@@ -28,7 +28,7 @@ function Dashboard() {
         <NavBar />
         
         { player &&
-            <div className='flex mx-20'>
+            <div className='flex m-10 space-x-4'>
                 <UserAvatarCard osuId={player['osuId']} />
                 <UserRankingCard rankingClass="Platinum" rating="1500" globalRank="27405" countryRank='5000' percentile='54.6' nextRankingClass='Diamond' ratingRemainingForNextRank='500'></UserRankingCard>
             </div>

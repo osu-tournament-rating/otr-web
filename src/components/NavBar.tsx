@@ -1,6 +1,6 @@
 function NavBar() {
   return (
-    <div className="bg-gray-100 rounded-xl p-4 m-20 flex items-center justify-between">
+    <div className="bg-gray-100 rounded-xl p-4 m-10 flex items-center justify-between">
     <a href="/">
         <img className="w-8 flex" src="logos/small.svg" alt="Company Logo" />
     </a>
