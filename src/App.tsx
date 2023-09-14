@@ -4,6 +4,7 @@ import Landing from './components/pages/Landing';
 import NoPage from './components/pages/NoPage';
 import Auth from './components/pages/Auth';
 import Dashboard from './components/pages/Dashboard';
+import Submit from './components/pages/Submit';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="*" element={<NoPage />} />
         </Route>
         <Route path="/auth" element={<Auth />} />
+        <Route path="/submit" element={<Submit />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>

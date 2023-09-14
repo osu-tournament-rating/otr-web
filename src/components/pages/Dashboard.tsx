@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import UserAvatarCard from './cards/UserAvatarCard';
 import NavBar from '../NavBar';
-import { useNavigate } from 'react-router-dom';
 import UserRankingCard from './cards/UserRankingCard';
 
 function Dashboard() {
