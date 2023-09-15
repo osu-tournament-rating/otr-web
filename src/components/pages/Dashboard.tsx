@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import UserAvatarCard from './cards/UserAvatarCard';
 import NavBar from '../NavBar';
 import UserRankingCard from './cards/UserRankingCard';
+import RatingHistoryChart from './cards/RatingHistoryChartExample';
 
 function Dashboard() {
     const [player, setPlayer] = useState(null);
