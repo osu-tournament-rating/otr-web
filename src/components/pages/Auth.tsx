@@ -1,35 +1,51 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { IAuthProps } from "./IAuthProps";
 
-function Auth() {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const navigate = useNavigate();
+function Auth({ isAuthenticated, setIsAuthenticated }: IAuthProps) {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        console.log('Logging in after osu! redirect');
-    
-        // make api call to login with code
-        fetch('http://localhost:5075/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ code: code })
-        })
-        .then(() => navigate('/dashboard', { replace: true }))
-        .catch(error => {console.error(error)
-            return (<><p>Authorization failed!</p></>)
-        });
-    });
+  const apiLink = process.env.REACT_APP_API_URL;
 
+  useEffect(() => {
+    console.log("Logging in after osu! redirect");
 
-    return (
-        <>
-            <p>Authorized</p>
-        </>
-    )
+    // make api call to login with code
+    fetch(apiLink + '/login', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ code: code }),
+    })
+      .then((response) => {
+        console.log(response);
+        if (response.status !== 200) {
+            throw new Error("Authorization failed!");
+        }
+        
+        setIsAuthenticated(true);
+        navigate("/", { replace: true });
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsAuthenticated(false);
+        return (
+          <>
+            <p>Authorization failed!</p>
+          </>
+        );
+      });
+  }, []);
+
+  return (
+    <>
+      <p>Authorized</p>
+    </>
+  );
 }
 
 export default Auth;

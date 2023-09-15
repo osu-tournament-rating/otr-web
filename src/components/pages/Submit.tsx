@@ -1,39 +1,38 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import NavBar from "../NavBar";
 import LandingCard from "./cards/LandingCard";
 import LandingCardLogo from "./cards/LandingCardLogo";
 
 function Submit() {
-  const [player, setPlayer] = useState<any>(null);
   const [hasOverrideAbility, setHasOverrideAbility] = useState(false);
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
+  const apiLink = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   useEffect(() => {
-	if(player != null) {
-		return;
-	}
-    fetch("http://localhost:5075/api/me", {
+    fetch(apiLink + "/me", {
       method: "GET",
       credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
-        setPlayer(data);
-        console.log(data);
-
-        const user = player["user"];
+        const user = data["user"];
         const roles = user["roles"];
         setHasOverrideAbility(roles.includes("Admin"));
-        console.log(hasOverrideAbility);
       })
       .catch((error) => {
-        console.error("Error fetching player data:", error);
+        console.error(
+          "Error fetching player data, auth key likely expired:",
+          error
+        );
+        return navigate("/unauthorized", { replace: true });
       });
   }, []); // The empty dependency array ensures this effect runs only once, similar to componentDidMount
 
   function handleSubmit(e: any) {
-	e.preventDefault();
+    e.preventDefault();
 
     if (!linkText) {
       alert("Please enter some links!");
@@ -46,7 +45,10 @@ function Submit() {
     for (let i = 0; i < linkList.length; i++) {
       const link = linkList[i];
       // Convert string to whole number
-      if (link.startsWith("https://osu.ppy.sh/community/matches/") || link.startsWith("https://osu.ppy.sh/mp/")) {
+      if (
+        link.startsWith("https://osu.ppy.sh/community/matches/") ||
+        link.startsWith("https://osu.ppy.sh/mp/")
+      ) {
         const matchId = parseInt(link.split("/").pop()!);
         submission.push(matchId);
       } else if (parseInt(link) > 0) {
@@ -57,9 +59,9 @@ function Submit() {
         return;
       }
     }
-	console.log(submission)
+    console.log(submission);
 
-	alert('Submitted! Thanks for your contribution!');
+    alert("Submitted! Thanks for your contribution!");
   }
 
   return (
