@@ -23,6 +23,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
       .then((response) => response.json())
       .then((data) => {
         setPlayer(data);
+        console.log(data);
       })
       .catch((error) => {
         console.error(
@@ -31,12 +32,6 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
         );
         return navigate("/unauthorized", { replace: true });
       });
-
-    fetch(apiLink + "/players/stats/14106450", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((response) => response.json())
   }, []); // The empty dependency array ensures this effect runs only once, similar to componentDidMount
 
   if (player == null) {
@@ -103,8 +98,8 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               ratingDelta={ratingDelta}
             />
           </div>
-          <div className="flex m-10 justify-center justify-items-center w-256 h-96">
-            <UserRatingChart ratingHistories={player["ratingHistories"]} />
+          <div className="flex m-10 justify-center justify-items-center w-256 h-64">
+            <UserRatingChart ratingHistories={player['ratingHistories']} currentRanking={ranking} nextRanking={nextRanking} />
           </div>
         </div>
       )}

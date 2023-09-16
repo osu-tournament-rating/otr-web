@@ -18,7 +18,6 @@ function UserRankingCard({
 }: IUserRankingCardProps) {
   const [barWidthClass, setBarWidthClass] = useState("w-0");
   const barWidthFraction = 1 - ratingRemainingForNextRank / ratingDelta;
-  console.log(barWidthFraction, ratingRemainingForNextRank, ratingDelta);
 
   function getBarWidthClass(barWidthFraction: number) {
     if (!isNaN(barWidthFraction)) {
@@ -55,8 +54,7 @@ function UserRankingCard({
 
   useEffect(() => {
     setBarWidthClass(getBarWidthClass(barWidthFraction));
-    console.log(barWidthClass);
-  });
+  }, [barWidthFraction]);
 
   return (
     <>
