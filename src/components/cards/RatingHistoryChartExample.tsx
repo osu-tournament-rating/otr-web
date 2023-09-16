@@ -11,7 +11,7 @@ import {
   Line,
 } from "recharts";
 
-function RatingHistoryChart(props: any) {
+function RatingHistoryChartExample(props: any) {
   const data = [
     {
       mu: 512,
@@ -40,7 +40,7 @@ function RatingHistoryChart(props: any) {
   ];
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer className="md:flex w-full h-full md:w-1/2" width="90%" height="90%">
       <AreaChart
         width={500}
         height={300}
@@ -56,7 +56,7 @@ function RatingHistoryChart(props: any) {
         <XAxis name="Match Date" dataKey="created" />
         <YAxis name="TR" dataKey="mu" />
         <Tooltip />
-        <Legend verticalAlign="top" height={36} />
+        <Legend verticalAlign="bottom" height={36} />
         <Area
           type="monotone"
           name="TR"
@@ -69,4 +69,4 @@ function RatingHistoryChart(props: any) {
   );
 }
 
-export default RatingHistoryChart;
+export default RatingHistoryChartExample;

@@ -2,7 +2,7 @@ import NavBar from "../NavBar";
 import LandingCard from "../cards/LandingCard";
 import LandingCardLogin from "../cards/LandingCardLogin";
 import LandingCardLogo from "../cards/LandingCardLogo";
-import RatingHistoryChart from "../cards/RatingHistoryChartExample";
+import RatingHistoryChartExample from "../cards/RatingHistoryChartExample";
 
 function Landing() {
   return (
@@ -22,9 +22,7 @@ function Landing() {
               title="Tournament Rating"
               description="A rating system that aims to predict your tournament performance relative to others"
             />
-            <div className="md:flex w-full h-full md:w-1/2">
-              <RatingHistoryChart />
-            </div>
+            <RatingHistoryChartExample />
           </div>
         </div>
         <div>

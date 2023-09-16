@@ -77,6 +77,10 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const worstPerformingOpponent = stats["worstPerformingOpponent"];
   const worstPerformingTeammate = stats["worstPerformingTeammate"];
 
+  const ratingGainedSincePeriod = stats["ratingGainedSincePeriod"];
+  const ratingGainedSincePeriodDisplay = ratingGainedSincePeriod > 0 ? `+${ratingGainedSincePeriod}` : ratingGainedSincePeriod;
+  const ratingGainedSincePeriodColor = ratingGainedSincePeriod > 0 ? "text-green-400" : "text-red-400";
+
   console.log(historyDays);
 
   return (
@@ -104,8 +108,16 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="flex">
             <DateSelector currentDays={historyDays} setDays={setHistoryDays} />
           </div>
-          <div className="flex m-10 justify-center justify-items-center w-256 h-64">
-            <UserRatingChart ratingHistories={player['ratingHistories']} currentRanking={ranking} nextRanking={nextRanking} />
+          <div className="m-10 bg-gray-100 rounded-xl pb-28" style={{height: "30rem"}}>
+            <div className="flex flex-row">
+              <p className="font-sans text-4xl md:text-5xl font-bold my-5 md:my-8 mx-4 md:mx-14">{rating}</p>
+              <p className={`font-sans text-2xl md:text-3xl font-bold -mx-3 md:-mx-12 mt-8 md:mt-12 ${ratingGainedSincePeriodColor}`}>{ratingGainedSincePeriodDisplay}</p>
+            </div>
+            <UserRatingChart
+              ratingHistories={player["ratingHistories"]}
+              currentRanking={ranking}
+              nextRanking={nextRanking}
+            />
           </div>
         </div>
       )}
