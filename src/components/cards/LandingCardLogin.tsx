@@ -1,6 +1,6 @@
 import { ICardProps } from "./ICardProps";
 
-const OSU_OAUTH_URL = `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=code&scope=public`
+const OSU_OAUTH_URL = `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public`
 
 function LandingCardLogin({ title, description }: ICardProps) {
     return (
