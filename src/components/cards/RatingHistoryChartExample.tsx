@@ -40,30 +40,32 @@ function RatingHistoryChart(props: any) {
   ];
 
   return (
-    <AreaChart
-      width={500}
-      height={300}
-      data={data}
-      margin={{
-        top: 10,
-        right: 40,
-        left: 0,
-        bottom: 0,
-      }}
-    >
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis name="Match Date" dataKey="created" />
-      <YAxis name="TR" dataKey="mu" />
-      <Tooltip />
-      <Legend verticalAlign="top" height={36} />
-      <Area
-        type="monotone"
-        name="TR"
-        dataKey="mu"
-        stroke="#000000"
-        fill="#8884d8"
-      />
-    </AreaChart>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart
+        width={500}
+        height={300}
+        data={data}
+        margin={{
+          top: 10,
+          right: 40,
+          left: 0,
+          bottom: 0,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis name="Match Date" dataKey="created" />
+        <YAxis name="TR" dataKey="mu" />
+        <Tooltip />
+        <Legend verticalAlign="top" height={36} />
+        <Area
+          type="monotone"
+          name="TR"
+          dataKey="mu"
+          stroke="#000000"
+          fill="#8884d8"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }
 

@@ -9,22 +9,22 @@ function Landing() {
     <>
       <NavBar />
       <div className="Landing m-5">
-        <div className="flex">
-          <div className="flex">
-            <LandingCardLogin
-              title="This is o!TR"
-              description="A suite of tools designed to make osu! tournaments better for everyone"
-            />
-            <LandingCardLogo />
-          </div>
+        <div className="md:flex">
+          <LandingCardLogin
+            title="This is o!TR"
+            description="A suite of tools designed to make osu! tournaments better for everyone"
+          />
+          <LandingCardLogo />
         </div>
         <div>
-          <div className="flex flex-row">
+          <div className="md:flex flex-row">
             <LandingCard
               title="Tournament Rating"
               description="A rating system that aims to predict your tournament performance relative to others"
             />
-            <RatingHistoryChart />
+            <div className="md:flex w-full h-full md:w-1/2">
+              <RatingHistoryChart />
+            </div>
           </div>
         </div>
         <div>
