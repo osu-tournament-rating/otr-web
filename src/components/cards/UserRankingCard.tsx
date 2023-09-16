@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { IUserRankingCardProps } from "./IUserRankingCardProps";
 
 /* Function that takes in a string number and outputs comma-separated digits */
@@ -15,14 +16,47 @@ function UserRankingCard({
   ratingRemainingForNextRank,
   ratingDelta,
 }: IUserRankingCardProps) {
-  const barWidthFraction = ratingRemainingForNextRank / ratingDelta;
-  console.log(barWidthFraction);
+  const [barWidthClass, setBarWidthClass] = useState("w-0");
+  const barWidthFraction = 1 - ratingRemainingForNextRank / ratingDelta;
+  console.log(barWidthFraction, ratingRemainingForNextRank, ratingDelta);
 
-  if (!isNaN(barWidthFraction)) {
-    // Round to nearest 1/12 and convert to X/12 string
-    if (barWidthFraction > 0 && barWidthFraction <= 1) {
+  function getBarWidthClass(barWidthFraction: number) {
+    if (!isNaN(barWidthFraction)) {
+      // Round to nearest 1/12 and convert to X/12 string
+      if (barWidthFraction < 1 / 12) {
+        return "w-0";
+      } else if (barWidthFraction < 2 / 12) {
+        return "w-1/12";
+      } else if (barWidthFraction < 3 / 12) {
+        return "w-2/12";
+      } else if (barWidthFraction < 4 / 12) {
+        return "w-3/12";
+      } else if (barWidthFraction < 5 / 12) {
+        return "w-4/12";
+      } else if (barWidthFraction < 6 / 12) {
+        return "w-5/12";
+      } else if (barWidthFraction < 7 / 12) {
+        return "w-6/12";
+      } else if (barWidthFraction < 8 / 12) {
+        return "w-7/12";
+      } else if (barWidthFraction < 9 / 12) {
+        return "w-8/12";
+      } else if (barWidthFraction < 10 / 12) {
+        return "w-9/12";
+      } else if (barWidthFraction < 11 / 12) {
+        return "w-10/12";
+      } else if (barWidthFraction < 12 / 12) {
+        return "w-11/12";
+      }
     }
+
+    return "w-full";
   }
+
+  useEffect(() => {
+    setBarWidthClass(getBarWidthClass(barWidthFraction));
+    console.log(barWidthClass);
+  });
 
   return (
     <>
@@ -64,8 +98,9 @@ function UserRankingCard({
             </p>
           </div>
           <div className="flex-shrink-0 flex-none pt-3">
-            <div className="w-1/2 max-w-md min-w-sm bg-gray-200 rounded-full dark:bg-gray-700">
-              <div className="bg-blue-300 pt-3 leading-none rounded-full w-1/12" />
+            <div
+              className="w-1/2 max-w-md min-w-sm bg-gray-200 rounded-full dark:bg-gray-700">
+              <div className={`bg-blue-300 pt-3 leading-none rounded-full ${barWidthClass}`} />
             </div>
           </div>
         </div>
