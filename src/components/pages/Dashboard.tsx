@@ -7,16 +7,17 @@ import MissingDataNotice from "../notices/MissingDataNotice";
 import NoDataNotice from "../notices/NoDataNotice";
 import TRUseCaseNotice from "../notices/TRUseCaseNotice";
 import UserRatingChart from "../charts/UserRatingChart";
+import DateSelector from "../DateSelector";
 
 function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [player, setPlayer] = useState<any>(null);
   const [mode, setMode] = useState(0);
-  const [historyDays, setHistoryDays] = useState(30);
+  const [historyDays, setHistoryDays] = useState(90);
   const navigate = useNavigate();
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(apiLink + "/me", {
+    fetch(apiLink + "/me?offsetDays=" + historyDays, {
       method: "GET",
       credentials: "include",
     })
@@ -32,7 +33,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
         );
         return navigate("/unauthorized", { replace: true });
       });
-  }, []); // The empty dependency array ensures this effect runs only once, similar to componentDidMount
+  }, [historyDays]); // The empty dependency array ensures this effect runs only once, similar to componentDidMount
 
   if (player == null) {
     return <p>Loading...</p>;
@@ -76,6 +77,8 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const worstPerformingOpponent = stats["worstPerformingOpponent"];
   const worstPerformingTeammate = stats["worstPerformingTeammate"];
 
+  console.log(historyDays);
+
   return (
     <>
       <NavBar />
@@ -97,6 +100,9 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               ratingRemainingForNextRank={ratingForNextRank}
               ratingDelta={ratingDelta}
             />
+          </div>
+          <div className="flex">
+            <DateSelector currentDays={historyDays} setDays={setHistoryDays} />
           </div>
           <div className="flex m-10 justify-center justify-items-center w-256 h-64">
             <UserRatingChart ratingHistories={player['ratingHistories']} currentRanking={ranking} nextRanking={nextRanking} />

@@ -59,13 +59,13 @@ function UserRankingCard({
   return (
     <>
       <div className="card w-full flex flex-col bg-gray-100 rounded-lg">
-        <div className="xs:flex-col lg:flex-row">
-          <div className="flex xs:flex-col lg:flex-row m-6">
+        <div className="lg:flex flex-col lg:flex-row">
+          <div className="flex flex-col lg:flex-row m-6">
             <div className="flex">
               <p className="text-6xl font-semibold font-sans">{rankingClass}</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row">
+          <div className="flex flex-row lg:m-6">
             <div className="flex flex-col mx-6">
               <p className="text-lg font-sans">Rating</p>
               <p className="text-lg font-semibold font-sans">{rating}</p>
