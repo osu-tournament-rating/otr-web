@@ -1,5 +1,5 @@
 import NavBar from "../NavBar";
-import LandingCardLogin from "./cards/LandingCardLogin";
+import LandingCardLogin from "../cards/LandingCardLogin";
 
 function Unauthorized() {
     return(

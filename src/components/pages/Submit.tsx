@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../NavBar";
-import LandingCard from "./cards/LandingCard";
-import LandingCardLogo from "./cards/LandingCardLogo";
+import LandingCard from "../cards/LandingCard";
+import LandingCardLogo from "../cards/LandingCardLogo";
 
 function Submit() {
   const [hasOverrideAbility, setHasOverrideAbility] = useState(false);
+  const [isSubmissionVerified, setIsSubmissionVerified] = useState(false);
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
+  const [userId, setUserId] = useState(0);
+
+  const [tournamentName, setTournamentName] = useState("");
+  const [abbreviation, setAbbreviation] = useState("");
+  const [forumPost, setForumPost] = useState("");
+
   const apiLink = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
@@ -21,6 +28,7 @@ function Submit() {
         const user = data["user"];
         const roles = user["roles"];
         setHasOverrideAbility(roles.includes("Admin"));
+        setUserId(user["id"])
       })
       .catch((error) => {
         console.error(
@@ -59,9 +67,44 @@ function Submit() {
         return;
       }
     }
-    console.log(submission);
+    console.log(submission, isSubmissionVerified);
+    setLinkText("");
+    setLinksCounted(0);
+    setTournamentName("");
+    setAbbreviation("");
+    setForumPost("");
 
-    alert("Submitted! Thanks for your contribution!");
+    fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ 
+        ids: submission,
+        tournamentName: tournamentName,
+        abbreviation: abbreviation,
+        forumPost: forumPost,
+        submitterId: userId
+       })
+    })
+      .then((response) => {
+        console.log(response);
+        if (response.status !== 200) {
+          throw new Error("Submission failed!");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("Submission failed due to API error!.")
+        return (
+          <>
+            <p>Submission failed!</p>
+          </>
+        );
+      });
+
+    alert("Submitted! The o!TR team thanks you for your contribution. <3");
   }
 
   return (
@@ -129,6 +172,7 @@ function Submit() {
                 setLinkText(e.target.value);
                 setLinksCounted(e.target.value.split("\n").length);
               }}
+              value={linkText}
               style={{ resize: "none" }}
               className="flex flex-row bg-gray-100 rounded-xl font-sans p-2 justify-center justify-items-center w-1/2 h-96"
               placeholder="https://osu.ppy.sh/community/matches/12345678"
@@ -144,9 +188,14 @@ function Submit() {
                       className="w-4"
                       type="checkbox"
                       name="forceVerified"
+                      onChange={(e) => {setIsSubmissionVerified(e.target.checked)}}
                     />
                   </div>
                 )}
+
+                <input required={true} type="text" name="tournamentName" onChange={(e) => {setTournamentName(e.target.value)}} value={tournamentName} className="flex flex-row bg-gray-200 rounded-xl font-sans p-2 justify-center justify-items-center" placeholder="Tournament name (The Roundtable)" />
+                <input required={true} type="text" name="abbreviation" onChange={(e) => {setAbbreviation(e.target.value)}} value={abbreviation} className="flex flex-row bg-gray-200 rounded-xl font-sans p-2 justify-center justify-items-center" placeholder="Abbreviation (TRT)" />
+                <input required={true} type="text" name="forumPost" onChange={(e) => {setForumPost(e.target.value)}} value={forumPost} className="flex flex-row bg-gray-200 rounded-xl font-sans p-2 justify-center justify-items-center" placeholder="Forum Post: (https://osu.ppy.sh/community/forums/topics/123456)" />
 
                 <p>Links counted: {linksCounted}</p>
               </div>

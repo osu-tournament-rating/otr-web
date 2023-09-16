@@ -1,8 +1,8 @@
 import NavBar from "../NavBar";
-import LandingCard from "./cards/LandingCard";
-import LandingCardLogin from "./cards/LandingCardLogin";
-import LandingCardLogo from "./cards/LandingCardLogo";
-import RatingHistoryChart from "./cards/RatingHistoryChartExample";
+import LandingCard from "../cards/LandingCard";
+import LandingCardLogin from "../cards/LandingCardLogin";
+import LandingCardLogo from "../cards/LandingCardLogo";
+import RatingHistoryChart from "../cards/RatingHistoryChartExample";
 
 function Landing() {
   return (
