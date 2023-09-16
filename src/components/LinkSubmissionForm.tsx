@@ -169,7 +169,7 @@ function LinkSubmissionForm() {
         />
 
         <div className="flex m-10">
-          <input className="w-12 h-12 rounded-full" type="checkbox" required={true} />
+          <input className="w-12 h-12 rounded-xl" type="checkbox" required={true} />
           <span className="ml-4 my-1 font-sans text-xl font-semibold">
             I read the rules and I understand that submitting irrelevant matches
             can lead to a restriction
@@ -180,7 +180,7 @@ function LinkSubmissionForm() {
           {hasOverrideAbility && (
             <div className="flex flex-row">
               <input
-                className="w-6 h-6 rounded-full"
+                className="w-6 h-6 rounded-xl"
                 type="checkbox"
                 name="forceVerified"
                 onChange={(e) => {
