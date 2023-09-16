@@ -1,4 +1,4 @@
-export interface ILandingCardProps {
+export interface ICardProps {
     title: string;
     description: string;
 }

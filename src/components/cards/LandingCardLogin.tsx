@@ -1,8 +1,8 @@
-import { ILandingCardProps } from "./ILandingCardProps";
+import { ICardProps } from "./ICardProps";
 
 const OSU_OAUTH_URL = `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=code&scope=public`
 
-function LandingCardLogin({ title, description }: ILandingCardProps) {
+function LandingCardLogin({ title, description }: ICardProps) {
     return (
         <div className="card bg-gray-100 text-dark-800 rounded-xl p-8 m-5 md:m-10" >
             <h1 className="card-title font-sans text-3xl md:text-6xl font-medium">{title}</h1>
