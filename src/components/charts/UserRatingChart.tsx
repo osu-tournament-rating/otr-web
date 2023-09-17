@@ -28,27 +28,11 @@ const CustomRatingTooltip = ({
   label,
 }: TooltipProps<ValueType, NameType>) => {
   if (active) {
+    console.log(payload)
     return (
       <div className="custom-tooltip">
         <p className="label">{`Date: ${formatXAxis(label)}`}</p>
         <p className="label">{`TR: ${payload?.[0].payload["muCasted"]}`}</p>
-      </div>
-    );
-  }
-
-  return null;
-};
-
-const CustomSigmaTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<ValueType, NameType>) => {
-  if (active) {
-    return (
-      <div className="custom-tooltip">
-        <p className="label">{`Date: ${formatXAxis(label)}`}</p>
-        <p className="label">{`Volatility: ${payload?.[0].payload["sigmaCasted"]}`}</p>
       </div>
     );
   }
@@ -71,8 +55,8 @@ function UserRatingChart({ ratingHistories }: IUserRatingChartProps) {
         <XAxis
           dataKey={"created"}
           tickFormatter={formatXAxis}
-          domain={["auto", "auto"]}
-          interval={5}
+          domain={["dataMin", "dataMax"]}
+          tickCount={8}
         />
         <YAxis
           dataKey={"muCasted"}
