@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function LinkSubmissionForm() {
-  const [hasOverrideAbility, setHasOverrideAbility] = useState(false);
+export interface ILinkSubmissionFormProps {
+  hasAdminRole: boolean;
+  setHasAdminRole: (hasAdminRole: boolean) => void;
+}
+
+function LinkSubmissionForm( { hasAdminRole, setHasAdminRole }: ILinkSubmissionFormProps) {
   const [isSubmissionVerified, setIsSubmissionVerified] = useState(false);
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
@@ -24,7 +28,7 @@ function LinkSubmissionForm() {
       .then((data) => {
         const user = data["user"];
         const roles = user["roles"];
-        setHasOverrideAbility(roles.includes("Admin"));
+        setHasAdminRole(roles.includes("Admin"));
         setUserId(user["id"]);
       })
       .catch((error) => {
@@ -166,6 +170,7 @@ function LinkSubmissionForm() {
           style={{ resize: "none" }}
           className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 m-auto h-36 max-h-48"
           placeholder="1 or more separated match links"
+          required={true}
         />
 
         <div className="flex m-10">
@@ -177,7 +182,7 @@ function LinkSubmissionForm() {
         </div>
 
         <div className="flex mx-10 mb-5">
-          {hasOverrideAbility && (
+          {hasAdminRole && (
             <div className="flex flex-row">
               <input
                 className="w-6 h-6 rounded-xl"

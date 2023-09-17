@@ -40,7 +40,7 @@ function RatingHistoryChartExample(props: any) {
   ];
 
   return (
-    <ResponsiveContainer className="md:flex w-full h-full md:w-1/2" width="90%" height="90%">
+    <ResponsiveContainer className="md:flex w-96 h-96 md:w-1/2" width="90%" height="90%">
       <AreaChart
         width={500}
         height={300}
