@@ -28,11 +28,14 @@ const CustomRatingTooltip = ({
   label,
 }: TooltipProps<ValueType, NameType>) => {
   if (active) {
-    console.log(payload)
+    const activePayload = payload?.[0].payload;
+
     return (
-      <div className="custom-tooltip">
-        <p className="label">{`Date: ${formatXAxis(label)}`}</p>
-        <p className="label">{`TR: ${payload?.[0].payload["muCasted"]}`}</p>
+      <div className="custom-tooltip bg-blue-200 opacity-90 rounded-xl p-2">
+        <p className="label font-sans font-bold text-xl">{activePayload["abbreviation"]}: {activePayload["tournamentName"]}</p>
+        <p className="label font-sans"><strong>Match:</strong> {`${activePayload["matchName"]}`}</p>
+        <p className="label font-sans"><strong>Date:</strong> {`${formatXAxis(label)}`}</p>
+        <p className="label font-sans"><strong>TR:</strong> {`${activePayload["muCasted"]}`}</p>
       </div>
     );
   }
