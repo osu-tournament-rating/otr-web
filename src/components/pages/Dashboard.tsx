@@ -114,7 +114,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
             <DateSelector currentDays={historyDays} setDays={setHistoryDays} />
           </div>
           <div
-            className="m-10 bg-gray-100 rounded-xl pb-28"
+            className="m-5 md:m-10 bg-gray-100 rounded-xl pb-28"
             style={{ height: "30rem" }}
           >
             <div className="flex flex-row">
