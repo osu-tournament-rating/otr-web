@@ -82,9 +82,9 @@ function UserRankingCard({
                 #{formatNumberWithCommas(countryRank)}
               </p>
             </div>
-            <div className="flex flex-col mx-6">
+            <div className="hidden sm:flex flex-col mx-6">
               <p className="text-lg font-sans">Percentile</p>
-              <p className="text-lg font-semibold font-sans">{percentile}</p>
+              <p className="text-lg font-semibold font-sans">{percentile}%</p>
             </div>
           </div>
         </div>
