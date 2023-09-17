@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <div className="flex flex-row bg-gray-100 rounded-xl p-4 m-10">
+    <div className="flex bg-gray-100 rounded-xl p-4 m-10">
       <div className="flex justify-start w-1/2">
         <p className="text-gray-700">&copy; 2023 StageCodes</p>
       </div>

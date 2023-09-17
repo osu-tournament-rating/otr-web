@@ -3,6 +3,7 @@ import LinkSubmissionForm from "../LinkSubmissionForm";
 import NavBar from "../NavBar";
 import SubmissionGuidelinesCard from "../cards/SubmissionGuidelinesCard";
 import VerifiedTournaments from "../VerifiedTournaments";
+import Footer from "../Footer";
 
 function Submit() {
   const [hasAdminRole, setHasAdminRole] = useState(false);
@@ -41,6 +42,8 @@ function Submit() {
       <div>
         <VerifiedTournaments hasAdminRole={hasAdminRole} />
       </div>
+
+      <Footer />
     </>
   );
 }

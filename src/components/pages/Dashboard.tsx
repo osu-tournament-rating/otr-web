@@ -9,6 +9,7 @@ import TRUseCaseNotice from "../notices/TRUseCaseNotice";
 import UserRatingChart from "../charts/UserRatingChart";
 import DateSelector from "../DateSelector";
 import Footer from "../Footer";
+import UserMatchesMapsCard from "../UserMatchesMapsCard";
 
 function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [player, setPlayer] = useState<any>(null);
@@ -18,10 +19,13 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(apiLink + "/players/8191845?offsetDays=" + historyDays + "&mode=" + mode, {
-      method: "GET",
-      credentials: "include",
-    })
+    fetch(
+      apiLink + "/players/8191845?offsetDays=" + historyDays + "&mode=" + mode,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         setPlayer(data);
@@ -49,6 +53,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const countryRank = stats["countryRank"];
   const gamesPlayed = stats["gamesPlayed"];
   const gamesWon = stats["gamesWon"];
+  const gamesLost = stats["gamesLost"];
   const globalRank = stats["globalRank"];
   const highestGlobalRank = stats["highestGlobalRank"];
   const highestPercentile = stats["highestPercentile"];
@@ -62,6 +67,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const matchAverageMisses = stats["matchAverageMisses"];
   const matchAverageScore = stats["matchAverageScore"];
   const matchesPlayed = stats["matchesPlayed"];
+  const matchesLost = stats["matchesLost"];
   const matchesWon = stats["matchesWon"];
   const mostPlayedOpponent = stats["mostPlayedOpponent"];
   const mostPlayedTeammateName = stats["mostPlayedTeammateName"];
@@ -77,6 +83,12 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const ratingForNextRank = stats["ratingForNextRank"];
   const worstPerformingOpponent = stats["worstPerformingOpponent"];
   const worstPerformingTeammate = stats["worstPerformingTeammate"];
+
+  // Trends
+  const isRatingPositiveTrend = stats["isRatingPositiveTrend"];
+  const isGlobalRankPositiveTrend = stats["isGlobalRankPositiveTrend"];
+  const isCountryRankPositiveTrend = stats["isCountryRankPositiveTrend"];
+  const isPercentilePositiveTrend = stats["isPercentilePositiveTrend"];
 
   const ratingGainedSincePeriod = stats["ratingGainedSincePeriod"];
   const ratingGainedSincePeriodDisplay =
@@ -108,6 +120,10 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               nextRankingClass={nextRanking}
               ratingRemainingForNextRank={ratingForNextRank}
               ratingDelta={ratingDelta}
+              isRatingPositiveTrend={isRatingPositiveTrend}
+              isGlobalRankPositiveTrend={isGlobalRankPositiveTrend}
+              isCountryRankPositiveTrend={isCountryRankPositiveTrend}
+              isPercentilePositiveTrend={isPercentilePositiveTrend}
             />
           </div>
           <div className="flex">
@@ -143,7 +159,16 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               </div>
             </div>
             <UserRatingChart ratingHistories={player["ratingHistories"]} />
+              <UserMatchesMapsCard
+                matches={matchesPlayed}
+                maps={gamesPlayed}
+                matchesWon={matchesWon}
+                matchesLost={matchesLost}
+                mapsWon={gamesWon}
+                mapsLost={gamesLost}
+              />
           </div>
+          <span className="flex mt-24" />
           <Footer />
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { IUserRankingCardProps } from "./IUserRankingCardProps";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 /* Function that takes in a string number and outputs comma-separated digits */
 function formatNumberWithCommas(num: number) {
@@ -15,6 +16,10 @@ function UserRankingCard({
   nextRankingClass,
   ratingRemainingForNextRank,
   ratingDelta,
+  isRatingPositiveTrend,
+  isGlobalRankPositiveTrend,
+  isCountryRankPositiveTrend,
+  isPercentilePositiveTrend,
 }: IUserRankingCardProps) {
   const [barWidthClass, setBarWidthClass] = useState("w-0");
   const barWidthFraction = 1 - ratingRemainingForNextRank / ratingDelta;
@@ -52,6 +57,22 @@ function UserRankingCard({
     return "w-full";
   }
 
+  const positiveTrendIcon = <KeyboardArrowUpIcon color="success" />;
+  const negativeTrendIcon = <KeyboardArrowUpIcon color="error" />;
+
+  const ratingTrendIcon = isRatingPositiveTrend
+    ? positiveTrendIcon
+    : negativeTrendIcon;
+  const globalRankTrendIcon = isGlobalRankPositiveTrend
+    ? positiveTrendIcon
+    : negativeTrendIcon;
+  const countryRankTrendIcon = isCountryRankPositiveTrend
+    ? positiveTrendIcon
+    : negativeTrendIcon;
+  const percentileTrendIcon = isPercentilePositiveTrend
+    ? positiveTrendIcon
+    : negativeTrendIcon;
+
   useEffect(() => {
     setBarWidthClass(getBarWidthClass(barWidthFraction));
   }, [barWidthFraction]);
@@ -68,23 +89,36 @@ function UserRankingCard({
           <div className="flex flex-row lg:m-6">
             <div className="flex flex-col mx-6">
               <p className="text-lg font-sans">Rating</p>
-              <p className="text-lg font-semibold font-sans">{rating}</p>
+              <div className="flex flex-row">
+                <p className="text-lg font-semibold font-sans">{rating}</p>
+                {ratingTrendIcon}
+              </div>
             </div>
             <div className="flex flex-col mx-6">
               <p className="text-lg font-sans">Global</p>
-              <p className="text-lg font-semibold font-sans">
-                #{formatNumberWithCommas(globalRank)}
-              </p>
+              <div className="flex flex-row">
+                <p className="text-lg font-semibold font-sans">
+                  #{formatNumberWithCommas(globalRank)}
+                </p>
+                {globalRankTrendIcon}
+              </div>
             </div>
             <div className="flex flex-col mx-6">
               <p className="text-lg font-sans">Country</p>
-              <p className="text-lg font-semibold font-sans">
-                #{formatNumberWithCommas(countryRank)}
-              </p>
+              <div className="flex flex-row">
+                <p className="text-lg font-semibold font-sans">
+                  #{formatNumberWithCommas(countryRank)}
+                </p>
+                {countryRankTrendIcon}
+              </div>
             </div>
             <div className="hidden sm:flex flex-col mx-6">
               <p className="text-lg font-sans">Percentile</p>
-              <p className="text-lg font-semibold font-sans">{percentile}%</p>
+
+              <div className="flex flex-row">
+                <p className="text-lg font-semibold font-sans">{percentile}%</p>
+                {percentileTrendIcon}
+              </div>
             </div>
           </div>
         </div>
@@ -96,9 +130,10 @@ function UserRankingCard({
             </p>
           </div>
           <div className="flex-shrink-0 flex-none pt-3">
-            <div
-              className="w-1/2 max-w-md min-w-sm bg-gray-200 rounded-full dark:bg-gray-700">
-              <div className={`bg-blue-300 pt-3 leading-none rounded-full ${barWidthClass}`} />
+            <div className="w-1/2 max-w-md min-w-sm bg-gray-200 rounded-full dark:bg-gray-700">
+              <div
+                className={`bg-blue-300 pt-3 leading-none rounded-full ${barWidthClass}`}
+              />
             </div>
           </div>
         </div>

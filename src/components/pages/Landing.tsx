@@ -1,3 +1,4 @@
+import Footer from "../Footer";
 import NavBar from "../NavBar";
 import LandingCard from "../cards/LandingCard";
 import LandingCardLogin from "../cards/LandingCardLogin";
@@ -71,6 +72,8 @@ function Landing() {
             />
           </div>
         </div>
+
+        <Footer />
       </div>
     </>
   );
