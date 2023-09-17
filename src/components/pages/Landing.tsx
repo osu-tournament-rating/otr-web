@@ -2,7 +2,6 @@ import NavBar from "../NavBar";
 import LandingCard from "../cards/LandingCard";
 import LandingCardLogin from "../cards/LandingCardLogin";
 import LandingCardLogo from "../cards/LandingCardLogo";
-import RatingHistoryChartExample from "../cards/RatingHistoryChartExample";
 
 function Landing() {
   return (
@@ -17,12 +16,11 @@ function Landing() {
           <LandingCardLogo />
         </div>
         <div>
-          <div className="md:flex flex-row">
+          <div className="flex-none">
             <LandingCard
               title="Tournament Rating"
               description="A rating system that aims to predict your tournament performance relative to others"
             />
-            <RatingHistoryChartExample />
           </div>
         </div>
         <div>

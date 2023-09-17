@@ -8,6 +8,7 @@ import NoDataNotice from "../notices/NoDataNotice";
 import TRUseCaseNotice from "../notices/TRUseCaseNotice";
 import UserRatingChart from "../charts/UserRatingChart";
 import DateSelector from "../DateSelector";
+import Footer from "../Footer";
 
 function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [player, setPlayer] = useState<any>(null);
@@ -143,6 +144,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
             </div>
             <UserRatingChart ratingHistories={player["ratingHistories"]} />
           </div>
+          <Footer />
         </div>
       )}
     </>
