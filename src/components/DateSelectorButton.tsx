@@ -8,7 +8,7 @@ export interface IDateSelectorButtonProps {
 function DateSelectorButton({currentDays, days, setDays, label}: IDateSelectorButtonProps) {
     return (
         <>
-            <div className={`flex flex-row ${currentDays !== days ? 'bg-gray-100' : 'bg-blue-400'} rounded-xl`}>
+            <div className={`flex flex-row ${currentDays !== days ? 'bg-gray-100' : 'bg-blue-300'} rounded-xl`}>
                 <button onClick={(() => setDays(days))} className={`p-4 md:p-5 font-medium text-lg md:text-2xl ${currentDays !== days ? 'text-black' : 'text-white'} font-sans`}>{label}</button>
             </div>
         </>

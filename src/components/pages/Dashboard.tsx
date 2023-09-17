@@ -159,19 +159,21 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               </div>
             </div>
             <UserRatingChart ratingHistories={player["ratingHistories"]} />
-              <UserMatchesMapsCard
-                matches={matchesPlayed}
-                maps={gamesPlayed}
-                matchesWon={matchesWon}
-                matchesLost={matchesLost}
-                mapsWon={gamesWon}
-                mapsLost={gamesLost}
-              />
           </div>
-          <span className="flex mt-24" />
-          <Footer />
+          <div>
+            <UserMatchesMapsCard
+              matches={matchesPlayed}
+              maps={gamesPlayed}
+              matchesWon={matchesWon}
+              matchesLost={matchesLost}
+              mapsWon={gamesWon}
+              mapsLost={gamesLost}
+            />
+          </div>
         </div>
       )}
+
+      <Footer />
     </>
   );
 }
