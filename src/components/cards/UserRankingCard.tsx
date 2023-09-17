@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { IUserRankingCardProps } from "./IUserRankingCardProps";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 /* Function that takes in a string number and outputs comma-separated digits */
 function formatNumberWithCommas(num: number) {
@@ -58,7 +59,7 @@ function UserRankingCard({
   }
 
   const positiveTrendIcon = <KeyboardArrowUpIcon color="success" />;
-  const negativeTrendIcon = <KeyboardArrowUpIcon color="error" />;
+  const negativeTrendIcon = <KeyboardArrowDownIcon color="error" />;
 
   const ratingTrendIcon = isRatingPositiveTrend
     ? positiveTrendIcon
