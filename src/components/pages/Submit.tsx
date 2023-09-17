@@ -11,8 +11,8 @@ function Submit() {
     <>
       <NavBar />
 
-      <div className="flex w-full">
-        <div className="flex-row w-3/5">
+      <div className="lg:flex">
+        <div className="flex-row w-full lg:w-3/5">
           <SubmissionGuidelinesCard
             title="Guidelines"
             description="Please follow the posted guidelines before submitting your matches. Keep in mind that posting matches that don't follow the rules may lead to a restriction."
@@ -34,7 +34,7 @@ function Submit() {
             description="The o!TR team reserves the right to make final judgements on whether a tournament or match should be deemed as fair and competitive play."
           />
         </div>
-        <div className="flex-row w-2/5">
+        <div className="flex-row w-full lg:w-2/5">
           <LinkSubmissionForm hasAdminRole={hasAdminRole} setHasAdminRole={setHasAdminRole} />
         </div>
       </div>

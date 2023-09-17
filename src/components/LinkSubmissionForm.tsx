@@ -110,7 +110,7 @@ function LinkSubmissionForm( { hasAdminRole, setHasAdminRole }: ILinkSubmissionF
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex flex-col bg-gray-100 mr-10 ml-2 my-5 rounded-xl font-sans pb-10">
+      <div className="flex flex-col bg-gray-100 my-5 mx-10 md:ml-5 rounded-xl font-sans pb-10">
         <div className="flex flex-row bg-gray-100 rounded-xl font-sans m-5">
           <p className="text-4xl font-semibold font-sans">Tournament</p>
         </div>

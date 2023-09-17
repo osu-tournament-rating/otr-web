@@ -17,7 +17,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(apiLink + "/players/8191845?offsetDays=" + historyDays, {
+    fetch(apiLink + "/players/8191845?offsetDays=" + historyDays + "&mode=" + mode, {
       method: "GET",
       credentials: "include",
     })
