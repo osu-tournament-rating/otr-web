@@ -4,7 +4,7 @@ function NavBar() {
   const [isMobileNavVisible, setIsMobileNavVisible] = useState(false);
 
   return (
-    <div className="bg-gray-100 rounded-xl p-4 m-10">
+    <div className="bg-gray-100 rounded-xl p-4 m-5 md:m-10">
       <div className="flex items-center justify-between">
         <a href="/">
           <img className="w-8 flex" src="logos/small.svg" alt="Company Logo" />

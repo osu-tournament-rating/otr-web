@@ -7,7 +7,7 @@ function Landing() {
   return (
     <>
       <NavBar />
-      <div className="Landing m-5">
+      <div>
         <div className="md:flex">
           <LandingCardLogin
             title="This is o!TR"

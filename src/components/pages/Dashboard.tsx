@@ -97,7 +97,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       {player && (
         <div>
-          <div className="md:flex m-5 md:m-10 space-y-5 md:space-x-4">
+          <div className="md:flex m-5 md:m-10 space-y-5 md:space-y-0 md:space-x-4">
             <UserAvatarCard osuId={player["osuId"]} />
             <UserRankingCard
               rankingClass={ranking}

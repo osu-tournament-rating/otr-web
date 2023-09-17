@@ -60,7 +60,7 @@ function UserRankingCard({
     <>
       <div className="card w-full flex flex-col bg-gray-100 rounded-lg">
         <div className="lg:flex flex-col lg:flex-row">
-          <div className="flex flex-col lg:flex-row m-6">
+          <div className="flex flex-col lg:flex-row m-5">
             <div className="flex">
               <p className="text-6xl font-semibold font-sans">{rankingClass}</p>
             </div>
