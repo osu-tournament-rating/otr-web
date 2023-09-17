@@ -58,6 +58,12 @@ function UserRatingChart({ ratingHistories }: IUserRatingChartProps) {
           bottom: 10,
         }}
       >
+        <defs>
+          <linearGradient id="colorMu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="47%" stopColor="#4C94FF" stopOpacity={0.7} />
+            <stop offset="100%" stopColor="#225CB3" stopOpacity={0.7} />  
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey={"created"}
           tickFormatter={formatXAxis}
@@ -78,8 +84,10 @@ function UserRatingChart({ ratingHistories }: IUserRatingChartProps) {
           type="monotone"
           dataKey="mu"
           name="TR"
-          stroke="#074eb0"
-          fill="#4982d1"
+          stroke="#4D94FF"
+          strokeWidth={2}
+          fillOpacity={1}
+          fill="url(#colorMu)"
         />
       </AreaChart>
     </ResponsiveContainer>
