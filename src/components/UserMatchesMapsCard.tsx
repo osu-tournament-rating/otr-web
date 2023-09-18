@@ -22,8 +22,8 @@ function UserMatchesMapsCard({
 }: IUserMatchesMapsCardProps) {
   const [matchesSelected, setMatchesSelected] = useState(true); // false = Maps selected
 
-  const matchesWonPercent = Math.round((matchesWon / matches) * 100);
-  const matchesLostPercent = Math.round((matchesLost / matches) * 100);
+  let matchesWonPercent = Math.round((matchesWon / matches) * 100);
+  let matchesLostPercent = Math.round((matchesLost / matches) * 100);
 
   let mapsWonPercent = Math.round((mapsWon / maps) * 100);
   let mapsLostPercent = Math.round((mapsLost / maps) * 100);
@@ -35,6 +35,19 @@ function UserMatchesMapsCard({
 
   const mapsWonPercentDisplay = `${mapsWonPercent}%`;
   const mapsLostPercentDisplay = `${mapsLostPercent}%`;
+
+  if (isNaN(mapsWonPercent)) {
+    mapsWonPercent = 50;
+  }
+  if (isNaN(mapsLostPercent)) {
+    mapsLostPercent = 50;
+  }
+  if (isNaN(matchesWonPercent)) {
+    matchesWonPercent = 50;
+  }
+  if (isNaN(matchesLostPercent)) {
+    matchesLostPercent = 50;
+  }
 
   return (
     <div className="flex flex-col m-5 md:m-10 bg-gray-100 mt-16 rounded-xl pb-14">
