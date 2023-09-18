@@ -178,7 +178,7 @@ function LinkSubmissionForm({
 
         <div className="flex m-10">
           <input
-            className="w-6 h-6 rounded-xl"
+            className="w-6 h-6 rounded-xl flex-none"
             type="checkbox"
             required={true}
           />
@@ -191,7 +191,7 @@ function LinkSubmissionForm({
         {hasAdminRole && (
           <div className="flex mx-10 mb-5">
             <input
-              className="w-6 h-6 rounded-xl"
+              className="w-6 h-6 rounded-xl flex-none"
               type="checkbox"
               name="forceVerified"
               onChange={(e) => {
