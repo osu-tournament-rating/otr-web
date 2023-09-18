@@ -6,7 +6,10 @@ export interface ILinkSubmissionFormProps {
   setHasAdminRole: (hasAdminRole: boolean) => void;
 }
 
-function LinkSubmissionForm( { hasAdminRole, setHasAdminRole }: ILinkSubmissionFormProps) {
+function LinkSubmissionForm({
+  hasAdminRole,
+  setHasAdminRole,
+}: ILinkSubmissionFormProps) {
   const [isSubmissionVerified, setIsSubmissionVerified] = useState(false);
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
@@ -174,30 +177,32 @@ function LinkSubmissionForm( { hasAdminRole, setHasAdminRole }: ILinkSubmissionF
         />
 
         <div className="flex m-10">
-          <input className="w-12 h-12 rounded-xl" type="checkbox" required={true} />
-          <span className="ml-4 my-1 font-sans text-xl font-semibold">
+          <input
+            className="w-6 h-6 rounded-xl"
+            type="checkbox"
+            required={true}
+          />
+          <span className="ml-4 font-sans text-xl font-semibold">
             I read the rules and I understand that submitting irrelevant matches
             can lead to a restriction
           </span>
         </div>
 
-        <div className="flex mx-10 mb-5">
-          {hasAdminRole && (
-            <div className="flex flex-row">
-              <input
-                className="w-6 h-6 rounded-xl"
-                type="checkbox"
-                name="forceVerified"
-                onChange={(e) => {
-                  setIsSubmissionVerified(e.target.checked);
-                }}
-              />
-              <span className="ml-4 font-sans text-xl font-semibold">
-                Admin force verified
-              </span>
-            </div>
-          )}
-        </div>
+        {hasAdminRole && (
+          <div className="flex mx-10 mb-5">
+            <input
+              className="w-6 h-6 rounded-xl"
+              type="checkbox"
+              name="forceVerified"
+              onChange={(e) => {
+                setIsSubmissionVerified(e.target.checked);
+              }}
+            />
+            <span className="ml-4 font-sans text-xl font-semibold">
+              Admin force verified
+            </span>
+          </div>
+        )}
 
         <button
           className="flex flex-row text-white bg-blue-500 rounded-xl font-sans p-2 w-11/12 m-auto h-16 text-2xl font-semibold justify-center items-center"
