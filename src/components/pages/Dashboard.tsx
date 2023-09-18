@@ -86,15 +86,13 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   // Trends
   const isRatingPositiveTrend = stats["isRatingPositiveTrend"];
-  const isGlobalRankPositiveTrend = stats["isGlobalRankPositiveTrend"];
-  const isCountryRankPositiveTrend = stats["isCountryRankPositiveTrend"];
-  const isPercentilePositiveTrend = stats["isPercentilePositiveTrend"];
-
   const ratingGainedSincePeriod = stats["ratingGainedSincePeriod"];
+
   const ratingGainedSincePeriodDisplay =
     ratingGainedSincePeriod > 0
       ? `+${ratingGainedSincePeriod}`
       : ratingGainedSincePeriod;
+      
   const ratingGainedSincePeriodColor =
     ratingGainedSincePeriod > 0 ? "text-green-400" : "text-red-400";
 
@@ -121,9 +119,6 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               ratingRemainingForNextRank={ratingForNextRank}
               ratingDelta={ratingDelta}
               isRatingPositiveTrend={isRatingPositiveTrend}
-              isGlobalRankPositiveTrend={isGlobalRankPositiveTrend}
-              isCountryRankPositiveTrend={isCountryRankPositiveTrend}
-              isPercentilePositiveTrend={isPercentilePositiveTrend}
             />
           </div>
           <div className="flex">
@@ -148,14 +143,14 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p className="font-sans">Highest rating</p>
                   <p className="font-sans font-bold">{highestRating}</p>
                 </div>
-                <div className="hidden md:flex space-x-3">
+                {/* <div className="hidden md:flex space-x-3">
                   <p className="font-sans">Highest rank</p>
                   <p className="font-sans font-bold">#{highestGlobalRank}</p>
                 </div>
                 <div className="hidden lg:flex space-x-3">
                   <p className="font-sans">Highest percentile</p>
                   <p className="font-sans font-bold">{highestPercentile}%</p>
-                </div>
+                </div> */}
               </div>
             </div>
             <UserRatingChart ratingHistories={player["ratingHistories"]} />

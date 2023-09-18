@@ -18,9 +18,6 @@ function UserRankingCard({
   ratingRemainingForNextRank,
   ratingDelta,
   isRatingPositiveTrend,
-  isGlobalRankPositiveTrend,
-  isCountryRankPositiveTrend,
-  isPercentilePositiveTrend,
 }: IUserRankingCardProps) {
   const [barWidthClass, setBarWidthClass] = useState("w-0");
   const barWidthFraction = 1 - ratingRemainingForNextRank / ratingDelta;
@@ -58,19 +55,10 @@ function UserRankingCard({
     return "w-full";
   }
 
-  const positiveTrendIcon = <KeyboardArrowUpIcon color="success" />;
-  const negativeTrendIcon = <KeyboardArrowDownIcon color="error" />;
+  const positiveTrendIcon = <KeyboardArrowUpIcon style={{color: "#78E375"}} />;
+  const negativeTrendIcon = <KeyboardArrowDownIcon style={{color: "#E37575"}} />;
 
   const ratingTrendIcon = isRatingPositiveTrend
-    ? positiveTrendIcon
-    : negativeTrendIcon;
-  const globalRankTrendIcon = isGlobalRankPositiveTrend
-    ? positiveTrendIcon
-    : negativeTrendIcon;
-  const countryRankTrendIcon = isCountryRankPositiveTrend
-    ? positiveTrendIcon
-    : negativeTrendIcon;
-  const percentileTrendIcon = isPercentilePositiveTrend
     ? positiveTrendIcon
     : negativeTrendIcon;
 
@@ -101,7 +89,6 @@ function UserRankingCard({
                 <p className="text-lg font-semibold font-sans">
                   #{formatNumberWithCommas(globalRank)}
                 </p>
-                {globalRankTrendIcon}
               </div>
             </div>
             <div className="flex flex-col mx-6">
@@ -110,7 +97,6 @@ function UserRankingCard({
                 <p className="text-lg font-semibold font-sans">
                   #{formatNumberWithCommas(countryRank)}
                 </p>
-                {countryRankTrendIcon}
               </div>
             </div>
             <div className="hidden sm:flex flex-col mx-6">
@@ -118,7 +104,6 @@ function UserRankingCard({
 
               <div className="flex flex-row">
                 <p className="text-lg font-semibold font-sans">{percentile}%</p>
-                {percentileTrendIcon}
               </div>
             </div>
           </div>

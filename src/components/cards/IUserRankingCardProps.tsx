@@ -7,10 +7,5 @@ export interface IUserRankingCardProps {
     nextRankingClass: string; // e.g. platnium, diamond (next rank)
     ratingRemainingForNextRank: number; // how much rating is needed to reach the next rank
     ratingDelta: number;
-
-    // Trends
     isRatingPositiveTrend: boolean;
-    isGlobalRankPositiveTrend: boolean;
-    isCountryRankPositiveTrend: boolean;
-    isPercentilePositiveTrend: boolean;
 }
