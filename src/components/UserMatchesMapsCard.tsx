@@ -22,8 +22,22 @@ function UserMatchesMapsCard({
 }: IUserMatchesMapsCardProps) {
   const [matchesSelected, setMatchesSelected] = useState(true); // false = Maps selected
 
+  const matchesWonPercent = Math.round((matchesWon / matches) * 100);
+  const matchesLostPercent = Math.round((matchesLost / matches) * 100);
+
+  let mapsWonPercent = Math.round((mapsWon / maps) * 100);
+  let mapsLostPercent = Math.round((mapsLost / maps) * 100);
+
+  console.log(mapsWonPercent, mapsLostPercent)
+
+  const matchesWonPercentDisplay = `${matchesWonPercent}%`;
+  const matchesLostPercentDisplay = `${matchesLostPercent}%`;
+
+  const mapsWonPercentDisplay = `${mapsWonPercent}%`;
+  const mapsLostPercentDisplay = `${mapsLostPercent}%`;
+
   return (
-    <div className="flex flex-col m-5 md:m-10 bg-gray-100 mt-16 rounded-xl">
+    <div className="flex flex-col m-5 md:m-10 bg-gray-100 mt-16 rounded-xl pb-14">
       <div className="flex">
         <div className="flex flex-row font-sans m-5 -space-x-3">
           <div>
@@ -42,7 +56,7 @@ function UserMatchesMapsCard({
           </div>
         </div>
       </div>
-      <Menu as="div" className="flex text-left ml-5">
+      <Menu as="div" className="flex text-left ml-7">
         <div>
           <Menu.Button className="inline-flex justify-center w-full px-4 py-2 font-sans text-xl rounded-xl focus:outline-none">
             {matchesSelected ? "Matches" : "Maps"}
@@ -79,11 +93,29 @@ function UserMatchesMapsCard({
         </Transition>
       </Menu>
       <div className="flex mx-5 md:mx-10 rounded-xl h-12 space-x-0">
-        <div className="flex flex-row w-1/2  rounded-l-xl"> 
-            Test
+        <div
+          className="flex flex-col rounded-l-xl justify-center"
+          style={{ backgroundColor: "#78E375", width: `${matchesSelected ? matchesWonPercent : mapsWonPercent}%` }}
+        >
+          <p className="mx-auto my-8 text-xl font-semibold font-sans">{matchesSelected ? matchesWonPercentDisplay : mapsWonPercentDisplay}</p>
+          <p
+            className="mx-auto m-autotext-xl font-sans"
+            style={{ marginTop: "-14px", marginBottom: "-14px" }}
+          >
+            {matchesSelected ? matchesWon : mapsWon} Won
+          </p>
         </div>
-        <div className="flex flex-row w-1/2 bg-red-400 rounded-r-xl">
-            Test
+        <div
+          className="flex flex-col rounded-r-xl justify-center"
+          style={{ backgroundColor: "#E37575", width: `${matchesSelected ? matchesLostPercent : mapsLostPercent}%` }}
+        >
+          <p className="mx-auto my-8 text-xl font-semibold font-sans">{matchesSelected ? matchesLostPercentDisplay : mapsLostPercentDisplay}</p>
+          <p
+            className="mx-auto m-autotext-xl font-sans"
+            style={{ marginTop: "-14px", marginBottom: "-14px" }}
+          >
+            {matchesSelected ? matchesLost : mapsLost} Lost
+          </p>
         </div>
       </div>
     </div>

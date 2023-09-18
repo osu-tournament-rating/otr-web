@@ -20,7 +20,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   useEffect(() => {
     fetch(
-      apiLink + "/players/8191845?offsetDays=" + historyDays + "&mode=" + mode,
+      apiLink + "/players/11536421?offsetDays=" + historyDays + "&mode=" + mode,
       {
         method: "GET",
         credentials: "include",
