@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { IUserRankingCardProps } from "./IUserRankingCardProps";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { formatNumberWithCommas } from "../../Helpers";
 
-/* Function that takes in a string number and outputs comma-separated digits */
-function formatNumberWithCommas(num: number) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
 
 function UserRankingCard({
   rankingClass,

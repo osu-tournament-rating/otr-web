@@ -10,6 +10,9 @@ import UserRatingChart from "../charts/UserRatingChart";
 import DateSelector from "../DateSelector";
 import Footer from "../Footer";
 import UserMatchesMapsCard from "../UserMatchesMapsCard";
+import DashboardStatsCard from "../cards/DashboardStatsCard";
+import { formatNumberWithCommas } from "../../Helpers";
+import MostPlayedModsCard from "../cards/MostPlayedModsCard";
 
 function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [player, setPlayer] = useState<any>(null);
@@ -19,13 +22,10 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(
-      apiLink + "/me?offsetDays=" + historyDays + "&mode=" + mode,
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    )
+    fetch(apiLink + "/me?offsetDays=" + historyDays + "&mode=" + mode, {
+      method: "GET",
+      credentials: "include",
+    })
       .then((response) => response.json())
       .then((data) => {
         setPlayer(data);
@@ -92,7 +92,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
     ratingGainedSincePeriod > 0
       ? `+${ratingGainedSincePeriod}`
       : ratingGainedSincePeriod;
-      
+
   const ratingGainedSincePeriodColor =
     ratingGainedSincePeriod > 0 ? "text-green-400" : "text-red-400";
 
@@ -163,6 +163,86 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               matchesLost={matchesLost}
               mapsWon={gamesWon}
               mapsLost={gamesLost}
+            />
+          </div>
+          <div className="flex m-7">
+            <DashboardStatsCard
+              title="General"
+              labels={[
+                "Average opponent rating",
+                "Average teammate rating",
+                "Best win streak",
+              ]}
+              values={[
+                averageOpponentRating,
+                averageTeammateRating,
+                bestWinStreak,
+              ]}
+            />
+            <DashboardStatsCard
+              title="Per match"
+              labels={[
+                "Average score",
+                "Average misses",
+                "Average accuracy",
+                "Average maps played",
+              ]}
+              values={[
+                formatNumberWithCommas(matchAverageScore),
+                formatNumberWithCommas(matchAverageMisses),
+                matchAverageAccuracy + "%",
+                matchAverageMapsPlayed,
+              ]}
+            />
+            <DashboardStatsCard
+              title="Per map"
+              labels={[
+                "Average score",
+                "Average misses",
+                "Average accuracy",
+                "Average placing",
+              ]}
+              values={[
+                averageOpponentRating,
+                averageTeammateRating,
+                bestWinStreak,
+                mapAveragePlacing,
+              ]}
+            />
+          </div>
+          <div className="flex m-7">
+            <MostPlayedModsCard
+              countHR={playedHR}
+              countDT={playedDT}
+              countHD={playedHD}
+              countNM={playedNM}
+            />
+            
+            <DashboardStatsCard
+              title="General"
+              labels={[
+                "Average opponent rating",
+                "Average teammate rating",
+                "Best win streak",
+              ]}
+              values={[
+                averageOpponentRating,
+                averageTeammateRating,
+                bestWinStreak,
+              ]}
+            />
+            <DashboardStatsCard
+              title="General"
+              labels={[
+                "Average opponent rating",
+                "Average teammate rating",
+                "Best win streak",
+              ]}
+              values={[
+                averageOpponentRating,
+                averageTeammateRating,
+                bestWinStreak,
+              ]}
             />
           </div>
         </div>
