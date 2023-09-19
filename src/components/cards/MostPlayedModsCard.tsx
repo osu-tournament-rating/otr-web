@@ -61,12 +61,12 @@ function MostPlayedModsCard({
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex w-1/2 mx-auto mt-5">
+        <div className="flex w-7/12 mx-auto mt-5">
           <div className="flex-col">
             {data.map((entry, index) => (
               <div className="flex flex-row space-x-2 pb-1">
-                <p className="font-sans text-lg">{data[index].percentage}%</p>
-                <p className="font-sans text-lg font-semibold" style={{color: colors[index]}}>{data[index].name}</p>
+                <p className="flex font-sans text-lg mx-auto w-full justify-end">{data[index].percentage}%</p>
+                <p className="flex font-sans text-lg font-semibold w-full justify-start" style={{color: colors[index]}}>{data[index].name}</p>
               </div>
             ))}
           </div>
