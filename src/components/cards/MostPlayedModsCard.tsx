@@ -14,16 +14,23 @@ function MostPlayedModsCard({
   countNM,
 }: IMostPlayedModsCardProps) {
   const sum = countHR + countDT + countHD + countNM;
-  const hrPercentage = (countHR / sum) * 100;
-  const dtPercentage = (countDT / sum) * 100;
-  const hdPercentage = (countHD / sum) * 100;
-  const nmPercentage = (countNM / sum) * 100;
+  let hrPercentage = Math.round((countHR / sum) * 100);
+  let dtPercentage = Math.round((countDT / sum) * 100);
+  let hdPercentage = Math.round((countHD / sum) * 100);
+  let nmPercentage = Math.round((countNM / sum) * 100);
+
+  if(sum === 0) {
+    hrPercentage = 0;
+    dtPercentage = 0;
+    hdPercentage = 0;
+    nmPercentage = 0;
+  }
 
   const data = [
-    { name: "HR", value: countHR, label: hrPercentage },
-    { name: "DT", value: countDT, label: dtPercentage },
-    { name: "HD", value: countHD, label: hdPercentage },
-    { name: "NM", value: countNM, label: nmPercentage },
+    { name: "HR", value: sum > 0 ? countHR : 1, percentage: hrPercentage },
+    { name: "DT", value: sum > 0 ? countDT : 1, percentage: dtPercentage },
+    { name: "HD", value: sum > 0 ? countHD : 1, percentage: hdPercentage },
+    { name: "NM", value: sum > 0 ? countNM : 1, percentage: nmPercentage },
   ];
 
   const colors = ["#E37575", "#4D94FF", "#E3DE76", "#78E375"];
@@ -58,7 +65,7 @@ function MostPlayedModsCard({
           <div className="flex-col">
             {data.map((entry, index) => (
               <div className="flex flex-row space-x-2 pb-1">
-                <p className="font-sans text-lg">{data[index].label}</p>
+                <p className="font-sans text-lg">{data[index].percentage}%</p>
                 <p className="font-sans text-lg font-semibold" style={{color: colors[index]}}>{data[index].name}</p>
               </div>
             ))}
