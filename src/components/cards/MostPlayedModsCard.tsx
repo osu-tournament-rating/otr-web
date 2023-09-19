@@ -4,36 +4,31 @@ export interface IMostPlayedModsCardProps {
   countHR: number;
   countDT: number;
   countHD: number;
-  countNM: number;
 }
 
 function MostPlayedModsCard({
   countHR,
   countDT,
   countHD,
-  countNM,
 }: IMostPlayedModsCardProps) {
-  const sum = countHR + countDT + countHD + countNM;
+  const sum = countHR + countDT + countHD;
   let hrPercentage = Math.round((countHR / sum) * 100);
   let dtPercentage = Math.round((countDT / sum) * 100);
   let hdPercentage = Math.round((countHD / sum) * 100);
-  let nmPercentage = Math.round((countNM / sum) * 100);
 
   if(sum === 0) {
     hrPercentage = 0;
     dtPercentage = 0;
     hdPercentage = 0;
-    nmPercentage = 0;
   }
 
   const data = [
-    { name: "HR", value: sum > 0 ? countHR : 1, percentage: hrPercentage },
-    { name: "DT", value: sum > 0 ? countDT : 1, percentage: dtPercentage },
-    { name: "HD", value: sum > 0 ? countHD : 1, percentage: hdPercentage },
-    { name: "NM", value: sum > 0 ? countNM : 1, percentage: nmPercentage },
+    { name: "HR", value: sum > 0 ? countHR : 1, percentage: hrPercentage, color: "#E37575" },
+    { name: "DT", value: sum > 0 ? countDT : 1, percentage: dtPercentage, color: "#4D94FF" },
+    { name: "HD", value: sum > 0 ? countHD : 1, percentage: hdPercentage, color: "#E3DE76" },
   ];
 
-  const colors = ["#E37575", "#4D94FF", "#E3DE76", "#78E375"];
+  data.sort((a, b) => b.value - a.value);
 
   return (
     <div className="bg-gray-100 rounded-xl md:w-1/2 lg:w-1/3 mx-3 px-8 py-5">
@@ -55,7 +50,7 @@ function MostPlayedModsCard({
                 dataKey="value"
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index]} />
+                  <Cell key={`cell-${index}`} fill={data[index].color} />
                 ))}
               </Pie>
             </PieChart>
@@ -65,8 +60,8 @@ function MostPlayedModsCard({
           <div className="flex-col">
             {data.map((entry, index) => (
               <div className="flex flex-row space-x-2 pb-1">
-                <p className="flex font-sans text-lg mx-auto w-full justify-end">{data[index].percentage}%</p>
-                <p className="flex font-sans text-lg font-semibold w-full justify-start" style={{color: colors[index]}}>{data[index].name}</p>
+                <p className="flex font-sans text-lg mx-auto w-full justify-end">{data[index].percentage < 1 ? '<1' : data[index].percentage}%</p>
+                <p className="flex font-sans text-lg font-semibold w-full justify-start" style={{color: data[index].color}}>{data[index].name}</p>
               </div>
             ))}
           </div>

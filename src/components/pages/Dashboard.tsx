@@ -70,13 +70,12 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
   const matchesLost = stats["matchesLost"];
   const matchesWon = stats["matchesWon"];
   const mostPlayedOpponent = stats["mostPlayedOpponent"];
-  const mostPlayedTeammateName = stats["mostPlayedTeammateName"];
+  const mostPlayedTeammate = stats["mostPlayedTeammateName"];
   const nextRanking = stats["nextRanking"];
   const percentile = Math.round(stats["percentile"] * 10) / 10;
   const playedDT = stats["playedDT"];
   const playedHD = stats["playedHD"];
   const playedHR = stats["playedHR"];
-  const playedNM = stats["playedNM"];
   const ranking = stats["ranking"];
   const rating = stats["rating"];
   const ratingDelta = stats["ratingDelta"];
@@ -215,20 +214,19 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
               countHR={playedHR}
               countDT={playedDT}
               countHD={playedHD}
-              countNM={playedNM}
             />
             
             <DashboardStatsCard
-              title="General"
+              title="Teammates"
               labels={[
-                "Average opponent rating",
-                "Average teammate rating",
-                "Best win streak",
+                "Most played",
+                "Best teammate",
+                "Worst teammate",
               ]}
               values={[
-                averageOpponentRating,
-                averageTeammateRating,
-                bestWinStreak,
+                mostPlayedTeammate,
+                bestPerformingTeammate,
+                worstPerformingTeammate,
               ]}
             />
             <DashboardStatsCard
