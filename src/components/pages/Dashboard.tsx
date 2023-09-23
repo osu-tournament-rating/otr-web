@@ -15,20 +15,21 @@ import { formatNumberWithCommas } from "../../Helpers";
 import MostPlayedModsCard from "../cards/MostPlayedModsCard";
 
 function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const [player, setPlayer] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [ratingHistories, setRatingHistories] = useState<any>(null);
   const [mode, setMode] = useState(0);
   const [historyDays, setHistoryDays] = useState(90);
   const navigate = useNavigate();
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(apiLink + "/me?offsetDays=" + historyDays + "&mode=" + mode, {
+    fetch(apiLink + "/me/statistics?offsetDays=" + historyDays + "&mode=" + mode, {
       method: "GET",
       credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
-        setPlayer(data);
+        setStats(data);
         console.log(data);
       })
       .catch((error) => {
@@ -38,13 +39,29 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
         );
         return navigate("/unauthorized", { replace: true });
       });
-  }, [historyDays]); // The empty dependency array ensures this effect runs only once, similar to componentDidMount
 
-  if (player == null) {
+    fetch(apiLink + "/me/ratinghistories?offsetDays=" + historyDays + "&mode=" + mode, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setRatingHistories(data);
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error(
+          "Error fetching player data, auth key likely expired:",
+          error
+        );
+        return navigate("/unauthorized", { replace: true });
+      });
+  }, [apiLink, mode, navigate, historyDays]);
+
+  if (stats == null) {
     return <p>Loading...</p>;
   }
 
-  const stats = player["statistics"];
   const averageOpponentRating = stats["averageOpponentRating"];
   const averageTeammateRating = stats["averageTeammateRating"];
   const bestPerformingOpponent = stats["bestPerformingOpponent"];
@@ -102,12 +119,12 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
       <NavBar />
       <TRUseCaseNotice />
       <MissingDataNotice />
-      {player["ratings"].length === 0 && <NoDataNotice />}
+      {!ratingHistories && <NoDataNotice />}
 
-      {player && (
+      {stats && (
         <div>
           <div className="md:flex m-5 md:m-10 space-y-5 md:space-y-0 md:space-x-4">
-            <UserAvatarCard osuId={player["osuId"]} />
+            <UserAvatarCard osuId={stats["osuId"]} />
             <UserRankingCard
               rankingClass={ranking}
               rating={rating}
@@ -152,7 +169,7 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </div> */}
               </div>
             </div>
-            <UserRatingChart ratingHistories={player["ratingHistories"]} />
+            <UserRatingChart ratingHistories={ratingHistories} />
           </div>
           <div>
             <UserMatchesMapsCard
