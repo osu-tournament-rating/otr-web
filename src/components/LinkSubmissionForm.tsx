@@ -29,10 +29,9 @@ function LinkSubmissionForm({
     })
       .then((response) => response.json())
       .then((data) => {
-        const user = data["user"];
-        const roles = user["roles"];
+        const roles = data["roles"];
         setHasAdminRole(roles.includes("Admin"));
-        setUserId(user["id"]);
+        setUserId(data["id"]);
       })
       .catch((error) => {
         console.error(
@@ -71,7 +70,6 @@ function LinkSubmissionForm({
         return;
       }
     }
-    console.log(submission, isSubmissionVerified);
     setLinkText("");
     setLinksCounted(0);
     setTournamentName("");
@@ -93,7 +91,6 @@ function LinkSubmissionForm({
       }),
     })
       .then((response) => {
-        console.log(response);
         if (response.status !== 200) {
           throw new Error("Submission failed!");
         }
