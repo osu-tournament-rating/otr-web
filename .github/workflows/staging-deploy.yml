@@ -20,7 +20,7 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest .
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest DockerfileStaging
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest
 
   deploy:
@@ -39,7 +39,4 @@ jobs:
           docker stop '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
           docker rm '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
           docker run -d --name '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' -p 3001:3000 \
-          -e 'REACT_APP_OSU_CLIENT_ID=${{ secrets.OSU_CLIENT_ID }}' \
-          -e 'REACT_APP_OSU_CALLBACK_URL=${{ secrets.DEV_OSU_CALLBACK_URL }}' \
-          -e 'REACT_APP_API_URL=${{ secrets.DEV_API_URL }}' \
           '${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest'
