@@ -20,7 +20,7 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest DockerfileStaging
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest ./DockerfileStaging
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest
 
   deploy:
