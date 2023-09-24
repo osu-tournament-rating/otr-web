@@ -13,13 +13,13 @@ function Auth({ isAuthenticated, setIsAuthenticated }: IAuthProps) {
     console.log("Logging in after osu! redirect");
 
     // make api call to login with code
-    fetch(apiLink + '/login', {
+    fetch(apiLink + '/login?code=' + code, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
       },
       credentials: "include",
-      body: JSON.stringify({ code: code }),
     })
       .then((response) => {
         console.log(response);
