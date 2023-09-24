@@ -1,0 +1,48 @@
+name: otr-web staging deploy
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  publish:
+    needs: build_test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest .
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          docker pull '${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest'
+          docker stop '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
+          docker rm '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
+          docker run -d --name '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' -p 3001:3000 \
+          -e 'REACT_APP_OSU_CLIENT_ID=${{ secrets.OSU_CLIENT_ID }}' \
+          -e 'REACT_APP_OSU_CLIENT_SECRET=${{ secrets.OSU_CLIENT_SECRET }}' \
+          -e 'REACT_APP_OSU_CALLBACK_URL=${{ secrets.DEV_OSU_CALLBACK_URL }}' \
+          -e 'REACT_APP_API_URL=${{ secrets.DEV_API_URL }}' \
+          -e 'REACT_APP_LOGIN_SECRET=${{ secrets.DEV_LOGIN_SECRET }}' \
+          '${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest'
