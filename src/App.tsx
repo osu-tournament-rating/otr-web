@@ -7,6 +7,7 @@ import Dashboard from "./components/pages/Dashboard";
 import Submit from "./components/pages/Submit";
 import { useState } from "react";
 import Unauthorized from "./components/pages/Unauthorized";
+import Leaderboards from "./components/pages/Leaderboards";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,6 +42,7 @@ function App() {
             />
           }
         />
+        <Route path="/leaderboards" element={ <Leaderboards /> } />
       </Routes>
     </BrowserRouter>
   );
