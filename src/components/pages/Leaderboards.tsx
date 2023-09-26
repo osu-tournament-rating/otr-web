@@ -31,7 +31,6 @@ function Leaderboards() {
 
   return (
     <>
-      <NavBar />
       <div className="flex m-5 md:m-10 bg-gray-100 rounded-xl">
         <LeaderboardTable leaderboardData={data} />
       </div>

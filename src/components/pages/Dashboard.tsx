@@ -116,7 +116,6 @@ function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   return (
     <>
-      <NavBar />
       <TRUseCaseNotice />
       <MissingDataNotice />
       {!ratingHistories && <NoDataNotice />}

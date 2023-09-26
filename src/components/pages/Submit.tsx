@@ -10,8 +10,6 @@ function Submit() {
 
   return (
     <>
-      <NavBar />
-
       <div className="lg:flex">
         <div className="flex-row w-full lg:w-3/5">
           <SubmissionGuidelinesCard

@@ -7,7 +7,6 @@ import LandingCardLogo from "../cards/LandingCardLogo";
 function Landing() {
   return (
     <>
-      <NavBar />
       <div>
         <div className="md:flex">
           <LandingCardLogin

@@ -8,43 +8,40 @@ import Submit from "./components/pages/Submit";
 import { useState } from "react";
 import Unauthorized from "./components/pages/Unauthorized";
 import Leaderboards from "./components/pages/Leaderboards";
+import NavBar from "./components/NavBar";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mode, setMode] = useState(0);
+  const [tab, setTab] = useState("");
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />}>
-          <Route path="*" element={<NoPage />} />
-        </Route>
-        <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route
-          path="/auth"
-          element={
-            <Auth
-              isAuthenticated={isAuthenticated}
-              setIsAuthenticated={setIsAuthenticated}
-            />
-          }
-        />
-        <Route
-          path="/submit"
-          element={
-            <Submit />
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <Dashboard
-              isAuthenticated={isAuthenticated}
-            />
-          }
-        />
-        <Route path="/leaderboards" element={ <Leaderboards /> } />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <NavBar isAuthenticated={isAuthenticated} mode={mode} setMode={setMode} tab={tab} setTab={setTab} />
+        <Routes>
+          <Route path="/" element={<Landing />}>
+            <Route path="*" element={<NoPage />} />
+          </Route>
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route
+            path="/auth"
+            element={
+              <Auth
+                isAuthenticated={isAuthenticated}
+                setIsAuthenticated={setIsAuthenticated}
+              />
+            }
+          />
+          <Route path="/submit" element={<Submit />} />
+          <Route
+            path="/dashboard"
+            element={<Dashboard isAuthenticated={isAuthenticated} />}
+          />
+          <Route path="/leaderboards" element={<Leaderboards />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

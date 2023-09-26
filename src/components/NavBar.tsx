@@ -1,32 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
 
-function NavBar() {
+interface NavBarProps {
+  isAuthenticated: boolean;
+
+  mode: number;
+  setMode: React.Dispatch<React.SetStateAction<number>>;
+
+  tab: string;
+  setTab: React.Dispatch<React.SetStateAction<string>>;
+}
+
+function NavBar({ isAuthenticated, mode, setMode, tab, setTab }: NavBarProps) {
   const [isMobileNavVisible, setIsMobileNavVisible] = useState(false);
+  const [isModeSwitcherVisible, setIsModeSwitcherVisible] = useState(false);
 
   return (
     <div className="bg-gray-100 rounded-xl p-4 m-5 md:m-10">
       <div className="flex items-center justify-between">
-        <a href="/">
+        <Link to="/">
           <img className="w-8 flex" src="logos/small.svg" alt="Company Logo" />
-        </a>
-        
+        </Link>
+
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center justify-between w-full mx-10">
           <div className="flex space-x-8">
-            <a href="/Dashboard" className="text-dark text-xl font-medium font-sans hover:text-gray-600">Dashboard</a>
-            <a href="/Leaderboards" className="text-dark text-xl font-medium font-sans hover:text-gray-600">Leaderboards</a>
-            <a href="/Submit" className="text-dark text-xl font-medium font-sans hover:text-gray-600 hover:drop-shadow-sm">Submit matches</a>
+            <Link
+              to="/Dashboard"
+              onClick={() => setTab("Dashboard")}
+              className={`text-dark text-xl font-sans hover:text-gray-600 ${
+                tab === "Dashboard" ? "font-bold" : "font-medium"
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/Leaderboards"
+              onClick={() => setTab("Leaderboards")}
+              className={`text-dark text-xl font-sans hover:text-gray-600 ${
+                tab === "Leaderboards" ? "font-bold" : "font-medium"
+              }`}
+            >
+              Leaderboards
+            </Link>
+            <Link
+              to="/Submit"
+              onClick={() => setTab("Submit")}
+              className={`text-dark text-xl font-sans hover:text-gray-600 ${
+                tab === "Submit" ? "font-bold" : "font-medium"
+              }`}
+            >
+              Submit matches
+            </Link>
           </div>
 
           <div className="flex-2/3 justify-end">
-            <a href="/Donate" className="mx-10 text-dark text-xl font-medium font-sans hover:text-gray-600 hover:drop-shadow-sm">Donate</a>
+            <Link
+              to="/Donate"
+              onClick={() => setTab("Donate")}
+              className={`text-dark text-xl font-sans hover:text-gray-600 ${
+                tab === "Donate" ? "font-bold" : "font-medium"
+              }`}
+            >
+              Donate
+            </Link>
+          </div>
+
+          <div className="flex-2/3 justify-end">
+            <button
+              onClick={() => setIsModeSwitcherVisible(!isModeSwitcherVisible)}
+            >
+              <img
+                className="w-8 h-8 flex mt-1"
+                src="icons/osu.svg"
+                alt="Mode Switcher"
+              />
+            </button>
           </div>
         </div>
 
+        {isModeSwitcherVisible && (
+          <div className="absolute right-0 mt-4 w-full"></div>
+        )}
+
         {/* Hamburger Menu Icon for mobile */}
-        <button 
+        <button
           onClick={() => setIsMobileNavVisible(!isMobileNavVisible)}
-          className="md:hidden p-2 focus:outline-none focus:shadow-outline">
+          className="md:hidden p-2 focus:outline-none focus:shadow-outline"
+        >
           ☰
         </button>
       </div>
@@ -34,10 +96,42 @@ function NavBar() {
       {/* Mobile Nav */}
       {isMobileNavVisible && (
         <div className="md:hidden mt-4 w-full">
-          <a href="/Dashboard" className="block text-dark text-xl font-medium font-sans hover:text-gray-600 px-4 py-2">Dashboard</a>
-          <a href="/Leaderboards" className="block text-dark text-xl font-medium font-sans hover:text-gray-600 px-4 py-2">Leaderboards</a>
-          <a href="/Submit" className="block text-dark text-xl font-medium font-sans hover:text-gray-600 hover:drop-shadow-sm px-4 py-2">Submit matches</a>
-          <a href="/Donate" className="block text-dark text-xl font-medium font-sans hover:text-gray-600 hover:drop-shadow-sm px-4 py-2">Donate</a>
+          <Link
+            to="/Dashboard"
+            onClick={() => setTab("Dashboard")}
+            className={`block text-dark text-xl ${
+              tab === "Dashboard" ? "font-bold" : "font-medium"
+            } font-sans hover:text-gray-600 px-4 py-2`}
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/Leaderboards"
+            onClick={() => setTab("Leaderboards")}
+            className={`block text-dark text-xl ${
+              tab === "Leaderboards" ? "font-bold" : "font-medium"
+            } font-sans hover:text-gray-600 px-4 py-2`}
+          >
+            Leaderboards
+          </Link>
+          <Link
+            to="/Submit"
+            onClick={() => setTab("Submit")}
+            className={`block text-dark text-xl ${
+              tab === "Submit" ? "font-bold" : "font-medium"
+            } font-sans hover:text-gray-600 px-4 py-2`}
+          >
+            Submit matches
+          </Link>
+          <Link
+            to="/Donate"
+            onClick={() => setTab("Donate")}
+            className={`block text-dark text-xl ${
+              tab === "Donate" ? "font-bold" : "font-medium"
+            } font-sans hover:text-gray-600 px-4 py-2`}
+          >
+            Donate
+          </Link>
         </div>
       )}
     </div>
