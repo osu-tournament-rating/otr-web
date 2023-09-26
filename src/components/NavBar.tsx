@@ -20,7 +20,7 @@ function NavBar({ isAuthenticated, mode, setMode, tab, setTab }: NavBarProps) {
     <div className="bg-gray-100 rounded-xl p-4 m-5 md:m-10">
       <div className="flex items-center justify-between">
         <Link to="/">
-          <img className="w-8 flex" src="logos/small.svg" alt="Company Logo" />
+          <img className="w-8 flex" src="logos/small.svg" alt="o!TR" />
         </Link>
 
         {/* Desktop Nav */}
@@ -81,7 +81,36 @@ function NavBar({ isAuthenticated, mode, setMode, tab, setTab }: NavBarProps) {
         </div>
 
         {isModeSwitcherVisible && (
-          <div className="absolute right-0 mt-4 w-full"></div>
+          <div className="absolute mt-10 right-40 z-10 bg-gray-200 rounded-xl">
+            <button
+              onClick={() => {
+                setMode(0);
+                setIsModeSwitcherVisible(false);
+              }}
+              className="block text-dark text-lg font-sans hover:text-gray-600 px-4 py-2"
+            >osu!</button>
+            <button
+              onClick={() => {
+                setMode(3);
+                setIsModeSwitcherVisible(false);
+              }}
+              className="block text-dark text-lg font-sans hover:text-gray-600 px-4 py-2"
+            >osu!Mania</button>
+            <button
+              onClick={() => {
+                setMode(1);
+                setIsModeSwitcherVisible(false);
+              }}
+              className="block text-dark text-lg font-sans hover:text-gray-600 px-4 py-2"
+            >osu!Taiko</button>
+            <button
+              onClick={() => {
+                setMode(2);
+                setIsModeSwitcherVisible(false);
+              }}
+              className="block text-dark text-lg font-sans hover:text-gray-600 px-4 py-2"
+            >osu!Catch</button>
+          </div>
         )}
 
         {/* Hamburger Menu Icon for mobile */}
