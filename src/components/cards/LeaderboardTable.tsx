@@ -13,14 +13,14 @@ function LeaderboardTable({ leaderboardData }: ILeaderboardTableProps) {
           <div className="flex-1 font-bold">Matches</div>
           <div className="flex-1 font-bold">Winrate</div>
         </div>
-        {leaderboardData.map((player, index) => (
+        {leaderboardData.map((item, index) => (
           <div className="flex mb-4 bg-gray-200 rounded-xl p-4 -mx-5" key={index}>
-            <div className="flex-1 ml-5">#{player.rank}</div>
-            <div className="flex-1 -ml-5">{player.username}</div>
-            <div className="flex-1">{player.tier}</div>
-            <div className="flex-1">{player.rating}</div>
-            <div className="flex-1">{player.Matches}</div>
-            <div className="flex-1">{(player.Winrate * 100).toFixed(2)}%</div>
+            <div className="flex-1 ml-5">#{item.globalRank}</div>
+            <div className="flex-1 -ml-5">{item.name}</div>
+            <div className="flex-1">{item.tier}</div>
+            <div className="flex-1">{item.rating}</div>
+            <div className="flex-1">{item.matchesPlayed}</div>
+            <div className="flex-1">{(item.winRate * 100).toFixed(1)}%</div>
           </div>
         ))}
       </div>
