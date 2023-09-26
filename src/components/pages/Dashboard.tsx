@@ -14,10 +14,9 @@ import DashboardStatsCard from "../cards/DashboardStatsCard";
 import { formatNumberWithCommas } from "../../Helpers";
 import MostPlayedModsCard from "../cards/MostPlayedModsCard";
 
-function Dashboard({ isAuthenticated }: { isAuthenticated: boolean }) {
+function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: number }) {
   const [stats, setStats] = useState<any>(null);
   const [ratingHistories, setRatingHistories] = useState<any>(null);
-  const [mode, setMode] = useState(0);
   const [historyDays, setHistoryDays] = useState(90);
   const navigate = useNavigate();
   const apiLink = process.env.REACT_APP_API_URL;

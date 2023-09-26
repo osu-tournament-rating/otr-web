@@ -36,9 +36,9 @@ function App() {
           <Route path="/submit" element={<Submit />} />
           <Route
             path="/dashboard"
-            element={<Dashboard isAuthenticated={isAuthenticated} />}
+            element={<Dashboard isAuthenticated={isAuthenticated} mode={mode} />}
           />
-          <Route path="/leaderboards" element={<Leaderboards />} />
+          <Route path="/leaderboards" element={<Leaderboards mode={mode} />} />
         </Routes>
       </BrowserRouter>
     </>
