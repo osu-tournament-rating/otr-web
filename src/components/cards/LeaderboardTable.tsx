@@ -44,7 +44,7 @@ function LeaderboardTable({
       ))}
       <div className="flex justify-center space-x-3 mt-4">
         <button
-          onClick={() => setPage(Math.max(page - 1, 0))}
+          onClick={() => setPage(0)}
           className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
             page === 0 ? "text-gray-400" : ""
           }`}
@@ -55,8 +55,24 @@ function LeaderboardTable({
           <p>Previous</p>
         </button>
 
+        {page > 2 && (
+          <>
+            <button
+              onClick={() => setPage(0)}
+              className="focus:outline-none focus:border-none cursor-pointer flex flex-row"
+              style={{ userSelect: "none", border: "none", background: "none" }}
+            >
+              <p>1</p>
+            </button>
+            <div className="flex flex-row">
+              <p>...</p>
+            </div>
+          </>
+        )}
+
         {[...Array(5)].map((_, i) => {
-          let pageNumber = page + i - 1;
+          let offset = page > 2 ? 0 : 1;
+          let pageNumber = page + i - 2 + offset;
           if (page < 2) pageNumber = i;
           if (page > 97) pageNumber = 95 + i;
 
