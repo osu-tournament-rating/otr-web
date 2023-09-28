@@ -22,11 +22,19 @@ function Submit() {
           />
           <SubmissionGuidelinesCard
             title=""
-            description="Extreme gimmicks such as tag, relax, and battle-royale styled matches will not be included. Bracket-stage and group-stage matches only."
+            description="Tag, relax, and battle-royale styled matches will not be included. Bracket-stage and group-stage matches only."
           />
           <SubmissionGuidelinesCard
             title=""
-            description="Qualifiers and warmups will not be included."
+            description="Tournaments that are non-traditional, such as forcing non-standard win conditions, will not be included. This can include tournaments with gimmicks that force players to not compete at their highest level."
+          />
+          <SubmissionGuidelinesCard
+            title=""
+            description="Never submit qualifiers or tryouts. Warmups will also not be included."
+          />
+          <SubmissionGuidelinesCard
+            title=""
+            description="Tournaments with multiple brackets across multiple rank ranges should be submitted separately. Submit divisional tournaments as one tournament with all divisional matches included."
           />
           <SubmissionGuidelinesCard
             title=""

@@ -1,3 +1,4 @@
+import { invalid } from "moment";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,10 +15,15 @@ function LinkSubmissionForm({
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
   const [userId, setUserId] = useState(0);
+  const [rankRangeLowerBound, setRankRangeLowerBound] = useState(1);
+  const [teamSize, setTeamSize] = useState(1);
+  const [gameMode, setGameMode] = useState(0); // 0 osu!, 1 osu!taiko, 2 osu!catch, 3 osu!mania
 
   const [tournamentName, setTournamentName] = useState("");
   const [abbreviation, setAbbreviation] = useState("");
   const [forumPost, setForumPost] = useState("");
+
+  const [isTooltipVisible, setTooltipVisible] = useState(false);
 
   const apiLink = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
@@ -40,7 +46,7 @@ function LinkSubmissionForm({
         );
         return navigate("/unauthorized", { replace: true });
       });
-  }, []);
+  }, [apiLink, navigate, setHasAdminRole]);
 
   function handleSubmit(e: any) {
     e.preventDefault();
@@ -75,6 +81,9 @@ function LinkSubmissionForm({
     setTournamentName("");
     setAbbreviation("");
     setForumPost("");
+    setTeamSize(1);
+    setRankRangeLowerBound(1);
+    setGameMode(0);
 
     fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
       method: "POST",
@@ -88,6 +97,9 @@ function LinkSubmissionForm({
         tournamentName: tournamentName,
         abbreviation: abbreviation,
         forumPost: forumPost,
+        rankRangeLowerBound: rankRangeLowerBound,
+        teamSize: teamSize,
+        mode: gameMode,
         submitterId: userId,
       }),
     })
@@ -123,6 +135,18 @@ function LinkSubmissionForm({
         </div>
 
         <div className="space-y-5">
+          <select
+            required={true}
+            value={gameMode}
+            onChange={(e) => setGameMode(Number(e.target.value))}
+            className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
+          >
+            <option value={0}>osu!Standard</option>
+            <option value={1}>osu!Taiko</option>
+            <option value={2}>osu!Catch</option>
+            <option value={3}>osu!Mania</option>
+          </select>
+
           <input
             required={true}
             type="text"
@@ -156,6 +180,56 @@ function LinkSubmissionForm({
             className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
             placeholder="Tournament abbreviation"
           />
+          <input
+            required={true}
+            min={1}
+            max={8}
+            type="number"
+            name="teamSize"
+            onChange={(e) => {
+              setTeamSize(parseInt(e.target.value));
+            }}
+            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
+            placeholder="Team size (1-8)"
+          />
+          <div className="relative flex items-center border-2 border-gray-400 rounded-xl w-11/12 m-auto h-16">
+            <input
+              required={true}
+              min={1}
+              type="number"
+              name="rankRangeLowerBound"
+              onChange={(e) => setRankRangeLowerBound(parseInt(e.target.value))}
+              className="flex-grow bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-md p-2 mr-5"
+              placeholder="Rank Range Bound (1+)"
+            />
+            <div className="relative">
+              <img
+                src="icons/info.svg"
+                alt="info icon"
+                className="w-6 h-6 mr-5"
+                onMouseEnter={() => setTooltipVisible(true)}
+                onMouseLeave={() => setTooltipVisible(false)}
+              />
+
+              <div
+                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${
+                  isTooltipVisible
+                    ? "opacity-100 visibility-visible"
+                    : "opacity-0 visibility-hidden"
+                } transition-opacity duration-250 ease-in-out tooltip`}
+              >
+                <div className="relative">
+                  <div className="absolute top-1/2 left-0 transform -translate-x-100% -translate-y-1/2 w-0 h-0 border-r-5 border-transparent border-l-5 border-white"></div>
+                  <p className="w-48">
+                    This is the best rank allowed to participate.{" "}
+                    <strong>1 is open rank.</strong> For example, a tournament
+                    with a rank range of <strong>&nbsp;#750-5000</strong> needs
+                    to have <strong>750</strong> in this field. Tiered tournaments should have the highest rank range in this field.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-row bg-gray-100 rounded-xl font-sans m-5">

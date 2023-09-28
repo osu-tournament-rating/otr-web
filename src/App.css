@@ -36,3 +36,21 @@
     transform: rotate(360deg);
   }
 }
+
+/* Custom Tooltip Styling */
+.tooltip {
+  z-index: 10;
+}
+
+.tooltip:hover {
+  opacity: 1;
+}
+
+.visibility-visible {
+  visibility: visible;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
+
