@@ -7,12 +7,19 @@ function Leaderboards() {
   const [data, setData] = useState<any[]>([]);
   const [mode, setMode] = useState(0);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetch(
-      apiUrl + "/leaderboards?mode=" + mode + "&page=" + page + "&pageSize=25",
+      apiUrl +
+        "/leaderboards?mode=" +
+        mode +
+        "&page=" +
+        page +
+        "&pageSize=" +
+        pageSize,
       {
         method: "GET",
         headers: {
@@ -27,13 +34,13 @@ function Leaderboards() {
       .catch((error) => {
         console.error("Error fetching player data:", error);
       });
-  }, []);
+  }, [apiUrl, mode, page, pageSize]);
 
   return (
     <>
       <NavBar />
       <div className="flex m-5 md:m-10 bg-gray-100 rounded-xl">
-        <LeaderboardTable leaderboardData={data} />
+        <LeaderboardTable leaderboardData={data} page={page} setPage={setPage} />
       </div>
       <Footer />
     </>
