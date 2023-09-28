@@ -23,7 +23,8 @@ function LinkSubmissionForm({
   const [abbreviation, setAbbreviation] = useState("");
   const [forumPost, setForumPost] = useState("");
 
-  const [isTooltipVisible, setTooltipVisible] = useState(false);
+  const [isTeamSizeTooltipVisible, setTeamSizeTooltipVisible] = useState(false);
+  const [isRankRangeTooltipVisible, setIsRankRangeTooltipVisible] = useState(false);
 
   const apiLink = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
@@ -180,18 +181,49 @@ function LinkSubmissionForm({
             className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
             placeholder="Tournament abbreviation"
           />
-          <input
-            required={true}
-            min={1}
-            max={8}
-            type="number"
-            name="teamSize"
-            onChange={(e) => {
-              setTeamSize(parseInt(e.target.value));
-            }}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Team size (1-8)"
-          />
+          <div className="relative flex items-center border-2 border-gray-400 rounded-xl w-11/12 m-auto h-16">
+            <input
+              required={true}
+              min={1}
+              max={8}
+              type="number"
+              name="teamSize"
+              onChange={(e) => {
+                setTeamSize(parseInt(e.target.value));
+              }}
+              className="flex-grow bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-md p-2 mr-5"
+              placeholder="Team size (1-8)"
+            />
+            <div className="relative">
+              <img
+                src="icons/info.svg"
+                alt="info icon"
+                className="w-6 h-6 mr-5"
+                onMouseEnter={() => setTeamSizeTooltipVisible(true)}
+                onMouseLeave={() => setTeamSizeTooltipVisible(false)}
+              />
+
+              <div
+                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${
+                  isTeamSizeTooltipVisible
+                    ? "opacity-100 visibility-visible"
+                    : "opacity-0 visibility-hidden"
+                } transition-opacity duration-250 ease-in-out tooltip`}
+              >
+                <div className="relative">
+                  <div className="absolute top-1/2 left-0 transform -translate-x-100% -translate-y-1/2 w-0 h-0 border-r-5 border-transparent border-l-5 border-white"></div>
+                  <p className="w-48">
+                    The amount of players allowed in the lobby at the same time, per team.&nbsp;
+                    <strong>1v1 tournaments</strong> should be submitted as <strong>1</strong>.&nbsp;
+                    <strong>2v2, 3v3, etc. tournaments</strong> should be submitted as <strong>2, 3, etc.</strong>&nbsp;
+                    This is NOT the amount of players allowed per team, but the amount of players playing in the lobby at the same time.&nbsp;
+                    <strong>Do not submit</strong> tournaments with variable team sizing (e.g. 2v4).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="relative flex items-center border-2 border-gray-400 rounded-xl w-11/12 m-auto h-16">
             <input
               required={true}
@@ -207,13 +239,13 @@ function LinkSubmissionForm({
                 src="icons/info.svg"
                 alt="info icon"
                 className="w-6 h-6 mr-5"
-                onMouseEnter={() => setTooltipVisible(true)}
-                onMouseLeave={() => setTooltipVisible(false)}
+                onMouseEnter={() => setIsRankRangeTooltipVisible(true)}
+                onMouseLeave={() => setIsRankRangeTooltipVisible(false)}
               />
 
               <div
                 className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${
-                  isTooltipVisible
+                  isRankRangeTooltipVisible
                     ? "opacity-100 visibility-visible"
                     : "opacity-0 visibility-hidden"
                 } transition-opacity duration-250 ease-in-out tooltip`}
@@ -224,7 +256,9 @@ function LinkSubmissionForm({
                     This is the best rank allowed to participate.{" "}
                     <strong>1 is open rank.</strong> For example, a tournament
                     with a rank range of <strong>&nbsp;#750-5000</strong> needs
-                    to have <strong>750</strong> in this field. Tiered tournaments should have the highest rank range in this field.
+                    to have <strong>750</strong> in this field. Tiered
+                    tournaments should have the highest rank range in this
+                    field.
                   </p>
                 </div>
               </div>
