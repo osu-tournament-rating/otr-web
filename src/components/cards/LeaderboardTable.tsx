@@ -5,14 +5,15 @@ interface ILeaderboardTableProps {
   leaderboardData: any[];
   page: number;
   setPage: (page: number) => void;
+  isLoading: boolean;
 }
 
 function LeaderboardTable({
   leaderboardData,
   page,
   setPage,
+  isLoading,
 }: ILeaderboardTableProps) {
-  console.log(leaderboardData);
   return (
     <div className="bg-gray-100 w-full rounded-xl m-10 font-sans p-4">
       <div className="flex mb-4 px-2 rounded-md">
@@ -30,7 +31,7 @@ function LeaderboardTable({
             <div className="flex space-x-2">
               <img
                 src={`https://a.ppy.sh/${item.osuId}`}
-                className="flex rounded-full w-6"
+                className="flex rounded-full w-6 h-6 my-auto"
                 alt="avatar"
               />
               <p className="flex">{item.name}</p>
@@ -44,12 +45,17 @@ function LeaderboardTable({
       ))}
       <div className="flex justify-center space-x-3 mt-4">
         <button
-          onClick={() => setPage(0)}
+          onClick={() => !isLoading && setPage(0)}
           className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-            page === 0 ? "text-gray-400" : ""
+            page === 0 || isLoading ? "text-gray-400" : ""
           }`}
-          style={{ userSelect: "none", border: "none", background: "none" }}
-          disabled={page === 0}
+          style={{
+            userSelect: "none",
+            border: "none",
+            background: "none",
+            opacity: isLoading ? 0.5 : 1,
+          }}
+          disabled={page === 0 || isLoading}
         >
           <KeyboardArrowLeftIcon fontSize="small" className="my-auto" />
           <p>Previous</p>
@@ -58,14 +64,22 @@ function LeaderboardTable({
         {page > 2 && (
           <>
             <button
-              onClick={() => setPage(0)}
-              className="focus:outline-none focus:border-none cursor-pointer flex flex-row"
-              style={{ userSelect: "none", border: "none", background: "none" }}
+              onClick={() => !isLoading && setPage(0)}
+              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
+                isLoading ? "text-gray-400" : ""
+              }`}
+              style={{
+                userSelect: "none",
+                border: "none",
+                background: "none",
+                opacity: isLoading ? 0.5 : 1,
+              }}
+              disabled={isLoading}
             >
               <p>1</p>
             </button>
             <div className="flex flex-row">
-              <p>...</p>
+              <p className={`${isLoading ? "text-gray-400" : ""}`}>...</p>
             </div>
           </>
         )}
@@ -79,11 +93,17 @@ function LeaderboardTable({
           return (
             <button
               key={i}
-              onClick={() => setPage(pageNumber)}
+              onClick={() => !isLoading && setPage(pageNumber)}
               className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
                 page === pageNumber ? "text-blue-500 font-bold" : ""
               }`}
-              style={{ userSelect: "none", border: "none", background: "none" }}
+              style={{
+                userSelect: "none",
+                border: "none",
+                background: "none",
+                opacity: isLoading ? 0.5 : 1,
+              }}
+              disabled={isLoading}
             >
               <p>{pageNumber + 1}</p>
             </button>
@@ -93,12 +113,20 @@ function LeaderboardTable({
         {page + 1 < 98 && (
           <>
             <div className="flex flex-row">
-              <p>...</p>
+              <p className={`${isLoading ? "text-gray-400" : ""}`}>...</p>
             </div>
             <button
-              onClick={() => setPage(99)}
-              className="focus:outline-none focus:border-none cursor-pointer flex flex-row"
-              style={{ userSelect: "none", border: "none", background: "none" }}
+              onClick={() => !isLoading && setPage(99)}
+              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
+                isLoading ? "text-gray-400" : ""
+              }`}
+              style={{
+                userSelect: "none",
+                border: "none",
+                background: "none",
+                opacity: isLoading ? 0.5 : 1,
+              }}
+              disabled={isLoading}
             >
               <p>100</p>
             </button>
@@ -106,12 +134,17 @@ function LeaderboardTable({
         )}
 
         <button
-          onClick={() => setPage(Math.min(page + 1, 99))}
+          onClick={() => !isLoading && setPage(Math.min(page + 1, 99))}
           className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-            page === 99 ? "text-gray-400" : ""
+            page === 99 || isLoading ? "text-gray-400" : ""
           }`}
-          style={{ userSelect: "none", border: "none", background: "none" }}
-          disabled={page === 99}
+          style={{
+            userSelect: "none",
+            border: "none",
+            background: "none",
+            opacity: isLoading ? 0.5 : 1,
+          }}
+          disabled={page === 99 || isLoading}
         >
           <p>Next</p>
           <KeyboardArrowRightIcon fontSize="small" className="my-auto" />
