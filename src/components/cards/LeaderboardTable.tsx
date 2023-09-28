@@ -12,6 +12,7 @@ function LeaderboardTable({
   page,
   setPage,
 }: ILeaderboardTableProps) {
+  console.log(leaderboardData);
   return (
     <div className="bg-gray-100 w-full rounded-xl m-10 font-sans p-4">
       <div className="flex mb-4 px-2 rounded-md">
@@ -25,7 +26,16 @@ function LeaderboardTable({
       {leaderboardData.map((item, index) => (
         <div className="flex mb-4 bg-gray-200 rounded-xl p-4 -mx-5" key={index}>
           <div className="flex-1 ml-5">#{item.globalRank}</div>
-          <div className="flex-1 -ml-5">{item.name}</div>
+          <div className="flex-1 -ml-10 mr-5">
+            <div className="flex space-x-2">
+              <img
+                src={`https://a.ppy.sh/${item.osuId}`}
+                className="flex rounded-full w-6"
+                alt="avatar"
+              />
+              <p className="flex">{item.name}</p>
+            </div>
+          </div>
           <div className="flex-1">{item.tier}</div>
           <div className="flex-1">{item.rating}</div>
           <div className="flex-1">{item.matchesPlayed}</div>
