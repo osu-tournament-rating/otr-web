@@ -45,7 +45,7 @@ function LeaderboardTable({
       ))}
       <div className="flex justify-center space-x-3 mt-4">
         <button
-          onClick={() => !isLoading && setPage(0)}
+          onClick={() => !isLoading && setPage(Math.max(page - 1, 0))}
           className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
             page === 0 || isLoading ? "text-gray-400" : ""
           }`}
@@ -61,7 +61,7 @@ function LeaderboardTable({
           <p>Previous</p>
         </button>
 
-        {page > 2 && (
+        {page > 3 && (
           <>
             <button
               onClick={() => !isLoading && setPage(0)}
@@ -85,10 +85,17 @@ function LeaderboardTable({
         )}
 
         {[...Array(5)].map((_, i) => {
-          let offset = page > 2 ? 0 : 1;
-          let pageNumber = page + i - 2 + offset;
-          if (page < 2) pageNumber = i;
-          if (page > 97) pageNumber = 95 + i;
+          let pageNumber = 0;
+          if (page < 3) {
+            // First five pages
+            pageNumber = i;
+          } else if (page > 96) {
+            // Last five pages
+            pageNumber = 95 + i;
+          } else {
+            // Middle pages, selected page in center
+            pageNumber = page - 2 + i;
+          }
 
           return (
             <button
