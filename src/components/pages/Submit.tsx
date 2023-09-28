@@ -30,7 +30,7 @@ function Submit() {
           />
           <SubmissionGuidelinesCard
             title=""
-            description="Never submit qualifiers or tryouts. Warmups will also not be included."
+            description="Never submit qualifiers or tryouts. The system will attempt to automatically remove warm-ups. Always submit finished tournaments with an established winner."
           />
           <SubmissionGuidelinesCard
             title=""
