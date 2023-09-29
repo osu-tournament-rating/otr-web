@@ -28,8 +28,6 @@ function UserMatchesMapsCard({
   let mapsWonPercent = Math.round((mapsWon / maps) * 100);
   let mapsLostPercent = Math.round((mapsLost / maps) * 100);
 
-  console.log(mapsWonPercent, mapsLostPercent)
-
   const matchesWonPercentDisplay = `${matchesWonPercent}%`;
   const matchesLostPercentDisplay = `${matchesLostPercent}%`;
 

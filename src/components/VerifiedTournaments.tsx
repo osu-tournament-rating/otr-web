@@ -39,7 +39,6 @@ function VerifiedTournaments({ hasAdminRole }: IVerifiedTournamentProps) {
                     <div className="table-row-group overflow-y-scroll h-96">
                         {
                             verifiedTournaments.map((tournament: any) => {
-                                console.log(tournament)
                                 return (
                                     <div className="table-row" key={tournament.tournamentName}>
                                         <div className="table-cell font-sans text-md font-semibold"><a href={tournament.forumPost} target="#">{tournament.tournamentName}</a></div>

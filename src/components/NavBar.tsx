@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 
 interface NavBarProps {
   isAuthenticated: boolean;
+  user: any;
 
   mode: number;
   setMode: React.Dispatch<React.SetStateAction<number>>;
@@ -12,7 +13,7 @@ interface NavBarProps {
   setTab: React.Dispatch<React.SetStateAction<string>>;
 }
 
-function NavBar({ isAuthenticated, mode, setMode, tab, setTab }: NavBarProps) {
+function NavBar({ isAuthenticated, user, mode, setMode, tab, setTab }: NavBarProps) {
   const [isMobileNavVisible, setIsMobileNavVisible] = useState(false);
   const [isModeSwitcherVisible, setIsModeSwitcherVisible] = useState(false);
 

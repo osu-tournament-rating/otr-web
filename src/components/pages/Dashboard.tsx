@@ -29,7 +29,6 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
       .then((response) => response.json())
       .then((data) => {
         setStats(data);
-        console.log(data);
       })
       .catch((error) => {
         console.error(
@@ -46,7 +45,6 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
       .then((response) => response.json())
       .then((data) => {
         setRatingHistories(data);
-        console.log(data);
       })
       .catch((error) => {
         console.error(
@@ -110,8 +108,6 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
 
   const ratingGainedSincePeriodColor =
     ratingGainedSincePeriod > 0 ? "text-green-400" : "text-red-400";
-
-  console.log(historyDays);
 
   return (
     <>

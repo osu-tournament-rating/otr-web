@@ -14,11 +14,13 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [mode, setMode] = useState(0);
   const [tab, setTab] = useState("");
+  const [authenticatedUser, setAuthenticatedUser] = useState({} as any);
+  // todo: authenticated user resets upon every refresh / new load of the page
 
   return (
     <>
       <BrowserRouter>
-        <NavBar isAuthenticated={isAuthenticated} mode={mode} setMode={setMode} tab={tab} setTab={setTab} />
+        <NavBar isAuthenticated={isAuthenticated} mode={mode} setMode={setMode} tab={tab} setTab={setTab} user={authenticatedUser} />
         <Routes>
           <Route path="/" element={<Landing />}>
             <Route path="*" element={<NoPage />} />
@@ -30,6 +32,7 @@ function App() {
               <Auth
                 isAuthenticated={isAuthenticated}
                 setIsAuthenticated={setIsAuthenticated}
+                setAuthenticatedUser={setAuthenticatedUser}
               />
             }
           />

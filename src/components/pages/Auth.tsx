@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IAuthProps } from "./IAuthProps";
 
-function Auth({ isAuthenticated, setIsAuthenticated }: IAuthProps) {
+function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAuthProps) {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
   const navigate = useNavigate();
@@ -22,7 +22,6 @@ function Auth({ isAuthenticated, setIsAuthenticated }: IAuthProps) {
       credentials: "include",
     })
       .then((response) => {
-        console.log(response);
         if (response.status !== 200) {
             throw new Error("Authorization failed!");
         }
@@ -39,7 +38,20 @@ function Auth({ isAuthenticated, setIsAuthenticated }: IAuthProps) {
           </>
         );
       });
-  }, []);
+
+      fetch(apiLink + "/me", {
+        method: "GET",
+        credentials: "include",
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            setAuthenticatedUser(data);
+        })
+        .catch((error) => {
+            console.error("Error fetching authenticated user:", error);
+        });
+      
+  }, [apiLink, code, navigate, setIsAuthenticated, setAuthenticatedUser]);
 
   return (
     <>
