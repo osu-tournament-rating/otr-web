@@ -15,8 +15,10 @@ function LinkSubmissionForm({
   const [linkText, setLinkText] = useState("");
   const [linksCounted, setLinksCounted] = useState(0);
   const [userId, setUserId] = useState(0);
-  const [rankRangeLowerBound, setRankRangeLowerBound] = useState(1);
-  const [teamSize, setTeamSize] = useState(1);
+  const [rankRangeLowerBound, setRankRangeLowerBound] = useState<number | null>(
+    null
+  );
+  const [teamSize, setTeamSize] = useState<number | null>(null);
   const [gameMode, setGameMode] = useState(0); // 0 osu!, 1 osu!taiko, 2 osu!catch, 3 osu!mania
 
   const [tournamentName, setTournamentName] = useState("");
@@ -83,8 +85,8 @@ function LinkSubmissionForm({
     setTournamentName("");
     setAbbreviation("");
     setForumPost("");
-    setTeamSize(1);
-    setRankRangeLowerBound(1);
+    setTeamSize(null);
+    setRankRangeLowerBound(null);
     setGameMode(0);
 
     fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
@@ -189,6 +191,7 @@ function LinkSubmissionForm({
               max={8}
               type="number"
               name="teamSize"
+              value={teamSize || ""}
               onChange={(e) => {
                 setTeamSize(parseInt(e.target.value));
               }}
@@ -239,6 +242,7 @@ function LinkSubmissionForm({
               onChange={(e) => setRankRangeLowerBound(parseInt(e.target.value))}
               className="flex-grow bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-md p-2 mr-5"
               placeholder="Rank Range Bound (1+)"
+              value={rankRangeLowerBound || ""}
             />
             <div className="relative">
               <img
