@@ -24,7 +24,8 @@ function LinkSubmissionForm({
   const [forumPost, setForumPost] = useState("");
 
   const [isTeamSizeTooltipVisible, setTeamSizeTooltipVisible] = useState(false);
-  const [isRankRangeTooltipVisible, setIsRankRangeTooltipVisible] = useState(false);
+  const [isRankRangeTooltipVisible, setIsRankRangeTooltipVisible] =
+    useState(false);
 
   const apiLink = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
@@ -151,17 +152,6 @@ function LinkSubmissionForm({
           <input
             required={true}
             type="text"
-            name="forumPost"
-            onChange={(e) => {
-              setForumPost(e.target.value);
-            }}
-            value={forumPost}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Tournament's osu! forum post"
-          />
-          <input
-            required={true}
-            type="text"
             name="tournamentName"
             onChange={(e) => {
               setTournamentName(e.target.value);
@@ -169,6 +159,17 @@ function LinkSubmissionForm({
             value={tournamentName}
             className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
             placeholder="Tournament name"
+          />
+          <input
+            required={true}
+            type="text"
+            name="forumPost"
+            onChange={(e) => {
+              setForumPost(e.target.value);
+            }}
+            value={forumPost}
+            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
+            placeholder="Tournament's osu! forum post"
           />
           <input
             required={true}
@@ -213,11 +214,16 @@ function LinkSubmissionForm({
                 <div className="relative">
                   <div className="absolute top-1/2 left-0 transform -translate-x-100% -translate-y-1/2 w-0 h-0 border-r-5 border-transparent border-l-5 border-white"></div>
                   <p className="w-48">
-                    The amount of players allowed in the lobby at the same time, per team.&nbsp;
-                    <strong>1v1 tournaments</strong> should be submitted as <strong>1</strong>.&nbsp;
-                    <strong>2v2, 3v3, etc. tournaments</strong> should be submitted as <strong>2, 3, etc.</strong>&nbsp;
-                    This is NOT the amount of players allowed per team, but the amount of players playing in the lobby at the same time.&nbsp;
-                    <strong>Do not submit</strong> tournaments with variable team sizing (e.g. 2v4).
+                    The amount of players allowed in the lobby at the same time,
+                    per team.&nbsp;
+                    <strong>1v1 tournaments</strong> should be submitted as{" "}
+                    <strong>1</strong>.&nbsp;
+                    <strong>2v2, 3v3, etc. tournaments</strong> should be
+                    submitted as <strong>2, 3, etc.</strong>&nbsp; This is NOT
+                    the amount of players allowed per team, but the amount of
+                    players playing in the lobby at the same time.&nbsp;
+                    <strong>Do not submit</strong> tournaments with variable
+                    team sizing (e.g. 2v4).
                   </p>
                 </div>
               </div>
