@@ -163,17 +163,6 @@ function LinkSubmissionForm({
           <input
             required={true}
             type="text"
-            name="forumPost"
-            onChange={(e) => {
-              setForumPost(e.target.value);
-            }}
-            value={forumPost}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Tournament's osu! forum post"
-          />
-          <input
-            required={true}
-            type="text"
             name="abbreviation"
             onChange={(e) => {
               setAbbreviation(e.target.value);
@@ -181,6 +170,17 @@ function LinkSubmissionForm({
             value={abbreviation}
             className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
             placeholder="Tournament abbreviation"
+          />
+          <input
+            required={true}
+            type="text"
+            name="forumPost"
+            onChange={(e) => {
+              setForumPost(e.target.value);
+            }}
+            value={forumPost}
+            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
+            placeholder="Tournament's osu! forum post"
           />
           <div className="relative flex items-center border-2 border-gray-400 rounded-xl w-11/12 m-auto h-16">
             <input
