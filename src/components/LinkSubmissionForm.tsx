@@ -40,7 +40,7 @@ function LinkSubmissionForm({
       .then((response) => response.json())
       .then((data) => {
         const roles = data["roles"];
-        setHasAdminRole(roles.includes("Admin"));
+        setHasAdminRole(roles.includes("MatchVerifier"));
         setUserId(data["id"]);
       })
       .catch((error) => {
