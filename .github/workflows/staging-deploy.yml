@@ -38,5 +38,5 @@ jobs:
           docker pull '${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest'
           docker stop '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
           docker rm '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' || true
-          docker run -d --name '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' -p 3001:3000 \
+          docker run -d --name '${{ secrets.DEV_DOCKER_IMAGE_NAME }}' -p 3001:3000 --restart always \
           '${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DEV_DOCKER_IMAGE_NAME }}:latest'
