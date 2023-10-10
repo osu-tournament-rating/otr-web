@@ -6,7 +6,7 @@ import VerifiedTournaments from "../VerifiedTournaments";
 import Footer from "../Footer";
 
 function Submit() {
-  const [hasAdminRole, setHasAdminRole] = useState(false);
+  const [hasVerifierRole, setHasVerifierRole] = useState(false);
 
   return (
     <>
@@ -42,11 +42,11 @@ function Submit() {
           />
         </div>
         <div className="flex-row w-full lg:w-2/5">
-          <LinkSubmissionForm hasAdminRole={hasAdminRole} setHasAdminRole={setHasAdminRole} />
+          <LinkSubmissionForm hasVerifierRole={hasVerifierRole} setHasVerifierRole={setHasVerifierRole} />
         </div>
       </div>
       <div>
-        <VerifiedTournaments hasAdminRole={hasAdminRole} />
+        <VerifiedTournaments hasVerifierRole={hasVerifierRole} />
       </div>
 
       <Footer />

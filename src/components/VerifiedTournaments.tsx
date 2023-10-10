@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
 export interface IVerifiedTournamentProps {
-    hasAdminRole: boolean;
+    hasVerifierRole: boolean;
 }
 
-function VerifiedTournaments({ hasAdminRole }: IVerifiedTournamentProps) {
+function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
     const [verifiedTournaments, setVerifiedTournaments] = useState([]);
 
     useEffect(() => {
-        if(!hasAdminRole) {
+        if(!hasVerifierRole) {
             return;
         }
 
@@ -23,7 +23,7 @@ function VerifiedTournaments({ hasAdminRole }: IVerifiedTournamentProps) {
         .catch((error) => {
             console.error("Error fetching verified tournaments:", error);
         })
-    }, [hasAdminRole])
+    }, [hasVerifierRole])
 
     return (
         <div>

@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export interface ILinkSubmissionFormProps {
-  hasAdminRole: boolean;
-  setHasAdminRole: (hasAdminRole: boolean) => void;
+  hasVerifierRole: boolean;
+  setHasVerifierRole: (hasAdminRole: boolean) => void;
 }
 
 function LinkSubmissionForm({
-  hasAdminRole,
-  setHasAdminRole,
+  hasVerifierRole: hasVerifierRole,
+  setHasVerifierRole: setHasVerifierRole,
 }: ILinkSubmissionFormProps) {
   const [isSubmissionVerified, setIsSubmissionVerified] = useState(false);
   const [linkText, setLinkText] = useState("");
@@ -40,7 +40,7 @@ function LinkSubmissionForm({
       .then((response) => response.json())
       .then((data) => {
         const roles = data["roles"];
-        setHasAdminRole(roles.includes("MatchVerifier"));
+        setHasVerifierRole(roles.includes("MatchVerifier") || roles.includes("Admin"));
         setUserId(data["id"]);
       })
       .catch((error) => {
@@ -50,7 +50,7 @@ function LinkSubmissionForm({
         );
         return navigate("/unauthorized", { replace: true });
       });
-  }, [apiLink, navigate, setHasAdminRole]);
+  }, [apiLink, navigate, setHasVerifierRole]);
 
   function handleSubmit(e: any) {
     e.preventDefault();
@@ -304,7 +304,7 @@ function LinkSubmissionForm({
           </span>
         </div>
 
-        {hasAdminRole && (
+        {hasVerifierRole && (
           <div className="flex mx-10 mb-5">
             <input
               className="w-6 h-6 rounded-xl flex-none"
