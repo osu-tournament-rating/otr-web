@@ -25,8 +25,13 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
     date.setDate(date.getDate() - historyDays);
     const formattedDate = date.toISOString().split("T")[0];
 
+    const origin = process.env.REACT_APP_ORIGIN_URL;
     fetch(apiLink + "/me/stats?dateMin=" + formattedDate + "&mode=" + mode, {
       method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": `${origin}`,
+      },
       credentials: "include",
     })
       .then((response) => response.json())

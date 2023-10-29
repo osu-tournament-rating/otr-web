@@ -89,11 +89,13 @@ function LinkSubmissionForm({
     setRankRangeLowerBound(null);
     setGameMode(0);
 
+    const origin = process.env.REACT_APP_ORIGIN_URL;
+
     fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": `${origin}`,
       },
       credentials: "include",
       body: JSON.stringify({

@@ -8,6 +8,7 @@ function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAu
   const navigate = useNavigate();
 
   const apiLink = process.env.REACT_APP_API_URL;
+  const origin = process.env.REACT_APP_ORIGIN_URL;
 
   useEffect(() => {
     console.log("Logging in after osu! redirect");
@@ -17,7 +18,7 @@ function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAu
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": `${origin}`,
       },
       credentials: "include",
     })
