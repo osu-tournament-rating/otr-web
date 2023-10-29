@@ -28,11 +28,11 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
     const origin = process.env.REACT_APP_ORIGIN_URL;
     fetch(apiLink + "/me/stats?dateMin=" + formattedDate + "&mode=" + mode, {
       method: "GET",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": `${origin}`,
       },
-      credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {

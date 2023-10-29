@@ -11,10 +11,16 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
         if(!hasVerifierRole) {
             return;
         }
-
-        fetch(process.env.REACT_APP_API_URL + "/tournaments/verified", {
+        
+        const apiUrl = process.env.REACT_APP_API_URL;
+        const origin = process.env.REACT_APP_ORIGIN_URL;
+        fetch(apiUrl + "/tournaments/verified", {
             method: "GET",
             credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": `${origin}`
+            }
         })
         .then((response) => response.json())
         .then((data) => {

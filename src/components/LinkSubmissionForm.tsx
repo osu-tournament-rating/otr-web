@@ -30,12 +30,17 @@ function LinkSubmissionForm({
     useState(false);
 
   const apiLink = process.env.REACT_APP_API_URL;
+  const origin = process.env.REACT_APP_ORIGIN_URL;
   const navigate = useNavigate();
-
+  
   useEffect(() => {
     fetch(apiLink + "/me", {
       method: "GET",
       credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": `${origin}`,
+      }
     })
       .then((response) => response.json())
       .then((data) => {
