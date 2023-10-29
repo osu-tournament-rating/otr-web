@@ -40,7 +40,6 @@ function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAu
         );
       });
 
-    const origin = process.env.REACT_APP_ORIGIN_URL;
     fetch(apiUrl + "/me", {
       method: "GET",
       credentials: "include",
