@@ -14,7 +14,7 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
         
         const apiUrl = process.env.REACT_APP_API_URL;
         const origin = process.env.REACT_APP_ORIGIN_URL;
-        fetch(apiUrl + "/tournaments/verified", {
+        fetch(apiUrl + "/tournaments", {
             method: "GET",
             credentials: "include",
             headers: {
