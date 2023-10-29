@@ -96,7 +96,7 @@ function LinkSubmissionForm({
 
     const origin = process.env.REACT_APP_ORIGIN_URL;
 
-    fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
+    fetch(apiLink + "/matches/batch?verified=" + isSubmissionVerified, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
