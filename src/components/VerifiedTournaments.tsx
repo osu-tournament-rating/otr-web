@@ -8,10 +8,10 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
     const [verifiedTournaments, setVerifiedTournaments] = useState([]);
 
     useEffect(() => {
-        if(!hasVerifierRole) {
+        if (!hasVerifierRole) {
             return;
         }
-        
+
         const apiUrl = process.env.REACT_APP_API_URL;
         const origin = process.env.REACT_APP_ORIGIN_URL;
         fetch(apiUrl + "/tournaments", {
@@ -22,13 +22,13 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
                 "Access-Control-Allow-Origin": `${origin}`
             }
         })
-        .then((response) => response.json())
-        .then((data) => {
-            setVerifiedTournaments(data);
-        })
-        .catch((error) => {
-            console.error("Error fetching verified tournaments:", error);
-        })
+            .then((response) => response.json())
+            .then((data) => {
+                setVerifiedTournaments(data);
+            })
+            .catch((error) => {
+                console.error("Error fetching verified tournaments:", error);
+            })
     }, [hasVerifierRole])
 
     return (
@@ -39,16 +39,22 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
                         <div className="table-row">
                             <div className="table-cell text-3xl font-bold font-sans">Tournament</div>
                             <div className="table-cell text-3xl font-bold font-sans">Abbreviation</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Rank Range</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Mode</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Team Size</div>
                         </div>
-                        
+
                     </div>
                     <div className="table-row-group overflow-y-scroll h-96">
                         {
                             verifiedTournaments.map((tournament: any) => {
                                 return (
                                     <div className="table-row" key={tournament.tournamentName}>
-                                        <div className="table-cell font-sans text-md font-semibold"><a href={tournament.forumPost} target="#">{tournament.tournamentName}</a></div>
+                                        <div className="table-cell font-sans text-md font-semibold"><a href={tournament.forumUrl} target="#">{tournament.name}</a></div>
                                         <div className="table-cell font-sans text-md">{tournament.abbreviation}</div>
+                                        <div className="table-cell font-sans text-md">{tournament.rankRangeLowerBound}</div>
+                                        <div className="table-cell font-sans text-md">{tournament.mode}</div>
+                                        <div className="table-cell font-sans text-md">{tournament.teamSize}</div>
                                     </div>
                                 )
                             })
