@@ -67,7 +67,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const ratingForNextTier = generalStats["ratingForNextTier"];
   const ratingDelta = generalStats["ratingDelta"];
 
-  const highestRating = matchStats["highestRating"];
+  const highestRating = matchStats["highestRating"].toFixed(0);
   const highestGlobalRank = matchStats["highestGlobalRank"];
   const highestCountryRank = matchStats["highestCountryRank"];
   const highestPercentile = matchStats["highestPercentile"];
