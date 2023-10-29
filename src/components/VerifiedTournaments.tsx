@@ -14,6 +14,7 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
 
         const apiUrl = process.env.REACT_APP_API_URL;
         const origin = process.env.REACT_APP_ORIGIN_URL;
+
         fetch(apiUrl + "/tournaments", {
             method: "GET",
             credentials: "include",
@@ -38,10 +39,10 @@ function VerifiedTournaments({ hasVerifierRole }: IVerifiedTournamentProps) {
                     <div className="table-header-group">
                         <div className="table-row">
                             <div className="table-cell text-3xl font-bold font-sans">Tournament</div>
-                            <div className="table-cell text-3xl font-bold font-sans">Abbreviation</div>
-                            <div className="table-cell text-3xl font-bold font-sans">Rank Range</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Abbrev</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Rank</div>
                             <div className="table-cell text-3xl font-bold font-sans">Mode</div>
-                            <div className="table-cell text-3xl font-bold font-sans">Team Size</div>
+                            <div className="table-cell text-3xl font-bold font-sans">Team</div>
                         </div>
 
                     </div>
