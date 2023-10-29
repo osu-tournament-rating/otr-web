@@ -22,7 +22,11 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(apiLink + "/me/statistics?offsetDays=" + historyDays + "&mode=" + mode, {
+    // Translate history days to datetime
+    const date = new Date();
+    date.setDate(date.getDate() - historyDays);
+
+    fetch(apiLink + "/stats?startTime=" + date + "&mode=" + mode, {
       method: "GET",
       credentials: "include",
     })
@@ -35,79 +39,96 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
           "Error fetching player data, auth key likely expired:",
           error
         );
-        return navigate("/unauthorized", { replace: true });
-      });
 
-    fetch(apiLink + "/me/ratinghistories?offsetDays=" + historyDays + "&mode=" + mode, {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setRatingHistories(data);
-      })
-      .catch((error) => {
-        console.error(
-          "Error fetching player data, auth key likely expired:",
-          error
-        );
+        // Should return /error instead once we have an error page
         return navigate("/unauthorized", { replace: true });
       });
-  }, [apiLink, mode, navigate, historyDays]);
+  });
 
   if (stats == null) {
     return <p>Loading...</p>;
   }
 
-  const averageOpponentRating = stats["averageOpponentRating"];
-  const averageTeammateRating = stats["averageTeammateRating"];
-  const bestPerformingOpponent = stats["bestPerformingOpponent"];
-  const bestPerformingTeammate = stats["bestPerformingTeammate"];
-  const bestWinStreak = stats["bestWinStreak"];
-  const countryRank = stats["countryRank"];
-  const gamesPlayed = stats["gamesPlayed"];
-  const gamesWon = stats["gamesWon"];
-  const gamesLost = stats["gamesLost"];
-  const globalRank = stats["globalRank"];
-  const highestGlobalRank = stats["highestGlobalRank"];
-  const highestPercentile = stats["highestPercentile"];
-  const highestRating = stats["highestRating"];
-  const mapAverageAccuracy = stats["mapAverageAccuracy"];
-  const mapAverageMisses = stats["mapAverageMisses"];
-  const mapAveragePlacing = stats["mapAveragePlacing"];
-  const mapAverageScore = stats["mapAverageScore"];
-  const matchAverageAccuracy = stats["matchAverageAccuracy"];
-  const matchAverageMapsPlayed = stats["matchAverageMapsPlayed"];
-  const matchAverageMisses = stats["matchAverageMisses"];
-  const matchAverageScore = stats["matchAverageScore"];
-  const matchesPlayed = stats["matchesPlayed"];
-  const matchesLost = stats["matchesLost"];
-  const matchesWon = stats["matchesWon"];
-  const mostPlayedOpponent = stats["mostPlayedOpponent"];
-  const mostPlayedTeammate = stats["mostPlayedTeammate"];
-  const nextRanking = stats["nextRanking"];
-  const percentile = Math.round(stats["percentile"] * 10) / 10;
-  const playedDT = stats["playedDT"];
-  const playedHD = stats["playedHD"];
-  const playedHR = stats["playedHR"];
-  const ranking = stats["ranking"];
-  const rating = stats["rating"];
-  const ratingDelta = stats["ratingDelta"];
-  const ratingForNextRank = stats["ratingForNextRank"];
-  const worstPerformingOpponent = stats["worstPerformingOpponent"];
-  const worstPerformingTeammate = stats["worstPerformingTeammate"];
+  const generalStats = stats["generalStats"];
+  const matchStats = stats["matchStats"];
+  const scoreStats = stats["scoreStats"];
+  const tournamentStats = stats["tournamentStats"];
+  const ratingStats = stats["ratingStats"];
+
+  const rating = generalStats["rating"];
+  const volatility = generalStats["volatility"];
+  const percentile = generalStats["percentile"];
+  const matchesPlayedAllTime = generalStats["matchesPlayed"];
+  const winRate = generalStats["winRate"];
+  const highestGlobalRankAllTime = generalStats["highestGlobalRank"];
+  const globalRank = generalStats["globalRank"];
+  const countryRank = generalStats["countryRank"];
+  const tier = generalStats["tier"];
+  const nextTier = generalStats["nextTier"];
+  const ratingForNextTier = generalStats["ratingForNextTier"];
+  const ratingDelta = generalStats["ratingDelta"];
+
+  const highestRating = matchStats["highestRating"];
+  const highestGlobalRank = matchStats["highestGlobalRank"];
+  const highestCountryRank = matchStats["highestCountryRank"];
+  const highestPercentile = matchStats["highestPercentile"];
+  const ratingGained = matchStats["ratingGained"];
+  const gamesWon = matchStats["gamesWon"];
+  const gamesLost = matchStats["gamesLost"];
+  const gamesPlayed = matchStats["gamesPlayed"];
+  const matchesWon = matchStats["matchesWon"];
+  const matchesLost = matchStats["matchesLost"];
+  const matchesPlayed = matchStats["matchesPlayed"];
+  const gameWinRate = matchStats["gameWinRate"];
+  const matchWinRate = matchStats["matchWinRate"];
+  const averageTeammateRating = matchStats["averageTeammateRating"];
+  const averageOpponentRating = matchStats["averageOpponentRating"];
+  const bestWinStreak = matchStats["bestWinStreak"];
+  const averageScore = matchStats["matchAverageScoreAggregate"];
+  const averageMisses = matchStats["matchAverageMissesAggregate"];
+  const averageAccuracy = matchStats["matchAverageAccuracyAggregate"];
+  const averageGamesPlayed = matchStats["averageGamesPlayedAggregate"];
+  const averagePlacing = matchStats["averagePlacingAggregate"];
+  const mostPlayedTeammateName = matchStats["mostPlayedTeammateName"];
+  const mostPlayedOpponentName = matchStats["mostPlayedOpponentName"];
+  const periodStart = matchStats["periodStart"];
+  const periodEnd = matchStats["periodEnd"];
+
+  const averageScoreEZ = scoreStats["averageScoreEZ"];
+  const averageScoreHD = scoreStats["averageScoreHD"];
+  const averageScoreHR = scoreStats["averageScoreHR"];
+  const averageScoreDT = scoreStats["averageScoreDT"];
+  const averageScoreFL = scoreStats["averageScoreFL"];
+  const averageScoreHDDT = scoreStats["averageScoreHDDT"];
+  const averageScoreHDHR = scoreStats["averageScoreHDHR"];
+  const averageScoreNM = scoreStats["averageScoreNM"];
+
+  const countPlayedEZ = scoreStats["countPlayedEZ"];
+  const countPlayedHD = scoreStats["countPlayedHD"];
+  const countPlayedHR = scoreStats["countPlayedHR"];
+  const countPlayedDT = scoreStats["countPlayedDT"];
+  const countPlayedFL = scoreStats["countPlayedFL"];
+  const countPlayedHDDT = scoreStats["countPlayedHDDT"];
+  const countPlayedHDHR = scoreStats["countPlayedHDHR"];
+  const countPlayedNM = scoreStats["countPlayedNM"];
+
+  const countPlayedTournament1v1 = tournamentStats["count1v1"];
+  const countPlayedTournament2v2 = tournamentStats["count2v2"];
+  const countPlayedTournament3v3 = tournamentStats["count3v3"];
+  const countPlayedTournament4v4 = tournamentStats["count4v4"];
+  const countPlayedTournamentOther = tournamentStats["countOther"];
+  const topTournamentPerformances = tournamentStats["topPerformances"];
 
   // Trends
-  const isRatingPositiveTrend = stats["isRatingPositiveTrend"];
-  const ratingGainedSincePeriod = stats["ratingGainedSincePeriod"];
+  const isRatingPositiveTrend = ratingGained >= 0;
 
   const ratingGainedSincePeriodDisplay =
-    ratingGainedSincePeriod > 0
-      ? `+${ratingGainedSincePeriod}`
-      : ratingGainedSincePeriod;
+    ratingGained >= 0
+      ? `+${ratingGained}`
+      : ratingGained;
 
-  const ratingGainedSincePeriodColor =
-    ratingGainedSincePeriod > 0 ? "text-green-400" : "text-red-400";
+  const ratingGainedColor =
+    ratingGained >= 0 ? "text-green-400" : "text-red-400";
 
   return (
     <>
@@ -120,13 +141,13 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
           <div className="md:flex m-5 md:m-10 space-y-5 md:space-y-0 md:space-x-4">
             <UserAvatarCard osuId={stats["osuId"]} />
             <UserRankingCard
-              rankingClass={ranking}
+              rankingClass={tier}
               rating={rating}
               globalRank={globalRank}
               countryRank={countryRank}
               percentile={percentile}
-              nextRankingClass={nextRanking}
-              ratingRemainingForNextRank={ratingForNextRank}
+              nextRankingClass={nextTier}
+              ratingRemainingForNextRank={ratingForNextTier}
               ratingDelta={ratingDelta}
               isRatingPositiveTrend={isRatingPositiveTrend}
             />
@@ -143,7 +164,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 {rating}
               </p>
               <p
-                className={`font-sans text-2xl md:text-3xl font-bold -mx-3 md:-mx-12 mt-8 md:mt-12 ${ratingGainedSincePeriodColor}`}
+                className={`font-sans text-2xl md:text-3xl font-bold -mx-3 md:-mx-12 mt-8 md:mt-12 ${ratingGainedColor}`}
               >
                 {ratingGainedSincePeriodDisplay}
               </p>
@@ -198,10 +219,10 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 "Average maps played",
               ]}
               values={[
-                formatNumberWithCommas(matchAverageScore),
-                formatNumberWithCommas(matchAverageMisses),
-                matchAverageAccuracy + "%",
-                matchAverageMapsPlayed,
+                formatNumberWithCommas(averageScore),
+                formatNumberWithCommas(averageMisses),
+                averageAccuracy + "%",
+                averageGamesPlayed,
               ]}
             />
             <DashboardStatsCard
@@ -216,17 +237,17 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 averageOpponentRating,
                 averageTeammateRating,
                 bestWinStreak,
-                mapAveragePlacing,
+                averagePlacing,
               ]}
             />
           </div>
           <div className="flex m-7">
             <MostPlayedModsCard
-              countHR={playedHR}
-              countDT={playedDT}
-              countHD={playedHD}
+              countHR={countPlayedHR}
+              countDT={countPlayedDT}
+              countHD={countPlayedHD}
             />
-            
+
             <DashboardStatsCard
               title="Teammates"
               labels={[
@@ -235,9 +256,9 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 "Worst teammate",
               ]}
               values={[
-                mostPlayedTeammate,
-                bestPerformingTeammate,
-                worstPerformingTeammate,
+                mostPlayedTeammateName,
+                "Foo",
+                "Foo",
               ]}
             />
             <DashboardStatsCard
@@ -248,9 +269,9 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 "Worst opponent",
               ]}
               values={[
-                mostPlayedOpponent,
-                bestPerformingOpponent,
-                worstPerformingOpponent,
+                mostPlayedOpponentName,
+                "Foo",
+                "Foo",
               ]}
             />
           </div>
