@@ -3,7 +3,7 @@ export interface IUserRankingCardProps {
     rating: number; // player mu, rounded
     globalRank: number; // player global rank
     countryRank: number; // how well the player is doing compared to their friends
-    percentile: number; // percentile ranking globally
+    percentile: string; // percentile ranking globally (formatted ahead of time as string)
     nextRankingClass: string; // e.g. platnium, diamond (next rank)
     ratingRemainingForNextRank: number; // how much rating is needed to reach the next rank
     ratingDelta: number;

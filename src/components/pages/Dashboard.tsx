@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UserAvatarCard from "../cards/UserAvatarCard";
-import NavBar from "../NavBar";
 import UserRankingCard from "../cards/UserRankingCard";
 import MissingDataNotice from "../notices/MissingDataNotice";
 import NoDataNotice from "../notices/NoDataNotice";
@@ -16,7 +15,6 @@ import MostPlayedModsCard from "../cards/MostPlayedModsCard";
 
 function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: number }) {
   const [stats, setStats] = useState<any>(null);
-  const [ratingHistories, setRatingHistories] = useState<any>(null);
   const [historyDays, setHistoryDays] = useState(90);
   const navigate = useNavigate();
   const apiLink = process.env.REACT_APP_API_URL;
@@ -25,8 +23,9 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
     // Translate history days to datetime
     const date = new Date();
     date.setDate(date.getDate() - historyDays);
+    const formattedDate = date.toISOString().split("T")[0];
 
-    fetch(apiLink + "/stats?startTime=" + date + "&mode=" + mode, {
+    fetch(apiLink + "/me/stats?dateMin=" + formattedDate + "&mode=" + mode, {
       method: "GET",
       credentials: "include",
     })
@@ -43,7 +42,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
         // Should return /error instead once we have an error page
         return navigate("/unauthorized", { replace: true });
       });
-  });
+  }, [apiLink, historyDays, navigate, mode]);
 
   if (stats == null) {
     return <p>Loading...</p>;
@@ -55,9 +54,9 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const tournamentStats = stats["tournamentStats"];
   const ratingStats = stats["ratingStats"];
 
-  const rating = generalStats["rating"];
-  const volatility = generalStats["volatility"];
-  const percentile = generalStats["percentile"];
+  const rating = generalStats["rating"].toFixed(0);
+  const volatility = generalStats["volatility"].toFixed(3);
+  const percentile = (generalStats["percentile"] * 100).toFixed(3);
   const matchesPlayedAllTime = generalStats["matchesPlayed"];
   const winRate = generalStats["winRate"];
   const highestGlobalRankAllTime = generalStats["highestGlobalRank"];
@@ -72,7 +71,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const highestGlobalRank = matchStats["highestGlobalRank"];
   const highestCountryRank = matchStats["highestCountryRank"];
   const highestPercentile = matchStats["highestPercentile"];
-  const ratingGained = matchStats["ratingGained"];
+  const ratingGained = matchStats["ratingGained"].toFixed(0);
   const gamesWon = matchStats["gamesWon"];
   const gamesLost = matchStats["gamesLost"];
   const gamesPlayed = matchStats["gamesPlayed"];
@@ -81,14 +80,14 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const matchesPlayed = matchStats["matchesPlayed"];
   const gameWinRate = matchStats["gameWinRate"];
   const matchWinRate = matchStats["matchWinRate"];
-  const averageTeammateRating = matchStats["averageTeammateRating"];
-  const averageOpponentRating = matchStats["averageOpponentRating"];
+  const averageTeammateRating = matchStats["averageTeammateRating"]?.toFixed(0);
+  const averageOpponentRating = matchStats["averageOpponentRating"]?.toFixed(0);
   const bestWinStreak = matchStats["bestWinStreak"];
-  const averageScore = matchStats["matchAverageScoreAggregate"];
-  const averageMisses = matchStats["matchAverageMissesAggregate"];
-  const averageAccuracy = matchStats["matchAverageAccuracyAggregate"];
-  const averageGamesPlayed = matchStats["averageGamesPlayedAggregate"];
-  const averagePlacing = matchStats["averagePlacingAggregate"];
+  const averageScore = matchStats["matchAverageScoreAggregate"].toFixed(0);
+  const averageMisses = matchStats["matchAverageMissesAggregate"].toFixed(1);
+  const averageAccuracy = matchStats["matchAverageAccuracyAggregate"].toFixed(1);
+  const averageGamesPlayed = matchStats["averageGamesPlayedAggregate"].toFixed(1);
+  const averagePlacing = matchStats["averagePlacingAggregate"].toFixed(1);
   const mostPlayedTeammateName = matchStats["mostPlayedTeammateName"];
   const mostPlayedOpponentName = matchStats["mostPlayedOpponentName"];
   const periodStart = matchStats["periodStart"];
@@ -134,9 +133,15 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
     <>
       <TRUseCaseNotice />
       <MissingDataNotice />
-      {!ratingHistories && <NoDataNotice />}
+      {matchesPlayed == 0 && <>
+        <NoDataNotice />
+        <div className="flex">
+          <DateSelector currentDays={historyDays} setDays={setHistoryDays} />
+        </div>
+      </>
+      }
 
-      {stats && (
+      {matchesPlayed > 0 && (
         <div>
           <div className="md:flex m-5 md:m-10 space-y-5 md:space-y-0 md:space-x-4">
             <UserAvatarCard osuId={stats["osuId"]} />
@@ -184,7 +189,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
                 </div> */}
               </div>
             </div>
-            <UserRatingChart ratingHistories={ratingHistories} />
+            <UserRatingChart ratingData={ratingStats} />
           </div>
           <div>
             <UserMatchesMapsCard
