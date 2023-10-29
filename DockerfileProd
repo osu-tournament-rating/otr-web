@@ -14,6 +14,7 @@ COPY . .
 ENV REACT_APP_OSU_CLIENT_ID 24523
 ENV REACT_APP_API_URL https://api.otr.stagec.xyz/api
 ENV REACT_APP_OSU_CALLBACK_URL https://otr.stagec.xyz/auth
+ENV REACT_APP_OSU_CALLBACK_URL https://otr.stagec.xyz/
 
 # Build the app
 RUN npm run build
