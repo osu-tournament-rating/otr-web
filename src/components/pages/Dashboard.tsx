@@ -17,7 +17,6 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   const [stats, setStats] = useState<any>(null);
   const [historyDays, setHistoryDays] = useState(90);
   const navigate = useNavigate();
-  const apiLink = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     // Translate history days to datetime
@@ -25,6 +24,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
     date.setDate(date.getDate() - historyDays);
     const formattedDate = date.toISOString().split("T")[0];
 
+    const apiLink = process.env.REACT_APP_API_URL;
     const origin = process.env.REACT_APP_ORIGIN_URL;
     fetch(apiLink + "/me/stats?dateMin=" + formattedDate + "&mode=" + mode, {
       method: "GET",
@@ -47,10 +47,10 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
         // Should return /error instead once we have an error page
         return navigate("/unauthorized", { replace: true });
       });
-  }, [apiLink, historyDays, navigate, mode]);
+  }, [historyDays, navigate, mode]);
 
-  if (stats == null) {
-    return <p>Loading...</p>;
+  if (!stats) {
+    return <p>Error loading dashboard.</p>;
   }
 
   const generalStats = stats["generalStats"];
