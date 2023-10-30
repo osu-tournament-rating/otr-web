@@ -13,32 +13,32 @@ function Submit() {
       <div className="lg:flex">
         <div className="flex-row w-full lg:w-3/5">
           <SubmissionGuidelinesCard
-            title="Guidelines"
-            description="Please follow the posted guidelines before submitting your matches. Keep in mind that posting matches that don't follow the rules may lead to a restriction."
+            title="Submission F.A.Q"
+            description="Please read the following FAQ before submitting. Our goal is to include matches that do not stray too far from the competitive norm."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="Our goal is to accept matches that do not stray too far away from the 'traditional' tournament format (head-to-head & team vs). Group stages of well-run tournaments are allowed."
+            title="What can I submit?"
+            description="Only submit matches from tournaments not already in our system. The tournament must be fully completed before its matches can be submitted. If you think a match is missing from a tournament already in the system, please contact us."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="Tag, relax, and battle-royale styled matches will not be included. Bracket-stage and group-stage matches only."
+            title="Is my tournament too gimmicky to be included?"
+            description="Tag, relax, and battle-royale styled matches will not be included. Submit bracket-stage and group-stage matches only. Tournaments that do not allow players to play at their full competitive strength or stray too far from the competitive norm will not be included. Please contact us if you are unsure."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="Tournaments that are non-traditional, such as forcing non-standard win conditions, will not be included. This can include tournaments with gimmicks that force players to not compete at their highest level."
+            title="How are tournaments with multiple tiers / divisions handled?"
+            description="Tournaments with multiple tiers across one bracket can be submitted. Multiple divisions should be submitted as separate tournaments if they are not played in the same bracket. In general, one bracket equals one tournament."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="Never submit qualifiers or tryouts. The system will attempt to automatically remove warm-ups. Always submit finished tournaments with an established winner."
+            title="What about qualifiers?"
+            description="Never submit qualifiers or tryouts."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="Tournaments with multiple brackets across multiple rank ranges should be submitted separately. Submit divisional tournaments as one tournament with all divisional matches included."
+            title="Can I submit from any time period?"
+            description="Tournaments from any time period can be submitted. However, please ensure what you are submitting is of quality."
           />
           <SubmissionGuidelinesCard
-            title=""
-            description="The o!TR team reserves the right to make final judgements on whether a tournament or match should be deemed as fair and competitive play."
+            title="The tournament I want to submit is missing matches. What do I do?"
+            description="If the tournament has not yet concluded, do not submit it yet. If the tournament's history is not properly recorded or maintained, that's okay - submit all that is publicly available. If you're not sure, please contact us."
           />
         </div>
         <div className="flex-row w-full lg:w-2/5">
