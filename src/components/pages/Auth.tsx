@@ -7,25 +7,26 @@ function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAu
   const code = params.get("code");
   const navigate = useNavigate();
 
-  const apiLink = process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const origin = process.env.REACT_APP_ORIGIN_URL;
 
   useEffect(() => {
     console.log("Logging in after osu! redirect");
 
     // make api call to login with code
-    fetch(apiLink + '/login?code=' + code, {
+    fetch(apiUrl + '/login?code=' + code, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": `${origin}`,
       },
-      credentials: "include",
     })
       .then((response) => {
         if (response.status !== 200) {
-            throw new Error("Authorization failed!");
+          throw new Error("Authorization failed!");
         }
-        
+
         setIsAuthenticated(true);
         navigate("/", { replace: true });
       })
@@ -39,19 +40,23 @@ function Auth({ isAuthenticated, setIsAuthenticated, setAuthenticatedUser }: IAu
         );
       });
 
-      fetch(apiLink + "/me", {
-        method: "GET",
-        credentials: "include",
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            setAuthenticatedUser(data);
-        })
-        .catch((error) => {
-            console.error("Error fetching authenticated user:", error);
-        });
-      
-  }, [apiLink, code, navigate, setIsAuthenticated, setAuthenticatedUser]);
+    fetch(apiUrl + "/me", {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": `${origin}`,
+      }
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setAuthenticatedUser(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching authenticated user:", error);
+      });
+
+  }, [apiUrl, code, navigate, setIsAuthenticated, setAuthenticatedUser]);
 
   return (
     <>

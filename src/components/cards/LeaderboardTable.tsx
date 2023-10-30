@@ -38,7 +38,7 @@ function LeaderboardTable({
             </div>
           </div>
           <div className="flex-1">{item.tier}</div>
-          <div className="flex-1">{item.rating}</div>
+          <div className="flex-1">{item.rating.toFixed(0)}</div>
           <div className="flex-1">{item.matchesPlayed}</div>
           <div className="flex-1">{(item.winRate * 100).toFixed(1)}%</div>
         </div>
@@ -46,9 +46,8 @@ function LeaderboardTable({
       <div className="flex justify-center space-x-3 mt-4">
         <button
           onClick={() => !isLoading && setPage(Math.max(page - 1, 0))}
-          className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-            page === 0 || isLoading ? "text-gray-400" : ""
-          }`}
+          className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${page === 0 || isLoading ? "text-gray-400" : ""
+            }`}
           style={{
             userSelect: "none",
             border: "none",
@@ -65,9 +64,8 @@ function LeaderboardTable({
           <>
             <button
               onClick={() => !isLoading && setPage(0)}
-              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-                isLoading ? "text-gray-400" : ""
-              }`}
+              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${isLoading ? "text-gray-400" : ""
+                }`}
               style={{
                 userSelect: "none",
                 border: "none",
@@ -101,9 +99,8 @@ function LeaderboardTable({
             <button
               key={i}
               onClick={() => !isLoading && setPage(pageNumber)}
-              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-                page === pageNumber ? "text-blue-500 font-bold" : ""
-              }`}
+              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${page === pageNumber ? "text-blue-500 font-bold" : ""
+                }`}
               style={{
                 userSelect: "none",
                 border: "none",
@@ -124,9 +121,8 @@ function LeaderboardTable({
             </div>
             <button
               onClick={() => !isLoading && setPage(99)}
-              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-                isLoading ? "text-gray-400" : ""
-              }`}
+              className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${isLoading ? "text-gray-400" : ""
+                }`}
               style={{
                 userSelect: "none",
                 border: "none",
@@ -142,9 +138,8 @@ function LeaderboardTable({
 
         <button
           onClick={() => !isLoading && setPage(Math.min(page + 1, 99))}
-          className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${
-            page === 99 || isLoading ? "text-gray-400" : ""
-          }`}
+          className={`focus:outline-none focus:border-none cursor-pointer flex flex-row ${page === 99 || isLoading ? "text-gray-400" : ""
+            }`}
           style={{
             userSelect: "none",
             border: "none",

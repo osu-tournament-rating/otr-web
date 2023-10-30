@@ -30,12 +30,17 @@ function LinkSubmissionForm({
     useState(false);
 
   const apiLink = process.env.REACT_APP_API_URL;
+  const origin = process.env.REACT_APP_ORIGIN_URL;
   const navigate = useNavigate();
-
+  
   useEffect(() => {
     fetch(apiLink + "/me", {
       method: "GET",
       credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": `${origin}`,
+      }
     })
       .then((response) => response.json())
       .then((data) => {
@@ -89,11 +94,13 @@ function LinkSubmissionForm({
     setRankRangeLowerBound(null);
     setGameMode(0);
 
-    fetch(apiLink + "/osumatches/batch?verified=" + isSubmissionVerified, {
+    const origin = process.env.REACT_APP_ORIGIN_URL;
+
+    fetch(apiLink + "/matches/batch?verified=" + isSubmissionVerified, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": `${origin}`,
       },
       credentials: "include",
       body: JSON.stringify({

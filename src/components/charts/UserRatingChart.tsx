@@ -35,10 +35,11 @@ const CustomRatingTooltip = ({
 
     return (
       <div className="custom-tooltip bg-blue-200 opacity-90 rounded-xl p-2">
-        {activePayload["tournamentName"] && <p className="label font-sans font-bold text-xl">{activePayload["abbreviation"]}: {activePayload["tournamentName"]}</p>}
-        <p className="label font-sans"><strong>Match:</strong> {`${activePayload["matchName"]}`}</p>
+        {activePayload["tooltipInfo.tournamentName"] && 
+        <p className="label font-sans font-bold text-xl">{activePayload["tooltipInfo.tournamentAbbreviation"]}: {activePayload["tooltipInfo.tournamentName"]}</p>}
+        <p className="label font-sans"><strong>Match:</strong> {`${activePayload["tooltipInfo.matchName"]}`}</p>
         <p className="label font-sans"><strong>Date:</strong> {`${formatXAxis(label)}`}</p>
-        <p className="label font-sans"><strong>TR:</strong> {`${activePayload["muCasted"]}`}</p>
+        <p className="label font-sans"><strong>TR:</strong> {`${activePayload["ratingAfter"].toFixed(0)}`}</p>
       </div>
     );
   }
@@ -46,11 +47,11 @@ const CustomRatingTooltip = ({
   return null;
 };
 
-function UserRatingChart({ ratingHistories }: IUserRatingChartProps) {
+function UserRatingChart({ ratingData }: IUserRatingChartProps) {
   return (
     <ResponsiveContainer className={"flex flex-col bg-white m-auto rounded-xl"} width={"90%"} height={"90%"}>
       <AreaChart
-        data={ratingHistories}
+        data={ratingData}
         margin={{
           top: 20,
           right: 20,
@@ -65,24 +66,23 @@ function UserRatingChart({ ratingHistories }: IUserRatingChartProps) {
           </linearGradient>
         </defs>
         <XAxis
-          dataKey={"created"}
+          dataKey={"tooltipInfo.matchDate"}
           tickFormatter={formatXAxis}
           domain={["dataMin", "dataMax"]}
           tickCount={8}
         />
         <YAxis
-          dataKey={"muCasted"}
+          dataKey={"ratingAfter"}
           name="TR"
           type="number"
           domain={["auto", "auto"]}
         />
         <CartesianGrid strokeDasharray="3 3" />
         <Tooltip content={<CustomRatingTooltip />} />
-        <Legend />
 
         <Area
           type="monotone"
-          dataKey="mu"
+          dataKey="ratingAfter"
           name="TR"
           stroke="#4D94FF"
           strokeWidth={2}

@@ -10,6 +10,7 @@ function Leaderboards({ mode }: { mode: number }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+  const origin = process.env.REACT_APP_ORIGIN_URL;
 
   useEffect(() => {
     setIsLoading(true);
@@ -25,6 +26,7 @@ function Leaderboards({ mode }: { mode: number }) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": `${origin}`
         },
       }
     )

@@ -1,3 +1,3 @@
 export interface IUserRatingChartProps {
-    ratingHistories: any[];
+    ratingData: any[];
 }

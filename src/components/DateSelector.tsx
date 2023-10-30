@@ -17,7 +17,7 @@ function DateSelector({ currentDays, setDays }: IDateSelectorProps) {
                 <div className="flex space-x-5 my-2">
                     <DateSelectorButton currentDays={currentDays} days={365} setDays={setDays} label="1 year" />
                     <DateSelectorButton currentDays={currentDays} days={730} setDays={setDays} label="2 years" />
-                    <DateSelectorButton currentDays={currentDays} days={-1} setDays={setDays} label="All time" />
+                    <DateSelectorButton currentDays={currentDays} days={182625} setDays={setDays} label="All time" />
                 </div>
             </div>
         </>
