@@ -32,7 +32,7 @@ function LinkSubmissionForm({
   const apiLink = process.env.REACT_APP_API_URL;
   const origin = process.env.REACT_APP_ORIGIN_URL;
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     fetch(apiLink + "/me", {
       method: "GET",
@@ -135,63 +135,85 @@ function LinkSubmissionForm({
   return (
     <form onSubmit={handleSubmit}>
       <div className="flex flex-col bg-gray-100 my-5 mx-10 md:ml-5 rounded-xl font-sans pb-10">
-        <div className="flex flex-row bg-gray-100 rounded-xl font-sans m-5">
+        <div className="flex flex-row bg-gray-100 rounded-xl font-sans mx-10 mt-10">
           <p className="text-4xl font-semibold font-sans">Tournament</p>
         </div>
         <div>
-          <p className="font-sans text-gray-400 m-5 text-xl">
+          <p className="font-sans text-gray-400 mx-10 my-5 text-xl w-3/5">
             We're currently prioritizing badged tournaments, but you can submit
             an unbadged tournament as well as long as it follows the rules.
           </p>
         </div>
 
         <div className="space-y-5">
-          <select
-            required={true}
-            value={gameMode}
-            onChange={(e) => setGameMode(Number(e.target.value))}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-          >
-            <option value={0}>osu!Standard</option>
-            <option value={1}>osu!Taiko</option>
-            <option value={2}>osu!Catch</option>
-            <option value={3}>osu!Mania</option>
-          </select>
-
-          <input
-            required={true}
-            type="text"
-            name="tournamentName"
-            onChange={(e) => {
-              setTournamentName(e.target.value);
-            }}
-            value={tournamentName}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Tournament name"
-          />
-          <input
-            required={true}
-            type="text"
-            name="abbreviation"
-            onChange={(e) => {
-              setAbbreviation(e.target.value);
-            }}
-            value={abbreviation}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Tournament abbreviation"
-          />
-          <input
-            required={true}
-            type="text"
-            name="forumPost"
-            onChange={(e) => {
-              setForumPost(e.target.value);
-            }}
-            value={forumPost}
-            className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 h-16 m-auto"
-            placeholder="Tournament's osu! forum post"
-          />
-          <div className="relative flex items-center border-2 border-gray-400 rounded-xl w-11/12 m-auto h-16">
+          <div className="space-y-3">
+            <p className="font-sans font-semibold mx-10 text-2xl">
+              Game mode
+            </p>
+            <select
+              required={true}
+              value={gameMode}
+              onChange={(e) => setGameMode(Number(e.target.value))}
+              className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-1/3 h-16 mx-10"
+            >
+              <option value={0}>osu!Standard</option>
+              <option value={1}>osu!Taiko</option>
+              <option value={2}>osu!Catch</option>
+              <option value={3}>osu!Mania</option>
+            </select>
+          </div>
+          <div className="space-y-3">
+            <p className="font-sans font-semibold mx-10 text-2xl">
+              Forum post link
+            </p>
+            <input
+              required={true}
+              type="text"
+              name="forumPost"
+              onChange={(e) => {
+                setForumPost(e.target.value);
+              }}
+              value={forumPost}
+              className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
+              style={{ width: "88%" }}
+              placeholder="https://osu.ppy.sh/community/forums/topics/1838608"
+            />
+          </div>
+          <div className="flex">
+            <div className="space-y-3">
+              <p className="font-sans font-semibold mx-10 text-2xl">
+                Tournament name
+              </p>
+              <input
+                required={true}
+                type="text"
+                name="tournamentName"
+                onChange={(e) => {
+                  setTournamentName(e.target.value);
+                }}
+                value={tournamentName}
+                className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
+                placeholder="osu! World Cup 2023"
+              />
+            </div>
+            <div className="space-y-3">
+              <p className="font-sans font-semibold mx-6 text-2xl">
+                Abbreviation
+              </p>
+              <input
+                required={true}
+                type="text"
+                name="abbreviation"
+                onChange={(e) => {
+                  setAbbreviation(e.target.value);
+                }}
+                value={abbreviation}
+                className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-5"
+                placeholder="OWC2023"
+              />
+            </div>
+          </div>
+          <div className="relative flex items-center border-2 border-gray-400 rounded-lg w-11/12 m-auto h-16">
             <input
               required={true}
               min={1}
@@ -202,7 +224,7 @@ function LinkSubmissionForm({
               onChange={(e) => {
                 setTeamSize(parseInt(e.target.value));
               }}
-              className="flex-grow bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-md p-2 mr-5"
+              className="flex-grow bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg p-2 mr-5"
               placeholder="Team size (1-8)"
             />
             <div className="relative">
@@ -215,11 +237,10 @@ function LinkSubmissionForm({
               />
 
               <div
-                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${
-                  isTeamSizeTooltipVisible
-                    ? "opacity-100 visibility-visible"
-                    : "opacity-0 visibility-hidden"
-                } transition-opacity duration-250 ease-in-out tooltip`}
+                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${isTeamSizeTooltipVisible
+                  ? "opacity-100 visibility-visible"
+                  : "opacity-0 visibility-hidden"
+                  } transition-opacity duration-250 ease-in-out tooltip`}
               >
                 <div className="relative">
                   <div className="absolute top-1/2 left-0 transform -translate-x-100% -translate-y-1/2 w-0 h-0 border-r-5 border-transparent border-l-5 border-white"></div>
@@ -261,11 +282,10 @@ function LinkSubmissionForm({
               />
 
               <div
-                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${
-                  isRankRangeTooltipVisible
-                    ? "opacity-100 visibility-visible"
-                    : "opacity-0 visibility-hidden"
-                } transition-opacity duration-250 ease-in-out tooltip`}
+                className={`absolute top-0 right-full transform -translate-x-2 p-2 bg-white border rounded-md shadow-md ${isRankRangeTooltipVisible
+                  ? "opacity-100 visibility-visible"
+                  : "opacity-0 visibility-hidden"
+                  } transition-opacity duration-250 ease-in-out tooltip`}
               >
                 <div className="relative">
                   <div className="absolute top-1/2 left-0 transform -translate-x-100% -translate-y-1/2 w-0 h-0 border-r-5 border-transparent border-l-5 border-white"></div>

@@ -11,7 +11,7 @@ function Submit() {
   return (
     <>
       <div className="lg:flex">
-        <div className="flex-row w-full lg:w-3/5">
+        <div className="flex-row w-full lg:w-1/2">
           <SubmissionGuidelinesCard
             title="Submission F.A.Q."
             description="Please read the following before submitting. Our goal is to include matches that do not stray too far from the competitive norm, it's important that bad data remains out of our system."
@@ -41,7 +41,7 @@ function Submit() {
             description="If the tournament has not yet concluded, do not submit it yet. If the tournament's history is not properly recorded or maintained, that's okay - submit all that is publicly available. If you're not sure, please contact us."
           />
         </div>
-        <div className="flex-row w-full lg:w-2/5">
+        <div className="flex-row w-full lg:w-1/2">
           <LinkSubmissionForm hasVerifierRole={hasVerifierRole} setHasVerifierRole={setHasVerifierRole} />
         </div>
       </div>
