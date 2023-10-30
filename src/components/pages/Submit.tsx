@@ -13,8 +13,8 @@ function Submit() {
       <div className="lg:flex">
         <div className="flex-row w-full lg:w-3/5">
           <SubmissionGuidelinesCard
-            title="Submission F.A.Q"
-            description="Please read the following FAQ before submitting. Our goal is to include matches that do not stray too far from the competitive norm."
+            title="Submission F.A.Q."
+            description="Please read the following before submitting. Our goal is to include matches that do not stray too far from the competitive norm, it's important that bad data remains out of our system."
           />
           <SubmissionGuidelinesCard
             title="What can I submit?"
