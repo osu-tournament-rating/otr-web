@@ -180,7 +180,7 @@ function LinkSubmissionForm({
             />
           </div>
           <div className="flex-none xl:flex">
-            <div className="space-y-3 w-1/2 mx-10 mb-5 md:mb-0">
+            <div className="space-y-3 w-1/2 mx-10 md:mb-0">
               <p className="font-sans font-semibold text-2xl">
                 Tournament name
               </p>
@@ -196,7 +196,7 @@ function LinkSubmissionForm({
                 placeholder="osu! World Cup 2023"
               />
             </div>
-            <div className="space-y-3 w-1/2 mx-10">
+            <div className="space-y-3 md:ml-10 xl:ml-0 mt-5 xl:mt-0">
               <p className="font-sans font-semibold text-2xl">
                 Abbreviation
               </p>
@@ -214,9 +214,9 @@ function LinkSubmissionForm({
               />
             </div>
           </div>
-          <div className="space-y-3 w-full">
+          <div className="space-y-3 ml-10">
             <div className="flex">
-              <p className="font-sans font-semibold ml-10 text-2xl">
+              <p className="font-sans font-semibold text-2xl">
                 Rank restriction
               </p>
               <p className="font-sans font-semibold ml-5 text-2xl text-gray-500 hover:cursor-help"
@@ -234,7 +234,7 @@ function LinkSubmissionForm({
                 type="number"
                 name="rankRangeLowerBound"
                 onChange={(e) => setRankRangeLowerBound(parseInt(e.target.value))}
-                className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
+                className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16"
                 placeholder="1000"
                 value={rankRangeLowerBound || ""}
                 style={{ width: "88%" }}
@@ -283,8 +283,8 @@ function LinkSubmissionForm({
             setLinksCounted(e.target.value.split("\n").length);
           }}
           value={linkText}
-          style={{ resize: "none" }}
-          className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 mx-10 h-36 max-h-48"
+          style={{ resize: "none", width: "88%" }}
+          className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center mx-10 h-36 max-h-48"
           placeholder="1 per line (match id or full link)"
           required={true}
         />
