@@ -162,8 +162,8 @@ function LinkSubmissionForm({
               <option value={3}>osu!Mania</option>
             </select>
           </div>
-          <div className="space-y-3">
-            <p className="font-sans font-semibold mx-10 text-2xl">
+          <div className="space-y-3 mx-10">
+            <p className="font-sans font-semibold text-2xl">
               Forum post link
             </p>
             <input
@@ -174,14 +174,14 @@ function LinkSubmissionForm({
                 setForumPost(e.target.value);
               }}
               value={forumPost}
-              className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
+              className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16"
               style={{ width: "88%" }}
               placeholder="https://osu.ppy.sh/community/forums/topics/1838608"
             />
           </div>
-          <div className="flex">
-            <div className="space-y-3 w-1/2">
-              <p className="font-sans font-semibold mx-10 text-2xl">
+          <div className="flex-none xl:flex">
+            <div className="space-y-3 w-1/2 mx-10 mb-5">
+              <p className="font-sans font-semibold text-2xl">
                 Tournament name
               </p>
               <input
@@ -192,12 +192,12 @@ function LinkSubmissionForm({
                   setTournamentName(e.target.value);
                 }}
                 value={tournamentName}
-                className="border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
+                className="border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16"
                 placeholder="osu! World Cup 2023"
               />
             </div>
-            <div className="space-y-3 w-1/2">
-              <p className="font-sans font-semibold mx-6 text-2xl">
+            <div className="space-y-3 w-1/2 mx-10">
+              <p className="font-sans font-semibold text-2xl">
                 Abbreviation
               </p>
               <input
@@ -208,12 +208,13 @@ function LinkSubmissionForm({
                   setAbbreviation(e.target.value);
                 }}
                 value={abbreviation}
-                className="border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-5"
+                className="border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-lg font-sans justify-center justify-items-center h-16 p-2"
                 placeholder="OWC2023"
+                style={{ width: "88%" }}
               />
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 w-full">
             <div className="flex">
               <p className="font-sans font-semibold ml-10 text-2xl">
                 Rank restriction
@@ -233,9 +234,10 @@ function LinkSubmissionForm({
                 type="number"
                 name="rankRangeLowerBound"
                 onChange={(e) => setRankRangeLowerBound(parseInt(e.target.value))}
-                className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-lg font-sans p-2 justify-center justify-items-center w-1/2 h-16 mx-10"
+                className="flex flex-row border-2 border-gray-400 bg-gray-100 text-xl font-medium rounded-lg font-sans p-2 justify-center justify-items-center h-16 ml-10"
                 placeholder="1000"
                 value={rankRangeLowerBound || ""}
+                style={{ width: "88%" }}
               />
             </div>
           </div>
@@ -271,7 +273,7 @@ function LinkSubmissionForm({
           </div>
         </div>
 
-        <div className="flex flex-row bg-gray-100 rounded-lg font-sans m-5">
+        <div className="flex flex-row bg-gray-100 rounded-lg font-sans m-10 mb-5">
           <p className="text-4xl font-semibold font-sans">Match links</p>
         </div>
         <textarea
@@ -282,7 +284,7 @@ function LinkSubmissionForm({
           }}
           value={linkText}
           style={{ resize: "none" }}
-          className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 m-auto h-36 max-h-48"
+          className="flex flex-row border-2 border-gray-400 bg-gray-100 placeholder:text-xl placeholder:font-medium rounded-xl font-sans p-2 justify-center justify-items-center w-11/12 mx-10 h-36 max-h-48"
           placeholder="1 per line (match id or full link)"
           required={true}
         />
