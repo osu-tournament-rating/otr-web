@@ -180,7 +180,7 @@ function LinkSubmissionForm({
             />
           </div>
           <div className="flex-none xl:flex">
-            <div className="space-y-3 w-1/2 mx-10 mb-5">
+            <div className="space-y-3 w-1/2 mx-10 mb-5 md:mb-0">
               <p className="font-sans font-semibold text-2xl">
                 Tournament name
               </p>
