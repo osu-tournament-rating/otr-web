@@ -3,6 +3,7 @@ import { IUserRankingCardProps } from "./IUserRankingCardProps";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { formatNumberWithCommas } from "../../Helpers";
+import UserRatingProgressBar from "./UserRatingProgressBar";
 
 
 function UserRankingCard({
@@ -105,21 +106,8 @@ function UserRankingCard({
             </div>
           </div>
         </div>
-        <div className="flex-col m-6">
-          <div className="flex-col">
-            <p className="text-2xl font-semibold font-sans">
-              {formatNumberWithCommas(ratingRemainingForNextRank)} TR left until{" "}
-              {nextRankingClass}
-            </p>
-          </div>
-          <div className="flex-shrink-0 flex-none pt-3">
-            <div className="w-1/2 max-w-md min-w-sm bg-gray-200 rounded-full dark:bg-gray-700">
-              <div
-                className={`bg-blue-300 pt-3 leading-none rounded-full ${barWidthClass}`}
-              />
-            </div>
-          </div>
-        </div>
+
+       <UserRatingProgressBar current={ratingDelta - ratingRemainingForNextRank} total={ratingDelta} nextRankingClass={nextRankingClass} />
       </div>
     </>
   );
