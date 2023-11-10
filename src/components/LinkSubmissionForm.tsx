@@ -46,7 +46,7 @@ function LinkSubmissionForm({
       .then((data) => {
         const roles = data["roles"];
         setHasVerifierRole(roles.includes("MatchVerifier") || roles.includes("Admin"));
-        setUserId(data["id"]);
+        setUserId(data["userId"]);
       })
       .catch((error) => {
         console.error(
