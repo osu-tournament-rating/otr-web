@@ -1,0 +1,26 @@
+.notice {
+  width: 100%;
+  background-color: hsla(var(--blue-100));
+  border-left: 4px solid hsla(var(--blue-500));
+  border-radius: var(--main-borderRadius);
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: hsla(0, 0%, 0%, 0.7);
+}
+
+.notice.alert {
+  background-color: hsla(var(--yellow-100));
+  border-left: 4px solid hsla(var(--yellow-500));
+  color: hsla(var(--yellow-900), 0.8);
+}
+
+.notice.error {
+  background-color: hsla(var(--red-100));
+  border-left: 4px solid hsla(var(--red-500));
+  color: hsla(var(--red-900), 0.8);
+}
+
+.notice p {
+  margin: 0.4rem 0 0 0;
+  line-height: 1.5rem;
+}

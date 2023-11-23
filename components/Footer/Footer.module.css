@@ -1,0 +1,20 @@
+.footer {
+  border-radius: var(--main-borderRadius);
+  padding: 1rem 1.2rem;
+  background-color: hsla(var(--gray-100));
+  margin: var(--main-padding);
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  margin-top: auto;
+  justify-content: space-between;
+  /* font-weight: 300; */
+  font-size: 0.95rem;
+  color: hsla(var(--foreground-hsl), 0.8);
+}
+
+.actions {
+  display: flex;
+  flex-flow: row;
+  gap: 1rem;
+}

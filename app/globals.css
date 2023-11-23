@@ -1,0 +1,166 @@
+:root {
+  --max-width: 1100px;
+  --border-radius: 12px;
+  --font-families: var(--font-Inter), ui-monospace, Menlo, Monaco,
+    'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono',
+    'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono',
+    'Courier New', monospace;
+
+  /* --main-padding: 2.5rem; 
+  --internal-gap: 0.8rem; */
+  --main-padding: 2vw; /* fluid design */
+  --internal-gap: 1vw; /* fluid design */
+  --main-borderRadius: 0.75rem;
+
+  --background-hsl: 0, 0%, 100%;
+  --foreground-hsl: 0, 0%, 6%;
+
+  --color-grey: 0, 0%, 6%;
+
+  /* COLORS */
+
+  --gray-50: 210, 20%, 98%;
+  --gray-100: 220, 14%, 96%;
+  --gray-200: 220, 13%, 91%;
+  --gray-300: 216, 12%, 84%;
+  --gray-400: 218, 11%, 65%;
+  --gray-500: 220, 9%, 46%;
+  --gray-600: 215, 14%, 34%;
+  --gray-700: 217, 19%, 27%;
+  --gray-800: 215, 28%, 17%;
+  --gray-900: 221, 39%, 11%;
+  --gray-950: 224, 71%, 4%;
+
+  --blue-50: 214, 100%, 97%;
+  --blue-100: 214, 95%, 93%;
+  --blue-200: 213, 97%, 87%;
+  --blue-300: 212, 96%, 78%;
+  --blue-400: 213, 94%, 68%;
+  --blue-500: 217, 91%, 60%;
+  --blue-600: 221, 83%, 53%;
+  --blue-700: 224, 76%, 48%;
+  --blue-800: 226, 71%, 40%;
+  --blue-900: 224, 64%, 33%;
+  --blue-950: 226, 57%, 21%;
+
+  --yellow-50: 55, 92%, 95%;
+  --yellow-100: 55, 97%, 88%;
+  --yellow-200: 53, 98%, 77%;
+  --yellow-300: 50, 98%, 64%;
+  --yellow-400: 48, 96%, 53%;
+  --yellow-500: 45, 93%, 47%;
+  --yellow-600: 41, 96%, 40%;
+  --yellow-700: 35, 92%, 33%;
+  --yellow-800: 32, 81%, 29%;
+  --yellow-900: 28, 73%, 26%;
+  --yellow-950: 26, 83%, 14%;
+
+  --red-50: 0, 86%, 97%;
+  --red-100: 0, 93%, 94%;
+  --red-200: 0, 96%, 89%;
+  --red-300: 0, 94%, 82%;
+  --red-400: 0, 91%, 71%;
+  --red-500: 0, 84%, 60%;
+  --red-600: 0, 72%, 51%;
+  --red-700: 0, 74%, 42%;
+  --red-800: 0, 70%, 35%;
+  --red-900: 0, 63%, 31%;
+  --red-950: 0, 75%, 15%;
+
+  --green-50: 138, 76%, 97%;
+  --green-100: 141, 84%, 93%;
+  --green-200: 141, 79%, 85%;
+  --green-300: 142, 77%, 73%;
+  --green-400: 142, 69%, 58%;
+  --green-500: 142, 71%, 45%;
+  --green-600: 142, 76%, 36%;
+  --green-700: 142, 72%, 29%;
+  --green-800: 143, 64%, 24%;
+  --green-900: 144, 61%, 20%;
+  --green-950: 145, 80%, 10%;
+
+  --mods-NM-bg: 226, 99%, 65%;
+  --mods-NM-bg-row: 226, 99%, 65%, 0.15;
+  --mods-HD-bg: 43, 98%, 60%;
+  --mods-HD-bg-row: 43, 98%, 60%, 0.15;
+  --mods-HR-bg: 0, 100%, 69%;
+  --mods-HR-bg-row: 0, 100%, 69%, 0.15;
+  --mods-HDHR-bg: 13, 98%, 60%;
+  --mods-HDHR-bg-row: 13, 98%, 60%, 0.15;
+  --mods-HDDT-bg: 302, 97%, 86%;
+  --mods-HDDT-bg-row: 302, 97%, 86%, 0.15;
+  --mods-EZ-bg: 120, 100%, 50%;
+  --mods-EZ-bg-row: 120, 100%, 50%, 0.15;
+  --mods-FL-bg: 0, 0%, 8%;
+  --mods-FL-bg-row: 0, 0%, 8%, 0.15;
+  --mods-DT-bg: 267, 97%, 73%;
+  --mods-DT-bg-row: 267, 97%, 73%, 0.15;
+  --mods-FM-bg: 101, 38%, 63%;
+  --mods-FM-bg-row: 101, 38%, 63%, 0.15;
+  --mods-TB-bg: 191, 26%, 57%;
+  --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* font-size: 100%; */
+  font-size: 16px; /* FOR FLUID DESIGN */
+  scroll-behavior: smooth !important;
+}
+
+body {
+  background-color: hsl(var(--background-rgb));
+  color: hsl(var(--foreground-hsl));
+  font-family: var(--font-families);
+  min-height: 100vh;
+  display: flex;
+  flex-flow: column;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  padding: var(--main-padding);
+  padding-top: 0px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a,
+button {
+  border: 0;
+  font-family: var(--font-families);
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  :root {
+    --main-padding: 1.2rem;
+  }
+}
+
+/* FOR FLUID DESIGN */
+
+@media screen and (min-width: 320px) {
+  html {
+    font-size: calc(7px + 9 * ((100vw - 320px) / 1280));
+    /* {default-font-size - 9}px + 9 * ((max-width-viewport - min-width-viewport) / calc(max-width-viewport - min-width-viewport)) */
+  }
+}
+
+@media screen and (min-width: 1600px) {
+  html {
+    font-size: 16px;
+  }
+}
