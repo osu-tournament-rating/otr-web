@@ -1,0 +1,43 @@
+.container {
+  width: 100%;
+  display: flex;
+  flex-flow: column;
+  padding: var(--main-padding);
+  background-color: hsla(var(--gray-100));
+  border-radius: var(--main-borderRadius);
+  gap: 1rem;
+}
+
+.header {
+  display: flex;
+  flex-flow: row;
+  gap: 2.2rem;
+  font-size: 3.4rem;
+}
+
+.header .item {
+  display: flex;
+  flex-flow: row;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.item span {
+  font-weight: 600;
+  font-size: 3.4rem;
+}
+
+.item .text {
+  font-size: 1.2rem;
+}
+
+.chartLabel {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chartLabel svg {
+  height: 0.8rem;
+}

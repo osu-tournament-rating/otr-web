@@ -1,0 +1,44 @@
+.container {
+  width: 100%;
+  max-width: fit-content;
+  height: fit-content;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: repeat(3, auto); /* old value 4 */
+  grid-auto-flow: column;
+  gap: 0.8rem 2.2rem;
+}
+
+.field {
+  display: flex;
+  flex-flow: row;
+  gap: 0.7rem;
+  height: 1.2rem;
+  line-height: 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.field .checkbox {
+  height: 100%;
+  aspect-ratio: 1;
+  border: 1px solid hsla(var(--gray-600));
+  border-radius: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: all 0.2s ease-out;
+}
+
+.checkbox.selected {
+  background-color: hsla(var(--green-500), 0.75);
+  border: 1px solid transparent;
+}
+
+.checkbox.excluded {
+  background-color: hsla(var(--red-500), 0.75);
+  border: 1px solid transparent;
+}

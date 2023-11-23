@@ -1,0 +1,27 @@
+.button {
+  border-radius: var(--main-borderRadius);
+  background-color: transparent;
+  padding: 0.8vw 2vw;
+  font-size: 1.3rem;
+  transition: all 0.2s ease-out;
+  text-transform: capitalize;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.button:hover {
+  cursor: pointer;
+}
+
+.button svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  /* padding-top: 0.25rem; */
+  transition: transform 0.2s ease-out;
+}
+
+.button svg.open {
+  transform: rotate(90deg);
+}

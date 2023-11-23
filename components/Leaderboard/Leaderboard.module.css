@@ -1,0 +1,111 @@
+.container {
+  display: flex;
+  flex-flow: column;
+  gap: var(--internal-gap);
+}
+
+.leaderboardContainer {
+  width: 100%;
+  background-color: hsla(var(--gray-100));
+  border-radius: var(--main-borderRadius);
+  padding: var(--main-padding);
+  font-size: 0.95rem;
+  display: flex;
+  flex-flow: column;
+  gap: 0.8rem;
+  scroll-margin-top: 10rem;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  gap: 0.5rem;
+}
+
+.header span {
+  font-weight: 600;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.9rem;
+  gap: 10px;
+}
+
+.table th {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.table thead th:first-child {
+  text-align: left;
+  padding-left: 2rem;
+}
+
+.table tbody td {
+  padding: 1.2rem 2rem;
+  background-color: hsla(var(--gray-200));
+}
+
+.table tbody tr.me td {
+  background-color: hsla(var(--blue-200), 0.6);
+}
+
+.table th:nth-child(1) {
+  width: 15%;
+}
+
+.table th:nth-child(2) {
+  text-align: left;
+  width: 20%;
+  padding-left: 2.3rem;
+}
+
+.table td:nth-child(2) {
+  padding-left: 0;
+}
+
+.table tbody td:not(:first-child, :nth-child(2)) {
+  text-align: center;
+}
+
+.table tbody td:nth-child(2) {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table tbody tr > td:first-child {
+  border-top-left-radius: 0.4rem;
+  border-bottom-left-radius: 0.4rem;
+}
+
+.table tbody tr > td:last-child {
+  border-top-right-radius: 0.4rem;
+  border-bottom-right-radius: 0.4rem;
+}
+
+.table tbody td .propic {
+  left: -0.4rem;
+  height: 1.8rem;
+  width: 1.8rem;
+  border-radius: 50vw;
+  background-color: hsla(var(--gray-300));
+  position: relative;
+  overflow: hidden;
+}
+
+.table tbody td .propic img {
+  object-fit: contain;
+}
+
+.table tbody td .rank {
+  height: 1.8rem;
+  width: 1.8rem;
+  border-radius: 50vw;
+  background-color: hsla(var(--gray-300));
+  margin: auto;
+}

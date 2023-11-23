@@ -1,0 +1,79 @@
+.navbar {
+  border-radius: var(--main-borderRadius);
+  padding: 1rem 1.5rem;
+  background-color: hsla(var(--gray-100));
+  margin: var(--main-padding);
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  font-size: clamp(0.5rem, 1.25rem, 1.25rem);
+  font-weight: 500;
+  gap: 2rem;
+}
+
+.content {
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.routes {
+  display: flex;
+  flex-flow: row;
+  gap: 2rem;
+}
+
+.content a {
+  transition: color 0.2s ease-out;
+}
+
+.content a:hover {
+  color: hsla(var(--gray-600));
+}
+
+.content a.active {
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  gap: 2rem;
+  height: 1.9rem;
+}
+
+.actions button {
+  height: fit-content;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.logoLink,
+.actions .userPropic {
+  height: 1.9rem;
+  width: 1.9rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.darkModeSwitcher {
+  position: relative;
+  height: 1.85rem;
+  width: 1.9rem;
+}
+
+:is(.userPropic, .logoLink, .darkModeSwitcher) img {
+  object-fit: contain;
+}
+
+@media (max-width: 1040px) {
+  .content {
+    display: none;
+  }
+}
