@@ -1,4 +1,4 @@
-name: .NET CI/CD
+name: Web deploy
 
 on:
   push:
@@ -60,4 +60,6 @@ jobs:
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script: |
+            docker stop otr-web-dev
+            docker rm otr-web-dev
             docker run -d -p 3000:3000 --name otr-web-dev --env-file ~/otr-web/.env stagecodes/otr-web-dev:latest
