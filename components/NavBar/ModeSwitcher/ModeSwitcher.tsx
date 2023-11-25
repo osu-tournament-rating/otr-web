@@ -8,28 +8,28 @@ import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
 
+const modeIcons: { [key: string]: { image: any; alt: string } } = {
+  '0': {
+    image: standardSVG,
+    alt: 'Standard',
+  },
+  '1': {
+    image: taikoSVG,
+    alt: 'Taiko',
+  },
+  '2': {
+    image: ctbSVG,
+    alt: 'CTB',
+  },
+  '3': {
+    image: maniaSVG,
+    alt: 'Mania',
+  },
+};
+
 export default function ModeSwitcher({ mode }: { mode: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMode, setSelectedMode] = useState(mode ?? '0');
-
-  const modeIcons: { [key: string]: { image: any; alt: string } } = {
-    '0': {
-      image: standardSVG,
-      alt: 'Standard',
-    },
-    '1': {
-      image: taikoSVG,
-      alt: 'Taiko',
-    },
-    '2': {
-      image: ctbSVG,
-      alt: 'CTB',
-    },
-    '3': {
-      image: maniaSVG,
-      alt: 'Mania',
-    },
-  };
 
   return (
     <div className={styles.modeSwitcher}>
@@ -41,8 +41,8 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
         }}
       >
         <Image
-          src={modeIcons[`${mode}`].image}
-          alt={modeIcons[`${mode}`].alt}
+          src={modeIcons[`${selectedMode}`].image}
+          alt={modeIcons[`${selectedMode}`].alt}
           fill
         />
       </button>
