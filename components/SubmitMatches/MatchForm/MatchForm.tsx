@@ -154,7 +154,11 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
             <h1>
               Match links
               {/* // ? ADD INFO TO MATCH  */}
-              <InfoIcon infoText={'lorem ipsum'} />
+              <InfoIcon
+                infoText={
+                  'One or more osu! multiplayer match links or ids, separated by a new line'
+                }
+              />
             </h1>
           </div>
           <div className={styles.fields}>
