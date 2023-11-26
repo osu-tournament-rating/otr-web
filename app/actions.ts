@@ -65,7 +65,8 @@ export async function setLoginCookie(cookie: string) {
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
   });
-  revalidateTag('user-me');
+  const res = await getUserData();
+  await changeOsuModeCookie(res.osuPlayMode);
   return;
 }
 
@@ -173,7 +174,7 @@ export async function saveTournamentMatches(
   }
 }
 
-export async function changeOsuModeCookie(mode: string) {
+export async function changeOsuModeCookie(mode?: string) {
   await cookies().set('OTR-user-selected-osu-mode', mode ?? '0');
   return;
 }
@@ -394,7 +395,8 @@ export async function fetchLeaderboard(params: {}) {
 }
 
 export async function fetchDashboard() {
-  const osuMode = await cookies().get('OTR-user-selected-osu-mode')?.value;
+  const osuMode =
+    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
   let data = await fetch(
     `${process.env.REACT_APP_API_URL}/me/stats?mode=${osuMode}`,
