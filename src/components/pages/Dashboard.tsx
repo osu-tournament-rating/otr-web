@@ -50,7 +50,7 @@ function Dashboard({ isAuthenticated, mode }: { isAuthenticated: boolean, mode: 
   }, [historyDays, navigate, mode]);
 
   if (!stats) {
-    return <p>Error loading dashboard.</p>;
+    return <p>Loading dashboard...</p>;
   }
 
   const generalStats = stats["generalStats"];
