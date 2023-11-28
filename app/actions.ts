@@ -1,6 +1,6 @@
 'use server';
 
-import { LeaderboardsQuerySchema } from '@/lib/types';
+import { LeaderboardsQuerySchema, MatchesSubmitFormSchema } from '@/lib/types';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -76,31 +76,31 @@ export async function saveTournamentMatches(
 ) {
   const submitterUser = await getUserData();
 
-  const tournamentSchema = z.object({
-    tournamentName: z.string().min(1),
-    abbreviation: z.string().min(1),
-    forumPost: z
-      .string()
-      .url()
-      .startsWith('https://osu.ppy.sh/community/forums/topics/')
-      .min(1),
-    rankRangeLowerBound: z.number().min(1),
-    teamSize: z.number().min(1).max(8),
-    mode: z.number().min(0).max(3),
-    submitterId: z.number().min(1),
-    ids: z.number().array().min(1),
-  });
-
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (submitterUser?.error) return redirect('/');
 
   try {
-    /* let hasVerifiedRole =
-      (submitterUser.roles.includes('MatchVerifier') ||
-        submitterUser.roles.includes('Admin')) ??
-      false; */
+    /* REGEX TO REMOVE ALL SPACES AND ENTERS */
+    let matchIDs = await formData
+      .get('matchLinks')
+      .split(/\r?\n/g)
+      .map((value: string) => {
+        if (value.startsWith('https://osu.ppy.sh/community/matches/'))
+          value = value.replace('https://osu.ppy.sh/community/matches/', '');
 
-    const data = tournamentSchema.parse({
+        if (value.startsWith('https://osu.ppy.sh/mp/')) {
+          value = value.replace('https://osu.ppy.sh/mp/', '');
+        }
+
+        /* REGEX TO CHECK IF VALUE HAS ONLY DIGITS */
+        if (!/^\d+$/.test(value)) {
+          return value;
+        }
+
+        return parseFloat(value);
+      });
+
+    const data = MatchesSubmitFormSchema.parse({
       tournamentName: formData.get('tournamentName'),
       abbreviation: formData.get('tournamentAbbreviation'),
       forumPost: formData.get('forumPostURL'),
@@ -108,11 +108,7 @@ export async function saveTournamentMatches(
       teamSize: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
       submitterId: submitterUser?.userId ?? 0,
-      /* REGEX TO REMOVE ALL SPACES AND ENTERS */
-      ids: formData
-        .get('matchLinks')
-        .split(/\r?\n/g)
-        .map((value: string) => parseInt(value)),
+      ids: matchIDs,
     });
 
     let isSubmissionVerified = formData.get('verifierCheckBox') ?? false;
@@ -124,7 +120,6 @@ export async function saveTournamentMatches(
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-          /* Authorization: `${await cookies().get('OTR-Access-Token')?.value}`, */
           Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
             cookies().get('OTR-Access-Token')?.value
           }`,
