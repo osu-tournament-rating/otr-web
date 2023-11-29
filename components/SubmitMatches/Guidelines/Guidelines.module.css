@@ -1,0 +1,6 @@
+.list {
+  display: flex;
+  flex-flow: column;
+  gap: var(--internal-gap);
+  grid-area: guidelines;
+}

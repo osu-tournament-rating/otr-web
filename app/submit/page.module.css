@@ -1,0 +1,6 @@
+.pageContainer {
+  display: grid;
+  grid-template-columns: 52% auto;
+  gap: var(--main-padding);
+  grid-template-areas: 'guidelines form';
+}

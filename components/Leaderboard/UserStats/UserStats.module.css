@@ -1,0 +1,43 @@
+.userStatsContainer {
+  width: 100%;
+  background-color: hsla(var(--gray-100));
+  border-radius: var(--main-borderRadius);
+  padding: var(--main-padding);
+  display: flex;
+  flex-flow: column;
+  gap: 1.4rem;
+}
+
+.header {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  height: 3.3rem;
+  gap: 3.5rem;
+}
+
+.header .item {
+  display: flex;
+  height: 100%;
+  flex-flow: column;
+  justify-content: space-between;
+  font-size: 1.15rem;
+}
+
+.item h1 {
+  font-size: 3.8rem;
+  font-weight: 600;
+  line-height: 3.3rem;
+}
+
+.item .label {
+  font-weight: 400;
+}
+
+.item .value {
+  font-weight: 600;
+}
+
+.chart {
+  height: 15rem;
+}

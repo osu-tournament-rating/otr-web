@@ -1,0 +1,44 @@
+.modeSwitcher {
+  height: 1.9rem;
+  width: 1.9rem;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.modeSwitcher .switchButton {
+  height: 1.9rem;
+  width: 1.9rem;
+  aspect-ratio: 1;
+}
+
+.dropdown {
+  display: flex;
+  flex-flow: column;
+  position: absolute;
+  top: 3.4rem;
+  right: 0;
+  background-color: hsla(var(--gray-100));
+  border-radius: var(--main-borderRadius);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.item {
+  font-weight: 400;
+  font-size: 1.1rem;
+  padding: 0.5rem 1.4rem;
+  cursor: pointer;
+}
+
+.item:first-child {
+  padding: 0.8rem 1.4rem 0.5rem 1.4rem;
+}
+
+.item:last-child {
+  padding: 0.5rem 1.4rem 0.8rem 1.4rem;
+}
+
+.item:hover {
+  /* background-color: hsla(0, 0%, 0%, 0.05); */
+  color: hsla(var(--gray-600));
+}

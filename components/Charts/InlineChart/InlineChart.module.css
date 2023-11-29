@@ -1,0 +1,46 @@
+.chart {
+  width: 100%;
+  padding-bottom: 2.2rem;
+}
+
+.line {
+  width: 100%;
+  height: 2.8rem;
+  border-radius: var(--main-borderRadius);
+  background-color: hsla(var(--gray-200));
+  display: flex;
+  flex-flow: row;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  position: relative;
+  user-select: none;
+}
+
+.segment:first-child {
+  border-radius: 0.75rem 0 0 0.75rem;
+}
+
+.segment:last-child {
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.segment:only-child {
+  border-radius: 0.75rem;
+}
+
+.segment .percentile::after {
+  content: '%';
+}
+
+.segment .label {
+  font-size: 0.92rem;
+  font-weight: 400;
+  position: absolute;
+  bottom: -1.6rem;
+}
