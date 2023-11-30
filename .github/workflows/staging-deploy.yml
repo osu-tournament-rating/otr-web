@@ -50,21 +50,21 @@ jobs:
           ref: staging
       - name: Create .env files
         run: |
-          echo "${{ secrets.PROD_APP_ENV }}" > .env
+          echo "${{ secrets.STAGING_APP_ENV }}" > .env
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
           source: ".env"
           target: "~/otr-web/"
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          username: ${{ secrets.PROD_SSH_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
             docker pull stagecodes/otr-web-staging:latest
             docker stop otr-web-staging || true
