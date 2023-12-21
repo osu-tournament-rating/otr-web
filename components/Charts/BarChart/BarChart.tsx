@@ -22,8 +22,19 @@ ChartJS.register(
   Legend
 );
 
-export default function BarChart({ mainAxe = 'x' }: { mainAxe: any }) {
+export default function BarChart({
+  mainAxe = 'x',
+  bestTournamentPerformances,
+  worstTournamentPerformances,
+  teamSizes,
+}: {
+  mainAxe: any;
+  bestTournamentPerformances?: any;
+  worstTournamentPerformances?: any;
+  teamSizes?: any;
+}) {
   const [font, setFont] = useState('');
+  const [color, setColor] = useState('');
 
   /* get variables of colors from CSS */
   useEffect(() => {
@@ -31,6 +42,9 @@ export default function BarChart({ mainAxe = 'x' }: { mainAxe: any }) {
       getComputedStyle(document.documentElement).getPropertyValue(
         '--font-families'
       )
+    );
+    setColor(
+      getComputedStyle(document.documentElement).getPropertyValue('--green-400')
     );
   }, []);
 
@@ -52,7 +66,7 @@ export default function BarChart({ mainAxe = 'x' }: { mainAxe: any }) {
         display: false,
       },
       tooltip: {
-        enabled: false,
+        enabled: true,
       },
     },
     scales: {
@@ -63,6 +77,7 @@ export default function BarChart({ mainAxe = 'x' }: { mainAxe: any }) {
             family: font,
           },
         },
+        grace: '2%',
         /* border: {
               color: 'transparent',
             }, */
@@ -74,27 +89,62 @@ export default function BarChart({ mainAxe = 'x' }: { mainAxe: any }) {
             family: font,
           },
         },
+        grace: '10%',
+        stepsSize: 1,
       },
     },
   };
 
-  const labels = ['HR', 'NM', 'HD', 'FM'];
+  var labels = ['HR', 'NM', 'HD', 'FM'];
+  var dataScores = ['']; /* labels.map(() => Math.ceil(Math.random() * 20)) */
+
+  if (bestTournamentPerformances) {
+    labels.length = 0;
+    bestTournamentPerformances.map((tournament: any, index: any) => {
+      labels[index] = tournament.tournamentName;
+      dataScores[index] = tournament.matchCost.toFixed(2);
+      return;
+    });
+  }
+
+  if (worstTournamentPerformances) {
+    labels.length = 0;
+    worstTournamentPerformances.map((tournament: any, index: any) => {
+      labels[index] = tournament.tournamentName;
+      dataScores[index] = tournament.matchCost.toFixed(2);
+      return;
+    });
+  }
+
+  if (teamSizes) {
+    Object.keys(teamSizes).map((data: any, index: any) => {
+      labels[index] = data.replace('count', '');
+      return;
+    });
+
+    Object.values(teamSizes).map((data: any, index: any) => {
+      dataScores[index] = data;
+      return;
+    });
+  }
 
   const data = {
     labels,
     datasets: [
       {
         label: 'Dataset 1',
-        data: labels.map(() => Math.ceil(Math.random() * 100)),
-        backgroundColor: [
-          'rgba(255, 99, 132)',
-          'rgba(54, 162, 235)',
-          'rgba(255, 206, 86)',
-          'rgba(25, 156, 86)',
-        ],
+        data: dataScores,
+        backgroundColor: teamSizes
+          ? [
+              'rgba(120, 227, 117, 1)',
+              'rgba(76, 148, 255, 1)',
+              'rgba(227, 117, 117, 1)',
+            ]
+          : `hsla(${color})`,
         /* barThickness: 30, */
         /* maxBarThickness: 30, */
         beginAtZero: true,
+        padding: 10,
       },
     ],
   };
