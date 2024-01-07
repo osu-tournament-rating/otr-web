@@ -128,9 +128,29 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
                 <div className={styles.field}>
                   <label htmlFor="rankRestriction">
                     Rank restriction{' '}
-                    <InfoIcon
-                      infoText={`The best rank allowed to participate -- for example, enter 10000 for a 10k-50k tournament and 1 for an open rank tournament. For a tiered tournament, use the best tier's rank, and for a tournament with an average rank requirement, enter that requirement (e.g. enter 500 for "average rank must be 500 or greater"). If the requirements are more complicated, ask in the o!TR server!`}
-                    />
+                    <InfoIcon>
+                      <p>
+                        <span>
+                          The best rank allowed to participate (after BWS if
+                          used).
+                          <br />
+                          Ask us in the Discord if you&apos;re not sure.
+                        </span>
+                        <br />
+                        <br />
+                        <span>Examples:</span>
+                        <ul style={{ paddingLeft: '1.2em' }}>
+                          <li>Enter 1 for open rank tournaments</li>
+                          <li>Enter 750 for a 750+ tournament</li>
+                          <li>
+                            If the tournament allows a team average rank, even
+                            if open rank, enter the average (e.g. teams must be
+                            750 rank average, enter 750)
+                          </li>
+                          <li>Enter 10000 for a 10k-50k tournament</li>
+                        </ul>
+                      </p>
+                    </InfoIcon>
                   </label>
                   <span className={styles.inputError}>
                     {state?.errors?.rankRangeLowerBound}
@@ -151,11 +171,21 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
                     Team size
                     <InfoIcon>
                       <p>
-                        The number of <i>players per team</i> that play in match
-                        at a time -- for example, enter 3 for a 3v3 team size 6
-                        tournament and 1 for a 1v1. Remember not to include
-                        battle royale matches or matches that are played in
-                        head-to-head mode with more than two players.
+                        <span>
+                          The maximum number of players per team allowed in the
+                          lobby at the same time. This is not the same as the
+                          maximum roster size (Team Size / TS). Ask us in the
+                          Discord if you&apos;re not sure.
+                        </span>
+                        <br />
+                        <br />
+                        <span>Examples:</span>
+                        <ul style={{ paddingLeft: '1.2em' }}>
+                          <li>1v1 TS 1 =&gt; 1v1</li>
+                          <li>1v1 TS 4 =&gt; 1v1</li>
+                          <li>3v3 TS 6 =&gt; 3v3</li>
+                          <li>osu! World Cups: 4v4 TS 8 =&gt; 4v4</li>
+                        </ul>
                       </p>
                     </InfoIcon>
                   </label>
