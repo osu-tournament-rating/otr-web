@@ -8,7 +8,7 @@ export default function Form({
   children: React.ReactNode;
 }) {
   return (
-    <form action={action} className={styles.form}>
+    <form action={action} className={styles.form} id={'tournament-form'}>
       {children}
     </form>
   );

@@ -2,6 +2,7 @@ import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
 import PlayersBarChart from '@/components/Charts/PlayersBarChart/PlayersBarChart';
+import RadarChart from '@/components/Charts/RadarChart/RadarChart';
 import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
 import GridCard from '@/components/Dashboard/GridCard/GridCard';
 import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/UserTotalMatches';
@@ -30,7 +31,7 @@ export default async function page({
 
   return (
     <main className={styles.main}>
-      <div className={styles.notices}>
+      {/* <div className={styles.notices}>
         <Notice title={'About your TR'}>
           Your TR (tournament rating) is calculated based on your match cost
           relative to other players in your matches, see{' '}
@@ -59,7 +60,7 @@ export default async function page({
             "If you've never played osu! tournaments before, welcome! You can start earning TR simply by playing in osu! tournament matches."
           }
         />
-      </div>
+      </div> */}
       <UserMainCard data={data?.generalStats} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
@@ -158,8 +159,8 @@ export default async function page({
             </span>
           </div>
         </GridCard>
-        <GridCard title={'Winrate by mod - TO DO'}>
-          <BarChart mainAxe={'x'} />
+        <GridCard title={'Winrate by mod'}>
+          <RadarChart winrateModData={data?.modStats} />
         </GridCard>
         <GridCard title={'Teammates'}>
           <div className={styles.cardStat}>
@@ -174,10 +175,6 @@ export default async function page({
               {data?.matchStats.bestTeammateName}
             </span>
           </div>
-          <div className={styles.cardStat}>
-            <span>Worst teammate (to remove)</span>
-            <span className={styles.value}>??</span>
-          </div>
         </GridCard>
         <GridCard title={'Opponents'}>
           <div className={styles.cardStat}>
@@ -190,13 +187,9 @@ export default async function page({
             <span>Best opponent</span>
             <span className={styles.value}>TO DO</span>
           </div>
-          <div className={styles.cardStat}>
-            <span>Worst opponent (to remove)</span>
-            <span className={styles.value}>??</span>
-          </div>
         </GridCard>
-        <GridCard title={'Average score per mod - TO DO'}>
-          <BarChart mainAxe={'x'} />
+        <GridCard title={'Average score per mod'}>
+          <RadarChart averageModScore={data?.modStats} />
         </GridCard>
         <GridCard title={'Most played with teammates - TO DO'}>
           <PlayersBarChart />
@@ -211,8 +204,11 @@ export default async function page({
             <AreaChart />
           </div>
         </GridCard>
-        <GridCard title={'Most common team size - TO DO'}>
-          <BarChart mainAxe={'x'} />
+        <GridCard title={'Most common team size'}>
+          <BarChart
+            mainAxe={'x'}
+            teamSizes={data?.tournamentStats.teamSizeCounts}
+          />
         </GridCard>
         <GridCard title={'Most common format - TO DO'}>
           <BarChart mainAxe={'x'} />
@@ -220,11 +216,19 @@ export default async function page({
         <GridCard title={'Summary of placements - TO DO'}>
           <BarChart mainAxe={'x'} />
         </GridCard>
-        <GridCard title={'Best tournament performances - TO DO'}>
-          <BarChart mainAxe={'y'} />
+        <GridCard title={'Best tournament performances'}>
+          <BarChart
+            mainAxe={'y'}
+            bestTournamentPerformances={data?.tournamentStats.bestPerformances}
+          />
         </GridCard>
-        <GridCard title={'Worst tournament performances - TO DO'}>
-          <BarChart mainAxe={'y'} />
+        <GridCard title={'Worst tournament performances'}>
+          <BarChart
+            mainAxe={'y'}
+            worstTournamentPerformances={
+              data?.tournamentStats.worstPerformances
+            }
+          />
         </GridCard>
       </StatsGrid>
     </main>

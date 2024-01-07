@@ -1,0 +1,100 @@
+.toast {
+  width: 26em;
+  height: auto;
+  padding: 1em 3em;
+  background-color: rgb(63, 63, 168);
+  color: white;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  align-items: center;
+  margin-left: -13em;
+  border-radius: 0.3rem;
+  font-family: var(--font-families);
+  transform: translateY(2em);
+  opacity: 0;
+  -webkit-animation: fadein 0.5s, stay 5s 0.5s, fadeout 0.5s 5s;
+  animation: fadein 0.5s, stay 5s 0.5s, fadeout 0.5s 5s;
+}
+
+.toast.success {
+  background-color: hsla(var(--green-400));
+  color: hsla(var(--green-900));
+  font-weight: 500;
+}
+
+.toast.error {
+  background-color: hsla(var(--red-400));
+  color: hsla(var(--red-900));
+  font-weight: 500;
+}
+
+@-webkit-keyframes fadein {
+  from {
+    transform: translateY(2em);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+}
+
+@keyframes fadein {
+  from {
+    transform: translateY(2em);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes stay {
+  from {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+}
+
+@keyframes stay {
+  from {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadeout {
+  from {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(2em);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeout {
+  from {
+    transform: translateY(-1em);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(2em);
+    opacity: 0;
+  }
+}
