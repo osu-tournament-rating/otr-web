@@ -111,7 +111,8 @@ export async function saveTournamentMatches(
       ids: matchIDs,
     });
 
-    let isSubmissionVerified = formData.get('verifierCheckBox') ?? false;
+    let isSubmissionVerified =
+      formData.get('verifierCheckBox') == 'on' ?? false;
 
     await fetch(
       `${process.env.REACT_APP_API_URL}/matches/batch?verified=${isSubmissionVerified}`,
