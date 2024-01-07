@@ -1,5 +1,5 @@
 .toast {
-  width: 22em;
+  width: 26em;
   height: auto;
   padding: 1em 3em;
   background-color: rgb(63, 63, 168);
@@ -12,7 +12,7 @@
   bottom: 0;
   left: 50%;
   align-items: center;
-  margin-left: -11em;
+  margin-left: -13em;
   border-radius: 0.3rem;
   font-family: var(--font-families);
   transform: translateY(2em);

@@ -10,7 +10,14 @@ export default function Toast({
 }) {
   return (
     <div
-      className={clsx(styles.toast, status === 'success' ? styles.success : '')}
+      className={clsx(
+        styles.toast,
+        status === 'success'
+          ? styles.success
+          : status === 'error'
+          ? styles.error
+          : ''
+      )}
     >
       {message}
     </div>

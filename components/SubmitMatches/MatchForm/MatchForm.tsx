@@ -31,15 +31,20 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (state?.status) {
+    // Shows toast for both success or error, but need better implementation for errors
+    /* if (state?.status) {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
       }, 6000);
-    }
+    } */
 
     if (state?.status === 'success') {
       document.getElementById('tournament-form')?.reset();
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 6000);
     }
 
     return () => {};

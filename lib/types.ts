@@ -44,7 +44,7 @@ export const MatchesSubmitFormSchema = z.object({
         .number({
           required_error: 'osu! match link or lobby id required',
           invalid_type_error:
-            'The format must be an osu! match link, or lobby id. “Text” is not a valid url',
+            'Failed to parse one or more entries, ensure all entries are match IDs or osu! match URLs only, one per line',
         })
         .positive()
     )
