@@ -140,7 +140,10 @@ export async function saveTournamentMatches(
             ],
           });
         }
-        return response.json();
+
+        return {
+          status: 'success',
+        };
       })
       .then((data) => {
         console.log(data);
