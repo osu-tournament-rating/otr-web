@@ -111,9 +111,6 @@ export default async function Home() {
         </div>
         <div className={styles.decoration}></div>
       </div>
-      <div className={styles.row}>
-        <code>{JSON.stringify(user)}</code>
-      </div>
     </main>
   );
 }
