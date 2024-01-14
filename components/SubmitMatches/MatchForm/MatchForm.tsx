@@ -56,11 +56,10 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
         <Form action={formAction}>
           <div className={styles.section}>
             <div className={styles.header}>
-              <h1>Tournament</h1>
+              <h1>Tournament Submission</h1>
               <p>
-                We’re currently prioritizing badged tournaments, but you can
-                submit an unbadged tournament as well as long as it follows the
-                rules.
+                Any tournament, regardless of badge status, may be submitted, so
+                long as it follows our rules.
               </p>
             </div>
             <div className={styles.fields}>
