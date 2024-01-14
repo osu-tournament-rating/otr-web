@@ -414,8 +414,6 @@ export async function fetchDashboard() {
 export async function paginationParamsToURL(params: {}) {
   let url = '';
 
-  console.log(params);
-
   if (Object.keys(params).length > 0) {
     Object.keys(params).forEach((key, index) => {
       if (key === 'page') return;
@@ -424,20 +422,16 @@ export async function paginationParamsToURL(params: {}) {
         let string = `${index !== 0 ? '&' : ''}${key}=`;
 
         params[key].forEach((value, index) => {
-          console.log(value);
           string += `${value}${index === 0 ? `&${key}=` : ''}`;
         });
 
-        return (url += `${string}${
-          index === Object.keys(params).length - 1 ? '&' : ''
-        }`);
+        return (url += `${string}`);
       }
 
       return (url += `${index !== 0 ? '&' : ''}${key}=${params[key]}${
         index === Object.keys(params).length - 1 ? '&' : ''
       }`);
     });
-    console.log(url);
   }
 
   return url;
