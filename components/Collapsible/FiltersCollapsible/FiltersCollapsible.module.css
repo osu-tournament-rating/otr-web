@@ -23,7 +23,14 @@
   flex-grow: 1;
 }
 
-.filter h2 {
+.filterName {
+  display: flex;
+  flex-flow: row;
+  gap: 0 0.5rem;
+}
+
+.filter h2,
+.filterName {
   font-weight: 600;
   font-size: 1.8rem;
 }
