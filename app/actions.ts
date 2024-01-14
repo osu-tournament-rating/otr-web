@@ -183,8 +183,6 @@ export async function resetLeaderboardFilters(string: string) {
 }
 
 export async function applyLeaderboardFilters(params: {}) {
-  /* const { type, rank, rating, matches, winrate, inclTier, exclTier } = params; */
-
   let urlStringObject = {};
 
   Object.keys(params).forEach((key) => {
@@ -200,7 +198,6 @@ export async function applyLeaderboardFilters(params: {}) {
       let string = '';
 
       params[key].forEach((value, index) => {
-        console.log(value);
         string += `${value}${index === 0 ? `&${key}=` : ''}`;
       });
 

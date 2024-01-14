@@ -78,13 +78,13 @@ export default function RangeSlider({
               setParamsToPush((prev: any) => ({
                 ...prev,
                 [name]: [
-                  values[0],
                   Math.max(
                     min - 1,
                     Math.min(values[1], Number(e.target.value))
                   ) < min
                     ? min
                     : Math.min(max, Number(e.target.value)),
+                  values[1],
                 ],
               }));
             }}
