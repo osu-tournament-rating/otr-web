@@ -6,7 +6,7 @@ export default function Guidelines() {
   return (
     <div className={styles.list}>
       <Card
-        title="Submission F.A.Q."
+        title="Submission Rules"
         description="Please read the following before submitting. Our goal is to include matches that do not stray too far from the competitive norm, it's important that bad data remains out of our system."
       />
       <Card

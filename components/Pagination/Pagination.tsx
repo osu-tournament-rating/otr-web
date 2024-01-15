@@ -37,7 +37,7 @@ export default function Pagination({
   const onPageChange = async (number: number) => {
     let url = await paginationParamsToURL(params);
 
-    router.push(`/leaderboards?${url}page=${number}#leaderboard`, {
+    router.push(`/leaderboards?${url}&page=${number}#leaderboard`, {
       scroll: true,
     });
 
@@ -53,7 +53,7 @@ export default function Pagination({
   const onNext = async () => {
     if (currentPage < parseInt(lastPage)) {
       let url = await paginationParamsToURL(params);
-      router.push(`/leaderboards?${url}page=${currentPage + 1}#leaderboard`, {
+      router.push(`/leaderboards?${url}&page=${currentPage + 1}#leaderboard`, {
         scroll: true,
       });
     }
@@ -62,7 +62,7 @@ export default function Pagination({
   const onPrevious = async () => {
     if (currentPage > 1) {
       let url = await paginationParamsToURL(params);
-      router.push(`/leaderboards?${url}page=${currentPage - 1}#leaderboard`, {
+      router.push(`/leaderboards?${url}&page=${currentPage - 1}#leaderboard`, {
         scroll: true,
       });
     }
