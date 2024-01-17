@@ -23,10 +23,6 @@ export default function FilterButtons({ params }: { params: {} }) {
           text={'All time'}
           isSelected={params.time == null || params.time === 'infinite'}
         />
-        {/* <FilterChangeButton
-          text={'Custom'}
-          isSelected={params.time === 'custom'}
-        /> */}
       </div>
     </div>
   );
