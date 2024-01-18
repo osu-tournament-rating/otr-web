@@ -3,6 +3,7 @@ import {
   applyLeaderboardFilters,
   resetLeaderboardFilters,
 } from '@/app/actions';
+import InfoIcon from '@/components/Form/InfoIcon/InfoIcon';
 import RangeSlider from '@/components/Range/RangeSlider';
 import TierSelector from '@/components/TierSelector/TierSelector';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,18 +30,6 @@ export default function FiltersCollapsible({
 
     return resetLeaderboardFilters(string);
   };
-
-  /*  useEffect(() => {
-    setParamsToPush({
-      ...params,
-      inclTier: inclTier != null ? inclTier.split(',') : [],
-      exclTier: exclTier != null ? exclTier.split(',') : [],
-      rank: rank != null ? rank.split(',') : [],
-      rating: rating != null ? rating.split(',') : [],
-      matches: matches != null ? matches.split(',') : [],
-      winrate: winrate != null ? winrate.split(',') : [],
-    });
-  }, [params]); */
 
   useEffect(() => {
     setParamsToPush({
@@ -117,7 +106,14 @@ export default function FiltersCollapsible({
         >
           <motion.div variants={collapsibleContent} className={styles.filters}>
             <motion.div className={styles.filter}>
-              <h2>Rank</h2>
+              <div className={styles.filterName}>
+                <h2>Rank</h2>
+                <InfoIcon
+                  infoText="Filter by the last-known osu! rank of the player"
+                  positionBottom={true}
+                  startLeft={true}
+                />
+              </div>
               <RangeSlider
                 name={'rank'}
                 max={data.maxRank}
@@ -144,22 +140,13 @@ export default function FiltersCollapsible({
                 setParamsToPush={setParamsToPush}
               />
             </motion.div>
-            <motion.div className={styles.filter}>
-              <h2>Winrate</h2>
-              <RangeSlider
-                name={'winrate'}
-                max={100}
-                value={winrate}
-                setParamsToPush={setParamsToPush}
-              />
-            </motion.div>
-            <motion.div className={styles.filter}>
+            {/* <motion.div className={styles.filter}>
               <h2>Tier</h2>
               <TierSelector
                 value={{ inclTier, exclTier }}
                 setParamsToPush={setParamsToPush}
               />
-            </motion.div>
+            </motion.div> */}
           </motion.div>
           <motion.div variants={collapsibleContent} className={styles.buttons}>
             <div

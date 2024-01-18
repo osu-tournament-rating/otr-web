@@ -12,8 +12,8 @@ export default function UserMainCard({ data }: { data: {} }) {
       <div className={styles.tierImageContainer}>
         <div className={styles.tierImage}>
           <Image
-            src={'http://s.ppy.sh/a/4001304'}
-            alt={"Player's propic"}
+            src={`http://s.ppy.sh/a/${data.playerId}`}
+            alt={"Player's Tier"}
             fill
           />
         </div>
