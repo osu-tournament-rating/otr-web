@@ -140,22 +140,13 @@ export default function FiltersCollapsible({
                 setParamsToPush={setParamsToPush}
               />
             </motion.div>
-            <motion.div className={styles.filter}>
-              <h2>Winrate</h2>
-              <RangeSlider
-                name={'winrate'}
-                max={100}
-                value={winrate}
-                setParamsToPush={setParamsToPush}
-              />
-            </motion.div>
-            <motion.div className={styles.filter}>
+            {/* <motion.div className={styles.filter}>
               <h2>Tier</h2>
               <TierSelector
                 value={{ inclTier, exclTier }}
                 setParamsToPush={setParamsToPush}
               />
-            </motion.div>
+            </motion.div> */}
           </motion.div>
           <motion.div variants={collapsibleContent} className={styles.buttons}>
             <div
