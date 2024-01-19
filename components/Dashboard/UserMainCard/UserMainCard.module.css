@@ -29,6 +29,7 @@
 
 .tierImage img {
   object-fit: contain;
+  background: linear-gradient(225deg, #4c94ff 0%, #216bda 100%);
 }
 
 .username {
