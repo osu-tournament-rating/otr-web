@@ -34,8 +34,22 @@ export default function FiltersCollapsible({
   useEffect(() => {
     setParamsToPush({
       ...params,
-      inclTier: inclTier != null ? inclTier : [],
-      exclTier: exclTier != null ? exclTier : [],
+      inclTier:
+        inclTier == null
+          ? []
+          : typeof inclTier === 'string'
+          ? [inclTier]
+          : typeof inclTier === 'object'
+          ? inclTier
+          : [],
+      exclTier:
+        exclTier == null
+          ? []
+          : typeof exclTier === 'string'
+          ? [exclTier]
+          : typeof exclTier === 'object'
+          ? exclTier
+          : [],
       rank: rank != null ? rank : [],
       rating: rating != null ? rating : [],
       matches: matches != null ? matches : [],
@@ -140,13 +154,13 @@ export default function FiltersCollapsible({
                 setParamsToPush={setParamsToPush}
               />
             </motion.div>
-            {/* <motion.div className={styles.filter}>
+            <motion.div className={styles.filter}>
               <h2>Tier</h2>
               <TierSelector
                 value={{ inclTier, exclTier }}
                 setParamsToPush={setParamsToPush}
               />
-            </motion.div> */}
+            </motion.div>
           </motion.div>
           <motion.div variants={collapsibleContent} className={styles.buttons}>
             <div

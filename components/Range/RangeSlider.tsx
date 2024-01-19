@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Range, getTrackBackground } from 'react-range';
 import styles from './RangeSlider.module.css';
 
@@ -45,19 +45,17 @@ export default function RangeSlider({
       if (array[1] > max) {
         array[1] = max;
       }
-      /* if (array[0] < 0) {
-        array[0] = array[0] * 100;
-      }
-      if (array[1] < 0) {
-        array[1] = array[1] * 100;
-      } */
     }
     return array;
   }
 
-  const [values, setValues] = useState(
-    value != null ? checkValues(value) : [min, max]
-  );
+  const [values, setValues] = useState([min, max]);
+
+  useEffect(() => {
+    setValues(value !== undefined ? checkValues(value) : [min, max]);
+
+    return () => {};
+  }, [value]);
 
   return (
     <div className={styles.container}>
