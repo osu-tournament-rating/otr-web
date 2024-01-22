@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/submit')) &&
     user?.error
   ) {
-    return NextResponse.rewrite(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 }
 
