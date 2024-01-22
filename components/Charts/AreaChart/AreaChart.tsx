@@ -186,7 +186,7 @@ export default function AreaChart({
     // Display, position, and set styles for font
     tooltipEl.style.opacity = 1;
     /* tooltipEl.style.left = positionX + tooltip.caretX + 'px'; */
-    tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+    tooltipEl.style.top = positionY + tooltip.caretY + 5 + 'px';
     tooltipEl.style.font = tooltip.options.bodyFont.string;
     tooltipEl.style.padding =
       tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
@@ -228,6 +228,7 @@ export default function AreaChart({
       point: {
         radius: 0 /* 0 makes points hidden */,
         hitRadius: 100,
+        pointBackgroundColor: `hsla(${colors[0]}, 0.6)`,
       },
     },
     maintainAspectRatio: false,
