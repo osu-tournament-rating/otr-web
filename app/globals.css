@@ -99,6 +99,13 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+
+  --accent-color: 216, 100%, 65%;
+
+  /* CHARTS */
+  --tooltip-color: 0, 0%, 100%;
+  --tooltip-gain: var(--green-400);
+  --tooltip-loss: var(--red-400);
 }
 
 * {
