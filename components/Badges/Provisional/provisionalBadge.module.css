@@ -18,7 +18,7 @@
 }
 
 .badge:after {
-  content: 'Rank is provisional, needs more matches to have an accurate rank calculation';
+  content: 'Rating is provisional, must play more matches for an accurate ranking';
   width: max-content;
   max-width: 500px;
   display: flex;
