@@ -1,7 +1,5 @@
 'use client';
-import { faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import clsx from 'clsx';
+import ProvisionalBadge from '@/components/Badges/Provisional/ProvisionalBadge';
 import Image from 'next/image';
 import UserRatingProgressBar from '../UserRatingProgressBar/UserRatingProgressBar';
 import styles from './UserMainCard.module.css';
@@ -17,6 +15,7 @@ export default function UserMainCard({ data }: { data: {} }) {
       <div className={styles.rankings}>
         <div className={styles.header} id="Tier">
           {data.tier}
+          {data.isProvisional && <ProvisionalBadge />}
         </div>
         <div className={styles.itemsRow}>
           <div className={styles.item} id="Rating">

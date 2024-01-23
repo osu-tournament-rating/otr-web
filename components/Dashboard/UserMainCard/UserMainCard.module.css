@@ -54,6 +54,11 @@
 .rankings .header {
   font-size: 3.75rem;
   font-weight: 600;
+  display: flex;
+  flex-flow: row;
+  gap: 0 1rem;
+  align-items: center;
+  height: fit-content;
 }
 
 .itemsRow {

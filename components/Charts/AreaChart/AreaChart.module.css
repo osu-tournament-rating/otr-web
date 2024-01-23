@@ -6,7 +6,7 @@
 }
 
 .tooltip {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.7);
   border-radius: 0.2rem;
   color: #fff;
   opacity: 0;
@@ -14,4 +14,48 @@
   position: absolute;
   transform: translate(0%, 0);
   transition: all 0.1s ease;
+  backdrop-filter: blur(2px);
+  min-width: 10em;
+}
+
+.tooltip ul {
+  gap: 1rem;
+}
+
+.tooltip li {
+  display: flex;
+  flex-flow: row;
+  gap: 0 0.8rem;
+  font-size: 0.9rem;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+  pointer-events: auto;
+  color: hsla(var(--tooltip-color), 0.8);
+  padding: 0.2rem;
+}
+
+.tooltip li a:hover {
+  color: hsla(var(--tooltip-color));
+}
+
+.tooltip_ratingChange {
+  font-weight: 600;
+  color: #eee;
+}
+
+.tooltip_ratingChange.gain {
+  color: hsl(var(--tooltip-gain));
+}
+
+.tooltip_ratingChange.gain::before {
+  content: '▲';
+}
+
+.tooltip_ratingChange.loss {
+  color: hsl(var(--tooltip-loss));
+}
+
+.tooltip_ratingChange.loss::before {
+  content: '▼';
 }
