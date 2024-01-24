@@ -48,6 +48,41 @@ export default function BarChart({
     );
   }, []);
 
+  var labels = ['HR', 'NM', 'HD', 'FM'];
+  var dataScores: any[] = [];
+
+  if (bestTournamentPerformances) {
+    labels.length = 0;
+    bestTournamentPerformances.map((tournament: any, index: any) => {
+      labels[index] = tournament.tournamentName;
+      dataScores[index] = tournament.matchCost.toFixed(2);
+      return;
+    });
+    dataScores.sort((a, b) => b - a);
+  }
+
+  if (worstTournamentPerformances) {
+    labels.length = 0;
+    worstTournamentPerformances.map((tournament: any, index: any) => {
+      labels[index] = tournament.tournamentName;
+      dataScores[index] = tournament.matchCost.toFixed(2);
+      return;
+    });
+    dataScores.sort((a, b) => b - a);
+  }
+
+  if (teamSizes) {
+    Object.keys(teamSizes).map((data: any, index: any) => {
+      labels[index] = data.replace('count', '');
+      return;
+    });
+
+    Object.values(teamSizes).map((data: any, index: any) => {
+      dataScores[index] = data;
+      return;
+    });
+  }
+
   const options = {
     indexAxis: mainAxe,
     elements: {
@@ -76,23 +111,19 @@ export default function BarChart({
             size: 12,
             family: font,
           },
-          precision: 0.4,
+          precision: 1,
         },
         grace: '2%',
-        /* border: {
-              color: 'transparent',
-            }, */
-        /* steps: 2,
-        stepsSize:
-          bestTournamentPerformances || worstTournamentPerformances ? 1 : 1, */
+        steps: 0.2,
         min:
           bestTournamentPerformances || worstTournamentPerformances
             ? 0.5
             : null,
-        suggestedMax:
+        max:
           bestTournamentPerformances || worstTournamentPerformances
-            ? 1.8
+            ? +dataScores[0]
             : null,
+        suggestedMax: 2,
       },
       y: {
         ticks: {
@@ -102,44 +133,11 @@ export default function BarChart({
           },
           precision: 0,
         },
-        grace: '10%',
+
         stepsSize: 1,
       },
     },
   };
-
-  var labels = ['HR', 'NM', 'HD', 'FM'];
-  var dataScores = ['']; /* labels.map(() => Math.ceil(Math.random() * 20)) */
-
-  if (bestTournamentPerformances) {
-    labels.length = 0;
-    bestTournamentPerformances.map((tournament: any, index: any) => {
-      labels[index] = tournament.tournamentName;
-      dataScores[index] = tournament.matchCost.toFixed(2);
-      return;
-    });
-  }
-
-  if (worstTournamentPerformances) {
-    labels.length = 0;
-    worstTournamentPerformances.map((tournament: any, index: any) => {
-      labels[index] = tournament.tournamentName;
-      dataScores[index] = tournament.matchCost.toFixed(2);
-      return;
-    });
-  }
-
-  if (teamSizes) {
-    Object.keys(teamSizes).map((data: any, index: any) => {
-      labels[index] = data.replace('count', '');
-      return;
-    });
-
-    Object.values(teamSizes).map((data: any, index: any) => {
-      dataScores[index] = data;
-      return;
-    });
-  }
 
   const data = {
     labels,
