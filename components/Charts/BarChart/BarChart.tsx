@@ -76,11 +76,23 @@ export default function BarChart({
             size: 12,
             family: font,
           },
+          precision: 0.4,
         },
         grace: '2%',
         /* border: {
               color: 'transparent',
             }, */
+        /* steps: 2,
+        stepsSize:
+          bestTournamentPerformances || worstTournamentPerformances ? 1 : 1, */
+        min:
+          bestTournamentPerformances || worstTournamentPerformances
+            ? 0.5
+            : null,
+        suggestedMax:
+          bestTournamentPerformances || worstTournamentPerformances
+            ? 1.8
+            : null,
       },
       y: {
         ticks: {
@@ -88,6 +100,7 @@ export default function BarChart({
             size: 12,
             family: font,
           },
+          precision: 0,
         },
         grace: '10%',
         stepsSize: 1,
