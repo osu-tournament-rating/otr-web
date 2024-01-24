@@ -112,9 +112,9 @@ export default function BarChart({
             family: font,
           },
           precision: 1,
+          stepSize: 0.2,
         },
         grace: '2%',
-        steps: 0.2,
         min:
           bestTournamentPerformances || worstTournamentPerformances
             ? 0.5
@@ -132,9 +132,8 @@ export default function BarChart({
             family: font,
           },
           precision: 0,
+          stepSize: 1,
         },
-
-        stepsSize: 1,
       },
     },
   };

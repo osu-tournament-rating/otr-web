@@ -199,11 +199,6 @@ export default async function page({
         </GridCard>
       </StatsGrid>
       <StatsGrid>
-        <GridCard title={'Tournaments over time - TO DO'}>
-          <div className={styles.chart}>
-            <AreaChart />
-          </div>
-        </GridCard>
         <GridCard title={'Most common format'}>
           <BarChart
             mainAxe={'x'}

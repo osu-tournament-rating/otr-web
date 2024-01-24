@@ -62,7 +62,6 @@ export default function AreaChart({
       getComputedStyle(document.documentElement).getPropertyValue(
         '--accent-color'
       ),
-      getComputedStyle(document.documentElement).getPropertyValue('--blue-400'),
     ]);
     setFont(
       getComputedStyle(document.documentElement).getPropertyValue(
@@ -78,29 +77,33 @@ export default function AreaChart({
   let tournamentsTooltip: object[];
 
   if (ratingStats) {
-    labels = ratingStats.map((match) =>
-      new Date(match.tooltipInfo.matchDate).toLocaleDateString(
+    labels = ratingStats.map((day) => {
+      return new Date(day[0].tooltipInfo.matchDate).toLocaleDateString(
         'en-US',
         dateFormatOptions
-      )
-    );
-    /* labels = Array.from(new Set(labels)); */
-
-    tournamentsTooltip = ratingStats.map((match) => {
-      /* console.log(match.tooltipInfo.matchDate); */
-      match.tooltipInfo.matchDate = new Date(
-        match.tooltipInfo.matchDate
-      ).toLocaleDateString('en-US', dateFormatOptions);
-
-      return match;
+      );
     });
 
-    dataForGraph = ratingStats.map((match) => {
-      /* tournamentsTooltip.filter(
-        (m) => m.tooltipInfo.matchDate == tooltip.title
-      ); */
+    tournamentsTooltip = ratingStats.map((day) => {
+      let matches = [];
+      day.forEach((match) => {
+        match.tooltipInfo.matchDate = new Date(
+          match.tooltipInfo.matchDate
+        ).toLocaleDateString('en-US', dateFormatOptions);
 
-      return match.ratingAfter.toFixed(0);
+        return matches.push(match);
+      });
+      return matches;
+    });
+
+    dataForGraph = ratingStats.map((day) => {
+      if (day.length > 1) {
+        return day[day.length - 1].ratingAfter.toFixed(0);
+      }
+
+      if (day.length === 1) {
+        return day[0].ratingAfter.toFixed(0);
+      }
     });
   }
 
@@ -118,7 +121,7 @@ export default function AreaChart({
         data: dataForGraph,
         borderWidth: 3,
         borderColor: `hsla(${colors[0]}, 0.6)`,
-        backgroundColor: 'transparent' /* `hsla(${colors[1]}, 0.6)` */,
+        backgroundColor: 'transparent',
         font: font,
       },
     ],
@@ -129,8 +132,6 @@ export default function AreaChart({
     const { chart, tooltip } = context;
     const tooltipEl = getOrCreateTooltip(chart);
 
-    /* console.log(tournamentsTooltip); */
-
     // Hide if no tooltip
     if (tooltip.opacity === 0) {
       tooltipEl.style.opacity = 0;
@@ -138,16 +139,27 @@ export default function AreaChart({
     }
 
     if (tooltip.body && ratingStats) {
-      const matchesLines = tournamentsTooltip.filter(
-        (match) => match.tooltipInfo.matchDate == tooltip.title
+      const matchesLines = new Set(
+        ...tournamentsTooltip.filter(
+          (day) => day[0].tooltipInfo.matchDate == tooltip.title
+        )
       );
 
-      /* console.log(matchesLines); */
+      /* TOOLTIP HEADER */
+      const header = document.createElement('div');
+      header.className = styles.header;
+      const headerProperty = document.createElement('span');
+      headerProperty.className = styles.headerProperty;
+      headerProperty.innerHTML = 'Rating:';
+      const headerValue = document.createElement('span');
+      headerValue.className = styles.headerValue;
+      headerValue.innerHTML = tooltip.body[0].lines[0];
+
+      header.appendChild(headerProperty);
+      header.appendChild(headerValue);
 
       const matchesList = document.createElement('ul');
-      matchesLines.forEach((match, i) => {
-        console.log(match, i);
-
+      matchesLines.forEach((match) => {
         const li = document.createElement('li');
 
         const matchName = document.createElement('a');
@@ -178,6 +190,7 @@ export default function AreaChart({
         divRoot.firstChild.remove();
       }
 
+      divRoot.appendChild(header);
       divRoot.appendChild(matchesList);
     }
 
@@ -185,7 +198,6 @@ export default function AreaChart({
 
     // Display, position, and set styles for font
     tooltipEl.style.opacity = 1;
-    /* tooltipEl.style.left = positionX + tooltip.caretX + 'px'; */
     tooltipEl.style.top = positionY + tooltip.caretY + 5 + 'px';
     tooltipEl.style.font = tooltip.options.bodyFont.string;
     tooltipEl.style.padding =
@@ -250,6 +262,8 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
+          precision: 0,
+          stepSize: 15,
         },
       },
     },

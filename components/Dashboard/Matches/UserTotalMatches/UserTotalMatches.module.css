@@ -41,3 +41,7 @@
 .chartLabel svg {
   height: 0.8rem;
 }
+
+.userTotalMatches {
+  grid-column: 1 / 4;
+}
