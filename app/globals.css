@@ -101,6 +101,7 @@
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
 
   --accent-color: 216, 100%, 65%;
+  --accent-secondary-color: var(--blue-300);
 
   /* CHARTS */
   --tooltip-color: 0, 0%, 100%;
