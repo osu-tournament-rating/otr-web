@@ -22,7 +22,7 @@ ChartJS.register(
   Legend
 );
 
-export default function PlayersBarChart() {
+export default function PlayersBarChart({ players }: { players: [] }) {
   const [font, setFont] = useState('');
 
   /* get variables of colors from CSS */
@@ -62,10 +62,8 @@ export default function PlayersBarChart() {
             size: 12,
             family: font,
           },
+          precision: 0,
         },
-        /* border: {
-            color: 'transparent',
-          }, */
       },
       y: {
         ticks: {
@@ -83,15 +81,25 @@ export default function PlayersBarChart() {
     },
   };
 
-  const labels = ['Akinari', 'Stage', 'Maliszewski', 'worst hr player'];
+  let labels: string[] = [];
+  let propicIDs: number[] = [];
+  let frequency: number[] = [];
+
+  if (players) {
+    players.forEach((player) => {
+      labels.push(player.username);
+      propicIDs.push(player.osuId);
+      frequency.push(player.frequency);
+    });
+  }
 
   const data = {
     labels,
     datasets: [
       {
         label: 'Times',
-        data: labels.map(() => Math.ceil(Math.random() * 1000)),
-        propicIDs: ['4001304', '8191845', '12408961', '14106450'],
+        data: frequency,
+        propicIDs: propicIDs,
         backgroundColor: [
           'rgba(255, 99, 132)',
           'rgba(54, 162, 235)',

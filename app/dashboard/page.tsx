@@ -191,11 +191,11 @@ export default async function page({
         <GridCard title={'Average score per mod'}>
           <RadarChart averageModScore={data?.modStats} />
         </GridCard>
-        <GridCard title={'Most played with teammates - TO DO'}>
-          <PlayersBarChart />
+        <GridCard title={'Most played with teammates'}>
+          <PlayersBarChart players={data?.frequentTeammates} />
         </GridCard>
-        <GridCard title={'Most played with opponents - TO DO'}>
-          <PlayersBarChart />
+        <GridCard title={'Most played with opponents'}>
+          <PlayersBarChart players={data?.frequentOpponents} />
         </GridCard>
       </StatsGrid>
       <StatsGrid>
@@ -204,17 +204,11 @@ export default async function page({
             <AreaChart />
           </div>
         </GridCard>
-        <GridCard title={'Most common team size'}>
+        <GridCard title={'Most common format'}>
           <BarChart
             mainAxe={'x'}
             teamSizes={data?.tournamentStats.teamSizeCounts}
           />
-        </GridCard>
-        <GridCard title={'Most common format - TO DO'}>
-          <BarChart mainAxe={'x'} />
-        </GridCard>
-        <GridCard title={'Summary of placements - TO DO'}>
-          <BarChart mainAxe={'x'} />
         </GridCard>
         <GridCard title={'Best tournament performances'}>
           <BarChart
@@ -223,12 +217,18 @@ export default async function page({
           />
         </GridCard>
         <GridCard title={'Worst tournament performances'}>
-          <BarChart
-            mainAxe={'y'}
-            worstTournamentPerformances={
-              data?.tournamentStats.worstPerformances
-            }
-          />
+          {data?.tournamentStats.worstPerformances.length > 0 ? (
+            <BarChart
+              mainAxe={'y'}
+              worstTournamentPerformances={
+                data?.tournamentStats.worstPerformances
+              }
+            />
+          ) : (
+            <span className={styles.noGraphText}>
+              Play 6 or more tournaments to populate this graph!
+            </span>
+          )}
         </GridCard>
       </StatsGrid>
     </main>
