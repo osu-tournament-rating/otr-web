@@ -145,7 +145,7 @@ export default function RangeSlider({
                   values,
                   colors: [
                     'hsla(var(--gray-600))',
-                    'hsla(var(--gray-600))',
+                    'hsla(var(--accent-secondary-color))',
                     'hsla(var(--gray-600))',
                   ],
                   min: min,

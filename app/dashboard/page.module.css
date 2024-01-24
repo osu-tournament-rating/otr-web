@@ -106,3 +106,9 @@
 .cardStat .value {
   font-weight: 600;
 }
+
+.noGraphText {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
