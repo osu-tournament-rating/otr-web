@@ -256,6 +256,8 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
+          autoSkip: true,
+          maxTicksLimit: 6,
           precision: 0,
           stepSize: 15,
         },
