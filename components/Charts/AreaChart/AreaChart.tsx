@@ -221,17 +221,12 @@ export default function AreaChart({
     plugins: {
       legend: {
         display: false,
-        /* position: 'top' as const, */
       },
       tooltip: {
         enabled: false,
         position: 'nearest',
         external: ratingStats ? externalTooltipHandler : null,
       },
-      /* title: {
-        display: true,
-        text: 'Chart.js Line Chart',
-      }, */
     },
     elements: {
       line: {
@@ -251,10 +246,9 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
+          autoSkip: true,
+          maxTicksLimit: 8,
         },
-        /* border: {
-          color: 'transparent',
-        }, */
       },
       y: {
         ticks: {
@@ -262,6 +256,8 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
+          autoSkip: true,
+          maxTicksLimit: 6,
           precision: 0,
           stepSize: 15,
         },
