@@ -1,3 +1,4 @@
+import { fetchDashboard } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
@@ -11,7 +12,6 @@ import UserMainCard from '@/components/Dashboard/UserMainCard/UserMainCard';
 import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
 import Notice from '@/components/Notice/Notice';
 import clsx from 'clsx';
-import { fetchDashboard } from '../actions';
 import styles from './page.module.css';
 
 import type { Metadata } from 'next';
