@@ -1,0 +1,114 @@
+.main {
+  gap: var(--main-padding);
+}
+
+.notices {
+  display: flex;
+  flex-flow: column;
+  gap: 0.8rem;
+}
+
+.mainGraphContainer {
+  display: flex;
+  flex-flow: column;
+  gap: var(--internal-gap);
+}
+
+.graphContainer {
+  display: flex;
+  flex-flow: column;
+  background-color: hsla(var(--gray-100));
+  border-radius: var(--main-borderRadius);
+  padding: var(--main-padding);
+  gap: 1.2rem;
+}
+
+.graphContainer .header {
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.graphContainer .chart,
+.chart {
+  height: 18rem;
+}
+
+.header .rating {
+  display: flex;
+  flex-flow: row;
+  font-size: 3.4rem;
+  font-weight: 600;
+  gap: 0.6rem;
+  line-height: 3.4rem;
+}
+
+.rating .change {
+  font-size: 1.6rem;
+  line-height: 2.2rem;
+  display: flex;
+  flex-flow: row;
+  align-items: flex-end;
+}
+
+.change.positive {
+  color: hsla(var(--green-400));
+}
+
+.change.positive::before {
+  content: '+';
+}
+
+.change.negative {
+  color: hsla(var(--red-400));
+}
+
+.change.negative::before {
+  content: '-';
+}
+
+.header .stats {
+  display: flex;
+  flex-flow: row;
+  gap: 4rem;
+  align-items: flex-end;
+}
+
+.stats .item {
+  display: flex;
+  flex-flow: row;
+  gap: 1.1rem;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.item .score {
+  font-weight: 600;
+}
+
+.item #rank::before {
+  content: '#';
+}
+
+.item #percentile::after {
+  content: '%';
+}
+
+.cardStat {
+  display: flex;
+  flex-flow: row;
+  gap: 1rem;
+  font-size: 1.2rem;
+}
+
+.cardStat .value {
+  font-weight: 600;
+}
+
+.noGraphText {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
