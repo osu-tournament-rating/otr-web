@@ -14,7 +14,7 @@ export default function UserMainCard({ data }: { data: {} }) {
       </div>
       <div className={styles.rankings}>
         <div className={styles.header} id="Tier">
-          {data.tier}
+          {data.rankProgress.currentTier}
           {data.isProvisional && <ProvisionalBadge />}
         </div>
         <div className={styles.itemsRow}>
@@ -51,7 +51,7 @@ export default function UserMainCard({ data }: { data: {} }) {
             )}%`}</div>
           </div>
         </div>
-        <UserRatingProgressBar data={data} />
+        <UserRatingProgressBar data={data.rankProgress} />
       </div>
     </div>
   );
