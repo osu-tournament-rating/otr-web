@@ -442,28 +442,50 @@ export async function fetchDashboard() {
   return data;
 }
 
-export async function fetchUserPage(player: string | number) {
-  const isUserLogged = (await cookies().get('OTR-Access-Token'))
-    ? await getUserData()
-    : null;
+export async function fetchUserPageTitle(player: string | number) {
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/players/${player}/info`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 
-  let data = await fetch(
+  if (res?.ok) {
+    res = await res.json();
+    return res;
+  }
+
+  return null;
+}
+
+export async function fetchUserPage(player: string | number) {
+  const isUserLogged = await checkUserLogin();
+
+  let res = await fetch(
     `${process.env.REACT_APP_API_URL}/stats/${player}${
       isUserLogged ? `?comparerId=${isUserLogged?.userId}` : ''
     }`,
     {
       headers: {
         'Content-Type': 'application/json',
-        /* Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-          cookies().get('OTR-Access-Token')?.value
-        }`, */
       },
     }
   );
 
-  data = await data.json();
+  if (!res?.ok) {
+    return redirect('/');
+  }
 
-  return data;
+  res = await res.json();
+
+  /* TEMPORARY BEHAVIOR */
+  if (res?.generalStats === null) {
+    return redirect('/');
+  }
+
+  return res;
 }
 
 export async function paginationParamsToURL(params: {}) {

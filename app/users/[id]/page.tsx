@@ -1,4 +1,4 @@
-import { fetchUserPage } from '@/app/actions';
+import { fetchUserPage, fetchUserPageTitle } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
@@ -8,22 +8,22 @@ import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
 import GridCard from '@/components/Dashboard/GridCard/GridCard';
 import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/UserTotalMatches';
 import StatsGrid from '@/components/Dashboard/StatsGrid/StatsGrid';
-import UserMainCard from '@/components/Dashboard/UserMainCard/UserMainCard';
 import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
+import UserMainCard from '@/components/Profile/UserMainCard/UserMainCard';
 import clsx from 'clsx';
 import styles from './page.module.css';
 
-import type { Metadata } from 'next';
+export async function generateMetadata({
+  params: { id },
+}: {
+  params: { id: string | number };
+}) {
+  let player = await fetchUserPageTitle(id);
 
-export const metadata: Metadata = {
-  title: 'Dashboard',
-};
-
-/* export async function generateMetadata({ params: { id } }: {params: { id: string | number }}) {
-    return {
-      title: '',
-    }
-  } */
+  return {
+    title: player !== null ? `${player?.username}'s profile` : 'User profile',
+  };
+}
 
 export const revalidate = 60;
 
@@ -38,7 +38,10 @@ export default async function page({
 
   return (
     <main className={styles.main}>
-      <UserMainCard data={data?.generalStats} />
+      <UserMainCard
+        generalStats={data?.generalStats}
+        playerInfo={data?.playerInfo}
+      />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
