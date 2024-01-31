@@ -1,7 +1,9 @@
-import { getUserData } from '@/app/actions';
+'use client';
+
 import moonSVG from '@/public/icons/moon.svg';
 import logo from '@/public/logos/small.svg';
-import { cookies } from 'next/headers';
+import { useUser } from '@/util/hooks';
+/* import { cookies } from 'next/headers'; */
 import Image from 'next/image';
 import Link from 'next/link';
 import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
@@ -9,9 +11,10 @@ import ModeSwitcher from './ModeSwitcher/ModeSwitcher';
 import styles from './NavBar.module.css';
 import Routes from './Routes/Routes';
 
-export default async function NavBar() {
-  const cookieMode = cookies().get('OTR-user-selected-osu-mode');
-  const user = await getUserData();
+export default function NavBar() {
+  /* const cookieMode = cookies().get('OTR-user-selected-osu-mode'); */
+  /* const user = await getUserData(); */
+  const user = useUser();
 
   return (
     <nav className={styles.navbar}>
@@ -22,13 +25,13 @@ export default async function NavBar() {
         <Routes />
         <Link href={'/donate'}>Donate</Link>
         <div className={styles.actions}>
-          <ModeSwitcher mode={cookieMode?.value} />
+          {/* <ModeSwitcher mode={cookieMode?.value} /> */}
           <button>
             <div className={styles.darkModeSwitcher}>
               <Image src={moonSVG} alt="Dark Mode Switcher" fill />
             </div>
           </button>
-          {!user?.error && (
+          {user?.osuId && (
             <div className={styles.userPropic}>
               <Image
                 src={`http://s.ppy.sh/a/${user.osuId}`}
