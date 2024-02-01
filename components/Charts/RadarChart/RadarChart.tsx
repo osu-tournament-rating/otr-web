@@ -45,33 +45,28 @@ export default function RadarChart({
     );
   }, []);
 
-  let labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-  let values = [95, 90, 22, 10, 50];
+  let mods: object[] = [];
 
   if (winrateModData) {
-    labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-    values = [
-      (winrateModData.playedNM?.winrate * 100) | 0,
-      (winrateModData.playedHD?.winrate * 100) | 0,
-      (winrateModData.playedHR?.winrate * 100) | 0,
-      (winrateModData.playedDT?.winrate * 100) | 0,
-      (winrateModData.playedEZ?.winrate * 100) | 0,
-    ];
+    Object.keys(winrateModData).forEach((mod: any) => {
+      let label = mod.replace('played', '');
+      let value = (winrateModData[mod]?.winrate * 100) | 0;
+      mods.push({ label, value });
+    });
+    mods.sort((a: any, b: any) => a.value < b.value);
   }
 
   if (averageModScore) {
-    labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-    values = [
-      averageModScore.playedNM?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedHD?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedHR?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedDT?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedEZ?.normalizedAverageScore.toFixed(0) | 0,
-    ];
+    Object.keys(averageModScore).forEach((mod: any) => {
+      let label = mod.replace('played', '');
+      let value = averageModScore[mod]?.normalizedAverageScore.toFixed(0) | 0;
+      mods.push({ label, value });
+    });
+    mods.sort((a: any, b: any) => a.value < b.value);
   }
 
   const data = {
-    labels: labels,
+    labels: mods.map((mod) => mod.label).slice(0, 5),
     datasets: [
       {
         label: winrateModData
@@ -79,7 +74,7 @@ export default function RadarChart({
           : averageModScore
           ? 'AVG Score'
           : 'Winrate %',
-        data: values,
+        data: mods.map((mod) => mod.value).slice(0, 5),
         backgroundColor: `hsla(${colors[0]}, 0.15)`,
         borderWidth: 0,
       },
@@ -108,6 +103,9 @@ export default function RadarChart({
       },
       tooltip: {
         enabled: true,
+        font: {
+          family: font,
+        },
       },
     },
 
@@ -118,8 +116,14 @@ export default function RadarChart({
     },
     scales: {
       r: {
+        pointLabels: {
+          font: {
+            family: font,
+            weight: 600,
+          },
+        },
         backgroundColor: 'rgb(250,250,250)',
-        beginAtZero: true,
+        beginAtZero: false,
         angleLines: {
           borderDash: (context: any) => {
             const space = context.scale.yCenter - context.scale.top - 30;
@@ -128,17 +132,21 @@ export default function RadarChart({
             return [0, 0, 0, spaceInPx, 2500];
           },
         },
-        min: 0,
+        min: winrateModData ? -20 : averageModScore ? -300000 : -20,
         max: winrateModData ? 100 : averageModScore ? 1200000 : 100,
         ticks: {
-          stepSize: winrateModData ? 25 : averageModScore ? 300000 : 25,
+          font: {
+            size: 10,
+            family: font,
+            weight: 300,
+          },
+          stepSize: winrateModData ? 20 : averageModScore ? 300000 : 20,
           callback: (value: any, tick: any, values: any) => {
-            return '';
+            return `${value.toLocaleString('en-US')}`;
           },
           showLabelBackdrop: (context: any) => {
             return false;
           },
-          /* maxTicksLimit: 4, */
         },
       },
     },
