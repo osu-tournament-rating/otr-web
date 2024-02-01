@@ -22,6 +22,14 @@ ChartJS.register(
   Legend
 );
 
+function kFormatter(num: number) {
+  return Math.abs(num) > 999999
+    ? Math.sign(num) * (Math.abs(num) / 1000000).toFixed(1) + 'M'
+    : Math.abs(num) > 999
+    ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + 'k'
+    : Math.sign(num) * Math.abs(num);
+}
+
 export default function RadarChart({
   winrateModData,
   averageModScore,
@@ -45,33 +53,69 @@ export default function RadarChart({
     );
   }, []);
 
-  let labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-  let values = [95, 90, 22, 10, 50];
+  let mods: object[] = [];
+  let defaultLabels: string[] = [
+    'NM',
+    'HD',
+    'HR',
+    'DT',
+    'EZ',
+    'FL',
+    'HT',
+    'HDHR',
+    'HDDT',
+  ];
 
   if (winrateModData) {
-    labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-    values = [
-      (winrateModData.playedNM?.winrate * 100) | 0,
-      (winrateModData.playedHD?.winrate * 100) | 0,
-      (winrateModData.playedHR?.winrate * 100) | 0,
-      (winrateModData.playedDT?.winrate * 100) | 0,
-      (winrateModData.playedEZ?.winrate * 100) | 0,
-    ];
+    Object.keys(winrateModData).forEach((mod: any) => {
+      let label = mod.replace('played', '');
+      let value = (winrateModData[mod]?.winrate * 100) | 0;
+      mods.push({ label, value });
+    });
+    mods.sort(
+      (a: any, b: any) =>
+        a.label === 'NM'
+          ? a > b
+          : a.value === b.value
+          ? a.label > b.label
+          : null /* a.value < b.value */
+    );
+
+    mods = mods.filter((mod) => mod.value !== 0);
   }
 
   if (averageModScore) {
-    labels = ['NM', 'HD', 'HR', 'DT', 'EZ'];
-    values = [
-      averageModScore.playedNM?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedHD?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedHR?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedDT?.normalizedAverageScore.toFixed(0) | 0,
-      averageModScore.playedEZ?.normalizedAverageScore.toFixed(0) | 0,
-    ];
+    Object.keys(averageModScore).forEach((mod: any) => {
+      let label = mod.replace('played', '');
+      let value = averageModScore[mod]?.normalizedAverageScore.toFixed(0) | 0;
+      mods.push({ label, value });
+    });
+    mods.sort(
+      (a: any, b: any) =>
+        a.label === 'NM'
+          ? a > b
+          : a.value === b.value
+          ? a.label > b.label
+          : null /* a.value < b.value */
+    );
+
+    mods = mods.filter((mod) => mod.value !== 0);
+  }
+
+  let existingMods = mods
+    .filter((mod) => mod.value !== 0)
+    .map((mod) => mod.label);
+  defaultLabels = defaultLabels.filter((mod) => !existingMods.includes(mod));
+  for (let i = 0; mods.length < 5; i++) {
+    if (defaultLabels[i] === 'NM') {
+      mods.unshift({ label: defaultLabels[i], value: 0 });
+    } else {
+      mods.push({ label: defaultLabels[i], value: 0 });
+    }
   }
 
   const data = {
-    labels: labels,
+    labels: mods.map((mod) => mod.label),
     datasets: [
       {
         label: winrateModData
@@ -79,7 +123,7 @@ export default function RadarChart({
           : averageModScore
           ? 'AVG Score'
           : 'Winrate %',
-        data: values,
+        data: mods.map((mod) => mod.value),
         backgroundColor: `hsla(${colors[0]}, 0.15)`,
         borderWidth: 0,
       },
@@ -108,6 +152,9 @@ export default function RadarChart({
       },
       tooltip: {
         enabled: true,
+        font: {
+          family: font,
+        },
       },
     },
 
@@ -118,8 +165,14 @@ export default function RadarChart({
     },
     scales: {
       r: {
+        pointLabels: {
+          font: {
+            family: font,
+            weight: 600,
+          },
+        },
         backgroundColor: 'rgb(250,250,250)',
-        beginAtZero: true,
+        beginAtZero: false,
         angleLines: {
           borderDash: (context: any) => {
             const space = context.scale.yCenter - context.scale.top - 30;
@@ -128,17 +181,23 @@ export default function RadarChart({
             return [0, 0, 0, spaceInPx, 2500];
           },
         },
-        min: 0,
-        max: winrateModData ? 100 : averageModScore ? 1200000 : 100,
+        min: winrateModData ? -25 : averageModScore ? -200000 : -25,
+        max: winrateModData ? 100 : averageModScore ? 1000000 : 100,
         ticks: {
-          stepSize: winrateModData ? 25 : averageModScore ? 300000 : 25,
+          font: {
+            size: 10,
+            family: font,
+            weight: 300,
+          },
+          stepSize: winrateModData ? 25 : averageModScore ? 200000 : 25,
           callback: (value: any, tick: any, values: any) => {
-            return '';
+            return value !== 0
+              ? `${kFormatter(value)}${winrateModData ? '%' : ''}`
+              : '';
           },
           showLabelBackdrop: (context: any) => {
             return false;
           },
-          /* maxTicksLimit: 4, */
         },
       },
     },

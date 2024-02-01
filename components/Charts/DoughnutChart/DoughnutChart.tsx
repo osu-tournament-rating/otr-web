@@ -7,29 +7,33 @@ import styles from './DoughnutChart.module.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export default function DoughnutChart({ scoreStats }: { scoreStats?: {} }) {
+export default function DoughnutChart({ modStats }: { modStats?: {} }) {
   const [modsColors, setModsColors] = useState({});
 
   let labels = ['NM', 'HD', 'HR'];
 
   let values = [12, 19, 3];
 
-  if (scoreStats) {
+  if (modStats) {
     labels = [];
     values = [];
-    Object.keys(scoreStats).forEach((key) => {
-      if (key.startsWith('countPlayed')) {
-        if (scoreStats[key] === 0) return;
-        let labelName = key.replace('countPlayed', '');
+    Object.keys(modStats).forEach((key) => {
+      if (key.startsWith('played')) {
+        if (modStats[key] === null) return;
+        let labelName = key.replace('played', '');
         labels.push(labelName);
-        values.push(scoreStats[key]);
+        values.push(modStats[key]?.gamesPlayed);
       }
     });
   }
 
   let valuesSum = values.reduce((a, b) => a + b, 0);
-  let valuesPercentage = values.map((number) =>
-    ((number / valuesSum) * 100).toPrecision(2)
+  let valuesPercentage = values.map(
+    (number) =>
+      `${(number / valuesSum) * 100 < 1 ? '<' : ''}${(
+        (number / valuesSum) *
+        100
+      ).toFixed(0)}`
   );
 
   useEffect(() => {
@@ -58,6 +62,9 @@ export default function DoughnutChart({ scoreStats }: { scoreStats?: {} }) {
       FL: getComputedStyle(document.documentElement).getPropertyValue(
         '--mods-FL-bg'
       ),
+      HT: getComputedStyle(document.documentElement).getPropertyValue(
+        '--mods-HT-bg'
+      ),
     });
   }, []);
 
@@ -69,7 +76,7 @@ export default function DoughnutChart({ scoreStats }: { scoreStats?: {} }) {
         data: values,
         backgroundColor: labels.map((mod) => `hsla(${modsColors[mod]})`),
         borderWidth: 0,
-        spacing: 4,
+        spacing: 5 /* 4 */,
         rotation: -20,
       },
     ],
