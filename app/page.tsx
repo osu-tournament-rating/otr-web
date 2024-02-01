@@ -6,18 +6,9 @@ import decoration4 from '@/public/decorations/decoration-4.svg';
 import fullLogo from '@/public/logos/full-logo.svg';
 import Image from 'next/image';
 import Balancer from 'react-wrap-balancer';
-import { getUserData } from './actions';
 import styles from './page.module.css';
 
-export const revalidate = 60;
-
-const getUser = async () => {
-  return await getUserData();
-};
-
 export default async function Home() {
-  const user = await getUser();
-
   return (
     <main className={styles.main}>
       <div className={styles.row}>

@@ -44,6 +44,11 @@ const possibleRanks = [
   },
 ];
 
+function includesMatch(array: any, match: string) {
+  const result = array.filter((item: any) => item === match);
+  return result == match;
+}
+
 export default function TierSelector({
   value,
   setParamsToPush,
@@ -55,55 +60,67 @@ export default function TierSelector({
   const [excludedRanks, setExcludedRanks] = useState([]);
 
   const selectRank = async (rank: string) => {
-    if (!ranks.includes(rank) && !excludedRanks.includes(rank)) {
+    if (!includesMatch(ranks, rank) && !includesMatch(excludedRanks, rank)) {
       setRanks((prev: any) => [...prev, rank]);
       return setParamsToPush((prev: any) => ({
         ...prev,
         inclTier: [...prev.inclTier, rank],
       }));
     }
-    if (ranks.includes(rank)) {
+    if (includesMatch(ranks, rank)) {
       setExcludedRanks((prev: any) => [...prev, rank]);
       setParamsToPush((prev: any) => ({
         ...prev,
         exclTier: [...prev.exclTier, rank],
       }));
       setRanks((prev: any) => prev.filter((item: any) => item !== rank));
-      return setParamsToPush((prev: any) => ({
-        ...prev,
-        inclTier: [
-          ...prev.inclTier.slice(
-            0,
-            prev.inclTier.findIndex((name) => name === rank)
-          ),
-          ...prev.inclTier.slice(
-            prev.inclTier.findIndex((name) => name === rank) + 1
-          ),
-        ],
-      }));
+      return setParamsToPush((prev: any) => {
+        return {
+          ...prev,
+          inclTier: [
+            ...prev.inclTier.slice(
+              0,
+              prev.inclTier.findIndex((name) => name === rank)
+            ),
+            ...prev.inclTier.slice(
+              prev.inclTier.findIndex((name) => name === rank) + 1
+            ),
+          ],
+        };
+      });
     }
-    if (excludedRanks.includes(rank)) {
+    if (includesMatch(excludedRanks, rank)) {
       setExcludedRanks((prev: any) =>
         prev.filter((item: any) => item !== rank)
       );
-      return setParamsToPush((prev: any) => ({
-        ...prev,
-        exclTier: [
-          ...prev.exclTier.slice(
-            0,
-            prev.exclTier.findIndex((name) => name === rank)
-          ),
-          ...prev.exclTier.slice(
-            prev.exclTier.findIndex((name) => name === rank) + 1
-          ),
-        ],
-      }));
+      return setParamsToPush((prev: any) => {
+        return {
+          ...prev,
+          exclTier: [
+            ...prev.exclTier.slice(
+              0,
+              prev.exclTier.findIndex((name) => name === rank)
+            ),
+            ...prev.exclTier.slice(
+              prev.exclTier.findIndex((name) => name === rank) + 1
+            ),
+          ],
+        };
+      });
     }
   };
 
   useEffect(() => {
-    setRanks(value?.inclTier ?? []);
-    setExcludedRanks(value?.exclTier ?? []);
+    setRanks(
+      typeof value?.inclTier === 'string'
+        ? [value?.inclTier]
+        : value?.inclTier ?? []
+    );
+    setExcludedRanks(
+      typeof value?.exclTier === 'string'
+        ? [value?.exclTier]
+        : value?.exclTier ?? []
+    );
   }, [value.inclTier, value.exclTier]);
 
   return (
@@ -120,16 +137,16 @@ export default function TierSelector({
             <div
               className={clsx(
                 styles.checkbox,
-                ranks.includes(rank.id)
+                includesMatch(ranks, rank.id)
                   ? styles.selected
-                  : excludedRanks.includes(rank.id)
+                  : includesMatch(excludedRanks, rank.id)
                   ? styles.excluded
                   : ''
               )}
             >
-              {ranks.includes(rank.id) ? (
+              {includesMatch(ranks, rank.id) ? (
                 <FontAwesomeIcon icon={faCheck} />
-              ) : excludedRanks.includes(rank.id) ? (
+              ) : includesMatch(excludedRanks, rank.id) ? (
                 <FontAwesomeIcon icon={faXmark} />
               ) : (
                 ''

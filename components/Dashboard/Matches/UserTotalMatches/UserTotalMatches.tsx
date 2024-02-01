@@ -1,11 +1,12 @@
 import InlineChart from '@/components/Charts/InlineChart/InlineChart';
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import clsx from 'clsx';
 import styles from './UserTotalMatches.module.css';
 
 export default function UserTotalMatches({ data }: { data: {} }) {
   return (
-    <div className={styles.container}>
+    <div className={clsx(styles.container, styles.userTotalMatches)}>
       <div className={styles.header}>
         <div className={styles.item}>
           <span>{data.matchesPlayed}</span>

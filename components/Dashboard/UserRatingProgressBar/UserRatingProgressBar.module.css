@@ -2,41 +2,67 @@
   width: 100%;
   margin-top: auto;
   display: flex;
-  flex-flow: row wrap;
-  gap: 1.4rem;
+  flex-flow: column;
+  gap: 0.6em 0;
+}
+
+.tiers {
+  display: flex;
+  flex-flow: row;
+  width: 100%;
+  gap: 1.4em;
   align-items: center;
 }
 
-.progressBar {
-  width: 100%;
-  height: 15px;
-  background-color: hsl(var(--gray-200));
-  border-radius: 50vw;
-  overflow: hidden;
-  position: relative;
-  flex: 2;
-}
-
-.progressBar .splits {
-  width: 100%;
-  position: absolute;
-  inset: 0;
+.tier {
+  width: 16em;
   display: flex;
-  flex-flow: row;
-  justify-content: space-evenly;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.splits .split {
-  width: 2px;
-  height: 100%;
-  background-color: hsla(var(--gray-100));
-  z-index: 2;
+.tier::before {
+  font-weight: 400;
+  position: absolute;
+  bottom: 0.6em;
+  font-size: 1.6em;
+  color: hsla(var(--tier-bar-background));
 }
 
-.progressBar .currentProgress {
+.tier:first-child:before {
+  content: 'III';
+}
+
+.tier:nth-child(2):before {
+  content: 'II';
+}
+
+.tier:nth-child(3):before {
+  content: 'I';
+}
+
+.tier .bar {
+  width: 100%;
+  height: 0.5em;
+  border-radius: 50vh;
+  overflow: hidden;
+  background-color: hsla(var(--tier-bar-background), 0.4);
+}
+
+.bar .currentProgress {
   height: 100%;
-  border-radius: 50vw;
-  background-color: hsla(var(--blue-300));
+  border-radius: 50vh;
+  background-color: hsla(var(--tier-bar-accent));
+}
+
+.nextRank {
+  width: 2em;
+  height: 2em;
+  aspect-ratio: 1;
+  background: linear-gradient(225deg, #4c94ff 0%, #216bda 100%);
+  border-radius: 50vh;
 }
 
 .container .text {

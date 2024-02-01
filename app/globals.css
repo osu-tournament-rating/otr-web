@@ -99,6 +99,22 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+
+  --accent-color: 216, 100%, 65%;
+  --accent-secondary-color: var(--blue-300);
+
+  /* CHARTS */
+  --tooltip-color: 0, 0%, 100%;
+  --tooltip-gain: var(--green-400);
+  --tooltip-loss: var(--red-400);
+
+  /* BADGES */
+  --badge-provisional-background: var(--yellow-400);
+  --badge-provisional-foreground: var(--yellow-900);
+
+  /* USER RATING TIER */
+  --tier-bar-background: var(--gray-300);
+  --tier-bar-accent: var(--accent-color);
 }
 
 * {
