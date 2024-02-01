@@ -17,24 +17,29 @@ export async function getUserData() {
         cookies().get('OTR-Access-Token')?.value
       }`,
     },
-    next: {
+    /* next: {
       revalidate: 120,
       tags: ['user-me'],
-    },
+    }, */
   });
 
   if (res.status !== 200) {
+    const errorMessage = await res.text();
+
     return {
       error: {
         status: res.status,
         text: res.statusText,
+        message: errorMessage,
       },
     };
   }
 
-  res = await res.json();
+  if (res.status === 200) {
+    res = await res.json();
 
-  return res;
+    return res;
+  }
 
   /* .then((response) => {
       return response.json();
@@ -46,6 +51,32 @@ export async function getUserData() {
     .catch((error) => {
       console.error('Error fetching authenticated user:', error);
     }); */
+}
+
+export async function checkUserLogin() {
+  let res = await fetch(`${process.env.REACT_APP_API_URL}/me/validate`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
+      Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
+        cookies().get('OTR-Access-Token')?.value
+      }`,
+    },
+  });
+
+  if (!res?.ok) {
+    const errorCode = res?.status;
+
+    return {
+      error: {
+        errorCode,
+      },
+    };
+  }
+
+  return await getUserData();
 }
 
 export async function revalidateUserData() {
@@ -409,6 +440,52 @@ export async function fetchDashboard() {
   data = await data.json();
 
   return data;
+}
+
+export async function fetchUserPageTitle(player: string | number) {
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/players/${player}/info`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (res?.ok) {
+    res = await res.json();
+    return res;
+  }
+
+  return null;
+}
+
+export async function fetchUserPage(player: string | number) {
+  const isUserLogged = await checkUserLogin();
+
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/stats/${player}${
+      isUserLogged ? `?comparerId=${isUserLogged?.userId}` : ''
+    }`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (!res?.ok) {
+    return redirect('/');
+  }
+
+  res = await res.json();
+
+  /* TEMPORARY BEHAVIOR */
+  if (res?.generalStats === null) {
+    return redirect('/');
+  }
+
+  return res;
 }
 
 export async function paginationParamsToURL(params: {}) {

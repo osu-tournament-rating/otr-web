@@ -50,3 +50,15 @@ export const MatchesSubmitFormSchema = z.object({
     )
     .min(1),
 });
+
+export interface User {
+  "id": number,
+  "userId": number,
+  "osuId": number,
+  "osuCountry": string,
+  "osuPlayMode": number,
+  "username": string,
+  "roles": [
+    string
+  ]
+} 

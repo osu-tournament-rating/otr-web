@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import styles from './InlineChart.module.css';
 
 export default function InlineChart({ matchesData }: { matchesData?: {} }) {
-  const wonPercentage =
+  const wonPercentage = (
     ((matchesData.matchesPlayed - matchesData.matchesLost) /
       matchesData.matchesPlayed) *
-    100;
-  const lostPercentage =
+    100
+  ).toFixed(1);
+  const lostPercentage = (
     ((matchesData.matchesPlayed - matchesData.matchesWon) /
       matchesData.matchesPlayed) *
-    100;
+    100
+  ).toFixed(1);
 
   return (
     <div className={styles.chart}>
