@@ -22,6 +22,14 @@ ChartJS.register(
   Legend
 );
 
+function kFormatter(num: number) {
+  return Math.abs(num) > 999999
+    ? Math.sign(num) * (Math.abs(num) / 1000000).toFixed(1) + 'M'
+    : Math.abs(num) > 999
+    ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + 'k'
+    : Math.sign(num) * Math.abs(num);
+}
+
 export default function RadarChart({
   winrateModData,
   averageModScore,
@@ -132,7 +140,7 @@ export default function RadarChart({
             return [0, 0, 0, spaceInPx, 2500];
           },
         },
-        min: winrateModData ? -20 : averageModScore ? -300000 : -20,
+        min: winrateModData ? -25 : averageModScore ? -300000 : -25,
         max: winrateModData ? 100 : averageModScore ? 1200000 : 100,
         ticks: {
           font: {
@@ -140,9 +148,9 @@ export default function RadarChart({
             family: font,
             weight: 300,
           },
-          stepSize: winrateModData ? 20 : averageModScore ? 300000 : 20,
+          stepSize: winrateModData ? 25 : averageModScore ? 300000 : 25,
           callback: (value: any, tick: any, values: any) => {
-            return `${value.toLocaleString('en-US')}`;
+            return `${kFormatter(value)}${winrateModData ? '%' : ''}`;
           },
           showLabelBackdrop: (context: any) => {
             return false;
