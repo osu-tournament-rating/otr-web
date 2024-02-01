@@ -89,7 +89,7 @@ export default async function page({
       <StatsGrid>
         <UserTotalMatches data={data?.matchStats} />
         <GridCard title={'Most played mods'}>
-          <DoughnutChart scoreStats={data?.scoreStats} />
+          <DoughnutChart modStats={data?.modStats} />
         </GridCard>
         <GridCard title={'General'}>
           <div className={styles.cardStat}>

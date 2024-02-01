@@ -7,6 +7,12 @@ import styles from './page.module.css';
 
 export const revalidate = 60;
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Leaderboards',
+};
+
 /* const catchErrors = async (params: {}) => {
   const { type, rank, rating, matches, winrate, inclTier, exclTier } = params;
 
