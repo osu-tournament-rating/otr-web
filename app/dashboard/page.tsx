@@ -67,7 +67,7 @@ export default async function page({
         <div className={styles.graphContainer}>
           <div className={styles.header}>
             <div className={styles.rating}>
-              <span>{Math.floor(data.generalStats.rating)}</span>
+              <span>{Math.round(data.generalStats.rating)}</span>
               <span
                 className={clsx(
                   styles.change,
