@@ -54,6 +54,17 @@ export default function RadarChart({
   }, []);
 
   let mods: object[] = [];
+  let defaultLabels: string[] = [
+    'NM',
+    'HD',
+    'HR',
+    'DT',
+    'EZ',
+    'FL',
+    'HT',
+    'HDHR',
+    'HDDT',
+  ];
 
   if (winrateModData) {
     Object.keys(winrateModData).forEach((mod: any) => {
@@ -61,7 +72,16 @@ export default function RadarChart({
       let value = (winrateModData[mod]?.winrate * 100) | 0;
       mods.push({ label, value });
     });
-    mods.sort((a: any, b: any) => a.value < b.value);
+    mods.sort(
+      (a: any, b: any) =>
+        a.label === 'NM'
+          ? a > b
+          : a.value === b.value
+          ? a.label > b.label
+          : null /* a.value < b.value */
+    );
+
+    mods = mods.filter((mod) => mod.value !== 0);
   }
 
   if (averageModScore) {
@@ -70,11 +90,32 @@ export default function RadarChart({
       let value = averageModScore[mod]?.normalizedAverageScore.toFixed(0) | 0;
       mods.push({ label, value });
     });
-    mods.sort((a: any, b: any) => a.value < b.value);
+    mods.sort(
+      (a: any, b: any) =>
+        a.label === 'NM'
+          ? a > b
+          : a.value === b.value
+          ? a.label > b.label
+          : null /* a.value < b.value */
+    );
+
+    mods = mods.filter((mod) => mod.value !== 0);
+  }
+
+  let existingMods = mods
+    .filter((mod) => mod.value !== 0)
+    .map((mod) => mod.label);
+  defaultLabels = defaultLabels.filter((mod) => !existingMods.includes(mod));
+  for (let i = 0; mods.length < 5; i++) {
+    if (defaultLabels[i] === 'NM') {
+      mods.unshift({ label: defaultLabels[i], value: 0 });
+    } else {
+      mods.push({ label: defaultLabels[i], value: 0 });
+    }
   }
 
   const data = {
-    labels: mods.map((mod) => mod.label).slice(0, 5),
+    labels: mods.map((mod) => mod.label),
     datasets: [
       {
         label: winrateModData
@@ -82,7 +123,7 @@ export default function RadarChart({
           : averageModScore
           ? 'AVG Score'
           : 'Winrate %',
-        data: mods.map((mod) => mod.value).slice(0, 5),
+        data: mods.map((mod) => mod.value),
         backgroundColor: `hsla(${colors[0]}, 0.15)`,
         borderWidth: 0,
       },
@@ -140,17 +181,19 @@ export default function RadarChart({
             return [0, 0, 0, spaceInPx, 2500];
           },
         },
-        min: winrateModData ? -25 : averageModScore ? -300000 : -25,
-        max: winrateModData ? 100 : averageModScore ? 1200000 : 100,
+        min: winrateModData ? -25 : averageModScore ? -200000 : -25,
+        max: winrateModData ? 100 : averageModScore ? 1000000 : 100,
         ticks: {
           font: {
             size: 10,
             family: font,
             weight: 300,
           },
-          stepSize: winrateModData ? 25 : averageModScore ? 300000 : 25,
+          stepSize: winrateModData ? 25 : averageModScore ? 200000 : 25,
           callback: (value: any, tick: any, values: any) => {
-            return `${kFormatter(value)}${winrateModData ? '%' : ''}`;
+            return value !== 0
+              ? `${kFormatter(value)}${winrateModData ? '%' : ''}`
+              : '';
           },
           showLabelBackdrop: (context: any) => {
             return false;
