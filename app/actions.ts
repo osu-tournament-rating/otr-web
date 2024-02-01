@@ -465,7 +465,7 @@ export async function fetchUserPage(player: string | number) {
 
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/stats/${player}${
-      isUserLogged ? `?comparerId=${isUserLogged?.userId}` : ''
+      isUserLogged?.userId ? `?comparerId=${isUserLogged?.userId}` : ''
     }`,
     {
       headers: {
