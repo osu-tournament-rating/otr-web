@@ -19,14 +19,14 @@ export default function NavBar() {
       </Link>
       <div className={styles.content}>
         <Routes />
-        <Link href={'/donate'}>Donate</Link>
+        {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
           <ModeSwitcher mode={cookieMode?.value} />
-          <button>
+          {/* <button>
             <div className={styles.darkModeSwitcher}>
               <Image src={moonSVG} alt="Dark Mode Switcher" fill />
             </div>
-          </button>
+          </button> */}
           <UserLogged />
         </div>
       </div>
