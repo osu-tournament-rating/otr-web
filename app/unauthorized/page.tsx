@@ -8,7 +8,7 @@ export default function page() {
     <main className={styles.container}>
       <Card
         title="Unauthorized"
-        description="Looks like you need to login first!"
+        description="Currently, the o!TR website is in a closed pre-alpha state. Only whitelisted users are allowed. We will open things up once we have more features implemented. Thanks for your patience!"
       >
         <LoginButton />
       </Card>
