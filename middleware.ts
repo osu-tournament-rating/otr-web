@@ -9,7 +9,11 @@ export async function middleware(request: NextRequest) {
   const PUBLIC_FILE = /.(.*)$/;
 
   if (!user?.osuId) {
-    return NextResponse.rewrite(new URL('/unauthorized', request.url));
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (request.nextUrl.pathname.startsWith('/unauthorized') && user?.osuId) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   if (
@@ -28,7 +32,6 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL('/', request.url));
   } */
-  /* return NextResponse.next(); */
 }
 
 export const config = {
