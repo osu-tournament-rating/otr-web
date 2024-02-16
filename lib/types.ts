@@ -29,11 +29,18 @@ export const LeaderboardsQuerySchema = z.object({
 export const MatchesSubmitFormSchema = z.object({
   tournamentName: z.string().min(1),
   abbreviation: z.string().min(1),
-  forumPost: z
-    .string()
-    .url()
-    .startsWith('https://osu.ppy.sh/community/forums/topics/')
-    .min(1),
+  forumPost: z.union([
+    z
+      .string()
+      .url()
+      .startsWith('https://osu.ppy.sh/community/forums/topics/')
+      .min(1),
+    z
+      .string()
+      .url()
+      .startsWith('https://osu.ppy.sh/wiki/en/Tournaments/')
+      .min(1),
+  ]),
   rankRangeLowerBound: z.number().min(1),
   teamSize: z.number().min(1).max(8),
   mode: z.number().min(0).max(3),
@@ -52,13 +59,11 @@ export const MatchesSubmitFormSchema = z.object({
 });
 
 export interface User {
-  "id": number,
-  "userId": number,
-  "osuId": number,
-  "osuCountry": string,
-  "osuPlayMode": number,
-  "username": string,
-  "roles": [
-    string
-  ]
-} 
+  id: number;
+  userId: number;
+  osuId: number;
+  osuCountry: string;
+  osuPlayMode: number;
+  username: string;
+  roles: [string];
+}
