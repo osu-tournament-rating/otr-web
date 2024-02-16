@@ -18,12 +18,14 @@ export default function Routes() {
           Dashboard
         </Link>
       )}
-      <Link
-        href={'/leaderboards'}
-        className={pathname === '/leaderboards' ? styles.active : ''}
-      >
-        Leaderboards
-      </Link>
+      {user?.osuId && (
+        <Link
+          href={'/leaderboards'}
+          className={pathname === '/leaderboards' ? styles.active : ''}
+        >
+          Leaderboards
+        </Link>
+      )}
       {user?.osuId && (
         <Link
           href={'/submit'}
