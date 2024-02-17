@@ -15,11 +15,17 @@ type Props = {
 };
 
 export default function ErrorProvider({ children }: Props): JSX.Element {
-  const [error, setError] = useState<object | undefined>();
+  const [error, setError] = useState<object | undefined>(undefined);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (!error || show) return;
+
+    if (
+      error?.status === 400 ||
+      error?.message === 'No access token cookie found.'
+    )
+      return;
 
     setShow(true);
     setTimeout(() => {
@@ -32,7 +38,7 @@ export default function ErrorProvider({ children }: Props): JSX.Element {
     <SetErrorContext.Provider value={useMemo(() => setError, [setError])}>
       <ErrorContext.Provider value={useMemo(() => error, [error])}>
         <AnimatePresence>
-          {error && (
+          {show && (
             <ErrorToast
               message={error?.message}
               status={error?.status}
