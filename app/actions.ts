@@ -23,7 +23,7 @@ export async function getUserData() {
     }, */
   });
 
-  if (res.status !== 200) {
+  if (!res?.ok) {
     const errorMessage = await res.text();
 
     return {
@@ -35,22 +35,9 @@ export async function getUserData() {
     };
   }
 
-  if (res.status === 200) {
-    res = await res.json();
+  res = await res.json();
 
-    return res;
-  }
-
-  /* .then((response) => {
-      return response.json();
-    })
-    .then((data) => {
-      console.log(data);
-      return data;
-    })
-    .catch((error) => {
-      console.error('Error fetching authenticated user:', error);
-    }); */
+  return res;
 }
 
 export async function checkUserLogin() {
@@ -67,11 +54,13 @@ export async function checkUserLogin() {
   });
 
   if (!res?.ok) {
-    const errorCode = res?.status;
+    const errorMessage = await res.text();
 
     return {
       error: {
-        errorCode,
+        status: res?.status,
+        text: res?.statusText,
+        message: errorMessage,
       },
     };
   }
