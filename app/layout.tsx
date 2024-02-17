@@ -1,5 +1,5 @@
 import Footer from '@/components/Footer/Footer';
-import NavBar from '@/components/NavBar/NavBar';
+import { LayoutProvider } from '@/components/LayoutProvider/LayoutProvider';
 import UserProvider from '@/util/UserLoggedContext';
 import type { Metadata } from 'next';
 import { Viewport } from 'next';
@@ -33,9 +33,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <UserProvider>
-          <NavBar />
-          {children}
-          <Footer />
+          <LayoutProvider>
+            {children}
+            <Footer />
+          </LayoutProvider>
         </UserProvider>
       </body>
     </html>

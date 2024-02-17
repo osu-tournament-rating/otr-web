@@ -1,6 +1,6 @@
+import { getOsuModeCookie } from '@/app/actions';
 import moonSVG from '@/public/icons/moon.svg';
 import logo from '@/public/logos/small.svg';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
@@ -10,7 +10,7 @@ import Routes from './Routes/Routes';
 import UserLogged from './UserLogged/UserLogged';
 
 export default function NavBar() {
-  const cookieMode = cookies().get('OTR-user-selected-osu-mode');
+  const cookieMode = getOsuModeCookie();
 
   return (
     <nav className={styles.navbar}>
@@ -22,11 +22,11 @@ export default function NavBar() {
         {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
           <ModeSwitcher mode={cookieMode?.value} />
-          {/* <button>
+          <button>
             <div className={styles.darkModeSwitcher}>
               <Image src={moonSVG} alt="Dark Mode Switcher" fill />
             </div>
-          </button> */}
+          </button>
           <UserLogged />
         </div>
       </div>

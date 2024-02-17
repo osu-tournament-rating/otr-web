@@ -16,7 +16,7 @@ export default function Unauthorized() {
   }
 
   return (
-    <main className={styles.container}>
+    <main className={styles.container} style={{ paddingTop: '2vw' }}>
       <Card
         title="Unauthorized"
         description="Currently, the o!TR website is in a closed pre-alpha state. Only whitelisted users are allowed. We will open things up once we have more features implemented. Thanks for your patience!"
