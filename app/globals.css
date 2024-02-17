@@ -117,6 +117,10 @@
   /* USER RATING TIER */
   --tier-bar-background: var(--gray-300);
   --tier-bar-accent: var(--accent-color);
+
+  /* TOAST */
+  --toast-error-bg: var(--yellow-200);
+  --toast-error-border: 50, 70%, 64%;
 }
 
 * {
