@@ -1,4 +1,4 @@
-![psu! Tournament Rating](https://akinariosu.s-ul.eu/X1Me0Jpd)
+![osu! Tournament Rating](https://akinariosu.s-ul.eu/X1Me0Jpd)
 
 # o!TR Web
 
