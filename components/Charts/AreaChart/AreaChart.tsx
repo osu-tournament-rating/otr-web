@@ -78,18 +78,18 @@ export default function AreaChart({
 
   if (ratingStats) {
     labels = ratingStats.map((day) => {
-      return new Date(day[0].tooltipInfo.matchDate).toLocaleDateString(
-        'en-US',
-        dateFormatOptions
-      );
+      return new Date(
+        day[0].timestamp /* tooltipInfo.matchDate */
+      ).toLocaleDateString('en-US', dateFormatOptions);
     });
 
     tournamentsTooltip = ratingStats.map((day) => {
       let matches = [];
       day.forEach((match) => {
-        match.tooltipInfo.matchDate = new Date(
-          match.tooltipInfo.matchDate
-        ).toLocaleDateString('en-US', dateFormatOptions);
+        match.timestamp = new Date(match.timestamp).toLocaleDateString(
+          'en-US',
+          dateFormatOptions
+        );
 
         return matches.push(match);
       });
@@ -140,9 +140,7 @@ export default function AreaChart({
 
     if (tooltip.body && ratingStats) {
       const matchesLines = new Set(
-        ...tournamentsTooltip.filter(
-          (day) => day[0].tooltipInfo.matchDate == tooltip.title
-        )
+        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltip.title)
       );
 
       /* TOOLTIP HEADER */
@@ -163,9 +161,11 @@ export default function AreaChart({
         const li = document.createElement('li');
 
         const matchName = document.createElement('a');
-        matchName.href = match.tooltipInfo.mpLink;
-        matchName.target = '_blank';
-        matchName.innerHTML = match.tooltipInfo.matchName;
+        matchName.href = match?.matchOsuId
+          ? `https://osu.ppy.sh/mp/${match?.matchOsuId}`
+          : '#';
+        matchName.target = match?.matchOsuId ? '_blank' : '_self';
+        matchName.innerHTML = match.name;
 
         const ratingChange = document.createElement('span');
         ratingChange.innerHTML = match.ratingChange.toFixed(1);
@@ -204,7 +204,7 @@ export default function AreaChart({
       tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
     tooltipEl.style.pointerEvents = 'none';
 
-    var offset = tooltip.width + 120;
+    var offset = tooltip.width + 40; /* 120 */
     if (chart.width / 2 < tooltip.caretX) {
       offset *= -1;
     } else {
