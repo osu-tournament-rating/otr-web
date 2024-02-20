@@ -28,6 +28,18 @@
   color: hsla(var(--tooltip-color), 0.92);
   cursor: default;
   pointer-events: auto;
+  align-items: center;
+}
+
+.tooltip .headerDate {
+  color: #ddd;
+  font-weight: 600;
+  font-size: 0.95em;
+  margin-left: auto;
+  text-align: right;
+  padding-left: 1.5em;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .tooltip ul {

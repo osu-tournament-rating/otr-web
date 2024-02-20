@@ -8,6 +8,7 @@ import {
   LineElement,
   LinearScale,
   PointElement,
+  TimeScale,
   Title,
   Tooltip,
 } from 'chart.js';
@@ -16,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
 
+import 'chartjs-adapter-date-fns';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -24,7 +26,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Filler,
-  Legend
+  Legend,
+  TimeScale
 );
 
 const getOrCreateTooltip = (chart) => {
@@ -44,6 +47,16 @@ const getOrCreateTooltip = (chart) => {
 
   return tooltipEl;
 };
+
+function formatDateTooltip(date) {
+  const year = date.toLocaleString('default', { year: 'numeric' });
+  const month = date.toLocaleString('default', {
+    month: '2-digit',
+  });
+  const day = date.toLocaleString('default', { day: '2-digit' });
+
+  return [year, month, day].join('-');
+}
 
 export default function AreaChart({
   ratingStats,
@@ -77,10 +90,17 @@ export default function AreaChart({
   let tournamentsTooltip: object[];
 
   if (ratingStats) {
+    const currentDay = new Date().toLocaleDateString(
+      'en-US',
+      dateFormatOptions
+    );
+    let latestRating = 0;
+
     labels = ratingStats.map((day) => {
-      return new Date(
-        day[0].timestamp /* tooltipInfo.matchDate */
-      ).toLocaleDateString('en-US', dateFormatOptions);
+      return new Date(day[0].timestamp).toLocaleDateString(
+        'en-US',
+        dateFormatOptions
+      );
     });
 
     tournamentsTooltip = ratingStats.map((day) => {
@@ -98,13 +118,21 @@ export default function AreaChart({
 
     dataForGraph = ratingStats.map((day) => {
       if (day.length > 1) {
+        latestRating = day[day.length - 1].ratingAfter.toFixed(0);
         return day[day.length - 1].ratingAfter.toFixed(0);
       }
 
       if (day.length === 1) {
+        latestRating = day[0].ratingAfter.toFixed(0);
         return day[0].ratingAfter.toFixed(0);
       }
     });
+
+    labels.push(currentDay);
+    tournamentsTooltip.push([
+      { name: 'Decay', ratingChange: 0, timestamp: currentDay },
+    ]);
+    dataForGraph.push(latestRating);
   }
 
   /* if (rankChart) {
@@ -152,9 +180,13 @@ export default function AreaChart({
       const headerValue = document.createElement('span');
       headerValue.className = styles.headerValue;
       headerValue.innerHTML = tooltip.body[0].lines[0];
+      const headerDate = document.createElement('span');
+      headerDate.className = styles.headerDate;
+      matchesLines.forEach((match) => (headerDate.innerHTML = match.timestamp));
 
       header.appendChild(headerProperty);
       header.appendChild(headerValue);
+      header.appendChild(headerDate);
 
       const matchesList = document.createElement('ul');
       matchesLines.forEach((match) => {
@@ -198,13 +230,13 @@ export default function AreaChart({
 
     // Display, position, and set styles for font
     tooltipEl.style.opacity = 1;
-    tooltipEl.style.top = positionY + tooltip.caretY + 5 + 'px';
+    tooltipEl.style.top = positionY + tooltip.caretY + 8 + 'px';
     tooltipEl.style.font = tooltip.options.bodyFont.string;
     tooltipEl.style.padding =
       tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
     tooltipEl.style.pointerEvents = 'none';
 
-    var offset = tooltip.width + 40; /* 120 */
+    var offset = tooltip.width + 80; /* 120 */
     if (chart.width / 2 < tooltip.caretX) {
       offset *= -1;
     } else {
@@ -241,13 +273,24 @@ export default function AreaChart({
     maintainAspectRatio: false,
     scales: {
       x: {
+        /* type: 'time', */
+        /* time: {
+          unit: 'day',
+          distribution: 'series',
+          tooltipFormat: 'dd.M.yyyy',
+          displayFormats: {
+            day: 'dd.M',
+          },
+          parser: 'dd/M/yyyy',
+        }, */
         ticks: {
           font: {
             size: 16,
             family: font,
           },
           autoSkip: true,
-          maxTicksLimit: 8,
+          maxTicksLimit: 7,
+          major: { enabled: true },
         },
       },
       y: {
