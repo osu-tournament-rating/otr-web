@@ -65,10 +65,6 @@
   color: hsla(var(--red-400));
 }
 
-.change.negative::before {
-  content: '-';
-}
-
 .header .stats {
   display: flex;
   flex-flow: row;
