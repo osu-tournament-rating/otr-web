@@ -102,7 +102,7 @@ export default async function page({
             </div>
           </div>
           <div className={styles.chart}>
-            <AreaChart ratingStats={data.ratingStats} />
+            <AreaChart ratingStats={data.ratingChart.chartData} />
           </div>
         </div>
       </div>
@@ -161,32 +161,6 @@ export default async function page({
         </GridCard>
         <GridCard title={'Winrate by mod'}>
           <RadarChart winrateModData={data?.modStats} />
-        </GridCard>
-        <GridCard title={'Teammates'}>
-          <div className={styles.cardStat}>
-            <span>Most played</span>
-            <span className={styles.value}>
-              {data?.matchStats.mostPlayedTeammateName}
-            </span>
-          </div>
-          <div className={styles.cardStat}>
-            <span>Best teammate</span>
-            <span className={styles.value}>
-              {data?.matchStats.bestTeammateName}
-            </span>
-          </div>
-        </GridCard>
-        <GridCard title={'Opponents'}>
-          <div className={styles.cardStat}>
-            <span>Most played</span>
-            <span className={styles.value}>
-              {data?.matchStats.mostPlayedOpponentName}
-            </span>
-          </div>
-          <div className={styles.cardStat}>
-            <span>Best opponent</span>
-            <span className={styles.value}>TO DO</span>
-          </div>
         </GridCard>
         <GridCard title={'Average score per mod'}>
           <RadarChart averageModScore={data?.modStats} />
