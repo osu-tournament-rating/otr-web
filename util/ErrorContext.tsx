@@ -27,7 +27,7 @@ export default function ErrorProvider({ children }: Props): JSX.Element {
     )
       return;
 
-    if (error?.status === 401 && error?.message == "") return;
+    if (error?.status === 401 && error?.message == '') return;
 
     setShow(true);
     setTimeout(() => {

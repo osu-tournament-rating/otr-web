@@ -1,12 +1,12 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { setLoginCookie } from '../actions';
+import { setLoginCookies } from '../actions';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
 
-  await fetch(`${process.env.REACT_APP_API_URL}/login?code=${code}`, {
+  await fetch(`${process.env.REACT_APP_API_URL}/oauth/authorize?code=${code}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     })
     .then(async (data) => {
       if (data) {
-        return await setLoginCookie(data?.token);
+        return await setLoginCookies(data);
       }
     })
     .catch((error) => {
