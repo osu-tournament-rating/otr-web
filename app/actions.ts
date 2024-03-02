@@ -13,9 +13,7 @@ export async function getUserData() {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-        cookies().get('OTR-Access-Token')?.value
-      }`,
+      Authorization: `Bearer ${cookies().get('OTR-Access-Token')?.value}`,
     },
     /* next: {
       revalidate: 120,
@@ -24,7 +22,11 @@ export async function getUserData() {
   });
 
   if (!res?.ok) {
+    refreshAccessToken();
+
     const errorMessage = await res.text();
+
+    console.log(errorMessage);
 
     return {
       error: {
@@ -40,6 +42,43 @@ export async function getUserData() {
   return res;
 }
 
+export async function refreshAccessToken() {
+  let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
+
+  /* Return if there is no refresh token */
+  if (refreshToken == null) return;
+
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/oauth/refresh?refreshToken=${refreshToken}`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
+      },
+    }
+  );
+
+  if (!res?.ok) {
+    const errorMessage = await res.text();
+
+    console.log(errorMessage);
+
+    return {
+      error: {
+        status: res?.status,
+        text: res?.statusText,
+        message: errorMessage,
+      },
+    };
+  }
+
+  res = await res.json();
+
+  return await setLoginCookies(res);
+}
+
 export async function checkUserLogin() {
   let res = await fetch(`${process.env.REACT_APP_API_URL}/me/validate`, {
     method: 'GET',
@@ -47,13 +86,13 @@ export async function checkUserLogin() {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-        cookies().get('OTR-Access-Token')?.value
-      }`,
+      Authorization: `Bearer ${cookies().get('OTR-Access-Token')?.value}`,
     },
   });
 
   if (!res?.ok) {
+    refreshAccessToken();
+
     const errorMessage = await res.text();
 
     return {
@@ -78,13 +117,26 @@ export async function loginIntoWebsite() {
   );
 }
 
-export async function setLoginCookie(cookie: string) {
-  await cookies().set('OTR-Access-Token', cookie, {
+export async function setLoginCookies(cookie: {
+  accessToken: string;
+  refreshToken: string;
+  accessExpiration: number;
+}) {
+  await cookies().set('OTR-Access-Token', cookie.accessToken, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: cookie.accessExpiration,
+  });
+
+  await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
     httpOnly: true,
     path: '/',
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
   });
+
   const res = await getUserData();
   await changeOsuModeCookie(res.osuPlayMode);
   return;
@@ -141,9 +193,7 @@ export async function saveTournamentMatches(
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-          Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-            cookies().get('OTR-Access-Token')?.value
-          }`,
+          Authorization: `Bearer ${cookies().get('OTR-Access-Token')?.value}`,
         },
         credentials: 'include',
         body: JSON.stringify(data),
@@ -398,13 +448,11 @@ export async function fetchLeaderboard(params: {}) {
     `${process.env.REACT_APP_API_URL}/leaderboards?${backendString}`,
     {
       /* headers: {
-        Authorization: `${await cookies().get('OTR-Access-Token')?.value}`,
+        Authorization: `${await cookies().get('OTR-Access-Token')?.value?.value}`,
       }, */
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-          cookies().get('OTR-Access-Token')?.value
-        }`,
+        Authorization: `Bearer ${cookies().get('OTR-Access-Token')?.value}`,
       },
     }
   );
@@ -423,9 +471,7 @@ export async function fetchDashboard() {
     {
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-          cookies().get('OTR-Access-Token')?.value
-        }`,
+        Authorization: `Bearer ${cookies().get('OTR-Access-Token')?.value}`,
       },
     }
   );
