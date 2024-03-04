@@ -22,7 +22,10 @@ export async function getUserData() {
   });
 
   if (!res?.ok) {
-    refreshAccessToken();
+    let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
+
+    if (refreshToken !== null && (res?.status === 401 || res?.status === 400))
+      refreshAccessToken();
 
     const errorMessage = await res.text();
 
@@ -91,7 +94,10 @@ export async function checkUserLogin() {
   });
 
   if (!res?.ok) {
-    refreshAccessToken();
+    let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
+
+    if (refreshToken !== null && (res?.status === 401 || res?.status === 400))
+      refreshAccessToken();
 
     const errorMessage = await res.text();
 
