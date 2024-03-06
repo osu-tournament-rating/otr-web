@@ -1,6 +1,6 @@
 'use client';
-import { checkUserLogin } from '@/app/actions';
-import { User } from '@/lib/types';
+import { getSession } from '@/app/actions';
+/* import { User } from '@/lib/types'; */
 import {
   DependencyList,
   createContext,
@@ -27,9 +27,8 @@ export default function UserProvider({ children }: Props): JSX.Element {
   const [user, setUser] = useState<object | undefined>(undefined);
 
   useAsyncEffect(async (): Promise<void> => {
-    let resp: object | undefined = await checkUserLogin();
+    let resp: object | undefined = await getSession(true);
 
-    /* console.log(resp); */
     setUser(resp);
   }, []);
 

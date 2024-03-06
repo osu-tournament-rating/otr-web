@@ -16,6 +16,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.4",
+    "iron-session": "^8.0.1",
     "next": "14.0.1",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",
