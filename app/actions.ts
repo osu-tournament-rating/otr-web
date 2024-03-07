@@ -1,51 +1,162 @@
 'use server';
 
-import { LeaderboardsQuerySchema, MatchesSubmitFormSchema } from '@/lib/types';
+import {
+  LeaderboardsQuerySchema,
+  MatchesSubmitFormSchema,
+  SessionUser,
+  defaultSessionUser,
+  sessionOptions,
+} from '@/lib/types';
+import { getIronSession } from 'iron-session';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { z } from 'zod';
 
-export async function getUserData() {
+export async function getSession(onlyData: boolean = false) {
+  const session = await getIronSession<SessionUser>(cookies(), sessionOptions);
+
+  if (!session.isLogged) {
+    session.isLogged = defaultSessionUser.isLogged;
+  }
+
+  // onlyData field will be true only when the website need to get the fields without the full IronSession
+  if (onlyData)
+    return {
+      isLogged: session?.isLogged,
+      id: session?.id,
+      userId: session?.userId,
+      osuId: session?.osuId,
+      osuCountry: session?.osuCountry,
+      osuPlayMode: session?.osuPlayMode,
+      osuPlayModeSelected: session?.osuPlayModeSelected,
+      username: session?.username,
+      roles: session?.roles,
+      accessToken: session?.accessToken,
+    };
+
+  return session;
+}
+
+export async function login(cookie: {
+  accessToken: string;
+  refreshToken: string;
+  accessExpiration?: number;
+}) {
+  const session = await getSession();
+
+  if (!cookie)
+    return {
+      error: {
+        status: 400,
+        text: 'Bad Request',
+        message: 'Received bad cookies from osu!.',
+      },
+    };
+
+  session.accessToken = cookie.accessToken;
+
+  await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  const loggedUser = await getLoggedUser(cookie.accessToken);
+
+  if (loggedUser.error)
+    return {
+      error: loggedUser.error,
+    };
+
+  session.id = loggedUser.id;
+  session.userId = loggedUser.userId;
+  session.osuId = loggedUser.osuId;
+  session.osuCountry = loggedUser.osuCountry;
+  session.osuPlayMode = loggedUser.osuPlayMode;
+  session.osuPlayModeSelected = loggedUser.osuPlayMode;
+  session.username = loggedUser.username;
+  session.roles = loggedUser.roles;
+  session.isLogged = true;
+
+  await session.save();
+
+  /* await changeOsuModeCookie(res.osuPlayMode); */
+  return redirect('/');
+}
+
+export async function getLoggedUser(accessToken: string) {
   let res = await fetch(`${process.env.REACT_APP_API_URL}/me`, {
     method: 'GET',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-        cookies().get('OTR-Access-Token')?.value
-      }`,
+      Authorization: `Bearer ${accessToken}`,
     },
-    next: {
+    /* next: {
       revalidate: 120,
       tags: ['user-me'],
-    },
+    }, */
   });
 
-  if (res.status !== 200) {
+  if (!res?.ok) {
+    /* let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
+
+    if (refreshToken !== null && (res?.status === 401 || res?.status === 400))
+      refreshAccessToken(); */
+
+    const errorMessage = await res.text();
+
+    console.log(errorMessage);
+
     return {
       error: {
         status: res.status,
         text: res.statusText,
+        message: errorMessage,
       },
     };
   }
 
   res = await res.json();
-
   return res;
+}
 
-  /* .then((response) => {
-      return response.json();
-    })
-    .then((data) => {
-      console.log(data);
-      return data;
-    })
-    .catch((error) => {
-      console.error('Error fetching authenticated user:', error);
-    }); */
+export async function refreshAccessToken() {
+  let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
+
+  /* Return if there is no refresh token */
+  if (refreshToken == null) return;
+
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/oauth/refresh?refreshToken=${refreshToken}`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
+      },
+    }
+  );
+
+  if (!res?.ok) {
+    const errorMessage = await res.text();
+
+    console.log(errorMessage);
+
+    return {
+      error: {
+        status: res?.status,
+        text: res?.statusText,
+        message: errorMessage,
+      },
+    };
+  }
+
+  res = await res.json();
+  return res;
 }
 
 export async function revalidateUserData() {
@@ -58,26 +169,14 @@ export async function loginIntoWebsite() {
   );
 }
 
-export async function setLoginCookie(cookie: string) {
-  await cookies().set('OTR-Access-Token', cookie, {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-  });
-  const res = await getUserData();
-  await changeOsuModeCookie(res.osuPlayMode);
-  return;
-}
-
 export async function saveTournamentMatches(
   prevState: any,
   formData: FormData
 ) {
-  const submitterUser = await getUserData();
+  const session = await getSession(true);
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (submitterUser?.error) return redirect('/');
+  if (!session.userId) return redirect('/');
 
   try {
     /* REGEX TO REMOVE ALL SPACES AND ENTERS */
@@ -107,7 +206,7 @@ export async function saveTournamentMatches(
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
       teamSize: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
-      submitterId: submitterUser?.userId ?? 0,
+      submitterId: session?.userId ?? 0,
       ids: matchIDs,
     });
 
@@ -121,9 +220,7 @@ export async function saveTournamentMatches(
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-          Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-            cookies().get('OTR-Access-Token')?.value
-          }`,
+          Authorization: `Bearer ${session.accessToken}`,
         },
         credentials: 'include',
         body: JSON.stringify(data),
@@ -173,6 +270,10 @@ export async function saveTournamentMatches(
   }
 }
 
+export async function getOsuModeCookie() {
+  return cookies().get('OTR-user-selected-osu-mode');
+}
+
 export async function changeOsuModeCookie(mode?: string) {
   await cookies().set('OTR-user-selected-osu-mode', mode ?? '0');
   return;
@@ -214,6 +315,8 @@ export async function applyLeaderboardFilters(params: {}) {
 }
 
 export async function fetchLeaderboard(params: {}) {
+  const session = await getSession(true);
+
   /* MISSING MODE,  PLAYERID */
 
   const { type, page, rank, rating, matches, winrate, inclTier, exclTier } =
@@ -373,14 +476,9 @@ export async function fetchLeaderboard(params: {}) {
   let data = await fetch(
     `${process.env.REACT_APP_API_URL}/leaderboards?${backendString}`,
     {
-      /* headers: {
-        Authorization: `${await cookies().get('OTR-Access-Token')?.value}`,
-      }, */
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-          cookies().get('OTR-Access-Token')?.value
-        }`,
+        Authorization: `Bearer ${session.accessToken}`,
       },
     }
   );
@@ -391,6 +489,8 @@ export async function fetchLeaderboard(params: {}) {
 }
 
 export async function fetchDashboard() {
+  const session = await getSession(true);
+
   const osuMode =
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
@@ -399,9 +499,7 @@ export async function fetchDashboard() {
     {
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${cookies().get('OTR-Access-Token')?.name}=${
-          cookies().get('OTR-Access-Token')?.value
-        }`,
+        Authorization: `Bearer ${session.accessToken}`,
       },
     }
   );
@@ -409,6 +507,52 @@ export async function fetchDashboard() {
   data = await data.json();
 
   return data;
+}
+
+export async function fetchUserPageTitle(player: string | number) {
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/players/${player}/info`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (res?.ok) {
+    res = await res.json();
+    return res;
+  }
+
+  return null;
+}
+
+export async function fetchUserPage(player: string | number) {
+  const session = await getSession(true);
+
+  let res = await fetch(
+    `${process.env.REACT_APP_API_URL}/stats/${player}${
+      session?.userId ? `?comparerId=${session?.userId}` : ''
+    }`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (!res?.ok) {
+    return redirect('/');
+  }
+
+  res = await res.json();
+
+  /* TEMPORARY BEHAVIOR */
+  if (res?.generalStats === null) {
+    return redirect('/');
+  }
+
+  return res;
 }
 
 export async function paginationParamsToURL(params: {}) {

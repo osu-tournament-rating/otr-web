@@ -1,4 +1,4 @@
-import { fetchDashboard } from '@/app/actions';
+import { fetchUserPage, fetchUserPageTitle } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
@@ -8,60 +8,40 @@ import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
 import GridCard from '@/components/Dashboard/GridCard/GridCard';
 import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/UserTotalMatches';
 import StatsGrid from '@/components/Dashboard/StatsGrid/StatsGrid';
-import UserMainCard from '@/components/Dashboard/UserMainCard/UserMainCard';
 import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
-import Notice from '@/components/Notice/Notice';
+import UserMainCard from '@/components/Profile/UserMainCard/UserMainCard';
 import clsx from 'clsx';
 import styles from './page.module.css';
 
-import type { Metadata } from 'next';
+export async function generateMetadata({
+  params: { id },
+}: {
+  params: { id: string | number };
+}) {
+  let player = await fetchUserPageTitle(id);
 
-export const metadata: Metadata = {
-  title: 'Dashboard',
-};
+  return {
+    title: player !== null ? `${player?.username}'s profile` : 'User profile',
+  };
+}
 
 export const revalidate = 60;
 
 export default async function page({
   searchParams,
+  params: { id },
 }: {
   searchParams: string | string[] | {};
+  params: { id: string | number };
 }) {
-  const data = await fetchDashboard();
+  const data = await fetchUserPage(id);
 
   return (
     <main className={styles.main}>
-      {/* <div className={styles.notices}>
-        <Notice title={'About your TR'}>
-          Your TR (tournament rating) is calculated based on your match cost
-          relative to other players in your matches, see{' '}
-          <a href="#">
-            <strong>here</strong>
-          </a>{' '}
-          for a more detailed explanation. If you notice that someone&apos;s
-          rating is significantly higher than others of similar skill level,
-          that means they are consistently outperforming in tournaments and
-          should participate against higher-rated opponents in more challenging
-          settings in order to have a more accurate rating.
-        </Notice>
-        <Notice title={'Heads up!'} type={'alert'}>
-          Missing tournament data? Don&apos;t worry! We are aggressively adding
-          tournament data, so check back later.
-          <br />
-          Help us populate your data first by submitting your matches{' '}
-          <a href="/submit">
-            <strong>here!</strong>
-          </a>
-        </Notice>
-        <Notice
-          title={'You have no data for this time period!'}
-          type={'error'}
-          text={
-            "If you've never played osu! tournaments before, welcome! You can start earning TR simply by playing in osu! tournament matches."
-          }
-        />
-      </div> */}
-      <UserMainCard data={data?.generalStats} />
+      <UserMainCard
+        generalStats={data?.generalStats}
+        playerInfo={data?.playerInfo}
+      />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>

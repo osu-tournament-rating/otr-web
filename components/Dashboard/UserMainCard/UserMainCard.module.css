@@ -29,6 +29,7 @@
 
 .tierImage img {
   object-fit: contain;
+  background: linear-gradient(225deg, #4c94ff 0%, #216bda 100%);
 }
 
 .username {
@@ -53,6 +54,11 @@
 .rankings .header {
   font-size: 3.75rem;
   font-weight: 600;
+  display: flex;
+  flex-flow: row;
+  gap: 0 1rem;
+  align-items: center;
+  height: fit-content;
 }
 
 .itemsRow {

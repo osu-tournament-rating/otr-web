@@ -1,3 +1,4 @@
+import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
 
 const leaderboardsTierNames = [
@@ -29,11 +30,18 @@ export const LeaderboardsQuerySchema = z.object({
 export const MatchesSubmitFormSchema = z.object({
   tournamentName: z.string().min(1),
   abbreviation: z.string().min(1),
-  forumPost: z
-    .string()
-    .url()
-    .startsWith('https://osu.ppy.sh/community/forums/topics/')
-    .min(1),
+  forumPost: z.union([
+    z
+      .string()
+      .url()
+      .startsWith('https://osu.ppy.sh/community/forums/topics/')
+      .min(1),
+    z
+      .string()
+      .url()
+      .startsWith('https://osu.ppy.sh/wiki/en/Tournaments/')
+      .min(1),
+  ]),
   rankRangeLowerBound: z.number().min(1),
   teamSize: z.number().min(1).max(8),
   mode: z.number().min(0).max(3),
@@ -50,3 +58,32 @@ export const MatchesSubmitFormSchema = z.object({
     )
     .min(1),
 });
+
+export interface SessionUser {
+  id?: number;
+  userId?: number;
+  osuId?: number;
+  osuCountry?: string;
+  osuPlayMode?: number;
+  osuPlayModeSelected?: number;
+  username?: string;
+  roles?: [string];
+  accessToken?: string;
+  refreshToken?: string;
+  isLogged: boolean;
+  isWhitelisted?: boolean;
+}
+
+export const defaultSessionUser: SessionUser = {
+  isLogged: false,
+};
+
+export const sessionOptions: SessionOptions = {
+  password: process.env.SESSION_SECRET!,
+  cookieName: 'otr-session',
+  cookieOptions: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 3550, //3600
+  },
+};

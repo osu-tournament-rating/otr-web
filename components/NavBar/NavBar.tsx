@@ -1,17 +1,26 @@
-import { getUserData } from '@/app/actions';
+'use client';
+
+import { getOsuModeCookie } from '@/app/actions';
 import moonSVG from '@/public/icons/moon.svg';
 import logo from '@/public/logos/small.svg';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
 import ModeSwitcher from './ModeSwitcher/ModeSwitcher';
 import styles from './NavBar.module.css';
 import Routes from './Routes/Routes';
+import UserLogged from './UserLogged/UserLogged';
 
-export default async function NavBar() {
-  const cookieMode = cookies().get('OTR-user-selected-osu-mode');
-  const user = await getUserData();
+export default function NavBar() {
+  const [cookieMode, setCookieMode] = useState({});
+
+  useEffect(() => {
+    const cookie = Promise.resolve(getOsuModeCookie());
+    cookie.then((value) => {
+      setCookieMode(value);
+    });
+  }, []);
 
   return (
     <nav className={styles.navbar}>
@@ -20,23 +29,15 @@ export default async function NavBar() {
       </Link>
       <div className={styles.content}>
         <Routes />
-        <Link href={'/donate'}>Donate</Link>
+        {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
-          <ModeSwitcher mode={cookieMode?.value} />
+          {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
           <button>
             <div className={styles.darkModeSwitcher}>
               <Image src={moonSVG} alt="Dark Mode Switcher" fill />
             </div>
           </button>
-          {!user?.error && (
-            <div className={styles.userPropic}>
-              <Image
-                src={`http://s.ppy.sh/a/${user.osuId}`}
-                alt="User Propic"
-                fill
-              />
-            </div>
-          )}
+          <UserLogged />
         </div>
       </div>
       {/* Hamburger Menu Icon for mobile */}

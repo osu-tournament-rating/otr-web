@@ -22,8 +22,8 @@
 
 .propic {
   position: relative;
-  height: 60px;
-  width: 60px;
+  height: 4.3rem;
+  width: 4.3rem;
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
@@ -34,7 +34,7 @@
 }
 
 .username {
-  font-size: 2.7rem;
+  font-size: 3rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   text-align: left;
@@ -54,7 +54,7 @@
   display: flex;
   flex-flow: column;
   align-items: flex-start;
-  font-size: 1.15rem;
+  font-size: 1.22rem;
   gap: 0.2rem;
 }
 

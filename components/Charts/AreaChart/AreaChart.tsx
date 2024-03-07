@@ -8,13 +8,16 @@ import {
   LineElement,
   LinearScale,
   PointElement,
+  TimeScale,
   Title,
   Tooltip,
 } from 'chart.js';
+import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
 
+import 'chartjs-adapter-date-fns';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -23,10 +26,10 @@ ChartJS.register(
   Title,
   Tooltip,
   Filler,
-  Legend
+  Legend,
+  TimeScale
 );
 
-/*
 const getOrCreateTooltip = (chart) => {
   let tooltipEl = chart.canvas.parentNode.querySelector('div');
 
@@ -34,100 +37,26 @@ const getOrCreateTooltip = (chart) => {
     tooltipEl = document.createElement('div');
     tooltipEl.className = styles.tooltip;
 
-    const table = document.createElement('table');
-    table.style.margin = '0px';
+    const div = document.createElement('div');
+    div.className = 'tooltip';
+    div.style.margin = '0px';
 
-    tooltipEl.appendChild(table);
+    tooltipEl.appendChild(div);
     chart.canvas.parentNode.appendChild(tooltipEl);
   }
 
   return tooltipEl;
 };
 
-export const externalTooltipHandler = (context) => {
-  // Tooltip Element
-  const { chart, tooltip } = context;
-  const tooltipEl = getOrCreateTooltip(chart);
+function formatDateTooltip(date) {
+  const year = date.toLocaleString('default', { year: 'numeric' });
+  const month = date.toLocaleString('default', {
+    month: '2-digit',
+  });
+  const day = date.toLocaleString('default', { day: '2-digit' });
 
-
-
-  // Hide if no tooltip
-  if (tooltip.opacity === 0) {
-    tooltipEl.style.opacity = 0;
-    return;
-  }
-
-  // Set Text
-  if (tooltip.body) {
-    const titleLines = tooltip.title || [];
-    const bodyLines = tooltip.body.map((b) => b.lines);
-
-    const tableHead = document.createElement('thead');
-
-    titleLines.forEach((title) => {
-      const tr = document.createElement('tr');
-      tr.style.borderWidth = 0;
-
-      const th = document.createElement('th');
-      th.style.borderWidth = 0;
-      const text = document.createTextNode(title);
-
-      th.appendChild(text);
-      tr.appendChild(th);
-      tableHead.appendChild(tr);
-    });
-
-    const tableBody = document.createElement('tbody');
-    bodyLines.forEach((body, i) => {
-      const colors = tooltip.labelColors[i];
-
-      const span = document.createElement('span');
-      span.style.background = colors.backgroundColor;
-      span.style.borderColor = colors.borderColor;
-      span.style.borderWidth = '2px';
-      span.style.marginRight = '10px';
-      span.style.height = '10px';
-      span.style.width = '10px';
-      span.style.display = 'inline-block';
-
-      const tr = document.createElement('tr');
-      tr.style.backgroundColor = 'inherit';
-      tr.style.borderWidth = 0;
-
-      const td = document.createElement('td');
-      td.style.borderWidth = 0;
-
-      const text = document.createTextNode(body);
-
-      td.appendChild(span);
-      td.appendChild(text);
-      tr.appendChild(td);
-      tableBody.appendChild(tr);
-    });
-
-    const tableRoot = tooltipEl.querySelector('table');
-
-    // Remove old children
-    while (tableRoot.firstChild) {
-      tableRoot.firstChild.remove();
-    }
-
-    // Add new children
-    tableRoot.appendChild(tableHead);
-    tableRoot.appendChild(tableBody);
-  }
-
-  const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-
-  // Display, position, and set styles for font
-  tooltipEl.style.opacity = 1;
-  tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-  tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-  tooltipEl.style.font = tooltip.options.bodyFont.string;
-  tooltipEl.style.padding =
-    tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
-};
- */
+  return [year, month, day].join('-');
+}
 
 export default function AreaChart({
   ratingStats,
@@ -143,8 +72,9 @@ export default function AreaChart({
   /* get variables of colors from CSS */
   useEffect(() => {
     setColors([
-      getComputedStyle(document.documentElement).getPropertyValue('--blue-600'),
-      getComputedStyle(document.documentElement).getPropertyValue('--blue-400'),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--accent-color'
+      ),
     ]);
     setFont(
       getComputedStyle(document.documentElement).getPropertyValue(
@@ -153,69 +83,56 @@ export default function AreaChart({
     );
   }, []);
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false,
-        /* position: 'top' as const, */
-      },
-      tooltip: {
-        enabled: false,
-        position: 'nearest',
-        /* external: externalTooltipHandler, */
-      },
-      /* title: {
-        display: true,
-        text: 'Chart.js Line Chart',
-      }, */
-    },
-    elements: {
-      line: {
-        tension: 0.3,
-      },
-      point: {
-        radius: 0 /* 0 makes points hidden */,
-        hitRadius: 0,
-      },
-    },
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        ticks: {
-          font: {
-            size: 16,
-            family: font,
-          },
-        },
-        /* border: {
-          color: 'transparent',
-        }, */
-      },
-      y: {
-        ticks: {
-          font: {
-            size: 16,
-            family: font,
-          },
-        },
-      },
-    },
-  };
-
   const dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
 
   let labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
   let dataForGraph: number[] = labels.map(() => Math.ceil(Math.random() * 100));
+  let tournamentsTooltip: object[];
 
   if (ratingStats) {
-    labels = ratingStats.map((match) =>
-      new Date(match.tooltipInfo.matchDate).toLocaleDateString(
+    const currentDay = new Date().toLocaleDateString(
+      'en-US',
+      dateFormatOptions
+    );
+    let latestRating = 0;
+
+    labels = ratingStats.map((day) => {
+      return new Date(day[0].timestamp).toLocaleDateString(
         'en-US',
         dateFormatOptions
-      )
-    );
-    dataForGraph = ratingStats.map((match) => match.ratingAfter.toFixed(0));
+      );
+    });
+
+    tournamentsTooltip = ratingStats.map((day) => {
+      let matches = [];
+      day.forEach((match) => {
+        match.timestamp = new Date(match.timestamp).toLocaleDateString(
+          'en-US',
+          dateFormatOptions
+        );
+
+        return matches.push(match);
+      });
+      return matches;
+    });
+
+    dataForGraph = ratingStats.map((day) => {
+      if (day.length > 1) {
+        latestRating = day[day.length - 1].ratingAfter.toFixed(0);
+        return day[day.length - 1].ratingAfter.toFixed(0);
+      }
+
+      if (day.length === 1) {
+        latestRating = day[0].ratingAfter.toFixed(0);
+        return day[0].ratingAfter.toFixed(0);
+      }
+    });
+
+    labels.push(currentDay);
+    tournamentsTooltip.push([
+      { name: 'Decay', ratingChange: 0, timestamp: currentDay },
+    ]);
+    dataForGraph.push(latestRating);
   }
 
   /* if (rankChart) {
@@ -232,10 +149,163 @@ export default function AreaChart({
         data: dataForGraph,
         borderWidth: 3,
         borderColor: `hsla(${colors[0]}, 0.6)`,
-        backgroundColor: 'transparent' /* `hsla(${colors[1]}, 0.6)` */,
+        backgroundColor: 'transparent',
         font: font,
       },
     ],
+  };
+
+  const externalTooltipHandler = (context) => {
+    // Tooltip Element
+    const { chart, tooltip } = context;
+    const tooltipEl = getOrCreateTooltip(chart);
+
+    // Hide if no tooltip
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    if (tooltip.body && ratingStats) {
+      const matchesLines = new Set(
+        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltip.title)
+      );
+
+      /* TOOLTIP HEADER */
+      const header = document.createElement('div');
+      header.className = styles.header;
+      const headerProperty = document.createElement('span');
+      headerProperty.className = styles.headerProperty;
+      headerProperty.innerHTML = 'Rating:';
+      const headerValue = document.createElement('span');
+      headerValue.className = styles.headerValue;
+      headerValue.innerHTML = tooltip.body[0].lines[0];
+      const headerDate = document.createElement('span');
+      headerDate.className = styles.headerDate;
+      matchesLines.forEach((match) => (headerDate.innerHTML = match.timestamp));
+
+      header.appendChild(headerProperty);
+      header.appendChild(headerValue);
+      header.appendChild(headerDate);
+
+      const matchesList = document.createElement('ul');
+      matchesLines.forEach((match) => {
+        const li = document.createElement('li');
+
+        const matchName = document.createElement('a');
+        matchName.href = match?.matchOsuId
+          ? `https://osu.ppy.sh/mp/${match?.matchOsuId}`
+          : '#';
+        matchName.target = match?.matchOsuId ? '_blank' : '_self';
+        matchName.innerHTML = match.name;
+
+        const ratingChange = document.createElement('span');
+        ratingChange.innerHTML = match.ratingChange.toFixed(1);
+        ratingChange.className = clsx(
+          styles.tooltip_ratingChange,
+          match.ratingChange.toFixed(1) > 0
+            ? styles.gain
+            : match.ratingChange.toFixed(1) < 0
+            ? styles.loss
+            : ''
+        );
+
+        li.appendChild(matchName);
+        li.appendChild(ratingChange);
+        matchesList.appendChild(li);
+      });
+
+      const divRoot = tooltipEl.querySelector('div.tooltip');
+
+      // Remove old children
+      while (divRoot.firstChild) {
+        divRoot.firstChild.remove();
+      }
+
+      divRoot.appendChild(header);
+      divRoot.appendChild(matchesList);
+    }
+
+    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+
+    // Display, position, and set styles for font
+    tooltipEl.style.opacity = 1;
+    tooltipEl.style.top = positionY + tooltip.caretY + 8 + 'px';
+    tooltipEl.style.font = tooltip.options.bodyFont.string;
+    tooltipEl.style.padding =
+      tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
+    tooltipEl.style.pointerEvents = 'none';
+
+    var offset = tooltip.width + 80; /* 120 */
+    if (chart.width / 2 < tooltip.caretX) {
+      offset *= -1;
+    } else {
+      offset *= -0.2;
+    }
+
+    // Hidden Code
+    tooltipEl.style.left = positionX + tooltip.caretX + offset + 'px';
+  };
+
+  const options = {
+    responsive: true,
+    events: ['mousemove', 'click', 'touchstart', 'touchmove'],
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: false,
+        position: 'nearest',
+        external: ratingStats ? externalTooltipHandler : null,
+      },
+    },
+    elements: {
+      line: {
+        tension: 0.3,
+      },
+      point: {
+        radius: 0 /* 0 makes points hidden */,
+        hitRadius: 100,
+        pointBackgroundColor: `hsla(${colors[0]}, 0.6)`,
+      },
+    },
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        /* type: 'time', */
+        /* time: {
+          unit: 'day',
+          distribution: 'series',
+          tooltipFormat: 'dd.M.yyyy',
+          displayFormats: {
+            day: 'dd.M',
+          },
+          parser: 'dd/M/yyyy',
+        }, */
+        ticks: {
+          font: {
+            size: 16,
+            family: font,
+          },
+          autoSkip: true,
+          maxTicksLimit: 7,
+          major: { enabled: true },
+        },
+      },
+      y: {
+        ticks: {
+          font: {
+            size: 16,
+            family: font,
+          },
+          autoSkip: true,
+          maxTicksLimit: 6,
+          precision: 0,
+          stepSize: 15,
+        },
+      },
+    },
   };
 
   return (
