@@ -249,8 +249,7 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
                   matches can lead to a restriction
                 </span>
               </div>
-              {(userRoles.includes('MatchVerifier') ||
-                userRoles.includes('Admin')) && (
+              {(userRoles.includes('verifier')) && (
                 <div className={clsx(styles.row, styles.checkbox)}>
                   <input
                     type="checkbox"

@@ -1,3 +1,4 @@
+import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
 
 const leaderboardsTierNames = [
@@ -58,12 +59,31 @@ export const MatchesSubmitFormSchema = z.object({
     .min(1),
 });
 
-export interface User {
-  id: number;
-  userId: number;
-  osuId: number;
-  osuCountry: string;
-  osuPlayMode: number;
-  username: string;
-  roles: [string];
+export interface SessionUser {
+  id?: number;
+  userId?: number;
+  osuId?: number;
+  osuCountry?: string;
+  osuPlayMode?: number;
+  osuPlayModeSelected?: number;
+  username?: string;
+  roles?: [string];
+  accessToken?: string;
+  refreshToken?: string;
+  isLogged: boolean;
+  isWhitelisted?: boolean;
 }
+
+export const defaultSessionUser: SessionUser = {
+  isLogged: false,
+};
+
+export const sessionOptions: SessionOptions = {
+  password: process.env.SESSION_SECRET!,
+  cookieName: 'otr-session',
+  cookieOptions: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 3550, //3600
+  },
+};
