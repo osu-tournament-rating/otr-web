@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import styles from './UserRatingProgressBar.module.css';
 
 const currentTierNumber = (current) => {
@@ -37,7 +38,15 @@ export default function UserRatingProgressBar({ data }: { data: {} }) {
             </div>
           </div>
         ))}
-        <div className={styles.nextRank}></div>
+        {data.nextMajorTier && (
+          <div className={styles.nextRank}>
+            <Image
+              src={`/icons/ranks/${data.nextMajorTier}.svg`}
+              alt={data.nextMajorTier}
+              fill
+            />
+          </div>
+        )}
       </div>
       <div className={styles.text}>
         <span>{data.ratingForNextMajorTier.toFixed(0)} TR</span> until{' '}
