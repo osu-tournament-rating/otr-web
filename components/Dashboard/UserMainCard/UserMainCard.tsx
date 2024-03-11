@@ -9,7 +9,11 @@ export default function UserMainCard({ data }: { data: {} }) {
     <div className={styles.userContainer}>
       <div className={styles.tierImageContainer}>
         <div className={styles.tierImage}>
-          <Image src={''} alt={"Player's Tier"} fill />
+          <Image
+            src={`/icons/ranks/${data.rankProgress.currentTier}.svg`}
+            alt={"Player's Tier"}
+            fill
+          />
         </div>
       </div>
       <div className={styles.rankings}>

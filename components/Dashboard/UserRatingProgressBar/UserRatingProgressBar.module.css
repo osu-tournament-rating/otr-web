@@ -61,8 +61,8 @@
   width: 2em;
   height: 2em;
   aspect-ratio: 1;
-  background: linear-gradient(225deg, #4c94ff 0%, #216bda 100%);
   border-radius: 50vh;
+  position: relative;
 }
 
 .container .text {
