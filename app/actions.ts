@@ -85,7 +85,7 @@ export async function login(cookie: {
 
   /* await changeOsuModeCookie(res.osuPlayMode); */
   return NextResponse.redirect(
-    new URL('/', process.env.REACT_APP_ORIGIN_URL_ALT)
+    new URL('/', process.env.REACT_APP_ORIGIN_URL)
   );
 }
 
