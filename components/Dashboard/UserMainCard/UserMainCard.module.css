@@ -20,7 +20,6 @@
 
 .tierImage {
   position: relative;
-  /* height: 100%; */
   width: 100%;
   aspect-ratio: 1;
   border-radius: 50vw;
@@ -29,7 +28,6 @@
 
 .tierImage img {
   object-fit: contain;
-  background: linear-gradient(225deg, #4c94ff 0%, #216bda 100%);
 }
 
 .username {

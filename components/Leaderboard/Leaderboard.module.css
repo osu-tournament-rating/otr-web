@@ -71,7 +71,8 @@
   text-align: center;
 }
 
-.table tbody td:nth-child(2) {
+.table tbody td:nth-child(2),
+.table tbody td:nth-child(2) a {
   display: flex;
   flex-flow: row;
   align-items: center;
@@ -106,6 +107,6 @@
   height: 1.8rem;
   width: 1.8rem;
   border-radius: 50vw;
-  background-color: hsla(var(--gray-300));
   margin: auto;
+  position: relative;
 }
