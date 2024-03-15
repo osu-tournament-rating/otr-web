@@ -11,6 +11,7 @@ import { getIronSession } from 'iron-session';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 
 export async function getSession(onlyData: boolean = false) {
   const session = await getIronSession<SessionUser>(cookies(), sessionOptions);
@@ -64,10 +65,11 @@ export async function login(cookie: {
 
   const loggedUser = await getLoggedUser(cookie.accessToken);
 
-  if (loggedUser.error)
-    return {
-      error: loggedUser.error,
-    };
+  if (loggedUser.error) {
+    return NextResponse.redirect(
+      new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL)
+    );
+  }
 
   session.id = loggedUser.id;
   session.userId = loggedUser.userId;
@@ -82,7 +84,9 @@ export async function login(cookie: {
   await session.save();
 
   /* await changeOsuModeCookie(res.osuPlayMode); */
-  return redirect('/');
+  return NextResponse.redirect(
+    new URL('/', process.env.REACT_APP_ORIGIN_URL)
+  );
 }
 
 export async function getLoggedUser(accessToken: string) {
@@ -94,21 +98,10 @@ export async function getLoggedUser(accessToken: string) {
       'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
       Authorization: `Bearer ${accessToken}`,
     },
-    /* next: {
-      revalidate: 120,
-      tags: ['user-me'],
-    }, */
   });
 
   if (!res?.ok) {
-    /* let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
-
-    if (refreshToken !== null && (res?.status === 401 || res?.status === 400))
-      refreshAccessToken(); */
-
     const errorMessage = await res.text();
-
-    console.log(errorMessage);
 
     return {
       error: {
@@ -510,11 +503,14 @@ export async function fetchDashboard() {
 }
 
 export async function fetchUserPageTitle(player: string | number) {
+  const session = await getSession(true);
+
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/players/${player}/info`,
     {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
       },
     }
   );
@@ -537,6 +533,7 @@ export async function fetchUserPage(player: string | number) {
     {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     }
   );
