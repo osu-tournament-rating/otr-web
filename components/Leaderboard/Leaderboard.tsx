@@ -40,12 +40,12 @@ export default function Leaderboard({
           {data.leaderboard.map((player, index) => {
             return (
               <tr
-                className={user?.osuId === player.osuId ? styles.me : ''}
+                className={user?.id === player.playerId ? styles.me : ''}
                 key={index}
               >
                 <td>#{player.globalRank}</td>
                 <td>
-                  <Link href={`/users/${player.osuId}`}>
+                  <Link href={`/users/${player.playerId}`}>
                     <div className={styles.propic}>
                       <Image
                         src={`http://a.ppy.sh/${player.osuId}`}
