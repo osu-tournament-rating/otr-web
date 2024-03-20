@@ -59,7 +59,16 @@ export default function Leaderboard({
                 </td>
                 <td>
                   <div className={styles.rank}>
-                    <Tooltip id={`tooltip-${player.tier}`} />
+                    <Tooltip
+                      id={`tooltip-${player.tier}`}
+                      style={{
+                        padding: '0.6em 1.2em',
+                        borderRadius: '0.6em',
+                        fontWeight: '500',
+                        background: 'hsl(0,0%,82%)',
+                        color: '#333',
+                      }}
+                    />
                     <Image
                       src={`/icons/ranks/${player.tier}.svg`}
                       alt={player.tier}
