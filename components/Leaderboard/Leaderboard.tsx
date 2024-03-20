@@ -4,6 +4,7 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Tooltip } from 'react-tooltip';
 import FormattedNumber from '../FormattedNumber/FormattedNumber';
 import Pagination from '../Pagination/Pagination';
 import styles from './Leaderboard.module.css';
@@ -58,9 +59,13 @@ export default function Leaderboard({
                 </td>
                 <td>
                   <div className={styles.rank}>
+                    <Tooltip id={`tooltip-${player.tier}`} />
                     <Image
                       src={`/icons/ranks/${player.tier}.svg`}
                       alt={player.tier}
+                      data-tooltip-id={`tooltip-${player.tier}`}
+                      data-tooltip-content={player.tier}
+                      data-tooltip-delay-show={400}
                       style={
                         player.tier === 'Elite Grandmaster'
                           ? { padding: '0.25em' }
