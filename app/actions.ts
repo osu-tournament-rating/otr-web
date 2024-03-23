@@ -40,7 +40,7 @@ export async function getSession(onlyData: boolean = false) {
 
 export async function login(cookie: {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   accessExpiration?: number;
 }) {
   const session = await getSession();
@@ -56,12 +56,15 @@ export async function login(cookie: {
 
   session.accessToken = cookie.accessToken;
 
-  await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  if (cookie?.refreshToken) {
+    await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1209600,
+    });
+  }
 
   const loggedUser = await getLoggedUser(cookie.accessToken);
 
@@ -84,9 +87,7 @@ export async function login(cookie: {
   await session.save();
 
   /* await changeOsuModeCookie(res.osuPlayMode); */
-  return NextResponse.redirect(
-    new URL('/', process.env.REACT_APP_ORIGIN_URL)
-  );
+  return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
 }
 
 export async function getLoggedUser(accessToken: string) {
