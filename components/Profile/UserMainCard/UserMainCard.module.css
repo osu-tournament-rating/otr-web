@@ -65,3 +65,12 @@
 .item .value {
   font-weight: 600;
 }
+
+.item .image {
+  position: relative;
+  display: flex;
+  flex-flow: row;
+  height: 1.13em;
+  aspect-ratio: 1;
+  margin: auto;
+}

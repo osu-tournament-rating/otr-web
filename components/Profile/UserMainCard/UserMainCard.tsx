@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { Tooltip } from 'react-tooltip';
 import styles from './UserMainCard.module.css';
 
 export default function UserMainCardProfile({
@@ -56,8 +57,26 @@ export default function UserMainCardProfile({
         </div>
         <div className={styles.item} id="Tier">
           <div className={styles.label}>Tier</div>
-          <div className={styles.value}>
-            {generalStats?.rankProgress.currentTier}
+          <div className={styles.image}>
+            <Tooltip
+              id={`tooltip-${generalStats?.rankProgress.currentTier}`}
+              style={{
+                borderRadius: '0.6em',
+                fontWeight: '500',
+                fontSize: '0.7em',
+                background: 'hsl(0,0%,82%)',
+                color: '#333',
+              }}
+              place={'right'}
+            />
+            <Image
+              src={`/icons/ranks/${generalStats?.rankProgress.currentTier}.svg`}
+              alt={generalStats?.rankProgress.currentTier}
+              data-tooltip-id={`tooltip-${generalStats?.rankProgress.currentTier}`}
+              data-tooltip-content={generalStats?.rankProgress.currentTier}
+              data-tooltip-delay-show={400}
+              fill
+            />
           </div>
         </div>
       </div>
