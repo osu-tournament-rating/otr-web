@@ -77,7 +77,7 @@ export default function Leaderboard({
                       data-tooltip-delay-show={400}
                       style={
                         player.tier === 'Elite Grandmaster'
-                          ? { padding: '0.25em' }
+                          ? { transform: 'scale(1.25)' }
                           : player.tier.includes('Silver')
                           ? {
                               filter:
