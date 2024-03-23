@@ -7,8 +7,9 @@ export async function GET(request: Request) {
   const refreshToken = searchParams.get('refreshToken');
   const accessToken = searchParams.get('accessToken');
 
+  // Refresh session if refreshToken is set
   if (refreshToken && accessToken) {
-    return await login({ accessToken, refreshToken });
+    return await login({ accessToken });
   }
 
   if (code) {
