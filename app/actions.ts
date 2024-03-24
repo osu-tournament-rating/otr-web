@@ -289,8 +289,6 @@ export async function applyLeaderboardFilters(params: {}) {
       return (urlStringObject[key] = 1);
     }
 
-    if (key === 'tiers') console.log(params[key]);
-
     if (Array.isArray(params[key]) && params[key].length > 1) {
       let string = '';
 
