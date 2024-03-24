@@ -289,11 +289,13 @@ export async function applyLeaderboardFilters(params: {}) {
       return (urlStringObject[key] = 1);
     }
 
+    if (key === 'tiers') console.log(params[key]);
+
     if (Array.isArray(params[key]) && params[key].length > 1) {
       let string = '';
 
       params[key].forEach((value, index) => {
-        string += `${value}${index === 0 ? `&${key}=` : ''}`;
+        string += `${value}${index < params[key].length - 1 ? `&${key}=` : ''}`;
       });
 
       return (urlStringObject[key] = string);
@@ -313,8 +315,7 @@ export async function fetchLeaderboard(params: {}) {
 
   /* MISSING MODE,  PLAYERID */
 
-  const { type, page, rank, rating, matches, winrate, inclTier, exclTier } =
-    params;
+  const { type, page, rank, rating, matches, winrate, tiers } = params;
 
   const tierFilters = {
     bronze: 'bronze',
@@ -368,16 +369,10 @@ export async function fetchLeaderboard(params: {}) {
           .sort(compareNumbers))
     : undefined;
 
-  inclTier
-    ? Array.isArray(inclTier)
-      ? (paramsToProcess.inclTier = inclTier)
-      : (paramsToProcess.inclTier = Array(inclTier))
-    : undefined;
-
-  exclTier
-    ? Array.isArray(exclTier)
-      ? (paramsToProcess.exclTier = exclTier)
-      : (paramsToProcess.exclTier = Array(exclTier))
+  tiers
+    ? Array.isArray(tiers)
+      ? (paramsToProcess.tiers = tiers)
+      : (paramsToProcess.tiers = Array(tiers))
     : undefined;
 
   const queryCheck = await LeaderboardsQuerySchema.safeParse({
@@ -452,16 +447,9 @@ export async function fetchLeaderboard(params: {}) {
   }
 
   /* Check included tiers filter */
-  if (queryCheck.data.inclTier) {
-    queryCheck.data.inclTier.forEach((tier) => {
+  if (queryCheck.data.tiers) {
+    queryCheck.data.tiers.forEach((tier) => {
       backendObject[tierFilters[tier]] = true;
-    });
-  }
-
-  /* Check included tiers filter */
-  if (queryCheck.data.exclTier) {
-    queryCheck.data.exclTier.forEach((tier) => {
-      backendObject[tierFilters[tier]] = false;
     });
   }
 
