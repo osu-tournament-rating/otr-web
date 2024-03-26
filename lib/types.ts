@@ -66,7 +66,7 @@ export interface SessionUser {
   osuPlayMode?: number;
   osuPlayModeSelected?: number;
   username?: string;
-  roles?: [string];
+  scopes?: [string];
   accessToken?: string;
   refreshToken?: string;
   isLogged: boolean;

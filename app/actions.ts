@@ -31,7 +31,7 @@ export async function getSession(onlyData: boolean = false) {
       osuPlayMode: session?.osuPlayMode,
       osuPlayModeSelected: session?.osuPlayModeSelected,
       username: session?.username,
-      roles: session?.roles,
+      scopes: session?.scopes,
       accessToken: session?.accessToken,
     };
 
@@ -81,7 +81,7 @@ export async function login(cookie: {
   session.osuPlayMode = loggedUser.osuPlayMode;
   session.osuPlayModeSelected = loggedUser.osuPlayMode;
   session.username = loggedUser.username;
-  session.roles = loggedUser.roles;
+  session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
   await session.save();

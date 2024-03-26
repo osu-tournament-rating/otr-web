@@ -23,7 +23,7 @@ function SubmitButton() {
   );
 }
 
-export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
+export default function MatchForm({ userScopes }: { userScopes: Array<string> }) {
   const [state, formAction] = useFormState(saveTournamentMatches, initialState);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
@@ -249,7 +249,7 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
                   matches can lead to a restriction
                 </span>
               </div>
-              {(userRoles.includes('verifier')) && (
+              {(userScopes.includes('verifier')) && (
                 <div className={clsx(styles.row, styles.checkbox)}>
                   <input
                     type="checkbox"
