@@ -9,7 +9,7 @@ import styles from './error.module.css';
 const errors = {
   '4': {
     title: 'No data',
-    message: "You don't have any data with the selected gamemode",
+    message: "You don't have any data for the selected ruleset",
     reloadBtn: true,
   },
   '404': {
