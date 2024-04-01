@@ -31,6 +31,7 @@ export default async function page({
 
   if (!data.generalStats || !data.playerInfo) {
     throw Error('4');
+    return;
   }
 
   return (
