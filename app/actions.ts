@@ -550,7 +550,9 @@ export async function paginationParamsToURL(params: {}) {
         let string = `${index !== 0 ? '&' : ''}${key}=`;
 
         params[key].forEach((value, index) => {
-          string += `${value}${index === 0 ? `&${key}=` : ''}`;
+          string += `${value}${
+            index < params[key].length - 1 ? `&${key}=` : ''
+          }`;
         });
 
         return (url += `${string}`);
