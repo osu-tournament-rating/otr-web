@@ -84,6 +84,14 @@ export async function login(cookie: {
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
+  await cookies().set('OTR-user-selected-osu-mode', loggedUser.osuPlayMode, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1209600,
+  });
+
   await session.save();
 
   /* await changeOsuModeCookie(res.osuPlayMode); */
