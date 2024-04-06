@@ -25,7 +25,7 @@ export async function getSession(onlyData: boolean = false) {
     return {
       isLogged: session?.isLogged,
       id: session?.id,
-      userId: session?.userId,
+      playerId: session?.playerId,
       osuId: session?.osuId,
       osuCountry: session?.osuCountry,
       osuPlayMode: session?.osuPlayMode,
@@ -75,12 +75,12 @@ export async function login(cookie: {
   }
 
   session.id = loggedUser.id;
-  session.userId = loggedUser.userId;
+  session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
   session.osuCountry = loggedUser.osuCountry;
   session.osuPlayMode = loggedUser.osuPlayMode;
-  session.osuPlayModeSelected = loggedUser.osuPlayMode;
-  session.username = loggedUser.username;
+  session.osuPlayModeSelected = loggedUser.osuPlayMode; // maybe to delete
+  session.username = loggedUser.osuUsername;
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
@@ -178,7 +178,7 @@ export async function saveTournamentMatches(
   const session = await getSession(true);
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.userId) return redirect('/');
+  if (!session.id) return redirect('/');
 
   try {
     /* REGEX TO REMOVE ALL SPACES AND ENTERS */
@@ -208,7 +208,7 @@ export async function saveTournamentMatches(
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
       teamSize: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
-      submitterId: session?.userId ?? 0,
+      submitterId: session?.id ?? 0,
       ids: matchIDs,
     });
 
@@ -229,6 +229,7 @@ export async function saveTournamentMatches(
       }
     )
       .then((response) => {
+        console.log(response);
         if (response.status !== 201) {
           throw new Error({
             issues: [
@@ -523,7 +524,7 @@ export async function fetchUserPage(player: string | number) {
 
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/stats/${player}${
-      session?.userId ? `?comparerId=${session?.userId}` : ''
+      session?.playerId ? `?comparerId=${session?.playerId}` : ''
     }`,
     {
       headers: {
