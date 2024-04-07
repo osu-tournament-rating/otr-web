@@ -216,7 +216,7 @@ export async function saveTournamentMatches(
       formData.get('verifierCheckBox') == 'on' ?? false;
 
     await fetch(
-      `${process.env.REACT_APP_API_URL}/tournaments?verified=${isSubmissionVerified}`,
+      `${process.env.REACT_APP_API_URL}/tournaments?verify=${isSubmissionVerified}`,
       {
         method: 'POST',
         headers: {
