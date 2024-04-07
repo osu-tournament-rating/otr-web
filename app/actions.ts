@@ -215,7 +215,7 @@ export async function saveTournamentMatches(
     let isSubmissionVerified =
       formData.get('verifierCheckBox') == 'on' ?? false;
 
-    await fetch(
+    let tournamentSubmit = await fetch(
       `${process.env.REACT_APP_API_URL}/tournaments?verify=${isSubmissionVerified}`,
       {
         method: 'POST',
@@ -227,33 +227,26 @@ export async function saveTournamentMatches(
         credentials: 'include',
         body: JSON.stringify(data),
       }
-    )
-      .then((response) => {
-        console.log(response);
-        if (response.status !== 201) {
-          throw new Error({
-            issues: [
-              {
-                path: ['serverError'],
-                message: response.body,
-              },
-            ],
-          });
-        }
+    );
 
-        return {
-          status: 'success',
-        };
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.log(JSON.parse(error.message));
-      });
+    if (!tournamentSubmit?.ok) {
+      const errorMessage = await tournamentSubmit.text();
+
+      return {
+        error: {
+          status: tournamentSubmit.status,
+          text: tournamentSubmit.statusText,
+          message: errorMessage,
+        },
+      };
+    }
 
     return {
-      status: 'success',
+      success: {
+        status: tournamentSubmit.status,
+        text: tournamentSubmit.statusText,
+        message: 'Tournament submitted successfully',
+      },
     };
   } catch (error) {
     let errors = {};
