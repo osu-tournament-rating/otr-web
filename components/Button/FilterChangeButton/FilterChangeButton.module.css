@@ -8,7 +8,7 @@
 }
 
 .button.selected {
-  background-color: hsla(var(--blue-300));
+  background-color: hsla(var(--accent-secondary-color));
   color: #ffffff;
   font-weight: 600;
 }

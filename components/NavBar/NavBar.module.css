@@ -62,14 +62,9 @@
   overflow: hidden;
 }
 
-.darkModeSwitcher {
-  position: relative;
-  height: 1.85rem;
-  width: 1.9rem;
-}
-
-:is(.userPropic, .logoLink, .darkModeSwitcher) img {
+:is(.userPropic, .logoLink, .themeSwitcher) img {
   object-fit: contain;
+  fill: white;
 }
 
 @media (max-width: 1040px) {
