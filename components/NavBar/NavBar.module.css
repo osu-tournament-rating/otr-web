@@ -1,7 +1,7 @@
 .navbar {
   border-radius: var(--main-borderRadius);
   padding: 1rem 1.5rem;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   margin: var(--main-padding);
   display: flex;
   flex-flow: row;
@@ -26,14 +26,16 @@
 }
 
 .content a {
+  color: hsla(var(--foreground-inactive-hsl));
   transition: color 0.2s ease-out;
 }
 
 .content a:hover {
-  color: hsla(var(--gray-600));
+  color: hsla(var(--foreground-active-hsl));
 }
 
 .content a.active {
+  color: hsla(var(--foreground-active-hsl));
   font-weight: 600;
 }
 
@@ -64,7 +66,6 @@
 
 :is(.userPropic, .logoLink, .themeSwitcher) img {
   object-fit: contain;
-  fill: white;
 }
 
 @media (max-width: 1040px) {

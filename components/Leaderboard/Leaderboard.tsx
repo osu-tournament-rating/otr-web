@@ -41,7 +41,7 @@ export default function Leaderboard({
           {data.leaderboard.map((player, index) => {
             return (
               <tr
-                className={user?.id === player.playerId ? styles.me : ''}
+                className={user?.osuId === player.osuId ? styles.me : ''}
                 key={index}
               >
                 <td>#{player.globalRank}</td>

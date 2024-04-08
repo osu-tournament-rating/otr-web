@@ -1,6 +1,6 @@
 .userStatsContainer {
   width: 100%;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   padding: var(--main-padding);
   display: flex;

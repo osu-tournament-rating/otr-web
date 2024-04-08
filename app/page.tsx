@@ -1,14 +1,20 @@
+'use client';
+
 import LoginButton from '@/components/Button/LoginButton';
 import decoration1 from '@/public/decorations/decoration-1.svg';
 import decoration2 from '@/public/decorations/decoration-2.svg';
 import decoration3 from '@/public/decorations/decoration-3.svg';
 import decoration4 from '@/public/decorations/decoration-4.svg';
+import fullLogoDark from '@/public/logos/full-logo-dark.svg';
 import fullLogo from '@/public/logos/full-logo.svg';
+import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Balancer from 'react-wrap-balancer';
 import styles from './page.module.css';
 
-export default async function Home() {
+export default function Home() {
+  const { theme } = useTheme();
+
   return (
     <main className={styles.main}>
       <div className={styles.row}>
@@ -20,7 +26,11 @@ export default async function Home() {
         </div>
         <div className={styles.box}>
           <div className={styles.logo}>
-            <Image src={fullLogo} alt={'o!TR logo'} fill />
+            <Image
+              src={theme === 'light' ? fullLogo : fullLogoDark}
+              alt={'o!TR logo'}
+              fill
+            />
           </div>
         </div>
       </div>

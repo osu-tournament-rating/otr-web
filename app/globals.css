@@ -13,7 +13,11 @@
   --main-borderRadius: 0.75rem;
 
   --background-hsl: 0, 0%, 100%;
+  --background-content-hsl: 220, 14%, 96%;
+  --background-content-childs-hsl: 220, 13%, 91%;
   --foreground-hsl: 0, 0%, 6%;
+  --foreground-inactive-hsl: 0, 0%, 6%;
+  --foreground-active-hsl: 0, 0%, 6%;
 
   --color-grey: 0, 0%, 6%;
 
@@ -141,7 +145,7 @@
 
   /* COLORS */
 
-  --gray-950: 210, 20%, 98%; /* #4d94ff, #4280de, #376dbe, #2c5a9e, #224880, #183663, #0f2648, #07162e, #020816, #000103 */
+  --gray-950: 210, 20%, 98%;
   --gray-900: 220, 14%, 96%;
   --gray-800: 220, 13%, 91%;
   --gray-700: 216, 12%, 84%;
@@ -201,8 +205,12 @@
   --green-900: 144, 61%, 20%;
   --green-950: 145, 80%, 10%;
 
-  --background-hsl: 222, 45%, 8%;
-  --foreground-hsl: 0, 0%, 90%;
+  --background-hsl: 240, 10%, 6%;
+  --background-content-hsl: 240, 6%, 10%;
+  --background-content-childs-hsl: 240, 5%, 14%;
+  --foreground-hsl: 0, 0%, 85%;
+  --foreground-inactive-hsl: 0, 0%, 70%;
+  --foreground-active-hsl: 0, 0%, 90%;
 
   --mods-NM-bg: 226, 99%, 65%;
   --mods-NM-bg-row: 226, 99%, 65%, 0.15;
@@ -236,11 +244,11 @@
   --tooltip-loss: var(--red-400);
 
   /* BADGES */
-  --badge-provisional-background: var(--yellow-400);
+  --badge-provisional-background: var(--yellow-300);
   --badge-provisional-foreground: var(--yellow-900);
 
   /* USER RATING TIER */
-  --tier-bar-background: var(--gray-300);
+  --tier-bar-background: 240, 5%, 21%;
   --tier-bar-accent: var(--accent-color);
 
   /* TOAST */
@@ -261,6 +269,11 @@ body {
   /* font-size: 100%; */
   font-size: 16px; /* FOR FLUID DESIGN */
   scroll-behavior: smooth !important;
+}
+
+[data-theme='dark'] ::selection,
+::-moz-selection {
+  background-color: hsla(var(--accent-color), 0.24);
 }
 
 body {
