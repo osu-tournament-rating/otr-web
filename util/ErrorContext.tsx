@@ -21,11 +21,7 @@ export default function ErrorProvider({ children }: Props): JSX.Element {
   useEffect(() => {
     if (!error || show) return;
 
-    if (
-      error?.status === 400 ||
-      error?.message === 'No access token cookie found.'
-    )
-      return;
+    if (error?.message === 'No access token cookie found.') return;
 
     if (error?.status === 401 && error?.message == '') return;
 
@@ -33,7 +29,7 @@ export default function ErrorProvider({ children }: Props): JSX.Element {
     setTimeout(() => {
       setError(undefined);
       setShow(false);
-    }, 6000);
+    }, 7000);
   }, [error, show]);
 
   return (

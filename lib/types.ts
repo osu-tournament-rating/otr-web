@@ -60,7 +60,7 @@ export const MatchesSubmitFormSchema = z.object({
 
 export interface SessionUser {
   id?: number;
-  userId?: number;
+  playerId?: number;
   osuId?: number;
   osuCountry?: string;
   osuPlayMode?: number;

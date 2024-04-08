@@ -25,7 +25,7 @@ export async function getSession(onlyData: boolean = false) {
     return {
       isLogged: session?.isLogged,
       id: session?.id,
-      userId: session?.userId,
+      playerId: session?.playerId,
       osuId: session?.osuId,
       osuCountry: session?.osuCountry,
       osuPlayMode: session?.osuPlayMode,
@@ -75,12 +75,12 @@ export async function login(cookie: {
   }
 
   session.id = loggedUser.id;
-  session.userId = loggedUser.userId;
+  session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
   session.osuCountry = loggedUser.osuCountry;
   session.osuPlayMode = loggedUser.osuPlayMode;
-  session.osuPlayModeSelected = loggedUser.osuPlayMode;
-  session.username = loggedUser.username;
+  session.osuPlayModeSelected = loggedUser.osuPlayMode; // maybe to delete
+  session.username = loggedUser.osuUsername;
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
@@ -178,7 +178,7 @@ export async function saveTournamentMatches(
   const session = await getSession(true);
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.userId) return redirect('/');
+  if (!session.id) return redirect('/');
 
   try {
     /* REGEX TO REMOVE ALL SPACES AND ENTERS */
@@ -208,15 +208,15 @@ export async function saveTournamentMatches(
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
       teamSize: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
-      submitterId: session?.userId ?? 0,
+      submitterId: session?.id ?? 0,
       ids: matchIDs,
     });
 
     let isSubmissionVerified =
       formData.get('verifierCheckBox') == 'on' ?? false;
 
-    await fetch(
-      `${process.env.REACT_APP_API_URL}/matches/batch?verified=${isSubmissionVerified}`,
+    let tournamentSubmit = await fetch(
+      `${process.env.REACT_APP_API_URL}/tournaments?verify=${isSubmissionVerified}`,
       {
         method: 'POST',
         headers: {
@@ -227,32 +227,26 @@ export async function saveTournamentMatches(
         credentials: 'include',
         body: JSON.stringify(data),
       }
-    )
-      .then((response) => {
-        if (response.status !== 200) {
-          throw new Error({
-            issues: [
-              {
-                path: ['serverError'],
-                message: response.body,
-              },
-            ],
-          });
-        }
+    );
 
-        return {
-          status: 'success',
-        };
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.log(JSON.parse(error.message));
-      });
+    if (!tournamentSubmit?.ok) {
+      const errorMessage = await tournamentSubmit.text();
+
+      return {
+        error: {
+          status: tournamentSubmit.status,
+          text: tournamentSubmit.statusText,
+          message: errorMessage,
+        },
+      };
+    }
 
     return {
-      status: 'success',
+      success: {
+        status: tournamentSubmit.status,
+        text: tournamentSubmit.statusText,
+        message: 'Tournament submitted successfully',
+      },
     };
   } catch (error) {
     let errors = {};
@@ -523,7 +517,7 @@ export async function fetchUserPage(player: string | number) {
 
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/stats/${player}${
-      session?.userId ? `?comparerId=${session?.userId}` : ''
+      session?.playerId ? `?comparerId=${session?.playerId}` : ''
     }`,
     {
       headers: {
