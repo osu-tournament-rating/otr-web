@@ -17,7 +17,7 @@
   position: absolute;
   top: 3.4rem;
   right: 0;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   overflow: hidden;
   z-index: 2;
@@ -41,4 +41,9 @@
 .item:hover {
   /* background-color: hsla(0, 0%, 0%, 0.05); */
   color: hsla(var(--gray-600));
+}
+
+[data-theme='dark'] .switchButton img {
+  -webkit-filter: invert(75%);
+  filter: invert(75%);
 }

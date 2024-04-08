@@ -11,7 +11,7 @@
   position: absolute;
   width: calc(100% - calc(var(--main-padding) * 2));
   margin: 0 var(--main-padding);
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   left: 0;
   top: 5.4rem;
   padding: 1.2rem;
