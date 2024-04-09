@@ -49,18 +49,6 @@
   justify-content: center;
 }
 
-.box .logo {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.box img {
-  object-fit: contain;
-  aspect-ratio: 221/101;
-  padding: 2rem;
-}
-
 .row .info {
   display: flex;
   flex-flow: column;
