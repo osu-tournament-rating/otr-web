@@ -17,7 +17,7 @@
 .graphContainer {
   display: flex;
   flex-flow: column;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   padding: var(--main-padding);
   gap: 1.2rem;
