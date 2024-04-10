@@ -1,0 +1,82 @@
+.container {
+  width: 100dvw;
+  height: 100dvh;
+  position: fixed;
+  padding: 9rem 0;
+  inset: 0;
+  background-color: hsla(0, 0%, 0%, 0.8);
+  z-index: 5;
+}
+
+.body {
+  width: 50vw;
+  height: fit-content;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  position: relative;
+  margin: auto;
+  gap: 1rem 0;
+}
+
+.bar {
+  position: relative;
+  width: 100%;
+  height: 4rem;
+  border-radius: 0.6rem;
+  border: 0;
+  font-family: inherit;
+  padding: 0.5rem 2rem;
+  font-size: 1.32rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0 1.8rem;
+  background-color: hsla(var(--search-bar-background));
+  color: hsla(var(--search-bar-foreground));
+}
+
+.bar input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: transparent;
+}
+
+.bar input::placeholder {
+  color: #333;
+}
+
+.bar input:focus-visible {
+  outline: 0;
+}
+
+.bar .icon {
+  height: 60%;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.bar .icon img {
+  object-fit: contain;
+}
+
+.content {
+  width: 100%;
+  height: fit-content;
+  padding: 2rem 2rem;
+  background-color: hsla(var(--search-bar-background));
+  color: hsla(var(--search-bar-foreground));
+  border-radius: 0.6rem;
+  border: 0;
+}
+
+[data-theme='dark'] .bar input::placeholder {
+  color: #999;
+}
+
+[data-theme='dark'] .bar .icon img {
+  -webkit-filter: invert(80%);
+  filter: invert(80%);
+}
