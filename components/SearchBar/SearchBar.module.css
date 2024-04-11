@@ -70,6 +70,70 @@
   color: hsla(var(--search-bar-foreground));
   border-radius: 0.6rem;
   border: 0;
+  display: flex;
+  flex-flow: column;
+  gap: 0.6rem 0;
+}
+
+.content .header {
+  font-weight: 700;
+  font-size: 1.52rem;
+  letter-spacing: 0.02rem;
+}
+
+.content .list {
+  display: flex;
+  flex-flow: column;
+  gap: 0.4rem 0;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: hsla(0, 0%, 53%, 1);
+}
+
+.content .list .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  border-radius: 50vh 8rem 8rem 50vh;
+  color: inherit;
+  transition: background-color 0.2s ease-out;
+}
+
+.content .list .item:hover {
+  background-color: hsla(0, 0%, 0%, 0.03);
+}
+
+[data-theme='dark'] .content .list .item:hover {
+  background-color: hsla(0, 0%, 100%, 0.05);
+}
+
+.content .list .item span {
+  color: hsla(var(--accent-color));
+}
+
+.content .list .item :is(.rank, .rating) {
+  color: hsla(0, 0%, 69.5%, 1);
+}
+
+.item .rank {
+  margin: 0 0.5rem 0 1.3rem;
+}
+
+.list .item .propic {
+  height: 1.5rem;
+  width: 1.5rem;
+  position: relative;
+  border-radius: 50vh;
+  overflow: hidden;
+}
+
+[data-theme='dark'] .content .list {
+  color: hsla(0, 0%, 58%, 1);
+}
+
+[data-theme='dark'] .content .list .item span {
+  color: hsla(var(--accent-secondary-color));
 }
 
 [data-theme='dark'] .bar input::placeholder {
