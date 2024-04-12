@@ -6,6 +6,7 @@
   inset: 0;
   background-color: hsla(0, 0%, 0%, 0.8);
   z-index: 5;
+  overflow: auto;
 }
 
 .body {
@@ -84,7 +85,7 @@
 .content .list {
   display: flex;
   flex-flow: column;
-  gap: 0.4rem 0;
+  /* gap: 0.4rem 0; */
   font-size: 1.15rem;
   font-weight: 400;
   color: hsla(0, 0%, 53%, 1);
@@ -93,19 +94,28 @@
 .content .list .item {
   display: inline-flex;
   align-items: center;
+  padding: 0.3rem 0;
   gap: 0.7rem;
   cursor: pointer;
-  border-radius: 50vh 8rem 8rem 50vh;
+  border-radius: 50vh 10rem 10rem 50vh;
   color: inherit;
-  transition: background-color 0.2s ease-out;
+  transition: all 0.2s ease-out;
 }
 
 .content .list .item:hover {
-  background-color: hsla(0, 0%, 0%, 0.03);
+  background: linear-gradient(90deg, transparent 0%, hsla(0, 0%, 0%, 0.03) 18%);
 }
 
 [data-theme='dark'] .content .list .item:hover {
-  background-color: hsla(0, 0%, 100%, 0.05);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsla(0, 0%, 100%, 0.05) 18%
+  );
+}
+
+.content .list .item .username {
+  display: inline-flex;
 }
 
 .content .list .item span {
@@ -114,6 +124,10 @@
 
 .content .list .item :is(.rank, .rating) {
   color: hsla(0, 0%, 69.5%, 1);
+}
+
+[data-theme='dark'] .content .list .item :is(.rank, .rating) {
+  color: hsla(0, 0%, 75%, 0.32);
 }
 
 .item .rank {
@@ -126,6 +140,34 @@
   position: relative;
   border-radius: 50vh;
   overflow: hidden;
+}
+
+.bar .icon span[aria-saving='true'] {
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(farthest-side, #444 94%, #4440) top/4px 4px
+      no-repeat,
+    conic-gradient(#4440 30%, #444);
+  -webkit-mask: radial-gradient(farthest-side, #4440 calc(100% - 4px), #444 0);
+  animation: l13 1s infinite linear;
+  margin: auto;
+  display: inline-block;
+  margin-top: 2.5px;
+}
+
+[data-theme='dark'] .bar .icon span[aria-saving='true'] {
+  background: radial-gradient(farthest-side, #ddd 94%, #ddd0) top/4px 4px
+      no-repeat,
+    conic-gradient(#ddd0 30%, #ddd);
+  -webkit-mask: radial-gradient(farthest-side, #ddd0 calc(100% - 4px), #ddd 0);
+  animation: l13 1s infinite linear;
+}
+
+@keyframes l13 {
+  100% {
+    transform: rotate(1turn);
+  }
 }
 
 [data-theme='dark'] .content .list {

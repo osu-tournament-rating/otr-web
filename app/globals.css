@@ -280,7 +280,7 @@ body {
 }
 
 [data-theme='dark'] ::selection,
-::-moz-selection {
+[data-theme='dark'] ::-moz-selection {
   background-color: hsla(var(--accent-color), 0.24);
 }
 
