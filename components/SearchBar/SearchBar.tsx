@@ -69,6 +69,13 @@ const bodyContentMotionStates = {
   },
 };
 
+const mode: { [key: number]: { image: any; alt: string } } = {
+  0: 'std',
+  1: 'taiko',
+  2: 'ctb',
+  3: 'mania',
+};
+
 export default function SearchBar({ setIsSeachBarOpen }) {
   const [searchValue, setSearchValue] = useState('');
   const [state, formAction] = useFormState(fetchSearchData, initialState);
@@ -79,7 +86,10 @@ export default function SearchBar({ setIsSeachBarOpen }) {
   });
 
   useEffect(() => {
-    if (searchValue.length < 3) return;
+    if (searchValue.length < 3) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     let timeout = setTimeout(() => {
@@ -158,15 +168,20 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                     ); */
 
                 return (
-                  <Link href={'/'} className={styles.item} key={player.text}>
+                  <Link
+                    href={`/users/${player.id}`}
+                    className={styles.item}
+                    key={player.username}
+                    onClick={() => setIsSeachBarOpen(false)}
+                  >
                     <div className={styles.propic}>
                       <Image
                         src={`http://${player.thumbnail}`}
-                        alt={`${player.text}`}
+                        alt={`${player.username}`}
                         fill
                       />
                     </div>
-                    <div className={styles.username}>
+                    <div className={styles.name}>
                       {/* {username.length > 1 && (
                             <>
                               <div>{username[0]}</div>
@@ -191,10 +206,21 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                               <span>{selectedText}</span>
                             </>
                           )} */}
-                      {player.text}
+                      {player.username}
                     </div>
-                    {/* <div className={styles.rank}>#24 024</div>
-                        <div className={styles.rating}>1400 TR</div> */}
+                    <div className={styles.secondaryInfo}>
+                      {player.globalRank && (
+                        <div className={styles.rank}>
+                          #
+                          {Intl.NumberFormat('us-US').format(player.globalRank)}
+                        </div>
+                      )}
+                      {player.rating && (
+                        <div className={styles.rating}>
+                          {player.rating.toFixed(0)} TR
+                        </div>
+                      )}
+                    </div>
                   </Link>
                 );
               })}
@@ -214,8 +240,17 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             <div className={styles.list}>
               {state?.search?.tournaments.slice(0, 12).map((tournament) => {
                 return (
-                  <div className={styles.item} key={tournament.text}>
-                    {tournament.text}
+                  <div className={styles.item} key={tournament.name}>
+                    <div className={styles.name}>{tournament.name}</div>
+                    <div className={styles.secondaryInfo}>
+                      {/* <div className={styles.year}>{}</div> */}
+                      <div className={styles.format}>
+                        {tournament.teamSize}v{tournament.teamSize}
+                      </div>
+                      <div className={styles.mode}>
+                        {mode[tournament.ruleset]}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -235,8 +270,8 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             <div className={styles.list}>
               {state?.search?.matches.slice(0, 12).map((match) => {
                 return (
-                  <div className={styles.item} key={match.text}>
-                    {match.text}
+                  <div className={styles.item} key={match.name}>
+                    <div className={styles.name}>{match.name}</div>
                   </div>
                 );
               })}
