@@ -112,6 +112,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
         initial={bodyMotionStates.initial}
         animate={bodyMotionStates.animate}
         exit={bodyMotionStates.initial}
+        layout="position"
       >
         <form action={fetchSearchData} className={styles.bar}>
           <input
@@ -130,19 +131,19 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             )}
           </div>
         </form>
-        <AnimatePresence>
-          {state?.search?.players.length > 0 && (
-            <motion.div
-              className={styles.content}
-              initial={bodyContentMotionStates.initial}
-              animate={bodyContentMotionStates.animate}
-              exit={bodyContentMotionStates.exit}
-              custom={1}
-            >
-              <h3 className={styles.header}>Players</h3>
-              <div className={styles.list}>
-                {state?.search?.players.slice(0, 12).map((player) => {
-                  /* const selectedText = searchValue;
+        {state?.search?.players.length > 0 && (
+          <motion.div
+            className={styles.content}
+            initial={bodyContentMotionStates.initial}
+            animate={bodyContentMotionStates.animate}
+            exit={bodyContentMotionStates.exit}
+            custom={1}
+            layout={'position'}
+          >
+            <h3 className={styles.header}>Players</h3>
+            <div className={styles.list}>
+              {state?.search?.players.slice(0, 12).map((player) => {
+                /* const selectedText = searchValue;
     
                     let indexesUsername = [
                       player.text.indexOf(searchValue),
@@ -156,17 +157,17 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                       new RegExp(regEscape(searchValue), 'ig')
                     ); */
 
-                  return (
-                    <Link href={'/'} className={styles.item} key={player.text}>
-                      <div className={styles.propic}>
-                        <Image
-                          src={`http://${player.thumbnail}`}
-                          alt={`${player.text}`}
-                          fill
-                        />
-                      </div>
-                      <div className={styles.username}>
-                        {/* {username.length > 1 && (
+                return (
+                  <Link href={'/'} className={styles.item} key={player.text}>
+                    <div className={styles.propic}>
+                      <Image
+                        src={`http://${player.thumbnail}`}
+                        alt={`${player.text}`}
+                        fill
+                      />
+                    </div>
+                    <div className={styles.username}>
+                      {/* {username.length > 1 && (
                             <>
                               <div>{username[0]}</div>
                               <span>{selectedText}</span>
@@ -190,57 +191,58 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                               <span>{selectedText}</span>
                             </>
                           )} */}
-                        {player.text}
-                      </div>
-                      {/* <div className={styles.rank}>#24 024</div>
+                      {player.text}
+                    </div>
+                    {/* <div className={styles.rank}>#24 024</div>
                         <div className={styles.rating}>1400 TR</div> */}
-                    </Link>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-          {state?.search?.tournaments.length > 0 && (
-            <motion.div
-              className={styles.content}
-              initial={bodyContentMotionStates.initial}
-              animate={bodyContentMotionStates.animate}
-              exit={bodyContentMotionStates.exit}
-              custom={2}
-            >
-              <h3 className={styles.header}>Tournaments</h3>
-              <div className={styles.list}>
-                {state?.search?.tournaments.slice(0, 12).map((tournament) => {
-                  return (
-                    <div className={styles.item} key={tournament.text}>
-                      {tournament.text}
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-          {state?.search?.matches.length > 0 && (
-            <motion.div
-              className={styles.content}
-              initial={bodyContentMotionStates.initial}
-              animate={bodyContentMotionStates.animate}
-              exit={bodyContentMotionStates.exit}
-              custom={3}
-            >
-              <h3 className={styles.header}>Matches</h3>
-              <div className={styles.list}>
-                {state?.search?.matches.slice(0, 12).map((match) => {
-                  return (
-                    <div className={styles.item} key={match.text}>
-                      {match.text}
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+        {state?.search?.tournaments.length > 0 && (
+          <motion.div
+            className={styles.content}
+            initial={bodyContentMotionStates.initial}
+            animate={bodyContentMotionStates.animate}
+            exit={bodyContentMotionStates.exit}
+            custom={2}
+            layout={'position'}
+          >
+            <h3 className={styles.header}>Tournaments</h3>
+            <div className={styles.list}>
+              {state?.search?.tournaments.slice(0, 12).map((tournament) => {
+                return (
+                  <div className={styles.item} key={tournament.text}>
+                    {tournament.text}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+        {state?.search?.matches.length > 0 && (
+          <motion.div
+            className={styles.content}
+            initial={bodyContentMotionStates.initial}
+            animate={bodyContentMotionStates.animate}
+            exit={bodyContentMotionStates.exit}
+            custom={3}
+            layout={'position'}
+          >
+            <h3 className={styles.header}>Matches</h3>
+            <div className={styles.list}>
+              {state?.search?.matches.slice(0, 12).map((match) => {
+                return (
+                  <div className={styles.item} key={match.text}>
+                    {match.text}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );
