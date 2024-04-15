@@ -1,0 +1,204 @@
+.container {
+  width: 100dvw;
+  height: 100dvh;
+  position: fixed;
+  padding: 9rem 0;
+  inset: 0;
+  background-color: hsla(0, 0%, 0%, 0.8);
+  z-index: 5;
+  overflow: auto;
+}
+
+.body {
+  width: 50vw;
+  height: fit-content;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  position: relative;
+  margin: auto;
+  gap: 1rem 0;
+}
+
+.bar {
+  position: relative;
+  width: 100%;
+  height: 4rem;
+  border-radius: 0.6rem;
+  border: 0;
+  font-family: inherit;
+  padding: 0.5rem 2rem;
+  font-size: 1.32rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0 1.8rem;
+  background-color: hsla(var(--search-bar-background));
+  color: hsla(var(--search-bar-foreground));
+}
+
+.bar input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: transparent;
+}
+
+.bar input::placeholder {
+  color: #333;
+}
+
+.bar input:focus-visible {
+  outline: 0;
+}
+
+.bar .icon {
+  height: 60%;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.bar .icon img {
+  object-fit: contain;
+}
+
+.content {
+  width: 100%;
+  height: fit-content;
+  padding: 2rem 1.4rem 1.6rem 1.4rem;
+  background-color: hsla(var(--search-bar-background));
+  color: hsla(var(--search-bar-foreground));
+  border-radius: 0.6rem;
+  border: 0;
+  display: flex;
+  flex-flow: column;
+  gap: 0.6rem 0;
+}
+
+.content .header {
+  font-weight: 700;
+  font-size: 1.52rem;
+  padding: 0 0.6rem;
+  letter-spacing: 0.02rem;
+}
+
+.content .list {
+  display: flex;
+  flex-flow: column;
+  /* gap: 0.4rem 0; */
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: hsla(0, 0%, 53%, 1);
+}
+
+.content .list .item {
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  gap: 0.7rem;
+  cursor: pointer;
+  border-radius: 0px 5rem 5rem 50vh;
+  color: inherit;
+  box-sizing: content-box;
+  transition: all 0.2s ease-out;
+}
+
+.content .list .item:hover {
+  background: linear-gradient(90deg, transparent 0%, hsla(0, 0%, 0%, 0.03) 20%);
+}
+
+[data-theme='dark'] .content .list .item:hover {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsla(0, 0%, 100%, 0.05) 18%
+  );
+}
+
+.content .list .item .name {
+  /* width: 100%; */
+  display: inline-flex;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* mask: linear-gradient(90deg, hsla(0, 0%, 100%) 95%, transparent 100%); */
+}
+
+.content .list .item span {
+  color: hsla(var(--accent-color));
+}
+
+.content .list .item .secondaryInfo {
+  display: inline-flex;
+  gap: 0 1.3rem;
+  margin-left: auto;
+  color: hsla(0, 0%, 69.5%, 1);
+  align-items: center;
+}
+
+[data-theme='dark'] .content .list .item .secondaryInfo {
+  color: hsla(0, 0%, 75%, 0.32);
+}
+
+/* .content .list .item :is(.rank, .rating) {
+  color: hsla(0, 0%, 69.5%, 1);
+}
+
+[data-theme='dark'] .content .list .item :is(.rank, .rating) {
+  color: hsla(0, 0%, 75%, 0.32);
+} */
+
+.list .item .propic {
+  height: 1.5rem;
+  width: 1.5rem;
+  position: relative;
+  border-radius: 50vh;
+  overflow: hidden;
+}
+
+.bar .icon span[aria-saving='true'] {
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(farthest-side, #444 94%, #4440) top/4px 4px
+      no-repeat,
+    conic-gradient(#4440 30%, #444);
+  -webkit-mask: radial-gradient(farthest-side, #4440 calc(100% - 4px), #444 0);
+  animation: l13 1s infinite linear;
+  margin: auto;
+  display: inline-block;
+  margin-top: 2.5px;
+}
+
+[data-theme='dark'] .bar .icon span[aria-saving='true'] {
+  background: radial-gradient(farthest-side, #ddd 94%, #ddd0) top/4px 4px
+      no-repeat,
+    conic-gradient(#ddd0 30%, #ddd);
+  -webkit-mask: radial-gradient(farthest-side, #ddd0 calc(100% - 4px), #ddd 0);
+  animation: l13 1s infinite linear;
+}
+
+@keyframes l13 {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+[data-theme='dark'] .content .list {
+  color: hsla(0, 0%, 58%, 1);
+}
+
+[data-theme='dark'] .content .list .item span {
+  color: hsla(var(--accent-secondary-color));
+}
+
+[data-theme='dark'] .bar input::placeholder {
+  color: #999;
+}
+
+[data-theme='dark'] .bar .icon img {
+  -webkit-filter: invert(80%);
+  filter: invert(80%);
+}

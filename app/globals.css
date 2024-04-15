@@ -125,6 +125,10 @@
   /* TOAST */
   --toast-error-bg: var(--yellow-200);
   --toast-error-border: 50, 70%, 64%;
+
+  /* SEARCH BAR */
+  --search-bar-background: 0, 0%, 97%;
+  --search-bar-foreground: 0, 0%, 15%;
 }
 
 [data-theme='dark'] {
@@ -254,6 +258,10 @@
   /* TOAST */
   --toast-error-bg: var(--yellow-200);
   --toast-error-border: 50, 70%, 64%;
+
+  /* SEARCH BAR */
+  --search-bar-background: 240, 6%, 10%;
+  --search-bar-foreground: 0, 0%, 75%;
 }
 
 * {
@@ -272,7 +280,7 @@ body {
 }
 
 [data-theme='dark'] ::selection,
-::-moz-selection {
+[data-theme='dark'] ::-moz-selection {
   background-color: hsla(var(--accent-color), 0.24);
 }
 
