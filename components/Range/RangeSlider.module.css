@@ -82,9 +82,13 @@
   width: var(--range-height);
   aspect-ratio: 1;
   border-radius: 50vh;
-  background-color: hsl(var(--gray-100));
+  background-color: hsl(var(--background-content-hsl));
   border: 1px solid hsl(var(--gray-600));
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+[data-theme='dark'] .rangeSelector {
+  background-color: hsla(var(--background-content-childs-hsl));
 }

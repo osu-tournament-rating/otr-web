@@ -2,7 +2,7 @@
   border-radius: var(--main-borderRadius);
   padding: 0.8vw 2vw;
   font-size: 1.3rem;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   transition: all 0.2s ease-out;
   text-transform: capitalize;
 }
@@ -14,7 +14,7 @@
 }
 
 .button:not(.selected):hover {
-  background-color: hsla(var(--gray-200));
+  background-color: hsla(var(--background-content-childs-hsl));
   color: hsla(var(--gray-900));
   cursor: pointer;
 }

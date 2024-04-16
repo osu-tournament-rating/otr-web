@@ -22,8 +22,7 @@ export const LeaderboardsQuerySchema = z.object({
   rating: z.array(z.number().positive().gte(100)).max(2).optional(),
   matches: z.array(z.number().positive()).max(2).optional(),
   winrate: z.array(z.number().gte(0.01).lte(1)).max(2).optional(),
-  inclTier: z.array(z.enum(leaderboardsTierNames)).optional(),
-  exclTier: z.array(z.enum(leaderboardsTierNames)).optional(),
+  tiers: z.array(z.enum(leaderboardsTierNames)).optional(),
   pageSize: z.number().default(25),
 });
 
@@ -61,13 +60,13 @@ export const MatchesSubmitFormSchema = z.object({
 
 export interface SessionUser {
   id?: number;
-  userId?: number;
+  playerId?: number;
   osuId?: number;
   osuCountry?: string;
   osuPlayMode?: number;
   osuPlayModeSelected?: number;
   username?: string;
-  roles?: [string];
+  scopes?: [string];
   accessToken?: string;
   refreshToken?: string;
   isLogged: boolean;

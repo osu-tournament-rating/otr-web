@@ -9,6 +9,7 @@ import {
   RadialLinearScale,
   Tooltip,
 } from 'chart.js';
+import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 import styles from './RadarChart.module.css';
@@ -37,6 +38,8 @@ export default function RadarChart({
   winrateModData?: any;
   averageModScore?: any;
 }) {
+  const { theme } = useTheme();
+
   const [colors, setColors] = useState<string[]>([]);
   const [font, setFont] = useState('');
 
@@ -170,8 +173,14 @@ export default function RadarChart({
             family: font,
             weight: 600,
           },
+          color: theme === 'dark' ? 'rgba(250,250,250,0.8)' : '#656565',
         },
-        backgroundColor: 'rgb(250,250,250)',
+        grid: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+        },
+        backgroundColor:
+          theme === 'light' ? 'rgb(250,250,250)' : 'rgba(0,0,0,0.05)',
         beginAtZero: false,
         angleLines: {
           borderDash: (context: any) => {
@@ -180,6 +189,8 @@ export default function RadarChart({
             const spaceInPx = space / ticksLength;
             return [0, 0, 0, spaceInPx, 2500];
           },
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
         },
         min: winrateModData ? -25 : averageModScore ? -200000 : -25,
         max: winrateModData ? 100 : averageModScore ? 1000000 : 100,
@@ -189,6 +200,7 @@ export default function RadarChart({
             family: font,
             weight: 300,
           },
+          color: theme === 'dark' ? 'rgba(250,250,250,0.7)' : '#707070',
           stepSize: winrateModData ? 25 : averageModScore ? 200000 : 25,
           callback: (value: any, tick: any, values: any) => {
             return value !== 0

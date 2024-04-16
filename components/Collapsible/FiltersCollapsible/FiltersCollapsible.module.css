@@ -1,6 +1,6 @@
 .collapsible {
   width: 100%;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   padding: var(--main-padding);
   border-radius: var(--main-borderRadius);
   display: flex;
@@ -65,6 +65,10 @@
   background-color: hsla(var(--blue-400));
   padding: 0.8rem 2rem;
   border-radius: 0.4rem;
+}
+
+[data-theme='dark'] .buttons .save {
+  color: #333;
 }
 
 .buttons .save:hover {

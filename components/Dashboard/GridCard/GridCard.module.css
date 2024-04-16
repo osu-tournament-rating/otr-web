@@ -1,7 +1,7 @@
 .card {
   display: flex;
   flex-flow: column;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   padding: var(--main-padding);
   border-radius: var(--main-borderRadius);
   gap: 1.3rem;

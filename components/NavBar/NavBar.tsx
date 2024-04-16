@@ -1,7 +1,6 @@
 'use client';
 
 import { getOsuModeCookie } from '@/app/actions';
-import moonSVG from '@/public/icons/moon.svg';
 import logo from '@/public/logos/small.svg';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,6 +9,8 @@ import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
 import ModeSwitcher from './ModeSwitcher/ModeSwitcher';
 import styles from './NavBar.module.css';
 import Routes from './Routes/Routes';
+import SearchButton from './SearchButton/SearchButton';
+import ThemeSwitcher from './ThemeSwitcher/ThemeSwitcher';
 import UserLogged from './UserLogged/UserLogged';
 
 export default function NavBar() {
@@ -31,12 +32,9 @@ export default function NavBar() {
         <Routes />
         {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
+          <SearchButton />
           {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
-          <button>
-            <div className={styles.darkModeSwitcher}>
-              <Image src={moonSVG} alt="Dark Mode Switcher" fill />
-            </div>
-          </button>
+          <ThemeSwitcher />
           <UserLogged />
         </div>
       </div>

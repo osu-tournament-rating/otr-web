@@ -6,7 +6,7 @@
 
 .leaderboardContainer {
   width: 100%;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   padding: var(--main-padding);
   font-size: 0.95rem;
@@ -46,11 +46,16 @@
 
 .table tbody td {
   padding: 1.2rem 2rem;
-  background-color: hsla(var(--gray-200));
+  background-color: hsla(var(--background-content-childs-hsl));
 }
 
 .table tbody tr.me td {
   background-color: hsla(var(--blue-200), 0.6);
+}
+
+[data-theme='dark'] .table tbody tr.me td {
+  background-color: hsla(var(--blue-500), 0.22);
+  color: hsla(var(--foreground-active-hsl));
 }
 
 .table th:nth-child(1) {

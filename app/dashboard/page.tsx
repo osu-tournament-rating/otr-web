@@ -29,45 +29,20 @@ export default async function page({
 }) {
   const data = await fetchDashboard();
 
+  if (!data.generalStats || !data.playerInfo) {
+    throw Error('4');
+    return;
+  }
+
   return (
     <main className={styles.main}>
-      {/* <div className={styles.notices}>
-        <Notice title={'About your TR'}>
-          Your TR (tournament rating) is calculated based on your match cost
-          relative to other players in your matches, see{' '}
-          <a href="#">
-            <strong>here</strong>
-          </a>{' '}
-          for a more detailed explanation. If you notice that someone&apos;s
-          rating is significantly higher than others of similar skill level,
-          that means they are consistently outperforming in tournaments and
-          should participate against higher-rated opponents in more challenging
-          settings in order to have a more accurate rating.
-        </Notice>
-        <Notice title={'Heads up!'} type={'alert'}>
-          Missing tournament data? Don&apos;t worry! We are aggressively adding
-          tournament data, so check back later.
-          <br />
-          Help us populate your data first by submitting your matches{' '}
-          <a href="/submit">
-            <strong>here!</strong>
-          </a>
-        </Notice>
-        <Notice
-          title={'You have no data for this time period!'}
-          type={'error'}
-          text={
-            "If you've never played osu! tournaments before, welcome! You can start earning TR simply by playing in osu! tournament matches."
-          }
-        />
-      </div> */}
       <UserMainCard data={data?.generalStats} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
           <div className={styles.header}>
             <div className={styles.rating}>
-              <span>{Math.round(data.generalStats.rating)}</span>
+              <span>{Math.round(data.generalStats?.rating)}</span>
               <span
                 className={clsx(
                   styles.change,
@@ -76,15 +51,15 @@ export default async function page({
                     : styles.negative
                 )}
               >
-                {data.matchStats.ratingGained.toFixed(0) !== 0 &&
-                  data.matchStats.ratingGained.toFixed(0)}
+                {data.matchStats.ratingGained?.toFixed(0) !== 0 &&
+                  data.matchStats.ratingGained?.toFixed(0)}
               </span>
             </div>
             <div className={styles.stats}>
               <div className={styles.item}>
                 <div className={styles.text}>Highest rating</div>
                 <span className={styles.score}>
-                  {data.matchStats.highestRating.toFixed(0)}
+                  {data.matchStats.highestRating?.toFixed(0)}
                 </span>
               </div>
               <div className={styles.item}>
@@ -115,13 +90,13 @@ export default async function page({
           <div className={styles.cardStat}>
             <span>Average opponent rating</span>
             <span className={styles.value}>
-              {data?.matchStats.averageOpponentRating.toFixed(0)}
+              {data?.matchStats.averageOpponentRating?.toFixed(0)}
             </span>
           </div>
           <div className={styles.cardStat}>
             <span>Average teammate rating</span>
             <span className={styles.value}>
-              {data?.matchStats.averageTeammateRating.toFixed(0)}
+              {data?.matchStats.averageTeammateRating?.toFixed(0)}
             </span>
           </div>
           <div className={styles.cardStat}>
@@ -143,19 +118,19 @@ export default async function page({
           <div className={styles.cardStat}>
             <span>Average misses</span>
             <span className={styles.value}>
-              {data?.matchStats.matchAverageMissesAggregate.toFixed(0)}
+              {data?.matchStats.matchAverageMissesAggregate?.toFixed(0)}
             </span>
           </div>
           <div className={styles.cardStat}>
             <span>Average accuracy</span>
             <span className={styles.value}>
-              {data?.matchStats.matchAverageAccuracyAggregate.toFixed(2)}%
+              {data?.matchStats.matchAverageAccuracyAggregate?.toFixed(2)}%
             </span>
           </div>
           <div className={styles.cardStat}>
             <span>Average maps played</span>
             <span className={styles.value}>
-              {data?.matchStats.averageGamesPlayedAggregate.toFixed(0)}
+              {data?.matchStats.averageGamesPlayedAggregate?.toFixed(0)}
             </span>
           </div>
         </GridCard>

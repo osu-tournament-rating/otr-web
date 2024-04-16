@@ -13,27 +13,27 @@ export const metadata: Metadata = {
   title: 'Leaderboards',
 };
 
-/* const catchErrors = async (params: {}) => {
-  const { type, rank, rating, matches, winrate, inclTier, exclTier } = params;
+const catchErrors = async (params: {}, leaderboard: any) => {
+  /* const { type, rank, rating, matches, winrate, inclTier, exclTier } = params; */
 
-  let leaderboardTypes = ['global', 'country', 'friends'];
+  if (leaderboard === undefined) {
+    return redirect('/leaderboards');
+  }
 
-  if (!type || (type?.length > 0 && leaderboardTypes.includes(type))) return;
-
-  return redirect('/leaderboards');
-}; */
+  return;
+};
 
 export default async function page({
   searchParams,
 }: {
   searchParams: URLSearchParams;
 }) {
-  /* await catchErrors(searchParams); */
   const leaderboardData = await fetchLeaderboard(searchParams);
+  await catchErrors(searchParams, leaderboardData);
 
   return (
     <main className={styles.container}>
-      {leaderboardData.playerChart && (
+      {leaderboardData?.playerChart && (
         <UserStats data={leaderboardData.playerChart} />
       )}
       <div className={styles.content}>

@@ -13,6 +13,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import clsx from 'clsx';
+import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
@@ -68,6 +69,8 @@ export default function AreaChart({
   const [colors, setColors] = useState<string[]>([]);
 
   const [font, setFont] = useState('');
+
+  const { theme } = useTheme();
 
   /* get variables of colors from CSS */
   useEffect(() => {
@@ -148,7 +151,10 @@ export default function AreaChart({
         label: '',
         data: dataForGraph,
         borderWidth: 3,
-        borderColor: `hsla(${colors[0]}, 0.6)`,
+        borderColor:
+          theme === 'light'
+            ? `hsla(${colors[0]}, 0.6)`
+            : `hsla(${colors[0]}, 0.82)`,
         backgroundColor: 'transparent',
         font: font,
       },
@@ -267,7 +273,8 @@ export default function AreaChart({
       point: {
         radius: 0 /* 0 makes points hidden */,
         hitRadius: 100,
-        pointBackgroundColor: `hsla(${colors[0]}, 0.6)`,
+        pointBackgroundColor:
+          theme === 'light' ? `hsla(${colors[0]}, 0.6)` : `hsla(${colors[0]})`,
       },
     },
     maintainAspectRatio: false,
@@ -288,17 +295,35 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
+          color: theme === 'dark' ? '#999' : '#707070',
           autoSkip: true,
           maxTicksLimit: 7,
           major: { enabled: true },
         },
+        grid: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+        },
+        border: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+        },
       },
       y: {
+        border: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+        },
+        grid: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+        },
         ticks: {
           font: {
             size: 16,
             family: font,
           },
+          color: theme === 'dark' ? '#999' : '#707070',
           autoSkip: true,
           maxTicksLimit: 6,
           precision: 0,

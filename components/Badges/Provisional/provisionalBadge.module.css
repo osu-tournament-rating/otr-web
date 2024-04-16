@@ -39,6 +39,10 @@
   font-weight: 600;
 }
 
+[data-theme='dark'] .badge:after {
+  background-color: hsla(var(--badge-provisional-background), 0.9);
+}
+
 .badge:hover::after {
   visibility: visible;
   opacity: 1;
