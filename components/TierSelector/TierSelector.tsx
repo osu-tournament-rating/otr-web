@@ -1,11 +1,11 @@
 'use client';
-import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import styles from './TierSelector.module.css';
 
-const possibleRanks = [
+const possibleTiers = [
   {
     id: 'bronze',
     name: 'Bronze',
@@ -53,106 +53,60 @@ export default function TierSelector({
   value,
   setParamsToPush,
 }: {
-  value: {};
+  value: [];
   setParamsToPush: any;
 }) {
-  const [ranks, setRanks] = useState([]);
-  const [excludedRanks, setExcludedRanks] = useState([]);
+  const [tiers, setTiers] = useState([]);
 
-  const selectRank = async (rank: string) => {
-    if (!includesMatch(ranks, rank) && !includesMatch(excludedRanks, rank)) {
-      setRanks((prev: any) => [...prev, rank]);
-      return setParamsToPush((prev: any) => ({
-        ...prev,
-        inclTier: [...prev.inclTier, rank],
-      }));
-    }
-    if (includesMatch(ranks, rank)) {
-      setExcludedRanks((prev: any) => [...prev, rank]);
-      setParamsToPush((prev: any) => ({
-        ...prev,
-        exclTier: [...prev.exclTier, rank],
-      }));
-      setRanks((prev: any) => prev.filter((item: any) => item !== rank));
+  const selectTier = async (tier: string) => {
+    if (!includesMatch(tiers, tier)) {
+      setTiers((prev: any) => [...prev, tier]);
       return setParamsToPush((prev: any) => {
         return {
           ...prev,
-          inclTier: [
-            ...prev.inclTier.slice(
-              0,
-              prev.inclTier.findIndex((name) => name === rank)
-            ),
-            ...prev.inclTier.slice(
-              prev.inclTier.findIndex((name) => name === rank) + 1
-            ),
-          ],
+          tiers: [...prev.tiers, tier],
         };
       });
     }
-    if (includesMatch(excludedRanks, rank)) {
-      setExcludedRanks((prev: any) =>
-        prev.filter((item: any) => item !== rank)
-      );
+    if (includesMatch(tiers, tier)) {
+      setTiers((prev: any) => prev.filter((item: any) => item !== tier));
       return setParamsToPush((prev: any) => {
         return {
           ...prev,
-          exclTier: [
-            ...prev.exclTier.slice(
-              0,
-              prev.exclTier.findIndex((name) => name === rank)
-            ),
-            ...prev.exclTier.slice(
-              prev.exclTier.findIndex((name) => name === rank) + 1
-            ),
-          ],
+          tiers: prev.tiers.filter((item) => item !== tier),
         };
       });
     }
   };
 
   useEffect(() => {
-    setRanks(
-      typeof value?.inclTier === 'string'
-        ? [value?.inclTier]
-        : value?.inclTier ?? []
-    );
-    setExcludedRanks(
-      typeof value?.exclTier === 'string'
-        ? [value?.exclTier]
-        : value?.exclTier ?? []
-    );
-  }, [value.inclTier, value.exclTier]);
+    setTiers(typeof value === 'string' ? [value] : value ?? []);
+  }, [value]);
 
   return (
     <div className={styles.container}>
-      {possibleRanks.map((rank) => {
+      {possibleTiers.map((tier) => {
         return (
           <div
             className={styles.field}
-            key={rank.id}
+            key={tier.id}
             onClick={async () => {
-              await selectRank(rank.id);
+              await selectTier(tier.id);
             }}
           >
             <div
               className={clsx(
                 styles.checkbox,
-                includesMatch(ranks, rank.id)
-                  ? styles.selected
-                  : includesMatch(excludedRanks, rank.id)
-                  ? styles.excluded
-                  : ''
+                includesMatch(tiers, tier.id) ? styles.selected : ''
               )}
             >
-              {includesMatch(ranks, rank.id) ? (
+              {includesMatch(tiers, tier.id) ? (
                 <FontAwesomeIcon icon={faCheck} />
-              ) : includesMatch(excludedRanks, rank.id) ? (
-                <FontAwesomeIcon icon={faXmark} />
               ) : (
                 ''
               )}
             </div>
-            <span>{rank.name}</span>
+            <span>{tier.name}</span>
           </div>
         );
       })}

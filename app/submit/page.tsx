@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default async function page() {
-  const { roles } = await getSession(true);
+  const { scopes } = await getSession(true);
 
   return (
     <main className={styles.pageContainer}>
       <Guidelines />
-      <MatchForm userRoles={roles} />
+      <MatchForm userScopes={scopes} />
     </main>
   );
 }

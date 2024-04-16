@@ -5,7 +5,7 @@
   width: 100%;
   height: fit-content;
   grid-area: form;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
 }
 

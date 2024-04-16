@@ -7,7 +7,7 @@
 
 .form :is(input, select, textarea, button) {
   width: 100%;
-  background-color: transparent;
+  background-color: hsla(var(--background-content-hsl));
   border: 1px solid hsla(var(--gray-500));
   border-radius: 5px;
   font-family: var(--font-families);

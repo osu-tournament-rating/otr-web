@@ -3,7 +3,7 @@
   display: flex;
   flex-flow: column;
   padding: var(--main-padding);
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   gap: 1rem;
 }

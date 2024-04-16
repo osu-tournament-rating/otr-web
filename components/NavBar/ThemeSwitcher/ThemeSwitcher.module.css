@@ -1,0 +1,14 @@
+.themeSwitcher {
+  position: relative;
+  height: 1.85rem;
+  width: 1.9rem;
+}
+
+.themeSwitcher img {
+  object-fit: contain;
+}
+
+[data-theme='dark'] .themeSwitcher img {
+  -webkit-filter: invert(75%);
+  filter: invert(75%);
+}

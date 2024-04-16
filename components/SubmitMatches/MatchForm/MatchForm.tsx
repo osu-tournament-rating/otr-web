@@ -4,6 +4,7 @@ import { saveTournamentMatches } from '@/app/actions';
 import Form from '@/components/Form/Form';
 import InfoIcon from '@/components/Form/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
+import { useSetError } from '@/util/hooks';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
@@ -23,12 +24,18 @@ function SubmitButton() {
   );
 }
 
-export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
+export default function MatchForm({
+  userScopes,
+}: {
+  userScopes: Array<string>;
+}) {
   const [state, formAction] = useFormState(saveTournamentMatches, initialState);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [verifierAccepted, setVerifierAccepted] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  const setError = useSetError();
 
   useEffect(() => {
     // Shows toast for both success or error, but need better implementation for errors
@@ -39,7 +46,11 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
       }, 6000);
     } */
 
-    if (state?.status === 'success') {
+    if (state?.error) {
+      setError(state?.error);
+    }
+
+    if (state?.success) {
       document.getElementById('tournament-form')?.reset();
       setShowToast(true);
       setTimeout(() => {
@@ -249,7 +260,7 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
                   matches can lead to a restriction
                 </span>
               </div>
-              {(userRoles.includes('verifier')) && (
+              {userScopes.includes('verifier') && (
                 <div className={clsx(styles.row, styles.checkbox)}>
                   <input
                     type="checkbox"
@@ -278,14 +289,8 @@ export default function MatchForm({ userRoles }: { userRoles: Array<string> }) {
       </div>
       {showToast && (
         <Toast
-          status={state?.status}
-          message={
-            state?.status === 'success'
-              ? 'Tournament submitted successfully'
-              : state?.status === 'error'
-              ? state?.errors[0]
-              : ''
-          }
+          status={state?.success ? 'success' : ''}
+          message={state?.success ? state?.success.message : ''}
         />
       )}
     </>

@@ -5,7 +5,7 @@
   grid-template-areas:
     'header'
     'rankings';
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   padding: 1.4rem 1.8rem;
   gap: 1.2rem;
@@ -64,4 +64,13 @@
 
 .item .value {
   font-weight: 600;
+}
+
+.item .image {
+  position: relative;
+  display: flex;
+  flex-flow: row;
+  height: 1.13em;
+  aspect-ratio: 1;
+  margin: auto;
 }

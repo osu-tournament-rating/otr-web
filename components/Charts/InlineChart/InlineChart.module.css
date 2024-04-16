@@ -44,3 +44,7 @@
   position: absolute;
   bottom: -1.6rem;
 }
+
+[data-theme='dark'] .segment .percentile {
+  color: hsl(0, 0%, 6%);
+}

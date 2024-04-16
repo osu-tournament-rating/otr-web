@@ -1,6 +1,6 @@
 .card {
   width: 100%;
-  background-color: hsla(var(--gray-100));
+  background-color: hsla(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
   padding: 1.5rem 2rem;
   display: flex;

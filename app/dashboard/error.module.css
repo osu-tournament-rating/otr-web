@@ -1,0 +1,47 @@
+.errorDiv {
+  position: relative;
+  min-height: 60dvh;
+  height: 70dvh;
+  max-height: 70dvh;
+  margin: var(--main-padding);
+  margin-top: 0;
+}
+
+.errorDiv .content {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--internal-gap);
+  gap: var(--internal-gap);
+  z-index: 2;
+}
+
+.errorDiv img {
+  z-index: 1;
+}
+
+.errorDiv h1 {
+  font-size: 4rem;
+}
+
+.errorDiv span {
+  font-size: 3.5rem;
+  letter-spacing: -2%;
+  text-align: center;
+  max-width: 40vw;
+}
+
+.errorDiv button {
+  margin-top: 1.3rem;
+  padding: 1rem 3rem;
+  width: fit-content;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  font-size: 1rem;
+  transition: background-color 0.2s ease-out;
+}

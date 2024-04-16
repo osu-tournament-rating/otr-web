@@ -4,6 +4,7 @@ import ErrorProvider from '@/util/ErrorContext';
 import UserProvider from '@/util/UserLoggedContext';
 import type { Metadata } from 'next';
 import { Viewport } from 'next';
+import { ThemeProvider } from 'next-themes';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -31,16 +32,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
-        <ErrorProvider>
-          <UserProvider>
-            <LayoutProvider>
-              {children}
-              <Footer />
-            </LayoutProvider>
-          </UserProvider>
-        </ErrorProvider>
+        <ThemeProvider defaultTheme="light" enableSystem={false}>
+          <ErrorProvider>
+            <UserProvider>
+              <LayoutProvider>
+                {children}
+                <Footer />
+              </LayoutProvider>
+            </UserProvider>
+          </ErrorProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

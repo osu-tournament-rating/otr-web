@@ -25,13 +25,13 @@ export async function getSession(onlyData: boolean = false) {
     return {
       isLogged: session?.isLogged,
       id: session?.id,
-      userId: session?.userId,
+      playerId: session?.playerId,
       osuId: session?.osuId,
       osuCountry: session?.osuCountry,
       osuPlayMode: session?.osuPlayMode,
       osuPlayModeSelected: session?.osuPlayModeSelected,
       username: session?.username,
-      roles: session?.roles,
+      scopes: session?.scopes,
       accessToken: session?.accessToken,
     };
 
@@ -40,7 +40,7 @@ export async function getSession(onlyData: boolean = false) {
 
 export async function login(cookie: {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   accessExpiration?: number;
 }) {
   const session = await getSession();
@@ -56,12 +56,15 @@ export async function login(cookie: {
 
   session.accessToken = cookie.accessToken;
 
-  await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  if (cookie?.refreshToken) {
+    await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1209600,
+    });
+  }
 
   const loggedUser = await getLoggedUser(cookie.accessToken);
 
@@ -72,21 +75,27 @@ export async function login(cookie: {
   }
 
   session.id = loggedUser.id;
-  session.userId = loggedUser.userId;
+  session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
   session.osuCountry = loggedUser.osuCountry;
   session.osuPlayMode = loggedUser.osuPlayMode;
-  session.osuPlayModeSelected = loggedUser.osuPlayMode;
-  session.username = loggedUser.username;
-  session.roles = loggedUser.roles;
+  session.osuPlayModeSelected = loggedUser.osuPlayMode; // maybe to delete
+  session.username = loggedUser.osuUsername;
+  session.scopes = loggedUser.scopes;
   session.isLogged = true;
+
+  await cookies().set('OTR-user-selected-osu-mode', loggedUser.osuPlayMode, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1209600,
+  });
 
   await session.save();
 
   /* await changeOsuModeCookie(res.osuPlayMode); */
-  return NextResponse.redirect(
-    new URL('/', process.env.REACT_APP_ORIGIN_URL)
-  );
+  return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
 }
 
 export async function getLoggedUser(accessToken: string) {
@@ -169,7 +178,7 @@ export async function saveTournamentMatches(
   const session = await getSession(true);
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.userId) return redirect('/');
+  if (!session.id) return redirect('/');
 
   try {
     /* REGEX TO REMOVE ALL SPACES AND ENTERS */
@@ -199,15 +208,15 @@ export async function saveTournamentMatches(
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
       teamSize: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
-      submitterId: session?.userId ?? 0,
+      submitterId: session?.id ?? 0,
       ids: matchIDs,
     });
 
     let isSubmissionVerified =
       formData.get('verifierCheckBox') == 'on' ?? false;
 
-    await fetch(
-      `${process.env.REACT_APP_API_URL}/matches/batch?verified=${isSubmissionVerified}`,
+    let tournamentSubmit = await fetch(
+      `${process.env.REACT_APP_API_URL}/tournaments?verify=${isSubmissionVerified}`,
       {
         method: 'POST',
         headers: {
@@ -218,32 +227,26 @@ export async function saveTournamentMatches(
         credentials: 'include',
         body: JSON.stringify(data),
       }
-    )
-      .then((response) => {
-        if (response.status !== 200) {
-          throw new Error({
-            issues: [
-              {
-                path: ['serverError'],
-                message: response.body,
-              },
-            ],
-          });
-        }
+    );
 
-        return {
-          status: 'success',
-        };
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.log(JSON.parse(error.message));
-      });
+    if (!tournamentSubmit?.ok) {
+      const errorMessage = await tournamentSubmit.text();
+
+      return {
+        error: {
+          status: tournamentSubmit.status,
+          text: tournamentSubmit.statusText,
+          message: errorMessage,
+        },
+      };
+    }
 
     return {
-      status: 'success',
+      success: {
+        status: tournamentSubmit.status,
+        text: tournamentSubmit.statusText,
+        message: 'Tournament submitted successfully',
+      },
     };
   } catch (error) {
     let errors = {};
@@ -292,7 +295,7 @@ export async function applyLeaderboardFilters(params: {}) {
       let string = '';
 
       params[key].forEach((value, index) => {
-        string += `${value}${index === 0 ? `&${key}=` : ''}`;
+        string += `${value}${index < params[key].length - 1 ? `&${key}=` : ''}`;
       });
 
       return (urlStringObject[key] = string);
@@ -312,8 +315,7 @@ export async function fetchLeaderboard(params: {}) {
 
   /* MISSING MODE,  PLAYERID */
 
-  const { type, page, rank, rating, matches, winrate, inclTier, exclTier } =
-    params;
+  const { type, page, rank, rating, matches, winrate, tiers } = params;
 
   const tierFilters = {
     bronze: 'bronze',
@@ -367,16 +369,10 @@ export async function fetchLeaderboard(params: {}) {
           .sort(compareNumbers))
     : undefined;
 
-  inclTier
-    ? Array.isArray(inclTier)
-      ? (paramsToProcess.inclTier = inclTier)
-      : (paramsToProcess.inclTier = Array(inclTier))
-    : undefined;
-
-  exclTier
-    ? Array.isArray(exclTier)
-      ? (paramsToProcess.exclTier = exclTier)
-      : (paramsToProcess.exclTier = Array(exclTier))
+  tiers
+    ? Array.isArray(tiers)
+      ? (paramsToProcess.tiers = tiers)
+      : (paramsToProcess.tiers = Array(tiers))
     : undefined;
 
   const queryCheck = await LeaderboardsQuerySchema.safeParse({
@@ -451,16 +447,9 @@ export async function fetchLeaderboard(params: {}) {
   }
 
   /* Check included tiers filter */
-  if (queryCheck.data.inclTier) {
-    queryCheck.data.inclTier.forEach((tier) => {
+  if (queryCheck.data.tiers) {
+    queryCheck.data.tiers.forEach((tier) => {
       backendObject[tierFilters[tier]] = true;
-    });
-  }
-
-  /* Check included tiers filter */
-  if (queryCheck.data.exclTier) {
-    queryCheck.data.exclTier.forEach((tier) => {
-      backendObject[tierFilters[tier]] = false;
     });
   }
 
@@ -528,7 +517,7 @@ export async function fetchUserPage(player: string | number) {
 
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/stats/${player}${
-      session?.userId ? `?comparerId=${session?.userId}` : ''
+      session?.playerId ? `?comparerId=${session?.playerId}` : ''
     }`,
     {
       headers: {
@@ -563,7 +552,9 @@ export async function paginationParamsToURL(params: {}) {
         let string = `${index !== 0 ? '&' : ''}${key}=`;
 
         params[key].forEach((value, index) => {
-          string += `${value}${index === 0 ? `&${key}=` : ''}`;
+          string += `${value}${
+            index < params[key].length - 1 ? `&${key}=` : ''
+          }`;
         });
 
         return (url += `${string}`);
@@ -576,4 +567,35 @@ export async function paginationParamsToURL(params: {}) {
   }
 
   return url;
+}
+
+export async function fetchSearchData(prevState: any, formData: FormData) {
+  const session = await getSession(true);
+
+  if (!session.id) return redirect('/');
+
+  let searchText = formData.get('search');
+
+  let searchData = await fetch(
+    `${process.env.REACT_APP_API_URL}/search?searchKey=${searchText}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
+
+  if (!searchData?.ok) {
+    throw new Error('Error from server on search!');
+  }
+
+  searchData = await searchData.json();
+
+  return {
+    status: 'success',
+    search: searchData,
+  };
 }
