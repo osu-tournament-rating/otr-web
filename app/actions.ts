@@ -313,7 +313,10 @@ export async function applyLeaderboardFilters(params: {}) {
 export async function fetchLeaderboard(params: {}) {
   const session = await getSession(true);
 
-  /* MISSING MODE,  PLAYERID */
+  const osuMode =
+    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+
+  /* PLAYERID */
 
   const { type, page, rank, rating, matches, winrate, tiers } = params;
 
@@ -456,7 +459,7 @@ export async function fetchLeaderboard(params: {}) {
   let backendString = new URLSearchParams(backendObject).toString();
 
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/leaderboards?${backendString}`,
+    `${process.env.REACT_APP_API_URL}/leaderboards?mode=${osuMode}&${backendString}`,
     {
       headers: {
         'Content-Type': 'application/json',
