@@ -574,7 +574,17 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
 
   if (!session.id) return redirect('/');
 
-  let searchText = formData.get('search');
+  let searchText = formData.get('search').trim();
+
+  if (searchText === '')
+    return {
+      status: 'success',
+      search: {
+        players: [],
+        tournaments: [],
+        matches: [],
+      },
+    };
 
   let searchData = await fetch(
     `${process.env.REACT_APP_API_URL}/search?searchKey=${searchText}`,
