@@ -4,10 +4,10 @@ import { Tooltip } from 'react-tooltip';
 import styles from './UserMainCard.module.css';
 
 export default function UserMainCardProfile({
-  generalStats,
+  baseStats,
   playerInfo,
 }: {
-  generalStats: object;
+  baseStats: object;
   playerInfo: object;
 }) {
   return (
@@ -26,7 +26,7 @@ export default function UserMainCardProfile({
         <div className={styles.item} id="Rating">
           <div className={styles.label}>Rating</div>
           <div className={styles.value}>
-            {Math.round(generalStats?.rating)}
+            {Math.round(baseStats?.rating)}
             {/* <FontAwesomeIcon
                 icon={faAngleUp}
                 className={clsx(styles.arrowIcon, styles.positiveTrend)}
@@ -36,7 +36,7 @@ export default function UserMainCardProfile({
         <div className={styles.item} id="Global">
           <div className={styles.label}>Global</div>
           <div className={styles.value}>
-            {`#${generalStats?.globalRank.toLocaleString('en-US')}`}
+            {`#${baseStats?.globalRank.toLocaleString('en-US')}`}
             {/* <FontAwesomeIcon
                 icon={faAngleUp}
                 className={clsx(styles.arrowIcon, styles.negativeTrend)}
@@ -47,19 +47,19 @@ export default function UserMainCardProfile({
           <div className={styles.label}>Country</div>
           <div
             className={styles.value}
-          >{`#${generalStats?.countryRank.toLocaleString('en-US')}`}</div>
+          >{`#${baseStats?.countryRank.toLocaleString('en-US')}`}</div>
         </div>
         <div className={styles.item} id="Percentile">
           <div className={styles.label}>Percentile</div>
           <div className={styles.value}>{`${(
-            generalStats?.percentile * 100
+            baseStats?.percentile * 100
           ).toFixed(1)}%`}</div>
         </div>
         <div className={styles.item} id="Tier">
           <div className={styles.label}>Tier</div>
           <div className={styles.image}>
             <Tooltip
-              id={`tooltip-${generalStats?.rankProgress.currentTier}`}
+              id={`tooltip-${baseStats?.rankProgress.currentTier}`}
               style={{
                 borderRadius: '0.6em',
                 fontWeight: '500',
@@ -70,10 +70,10 @@ export default function UserMainCardProfile({
               place={'right'}
             />
             <Image
-              src={`/icons/ranks/${generalStats?.rankProgress.currentTier}.svg`}
-              alt={generalStats?.rankProgress.currentTier}
-              data-tooltip-id={`tooltip-${generalStats?.rankProgress.currentTier}`}
-              data-tooltip-content={generalStats?.rankProgress.currentTier}
+              src={`/icons/ranks/${baseStats?.rankProgress.currentTier}.svg`}
+              alt={baseStats?.rankProgress.currentTier}
+              data-tooltip-id={`tooltip-${baseStats?.rankProgress.currentTier}`}
+              data-tooltip-content={baseStats?.rankProgress.currentTier}
               data-tooltip-delay-show={400}
               fill
             />

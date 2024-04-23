@@ -29,20 +29,20 @@ export default async function page({
 }) {
   const data = await fetchDashboard();
 
-  if (!data.generalStats || !data.playerInfo) {
+  if (!data.baseStats || !data.playerInfo) {
     throw Error('4');
     return;
   }
 
   return (
     <main className={styles.main}>
-      <UserMainCard data={data?.generalStats} />
+      <UserMainCard data={data?.baseStats} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
           <div className={styles.header}>
             <div className={styles.rating}>
-              <span>{Math.round(data.generalStats?.rating)}</span>
+              <span>{Math.round(data.baseStats?.rating)}</span>
               <span
                 className={clsx(
                   styles.change,
