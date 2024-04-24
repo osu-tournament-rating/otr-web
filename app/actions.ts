@@ -84,8 +84,6 @@ export async function login(cookie: {
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
-  console.log(loggedUser, session);
-
   await cookies().set('OTR-user-selected-osu-mode', loggedUser.ruleset ?? '0', {
     httpOnly: true,
     path: '/',
@@ -96,7 +94,6 @@ export async function login(cookie: {
 
   await session.save();
 
-  /* await changeOsuModeCookie(res.osuPlayMode); */
   return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
 }
 
