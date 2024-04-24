@@ -77,14 +77,16 @@ export async function login(cookie: {
   session.id = loggedUser.id;
   session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
-  session.osuCountry = loggedUser.osuCountry;
-  session.osuPlayMode = loggedUser.osuPlayMode;
-  session.osuPlayModeSelected = loggedUser.osuPlayMode; // maybe to delete
-  session.username = loggedUser.osuUsername;
+  session.osuCountry = loggedUser.country;
+  session.osuPlayMode = loggedUser.ruleset ?? '0';
+  session.osuPlayModeSelected = loggedUser.ruleset ?? '0'; // maybe to delete
+  session.username = loggedUser.username;
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
-  await cookies().set('OTR-user-selected-osu-mode', loggedUser.osuPlayMode, {
+  console.log(loggedUser, session);
+
+  await cookies().set('OTR-user-selected-osu-mode', loggedUser.ruleset ?? '0', {
     httpOnly: true,
     path: '/',
     sameSite: 'strict',
