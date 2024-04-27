@@ -38,16 +38,13 @@ export default async function page({
 
   return (
     <main className={styles.main}>
-      <UserMainCard
-        generalStats={data?.generalStats}
-        playerInfo={data?.playerInfo}
-      />
+      <UserMainCard baseStats={data?.baseStats} playerInfo={data?.playerInfo} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
           <div className={styles.header}>
             <div className={styles.rating}>
-              <span>{Math.round(data.generalStats.rating)}</span>
+              <span>{Math.round(data.baseStats.rating)}</span>
               <span
                 className={clsx(
                   styles.change,
