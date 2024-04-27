@@ -77,14 +77,14 @@ export async function login(cookie: {
   session.id = loggedUser.id;
   session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
-  session.osuCountry = loggedUser.osuCountry;
-  session.osuPlayMode = loggedUser.osuPlayMode;
-  session.osuPlayModeSelected = loggedUser.osuPlayMode; // maybe to delete
-  session.username = loggedUser.osuUsername;
+  session.osuCountry = loggedUser.country;
+  session.osuPlayMode = loggedUser.ruleset ?? '0';
+  session.osuPlayModeSelected = loggedUser.ruleset ?? '0'; // maybe to delete
+  session.username = loggedUser.username;
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
-  await cookies().set('OTR-user-selected-osu-mode', loggedUser.osuPlayMode, {
+  await cookies().set('OTR-user-selected-osu-mode', loggedUser.ruleset ?? '0', {
     httpOnly: true,
     path: '/',
     sameSite: 'strict',
@@ -94,7 +94,6 @@ export async function login(cookie: {
 
   await session.save();
 
-  /* await changeOsuModeCookie(res.osuPlayMode); */
   return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
 }
 
@@ -313,7 +312,10 @@ export async function applyLeaderboardFilters(params: {}) {
 export async function fetchLeaderboard(params: {}) {
   const session = await getSession(true);
 
-  /* MISSING MODE,  PLAYERID */
+  const osuMode =
+    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+
+  /* PLAYERID */
 
   const { type, page, rank, rating, matches, winrate, tiers } = params;
 
@@ -456,7 +458,7 @@ export async function fetchLeaderboard(params: {}) {
   let backendString = new URLSearchParams(backendObject).toString();
 
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/leaderboards?${backendString}`,
+    `${process.env.REACT_APP_API_URL}/leaderboards?mode=${osuMode}&${backendString}`,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -574,7 +576,17 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
 
   if (!session.id) return redirect('/');
 
-  let searchText = formData.get('search');
+  let searchText = formData.get('search').trim();
+
+  if (searchText === '')
+    return {
+      status: 'success',
+      search: {
+        players: [],
+        tournaments: [],
+        matches: [],
+      },
+    };
 
   let searchData = await fetch(
     `${process.env.REACT_APP_API_URL}/search?searchKey=${searchText}`,

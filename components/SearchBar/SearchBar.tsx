@@ -76,6 +76,10 @@ const mode: { [key: number]: { image: any; alt: string } } = {
   3: 'mania',
 };
 
+const disableEnter = (e) => {
+  if (e.keyCode === 13) return e.preventDefault();
+};
+
 export default function SearchBar({ setIsSeachBarOpen }) {
   const [searchValue, setSearchValue] = useState('');
   const [state, formAction] = useFormState(fetchSearchData, initialState);
@@ -124,7 +128,11 @@ export default function SearchBar({ setIsSeachBarOpen }) {
         exit={bodyMotionStates.initial}
         layout="position"
       >
-        <form action={fetchSearchData} className={styles.bar}>
+        <form
+          action={fetchSearchData}
+          className={styles.bar}
+          onKeyDown={disableEnter}
+        >
           <input
             name={'search'}
             placeholder="Search"
