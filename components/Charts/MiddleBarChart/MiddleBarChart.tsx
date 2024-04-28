@@ -67,6 +67,8 @@ export default function MiddleBarChart() {
 
   let minMax = findMinMaxNumber(dataScores);
 
+  let propicIDs: number[] = ['4001304', '14106450', '4448118', '11215030'];
+
   const options = {
     elements: {
       bar: {
@@ -105,10 +107,11 @@ export default function MiddleBarChart() {
             family: font,
           },
           precision: 0,
-          stepSize: 5,
+          /* stepSize: 5, */
         },
-        min: -minMax,
-        max: minMax,
+        grace: '20%',
+        /* min: -minMax,
+        max: minMax, */
         suggestedMax: minMax,
         suggestedMin: -minMax,
       },
@@ -121,6 +124,7 @@ export default function MiddleBarChart() {
       {
         label: 'W/L',
         data: dataScores,
+        propicIDs: propicIDs,
         backgroundColor: graphColors(dataScores),
         beginAtZero: true,
         padding: 10,
@@ -128,9 +132,58 @@ export default function MiddleBarChart() {
     ],
   };
 
+  const playerImage = {
+    id: 'playerImage',
+    beforeDatasetsDraw(chart, args, plugin) {
+      const { ctx, data } = chart;
+
+      data.datasets[0].propicIDs.forEach((image, index) => {
+        const xPos = chart.getDatasetMeta(0).data[index].x;
+        const yPos = chart.getDatasetMeta(0).data[index].y;
+
+        const valueNumber = data.datasets[0].data[index];
+
+        const chartImage = new (Image as any)();
+
+        /* chartImage.onload = function () {
+          // draw image with circle shape clip
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(
+            0,
+            valueNumber >= 0 ? 15 - 40 : 15 + 10,
+            13,
+            0,
+            Math.PI * 2,
+            false
+          ); //(imageSize/2 - -valueXpos, imageSize/2 - -+valueYpos)
+          ctx.clip();
+          ctx.drawImage(
+            chartImage,
+            xPos - 15,
+            valueNumber >= 0 ? yPos - 40 : yPos + 10,
+            30,
+            30
+          );
+          ctx.restore();
+        }; */
+
+        chartImage.src = `http://s.ppy.sh/a/${image}`;
+
+        ctx.drawImage(
+          chartImage,
+          xPos - 15,
+          valueNumber >= 0 ? yPos - 40 : yPos + 10,
+          30,
+          30
+        );
+      });
+    },
+  };
+
   return (
     <div className={styles.middleBarChart}>
-      <Bar data={data} options={options} />
+      <Bar data={data} options={options} plugins={[playerImage]} />
     </div>
   );
 }
