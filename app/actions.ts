@@ -517,9 +517,12 @@ export async function fetchUserPageTitle(player: string | number) {
 export async function fetchUserPage(player: string | number) {
   const session = await getSession(true);
 
+  const osuMode =
+    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+
   let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}${
-      session?.playerId ? `?comparerId=${session?.playerId}` : ''
+    `${process.env.REACT_APP_API_URL}/stats/${player}?mode=${osuMode}${
+      session?.playerId ? `&comparerId=${session?.playerId}` : ''
     }`,
     {
       headers: {
