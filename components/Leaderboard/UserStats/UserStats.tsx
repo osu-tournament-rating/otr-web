@@ -30,7 +30,7 @@ export default function UserStats({ data }: { data: {} }) {
         <div className={styles.item}>
           <div className={styles.label}>Winrate</div>
           <div className={styles.value}>
-            {parseFloat((data.winrate * 100).toFixed(2))}%
+            {parseFloat((data.winRate * 100).toFixed(2))}%
           </div>
         </div>
         <div className={styles.item}>

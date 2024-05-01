@@ -21,7 +21,7 @@ export const LeaderboardsQuerySchema = z.object({
   rank: z.array(z.number().positive()).max(2).nullish(),
   rating: z.array(z.number().positive().gte(100)).max(2).optional(),
   matches: z.array(z.number().positive()).max(2).optional(),
-  winrate: z.array(z.number().gte(0.01).lte(1)).max(2).optional(),
+  winRate: z.array(z.number().gte(0.01).lte(1)).max(2).optional(),
   tiers: z.array(z.enum(leaderboardsTierNames)).optional(),
   pageSize: z.number().default(25),
 });
