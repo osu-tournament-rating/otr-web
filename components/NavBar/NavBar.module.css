@@ -64,12 +64,27 @@
   overflow: hidden;
 }
 
+.logoLink {
+  width: 2.25rem;
+}
+
 :is(.userPropic, .logoLink, .themeSwitcher) img {
   object-fit: contain;
 }
 
+@media (max-width: 480px) {
+  .navbar {
+    margin-top: 0;
+    border-radius: 0 0 var(--main-borderRadius) var(--main-borderRadius);
+  }
+}
+
 @media (max-width: 1040px) {
-  .content {
+  .content a {
+    display: none;
+  }
+
+  .userPropic {
     display: none;
   }
 }
