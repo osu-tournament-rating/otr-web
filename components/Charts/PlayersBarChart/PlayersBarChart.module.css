@@ -1,14 +1,11 @@
 .playersChart {
-  display: flex;
-  flex-flow: row;
-}
-
-.chart {
   width: 100%;
-  max-width: 100%;
-  height: 14rem;
-  max-height: 14rem;
   display: flex;
+  /* max-width: 100%;
+  height: 14rem;
+  max-height: 14rem; */
+  height: 100%;
+  position: relative;
 }
 
 .yAxe {

@@ -146,28 +146,13 @@ export default function PlayersBarChart({ players }: { players: [] }) {
 
   return (
     <div className={styles.playersChart}>
-      {/* <div className={styles.yAxe}>
-        {labels.map((label, index) => {
-          return (
-            <div className={styles.label} key={index}>
-              {
-                <div className={styles.image}>
-                  <Image src={'http://s.ppy.sh/a/4001304'} alt="propic" fill />
-                </div>
-              }
-            </div>
-          );
-        })}
-      </div> */}
-      <div className={styles.chart}>
-        <Bar
-          options={options}
-          data={data}
-          plugins={[playerImage]}
-          onClick={chartOnClick}
-          ref={chartRef}
-        />
-      </div>
+      <Bar
+        options={options}
+        data={data}
+        plugins={[playerImage]}
+        onClick={chartOnClick}
+        ref={chartRef}
+      />
     </div>
   );
 }

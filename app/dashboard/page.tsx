@@ -135,7 +135,7 @@ export default async function page({
           </div>
         </GridCard>
         <GridCard title={'Winrate by mod'}>
-          <RadarChart winrateModData={data?.modStats} />
+          <RadarChart winRateModData={data?.modStats} />
         </GridCard>
         <GridCard title={'Average score per mod'}>
           <RadarChart averageModScore={data?.modStats} />
