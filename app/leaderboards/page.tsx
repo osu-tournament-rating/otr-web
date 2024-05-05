@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 const catchErrors = async (params: {}, leaderboard: any) => {
-  /* const { type, rank, rating, matches, winrate, inclTier, exclTier } = params; */
+  /* const { type, rank, rating, matches, winRate, inclTier, exclTier } = params; */
 
   if (leaderboard === undefined) {
     return redirect('/leaderboards');

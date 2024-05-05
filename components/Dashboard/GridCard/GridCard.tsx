@@ -1,6 +1,10 @@
 'use client';
 
+import clsx from 'clsx';
 import styles from './GridCard.module.css';
+
+const firstRow = ['Most played mods', 'General', 'Per match'];
+const textCards = ['General', 'Per match'];
 
 export default function GridCard({
   title,
@@ -11,14 +15,20 @@ export default function GridCard({
 }) {
   return (
     <div
-      className={styles.card}
-      style={{
-        paddingBottom: title === 'Winrate by mod' ? '0.2vw' : '2vw',
-        gap: title === 'Winrate by mod' ? '0.2rem' : '1.3rem',
-      }}
+      className={clsx(
+        styles.card,
+        firstRow.includes(title) ? styles.firstRow : ''
+      )}
     >
       <h1>{title}</h1>
-      <div className={styles.content}>{children}</div>
+      <div
+        className={clsx(
+          styles.content,
+          textCards.includes(title) ? styles.notGraph : ''
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

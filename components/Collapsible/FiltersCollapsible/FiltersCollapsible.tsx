@@ -19,7 +19,7 @@ export default function FiltersCollapsible({
   isCollapsibleOpen: boolean;
   data: {};
 }) {
-  const { type, rank, rating, matches, winrate, tiers } = params;
+  const { type, rank, rating, matches, winRate, tiers } = params;
 
   const [paramsToPush, setParamsToPush] = useState({});
 
@@ -45,7 +45,7 @@ export default function FiltersCollapsible({
       rank: rank != null ? rank : [],
       rating: rating != null ? rating : [],
       matches: matches != null ? matches : [],
-      winrate: winrate != null ? winrate : [],
+      winRate: winRate != null ? winRate : [],
     });
   }, [params]);
 

@@ -32,10 +32,10 @@ function kFormatter(num: number) {
 }
 
 export default function RadarChart({
-  winrateModData,
+  winRateModData,
   averageModScore,
 }: {
-  winrateModData?: any;
+  winRateModData?: any;
   averageModScore?: any;
 }) {
   const { theme } = useTheme();
@@ -69,10 +69,10 @@ export default function RadarChart({
     'HDDT',
   ];
 
-  if (winrateModData) {
-    Object.keys(winrateModData).forEach((mod: any) => {
+  if (winRateModData) {
+    Object.keys(winRateModData).forEach((mod: any) => {
       let label = mod.replace('played', '');
-      let value = (winrateModData[mod]?.winrate * 100) | 0;
+      let value = (winRateModData[mod]?.winRate * 100) | 0;
       mods.push({ label, value });
     });
     mods.sort(
@@ -121,7 +121,7 @@ export default function RadarChart({
     labels: mods.map((mod) => mod.label),
     datasets: [
       {
-        label: winrateModData
+        label: winRateModData
           ? 'Winrate %'
           : averageModScore
           ? 'AVG Score'
@@ -192,8 +192,8 @@ export default function RadarChart({
           color:
             theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
         },
-        min: winrateModData ? -25 : averageModScore ? -200000 : -25,
-        max: winrateModData ? 100 : averageModScore ? 1000000 : 100,
+        min: winRateModData ? -25 : averageModScore ? -200000 : -25,
+        max: winRateModData ? 100 : averageModScore ? 1000000 : 100,
         ticks: {
           font: {
             size: 10,
@@ -201,10 +201,10 @@ export default function RadarChart({
             weight: 300,
           },
           color: theme === 'dark' ? 'rgba(250,250,250,0.7)' : '#707070',
-          stepSize: winrateModData ? 25 : averageModScore ? 200000 : 25,
+          stepSize: winRateModData ? 25 : averageModScore ? 200000 : 25,
           callback: (value: any, tick: any, values: any) => {
             return value !== 0
-              ? `${kFormatter(value)}${winrateModData ? '%' : ''}`
+              ? `${kFormatter(value)}${winRateModData ? '%' : ''}`
               : '';
           },
           showLabelBackdrop: (context: any) => {

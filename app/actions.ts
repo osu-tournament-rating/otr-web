@@ -317,7 +317,7 @@ export async function fetchLeaderboard(params: {}) {
 
   /* PLAYERID */
 
-  const { type, page, rank, rating, matches, winrate, tiers } = params;
+  const { type, page, rank, rating, matches, winRate, tiers } = params;
 
   const tierFilters = {
     bronze: 'bronze',
@@ -361,12 +361,12 @@ export async function fetchLeaderboard(params: {}) {
           .sort(compareNumbers))
     : undefined;
 
-  winrate
-    ? Array.isArray(winrate)
-      ? (paramsToProcess.winrate = winrate
+  winRate
+    ? Array.isArray(winRate)
+      ? (paramsToProcess.winRate = winRate
           .map((value) => Number(value) / 100)
           .sort(compareNumbers))
-      : (paramsToProcess.winrate = Array(winrate)
+      : (paramsToProcess.winRate = Array(winRate)
           .map((value) => Number(value) / 100)
           .sort(compareNumbers))
     : undefined;
@@ -438,13 +438,13 @@ export async function fetchLeaderboard(params: {}) {
       : null;
   }
 
-  /* Check winrate filter */
-  if (queryCheck.data.winrate) {
-    queryCheck.data.winrate[0] != null
-      ? (backendObject['MinWinrate'] = queryCheck.data.winrate[0])
+  /* Check winRate filter */
+  if (queryCheck.data.winRate) {
+    queryCheck.data.winRate[0] != null
+      ? (backendObject['MinWinrate'] = queryCheck.data.winRate[0])
       : null;
-    queryCheck.data.winrate[1] != null
-      ? (backendObject['MaxWinrate'] = queryCheck.data.winrate[1])
+    queryCheck.data.winRate[1] != null
+      ? (backendObject['MaxWinrate'] = queryCheck.data.winRate[1])
       : null;
   }
 
@@ -517,9 +517,12 @@ export async function fetchUserPageTitle(player: string | number) {
 export async function fetchUserPage(player: string | number) {
   const session = await getSession(true);
 
+  const osuMode =
+    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+
   let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}${
-      session?.playerId ? `?comparerId=${session?.playerId}` : ''
+    `${process.env.REACT_APP_API_URL}/stats/${player}?mode=${osuMode}${
+      session?.playerId ? `&comparerId=${session?.playerId}` : ''
     }`,
     {
       headers: {
