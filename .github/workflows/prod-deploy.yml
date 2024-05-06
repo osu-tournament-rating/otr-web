@@ -38,6 +38,7 @@ jobs:
           docker push stagecodes/otr-web-prod:latest
 
   deploy:
+    environment: Production
     needs: publish
     runs-on: ubuntu-latest
     steps:
