@@ -2,7 +2,7 @@ name: Web deploy
 
 on:
   push:
-    branches: [ staging ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -41,6 +41,7 @@ jobs:
           docker push stagecodes/otr-web-staging:latest
 
   deploy:
+    environment: Staging
     needs: publish
     runs-on: ubuntu-latest
     steps:
@@ -50,21 +51,21 @@ jobs:
           ref: staging
       - name: Create .env files
         run: |
-          echo "${{ secrets.STAGING_APP_ENV }}" > .env
+          echo "${{ secrets.ENV }}" > .env
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.STAGING_SSH_HOST }}
-          username: ${{ secrets.STAGING_SSH_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
           source: ".env"
           target: "~/otr-web/"
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.STAGING_SSH_HOST }}
-          username: ${{ secrets.STAGING_SSH_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             docker pull stagecodes/otr-web-staging:latest
             docker stop otr-web-staging || true
