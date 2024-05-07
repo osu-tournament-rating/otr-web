@@ -132,7 +132,7 @@ export default function FiltersCollapsible({
               <RangeSlider
                 name={'rating'}
                 min={100}
-                max={Math.floor(data.maxRating)}
+                max={Math.ceil(data.maxRating)}
                 value={rating}
                 setParamsToPush={setParamsToPush}
               />
