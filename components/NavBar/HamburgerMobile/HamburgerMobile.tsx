@@ -2,11 +2,15 @@
 import BurgerSVG from '@/public/icons/burger.svg';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './HamburgerMobile.module.css';
 
 export default function HamburgerMobile() {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflowY = isOpen ? 'hidden' : 'auto';
+  }, [isOpen]);
 
   return (
     <>
