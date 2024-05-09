@@ -17,14 +17,80 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
   if (modStats) {
     labels = [];
     values = [];
-    Object.keys(modStats).forEach((key) => {
-      if (key.startsWith('played')) {
-        if (modStats[key] === null) return;
-        let labelName = key.replace('played', '');
-        labels.push(labelName);
-        values.push(modStats[key]?.gamesPlayed);
+
+    let sortable = [];
+
+    for (let mods in modStats) {
+      sortable.push([mods, modStats[mods]]);
+    }
+
+    sortable.sort((a, b) => {
+      // nulls sort after anything else
+      if (a[1] === null) {
+        return 1;
       }
+      if (b[1] === null) {
+        return -1;
+      }
+
+      if (a[1].gamesPlayed === b[1].gamesPlayed) {
+        return 0;
+      }
+
+      return a[1].gamesPlayed < b[1].gamesPlayed ? 1 : -1;
     });
+
+    sortable = sortable.map((mod) => {
+      return { [mod[0]]: { ...mod[1] } };
+    });
+
+    console.log(sortable);
+
+    Object /* .values(modStats)
+      .sort((a, b) => {
+        // nulls sort after anything else
+        if (a === null) {
+          return 1;
+        }
+        if (b === null) {
+          return -1;
+        }
+
+        if (a.gamesPlayed === b.gamesPlayed) {
+          return 0;
+        }
+
+        return a.gamesPlayed < b.gamesPlayed ? 1 : -1;
+      }) */.keys(modStats)
+      .forEach((key) => {
+        if (key.startsWith('played')) {
+          if (modStats[key] === null) return;
+          let labelName = key.replace('played', '');
+          labels.push(labelName);
+          values.push(modStats[key]?.gamesPlayed);
+        }
+      });
+
+    console.log(
+      Object.values(modStats),
+      Object.values(modStats).sort((a, b) => {
+        // nulls sort after anything else
+        if (a === null) {
+          return 1;
+        }
+        if (b === null) {
+          return -1;
+        }
+
+        if (a.gamesPlayed === b.gamesPlayed) {
+          return 0;
+        }
+
+        return a.gamesPlayed < b.gamesPlayed ? 1 : -1;
+      })
+    );
+    if (labels.length === values.length && labels.length > 5) {
+    }
   }
 
   let valuesSum = values.reduce((a, b) => a + b, 0);
