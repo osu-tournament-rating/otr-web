@@ -2,17 +2,17 @@
 
 import styles from './InlineChart.module.css';
 
-export default function InlineChart({ matchesData }: { matchesData?: {} }) {
-  const wonPercentage = (
-    ((matchesData.matchesPlayed - matchesData.matchesLost) /
-      matchesData.matchesPlayed) *
-    100
-  ).toFixed(1);
-  const lostPercentage = (
-    ((matchesData.matchesPlayed - matchesData.matchesWon) /
-      matchesData.matchesPlayed) *
-    100
-  ).toFixed(1);
+export default function InlineChart({
+  won,
+  lost,
+  played,
+}: {
+  won: number;
+  lost: number;
+  played: number;
+}) {
+  const wonPercentage = (((played - lost) / played) * 100).toFixed(1);
+  const lostPercentage = (((played - won) / played) * 100).toFixed(1);
 
   return (
     <div className={styles.chart}>
@@ -29,7 +29,7 @@ export default function InlineChart({ matchesData }: { matchesData?: {} }) {
           {wonPercentage >= 5 && (
             <>
               <span className={styles.percentile}>{wonPercentage}</span>
-              <span className={styles.label}>{matchesData.matchesWon} won</span>
+              <span className={styles.label}>{won} won</span>
             </>
           )}
         </div>
@@ -45,9 +45,7 @@ export default function InlineChart({ matchesData }: { matchesData?: {} }) {
           {lostPercentage >= 5 && (
             <>
               <span className={styles.percentile}>{lostPercentage}</span>
-              <span className={styles.label}>
-                {matchesData.matchesLost} lost
-              </span>
+              <span className={styles.label}>{lost} lost</span>
             </>
           )}
         </div>

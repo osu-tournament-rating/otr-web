@@ -31,11 +31,27 @@
   font-size: 1.2rem;
 }
 
-.chartLabel {
-  font-weight: 500;
+.chartLabels {
+  font-size: 1.2em;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  flex-flow: row;
+  gap: 1.2em;
+  font-weight: 500;
+}
+
+.chartLabels .label {
+  user-select: none;
+  cursor: pointer;
+  color: hsla(0, 0%, 60%, 1);
+  transition: all 0.2s ease-out;
+}
+
+.chartLabels .label:hover {
+  color: hsla(0, 0%, 45%, 1);
+}
+
+.chartLabels .label.selected {
+  color: inherit;
 }
 
 .chartLabel svg {
