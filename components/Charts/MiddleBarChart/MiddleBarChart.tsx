@@ -23,18 +23,6 @@ ChartJS.register(
   Legend
 );
 
-const findMinMaxNumber = (array) => {
-  let number = 0;
-
-  array.forEach((element) => {
-    let currNumber = Math.abs(Number(element));
-
-    if (number < currNumber) number = currNumber;
-  });
-
-  return number;
-};
-
 const exampleData = {
   teammateWinLoss: [
     {
@@ -1214,12 +1202,10 @@ export default function MiddleBarChart() {
   var dataScores: any[] = [
     [50, (exampleData.teammateWinLoss[0].winRate * 100).toFixed(0)],
     [50, (exampleData.teammateWinLoss[3].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[10].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[14].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[10].winRate * 100).toFixed(0) /* 99 */],
+    [50, (exampleData.teammateWinLoss[14].winRate * 100).toFixed(0) /* 0 */],
     [50, (exampleData.teammateWinLoss[16].winRate * 100).toFixed(0)],
   ];
-
-  let minMax = findMinMaxNumber(dataScores);
 
   const options = {
     elements: {
@@ -1299,62 +1285,18 @@ export default function MiddleBarChart() {
 
         const chartImage = new (Image as any)();
 
-        /* chartImage.onload = function () {
-          // draw image with circle shape clip
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(
-            0,
-            valueNumber >= 0 ? 15 - 40 : 15 + 10,
-            13,
-            0,
-            Math.PI * 2,
-            false
-          ); //(imageSize/2 - -valueXpos, imageSize/2 - -+valueYpos)
-          ctx.clip();
-          ctx.drawImage(
-            chartImage,
-            xPos - 15,
-            valueNumber >= 0 ? yPos - 40 : yPos + 10,
-            30,
-            30
-          );
-          ctx.restore();
-        }; */
-
         chartImage.src = `http://s.ppy.sh/a/${image}`;
-
-        if (valueNumber[0] > valueNumber[1])
-          console.log({
-            yPos: yPos,
-            value2: valueNumber[1],
-            difference: valueNumber[0] - valueNumber[1],
-            calculatedValue:
-              ((valueNumber[0] - valueNumber[1]) / (yPos * 2)) * 1000,
-          });
 
         ctx.drawImage(
           chartImage,
           xPos - 15,
           valueNumber[1] >= valueNumber[0]
             ? yPos - 40
-            : /* : yPos + (yPos * 2) / (valueNumber[0] - valueNumber[1]), */
-              /* ((valueNumber[0] - valueNumber[1]) / (yPos * 2)) * 1000 */
-              yPos +
-                ((valueNumber[0] - valueNumber[1]) / (yPos * 2)) * 1000 +
-                valueNumber[1],
-          /* (valueNumber[0] +
-                  valueNumber[1]) */ /* (yPos * 2) - (yPos - valueNumber[1]) */ /* 10 */ 30,
+            : (yPos / 50 - 0.2) * (100 - valueNumber[1]) + 10.2 + 10,
+          30,
           30
         );
       });
-
-      /*
-      middleValue = yPos;
-      fullValue = middleValue * 2; 
-      barValue = 50 (AKA value[0]) - value[1];
-
-      */
     },
   };
 
