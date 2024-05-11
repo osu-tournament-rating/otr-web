@@ -13,6 +13,10 @@
   height: 20em;
 }
 
+.card.span2 {
+  grid-column: 2/4;
+}
+
 .card h1 {
   font-size: 2rem;
   font-weight: 600;

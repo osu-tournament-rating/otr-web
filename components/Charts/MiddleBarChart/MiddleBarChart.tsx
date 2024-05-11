@@ -1188,7 +1188,20 @@ export default function MiddleBarChart() {
     exampleData.teammateWinLoss[3].username,
     exampleData.teammateWinLoss[10].username,
     exampleData.teammateWinLoss[14].username,
+    exampleData.teammateWinLoss[15].username,
     exampleData.teammateWinLoss[16].username,
+    exampleData.teammateWinLoss[17].username,
+    exampleData.teammateWinLoss[18].username,
+    exampleData.teammateWinLoss[19].username,
+    exampleData.teammateWinLoss[20].username,
+    exampleData.teammateWinLoss[21].username,
+    exampleData.teammateWinLoss[22].username,
+    exampleData.teammateWinLoss[23].username,
+    exampleData.teammateWinLoss[24].username,
+    exampleData.teammateWinLoss[25].username,
+    exampleData.teammateWinLoss[26].username,
+    exampleData.teammateWinLoss[27].username,
+    exampleData.teammateWinLoss[28].username,
   ];
 
   let propicIDs: number[] = [
@@ -1196,7 +1209,20 @@ export default function MiddleBarChart() {
     exampleData.teammateWinLoss[3].osuId,
     exampleData.teammateWinLoss[10].osuId,
     exampleData.teammateWinLoss[14].osuId,
+    exampleData.teammateWinLoss[15].osuId,
     exampleData.teammateWinLoss[16].osuId,
+    exampleData.teammateWinLoss[17].osuId,
+    exampleData.teammateWinLoss[18].osuId,
+    exampleData.teammateWinLoss[19].osuId,
+    exampleData.teammateWinLoss[20].osuId,
+    exampleData.teammateWinLoss[21].osuId,
+    exampleData.teammateWinLoss[22].osuId,
+    exampleData.teammateWinLoss[23].osuId,
+    exampleData.teammateWinLoss[24].osuId,
+    exampleData.teammateWinLoss[25].osuId,
+    exampleData.teammateWinLoss[26].osuId,
+    exampleData.teammateWinLoss[27].osuId,
+    exampleData.teammateWinLoss[28].osuId,
   ];
 
   var dataScores: any[] = [
@@ -1204,7 +1230,20 @@ export default function MiddleBarChart() {
     [50, (exampleData.teammateWinLoss[3].winRate * 100).toFixed(0)],
     [50, (exampleData.teammateWinLoss[10].winRate * 100).toFixed(0) /* 99 */],
     [50, (exampleData.teammateWinLoss[14].winRate * 100).toFixed(0) /* 0 */],
+    [50, (exampleData.teammateWinLoss[15].winRate * 100).toFixed(0)],
     [50, (exampleData.teammateWinLoss[16].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[17].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[18].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[19].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[20].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[21].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[22].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[23].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[24].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[25].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[26].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[27].winRate * 100).toFixed(0)],
+    [50, (exampleData.teammateWinLoss[28].winRate * 100).toFixed(0)],
   ];
 
   const options = {

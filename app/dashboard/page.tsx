@@ -141,7 +141,6 @@ export default async function page({
         <GridCard title={'Teammates W/L'}>
           <MiddleBarChart />
         </GridCard>
-        <GridCard title={'Opponents W/L'}>{/* <MiddleBarChart /> */}</GridCard>
         <GridCard title={'Average score per mod'}>
           <RadarChart averageModScore={data?.modStats} />
         </GridCard>

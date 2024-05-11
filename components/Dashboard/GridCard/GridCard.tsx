@@ -17,7 +17,8 @@ export default function GridCard({
     <div
       className={clsx(
         styles.card,
-        firstRow.includes(title) ? styles.firstRow : ''
+        firstRow.includes(title) ? styles.firstRow : '',
+        title === 'Teammates W/L' ? styles.span2 : ''
       )}
     >
       <h1>{title}</h1>
