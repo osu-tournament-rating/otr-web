@@ -6,6 +6,7 @@
   border-radius: var(--main-borderRadius);
   gap: 1.3rem;
   height: 28em;
+  overflow: hidden;
 }
 
 .card.firstRow {
