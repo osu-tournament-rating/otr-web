@@ -14,6 +14,8 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
 
   let values = [12, 19, 3];
 
+  let otherValues = [];
+
   if (modStats) {
     labels = [];
     values = [];
@@ -40,56 +42,28 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
       return a[1].gamesPlayed < b[1].gamesPlayed ? 1 : -1;
     });
 
-    sortable = sortable.map((mod) => {
-      return { [mod[0]]: { ...mod[1] } };
+    sortable = Object.fromEntries(sortable);
+
+    Object.keys(sortable).forEach((key) => {
+      if (key.startsWith('played')) {
+        if (modStats[key] === null) return;
+        let labelName = key.replace('played', '');
+        labels.push(labelName);
+        values.push(modStats[key]?.gamesPlayed);
+      }
     });
 
-    console.log(sortable);
-
-    Object /* .values(modStats)
-      .sort((a, b) => {
-        // nulls sort after anything else
-        if (a === null) {
-          return 1;
-        }
-        if (b === null) {
-          return -1;
-        }
-
-        if (a.gamesPlayed === b.gamesPlayed) {
-          return 0;
-        }
-
-        return a.gamesPlayed < b.gamesPlayed ? 1 : -1;
-      }) */.keys(modStats)
-      .forEach((key) => {
-        if (key.startsWith('played')) {
-          if (modStats[key] === null) return;
-          let labelName = key.replace('played', '');
-          labels.push(labelName);
-          values.push(modStats[key]?.gamesPlayed);
-        }
-      });
-
-    console.log(
-      Object.values(modStats),
-      Object.values(modStats).sort((a, b) => {
-        // nulls sort after anything else
-        if (a === null) {
-          return 1;
-        }
-        if (b === null) {
-          return -1;
-        }
-
-        if (a.gamesPlayed === b.gamesPlayed) {
-          return 0;
-        }
-
-        return a.gamesPlayed < b.gamesPlayed ? 1 : -1;
-      })
-    );
     if (labels.length === values.length && labels.length > 5) {
+      let lastValue = 0;
+
+      for (let i = 5; i < values.length; i++) {
+        otherValues.push({ label: labels[i], value: values[i] });
+        lastValue += values[i];
+      }
+      labels.length = 4;
+      values.length = 4;
+      labels.push('Others');
+      values.push(lastValue);
     }
   }
 
@@ -130,6 +104,9 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
       ),
       HT: getComputedStyle(document.documentElement).getPropertyValue(
         '--mods-HT-bg'
+      ),
+      Others: getComputedStyle(document.documentElement).getPropertyValue(
+        '--mods-Others-bg'
       ),
     });
   }, []);

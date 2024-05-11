@@ -105,6 +105,8 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+  --mods-Others-bg: 291, 97%, 73%;
+  --mods-Others-bg-row: 291, 97%, 73%, 0.15;
 
   --accent-color: 216, 100%, 65%;
   --accent-secondary-color: var(--blue-300);
@@ -238,6 +240,8 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+  --mods-Others-bg: 291, 97%, 73%;
+  --mods-Others-bg-row: 291, 97%, 73%, 0.15;
 
   --accent-color: 216, 100%, 65%;
   --accent-secondary-color: var(--blue-400);
