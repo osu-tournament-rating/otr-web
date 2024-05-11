@@ -1,5 +1,8 @@
 'use client';
 
+import Tooltip from '@/components/Tooltip/Tooltip';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
 import styles from './InlineChart.module.css';
 
 export default function InlineChart({
@@ -11,14 +14,22 @@ export default function InlineChart({
   lost: number;
   played: number;
 }) {
-  const wonPercentage = (((played - lost) / played) * 100).toFixed(1);
-  const lostPercentage = (((played - won) / played) * 100).toFixed(1);
+  /* const wonPercentage = (((played - lost) / played) * 100).toFixed(1);
+  const lostPercentage = (((played - won) / played) * 100).toFixed(1); */
+  const wonPercentage = 3;
+  const lostPercentage = 97;
+
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div className={styles.chart}>
       <div className={styles.line}>
-        <div
+        <motion.div
           className={styles.segment}
+          onHoverStart={() => {
+            wonPercentage < 5 ? setShowTooltip(true) : setShowTooltip(false);
+          }}
+          onHoverEnd={() => setShowTooltip(false)}
           style={{
             width: `${wonPercentage}%`,
             borderRadius:
@@ -26,15 +37,22 @@ export default function InlineChart({
             backgroundColor: 'hsla(var(--green-400))',
           }}
         >
+          <AnimatePresence initial={true}>
+            {showTooltip && <Tooltip>Hello</Tooltip>}
+          </AnimatePresence>
           {wonPercentage >= 5 && (
             <>
               <span className={styles.percentile}>{wonPercentage}</span>
               <span className={styles.label}>{won} won</span>
             </>
           )}
-        </div>
-        <div
+        </motion.div>
+        <motion.div
           className={styles.segment}
+          onHoverStart={() => {
+            lostPercentage < 5 ? setShowTooltip(true) : setShowTooltip(false);
+          }}
+          onHoverEnd={() => setShowTooltip(false)}
           style={{
             width: `${lostPercentage}%`,
             borderRadius:
@@ -48,7 +66,7 @@ export default function InlineChart({
               <span className={styles.label}>{lost} lost</span>
             </>
           )}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
