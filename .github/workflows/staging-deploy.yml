@@ -70,4 +70,4 @@ jobs:
             docker pull stagecodes/otr-web-staging:latest
             docker stop otr-web-staging || true
             docker rm otr-web-staging || true
-            docker run -d -p 3000:3000 --name otr-web-staging --env-file ~/otr-web/.env stagecodes/otr-web-staging:latest
+            docker run -d -p 3000:3000 --restart always --name otr-web-staging --env-file ~/otr-web/.env stagecodes/otr-web-staging:latest
