@@ -74,23 +74,29 @@ export async function login(cookie: {
     );
   }
 
+  console.log(loggedUser);
+
   session.id = loggedUser.id;
   session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
   session.osuCountry = loggedUser.country;
-  session.osuPlayMode = loggedUser.ruleset ?? '0';
-  session.osuPlayModeSelected = loggedUser.ruleset ?? '0'; // maybe to delete
+  session.osuPlayMode = loggedUser.settings.ruleset ?? '0';
+  session.osuPlayModeSelected = loggedUser.settings.ruleset ?? '0'; // maybe to delete
   session.username = loggedUser.username;
   session.scopes = loggedUser.scopes;
   session.isLogged = true;
 
-  await cookies().set('OTR-user-selected-osu-mode', loggedUser.ruleset ?? '0', {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 1209600,
-  });
+  await cookies().set(
+    'OTR-user-selected-osu-mode',
+    loggedUser.settings.ruleset ?? '0',
+    {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1209600,
+    }
+  );
 
   await session.save();
 
