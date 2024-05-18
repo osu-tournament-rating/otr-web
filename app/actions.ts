@@ -74,8 +74,6 @@ export async function login(cookie: {
     );
   }
 
-  console.log(loggedUser);
-
   session.id = loggedUser.id;
   session.playerId = loggedUser.playerId;
   session.osuId = loggedUser.osuId;
