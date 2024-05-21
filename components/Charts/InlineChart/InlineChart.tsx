@@ -14,10 +14,8 @@ export default function InlineChart({
   lost: number;
   played: number;
 }) {
-  /* const wonPercentage = (((played - lost) / played) * 100).toFixed(1);
-  const lostPercentage = (((played - won) / played) * 100).toFixed(1); */
-  const wonPercentage = 3;
-  const lostPercentage = 97;
+  const wonPercentage = (((played - lost) / played) * 100).toFixed(1);
+  const lostPercentage = (((played - won) / played) * 100).toFixed(1);
 
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -37,8 +35,17 @@ export default function InlineChart({
             backgroundColor: 'hsla(var(--green-400))',
           }}
         >
-          <AnimatePresence initial={true}>
-            {showTooltip && <Tooltip>Hello</Tooltip>}
+          <AnimatePresence mode="wait" initial={true}>
+            {showTooltip && wonPercentage < 5 && (
+              <Tooltip>
+                <div className="graphs_basic_tooltip-row">
+                  <span>{wonPercentage}%</span> won
+                </div>
+                <div className="graphs_basic_tooltip-row">
+                  Matches <span>{won}</span>
+                </div>
+              </Tooltip>
+            )}
           </AnimatePresence>
           {wonPercentage >= 5 && (
             <>
@@ -60,6 +67,18 @@ export default function InlineChart({
             backgroundColor: 'hsla(var(--red-400))',
           }}
         >
+          <AnimatePresence mode="wait" initial={true}>
+            {showTooltip && lostPercentage < 5 && (
+              <Tooltip startingAnchor={'right'}>
+                <div className="graphs_basic_tooltip-row">
+                  <span>{lostPercentage}%</span> lost
+                </div>
+                <div className="graphs_basic_tooltip-row">
+                  Matches <span>{lost}</span>
+                </div>
+              </Tooltip>
+            )}
+          </AnimatePresence>
           {lostPercentage >= 5 && (
             <>
               <span className={styles.percentile}>{lostPercentage}</span>

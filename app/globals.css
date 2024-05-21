@@ -316,12 +316,27 @@ button {
 }
 
 .graphs_basic_tooltip {
-  width: fit-content;
   background-color: hsla(var(--background-hsl));
   box-shadow: 0px 12px 25px 0px hsla(0, 0%, 0%, 0.1);
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  display: flex;
+  flex-flow: column;
+  gap: 0.5rem 0;
+  font-weight: 400;
+  font-size: 1.05rem;
   z-index: 2;
-  /* position: absolute; */
-  /* top: -; */
+}
+
+.graphs_basic_tooltip-row {
+  width: 100%;
+  display: inline-flex;
+  flex-flow: row;
+  gap: 0 0.4rem;
+}
+
+.graphs_basic_tooltip-row span {
+  font-weight: 600;
 }
 
 /* Mobile */
