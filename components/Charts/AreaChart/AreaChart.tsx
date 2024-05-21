@@ -93,12 +93,6 @@ export default function AreaChart({
   let tournamentsTooltip: object[];
 
   if (ratingStats) {
-    const currentDay = new Date().toLocaleDateString(
-      'en-US',
-      dateFormatOptions
-    );
-    let latestRating = 0;
-
     labels = ratingStats.map((day) => {
       return new Date(day[0].timestamp).toLocaleDateString(
         'en-US',
@@ -121,21 +115,13 @@ export default function AreaChart({
 
     dataForGraph = ratingStats.map((day) => {
       if (day.length > 1) {
-        latestRating = day[day.length - 1].ratingAfter.toFixed(0);
         return day[day.length - 1].ratingAfter.toFixed(0);
       }
 
       if (day.length === 1) {
-        latestRating = day[0].ratingAfter.toFixed(0);
         return day[0].ratingAfter.toFixed(0);
       }
     });
-
-    labels.push(currentDay);
-    tournamentsTooltip.push([
-      { name: 'Decay', ratingChange: 0, timestamp: currentDay },
-    ]);
-    dataForGraph.push(latestRating);
   }
 
   /* if (rankChart) {
