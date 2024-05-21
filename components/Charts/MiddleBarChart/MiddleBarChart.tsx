@@ -1171,7 +1171,7 @@ export default function MiddleBarChart() {
 
   const graphColors = (array) => {
     let colors = array.map((number) =>
-      Number(number[1]) <= 50 ? `hsla(${color[1]})` : `hsla(${color[0]})`
+      Number(number[1]) <= 0 ? `hsla(${color[1]})` : `hsla(${color[0]})`
     );
 
     return colors;
@@ -1226,24 +1226,24 @@ export default function MiddleBarChart() {
   ];
 
   var dataScores: any[] = [
-    [50, (exampleData.teammateWinLoss[0].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[3].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[10].winRate * 100).toFixed(0) /* 99 */],
-    [50, (exampleData.teammateWinLoss[14].winRate * 100).toFixed(0) /* 0 */],
-    [50, (exampleData.teammateWinLoss[15].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[16].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[17].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[18].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[19].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[20].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[21].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[22].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[23].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[24].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[25].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[26].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[27].winRate * 100).toFixed(0)],
-    [50, (exampleData.teammateWinLoss[28].winRate * 100).toFixed(0)],
+    [0, -50],
+    [0, (exampleData.teammateWinLoss[3].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[10].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[14].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[15].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[16].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[17].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[18].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[19].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[20].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[21].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[22].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[23].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[24].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[25].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[26].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[27].winRate * 100).toFixed(0)],
+    [0, (exampleData.teammateWinLoss[28].winRate * 100).toFixed(0)],
   ];
 
   const options = {
@@ -1290,7 +1290,7 @@ export default function MiddleBarChart() {
         /* min: -minMax,
         max: minMax, */
         max: 100,
-        min: 0,
+        min: -100,
         /* suggestedMax: minMax,
         suggestedMin: -minMax, */
       },
@@ -1331,7 +1331,8 @@ export default function MiddleBarChart() {
           xPos - 15,
           valueNumber[1] >= valueNumber[0]
             ? yPos - 40
-            : (yPos / 50 - 0.2) * (100 - valueNumber[1]) + 10.2 + 10,
+            : /* (yPos / 50 - 0.2) * (100 - valueNumber[1]) + 10.2 + 10 */ yPos +
+                10,
           30,
           30
         );
