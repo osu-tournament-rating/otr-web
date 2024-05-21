@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { array } from 'zod';
 import styles from './MiddleBarChart.module.css';
+import { useTheme } from 'next-themes';
 
 ChartJS.register(
   CategoryScale,
@@ -1154,6 +1155,8 @@ export default function MiddleBarChart() {
   const [font, setFont] = useState('');
   const [color, setColor] = useState('');
 
+  const { theme } = useTheme();
+
   /* get variables of colors from CSS */
   useEffect(() => {
     setFont(
@@ -1276,6 +1279,14 @@ export default function MiddleBarChart() {
           precision: 1,
           stepSize: 0.2,
         },
+        grid: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+        },
+        border: {
+          color:
+            theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+        },
       },
       y: {
         ticks: {
@@ -1285,6 +1296,14 @@ export default function MiddleBarChart() {
           },
           precision: 0,
           /* stepSize: 5, */
+          border: {
+            color:
+              theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+          },
+          grid: {
+            color:
+              theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+          },
         },
         /* grace: '20%', */
         /* min: -minMax,
