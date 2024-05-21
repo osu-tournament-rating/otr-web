@@ -30,7 +30,7 @@
   flex: 1 0 35%;
   font-size: 1.1rem;
   width: max-content;
-  justify-content: end;
+  justify-content: flex-end;
 }
 
 .item:last-child {
