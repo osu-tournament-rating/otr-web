@@ -30,6 +30,7 @@ export default function PlayersBarChart({ players }: { players: [] }) {
   const [textColor, setTextColor] = useState([]);
   const [barColor, setBarColor] = useState(undefined);
   const [canvasColor, setCanvasColor] = useState([]);
+  const [canvasInnerLinesColor, setCanvasInnerLinesColor] = useState([]);
   const [canvasScalesColor, setCanvasScalesColor] = useState([]);
 
   const { theme } = useTheme();
@@ -60,6 +61,14 @@ export default function PlayersBarChart({ players }: { players: [] }) {
       ),
       getComputedStyle(document.documentElement).getPropertyValue(
         '--chart-canvas-background-dark'
+      ),
+    ]);
+    setCanvasInnerLinesColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-dark'
       ),
     ]);
     setCanvasScalesColor([
@@ -123,6 +132,12 @@ export default function PlayersBarChart({ players }: { players: [] }) {
           textStrokeWidth: 0.4,
           precision: 0,
           z: 2,
+        },
+        grid: {
+          color:
+            theme === 'light'
+              ? `hsla(${canvasInnerLinesColor[0]})`
+              : `hsla(${canvasInnerLinesColor[1]})`,
         },
         border: {
           display: false,
