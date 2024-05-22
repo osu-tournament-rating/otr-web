@@ -112,6 +112,13 @@
   --accent-secondary-color: var(--blue-300);
 
   /* CHARTS */
+  --chart-canvas-background-white: 0, 100%, 100%;
+  --chart-canvas-background-dark: 0, 0%, 0%;
+  --chart-canvas-text-color-white: 0, 0%, 40%, 1;
+  --chart-canvas-text-color-dark: 0, 0%, 98%, 0.8;
+  --chart-canvas-scales-background-white: var(--background-content-hsl);
+  --chart-canvas-scales-background-dark: 240, 6%, 10%;
+  --chart-players-bar-color: 216, 100%, 65%;
   --tooltip-color: 0, 0%, 100%;
   --tooltip-gain: var(--green-400);
   --tooltip-loss: var(--red-400);
@@ -247,6 +254,13 @@
   --accent-secondary-color: var(--blue-400);
 
   /* CHARTS */
+  --chart-canvas-background-white: 0, 100%, 100%;
+  --chart-canvas-background-dark: 0, 0%, 0%;
+  --chart-canvas-text-color-white: 0, 0%, 40%, 1;
+  --chart-canvas-text-color-dark: 0, 0%, 98%, 0.8;
+  --chart-canvas-scales-background-white: 220, 14%, 96%;
+  --chart-canvas-scales-background-dark: var(--background-content-hsl);
+  --chart-players-bar-color: 216, 100%, 65%;
   --tooltip-color: 0, 0%, 100%;
   --tooltip-gain: var(--green-400);
   --tooltip-loss: var(--red-400);

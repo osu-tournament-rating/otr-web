@@ -12,6 +12,9 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Bar, getDatasetAtEvent, getElementsAtEvent } from 'react-chartjs-2';
 import styles from './PlayersBarChart.module.css';
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
+import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
+import { useTheme } from 'next-themes';
 
 ChartJS.register(
   CategoryScale,
@@ -23,7 +26,13 @@ ChartJS.register(
 );
 
 export default function PlayersBarChart({ players }: { players: [] }) {
-  const [font, setFont] = useState('');
+  const [font, setFont] = useState(undefined);
+  const [textColor, setTextColor] = useState([]);
+  const [barColor, setBarColor] = useState(undefined);
+  const [canvasColor, setCanvasColor] = useState([]);
+  const [canvasScalesColor, setCanvasScalesColor] = useState([]);
+
+  const { theme } = useTheme();
 
   /* get variables of colors from CSS */
   useEffect(() => {
@@ -32,6 +41,35 @@ export default function PlayersBarChart({ players }: { players: [] }) {
         '--font-families'
       )
     );
+    setTextColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-dark'
+      ),
+    ]);
+    setBarColor(
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-players-bar-color'
+      )
+    );
+    setCanvasColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-dark'
+      ),
+    ]);
+    setCanvasScalesColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-scales-background-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-scales-background-dark'
+      ),
+    ]);
   }, []);
 
   const options = {
@@ -54,6 +92,18 @@ export default function PlayersBarChart({ players }: { players: [] }) {
       tooltip: {
         enabled: true,
       },
+      customCanvasBackgroundColor: {
+        color:
+          theme === 'light'
+            ? `hsl(${canvasColor[0]})`
+            : `hsl(${canvasColor[1]})`,
+      },
+      customCanvasScaleXBackgroundColor: {
+        color:
+          theme === 'light'
+            ? `hsl(${canvasScalesColor[0]})`
+            : `hsl(${canvasScalesColor[1]})`,
+      },
     },
     scales: {
       x: {
@@ -62,7 +112,20 @@ export default function PlayersBarChart({ players }: { players: [] }) {
             size: 12,
             family: font,
           },
+          color:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
+          textStrokeColor:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
+          textStrokeWidth: 0.4,
           precision: 0,
+          z: 2,
+        },
+        border: {
+          display: false,
         },
       },
       y: {
@@ -71,6 +134,13 @@ export default function PlayersBarChart({ players }: { players: [] }) {
             size: 0,
             family: font,
           },
+          z: 2,
+        },
+        grid: {
+          display: false,
+        },
+        border: {
+          display: false,
         },
       },
     },
@@ -100,12 +170,7 @@ export default function PlayersBarChart({ players }: { players: [] }) {
         label: 'Times',
         data: frequency,
         propicIDs: propicIDs,
-        backgroundColor: [
-          'rgba(255, 99, 132)',
-          'rgba(54, 162, 235)',
-          'rgba(255, 206, 86)',
-          'rgba(25, 156, 86)',
-        ],
+        backgroundColor: [`hsl(${barColor})`],
         barThickness: 30,
         maxBarThickness: 30,
         beginAtZero: true,
@@ -149,7 +214,11 @@ export default function PlayersBarChart({ players }: { players: [] }) {
       <Bar
         options={options}
         data={data}
-        plugins={[playerImage]}
+        plugins={[
+          playerImage,
+          customChartBackground,
+          customChartScaleXBackground,
+        ]}
         onClick={chartOnClick}
         ref={chartRef}
       />
