@@ -364,7 +364,7 @@ export default function AreaChart({
             ? theme === 'light'
               ? `hsla(${canvasInnerLinesColor[0]})`
               : `hsla(${canvasInnerLinesColor[1]})`
-            : undefined,
+            : 'transparent',
         },
         border: {
           display: false,
@@ -379,7 +379,7 @@ export default function AreaChart({
             ? theme === 'light'
               ? `hsla(${canvasInnerLinesColor[0]})`
               : `hsla(${canvasInnerLinesColor[1]})`
-            : undefined,
+            : 'transparent',
         },
         ticks: {
           font: {

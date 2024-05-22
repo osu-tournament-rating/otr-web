@@ -29,9 +29,15 @@ export default function PlayersBarChart({ players }: { players: [] }) {
   const [font, setFont] = useState(undefined);
   const [textColor, setTextColor] = useState([]);
   const [barColor, setBarColor] = useState(undefined);
-  const [canvasColor, setCanvasColor] = useState([]);
-  const [canvasInnerLinesColor, setCanvasInnerLinesColor] = useState([]);
-  const [canvasScalesColor, setCanvasScalesColor] = useState([]);
+  const [canvasColor, setCanvasColor] = useState([undefined, undefined]);
+  const [canvasInnerLinesColor, setCanvasInnerLinesColor] = useState([
+    undefined,
+    undefined,
+  ]);
+  const [canvasScalesColor, setCanvasScalesColor] = useState([
+    undefined,
+    undefined,
+  ]);
 
   const { theme } = useTheme();
 
@@ -102,16 +108,18 @@ export default function PlayersBarChart({ players }: { players: [] }) {
         enabled: true,
       },
       customCanvasBackgroundColor: {
-        color:
-          theme === 'light'
+        color: canvasColor[0]
+          ? theme === 'light'
             ? `hsl(${canvasColor[0]})`
-            : `hsl(${canvasColor[1]})`,
+            : `hsl(${canvasColor[1]})`
+          : 'transparent',
       },
       customCanvasScaleXBackgroundColor: {
-        color:
-          theme === 'light'
+        color: canvasScalesColor[0]
+          ? theme === 'light'
             ? `hsl(${canvasScalesColor[0]})`
-            : `hsl(${canvasScalesColor[1]})`,
+            : `hsl(${canvasScalesColor[1]})`
+          : 'transparent',
       },
     },
     scales: {
@@ -134,10 +142,11 @@ export default function PlayersBarChart({ players }: { players: [] }) {
           z: 2,
         },
         grid: {
-          color:
-            theme === 'light'
+          color: canvasInnerLinesColor
+            ? theme === 'light'
               ? `hsla(${canvasInnerLinesColor[0]})`
-              : `hsla(${canvasInnerLinesColor[1]})`,
+              : `hsla(${canvasInnerLinesColor[1]})`
+            : 'transparent',
         },
         border: {
           display: false,
