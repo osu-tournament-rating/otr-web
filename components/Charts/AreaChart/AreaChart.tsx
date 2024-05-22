@@ -17,6 +17,9 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
+import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
+import customChartScaleYBackground from '@/lib/chartjs-plugins/customChartScaleYBackground';
 
 import 'chartjs-adapter-date-fns';
 ChartJS.register(
@@ -67,13 +70,30 @@ export default function AreaChart({
   rankChart?: [];
 }) {
   const [colors, setColors] = useState<string[]>([]);
-
   const [font, setFont] = useState('');
+  const [textColor, setTextColor] = useState([]);
+  const [canvasColor, setCanvasColor] = useState([undefined, undefined]);
+  const [canvasInnerLinesColor, setCanvasInnerLinesColor] = useState([
+    undefined,
+    undefined,
+  ]);
+  const [canvasScalesColor, setCanvasScalesColor] = useState([
+    undefined,
+    undefined,
+  ]);
 
   const { theme } = useTheme();
 
   /* get variables of colors from CSS */
   useEffect(() => {
+    setCanvasColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-dark'
+      ),
+    ]);
     setColors([
       getComputedStyle(document.documentElement).getPropertyValue(
         '--accent-color'
@@ -84,6 +104,30 @@ export default function AreaChart({
         '--font-families'
       )
     );
+    setTextColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-dark'
+      ),
+    ]);
+    setCanvasInnerLinesColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-dark'
+      ),
+    ]);
+    setCanvasScalesColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-scales-background-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-scales-background-dark'
+      ),
+    ]);
   }, []);
 
   const dateFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -137,10 +181,11 @@ export default function AreaChart({
         label: '',
         data: dataForGraph,
         borderWidth: 3,
-        borderColor:
-          theme === 'light'
+        borderColor: colors[0]
+          ? theme === 'light'
             ? `hsla(${colors[0]}, 0.6)`
-            : `hsla(${colors[0]}, 0.82)`,
+            : `hsla(${colors[0]}, 0.82)`
+          : 'transparent',
         backgroundColor: 'transparent',
         font: font,
       },
@@ -251,6 +296,27 @@ export default function AreaChart({
         position: 'nearest',
         external: ratingStats ? externalTooltipHandler : null,
       },
+      customCanvasBackgroundColor: {
+        color: canvasColor[0]
+          ? theme === 'light'
+            ? `hsl(${canvasColor[0]})`
+            : `hsl(${canvasColor[1]})`
+          : undefined,
+      },
+      customCanvasScaleXBackgroundColor: {
+        color: canvasScalesColor[0]
+          ? theme === 'light'
+            ? `hsl(${canvasScalesColor[0]})`
+            : `hsl(${canvasScalesColor[1]})`
+          : 'transparent',
+      },
+      customCanvasScaleYBackgroundColor: {
+        color: canvasScalesColor[0]
+          ? theme === 'light'
+            ? `hsl(${canvasScalesColor[0]})`
+            : `hsl(${canvasScalesColor[1]})`
+          : 'transparent',
+      },
     },
     elements: {
       line: {
@@ -259,8 +325,11 @@ export default function AreaChart({
       point: {
         radius: 0 /* 0 makes points hidden */,
         hitRadius: 100,
-        pointBackgroundColor:
-          theme === 'light' ? `hsla(${colors[0]}, 0.6)` : `hsla(${colors[0]})`,
+        pointBackgroundColor: colors[0]
+          ? theme === 'light'
+            ? `hsla(${colors[0]}, 0.6)`
+            : `hsla(${colors[0]})`
+          : 'transparent',
       },
     },
     maintainAspectRatio: false,
@@ -281,39 +350,51 @@ export default function AreaChart({
             size: 16,
             family: font,
           },
-          color: theme === 'dark' ? '#999' : '#707070',
+          color:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
           autoSkip: true,
           maxTicksLimit: 7,
           major: { enabled: true },
+          z: 2,
         },
         grid: {
-          color:
-            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+          color: canvasInnerLinesColor[0]
+            ? theme === 'light'
+              ? `hsla(${canvasInnerLinesColor[0]})`
+              : `hsla(${canvasInnerLinesColor[1]})`
+            : undefined,
         },
         border: {
-          color:
-            theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+          display: false,
         },
       },
       y: {
         border: {
-          color:
-            theme === 'dark' ? 'rgba(250,250,250,0.040)' : 'rgba(0,0,0,0.08)',
+          display: false,
         },
         grid: {
-          color:
-            theme === 'dark' ? 'rgba(250,250,250,0.028)' : 'rgba(0,0,0,0.08)',
+          color: canvasInnerLinesColor[0]
+            ? theme === 'light'
+              ? `hsla(${canvasInnerLinesColor[0]})`
+              : `hsla(${canvasInnerLinesColor[1]})`
+            : undefined,
         },
         ticks: {
           font: {
             size: 16,
             family: font,
           },
-          color: theme === 'dark' ? '#999' : '#707070',
+          color:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
           autoSkip: true,
           maxTicksLimit: 6,
           precision: 0,
           stepSize: 15,
+          z: 2,
         },
       },
     },
@@ -321,7 +402,15 @@ export default function AreaChart({
 
   return (
     <div className={styles.graphContainer}>
-      <Line options={options} data={data} />
+      <Line
+        options={options}
+        data={data}
+        plugins={[
+          customChartBackground,
+          customChartScaleXBackground,
+          customChartScaleYBackground,
+        ]}
+      />
     </div>
   );
 }
