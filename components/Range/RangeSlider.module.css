@@ -44,12 +44,12 @@
   -moz-appearance: textfield;
 }
 
-.winrate {
+.winRate {
   position: relative;
   display: block;
 }
 
-.winrate::after {
+.winRate::after {
   content: '%';
   position: absolute;
 

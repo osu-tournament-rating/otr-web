@@ -89,7 +89,7 @@ export default function Leaderboard({
                     />
                   </div>
                 </td>
-                <td>{Math.floor(player.rating)}</td>
+                <td>{Math.round(player.rating)}</td>
                 <td>{player.matchesPlayed}</td>
                 <td>{(player.winRate * 100).toFixed(1)}%</td>
               </tr>
