@@ -483,7 +483,7 @@ export async function fetchDashboard() {
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/me/stats?mode=${osuMode}`,
+    `${process.env.REACT_APP_API_URL}/me/stats?ruleset=${osuMode}`,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -525,7 +525,7 @@ export async function fetchUserPage(player: string | number) {
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
   let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}?mode=${osuMode}${
+    `${process.env.REACT_APP_API_URL}/stats/${player}?ruleset=${osuMode}${
       session?.playerId ? `&comparerId=${session?.playerId}` : ''
     }`,
     {

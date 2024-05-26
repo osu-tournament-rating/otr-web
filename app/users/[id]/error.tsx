@@ -7,11 +7,6 @@ import Balancer from 'react-wrap-balancer';
 import styles from './error.module.css';
 
 const errors = {
-  '4': {
-    title: 'No data',
-    message: "You don't have any data for the selected ruleset",
-    reloadBtn: true,
-  },
   '404': {
     title: '404',
     message: "We don't have that page",

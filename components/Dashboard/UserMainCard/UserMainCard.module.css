@@ -26,6 +26,11 @@
   overflow: hidden;
 }
 
+.tierImage.noImage {
+  width: 60%;
+  margin: 3.3em auto;
+}
+
 .tierImage img {
   object-fit: contain;
 }
@@ -100,6 +105,11 @@
 .negativeTrend {
   color: hsla(var(--red-500));
   transform: rotate(-180deg);
+}
+
+[data-theme='dark'] .tierImage.noImage {
+  filter: brightness(0) saturate(100%) invert(98%) sepia(0%) saturate(13%)
+    hue-rotate(205deg) brightness(105%) contrast(80%);
 }
 
 /* Mobile */

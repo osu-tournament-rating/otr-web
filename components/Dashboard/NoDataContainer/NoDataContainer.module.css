@@ -1,0 +1,27 @@
+.noDataContainer {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1em;
+  margin: 3em 0;
+}
+
+.noDataImageContainer {
+  position: relative;
+  height: 8em;
+  width: 8em;
+  margin: auto;
+}
+
+.noDataText {
+  font-weight: 500;
+  font-size: 4em;
+  margin: auto;
+  color: hsl(var(--foreground-nodata-hsl));
+}
+
+[data-theme='dark'] .noDataImageContainer {
+  filter: brightness(0) saturate(100%) invert(98%) sepia(0%) saturate(13%)
+    hue-rotate(205deg) brightness(105%) contrast(80%);
+}
