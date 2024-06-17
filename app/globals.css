@@ -19,6 +19,8 @@
   --foreground-inactive-hsl: 0, 0%, 6%;
   --foreground-active-hsl: 0, 0%, 6%;
 
+  --foreground-nodata-hsl: 210, 2%, 82%;
+
   --color-grey: 0, 0%, 6%;
 
   /* COLORS */
@@ -226,6 +228,8 @@
   --foreground-hsl: 0, 0%, 85%;
   --foreground-inactive-hsl: 0, 0%, 70%;
   --foreground-active-hsl: 0, 0%, 90%;
+
+  --foreground-nodata-hsl: 240, 3%, 22%;
 
   --mods-NM-bg: 226, 99%, 65%;
   --mods-NM-bg-row: 226, 99%, 65%, 0.15;

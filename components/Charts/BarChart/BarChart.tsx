@@ -25,12 +25,12 @@ ChartJS.register(
 export default function BarChart({
   mainAxe = 'x',
   bestTournamentPerformances,
-  worstTournamentPerformances,
+  recentTournamentPerformances,
   teamSizes,
 }: {
   mainAxe: any;
   bestTournamentPerformances?: any;
-  worstTournamentPerformances?: any;
+  recentTournamentPerformances?: any;
   teamSizes?: any;
 }) {
   const [font, setFont] = useState('');
@@ -58,17 +58,15 @@ export default function BarChart({
       dataScores[index] = tournament.matchCost.toFixed(2);
       return;
     });
-    dataScores.sort((a, b) => b - a);
   }
 
-  if (worstTournamentPerformances) {
+  if (recentTournamentPerformances) {
     labels.length = 0;
-    worstTournamentPerformances.map((tournament: any, index: any) => {
+    recentTournamentPerformances.map((tournament: any, index: any) => {
       labels[index] = tournament.tournamentName;
       dataScores[index] = tournament.matchCost.toFixed(2);
       return;
     });
-    dataScores.sort((a, b) => b - a);
   }
 
   if (teamSizes) {
@@ -116,11 +114,11 @@ export default function BarChart({
         },
         grace: '2%',
         min:
-          bestTournamentPerformances || worstTournamentPerformances
+          bestTournamentPerformances || recentTournamentPerformances
             ? 0.5
             : null,
         max:
-          bestTournamentPerformances || worstTournamentPerformances
+          bestTournamentPerformances || recentTournamentPerformances
             ? +dataScores[0]
             : null,
         suggestedMax: 2,
