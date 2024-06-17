@@ -171,12 +171,12 @@ export default async function page({
                 }
               />
             </GridCard>
-            <GridCard title={'Worst tournament performances'}>
-              {data?.tournamentStats.worstPerformances.length > 0 ? (
+            <GridCard title={'Recent tournament performances'}>
+              {data?.tournamentStats.recentPerformances.length > 0 ? (
                 <BarChart
                   mainAxe={'y'}
-                  worstTournamentPerformances={
-                    data?.tournamentStats.worstPerformances
+                  recentTournamentPerformances={
+                    data?.tournamentStats.recentPerformances
                   }
                 />
               ) : (
