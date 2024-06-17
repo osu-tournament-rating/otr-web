@@ -140,9 +140,9 @@ export default async function page({
         <GridCard title={'Winrate by mod'}>
           <RadarChart winRateModData={data?.modStats} />
         </GridCard>
-        <GridCard title={'Teammates W/L'}>
+        {/* <GridCard title={'Teammates W/L'}>
           <MiddleBarChart />
-        </GridCard>
+        </GridCard> */}
         <GridCard title={'Average score per mod'}>
           <RadarChart averageModScore={data?.modStats} />
         </GridCard>
