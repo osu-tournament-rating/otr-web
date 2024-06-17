@@ -1,5 +1,6 @@
 'use client';
 
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
 import {
   BarElement,
   CategoryScale,
@@ -9,6 +10,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
+import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import styles from './BarChart.module.css';
@@ -34,7 +36,15 @@ export default function BarChart({
   teamSizes?: any;
 }) {
   const [font, setFont] = useState('');
-  const [color, setColor] = useState('');
+  const [colors, setColors] = useState('');
+  const [textColor, setTextColor] = useState([]);
+  const [canvasColor, setCanvasColor] = useState([undefined, undefined]);
+  const [canvasInnerLinesColor, setCanvasInnerLinesColor] = useState([
+    undefined,
+    undefined,
+  ]);
+
+  const { theme } = useTheme();
 
   /* get variables of colors from CSS */
   useEffect(() => {
@@ -43,9 +53,38 @@ export default function BarChart({
         '--font-families'
       )
     );
-    setColor(
-      getComputedStyle(document.documentElement).getPropertyValue('--green-400')
-    );
+    setColors([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--accent-color'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--green-400'
+      ),
+    ]);
+    setCanvasColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-dark'
+      ),
+    ]);
+    setTextColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-text-color-dark'
+      ),
+    ]);
+    setCanvasInnerLinesColor([
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-white'
+      ),
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--chart-canvas-background-inner-lines-dark'
+      ),
+    ]);
   }, []);
 
   var labels = ['HR', 'NM', 'HD', 'FM'];
@@ -101,14 +140,35 @@ export default function BarChart({
       tooltip: {
         enabled: true,
       },
+      customCanvasBackgroundColor: {
+        color: canvasColor[0]
+          ? theme === 'light'
+            ? `hsl(${canvasColor[0]})`
+            : `hsl(${canvasColor[1]})`
+          : undefined,
+      },
     },
     scales: {
       x: {
+        border: {
+          display: false,
+        },
+        grid: {
+          color: canvasInnerLinesColor[0]
+            ? theme === 'light'
+              ? `hsla(${canvasInnerLinesColor[0]})`
+              : `hsla(${canvasInnerLinesColor[1]})`
+            : 'transparent',
+        },
         ticks: {
           font: {
             size: 12,
             family: font,
           },
+          color:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
           precision: 1,
           stepSize: 0.2,
         },
@@ -124,11 +184,18 @@ export default function BarChart({
         suggestedMax: 2,
       },
       y: {
+        border: {
+          display: false,
+        },
         ticks: {
           font: {
             size: 12,
             family: font,
           },
+          color:
+            theme === 'light'
+              ? `hsla(${textColor[0]})`
+              : `hsla(${textColor[1]})`,
           precision: 0,
           stepSize: 1,
         },
@@ -140,15 +207,11 @@ export default function BarChart({
     labels,
     datasets: [
       {
-        label: 'Dataset 1',
+        label: teamSizes ? 'Times' : 'Average match cost',
         data: dataScores,
         backgroundColor: teamSizes
-          ? [
-              'rgba(120, 227, 117, 1)',
-              'rgba(76, 148, 255, 1)',
-              'rgba(227, 117, 117, 1)',
-            ]
-          : `hsla(${color})`,
+          ? `hsla(${colors[0]})`
+          : `hsla(${colors[1]})`,
         /* barThickness: 30, */
         /* maxBarThickness: 30, */
         beginAtZero: true,
@@ -157,5 +220,7 @@ export default function BarChart({
     ],
   };
 
-  return <Bar data={data} options={options} />;
+  return (
+    <Bar data={data} options={options} plugins={[customChartBackground]} />
+  );
 }
