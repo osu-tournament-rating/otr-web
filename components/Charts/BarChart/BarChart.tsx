@@ -150,6 +150,8 @@ export default function BarChart({
     },
     scales: {
       x: {
+        offset: true,
+        beginAtZero: true,
         border: {
           display: false,
         },
@@ -159,6 +161,7 @@ export default function BarChart({
               ? `hsla(${canvasInnerLinesColor[0]})`
               : `hsla(${canvasInnerLinesColor[1]})`
             : 'transparent',
+          display: mainAxe === 'y' ? true : false,
         },
         ticks: {
           font: {
@@ -172,20 +175,30 @@ export default function BarChart({
           precision: 1,
           stepSize: 0.2,
         },
-        grace: '2%',
         min:
           bestTournamentPerformances || recentTournamentPerformances
-            ? 0.5
+            ? 0.4
             : null,
         max:
           bestTournamentPerformances || recentTournamentPerformances
-            ? +dataScores[0]
+            ? +dataScores[0] % 0.2 === 1
+              ? +dataScores[0]
+              : +dataScores[0] + 0.1
             : null,
         suggestedMax: 2,
       },
       y: {
+        beginAtZero: true,
         border: {
           display: false,
+        },
+        grid: {
+          display: mainAxe === 'x' ? true : false,
+          color: canvasInnerLinesColor[0]
+            ? theme === 'light'
+              ? `hsla(${canvasInnerLinesColor[0]})`
+              : `hsla(${canvasInnerLinesColor[1]})`
+            : 'transparent',
         },
         ticks: {
           font: {
@@ -212,8 +225,6 @@ export default function BarChart({
         backgroundColor: teamSizes
           ? `hsla(${colors[0]})`
           : `hsla(${colors[1]})`,
-        /* barThickness: 30, */
-        /* maxBarThickness: 30, */
         beginAtZero: true,
         padding: 10,
       },
