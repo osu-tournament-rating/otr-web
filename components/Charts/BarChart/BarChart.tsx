@@ -213,8 +213,9 @@ export default function BarChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           precision: 0,
-          stepSize: 1,
+          maxTicksLimit: 4,
         },
+        grace: '20%',
       },
     },
   };

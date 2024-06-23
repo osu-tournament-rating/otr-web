@@ -1,5 +1,7 @@
 'use client';
 
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
+import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
 import {
   BarElement,
   CategoryScale,
@@ -9,12 +11,10 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
+import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
 import { Bar, getDatasetAtEvent, getElementsAtEvent } from 'react-chartjs-2';
 import styles from './PlayersBarChart.module.css';
-import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
-import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
-import { useTheme } from 'next-themes';
 
 ChartJS.register(
   CategoryScale,
@@ -151,6 +151,7 @@ export default function PlayersBarChart({ players }: { players: [] }) {
         border: {
           display: false,
         },
+        grace: '20%',
       },
       y: {
         ticks: {
