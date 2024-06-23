@@ -213,7 +213,7 @@ export default function BarChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           precision: 0,
-          maxTicksLimit: 4,
+          maxTicksLimit: teamSizes ? 4 : 0,
         },
         grace: '20%',
       },
