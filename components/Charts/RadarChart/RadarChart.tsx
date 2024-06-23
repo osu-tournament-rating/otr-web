@@ -73,6 +73,7 @@ export default function RadarChart({
     Object.keys(winRateModData).forEach((mod: any) => {
       let label = mod.replace('played', '');
       let value = (winRateModData[mod]?.winRate * 100) | 0;
+
       mods.push({ label, value });
     });
     mods.sort(

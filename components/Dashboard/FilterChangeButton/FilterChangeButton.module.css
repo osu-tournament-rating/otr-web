@@ -5,6 +5,7 @@
   background-color: hsla(var(--background-content-hsl));
   transition: all 0.2s ease-out;
   text-transform: capitalize;
+  min-width: 10rem;
 }
 
 .button.selected {

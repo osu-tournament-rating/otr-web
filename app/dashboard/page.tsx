@@ -2,6 +2,7 @@ import { fetchDashboard } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
+import MiddleBarChart from '@/components/Charts/MiddleBarChart/MiddleBarChart';
 import PlayersBarChart from '@/components/Charts/PlayersBarChart/PlayersBarChart';
 import RadarChart from '@/components/Charts/RadarChart/RadarChart';
 import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
@@ -146,6 +147,9 @@ export default async function page({
             <GridCard title={'Winrate by mod'}>
               <RadarChart winRateModData={data?.modStats} />
             </GridCard>
+            {/* <GridCard title={'Teammates W/L'}>
+          <MiddleBarChart />
+        </GridCard> */}
             <GridCard title={'Average score per mod'}>
               <RadarChart averageModScore={data?.modStats} />
             </GridCard>

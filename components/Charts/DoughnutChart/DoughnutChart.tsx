@@ -14,10 +14,37 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
 
   let values = [12, 19, 3];
 
+  let otherValues = [];
+
   if (modStats) {
     labels = [];
     values = [];
-    Object.keys(modStats).forEach((key) => {
+
+    let sortable = [];
+
+    for (let mods in modStats) {
+      sortable.push([mods, modStats[mods]]);
+    }
+
+    sortable.sort((a, b) => {
+      // nulls sort after anything else
+      if (a[1] === null) {
+        return 1;
+      }
+      if (b[1] === null) {
+        return -1;
+      }
+
+      if (a[1].gamesPlayed === b[1].gamesPlayed) {
+        return 0;
+      }
+
+      return a[1].gamesPlayed < b[1].gamesPlayed ? 1 : -1;
+    });
+
+    sortable = Object.fromEntries(sortable);
+
+    Object.keys(sortable).forEach((key) => {
       if (key.startsWith('played')) {
         if (modStats[key] === null) return;
         let labelName = key.replace('played', '');
@@ -25,6 +52,19 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
         values.push(modStats[key]?.gamesPlayed);
       }
     });
+
+    if (labels.length === values.length && labels.length > 5) {
+      let lastValue = 0;
+
+      for (let i = 5; i < values.length; i++) {
+        otherValues.push({ label: labels[i], value: values[i] });
+        lastValue += values[i];
+      }
+      labels.length = 4;
+      values.length = 4;
+      labels.push('Others');
+      values.push(lastValue);
+    }
   }
 
   let valuesSum = values.reduce((a, b) => a + b, 0);
@@ -64,6 +104,9 @@ export default function DoughnutChart({ modStats }: { modStats?: {} }) {
       ),
       HT: getComputedStyle(document.documentElement).getPropertyValue(
         '--mods-HT-bg'
+      ),
+      Others: getComputedStyle(document.documentElement).getPropertyValue(
+        '--mods-Others-bg'
       ),
     });
   }, []);

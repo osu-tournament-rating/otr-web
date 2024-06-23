@@ -20,6 +20,7 @@
   font-weight: 600;
   position: relative;
   user-select: none;
+  transition: all 0.3s ease-out;
 }
 
 .segment:first-child {

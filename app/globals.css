@@ -107,11 +107,22 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+  --mods-Others-bg: 291, 97%, 73%;
+  --mods-Others-bg-row: 291, 97%, 73%, 0.15;
 
   --accent-color: 216, 100%, 65%;
   --accent-secondary-color: var(--blue-300);
 
   /* CHARTS */
+  --chart-canvas-background-white: 0, 100%, 100%;
+  --chart-canvas-background-dark: 220, 9%, 6%;
+  --chart-canvas-background-inner-lines-white: 0, 0%, 93%;
+  --chart-canvas-background-inner-lines-dark: 220, 4%, 14%;
+  --chart-canvas-text-color-white: 0, 0%, 40%, 1;
+  --chart-canvas-text-color-dark: 0, 0%, 92%, 0.8;
+  --chart-canvas-scales-background-white: var(--background-content-hsl);
+  --chart-canvas-scales-background-dark: 240, 6%, 10%;
+  --chart-players-bar-color: 216, 100%, 65%;
   --tooltip-color: 0, 0%, 100%;
   --tooltip-gain: var(--green-400);
   --tooltip-loss: var(--red-400);
@@ -242,11 +253,22 @@
   --mods-FM-bg-row: 101, 38%, 63%, 0.15;
   --mods-TB-bg: 191, 26%, 57%;
   --mods-TB-bg-row: 191, 26%, 57%, 0.15;
+  --mods-Others-bg: 291, 97%, 73%;
+  --mods-Others-bg-row: 291, 97%, 73%, 0.15;
 
   --accent-color: 216, 100%, 65%;
   --accent-secondary-color: var(--blue-400);
 
   /* CHARTS */
+  --chart-canvas-background-white: 0, 100%, 100%;
+  --chart-canvas-background-dark: 220, 9%, 6%;
+  --chart-canvas-background-inner-lines-white: 0, 0%, 93%;
+  --chart-canvas-background-inner-lines-dark: 220, 4%, 14%;
+  --chart-canvas-text-color-white: 0, 0%, 40%, 1;
+  --chart-canvas-text-color-dark: 0, 0%, 92%, 0.8;
+  --chart-canvas-scales-background-white: 220, 14%, 96%;
+  --chart-canvas-scales-background-dark: var(--background-content-hsl);
+  --chart-players-bar-color: 216, 100%, 65%;
   --tooltip-color: 0, 0%, 100%;
   --tooltip-gain: var(--green-400);
   --tooltip-loss: var(--red-400);
@@ -313,6 +335,30 @@ a,
 button {
   border: 0;
   font-family: var(--font-families);
+}
+
+.graphs_basic_tooltip {
+  background-color: hsla(var(--background-hsl));
+  box-shadow: 0px 12px 25px 0px hsla(0, 0%, 0%, 0.1);
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  display: flex;
+  flex-flow: column;
+  gap: 0.5rem 0;
+  font-weight: 400;
+  font-size: 1.05rem;
+  z-index: 2;
+}
+
+.graphs_basic_tooltip-row {
+  width: 100%;
+  display: inline-flex;
+  flex-flow: row;
+  gap: 0 0.4rem;
+}
+
+.graphs_basic_tooltip-row span {
+  font-weight: 600;
 }
 
 /* Mobile */
