@@ -174,6 +174,8 @@ export default function BarChart({
               : `hsla(${textColor[1]})`,
           precision: 1,
           stepSize: 0.2,
+          includeBounds: false,
+          autoSkip: false,
         },
         min:
           bestTournamentPerformances || recentTournamentPerformances
@@ -181,11 +183,12 @@ export default function BarChart({
             : null,
         max:
           bestTournamentPerformances || recentTournamentPerformances
-            ? +dataScores[0] % 0.2 === 1
-              ? +dataScores[0]
-              : +dataScores[0] + 0.1
+            ? /* ? Math.max(...dataScores)
+            : */ Math.max(...dataScores) % 0.2 === 1
+              ? Math.max(...dataScores)
+              : Math.max(...dataScores) + 0.1
             : null,
-        suggestedMax: 2,
+        suggestedMax: 2.2,
       },
       y: {
         beginAtZero: true,
