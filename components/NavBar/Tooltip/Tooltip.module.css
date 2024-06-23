@@ -1,0 +1,46 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltipContent {
+  visibility: hidden;
+  width: 100px;
+  background-color: white;
+  color: black;
+  text-align: center;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  z-index: 1;
+  top: 120%; /* Position the tooltip below the text */
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltipContainer:hover .tooltipContent {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltipContent div {
+  margin-bottom: 10px;
+}
+
+.tooltipContent div:last-child {
+  margin-bottom: 0;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.iconContainer img {
+  width: 24px;
+  height: 24px;
+}
