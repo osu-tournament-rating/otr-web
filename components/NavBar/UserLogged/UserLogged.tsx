@@ -1,20 +1,39 @@
-'use client';
+"use client";
 
-import { useUser } from '@/util/hooks';
-import Image from 'next/image';
-import styles from '../NavBar.module.css';
+import { useUser } from "@/util/hooks";
+import Image from "next/image";
+import moonSVG from "@/public/icons/moon.svg";
+import styles from "../NavBar.module.css";
+import Tooltip from "./../Tooltip/Tooltip";
+
+const tooltipContent = (
+  <>
+    <div>Friends</div>
+    <div>Sign out</div>
+    <div className={styles.iconContainer}>
+      <Image
+        src={moonSVG}
+        alt="Moon Icon"
+        width={20}
+        height={20}
+      />
+    </div>
+  </>
+);
 
 export default function UserLogged() {
   const user = useUser();
 
   if (user?.osuId)
     return (
-      <div className={styles.userPropic}>
-        <Image
-          src={`http://s.ppy.sh/a/${user?.osuId}`}
-          alt="User Propic"
-          fill
-        />
-      </div>
+      <Tooltip content={tooltipContent}>
+        <div className={styles.userPropic}>
+          <Image
+            src={`http://s.ppy.sh/a/${user?.osuId}`}
+            alt="User Propic"
+            fill
+          />
+        </div>
+      </Tooltip>
     );
 }

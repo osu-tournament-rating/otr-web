@@ -12,8 +12,7 @@ import Routes from "./Routes/Routes";
 import SearchButton from "./SearchButton/SearchButton";
 import ThemeSwitcher from "./ThemeSwitcher/ThemeSwitcher";
 import UserLogged from "./UserLogged/UserLogged";
-import moonSVG from "@/public/icons/moon.svg";
-import Tooltip from "./Tooltip/Tooltip";
+
 export default function NavBar() {
   const [cookieMode, setCookieMode] = useState({});
 
@@ -23,19 +22,6 @@ export default function NavBar() {
       setCookieMode(value);
     });
   }, []);
-
-  const tooltipContent = (
-    <div>
-      <div>Friends</div>
-      <div>Sign out</div>
-      <div className={styles.iconContainer}>
-        <img
-          src={moonSVG}
-          alt="Moon Icon"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <nav className={styles.navbar}>
@@ -57,9 +43,7 @@ export default function NavBar() {
           {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
           <ThemeSwitcher />
           {/* TODO: refactor to be local to UserLogged */}
-          <Tooltip content={tooltipContent}>
-            <UserLogged />
-          </Tooltip>
+          <UserLogged />
         </div>
       </div>
       {/* Hamburger Menu Icon for mobile */}
