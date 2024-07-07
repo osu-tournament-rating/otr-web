@@ -7,13 +7,13 @@
   position: absolute;
   z-index: 1000;
   top: calc(100% + 10px);
-  right: 0; /* Align to the right of the container */
+  right: -44px;
   background-color: white;
   color: black;
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  min-width: 150px; /* Ensure minimum width for content */
+  min-width: 120px;
   white-space: nowrap;
 }
 
@@ -21,21 +21,40 @@
   padding: 8px 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
-.tooltipContent > div:not(:last-child) {
-  border-bottom: 1px solid #e0e0e0;
+.tooltipContent > div > span {
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  /* padding: 4px 8px; */
+  border-radius: 4px;
 }
 
-.iconContainer {
+.tooltipContent > div > span:hover {
+  color: #888;
+}
+
+/* .iconContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-left: auto; /* Push icon to the right */
+  margin-left: auto;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.iconContainer:hover {
+  background-color: #f0f0f0;
+}
+
+.iconContainer:hover img {
+  filter: brightness(1.5);
 }
 
 .iconContainer img {
   width: 20px;
   height: 20px;
-}
+} */

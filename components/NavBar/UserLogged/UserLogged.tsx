@@ -8,8 +8,12 @@ import Tooltip from "./../Tooltip/Tooltip";
 
 const tooltipContent = (
   <>
-    <div>Friends</div>
-    <div>Sign out</div>
+    <div>
+      <span>Friends</span>
+    </div>
+    <div>
+      <span>Sign out</span>
+    </div>
     <div className={styles.iconContainer}>
       <Image
         src={moonSVG}
