@@ -10,7 +10,6 @@ import ModeSwitcher from "./ModeSwitcher/ModeSwitcher";
 import styles from "./NavBar.module.css";
 import Routes from "./Routes/Routes";
 import SearchButton from "./SearchButton/SearchButton";
-import ThemeSwitcher from "./ThemeSwitcher/ThemeSwitcher";
 import UserLogged from "./UserLogged/UserLogged";
 
 export default function NavBar() {
@@ -25,15 +24,8 @@ export default function NavBar() {
 
   return (
     <nav className={styles.navbar}>
-      <Link
-        href={"/"}
-        className={styles.logoLink}
-      >
-        <Image
-          src={logo}
-          alt="o!TR"
-          fill
-        />
+      <Link href={"/"} className={styles.logoLink}>
+        <Image src={logo} alt="o!TR" fill />
       </Link>
       <div className={styles.content}>
         <Routes />
@@ -41,8 +33,6 @@ export default function NavBar() {
         <div className={styles.actions}>
           <SearchButton />
           {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
-          <ThemeSwitcher />
-          {/* TODO: refactor to be local to UserLogged */}
           <UserLogged />
         </div>
       </div>

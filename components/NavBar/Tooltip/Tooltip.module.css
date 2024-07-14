@@ -27,34 +27,9 @@
 .tooltipContent > div > span {
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
-  /* padding: 4px 8px; */
   border-radius: 4px;
 }
 
 .tooltipContent > div > span:hover {
   color: #888;
 }
-
-/* .iconContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: auto;
-  cursor: pointer;
-  transition: filter 0.2s ease;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.iconContainer:hover {
-  background-color: #f0f0f0;
-}
-
-.iconContainer:hover img {
-  filter: brightness(1.5);
-}
-
-.iconContainer img {
-  width: 20px;
-  height: 20px;
-} */

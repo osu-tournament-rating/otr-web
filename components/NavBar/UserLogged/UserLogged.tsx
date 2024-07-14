@@ -2,10 +2,9 @@
 
 import { useUser } from "@/util/hooks";
 import Image from "next/image";
-import moonSVG from "@/public/icons/moon.svg";
 import styles from "../NavBar.module.css";
 import Tooltip from "./../Tooltip/Tooltip";
-
+import ThemeSwitcher from "../ThemeSwitcher/ThemeSwitcher";
 const tooltipContent = (
   <>
     <div>
@@ -15,12 +14,7 @@ const tooltipContent = (
       <span>Sign out</span>
     </div>
     <div className={styles.iconContainer}>
-      <Image
-        src={moonSVG}
-        alt="Moon Icon"
-        width={20}
-        height={20}
-      />
+      <ThemeSwitcher />
     </div>
   </>
 );
