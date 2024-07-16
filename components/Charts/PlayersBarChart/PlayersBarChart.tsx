@@ -214,8 +214,20 @@ export default function PlayersBarChart({ players }: { players: [] }) {
         chartImage.classList.add(styles.graphPropic);
 
         const yPos = chart.getDatasetMeta(0).data[index].y;
+        // Save the current context state
+        ctx.save();
+
+        // Create a circular clipping path
+        ctx.beginPath();
+        ctx.arc(15, yPos, 15, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+
+        // Draw the image
         ctx.drawImage(chartImage, 0, yPos - 15, 30, 30);
-        /* console.log(yPos - 30, yPos); */
+
+        // Restore the context state
+        ctx.restore();
       });
     },
   };
