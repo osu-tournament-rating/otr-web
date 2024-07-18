@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import styles from "./Tooltip.module.css";
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import styles from './Tooltip.module.css';
 
 export default function Tooltip({ children, content }) {
   const [isOpen, setIsOpen] = useState(false);

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { getOsuModeCookie } from "@/app/actions";
-import logo from "@/public/logos/small.svg";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import HamburgerMobile from "./HamburgerMobile/HamburgerMobile";
-import ModeSwitcher from "./ModeSwitcher/ModeSwitcher";
-import styles from "./NavBar.module.css";
-import Routes from "./Routes/Routes";
-import SearchButton from "./SearchButton/SearchButton";
-import UserLogged from "./UserLogged/UserLogged";
+import { getOsuModeCookie } from '@/app/actions';
+import logo from '@/public/logos/small.svg';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
+import ModeSwitcher from './ModeSwitcher/ModeSwitcher';
+import styles from './NavBar.module.css';
+import Routes from './Routes/Routes';
+import SearchButton from './SearchButton/SearchButton';
+import UserLogged from './UserLogged/UserLogged';
 
 export default function NavBar() {
   const [cookieMode, setCookieMode] = useState({});
@@ -24,7 +24,7 @@ export default function NavBar() {
 
   return (
     <nav className={styles.navbar}>
-      <Link href={"/"} className={styles.logoLink}>
+      <Link href={'/'} className={styles.logoLink}>
         <Image src={logo} alt="o!TR" fill />
       </Link>
       <div className={styles.content}>

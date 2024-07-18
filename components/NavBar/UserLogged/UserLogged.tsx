@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useUser } from "@/util/hooks";
-import Image from "next/image";
-import styles from "../NavBar.module.css";
-import Tooltip from "./../Tooltip/Tooltip";
-import ThemeSwitcher from "../ThemeSwitcher/ThemeSwitcher";
+import { useUser } from '@/util/hooks';
+import Image from 'next/image';
+import styles from '../NavBar.module.css';
+import Tooltip from './../Tooltip/Tooltip';
+import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 const tooltipContent = (
   <>
     <div>
