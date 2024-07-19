@@ -1,5 +1,8 @@
 'use client';
 
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
+import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
+import customChartScaleYBackground from '@/lib/chartjs-plugins/customChartScaleYBackground';
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -17,9 +20,6 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
-import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
-import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
-import customChartScaleYBackground from '@/lib/chartjs-plugins/customChartScaleYBackground';
 
 import 'chartjs-adapter-date-fns';
 ChartJS.register(
@@ -81,6 +81,7 @@ export default function AreaChart({
     undefined,
     undefined,
   ]);
+  const [minMaxDates, setMinMaxDates] = useState([]);
 
   const { theme } = useTheme();
 
@@ -136,6 +137,16 @@ export default function AreaChart({
   let dataForGraph: number[] = labels.map(() => Math.ceil(Math.random() * 100));
   let tournamentsTooltip: object[];
 
+  const formatDate = (date = new Date()) => {
+    const year = date.toLocaleString('default', { year: 'numeric' });
+    const month = date.toLocaleString('default', {
+      month: '2-digit',
+    });
+    const day = date.toLocaleString('default', { day: '2-digit' });
+
+    return [year, month, day].join('-');
+  };
+
   if (ratingStats) {
     labels = ratingStats.map((day) => {
       return new Date(day[0].timestamp).toLocaleDateString(
@@ -156,16 +167,22 @@ export default function AreaChart({
       });
       return matches;
     });
-
     dataForGraph = ratingStats.map((day) => {
       if (day.length > 1) {
-        return day[day.length - 1].ratingAfter.toFixed(0);
+        return {
+          x: new Date(day[day.length - 1].timestamp),
+          y: day[day.length - 1].ratingAfter.toFixed(0),
+        };
       }
 
       if (day.length === 1) {
-        return day[0].ratingAfter.toFixed(0);
+        return {
+          x: new Date(day[0].timestamp),
+          y: day[0].ratingAfter.toFixed(0),
+        };
       }
     });
+    console.log(dataForGraph);
   }
 
   /* if (rankChart) {
@@ -345,6 +362,15 @@ export default function AreaChart({
           },
           parser: 'dd/M/yyyy',
         }, */
+        type: 'time',
+        time: {
+          unit: 'month',
+          displayFormats: {
+            month: 'MMM dd, yyyy',
+          },
+        },
+        min: formatDate(dataForGraph[0].x),
+        max: formatDate(dataForGraph[dataForGraph.length - 1].x),
         ticks: {
           font: {
             size: 16,
@@ -355,9 +381,10 @@ export default function AreaChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           autoSkip: true,
-          maxTicksLimit: 7,
+          maxTicksLimit: 10,
           major: { enabled: true },
           z: 2,
+          /* source: 'data', */
         },
         grid: {
           color: canvasInnerLinesColor[0]
