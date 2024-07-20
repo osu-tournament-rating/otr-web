@@ -81,10 +81,11 @@ export default function MatchForm({
                     {state?.errors?.mode}
                   </span>
                   <select name="gameMode" id={styles.gamemode} required={true}>
-                    <option value={0}>osu!Standard</option>
-                    <option value={1}>osu!Taiko</option>
-                    <option value={2}>osu!Catch</option>
-                    <option value={3}>osu!Mania</option>
+                    <option value={0}>osu!</option>
+                    <option value={1}>osu!taiko</option>
+                    <option value={2}>osu!catch</option>
+                    <option value={3}>osu!mania4k</option>
+                    <option value={4}>osu!mania7k</option>
                   </select>
                 </div>
               </div>
