@@ -222,8 +222,9 @@ export default function AreaChart({
     }
 
     if (tooltip.body && ratingStats) {
+      const tooltipTitle = tooltip.title[0].split(',', 2).join(',');
       const matchesLines = new Set(
-        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltip.title)
+        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltipTitle)
       );
 
       /* TOOLTIP HEADER */
