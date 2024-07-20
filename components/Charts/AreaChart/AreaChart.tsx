@@ -1,5 +1,8 @@
 'use client';
 
+import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
+import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
+import customChartScaleYBackground from '@/lib/chartjs-plugins/customChartScaleYBackground';
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -9,6 +12,7 @@ import {
   LinearScale,
   PointElement,
   TimeScale,
+  TimeSeriesScale,
   Title,
   Tooltip,
 } from 'chart.js';
@@ -17,9 +21,6 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
-import customChartBackground from '@/lib/chartjs-plugins/customChartBackground';
-import customChartScaleXBackground from '@/lib/chartjs-plugins/customChartScaleXBackground';
-import customChartScaleYBackground from '@/lib/chartjs-plugins/customChartScaleYBackground';
 
 import 'chartjs-adapter-date-fns';
 ChartJS.register(
@@ -31,7 +32,8 @@ ChartJS.register(
   Tooltip,
   Filler,
   Legend,
-  TimeScale
+  TimeScale,
+  TimeSeriesScale
 );
 
 const getOrCreateTooltip = (chart) => {
@@ -81,6 +83,7 @@ export default function AreaChart({
     undefined,
     undefined,
   ]);
+  const [minMaxDates, setMinMaxDates] = useState([]);
 
   const { theme } = useTheme();
 
@@ -136,6 +139,16 @@ export default function AreaChart({
   let dataForGraph: number[] = labels.map(() => Math.ceil(Math.random() * 100));
   let tournamentsTooltip: object[];
 
+  const formatDate = (date = new Date()) => {
+    const year = date.toLocaleString('default', { year: 'numeric' });
+    const month = date.toLocaleString('default', {
+      month: '2-digit',
+    });
+    const day = date.toLocaleString('default', { day: '2-digit' });
+
+    return [year, month, day].join('-');
+  };
+
   if (ratingStats) {
     labels = ratingStats.map((day) => {
       return new Date(day[0].timestamp).toLocaleDateString(
@@ -156,14 +169,19 @@ export default function AreaChart({
       });
       return matches;
     });
-
     dataForGraph = ratingStats.map((day) => {
       if (day.length > 1) {
-        return day[day.length - 1].ratingAfter.toFixed(0);
+        return {
+          x: new Date(day[day.length - 1].timestamp),
+          y: day[day.length - 1].ratingAfter.toFixed(0),
+        };
       }
 
       if (day.length === 1) {
-        return day[0].ratingAfter.toFixed(0);
+        return {
+          x: new Date(day[0].timestamp),
+          y: day[0].ratingAfter.toFixed(0),
+        };
       }
     });
   }
@@ -204,8 +222,9 @@ export default function AreaChart({
     }
 
     if (tooltip.body && ratingStats) {
+      const tooltipTitle = tooltip.title[0].split(',', 2).join(',');
       const matchesLines = new Set(
-        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltip.title)
+        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltipTitle)
       );
 
       /* TOOLTIP HEADER */
@@ -324,7 +343,7 @@ export default function AreaChart({
       },
       point: {
         radius: 0 /* 0 makes points hidden */,
-        hitRadius: 100,
+        hitRadius: 200,
         pointBackgroundColor: colors[0]
           ? theme === 'light'
             ? `hsla(${colors[0]}, 0.6)`
@@ -335,16 +354,18 @@ export default function AreaChart({
     maintainAspectRatio: false,
     scales: {
       x: {
-        /* type: 'time', */
-        /* time: {
-          unit: 'day',
-          distribution: 'series',
-          tooltipFormat: 'dd.M.yyyy',
+        type: 'time',
+        time: {
+          unit: 'month',
           displayFormats: {
-            day: 'dd.M',
+            day: 'MMM yyyy',
+            week: 'MMM yyyy',
+            month: 'MMM yyyy',
+            year: 'MMM yyyy',
           },
-          parser: 'dd/M/yyyy',
-        }, */
+        },
+        min: formatDate(dataForGraph[0].x),
+        max: formatDate(dataForGraph[dataForGraph.length - 1].x),
         ticks: {
           font: {
             size: 16,
@@ -355,9 +376,10 @@ export default function AreaChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           autoSkip: true,
-          maxTicksLimit: 7,
+          maxTicksLimit: 12,
           major: { enabled: true },
           z: 2,
+          source: 'auto',
         },
         grid: {
           color: canvasInnerLinesColor[0]
@@ -391,7 +413,7 @@ export default function AreaChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           autoSkip: true,
-          maxTicksLimit: 6,
+          maxTicksLimit: 8,
           precision: 0,
           stepSize: 15,
           z: 2,
