@@ -342,7 +342,7 @@ export default function AreaChart({
       },
       point: {
         radius: 0 /* 0 makes points hidden */,
-        hitRadius: 100,
+        hitRadius: 200,
         pointBackgroundColor: colors[0]
           ? theme === 'light'
             ? `hsla(${colors[0]}, 0.6)`
