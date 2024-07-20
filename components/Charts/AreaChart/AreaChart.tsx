@@ -12,6 +12,7 @@ import {
   LinearScale,
   PointElement,
   TimeScale,
+  TimeSeriesScale,
   Title,
   Tooltip,
 } from 'chart.js';
@@ -31,7 +32,8 @@ ChartJS.register(
   Tooltip,
   Filler,
   Legend,
-  TimeScale
+  TimeScale,
+  TimeSeriesScale
 );
 
 const getOrCreateTooltip = (chart) => {
@@ -182,7 +184,6 @@ export default function AreaChart({
         };
       }
     });
-    console.log(dataForGraph);
   }
 
   /* if (rankChart) {
@@ -352,21 +353,15 @@ export default function AreaChart({
     maintainAspectRatio: false,
     scales: {
       x: {
-        /* type: 'time', */
-        /* time: {
-          unit: 'day',
-          distribution: 'series',
-          tooltipFormat: 'dd.M.yyyy',
-          displayFormats: {
-            day: 'dd.M',
-          },
-          parser: 'dd/M/yyyy',
-        }, */
         type: 'time',
+        /* type: 'timeseries', */
         time: {
           unit: 'month',
           displayFormats: {
+            day: 'MMM dd, yyyy',
+            week: 'MMM dd, yyyy',
             month: 'MMM dd, yyyy',
+            year: 'MMM dd, yyyy',
           },
         },
         min: formatDate(dataForGraph[0].x),
@@ -384,7 +379,7 @@ export default function AreaChart({
           maxTicksLimit: 10,
           major: { enabled: true },
           z: 2,
-          /* source: 'data', */
+          source: 'auto',
         },
         grid: {
           color: canvasInnerLinesColor[0]
