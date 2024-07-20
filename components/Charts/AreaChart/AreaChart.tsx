@@ -376,7 +376,7 @@ export default function AreaChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           autoSkip: true,
-          maxTicksLimit: 10,
+          maxTicksLimit: 12,
           major: { enabled: true },
           z: 2,
           source: 'auto',
@@ -413,7 +413,7 @@ export default function AreaChart({
               ? `hsla(${textColor[0]})`
               : `hsla(${textColor[1]})`,
           autoSkip: true,
-          maxTicksLimit: 6,
+          maxTicksLimit: 8,
           precision: 0,
           stepSize: 15,
           z: 2,
