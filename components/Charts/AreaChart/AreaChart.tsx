@@ -355,14 +355,13 @@ export default function AreaChart({
     scales: {
       x: {
         type: 'time',
-        /* type: 'timeseries', */
         time: {
           unit: 'month',
           displayFormats: {
-            day: 'MMM dd, yyyy',
-            week: 'MMM dd, yyyy',
-            month: 'MMM dd, yyyy',
-            year: 'MMM dd, yyyy',
+            day: 'MMM yyyy',
+            week: 'MMM yyyy',
+            month: 'MMM yyyy',
+            year: 'MMM yyyy',
           },
         },
         min: formatDate(dataForGraph[0].x),
