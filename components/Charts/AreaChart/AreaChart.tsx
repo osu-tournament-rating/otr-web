@@ -364,8 +364,8 @@ export default function AreaChart({
             year: 'MMM yyyy',
           },
         },
-        min: formatDate(dataForGraph[0].x),
-        max: formatDate(dataForGraph[dataForGraph.length - 1].x),
+        min: formatDate(dataForGraph[0]?.x),
+        max: formatDate(dataForGraph[dataForGraph.length - 1]?.x),
         ticks: {
           font: {
             size: 16,

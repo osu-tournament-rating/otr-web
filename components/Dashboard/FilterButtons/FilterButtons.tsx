@@ -9,23 +9,28 @@ export default function FilterButtons({ params }: { params: {} }) {
       <div className={styles.buttons}>
         <FilterChangeButton
           text={'90 days'}
-          isSelected={params.time === '90days'}
+          value={'90'}
+          isSelected={params.time === '90'}
         />
         <FilterChangeButton
-          text={'180 days'}
-          isSelected={params.time === '180days'}
+          text={'6 months'}
+          value={'180'}
+          isSelected={params.time === '180'}
         />
         <FilterChangeButton
           text={'1 year'}
-          isSelected={params.time === '1year'}
+          value={'365'}
+          isSelected={params.time === '365'}
         />
         <FilterChangeButton
           text={'2 years'}
-          isSelected={params.time === '2years'}
+          value={'730'}
+          isSelected={params.time === '730'}
         />
         <FilterChangeButton
           text={'All time'}
-          isSelected={params.time == null || params.time === 'infinite'}
+          value={''}
+          isSelected={params.time == null || params.time === ''}
         />
       </div>
     </div>

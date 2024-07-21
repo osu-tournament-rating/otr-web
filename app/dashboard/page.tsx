@@ -28,9 +28,9 @@ export const revalidate = 60;
 export default async function page({
   searchParams,
 }: {
-  searchParams: string | string[] | {};
+  searchParams: URLSearchParams;
 }) {
-  const data = await fetchDashboard();
+  const data = await fetchDashboard(searchParams);
 
   return (
     <main className={styles.main}>
@@ -38,7 +38,9 @@ export default async function page({
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
-          {data?.baseStats ? (
+          {data?.baseStats &&
+          data?.matchStats &&
+          data?.matchStats.gamesPlayed > 0 ? (
             <>
               <div className={styles.header}>
                 <div className={styles.rating}>
@@ -87,7 +89,7 @@ export default async function page({
           )}
         </div>
       </div>
-      {data?.matchStats && (
+      {data?.matchStats && data?.matchStats.gamesPlayed > 0 && (
         <>
           <StatsGrid>
             <UserTotalMatches data={data?.matchStats} />

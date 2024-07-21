@@ -1,6 +1,12 @@
 import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
 
+const userpageTimeValues = ['90', '180', '365', '730'] as const;
+
+export const UserpageQuerySchema = z.object({
+  time: z.enum(userpageTimeValues).optional(),
+});
+
 const leaderboardsTierNames = [
   'bronze',
   'silver',
