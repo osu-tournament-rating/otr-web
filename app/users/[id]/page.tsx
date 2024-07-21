@@ -33,10 +33,10 @@ export default async function page({
   searchParams,
   params: { id },
 }: {
-  searchParams: string | string[] | {};
+  searchParams: URLSearchParams;
   params: { id: string | number };
 }) {
-  const data = await fetchUserPage(id);
+  const data = await fetchUserPage(id, searchParams);
 
   return (
     <main className={styles.main}>
@@ -44,7 +44,9 @@ export default async function page({
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
-          {data?.baseStats ? (
+          {data?.baseStats &&
+          data?.matchStats &&
+          data?.matchStats.gamesPlayed > 0 ? (
             <>
               <div className={styles.header}>
                 <div className={styles.rating}>
@@ -93,7 +95,7 @@ export default async function page({
           )}
         </div>
       </div>
-      {data?.matchStats && (
+      {data?.matchStats && data?.matchStats.gamesPlayed > 0 && (
         <>
           <StatsGrid>
             <UserTotalMatches data={data?.matchStats} />
@@ -104,13 +106,13 @@ export default async function page({
               <div className={styles.cardStat}>
                 <span>Average opponent rating</span>
                 <span className={styles.value}>
-                  {data?.matchStats.averageOpponentRating.toFixed(0)}
+                  {data?.matchStats.averageOpponentRating?.toFixed(0)}
                 </span>
               </div>
               <div className={styles.cardStat}>
                 <span>Average teammate rating</span>
                 <span className={styles.value}>
-                  {data?.matchStats.averageTeammateRating.toFixed(0)}
+                  {data?.matchStats.averageTeammateRating?.toFixed(0)}
                 </span>
               </div>
               <div className={styles.cardStat}>
@@ -134,19 +136,19 @@ export default async function page({
               <div className={styles.cardStat}>
                 <span>Average misses</span>
                 <span className={styles.value}>
-                  {data?.matchStats.matchAverageMissesAggregate.toFixed(0)}
+                  {data?.matchStats.matchAverageMissesAggregate?.toFixed(0)}
                 </span>
               </div>
               <div className={styles.cardStat}>
                 <span>Average accuracy</span>
                 <span className={styles.value}>
-                  {data?.matchStats.matchAverageAccuracyAggregate.toFixed(2)}%
+                  {data?.matchStats.matchAverageAccuracyAggregate?.toFixed(2)}%
                 </span>
               </div>
               <div className={styles.cardStat}>
                 <span>Average maps played</span>
                 <span className={styles.value}>
-                  {data?.matchStats.averageGamesPlayedAggregate.toFixed(0)}
+                  {data?.matchStats.averageGamesPlayedAggregate?.toFixed(0)}
                 </span>
               </div>
             </GridCard>
