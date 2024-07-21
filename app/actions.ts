@@ -4,6 +4,7 @@ import {
   LeaderboardsQuerySchema,
   MatchesSubmitFormSchema,
   SessionUser,
+  UserpageQuerySchema,
   defaultSessionUser,
   sessionOptions,
 } from '@/lib/types';
@@ -476,14 +477,38 @@ export async function fetchLeaderboard(params: {}) {
   return data;
 }
 
-export async function fetchDashboard() {
+export async function fetchDashboard(params: {}) {
   const session = await getSession(true);
 
   const osuMode =
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
+  let urlStringObject = {
+    ruleset: osuMode,
+  };
+
+  const queryCheck = await UserpageQuerySchema.safeParse({
+    time: params?.time,
+  });
+
+  // put time on the url only if the value is not undefined and without errors
+  if (queryCheck.success && queryCheck.data.time) {
+    let minDate = new Date();
+    minDate.setDate(minDate.getDate() - params?.time);
+    let year = minDate.getFullYear();
+    let month = String(minDate.getMonth() + 1).padStart(2, '0');
+    let day = String(minDate.getDate()).padStart(2, '0');
+    minDate = `${year}-${month}-${day}`;
+
+    urlStringObject.dateMin = minDate;
+  }
+
+  const urlParams = decodeURIComponent(
+    new URLSearchParams(urlStringObject).toString()
+  );
+
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/me/stats?ruleset=${osuMode}`,
+    `${process.env.REACT_APP_API_URL}/me/stats?${urlParams}`,
     {
       headers: {
         'Content-Type': 'application/json',

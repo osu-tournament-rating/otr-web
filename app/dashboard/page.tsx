@@ -28,9 +28,10 @@ export const revalidate = 60;
 export default async function page({
   searchParams,
 }: {
-  searchParams: string | string[] | {};
+  searchParams: URLSearchParams;
 }) {
-  const data = await fetchDashboard();
+  const data = await fetchDashboard(searchParams);
+  console.log(data);
 
   return (
     <main className={styles.main}>
