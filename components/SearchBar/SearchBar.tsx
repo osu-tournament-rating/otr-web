@@ -177,7 +177,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
 
                 return (
                   <Link
-                    href={`/users/${player.id}`}
+                    href={`/players/${player.id}`}
                     className={styles.item}
                     key={player.username}
                     onClick={() => setIsSeachBarOpen(false)}

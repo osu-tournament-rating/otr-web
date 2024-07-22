@@ -11,7 +11,7 @@ import {
 import { getIronSession } from 'iron-session';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
 export async function getSession(onlyData: boolean = false) {
@@ -588,7 +588,7 @@ export async function fetchUserPage(player: string | number, params) {
   );
 
   if (!res?.ok) {
-    return redirect('/');
+    return res?.status === 404 ? notFound() : redirect('/');
   }
 
   res = await res.json();

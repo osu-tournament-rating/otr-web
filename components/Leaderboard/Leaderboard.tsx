@@ -46,7 +46,7 @@ export default function Leaderboard({
               >
                 <td>#{player.globalRank}</td>
                 <td>
-                  <Link href={`/users/${player.playerId}`}>
+                  <Link href={`/players/${player.playerId}`}>
                     <div className={styles.propic}>
                       <Image
                         src={`http://a.ppy.sh/${player.osuId}`}
