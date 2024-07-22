@@ -80,6 +80,22 @@ const disableEnter = (e) => {
   if (e.keyCode === 13) return e.preventDefault();
 };
 
+// Highlight function
+const highlightMatch = (text, query) => {
+  if (!query) return text;
+
+  const index = text.toLowerCase().indexOf(query.toLowerCase());
+  if (index === -1) return text;
+
+  return (
+    <>
+      {text.slice(0, index)}
+      <span>{text.slice(index, index + query.length)}</span>
+      {text.slice(index + query.length)}
+    </>
+  );
+};
+
 export default function SearchBar({ setIsSeachBarOpen }) {
   const [searchValue, setSearchValue] = useState('');
   const [state, formAction] = useFormState(fetchSearchData, initialState);
@@ -161,20 +177,6 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             <h3 className={styles.header}>Players</h3>
             <div className={styles.list}>
               {state?.search?.players.slice(0, 12).map((player) => {
-                /* const selectedText = searchValue;
-    
-                    let indexesUsername = [
-                      player.text.indexOf(searchValue),
-                      player.text.lastIndexOf(searchValue),
-                    ];
-    
-                    const regEscape = (v) =>
-                      v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-    
-                    let username = player.text.split(
-                      new RegExp(regEscape(searchValue), 'ig')
-                    ); */
-
                 return (
                   <Link
                     href={`/players/${player.id}`}
@@ -190,31 +192,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                       />
                     </div>
                     <div className={styles.name}>
-                      {/* {username.length > 1 && (
-                            <>
-                              <div>{username[0]}</div>
-                              <span>{selectedText}</span>
-                              <div>{username[1]}</div>
-                            </>
-                          )}
-                          {username.length < 2 && indexesUsername[0] === 0 && (
-                            <>
-                              <span>
-                                {/[A-Z]/.test(player.text[0])
-                                  ? selectedText.text.charAt(0).toUpperCase() +
-                                    selectedText.text.slice(1)
-                                  : selectedText}
-                              </span>
-                              <div>{username[0]}</div>
-                            </>
-                          )}
-                          {username.length < 2 && indexesUsername[0] !== 0 && (
-                            <>
-                              <div>{username[0]}</div>
-                              <span>{selectedText}</span>
-                            </>
-                          )} */}
-                      {player.username}
+                      {highlightMatch(player.username, searchValue)}
                     </div>
                     <div className={styles.secondaryInfo}>
                       {player.globalRank && (
@@ -249,14 +227,15 @@ export default function SearchBar({ setIsSeachBarOpen }) {
               {state?.search?.tournaments.slice(0, 12).map((tournament) => {
                 return (
                   <div className={styles.item} key={tournament.name}>
-                    <div className={styles.name}>{tournament.name}</div>
+                    <div className={styles.name}>
+                      {highlightMatch(tournament.name, searchValue)}
+                    </div>
                     <div className={styles.secondaryInfo}>
-                      {/* <div className={styles.year}>{}</div> */}
-                      <div className={styles.format}>
-                        {tournament.teamSize}v{tournament.teamSize}
-                      </div>
                       <div className={styles.mode}>
                         {mode[tournament.ruleset]}
+                      </div>
+                      <div className={styles.format}>
+                        {tournament.teamSize}v{tournament.teamSize}
                       </div>
                     </div>
                   </div>
@@ -279,7 +258,9 @@ export default function SearchBar({ setIsSeachBarOpen }) {
               {state?.search?.matches.slice(0, 12).map((match) => {
                 return (
                   <div className={styles.item} key={match.name}>
-                    <div className={styles.name}>{match.name}</div>
+                    <div className={styles.name}>
+                      {highlightMatch(match.name, searchValue)}
+                    </div>
                   </div>
                 );
               })}
