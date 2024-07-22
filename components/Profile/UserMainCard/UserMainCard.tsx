@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+/* import { usePathname, useRouter } from 'next/navigation'; */
 import { Tooltip } from 'react-tooltip';
 import styles from './UserMainCard.module.css';
 
@@ -11,10 +11,14 @@ export default function UserMainCardProfile({
   baseStats: object;
   playerInfo: object;
 }) {
+  /* const pathname = usePathname();
+  console.log(pathname);
   const router = useRouter();
-  router.replace(`/players/${baseStats?.playerId}`, undefined, {
-    shallow: true,
-  });
+  if (baseStats?.playerId) {
+    router.replace(`/players/${baseStats?.playerId}`, undefined, {
+      shallow: true,
+    });
+  } */
 
   return (
     <div className={styles.userContainer}>
