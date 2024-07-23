@@ -1,10 +1,16 @@
 'use client';
+import BurgerSVG from '@/public/icons/burger.svg';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './HamburgerMobile.module.css';
 
 export default function HamburgerMobile() {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflowY = isOpen ? 'hidden' : 'auto';
+  }, [isOpen]);
 
   return (
     <>
@@ -12,7 +18,7 @@ export default function HamburgerMobile() {
         className={styles.hamburger}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <span>☰</span>
+        <Image src={BurgerSVG} alt={'burger'} fill />
       </div>
       {isOpen && (
         <div className={styles.dropdown}>
