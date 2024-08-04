@@ -30,6 +30,7 @@ export default function UserLogged() {
             src={`http://s.ppy.sh/a/${user?.osuId}`}
             alt="User Propic"
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       </Tooltip>

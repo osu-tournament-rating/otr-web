@@ -15,7 +15,7 @@ export default function Tooltip({ children, content }) {
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       setIsOpen(false);
-    }, 100);
+    }, 500);
   };
 
   useEffect(() => {

@@ -10,8 +10,6 @@
   right: -44px;
   background-color: hsla(var(--background-content-hsl));
   color: hsla(var(--foreground-inactive-hsl));
-  transition: color 0.2s ease-out;
-
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -36,6 +34,6 @@
   color: #888;
 }
 
-[data-theme="dark"] .tooltipContent > div > span:hover {
+[data-theme='dark'] .tooltipContent > div > span:hover {
   color: hsla(var(--foreground-active-hsl));
 }
