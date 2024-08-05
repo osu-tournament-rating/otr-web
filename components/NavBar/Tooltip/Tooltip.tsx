@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './Tooltip.module.css';
 
 export default function Tooltip({ children, content }) {
@@ -29,26 +29,17 @@ export default function Tooltip({ children, content }) {
   return (
     <div
       className={styles.tooltipContainer}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      /* onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave} */
     >
       {children}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={tooltipRef}
-            className={styles.tooltipContent}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            {content}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* <AnimatePresence>
+        {isOpen && ( */}
+      <div className={styles.parent}>
+        <div className={styles.tooltipContent}>{content}</div>
+      </div>
+      {/*   )}
+      </AnimatePresence> */}
     </div>
   );
 }

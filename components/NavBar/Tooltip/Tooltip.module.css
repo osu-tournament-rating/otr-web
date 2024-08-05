@@ -1,20 +1,34 @@
 .tooltipContainer {
   position: relative;
   display: inline-block;
+  height: 100%;
+}
+
+.parent {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% - 10px);
+  right: -44px;
+  min-width: 120px;
+  white-space: nowrap;
+  opacity: 0;
+  padding-top: 8px;
+  visibility: hidden;
 }
 
 .tooltipContent {
-  position: absolute;
-  z-index: 1000;
-  top: calc(100% + 10px);
-  right: -44px;
-  background-color: hsla(var(--background-content-hsl));
+  padding: 12px;
+  background-color: hsla(var(--background-navbar-tooltip-hsl));
   color: hsla(var(--foreground-inactive-hsl));
   border-radius: 8px;
-  padding: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  min-width: 120px;
-  white-space: nowrap;
+}
+
+.tooltipContainer:hover > .parent {
+  opacity: 1;
+  top: calc(100% - 2px);
+  visibility: visible;
+  transition: all 0.2s ease-out;
 }
 
 .tooltipContent > div {
