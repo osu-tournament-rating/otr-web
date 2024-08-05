@@ -19,11 +19,6 @@ export default function ThemeSwitcher() {
         {theme === 'light' && <Image src={sunSVG} alt="Theme Switcher" fill />}
         {theme === 'dark' && <Image src={moonSVG} alt="Theme Switcher" fill />}
         {!theme && <></>}
-        {/* <Image
-              src={theme === 'light' ? sunSVG : moonSVG}
-              alt="Theme Switcher"
-              fill
-            /> */}
       </div>
     </button>
   );

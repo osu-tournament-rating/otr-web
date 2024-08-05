@@ -10,7 +10,6 @@ import ModeSwitcher from './ModeSwitcher/ModeSwitcher';
 import styles from './NavBar.module.css';
 import Routes from './Routes/Routes';
 import SearchButton from './SearchButton/SearchButton';
-import ThemeSwitcher from './ThemeSwitcher/ThemeSwitcher';
 import UserLogged from './UserLogged/UserLogged';
 
 export default function NavBar() {
@@ -34,7 +33,6 @@ export default function NavBar() {
         <div className={styles.actions}>
           <SearchButton />
           {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
-          <ThemeSwitcher />
           <UserLogged />
         </div>
       </div>
