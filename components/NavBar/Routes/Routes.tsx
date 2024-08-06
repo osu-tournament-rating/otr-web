@@ -24,6 +24,12 @@ export default function Routes() {
       >
         Leaderboards
       </Link>
+      <Link
+        href={'/tournaments'}
+        className={pathname === '/tournaments' ? styles.active : ''}
+      >
+        Tournaments
+      </Link>
       {user?.osuId && (
         <Link
           href={'/submit'}
