@@ -47,3 +47,20 @@
   border-top-right-radius: 0.4rem;
   border-bottom-right-radius: 0.4rem;
 }
+
+.table tbody td:has(.rulesetIcon) {
+  padding: 0 2rem;
+}
+
+.rulesetIcon {
+  height: 1.6rem;
+  width: 1.6rem;
+  aspect-ratio: 1;
+  position: relative;
+  margin: auto;
+  fill: hsl(var(--foreground-hsl));
+}
+
+.rulesetIcon img {
+  object-fit: contain;
+}

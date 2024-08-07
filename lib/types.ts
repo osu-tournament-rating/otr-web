@@ -1,5 +1,28 @@
+import ctbSVG from '@/public/icons/Ruleset Catch.svg';
+import maniaSVG from '@/public/icons/Ruleset Mania.svg';
+import standardSVG from '@/public/icons/Ruleset Standard.svg';
+import taikoSVG from '@/public/icons/Ruleset Taiko.svg';
 import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
+
+export const modeIcons: { [key: string]: { image: any; alt: string } } = {
+  '0': {
+    image: standardSVG,
+    alt: 'Standard',
+  },
+  '1': {
+    image: taikoSVG,
+    alt: 'Taiko',
+  },
+  '2': {
+    image: ctbSVG,
+    alt: 'CTB',
+  },
+  '3': {
+    image: maniaSVG,
+    alt: 'Mania',
+  },
+} as const;
 
 const userpageTimeValues = ['90', '180', '365', '730'] as const;
 
@@ -34,7 +57,7 @@ export const LeaderboardsQuerySchema = z.object({
 
 export const TournamentsQuerySchema = z.object({
   page: z.number().gte(1).default(1),
-})
+});
 
 export const MatchesSubmitFormSchema = z.object({
   tournamentName: z.string().min(1),
