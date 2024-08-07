@@ -27,26 +27,16 @@ export default function TournamentsList({
           </tr>
         </thead>
         <tbody>
-          {/* {data.leaderboard.map((player, index) => {
+          {data.map((tournament, index) => {
             return (
-              <tr
-                key={index}
-              >
-                <td>Porco tournament</td>
-                <td>dasd3</td>
-                <td>sdoa</td>
-                <td>test</td>
+              <tr key={index}>
+                <td>{tournament.name}</td>
+                <td>Missing format</td>
+                <td>{tournament.mode}</td>
+                <td>Missing starting date</td>
               </tr>
             );
-          })} */}
-          <tr
-          /* key={index} */
-          >
-            <td>Porco tournament</td>
-            <td>dasd3</td>
-            <td>sdoa</td>
-            <td>test</td>
-          </tr>
+          })}
         </tbody>
       </table>
       {/* <Pagination

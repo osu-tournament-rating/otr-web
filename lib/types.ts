@@ -32,6 +32,10 @@ export const LeaderboardsQuerySchema = z.object({
   pageSize: z.number().default(25),
 });
 
+export const TournamentsQuerySchema = z.object({
+  page: z.number().gte(1).default(1),
+})
+
 export const MatchesSubmitFormSchema = z.object({
   tournamentName: z.string().min(1),
   abbreviation: z.string().min(1),
