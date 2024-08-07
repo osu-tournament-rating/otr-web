@@ -10,6 +10,5 @@
   gap: var(--internal-gap);
   background-color: hsl(var(--background-content-hsl));
   border-radius: var(--main-borderRadius);
-  height: 200px;
   padding: var(--main-padding);
 }
