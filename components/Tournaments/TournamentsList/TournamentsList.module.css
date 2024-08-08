@@ -3,6 +3,7 @@
   border-collapse: separate;
   border-spacing: 0 0.9rem;
   gap: 10px;
+  table-layout: fixed;
 }
 
 .table th {
@@ -53,8 +54,8 @@
 }
 
 .rulesetIcon {
-  height: 1.6rem;
-  width: 1.6rem;
+  height: 1.5rem;
+  width: 1.5rem;
   aspect-ratio: 1;
   position: relative;
   margin: auto;
@@ -63,4 +64,9 @@
 
 .rulesetIcon img {
   object-fit: contain;
+}
+
+[data-theme='dark'] .rulesetIcon {
+  filter: invert(99%) sepia(17%) saturate(86%) hue-rotate(139deg)
+    brightness(111%) contrast(70%);
 }
