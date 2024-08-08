@@ -54,12 +54,12 @@
 }
 
 .rulesetIcon {
-  height: 1.5rem;
-  width: 1.5rem;
   aspect-ratio: 1;
-  position: relative;
+  height: 1.6rem;
+  width: 1.6em;
+  border-radius: 50vw;
   margin: auto;
-  fill: hsl(var(--foreground-hsl));
+  position: relative;
 }
 
 .rulesetIcon img {

@@ -32,7 +32,11 @@ export default function TournamentsList({
           {data.map((tournament, index) => {
             return (
               <tr key={index}>
-                <td>{tournament.name}</td>
+                <td>
+                  <Link href={`/tournaments/${tournament.id}`}>
+                    {tournament.name}
+                  </Link>
+                </td>
                 <td>Missing format</td>
                 <td>
                   <div className={styles.rulesetIcon}>
