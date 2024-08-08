@@ -25,14 +25,11 @@ export default function MatchesList({ data }: { data: {} }) {
             return (
               <tr key={index}>
                 <td>
-                  <Link href={`/matches/${match.id}`}>
-                    {/* {tournament.name} */}
-                    ciao
-                  </Link>
+                  <Link href={`/matches/${match.id}`}>{match.name}</Link>
                 </td>
                 <td>Missing format</td>
-                <td>ciao</td>
-                <td>Missing starting date</td>
+                <td>{new Date(match.startTime).toLocaleDateString()}</td>
+                <td>{match.verificationStatus}</td>
               </tr>
             );
           })}
