@@ -545,6 +545,21 @@ export async function fetchTournamentsPage(params: {}) {
   return data;
 }
 
+export async function fetchTournamentPage(tournament: string | number) {
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  data = await data.json();
+
+  return data;
+}
+
 export async function fetchUserPageTitle(player: string | number) {
   const session = await getSession(true);
 

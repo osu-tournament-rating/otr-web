@@ -6,7 +6,7 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
-import styles from './TournamentsList.module.css';
+import styles from './Lists.module.css';
 
 export default function TournamentsList({
   params,

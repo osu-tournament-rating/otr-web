@@ -1,10 +1,10 @@
-import TournamentsList from '@/components/Tournaments/TournamentsList/TournamentsList';
+import TournamentsList from '@/components/Tournaments/Lists/TournamentsList';
 import styles from './page.module.css';
 
 export const revalidate = 60;
 
+import { fetchTournamentsPage } from '@/app/actions';
 import type { Metadata } from 'next';
-import { fetchTournamentsPage } from '../actions';
 
 export const metadata: Metadata = {
   title: 'Tournaments',

@@ -1,0 +1,48 @@
+'use client';
+
+import Pagination from '@/components/Pagination/Pagination';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Link from 'next/link';
+import styles from './Lists.module.css';
+
+export default function MatchesList({ data }: { data: {} }) {
+  return (
+    <div>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Match</th>
+            <th>Score</th>
+            <th>
+              Date <FontAwesomeIcon icon={faAngleDown} />
+            </th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((match, index) => {
+            return (
+              <tr key={index}>
+                <td>
+                  <Link href={`/matches/${match.id}`}>
+                    {/* {tournament.name} */}
+                    ciao
+                  </Link>
+                </td>
+                <td>Missing format</td>
+                <td>ciao</td>
+                <td>Missing starting date</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {/* <Pagination
+        pageSize={25}
+        totalCount={data.totalPlayerCount}
+        params={params}
+      /> */}
+    </div>
+  );
+}
