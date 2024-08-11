@@ -37,7 +37,10 @@ export default function MatchesList({ data }: { data: {} }) {
                   )}
                 </td>
                 <td className={styles.status}>
-                  <StatusButton status={match.verificationStatus} canChange />
+                  <StatusButton
+                    status={match.verificationStatus}
+                    canChange={index === 1 ? true : false}
+                  />
                 </td>
               </tr>
             );
