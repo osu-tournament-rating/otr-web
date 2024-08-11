@@ -58,7 +58,7 @@ export default function StatusButton({
       <div
         className={clsx(
           styles.button,
-          statusButtonTypes[status]?.className,
+          styles[statusButtonTypes[status]?.className],
           canChange ? styles.canChange : ''
         )}
         onClick={() => {
@@ -90,17 +90,19 @@ export default function StatusButton({
               exit={'exit'}
               className={styles.dropdown}
             >
-              {Object.values(statusButtonTypes).map((status, index) => {
-                return (
-                  <motion.div
-                    key={index}
-                    className={styles.item}
-                    variants={listItemVariants}
-                  >
-                    {status.text}
-                  </motion.div>
-                );
-              })}
+              {Object.values(statusButtonTypes)
+                .sort((a, b) => (a.order < b.order ? -1 : 1))
+                .map((status, index) => {
+                  return (
+                    <motion.div
+                      key={index}
+                      className={styles.item}
+                      variants={listItemVariants}
+                    >
+                      {status.text}
+                    </motion.div>
+                  );
+                })}
             </motion.div>
           )}
         </AnimatePresence>

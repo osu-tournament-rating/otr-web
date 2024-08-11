@@ -142,6 +142,14 @@
   /* SEARCH BAR */
   --search-bar-background: 0, 0%, 97%;
   --search-bar-foreground: 0, 0%, 15%;
+
+  /* STATUS BUTTON */
+  --status-btn-rejected-background: 0, 100%, 91%;
+  --status-btn-rejected-foreground: 0, 71%, 42%;
+  --status-btn-verified-background: 115, 100%, 93%;
+  --status-btn-verified-foreground: 118, 64%, 34%;
+  --status-btn-pending-background: 16, 100%, 91%;
+  --status-btn-pending-foreground: 18, 71%, 42%;
 }
 
 [data-theme='dark'] {

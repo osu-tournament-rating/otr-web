@@ -120,11 +120,11 @@ export const matchesVerificationStatuses = {
 };
 
 export const statusButtonTypes = {
-  0: { className: 'pending', text: 'Pending' }, // None
-  1: { className: 'prerejected', text: 'Pre-rejected' }, // PreRejected
-  2: { className: 'preverified', text: 'Pre-verified' }, // PreVerified
-  3: { className: 'rejected', text: 'Rejected' }, // Rejected
-  4: { className: 'verified', text: 'Verified' }, // Verified
+  0: { order: 0, className: 'pending', text: 'Pending' }, // None
+  1: { order: 3, className: 'prerejected', text: 'Pre-rejected' }, // PreRejected
+  2: { order: 2, className: 'preverified', text: 'Pre-verified' }, // PreVerified
+  3: { order: 4, className: 'rejected', text: 'Rejected' }, // Rejected
+  4: { order: 1, className: 'verified', text: 'Verified' }, // Verified
 };
 
 export interface SessionUser {

@@ -28,6 +28,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  font-weight: 500;
 }
 
 .icon {
@@ -76,4 +77,46 @@
 
 [data-theme='dark'] .dropdown .item:hover {
   color: hsl(0, 0%, 75%);
+}
+
+.verified {
+  background-color: hsla(var(--status-btn-verified-background));
+  color: hsla(var(--status-btn-verified-foreground));
+}
+.preverified {
+  background-color: hsla(var(--status-btn-verified-background));
+  color: hsla(var(--status-btn-verified-foreground));
+}
+.rejected {
+  background-color: hsla(var(--status-btn-rejected-background));
+  color: hsla(var(--status-btn-rejected-foreground));
+}
+.prerejected {
+  background-color: hsla(var(--status-btn-rejected-background));
+  color: hsla(var(--status-btn-rejected-foreground));
+}
+.pending {
+  background-color: hsla(var(--status-btn-pending-background));
+  color: hsla(var(--status-btn-pending-foreground));
+}
+
+[data-theme='dark'] .verified {
+  background-color: hsla(var(--status-btn-verified-background), 0.8);
+  color: hsla(var(--status-btn-verified-foreground));
+}
+[data-theme='dark'] .preverified {
+  background-color: hsla(var(--status-btn-verified-background), 0.8);
+  color: hsla(var(--status-btn-verified-foreground));
+}
+[data-theme='dark'] .rejected {
+  background-color: hsla(var(--status-btn-rejected-background), 0.8);
+  color: hsla(var(--status-btn-rejected-foreground));
+}
+[data-theme='dark'] .prerejected {
+  background-color: hsla(var(--status-btn-rejected-background), 0.8);
+  color: hsla(var(--status-btn-rejected-foreground));
+}
+[data-theme='dark'] .pending {
+  background-color: hsla(var(--status-btn-pending-background), 0.8);
+  color: hsla(var(--status-btn-pending-foreground));
 }
