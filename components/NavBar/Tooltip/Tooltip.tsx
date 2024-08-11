@@ -27,19 +27,11 @@ export default function Tooltip({ children, content }) {
   }, []);
 
   return (
-    <div
-      className={styles.tooltipContainer}
-      /* onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave} */
-    >
+    <div className={styles.tooltipContainer}>
       {children}
-      {/* <AnimatePresence>
-        {isOpen && ( */}
       <div className={styles.parent}>
         <div className={styles.tooltipContent}>{content}</div>
       </div>
-      {/*   )}
-      </AnimatePresence> */}
     </div>
   );
 }

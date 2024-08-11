@@ -7,12 +7,8 @@ import Tooltip from './../Tooltip/Tooltip';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 const tooltipContent = (
   <>
-    <div>
-      <span>Friends</span>
-    </div>
-    <div>
-      <span>Sign out</span>
-    </div>
+    <div>Friends</div>
+    <div>Sign out</div>
     <div className={styles.iconContainer}>
       <ThemeSwitcher />
     </div>
