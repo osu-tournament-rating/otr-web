@@ -30,6 +30,12 @@ export const modeIcons: {
   },
 } as const;
 
+export const dateFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+};
+
 const userpageTimeValues = ['90', '180', '365', '730'] as const;
 
 export const UserpageQuerySchema = z.object({

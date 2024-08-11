@@ -20,7 +20,7 @@ export default function TournamentsList({
   //! to remove, just to avoid massive data on the page
   data.length = 5;
 
-  const [sorting, setSorting] = useState({ name: 'name', direction: 'desc' });
+  const [sorting, setSorting] = useState({ name: 'date', direction: 'desc' });
 
   const changeSorting = (sortName: string) => {
     setSorting(({ name, direction }) => ({
@@ -57,9 +57,9 @@ export default function TournamentsList({
                 />
               )}
             </th>
-            <th onClick={() => changeSorting('teamSize')}>
+            <th onClick={() => changeSorting('format')}>
               Format
-              {sorting.name === 'teamSize' && (
+              {sorting.name === 'format' && (
                 <FontAwesomeIcon
                   icon={sorting.direction === 'asc' ? faAngleUp : faAngleDown}
                 />
@@ -85,7 +85,7 @@ export default function TournamentsList({
         </thead>
         <tbody>
           {data.map((tournament, index) => {
-            const format = `${tournament.teamSize}v${tournament.teamSize}`;
+            const format = `${tournament?.format}v${tournament?.format}`;
 
             return (
               <tr key={index}>

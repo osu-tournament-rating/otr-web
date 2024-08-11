@@ -1,6 +1,7 @@
 'use client';
 
 import Pagination from '@/components/Pagination/Pagination';
+import { dateFormatOptions } from '@/lib/types';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
@@ -27,8 +28,13 @@ export default function MatchesList({ data }: { data: {} }) {
                 <td>
                   <Link href={`/matches/${match.id}`}>{match.name}</Link>
                 </td>
-                <td>Missing format</td>
-                <td>{new Date(match.startTime).toLocaleDateString()}</td>
+                <td>Missing data</td>
+                <td>
+                  {new Date(match.startTime).toLocaleDateString(
+                    'en-US',
+                    dateFormatOptions
+                  )}
+                </td>
                 <td>{match.verificationStatus}</td>
               </tr>
             );

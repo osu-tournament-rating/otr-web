@@ -18,8 +18,6 @@ export default async function page({
 }) {
   const tournamentData = await fetchTournamentPage(id);
 
-  console.log(tournamentData);
-
   return (
     <main className={styles.container}>
       <div className={styles.content}>
