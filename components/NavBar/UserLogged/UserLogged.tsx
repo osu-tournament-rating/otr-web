@@ -3,11 +3,11 @@
 import { useUser } from '@/util/hooks';
 import Image from 'next/image';
 import styles from '../NavBar.module.css';
-import Tooltip from './../Tooltip/Tooltip';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
+import Tooltip from './../Tooltip/Tooltip';
 const tooltipContent = (
   <>
-    <div>Friends</div>
+    {/* <div>Friends</div> */}
     <div>Sign out</div>
     <div className={styles.iconContainer}>
       <ThemeSwitcher />
