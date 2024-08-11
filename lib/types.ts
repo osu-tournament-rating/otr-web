@@ -31,9 +31,21 @@ export const modeIcons: {
 } as const;
 
 export const dateFormatOptions = {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
+  tournaments: {
+    header: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    },
+    listItem: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+  },
 };
 
 const userpageTimeValues = ['90', '180', '365', '730'] as const;

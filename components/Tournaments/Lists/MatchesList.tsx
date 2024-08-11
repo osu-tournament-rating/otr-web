@@ -32,7 +32,7 @@ export default function MatchesList({ data }: { data: {} }) {
                 <td>
                   {new Date(match.startTime).toLocaleDateString(
                     'en-US',
-                    dateFormatOptions
+                    dateFormatOptions.tournaments.listItem
                   )}
                 </td>
                 <td>{match.verificationStatus}</td>

@@ -7,9 +7,17 @@ import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer'
 import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Tournaments',
-};
+export async function generateMetadata({
+  params: { id },
+}: {
+  params: { id: string | number };
+}) {
+  let tournament = await fetchTournamentPage(id);
+
+  return {
+    title: tournament !== null ? `${tournament?.name}` : 'User profile',
+  };
+}
 
 export default async function page({
   params: { id },

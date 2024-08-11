@@ -24,4 +24,5 @@
 
 .header .date {
   width: fit-content;
+  margin-right: 0.2em;
 }
