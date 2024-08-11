@@ -1,0 +1,55 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+  height: 100%;
+}
+
+.parent {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% - 0.6rem);
+  left: calc(
+    -1 * (1.9rem + (1.4rem / 2))
+  ); /* calc(-1 * (profile image width + (horizontal padding of content below / 2))) */
+  white-space: nowrap;
+  opacity: 0;
+  padding-top: 0.7rem;
+  visibility: hidden;
+}
+
+.tooltipContent {
+  padding: 1.2rem 1.4rem;
+  background-color: hsla(var(--background-navbar-tooltip-hsl));
+  color: hsla(var(--foreground-inactive-hsl));
+  border-radius: 0.85rem;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 1.1rem;
+  display: flex;
+  font-weight: 400;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.tooltipContainer:hover > .parent {
+  opacity: 1;
+  top: calc(100% - 0.15rem);
+  visibility: visible;
+  transition: all 0.2s ease-out;
+}
+
+.tooltipContent > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltipContent > div {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  border-radius: 4px;
+  color: hsla(var(--foreground-inactive-hsl));
+}
+
+.tooltipContent > div:hover {
+  color: hsla(var(--foreground-active-hsl));
+}
