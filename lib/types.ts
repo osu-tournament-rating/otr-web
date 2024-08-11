@@ -5,26 +5,28 @@ import taikoSVG from '@/public/icons/Ruleset Taiko.svg';
 import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
 
-export const modeIcons: { [key: string]: { image: any; alt: string } } = {
+export const modeIcons: {
+  [key: string]: { image: any; alt: string; altTournamentList: string };
+} = {
   '0': {
     image: standardSVG,
     alt: 'Standard',
-    altTournamentsList: 'osu!Standard',
+    altTournamentsList: 'Standard',
   },
   '1': {
     image: taikoSVG,
     alt: 'Taiko',
-    altTournamentsList: 'osu!Taiko',
+    altTournamentsList: 'Taiko',
   },
   '2': {
     image: ctbSVG,
     alt: 'CTB',
-    altTournamentsList: 'osu!Catch',
+    altTournamentsList: 'Catch',
   },
   '3': {
     image: maniaSVG,
     alt: 'Mania',
-    altTournamentsList: 'osu!Mania',
+    altTournamentsList: 'Mania',
   },
 } as const;
 
@@ -94,6 +96,10 @@ export const MatchesSubmitFormSchema = z.object({
     )
     .min(1),
 });
+
+export const matchesVerificationStatuses = {
+  '0': {},
+};
 
 export interface SessionUser {
   id?: number;
