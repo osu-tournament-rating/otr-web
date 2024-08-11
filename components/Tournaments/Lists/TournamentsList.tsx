@@ -6,6 +6,7 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Tooltip } from 'react-tooltip';
 import styles from './Lists.module.css';
 
 export default function TournamentsList({
@@ -15,6 +16,9 @@ export default function TournamentsList({
   params: {};
   data: {};
 }) {
+  //! to remove, just to avoid massive data on the page
+  data.length = 5;
+
   return (
     <div>
       <table className={styles.table}>
@@ -40,9 +44,24 @@ export default function TournamentsList({
                 <td>Missing format</td>
                 <td>
                   <div className={styles.rulesetIcon}>
+                    <Tooltip
+                      id={`tooltip-${tournament.mode}`}
+                      style={{
+                        padding: '0.6em 1.2em',
+                        borderRadius: '0.6em',
+                        fontWeight: '500',
+                        background: 'hsl(0,0%,82%)',
+                        color: '#333',
+                      }}
+                    />
                     <Image
+                      data-tooltip-id={`tooltip-${tournament.mode}`}
+                      data-tooltip-content={
+                        modeIcons[tournament.mode]?.altTournamentsList
+                      }
+                      data-tooltip-delay-show={400}
                       src={modeIcons[tournament.mode].image}
-                      alt={modeIcons[tournament.mode].alt}
+                      alt={modeIcons[tournament.mode].altTournamentsList}
                       fill
                     />
                   </div>

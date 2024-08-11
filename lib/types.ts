@@ -9,18 +9,22 @@ export const modeIcons: { [key: string]: { image: any; alt: string } } = {
   '0': {
     image: standardSVG,
     alt: 'Standard',
+    altTournamentsList: 'osu!Standard',
   },
   '1': {
     image: taikoSVG,
     alt: 'Taiko',
+    altTournamentsList: 'osu!Taiko',
   },
   '2': {
     image: ctbSVG,
     alt: 'CTB',
+    altTournamentsList: 'osu!Catch',
   },
   '3': {
     image: maniaSVG,
     alt: 'Mania',
+    altTournamentsList: 'osu!Mania',
   },
 } as const;
 
