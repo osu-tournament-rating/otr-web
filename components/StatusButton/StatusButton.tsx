@@ -22,7 +22,9 @@ export default function StatusButton({
       )}
     >
       {statusButtonTypes[status]?.text}
-      {canChange && <FontAwesomeIcon icon={faAngleDown} />}
+      {canChange && (
+        <FontAwesomeIcon className={styles.icon} icon={faAngleDown} />
+      )}
     </div>
   );
 }
