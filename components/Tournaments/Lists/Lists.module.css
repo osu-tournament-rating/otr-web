@@ -9,6 +9,12 @@
 .table th {
   font-weight: 600;
   cursor: pointer;
+  user-select: none;
+}
+
+.table th svg {
+  margin: 0 0 0 0.4rem;
+  vertical-align: -0.18rem;
 }
 
 .table thead th:first-child {
