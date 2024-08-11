@@ -1,0 +1,20 @@
+.container {
+  --padding: 0.9rem 1.2rem;
+  max-width: 10rem;
+  min-width: 10rem;
+  height: fit-content;
+  padding: var(--padding);
+  background-color: rgba(0, 0, 0, 0.2);
+  font-size: 0.9rem;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.8rem;
+  user-select: none;
+  gap: var(--padding);
+}
+
+.canChange {
+  cursor: pointer;
+}

@@ -119,6 +119,14 @@ export const matchesVerificationStatuses = {
   '0': {},
 };
 
+export const statusButtonTypes = {
+  0: { className: 'pending', text: 'Pending' }, // None
+  1: { className: 'prerejected', text: 'Pre-rejected' }, // PreRejected
+  2: { className: 'preverified', text: 'Pre-verified' }, // PreVerified
+  3: { className: 'rejected', text: 'Rejected' }, // Rejected
+  4: { className: 'verified', text: 'Verified' }, // Verified
+};
+
 export interface SessionUser {
   id?: number;
   playerId?: number;

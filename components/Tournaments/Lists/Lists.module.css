@@ -31,6 +31,7 @@
   padding: 1.2rem 2rem;
   background-color: hsla(var(--background-content-childs-hsl));
   text-align: center;
+  height: 3.7rem;
 }
 
 .table th:nth-child(1) {
@@ -43,6 +44,15 @@
 
 .table tbody td:last-child {
   text-align: right;
+}
+
+.table tbody td.status {
+  display: flex;
+  flex-flow: row;
+  justify-content: flex-end;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  align-items: center;
 }
 
 .table tbody tr > td:first-child {
