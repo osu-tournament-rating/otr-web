@@ -144,12 +144,12 @@
   --search-bar-foreground: 0, 0%, 15%;
 
   /* STATUS BUTTON */
-  --status-btn-rejected-background: 0, 100%, 91%;
-  --status-btn-rejected-foreground: 0, 71%, 42%;
-  --status-btn-verified-background: 115, 100%, 93%;
-  --status-btn-verified-foreground: 118, 64%, 34%;
-  --status-btn-pending-background: 16, 100%, 91%;
-  --status-btn-pending-foreground: 18, 71%, 42%;
+  --status-btn-rejected-background: 2, 74%, 90%;
+  --status-btn-rejected-foreground: 4, 62%, 41%;
+  --status-btn-verified-background: 108, 94%, 94%;
+  --status-btn-verified-foreground: 107, 47%, 38%;
+  --status-btn-pending-background: 37, 87%, 94%;
+  --status-btn-pending-foreground: 33, 63%, 47%;
 }
 
 [data-theme='dark'] {
@@ -296,6 +296,14 @@
   /* SEARCH BAR */
   --search-bar-background: 240, 6%, 10%;
   --search-bar-foreground: 0, 0%, 75%;
+
+  /* STATUS BUTTON */
+  --status-btn-rejected-background: 0, 100%, 81%;
+  --status-btn-rejected-foreground: 0, 71%, 32%;
+  --status-btn-verified-background: 115, 100%, 83%;
+  --status-btn-verified-foreground: 118, 64%, 24%;
+  --status-btn-pending-background: 38, 88%, 84%;
+  --status-btn-pending-foreground: 33, 63%, 37%;
 }
 
 * {
