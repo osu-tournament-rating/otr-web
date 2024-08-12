@@ -560,6 +560,18 @@ export async function fetchTournamentPage(tournament: string | number) {
   return data;
 }
 
+export async function fetchMatchPage(match: string | number) {
+  let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  data = await data.json();
+
+  return data;
+}
+
 export async function fetchUserPageTitle(player: string | number) {
   const session = await getSession(true);
 

@@ -28,13 +28,19 @@ export default function InfoContainer({
         <div className={styles.field}>
           <div className={styles.name}>Ruleset</div>
           <div className={styles.value}>
-            {modeIcons[data?.mode]?.altTournamentsList}
+            {
+              modeIcons[data?.mode | data?.ruleset]?.altTournamentsList //! the key of ruleset on "/tournaments/{id}" is called "mode", on "/matches/{id}" is called "ruleset"
+            }
           </div>
         </div>
         <div className={styles.field}>
           <div className={styles.name}>Forum post link</div>
           <div className={styles.value}>
-            <Link href={data?.forumUrl} alt={'Forum Post'} target="_blank">
+            <Link
+              href={data?.forumUrl ?? ''}
+              alt={'Forum Post'}
+              target="_blank"
+            >
               {data?.forumUrl}
             </Link>
           </div>
