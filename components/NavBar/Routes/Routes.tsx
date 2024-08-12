@@ -35,7 +35,7 @@ export default function Routes() {
           href={'/submit'}
           className={pathname === '/submit' ? styles.active : ''}
         >
-          Submit Matches
+          Tournament Submission
         </Link>
       )}
     </div>
