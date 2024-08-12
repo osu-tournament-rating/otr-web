@@ -27,7 +27,6 @@ export default async function page({
           headerText={'Tournament information'}
           showHeader={true}
         />
-        {/* <MatchesList data={tournamentData?.matches} /> */}
       </div>
     </main>
   );
