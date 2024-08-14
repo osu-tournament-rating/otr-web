@@ -22,6 +22,28 @@
   justify-content: space-between;
 }
 
+.header .title {
+  display: flex;
+  flex-flow: row;
+  gap: 0 1.8rem;
+}
+
+.header .title .score {
+  font-weight: 400;
+}
+
+.header .title .icon {
+  position: relative;
+  height: 1.4rem;
+  width: 1.4rem;
+  aspect-ratio: 1;
+}
+
+.title .icon img {
+  fill: red;
+  object-fit: cover;
+}
+
 .header .date {
   width: fit-content;
   margin-right: 0.2em;
