@@ -206,13 +206,12 @@ export async function saveTournamentMatches(
       });
 
     const data = MatchesSubmitFormSchema.parse({
-      tournamentName: formData.get('tournamentName'),
+      name: formData.get('tournamentName'),
       abbreviation: formData.get('tournamentAbbreviation'),
-      forumPost: formData.get('forumPostURL'),
+      forumUrl: formData.get('forumPostURL'),
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
-      teamSize: parseInt(formData.get('teamSize')),
+      format: parseInt(formData.get('teamSize')),
       mode: parseInt(formData.get('gameMode')),
-      submitterId: session?.id ?? 0,
       ids: matchIDs,
     });
 
