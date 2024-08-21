@@ -178,7 +178,7 @@ export default function MatchForm({
               <div className={styles.row}>
                 <div className={styles.field}>
                   <label htmlFor="teamSize">
-                    Team size
+                    Format
                     <InfoIcon>
                       <p>
                         <span>
