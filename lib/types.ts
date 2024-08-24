@@ -48,7 +48,7 @@ export const MatchesSubmitFormSchema = z.object({
       .min(1),
   ]),
   rankRangeLowerBound: z.number().min(1),
-  format: z.number().min(1).max(8),
+  lobbySize: z.number().min(1).max(8),
   ruleset: z.number().min(0).max(5),
   ids: z
     .array(
