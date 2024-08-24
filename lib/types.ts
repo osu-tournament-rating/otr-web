@@ -49,7 +49,7 @@ export const MatchesSubmitFormSchema = z.object({
   ]),
   rankRangeLowerBound: z.number().min(1),
   teamSize: z.number().min(1).max(8),
-  mode: z.number().min(0).max(3),
+  mode: z.number().min(0).max(5),
   submitterId: z.number().positive(),
   ids: z
     .array(
