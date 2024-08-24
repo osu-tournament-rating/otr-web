@@ -33,9 +33,9 @@ export const LeaderboardsQuerySchema = z.object({
 });
 
 export const MatchesSubmitFormSchema = z.object({
-  tournamentName: z.string().min(1),
+  name: z.string().min(1),
   abbreviation: z.string().min(1),
-  forumPost: z.union([
+  forumUrl: z.union([
     z
       .string()
       .url()
@@ -48,9 +48,8 @@ export const MatchesSubmitFormSchema = z.object({
       .min(1),
   ]),
   rankRangeLowerBound: z.number().min(1),
-  teamSize: z.number().min(1).max(8),
-  mode: z.number().min(0).max(5),
-  submitterId: z.number().positive(),
+  format: z.number().min(1).max(8),
+  ruleset: z.number().min(0).max(5),
   ids: z
     .array(
       z
