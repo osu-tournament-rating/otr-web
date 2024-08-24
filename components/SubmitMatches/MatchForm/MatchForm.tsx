@@ -262,23 +262,6 @@ export default function MatchForm({
                   matches can lead to a restriction
                 </span>
               </div>
-              {userScopes.includes('verifier') && (
-                <div className={clsx(styles.row, styles.checkbox)}>
-                  <input
-                    type="checkbox"
-                    name="verifierCheckBox"
-                    id="verifierCheckBox"
-                    checked={verifierAccepted}
-                    onChange={(e) => {
-                      console.log(e.target.checked);
-                      setVerifierAccepted(e.target.checked);
-                    }}
-                  />
-                  <span onClick={() => setVerifierAccepted(!verifierAccepted)}>
-                    Force verify
-                  </span>
-                </div>
-              )}
             </div>
             <div className={styles.field}>
               <span className={styles.inputError}>
