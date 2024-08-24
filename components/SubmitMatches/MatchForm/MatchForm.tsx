@@ -84,8 +84,9 @@ export default function MatchForm({
                     <option value={0}>osu!</option>
                     <option value={1}>osu!taiko</option>
                     <option value={2}>osu!catch</option>
-                    <option value={3}>osu!mania 4K</option>
-                    <option value={4}>osu!mania 7K</option>
+                    <option value={4}>osu!mania 4K</option>
+                    <option value={5}>osu!mania 7K</option>
+                    <option value={3}>osu!mania &lpar;Other&rpar;</option>
                   </select>
                 </div>
               </div>
