@@ -180,7 +180,7 @@ export default function MatchForm({
               <div className={styles.row}>
                 <div className={styles.field}>
                   <label htmlFor="teamSize">
-                    Format
+                    Lobby size
                     <InfoIcon>
                       <p>
                         <span>
