@@ -210,7 +210,7 @@ export async function saveTournamentMatches(
       abbreviation: formData.get('tournamentAbbreviation'),
       forumUrl: formData.get('forumPostURL'),
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
-      format: parseInt(formData.get('teamSize')),
+      lobbySize: parseInt(formData.get('teamSize')),
       ruleset: parseInt(formData.get('gameMode')),
       ids: matchIDs,
     });
