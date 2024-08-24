@@ -235,7 +235,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                         {mode[tournament.ruleset]}
                       </div>
                       <div className={styles.format}>
-                        {tournament.teamSize}v{tournament.teamSize}
+                        {tournament.lobbySize}v{tournament.lobbySize}
                       </div>
                     </div>
                   </div>
