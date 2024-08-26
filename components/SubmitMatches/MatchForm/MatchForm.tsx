@@ -78,7 +78,7 @@ export default function MatchForm({
                 <div className={styles.field}>
                   <label htmlFor="gameMode">Game mode</label>
                   <span className={styles.inputError}>
-                    {state?.errors?.mode}
+                    {state?.errors?.ruleset}
                   </span>
                   <select name="gameMode" id={styles.gamemode} required={true}>
                     <option value={0}>osu!</option>
