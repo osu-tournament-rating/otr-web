@@ -14,7 +14,10 @@ export default function ThemeSwitcher() {
   });
 
   return (
-    <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+    <button
+      id={styles.button}
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+    >
       <div className={styles.themeSwitcher}>
         {theme === 'light' && <Image src={sunSVG} alt="Theme Switcher" fill />}
         {theme === 'dark' && <Image src={moonSVG} alt="Theme Switcher" fill />}
