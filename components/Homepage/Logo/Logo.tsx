@@ -1,6 +1,6 @@
 'use client';
-import fullLogoDark from '@/public/logos/full-logo-dark.svg';
-import fullLogo from '@/public/logos/full-logo.svg';
+import fullLogoDark from '@/public/logos/full-logo-dark.svg?url';
+import fullLogo from '@/public/logos/full-logo.svg?url';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';

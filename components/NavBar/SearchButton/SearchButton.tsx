@@ -1,7 +1,7 @@
 'use client';
 
 import SearchBar from '@/components/SearchBar/SearchBar';
-import searchIcon from '@/public/icons/search.svg';
+import searchIcon from '@/public/icons/search.svg?url';
 import { AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';

@@ -1,7 +1,7 @@
 'use client';
 
 import { fetchSearchData } from '@/app/actions';
-import searchIcon from '@/public/icons/search.svg';
+import searchIcon from '@/public/icons/search.svg?url';
 import { useClickAway } from '@uidotdev/usehooks';
 import { AnimatePresence, motion, stagger } from 'framer-motion';
 import Image from 'next/image';

@@ -1,6 +1,6 @@
 'use client';
-import moonSVG from '@/public/icons/moon.svg';
-import sunSVG from '@/public/icons/sun.svg';
+import moonSVG from '@/public/icons/moon.svg?url';
+import sunSVG from '@/public/icons/sun.svg?url';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useHotkeys } from 'react-hotkeys-hook';
