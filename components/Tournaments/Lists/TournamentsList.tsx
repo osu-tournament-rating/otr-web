@@ -65,9 +65,9 @@ export default function TournamentsList({
                 />
               )}
             </th>
-            <th onClick={() => changeSorting('mode')}>
+            <th onClick={() => changeSorting('ruleset')}>
               Ruleset
-              {sorting.name === 'mode' && (
+              {sorting.name === 'ruleset' && (
                 <FontAwesomeIcon
                   icon={sorting.direction === 'asc' ? faAngleUp : faAngleDown}
                 />
@@ -85,7 +85,7 @@ export default function TournamentsList({
         </thead>
         <tbody>
           {data.map((tournament, index) => {
-            const format = `${tournament?.format}v${tournament?.format}`;
+            const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
 
             return (
               <tr key={index}>
@@ -98,7 +98,7 @@ export default function TournamentsList({
                 <td>
                   <div className={styles.rulesetIcon}>
                     <Tooltip
-                      id={`tooltip-${tournament.mode}`}
+                      id={`tooltip-${tournament.ruleset}`}
                       style={{
                         padding: '0.6em 1.2em',
                         borderRadius: '0.6em',
@@ -108,13 +108,13 @@ export default function TournamentsList({
                       }}
                     />
                     <Image
-                      data-tooltip-id={`tooltip-${tournament.mode}`}
+                      data-tooltip-id={`tooltip-${tournament.ruleset}`}
                       data-tooltip-content={
-                        modeIcons[tournament.mode]?.altTournamentsList
+                        modeIcons[tournament.ruleset]?.altTournamentsList
                       }
                       data-tooltip-delay-show={400}
-                      src={modeIcons[tournament.mode].image}
-                      alt={modeIcons[tournament.mode].altTournamentsList}
+                      src={modeIcons[tournament.ruleset].image}
+                      alt={modeIcons[tournament.ruleset].altTournamentsList}
                       fill
                     />
                   </div>
