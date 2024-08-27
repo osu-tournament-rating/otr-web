@@ -19,6 +19,8 @@
   --foreground-inactive-hsl: 0, 0%, 6%;
   --foreground-active-hsl: 0, 0%, 6%;
 
+  --background-navbar-tooltip-hsl: 0, 0%, 100%;
+
   --foreground-nodata-hsl: 210, 2%, 82%;
 
   --color-grey: 0, 0%, 6%;
@@ -238,6 +240,8 @@
   --foreground-active-hsl: 0, 0%, 90%;
 
   --foreground-nodata-hsl: 240, 3%, 22%;
+
+  --background-navbar-tooltip-hsl: 240, 3%, 12%;
 
   --mods-NM-bg: 226, 99%, 65%;
   --mods-NM-bg-row: 226, 99%, 65%, 0.15;

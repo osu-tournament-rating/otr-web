@@ -207,21 +207,17 @@ export async function saveTournamentMatches(
       });
 
     const data = MatchesSubmitFormSchema.parse({
-      tournamentName: formData.get('tournamentName'),
+      name: formData.get('tournamentName'),
       abbreviation: formData.get('tournamentAbbreviation'),
-      forumPost: formData.get('forumPostURL'),
+      forumUrl: formData.get('forumPostURL'),
       rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
-      teamSize: parseInt(formData.get('teamSize')),
-      mode: parseInt(formData.get('gameMode')),
-      submitterId: session?.id ?? 0,
+      lobbySize: parseInt(formData.get('teamSize')),
+      ruleset: parseInt(formData.get('gameMode')),
       ids: matchIDs,
     });
 
-    let isSubmissionVerified =
-      formData.get('verifierCheckBox') == 'on' ?? false;
-
     let tournamentSubmit = await fetch(
-      `${process.env.REACT_APP_API_URL}/tournaments?verify=${isSubmissionVerified}`,
+      `${process.env.REACT_APP_API_URL}/tournaments`,
       {
         method: 'POST',
         headers: {

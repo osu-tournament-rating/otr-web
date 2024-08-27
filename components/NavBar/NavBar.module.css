@@ -54,6 +54,9 @@
   cursor: pointer;
 }
 
+.iconContainer {
+  margin-top: 12px;
+}
 .logoLink,
 .actions .userPropic {
   height: 1.9rem;

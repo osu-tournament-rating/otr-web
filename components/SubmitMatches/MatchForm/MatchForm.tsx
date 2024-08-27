@@ -81,10 +81,12 @@ export default function MatchForm({
                     {state?.errors?.mode}
                   </span>
                   <select name="gameMode" id={styles.gamemode} required={true}>
-                    <option value={0}>osu!Standard</option>
-                    <option value={1}>osu!Taiko</option>
-                    <option value={2}>osu!Catch</option>
-                    <option value={3}>osu!Mania</option>
+                    <option value={0}>osu!</option>
+                    <option value={1}>osu!taiko</option>
+                    <option value={2}>osu!catch</option>
+                    <option value={4}>osu!mania 4K</option>
+                    <option value={5}>osu!mania 7K</option>
+                    <option value={3}>osu!mania (Other)</option>
                   </select>
                 </div>
               </div>
@@ -178,7 +180,7 @@ export default function MatchForm({
               <div className={styles.row}>
                 <div className={styles.field}>
                   <label htmlFor="teamSize">
-                    Team size
+                    Lobby size
                     <InfoIcon>
                       <p>
                         <span>
@@ -260,23 +262,6 @@ export default function MatchForm({
                   matches can lead to a restriction
                 </span>
               </div>
-              {userScopes.includes('verifier') && (
-                <div className={clsx(styles.row, styles.checkbox)}>
-                  <input
-                    type="checkbox"
-                    name="verifierCheckBox"
-                    id="verifierCheckBox"
-                    checked={verifierAccepted}
-                    onChange={(e) => {
-                      console.log(e.target.checked);
-                      setVerifierAccepted(e.target.checked);
-                    }}
-                  />
-                  <span onClick={() => setVerifierAccepted(!verifierAccepted)}>
-                    Force verify
-                  </span>
-                </div>
-              )}
             </div>
             <div className={styles.field}>
               <span className={styles.inputError}>
