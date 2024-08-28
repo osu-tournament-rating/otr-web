@@ -67,8 +67,14 @@
   overflow: hidden;
 }
 
-:is(.userPropic, .logoLink, .themeSwitcher) img {
+:is(.userPropic, .logoLink, .themeSwitcher) svg {
+  height: 100%;
+  width: 100%;
   object-fit: contain;
+}
+
+.logoLink svg {
+  fill: hsla(var(--accent-color));
 }
 
 @media (max-width: 1040px) {

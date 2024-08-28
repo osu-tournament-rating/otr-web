@@ -1,6 +1,7 @@
 'use client';
 
 import { getOsuModeCookie } from '@/app/actions';
+import Logo from '@/public/logos/small.svg';
 import logo from '@/public/logos/small.svg?url';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,7 +26,8 @@ export default function NavBar() {
   return (
     <nav className={styles.navbar}>
       <Link href={'/'} className={styles.logoLink}>
-        <Image src={logo} alt="o!TR" fill />
+        {/* <Image src={logo} alt="o!TR" fill /> */}
+        <Logo />
       </Link>
       <div className={styles.content}>
         <Routes />
