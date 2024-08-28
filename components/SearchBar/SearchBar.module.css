@@ -59,10 +59,6 @@
   position: relative;
 }
 
-.bar .icon img {
-  object-fit: contain;
-}
-
 .content {
   width: 100%;
   height: fit-content;
@@ -198,9 +194,4 @@
 
 [data-theme='dark'] .bar input::placeholder {
   color: #999;
-}
-
-[data-theme='dark'] .bar .icon img {
-  -webkit-filter: invert(80%);
-  filter: invert(80%);
 }
