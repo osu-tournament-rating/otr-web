@@ -21,7 +21,7 @@
 
   --background-navbar-tooltip-hsl: 0, 0%, 100%;
 
-  --foreground-nodata-hsl: 210, 2%, 82%;
+  --foreground-nodata-hsl: 0, 0%, 6%, 0.15;
 
   --color-grey: 0, 0%, 6%;
 
@@ -231,7 +231,7 @@
   --foreground-inactive-hsl: 0, 0%, 70%;
   --foreground-active-hsl: 0, 0%, 90%;
 
-  --foreground-nodata-hsl: 240, 3%, 22%;
+  --foreground-nodata-hsl: 240, 3%, 23%;
 
   --background-navbar-tooltip-hsl: 240, 3%, 12%;
 
@@ -339,6 +339,25 @@ a,
 button {
   border: 0;
   font-family: var(--font-families);
+}
+
+/* Addressing all the SVGs in the project, not touching the SVGs inside tables */
+*:not(table, thead, th):has(svg) > svg {
+  width: 100%;
+  height: 100%;
+  fill: transparent;
+  stroke: transparent;
+
+  &.stroke {
+    stroke: hsla(var(--foreground-hsl));
+  }
+  &.fill {
+    fill: hsla(var(--foreground-hsl));
+  }
+  &.both {
+    fill: hsla(var(--foreground-hsl));
+    stroke: hsla(var(--foreground-hsl));
+  }
 }
 
 .graphs_basic_tooltip {

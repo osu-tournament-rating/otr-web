@@ -1,5 +1,6 @@
 'use client';
 import ProvisionalBadge from '@/components/Badges/Provisional/ProvisionalBadge';
+import OTRlogo from '@/public/logos/otr-logo-2.svg';
 import clsx from 'clsx';
 import Image from 'next/image';
 import UserRatingProgressBar from '../UserRatingProgressBar/UserRatingProgressBar';
@@ -22,7 +23,7 @@ export default function UserMainCard({ data }: { data: {} }) {
               fill
             />
           ) : (
-            <Image src={`/logos/otr-logo-2.svg`} alt={"Player's Tier"} fill />
+            <OTRlogo className="fill" />
           )}
         </div>
       </div>

@@ -1,9 +1,9 @@
 'use client';
 import { changeOsuModeCookie } from '@/app/actions';
-import ctbSVG from '@/public/icons/ctb.svg';
-import maniaSVG from '@/public/icons/mania.svg';
-import standardSVG from '@/public/icons/osu.svg';
-import taikoSVG from '@/public/icons/taiko.svg';
+import ctbSVG from '@/public/icons/ctb.svg?url';
+import maniaSVG from '@/public/icons/mania.svg?url';
+import standardSVG from '@/public/icons/osu.svg?url';
+import taikoSVG from '@/public/icons/taiko.svg?url';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
