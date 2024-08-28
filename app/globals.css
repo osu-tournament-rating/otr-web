@@ -341,7 +341,8 @@ button {
   font-family: var(--font-families);
 }
 
-*:has(svg) > svg {
+/* Addressing all the SVGs in the project, not touching the SVGs inside tables */
+*:not(table, thead, th):has(svg) > svg {
   width: 100%;
   height: 100%;
   fill: transparent;
