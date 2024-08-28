@@ -167,7 +167,7 @@
   animation: l13 1s infinite linear;
   margin: auto;
   display: inline-block;
-  margin-top: 2.5px;
+  margin-top: 1px;
 }
 
 [data-theme='dark'] .bar .icon span[aria-saving='true'] {
