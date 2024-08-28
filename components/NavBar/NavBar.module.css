@@ -67,14 +67,16 @@
   overflow: hidden;
 }
 
-:is(.userPropic, .logoLink, .themeSwitcher) svg {
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-}
-
 .logoLink svg {
   fill: hsla(var(--accent-color));
+}
+
+.actions > *:has(svg) > svg {
+  stroke: hsla(var(--foreground-inactive-hsl));
+  transition: stroke 0.2s ease-out;
+}
+.actions > *:has(svg) > svg:hover {
+  stroke: hsla(var(--foreground-active-hsl));
 }
 
 @media (max-width: 1040px) {

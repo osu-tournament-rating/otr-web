@@ -1,7 +1,7 @@
 'use client';
 
 import SearchBar from '@/components/SearchBar/SearchBar';
-import searchIcon from '@/public/icons/search.svg?url';
+import SearchIcon from '@/public/icons/search.svg';
 import { AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -21,7 +21,7 @@ export default function SearchButton() {
         className={styles.searchButton}
         onClick={() => setIsSeachBarOpen((prev) => !prev)}
       >
-        <Image src={searchIcon} alt={'search'} fill />
+        <SearchIcon />
       </div>
       <AnimatePresence /* mode="wait" */>
         {isSeachBarOpen && <SearchBar setIsSeachBarOpen={setIsSeachBarOpen} />}
