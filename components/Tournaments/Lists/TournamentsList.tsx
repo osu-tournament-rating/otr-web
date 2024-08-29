@@ -4,7 +4,6 @@ import Pagination from '@/components/Pagination/Pagination';
 import { modeIcons } from '@/lib/types';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
@@ -87,6 +86,8 @@ export default function TournamentsList({
           {data.map((tournament, index) => {
             const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
 
+            const IconComponent = modeIcons[tournament.ruleset].image;
+
             return (
               <tr key={index}>
                 <td>
@@ -107,15 +108,13 @@ export default function TournamentsList({
                         color: '#333',
                       }}
                     />
-                    <Image
+                    <IconComponent
+                      class="fill"
                       data-tooltip-id={`tooltip-${tournament.ruleset}`}
                       data-tooltip-content={
                         modeIcons[tournament.ruleset]?.altTournamentsList
                       }
                       data-tooltip-delay-show={400}
-                      src={modeIcons[tournament.ruleset].image}
-                      alt={modeIcons[tournament.ruleset].altTournamentsList}
-                      fill
                     />
                   </div>
                 </td>

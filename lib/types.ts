@@ -1,7 +1,7 @@
-import ctbSVG from '@/public/icons/Ruleset Catch.svg';
-import maniaSVG from '@/public/icons/Ruleset Mania.svg';
-import standardSVG from '@/public/icons/Ruleset Standard.svg';
-import taikoSVG from '@/public/icons/Ruleset Taiko.svg';
+import CtbSVG from '@/public/icons/Ruleset Catch.svg';
+import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
+import StandardSVG from '@/public/icons/Ruleset Standard.svg';
+import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
 import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
 
@@ -9,22 +9,22 @@ export const modeIcons: {
   [key: string]: { image: any; alt: string; altTournamentList: string };
 } = {
   '0': {
-    image: standardSVG,
+    image: StandardSVG,
     alt: 'Standard',
     altTournamentsList: 'Standard',
   },
   '1': {
-    image: taikoSVG,
+    image: TaikoSVG,
     alt: 'Taiko',
     altTournamentsList: 'Taiko',
   },
   '2': {
-    image: ctbSVG,
+    image: CtbSVG,
     alt: 'CTB',
     altTournamentsList: 'Catch',
   },
   '3': {
-    image: maniaSVG,
+    image: ManiaSVG,
     alt: 'Mania',
     altTournamentsList: 'Mania',
   },

@@ -71,18 +71,9 @@
 
 .rulesetIcon {
   aspect-ratio: 1;
-  height: 1.6rem;
-  width: 1.6em;
+  height: 1.5rem;
+  width: 1.5em;
   border-radius: 50vw;
   margin: auto;
   position: relative;
-}
-
-.rulesetIcon img {
-  object-fit: contain;
-}
-
-[data-theme='dark'] .rulesetIcon {
-  filter: invert(99%) sepia(17%) saturate(86%) hue-rotate(139deg)
-    brightness(111%) contrast(70%);
 }

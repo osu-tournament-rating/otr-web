@@ -364,6 +364,11 @@ button {
   fill: transparent;
   stroke: transparent;
 
+  &:is(:focus, :focus-visible) {
+    border: 0;
+    outline: 0;
+  }
+
   &.stroke {
     stroke: hsla(var(--foreground-hsl));
   }
