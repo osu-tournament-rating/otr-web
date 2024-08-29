@@ -52,6 +52,9 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
 }
 
 .iconContainer {

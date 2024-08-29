@@ -37,19 +37,16 @@
   transition: all 0.2s ease-out;
 }
 
-.tooltipContent > div {
+.tooltipContent > :is(div, button) {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.tooltipContent > div {
   cursor: pointer;
   transition: color 0.2s ease;
   border-radius: 4px;
   color: hsla(var(--foreground-inactive-hsl));
 }
 
-.tooltipContent > div:hover {
+.tooltipContent > :is(div, button):hover {
   color: hsla(var(--foreground-active-hsl));
 }
