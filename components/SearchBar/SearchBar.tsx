@@ -1,7 +1,7 @@
 'use client';
 
 import { fetchSearchData } from '@/app/actions';
-import searchIcon from '@/public/icons/search.svg';
+import SearchIcon from '@/public/icons/search.svg';
 import { useClickAway } from '@uidotdev/usehooks';
 import { AnimatePresence, motion, stagger } from 'framer-motion';
 import Image from 'next/image';
@@ -161,7 +161,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             {isLoading ? (
               <span aria-saving="true" />
             ) : (
-              <Image src={searchIcon} alt={'search icon'} fill />
+              <SearchIcon className="stroke" />
             )}
           </div>
         </form>

@@ -2,14 +2,5 @@
   position: relative;
   height: 1.85rem;
   width: 1.9rem;
-}
-
-.searchButton img {
-  object-fit: contain;
   cursor: pointer;
-}
-
-[data-theme='dark'] .searchButton img {
-  -webkit-filter: invert(75%);
-  filter: invert(75%);
 }

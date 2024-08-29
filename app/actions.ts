@@ -460,7 +460,7 @@ export async function fetchLeaderboard(params: {}) {
   let backendString = new URLSearchParams(backendObject).toString();
 
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/leaderboards?mode=${osuMode}&${backendString}`,
+    `${process.env.REACT_APP_API_URL}/leaderboards?ruleset=${osuMode}&${backendString}`,
     {
       headers: {
         'Content-Type': 'application/json',
