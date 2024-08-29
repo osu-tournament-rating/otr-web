@@ -102,6 +102,22 @@ export async function login(cookie: {
   return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
 }
 
+export async function logout() {
+  const session = await getSession();
+
+  if (session) {
+    try {
+      session.destroy(); // delete the session made with IronSession - delete it's session cookie
+      await cookies().delete('OTR-Refresh-Token'); // delete the cookie that contains the refresh token
+      await cookies().delete('OTR-user-selected-osu-mode'); // delete the cookie that contains the selected osu mode
+    } catch (error) {
+      console.log(error);
+    } finally {
+      return redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
+    }
+  }
+}
+
 export async function getLoggedUser(accessToken: string) {
   let res = await fetch(`${process.env.REACT_APP_API_URL}/me`, {
     method: 'GET',

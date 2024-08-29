@@ -1,14 +1,20 @@
 'use client';
 
+import { logout } from '@/app/actions';
 import { useUser } from '@/util/hooks';
 import Image from 'next/image';
 import styles from '../NavBar.module.css';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import Tooltip from './../Tooltip/Tooltip';
+
 const tooltipContent = (
   <>
     {/* <div>Friends</div> */}
-    <div>Sign out</div>
+    <div>
+      <form action={logout}>
+        <button>Sign out</button>
+      </form>
+    </div>
     <div className={styles.iconContainer}>
       <ThemeSwitcher />
     </div>
