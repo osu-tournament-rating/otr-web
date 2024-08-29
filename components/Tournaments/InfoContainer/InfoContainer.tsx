@@ -19,7 +19,7 @@ export default function InfoContainer({
           <div className={styles.name}>Format</div>
           <div
             className={styles.value}
-          >{`${data?.teamSize}v${data?.teamSize}`}</div>
+          >{`${data?.lobbySize}v${data?.lobbySize}`}</div>
         </div>
         <div className={styles.field}>
           <div className={styles.name}>Abbreviation</div>
@@ -28,9 +28,7 @@ export default function InfoContainer({
         <div className={styles.field}>
           <div className={styles.name}>Ruleset</div>
           <div className={styles.value}>
-            {
-              modeIcons[data?.mode | data?.ruleset]?.altTournamentsList //! the key of ruleset on "/tournaments/{id}" is called "mode", on "/matches/{id}" is called "ruleset"
-            }
+            {modeIcons[data?.ruleset]?.altTournamentsList}
           </div>
         </div>
         <div className={styles.field}>
