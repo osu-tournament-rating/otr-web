@@ -1,8 +1,8 @@
 import { fetchMatchPage } from '@/app/actions';
 import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
 import { dateFormatOptions } from '@/lib/types';
-import linkIcon from '@/public/icons/out.svg';
-import Image from 'next/image';
+import LinkIcon from '@/public/icons/out.svg';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 export default async function page({
@@ -22,9 +22,9 @@ export default async function page({
             <span>Missing</span>
             <span className={styles.score}>6 - 1</span>
             <span>Missing</span>
-            {/* <span className={styles.icon}>
-              <Image src={linkIcon} alt="link icon" fill />
-            </span> */}
+            <Link href={'#'} className={styles.icon} target="_blank">
+              <LinkIcon className="fill" />
+            </Link>
           </h1>
           <div className={styles.date}>
             {new Date(matchData?.startTime).toLocaleDateString(

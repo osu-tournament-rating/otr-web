@@ -34,14 +34,9 @@
 
 .header .title .icon {
   position: relative;
-  height: 1.4rem;
-  width: 1.4rem;
+  height: 1.18rem;
+  width: 1.18rem;
   aspect-ratio: 1;
-}
-
-.title .icon img {
-  fill: red;
-  object-fit: cover;
 }
 
 .header .date {
