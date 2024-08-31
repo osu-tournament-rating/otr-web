@@ -81,7 +81,7 @@ export default function MatchForm({
                     {state?.errors?.ruleset}
                   </span>
                   <select
-                    className="field"
+                    className="formField"
                     name="gameMode"
                     id={styles.gamemode}
                     required={true}
@@ -106,7 +106,7 @@ export default function MatchForm({
                     type="url"
                     name="forumPostURL"
                     id="forumPostURL"
-                    className="field"
+                    className="formField"
                     placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
                   />
                 </div>
@@ -122,7 +122,7 @@ export default function MatchForm({
                     type="text"
                     name="tournamentName"
                     id="tournamentName"
-                    className="field"
+                    className="formField"
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
@@ -139,7 +139,7 @@ export default function MatchForm({
                     required={true}
                     name="tournamentAbbreviation"
                     id="tournamentAbbreviation"
-                    className="field"
+                    className="formField"
                     placeholder={'OWC2023'}
                   />
                 </div>
@@ -181,7 +181,7 @@ export default function MatchForm({
                     type="number"
                     name="rankRestriction"
                     id="rankRestriction"
-                    className="field"
+                    className="formField"
                     placeholder={'1000'}
                   />
                 </div>
@@ -214,7 +214,7 @@ export default function MatchForm({
                     {state?.errors?.teamSize}
                   </span>
                   <select
-                    className="field"
+                    className="formField"
                     name="teamSize"
                     id={styles.teamsize}
                     required={true}
@@ -253,7 +253,7 @@ export default function MatchForm({
                   </span>
                   <textarea
                     required={true}
-                    className="field"
+                    className="formField"
                     name="matchLinks"
                     id="matchLinks"
                     placeholder="1 or more separated match links"

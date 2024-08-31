@@ -358,7 +358,7 @@ button {
 }
 
 /* all the inputs that can be into forms */
-.field:is(input, select, textarea, button) {
+.formField:is(input, select, textarea, button) {
   background-color: hsla(var(--background-content-hsl));
   border: 1px solid hsla(var(--gray-500));
   border-radius: 5px;
