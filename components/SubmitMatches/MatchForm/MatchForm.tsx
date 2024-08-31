@@ -80,7 +80,12 @@ export default function MatchForm({
                   <span className={styles.inputError}>
                     {state?.errors?.ruleset}
                   </span>
-                  <select name="gameMode" id={styles.gamemode} required={true}>
+                  <select
+                    className="field"
+                    name="gameMode"
+                    id={styles.gamemode}
+                    required={true}
+                  >
                     <option value={0}>osu!</option>
                     <option value={1}>osu!taiko</option>
                     <option value={2}>osu!catch</option>
@@ -101,6 +106,7 @@ export default function MatchForm({
                     type="url"
                     name="forumPostURL"
                     id="forumPostURL"
+                    className="field"
                     placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
                   />
                 </div>
@@ -116,6 +122,7 @@ export default function MatchForm({
                     type="text"
                     name="tournamentName"
                     id="tournamentName"
+                    className="field"
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
@@ -132,6 +139,7 @@ export default function MatchForm({
                     required={true}
                     name="tournamentAbbreviation"
                     id="tournamentAbbreviation"
+                    className="field"
                     placeholder={'OWC2023'}
                   />
                 </div>
@@ -173,6 +181,7 @@ export default function MatchForm({
                     type="number"
                     name="rankRestriction"
                     id="rankRestriction"
+                    className="field"
                     placeholder={'1000'}
                   />
                 </div>
@@ -204,7 +213,12 @@ export default function MatchForm({
                   <span className={styles.inputError}>
                     {state?.errors?.teamSize}
                   </span>
-                  <select name="teamSize" id={styles.teamsize} required={true}>
+                  <select
+                    className="field"
+                    name="teamSize"
+                    id={styles.teamsize}
+                    required={true}
+                  >
                     <option value={1}>1v1</option>
                     <option value={2}>2v2</option>
                     <option value={3}>3v3</option>
@@ -239,6 +253,7 @@ export default function MatchForm({
                   </span>
                   <textarea
                     required={true}
+                    className="field"
                     name="matchLinks"
                     id="matchLinks"
                     placeholder="1 or more separated match links"
@@ -253,11 +268,10 @@ export default function MatchForm({
                   type="checkbox"
                   name="rulesCheckBox"
                   id="rulesCheckBox"
-                  /* defaultChecked={rulesAccepted} */
                   checked={rulesAccepted}
                   onChange={(e) => setRulesAccepted(e.target.checked)}
                 />
-                <span onClick={() => setRulesAccepted(!rulesAccepted)}>
+                <span onClick={() => setRulesAccepted((prev) => !prev)}>
                   I read the rules and I understand that submitting irrelevant
                   matches can lead to a restriction
                 </span>

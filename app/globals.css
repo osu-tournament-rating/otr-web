@@ -357,6 +357,17 @@ button {
   font-family: var(--font-families);
 }
 
+/* all the inputs that can be into forms */
+.field:is(input, select, textarea, button) {
+  background-color: hsla(var(--background-content-hsl));
+  border: 1px solid hsla(var(--gray-500));
+  border-radius: 5px;
+  font-family: var(--font-families);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
 /* Addressing all the SVGs in the project, not touching the SVGs inside tables */
 *:not(table, thead, th):has(svg) > svg {
   width: 100%;
