@@ -1,7 +1,7 @@
 'use client';
 
 import Pagination from '@/components/Pagination/Pagination';
-import { modeIcons } from '@/lib/types';
+import { dateFormatOptions, modeIcons } from '@/lib/types';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
@@ -118,7 +118,12 @@ export default function TournamentsList({
                     />
                   </div>
                 </td>
-                <td>Missing starting date</td>
+                <td>
+                  {new Date(tournament.startTime).toLocaleDateString(
+                    'en-US',
+                    dateFormatOptions.tournaments.listItem
+                  )}
+                </td>
               </tr>
             );
           })}
