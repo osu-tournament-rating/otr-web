@@ -109,7 +109,7 @@ export default function TournamentsList({
                     />
                     {IconComponent && (
                       <IconComponent
-                        class="fill"
+                        className="fill"
                         data-tooltip-id={`tooltip-${tournament.ruleset}`}
                         data-tooltip-content={
                           modeIcons[tournament.ruleset]?.altTournamentsList
