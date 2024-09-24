@@ -25,8 +25,18 @@ export const modeIcons: {
   },
   '3': {
     image: ManiaSVG,
-    alt: 'Mania',
-    altTournamentsList: 'Mania',
+    alt: 'Mania (Other)',
+    altTournamentsList: 'Mania (Other)',
+  },
+  '4': {
+    image: ManiaSVG,
+    alt: 'Mania 4K',
+    altTournamentsList: 'Mania 4K',
+  },
+  '5': {
+    image: ManiaSVG,
+    alt: 'Mania 7K',
+    altTournamentsList: 'Mania 7K',
   },
 } as const;
 

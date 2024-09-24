@@ -17,7 +17,7 @@ export default function TournamentsList({
   data: {};
 }) {
   //! to remove, just to avoid massive data on the page
-  data.length = 5;
+  data.length = 30;
 
   const [sorting, setSorting] = useState({ name: 'date', direction: 'desc' });
 
@@ -85,8 +85,7 @@ export default function TournamentsList({
         <tbody>
           {data.map((tournament, index) => {
             const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
-
-            const IconComponent = modeIcons[tournament.ruleset].image;
+            const IconComponent = modeIcons[tournament?.ruleset]?.image;
 
             return (
               <tr key={index}>
@@ -108,14 +107,16 @@ export default function TournamentsList({
                         color: '#333',
                       }}
                     />
-                    <IconComponent
-                      class="fill"
-                      data-tooltip-id={`tooltip-${tournament.ruleset}`}
-                      data-tooltip-content={
-                        modeIcons[tournament.ruleset]?.altTournamentsList
-                      }
-                      data-tooltip-delay-show={400}
-                    />
+                    {IconComponent && (
+                      <IconComponent
+                        class="fill"
+                        data-tooltip-id={`tooltip-${tournament.ruleset}`}
+                        data-tooltip-content={
+                          modeIcons[tournament.ruleset]?.altTournamentsList
+                        }
+                        data-tooltip-delay-show={400}
+                      />
+                    )}
                   </div>
                 </td>
                 <td>
