@@ -543,7 +543,7 @@ export async function fetchTournamentsPage(params: {}) {
 
 export async function fetchTournamentPage(tournament: string | number) {
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}`,
+    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?unfiltered=true`, //! to remove unfiltered
     {
       headers: {
         'Content-Type': 'application/json',
