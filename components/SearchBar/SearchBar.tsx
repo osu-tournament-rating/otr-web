@@ -124,7 +124,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
   }, [searchValue]);
 
   useEffect(() => {
-    if (state.status !== 'success') return;
+    if (state?.status !== 'success') return;
 
     setIsLoading(false);
   }, [state]);
@@ -226,7 +226,12 @@ export default function SearchBar({ setIsSeachBarOpen }) {
             <div className={styles.list}>
               {state?.search?.tournaments.slice(0, 12).map((tournament) => {
                 return (
-                  <div className={styles.item} key={tournament.name}>
+                  <Link
+                    className={styles.item}
+                    key={tournament.name}
+                    href={`/tournaments/${tournament.id}`}
+                    onClick={() => setIsSeachBarOpen(false)}
+                  >
                     <div className={styles.name}>
                       {highlightMatch(tournament.name, searchValue)}
                     </div>
@@ -238,7 +243,7 @@ export default function SearchBar({ setIsSeachBarOpen }) {
                         {tournament.lobbySize}v{tournament.lobbySize}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

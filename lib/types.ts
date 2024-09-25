@@ -1,5 +1,62 @@
+import CtbSVG from '@/public/icons/Ruleset Catch.svg';
+import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
+import StandardSVG from '@/public/icons/Ruleset Standard.svg';
+import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
 import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
+
+export const modeIcons: {
+  [key: string]: { image: any; alt: string; altTournamentList: string };
+} = {
+  '0': {
+    image: StandardSVG,
+    alt: 'Standard',
+    altTournamentsList: 'Standard',
+  },
+  '1': {
+    image: TaikoSVG,
+    alt: 'Taiko',
+    altTournamentsList: 'Taiko',
+  },
+  '2': {
+    image: CtbSVG,
+    alt: 'CTB',
+    altTournamentsList: 'Catch',
+  },
+  '3': {
+    image: ManiaSVG,
+    alt: 'Mania (Other)',
+    altTournamentsList: 'Mania (Other)',
+  },
+  '4': {
+    image: ManiaSVG,
+    alt: 'Mania 4K',
+    altTournamentsList: 'Mania 4K',
+  },
+  '5': {
+    image: ManiaSVG,
+    alt: 'Mania 7K',
+    altTournamentsList: 'Mania 7K',
+  },
+} as const;
+
+export const dateFormatOptions = {
+  tournaments: {
+    header: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    },
+    listItem: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+  },
+};
 
 const userpageTimeValues = ['90', '180', '365', '730'] as const;
 
@@ -32,6 +89,10 @@ export const LeaderboardsQuerySchema = z.object({
   pageSize: z.number().default(25),
 });
 
+export const TournamentsQuerySchema = z.object({
+  page: z.number().gte(1).default(1),
+});
+
 export const MatchesSubmitFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),
@@ -62,6 +123,18 @@ export const MatchesSubmitFormSchema = z.object({
     )
     .min(1),
 });
+
+export const matchesVerificationStatuses = {
+  '0': {},
+};
+
+export const statusButtonTypes = {
+  0: { order: 0, className: 'pending', text: 'Pending' }, // None
+  1: { order: 3, className: 'prerejected', text: 'Pre-rejected' }, // PreRejected
+  2: { order: 2, className: 'preverified', text: 'Pre-verified' }, // PreVerified
+  3: { order: 4, className: 'rejected', text: 'Rejected' }, // Rejected
+  4: { order: 1, className: 'verified', text: 'Verified' }, // Verified
+};
 
 export interface SessionUser {
   id?: number;

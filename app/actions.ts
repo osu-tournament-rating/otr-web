@@ -4,6 +4,7 @@ import {
   LeaderboardsQuerySchema,
   MatchesSubmitFormSchema,
   SessionUser,
+  TournamentsQuerySchema,
   UserpageQuerySchema,
   defaultSessionUser,
   sessionOptions,
@@ -528,6 +529,55 @@ export async function fetchDashboard(params: {}) {
       },
     }
   );
+
+  data = await data.json();
+
+  return data;
+}
+
+export async function fetchTournamentsPage(params: {}) {
+  const { page } = params;
+
+  const queryCheck = await TournamentsQuerySchema.safeParse({
+    page: page ? +page : page,
+  });
+
+  if (!queryCheck.success) {
+    return console.log('error');
+  }
+
+  let data = await fetch(`${process.env.REACT_APP_API_URL}/tournaments`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  data = await data.json();
+
+  return data;
+}
+
+export async function fetchTournamentPage(tournament: string | number) {
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?unfiltered=true`, //! to remove unfiltered
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  data = await data.json();
+
+  return data;
+}
+
+export async function fetchMatchPage(match: string | number) {
+  let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
   data = await data.json();
 

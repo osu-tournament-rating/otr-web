@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  flex-flow: column;
+  gap: var(--main-padding);
+}
+
+.content {
+  display: flex;
+  flex-flow: column;
+  gap: var(--internal-gap);
+  background-color: hsl(var(--background-content-hsl));
+  border-radius: var(--main-borderRadius);
+  padding: var(--main-padding);
+}
+
+.header {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-flow: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.header .title {
+  display: flex;
+  flex-flow: row;
+  gap: 0 1.8rem;
+}
+
+.header .title .score {
+  font-weight: 400;
+}
+
+.header .title .icon {
+  position: relative;
+  height: 1.18rem;
+  width: 1.18rem;
+  aspect-ratio: 1;
+}
+
+.header .date {
+  width: fit-content;
+  margin-right: 0.2em;
+}
