@@ -726,3 +726,15 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
     search: searchData,
   };
 }
+
+export async function fetchTournamentsForAdminPage(params: {}) {
+  let data = await fetch(`${process.env.REACT_APP_API_URL}/tournaments`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  data = await data.json();
+
+  return data;
+}
