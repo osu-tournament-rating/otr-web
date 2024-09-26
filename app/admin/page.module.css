@@ -7,8 +7,10 @@
 
 .leftNavigationContainer {
   width: fit-content;
-  height: 100%;
+  height: min-content;
   grid-area: nav;
+  position: sticky;
+  top: var(--main-padding);
 }
 
 .navigation {

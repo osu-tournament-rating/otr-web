@@ -95,8 +95,6 @@ export default function TournamentsListAdmin({
             const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
             const IconComponent = modeIcons[tournament?.ruleset]?.image;
 
-            console.log(tournament);
-
             return (
               <tr key={index}>
                 <td>

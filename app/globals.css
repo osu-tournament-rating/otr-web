@@ -319,7 +319,7 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* font-size: 100%; */
   font-size: 16px; /* FOR FLUID DESIGN */
   scroll-behavior: smooth !important;
