@@ -5,6 +5,7 @@ import { dateFormatOptions, modeIcons } from '@/lib/types';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 import styles from './Lists.module.css';
@@ -16,6 +17,8 @@ export default function TournamentsList({
   params: {};
   data: {};
 }) {
+  const pathname = usePathname();
+
   //! to remove, just to avoid massive data on the page
   data.length = 30;
 
@@ -72,6 +75,16 @@ export default function TournamentsList({
                 />
               )}
             </th>
+            {pathname === '/admin' && (
+              <th onClick={() => changeSorting('user')}>
+                User
+                {sorting.name === 'user' && (
+                  <FontAwesomeIcon
+                    icon={sorting.direction === 'asc' ? faAngleUp : faAngleDown}
+                  />
+                )}
+              </th>
+            )}
             <th onClick={() => changeSorting('date')}>
               Date
               {sorting.name === 'date' && (
@@ -119,6 +132,7 @@ export default function TournamentsList({
                     )}
                   </div>
                 </td>
+                {pathname === '/admin' && <td>missing user</td>}
                 <td>
                   {new Date(tournament.startTime).toLocaleDateString(
                     'en-US',
