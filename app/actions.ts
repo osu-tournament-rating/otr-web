@@ -588,7 +588,7 @@ export async function fetchUserPageTitle(player: string | number) {
   const session = await getSession(true);
 
   let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/players/${player}/info`,
+    `${process.env.REACT_APP_API_URL}/players/${player}`,
     {
       headers: {
         'Content-Type': 'application/json',
