@@ -72,7 +72,7 @@ export async function login(cookie: {
 
   if (loggedUser.error) {
     return NextResponse.redirect(
-      new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL)
+      new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL),
     );
   }
 
@@ -95,7 +95,7 @@ export async function login(cookie: {
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 1209600,
-    }
+    },
   );
 
   await session.save();
@@ -161,7 +161,7 @@ export async function refreshAccessToken() {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
       },
-    }
+    },
   );
 
   if (!res?.ok) {
@@ -188,13 +188,13 @@ export async function revalidateUserData() {
 
 export async function loginIntoWebsite() {
   return redirect(
-    `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public`
+    `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public`,
   );
 }
 
 export async function saveTournamentMatches(
   prevState: any,
-  formData: FormData
+  formData: FormData,
 ) {
   const session = await getSession(true);
 
@@ -221,6 +221,13 @@ export async function saveTournamentMatches(
 
         return parseFloat(value);
       });
+    const beatmapIds: number[] = await formData
+      .get('beatmapLinks')
+      .split(/\r?\n/g)
+      .map((v) => v.split('/').pop())
+      // Remove duplicates
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .map(Number);
 
     const data = MatchesSubmitFormSchema.parse({
       name: formData.get('tournamentName'),
@@ -230,6 +237,7 @@ export async function saveTournamentMatches(
       lobbySize: parseInt(formData.get('teamSize')),
       ruleset: parseInt(formData.get('gameMode')),
       ids: matchIDs,
+      beatmapIds,
     });
 
     let tournamentSubmit = await fetch(
@@ -243,7 +251,7 @@ export async function saveTournamentMatches(
         },
         credentials: 'include',
         body: JSON.stringify(data),
-      }
+      },
     );
 
     if (!tournamentSubmit?.ok) {
@@ -321,7 +329,7 @@ export async function applyLeaderboardFilters(params: {}) {
   });
 
   let urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
+    new URLSearchParams(urlStringObject).toString(),
   );
 
   if (urlParams) return redirect(`/leaderboards?${urlParams}`);
@@ -414,8 +422,8 @@ export async function fetchLeaderboard(params: {}) {
     queryCheck.data.type === 'global'
       ? (backendObject.chartType = 0)
       : queryCheck.data.type === 'country'
-      ? (backendObject.chartType = 1)
-      : null;
+        ? (backendObject.chartType = 1)
+        : null;
   }
 
   /* Check page number */
@@ -482,7 +490,7 @@ export async function fetchLeaderboard(params: {}) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.accessToken}`,
       },
-    }
+    },
   );
 
   data = await data.json();
@@ -517,7 +525,7 @@ export async function fetchDashboard(params: {}) {
   }
 
   const urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
+    new URLSearchParams(urlStringObject).toString(),
   );
 
   let data = await fetch(
@@ -527,7 +535,7 @@ export async function fetchDashboard(params: {}) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.accessToken}`,
       },
-    }
+    },
   );
 
   data = await data.json();
@@ -564,7 +572,7 @@ export async function fetchTournamentPage(tournament: string | number) {
       headers: {
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
 
   data = await data.json();
@@ -587,15 +595,12 @@ export async function fetchMatchPage(match: string | number) {
 export async function fetchUserPageTitle(player: string | number) {
   const session = await getSession(true);
 
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/players/${player}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  let res = await fetch(`${process.env.REACT_APP_API_URL}/players/${player}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+  });
 
   if (res?.ok) {
     res = await res.json();
@@ -636,7 +641,7 @@ export async function fetchUserPage(player: string | number, params) {
   }
 
   const urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
+    new URLSearchParams(urlStringObject).toString(),
   );
 
   let res = await fetch(
@@ -646,7 +651,7 @@ export async function fetchUserPage(player: string | number, params) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session?.accessToken}`,
       },
-    }
+    },
   );
 
   if (!res?.ok) {
@@ -712,7 +717,7 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
         'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
         Authorization: `Bearer ${session.accessToken}`,
       },
-    }
+    },
   );
 
   if (!searchData?.ok) {

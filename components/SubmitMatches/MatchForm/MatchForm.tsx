@@ -261,6 +261,20 @@ export default function MatchForm({
                     rows={6}
                   ></textarea>
                 </div>
+                <div className={styles.field}>
+                  <span className={styles.inputError}>
+                    {state?.errors?.ids}
+                  </span>
+                  <textarea
+                    required={true}
+                    className="formField"
+                    name="beatmapLinks"
+                    id="beatmapLinks"
+                    placeholder="A list of beatmap ids or URLs which were pooled in the tournament, separated by a new line"
+                    cols={30}
+                    rows={6}
+                  ></textarea>
+                </div>
               </div>
               <div className={clsx(styles.row, styles.checkbox)}>
                 <input
