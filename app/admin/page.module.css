@@ -23,11 +23,11 @@
   flex-flow: column;
   align-items: center;
   justify-content: center;
-  gap: 1.4rem;
+  gap: 1.6rem;
 }
 
 .navigation > svg {
-  height: 1.6rem;
+  height: 1.5rem;
   width: auto;
 
   &.active {
