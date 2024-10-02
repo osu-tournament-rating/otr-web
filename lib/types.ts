@@ -119,7 +119,7 @@ export const MatchesSubmitFormSchema = z.object({
           invalid_type_error:
             'Failed to parse one or more entries, ensure all entries are match IDs or osu! match URLs only, one per line',
         })
-        .positive(),
+        .positive()
     )
     .min(1),
   beatmapIds: z
@@ -130,7 +130,7 @@ export const MatchesSubmitFormSchema = z.object({
           invalid_type_error:
             'Failed to parse one or more entries, ensure all entries are osu! beatmap ids, one per line',
         })
-        .positive(),
+        .positive()
     )
     .min(1),
 });
