@@ -76,9 +76,9 @@ export default function TournamentsList({
               )}
             </th>
             {pathname === '/admin' && (
-              <th onClick={() => changeSorting('user')}>
-                User
-                {sorting.name === 'user' && (
+              <th onClick={() => changeSorting('submitter')}>
+                Submitter
+                {sorting.name === 'submitter' && (
                   <FontAwesomeIcon
                     icon={sorting.direction === 'asc' ? faAngleUp : faAngleDown}
                   />
@@ -132,7 +132,7 @@ export default function TournamentsList({
                     )}
                   </div>
                 </td>
-                {pathname === '/admin' && <td>missing user</td>}
+                {pathname === '/admin' && <td>missing Submitter</td>}
                 <td>
                   {new Date(tournament.startTime).toLocaleDateString(
                     'en-US',

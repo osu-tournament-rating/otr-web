@@ -536,6 +536,11 @@ export async function fetchDashboard(params: {}) {
 }
 
 export async function fetchTournamentsPage(params: {}) {
+  const session = await getSession(true);
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
   const { page } = params;
 
   const queryCheck = await TournamentsQuerySchema.safeParse({
@@ -546,11 +551,15 @@ export async function fetchTournamentsPage(params: {}) {
     return console.log('error');
   }
 
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/tournaments`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/tournaments?verified=false`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
 
   data = await data.json();
 
@@ -558,11 +567,17 @@ export async function fetchTournamentsPage(params: {}) {
 }
 
 export async function fetchTournamentPage(tournament: string | number) {
+  const session = await getSession(true);
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
   let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?unfiltered=true`, //! to remove unfiltered
+    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?verified=false`, //! to remove unfiltered
     {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
       },
     }
   );
@@ -573,9 +588,15 @@ export async function fetchTournamentPage(tournament: string | number) {
 }
 
 export async function fetchMatchPage(match: string | number) {
+  const session = await getSession(true);
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
   let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.accessToken}`,
     },
   });
 
@@ -728,11 +749,20 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
 }
 
 export async function fetchTournamentsForAdminPage(params: {}) {
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/tournaments`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  const session = await getSession(true);
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/tournaments?verified=false`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
 
   data = await data.json();
 
