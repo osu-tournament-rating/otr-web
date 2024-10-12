@@ -19,9 +19,9 @@ export default async function page({
       <div className={styles.content}>
         <div className={styles.header}>
           <h1 className={styles.title}>
-            <span>Missing</span>
-            <span className={styles.score}>6 - 1</span>
-            <span>Missing</span>
+            <span>Team A</span>
+            <span className={styles.score}> - </span>
+            <span>Team B</span>
             <Link href={'#'} className={styles.icon} target="_blank">
               <LinkIcon className="fill" />
             </Link>
