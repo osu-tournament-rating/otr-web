@@ -5,6 +5,7 @@ export const revalidate = 60;
 import { fetchTournamentPage } from '@/app/actions';
 import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
 import MatchesList from '@/components/Tournaments/Lists/MatchesList';
+import { dateFormatOptions } from '@/lib/types';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -26,12 +27,19 @@ export default async function page({
 }) {
   const tournamentData = await fetchTournamentPage(id);
 
+  console.log(tournamentData);
+
   return (
     <main className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
           <h1 className={styles.title}>{tournamentData?.name}</h1>
-          <div className={styles.date}>Missing Date</div>
+          <div className={styles.date}>
+            {new Date(tournamentData?.startTime).toLocaleDateString(
+              'en-US',
+              dateFormatOptions.tournaments.header
+            )}
+          </div>
         </div>
         <InfoContainer data={tournamentData} />
         <MatchesList data={tournamentData?.matches} />
