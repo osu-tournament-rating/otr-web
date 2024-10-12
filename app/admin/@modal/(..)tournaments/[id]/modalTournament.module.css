@@ -10,7 +10,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  padding: 5rem 20rem;
+  padding: 5rem 10rem;
 }
 
 .container {
@@ -30,6 +30,7 @@
   padding: var(--main-padding);
   height: 100%;
   width: 100%;
+  overflow: auto;
 }
 
 .header {

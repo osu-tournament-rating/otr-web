@@ -12,8 +12,6 @@ export default async function page({
 }) {
   const matchData = await fetchMatchPage(id);
 
-  console.log(matchData);
-
   return (
     <main className={styles.container}>
       <div className={styles.content}>
