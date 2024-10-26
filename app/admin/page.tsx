@@ -1,4 +1,4 @@
-import TournamentsList from '@/components/Tournaments/Lists/TournamentsList';
+import AdminTournamentsList from '@/components/Tournaments/Lists/AdminTournamentsList';
 import Cup from '@/public/icons/Cup.svg';
 import User from '@/public/icons/User.svg';
 import clsx from 'clsx';
@@ -30,7 +30,7 @@ export default async function page({
       </div>
       <div className={styles.content}>
         <h1 className={styles.title}>Tournaments</h1>
-        <TournamentsList data={tournamentsData} />
+        <AdminTournamentsList data={tournamentsData} />
       </div>
     </main>
   );

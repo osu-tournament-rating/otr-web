@@ -145,6 +145,11 @@
   --search-bar-background: 0, 0%, 97%;
   --search-bar-foreground: 0, 0%, 15%;
 
+  /* ROW STATUS CIRCLE */
+  --status-circle-verified: 118, 66%, 67%;
+  --status-circle-preverified: 36, 100%, 65%;
+  --status-circle-rejected: 0, 66%, 67%;
+
   /* STATUS BUTTON */
   --status-btn-rejected-background: 2, 74%, 90%;
   --status-btn-rejected-foreground: 4, 62%, 41%;
@@ -300,6 +305,11 @@
   /* SEARCH BAR */
   --search-bar-background: 240, 6%, 10%;
   --search-bar-foreground: 0, 0%, 75%;
+
+  /* ROW STATUS CIRCLE */
+  --status-circle-verified: 118, 66%, 67%;
+  --status-circle-preverified: 36, 100%, 65%;
+  --status-circle-rejected: 0, 66%, 67%;
 
   /* STATUS BUTTON */
   --status-btn-rejected-background: 0, 100%, 81%;

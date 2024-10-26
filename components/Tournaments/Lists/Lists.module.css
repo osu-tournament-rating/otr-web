@@ -77,3 +77,74 @@
   margin: auto;
   position: relative;
 }
+
+.gridList {
+  display: flex;
+  flex-flow: column;
+  gap: 0.8rem;
+}
+
+.gridList .row {
+  display: grid;
+  grid-template-columns: 50% 6% 6% 25% 13%;
+  text-align: center;
+  /* height: 3.7rem; */
+  border-radius: 0.4rem;
+  align-items: center;
+  font-size: 1rem;
+  padding: 1.2rem 2rem;
+  background-color: hsla(var(--background-content-childs-hsl));
+
+  &:first-child {
+    padding: 0.6rem 2rem 0.4rem 2rem;
+    background-color: transparent;
+    font-weight: 600;
+  }
+
+  & > :not(:only-child) {
+    width: 100%;
+  }
+
+  & > :first-child {
+    margin-right: auto;
+    text-align: left;
+  }
+
+  & > :last-child {
+    margin-left: auto;
+    text-align: right;
+  }
+}
+
+.infoName {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.8rem;
+
+  & .status {
+    width: 0.5rem;
+    height: 0.5rem;
+    aspect-ratio: 1;
+    border-radius: 50vh;
+
+    &.verified {
+      background-color: hsla(var(--status-circle-verified));
+    }
+
+    &.preverified {
+      background-color: hsla(var(--status-circle-preverified));
+    }
+
+    &.rejected {
+      background-color: hsla(var(--status-circle-rejected));
+    }
+  }
+
+  & .name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}

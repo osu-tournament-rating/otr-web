@@ -1,0 +1,7 @@
+.expandedRow {
+  border-radius: 0.4rem;
+  align-items: center;
+  font-size: 1rem;
+  padding: 1.2rem 2rem;
+  background-color: hsla(var(--background-content-childs-hsl));
+}
