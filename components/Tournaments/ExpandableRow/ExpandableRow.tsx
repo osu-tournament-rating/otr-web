@@ -5,15 +5,18 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Tooltip } from 'react-tooltip';
+import InfoContainer from '../InfoContainer/InfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
 import styles from './ExpandableRow.module.css';
 
 export default function ExpandableRow({ tournament }: { tournament: {} }) {
   const [expanded, setExpanded] = useState(false);
+  const [fetchedData, setFetchedData] = useState(null);
 
   const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
   const IconComponent = modeIcons[tournament?.ruleset]?.image;
-  const status = tournament?.processingStatus;
+  const status = tournament?.verificationStatus;
+  console.log(status);
 
   return (
     <AnimatePresence>
@@ -31,7 +34,7 @@ export default function ExpandableRow({ tournament }: { tournament: {} }) {
                 )}
               />
               <motion.span
-                layout="position"
+                layout="preserve-aspect"
                 layoutId={`${tournament.name}-title`}
                 className={parentStyles.name}
               >
@@ -72,18 +75,32 @@ export default function ExpandableRow({ tournament }: { tournament: {} }) {
             </span>
           </>
         ) : (
-          <>
-            <div className={styles.header}>
-              <motion.div
-                layoutId={`${tournament.name}-title`}
-                style={{ fontSize: '4rem' }}
-              >
-                ciao
-              </motion.div>
-            </div>
-          </>
+          <ExpandedRow tournament={tournament} data={fetchedData} />
         )}
       </motion.div>
     </AnimatePresence>
   );
 }
+
+const ExpandedRow = ({ tournament, data }: { tournament: any; data: any }) => {
+  return (
+    <>
+      <div className={styles.header}>
+        <motion.h1
+          layout="preserve-aspect"
+          layoutId={`${tournament?.name}-title`}
+          className={styles.title}
+        >
+          {tournament?.name}
+        </motion.h1>
+        <div className={styles.date}>
+          {new Date(tournament?.startTime).toLocaleDateString(
+            'en-US',
+            dateFormatOptions.tournaments.header
+          )}
+        </div>
+      </div>
+      <InfoContainer data={tournament} isAdminView={true} />
+    </>
+  );
+};
