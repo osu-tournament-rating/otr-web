@@ -88,7 +88,7 @@
   display: grid;
   grid-template-columns: 50% 6% 6% 25% 13%;
   text-align: center;
-  /* height: 3.7rem; */
+  height: 4rem;
   border-radius: 0.4rem;
   align-items: center;
   font-size: 1rem;

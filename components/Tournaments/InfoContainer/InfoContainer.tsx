@@ -20,7 +20,7 @@ export default function InfoContainer({
       <div className={styles.infoContainer}>
         {isAdminView && (
           <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-            <StatusButton status={data.verificationStatus} />
+            <StatusButton status={data.verificationStatus} canChange />
           </div>
         )}
         <div className={styles.field}>

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import ExpandableRow from '../ExpandableRow/ExpandableRow';
+import ExpandableRow from '../MainExpandableRow/MainExpandableRow';
 import styles from './Lists.module.css';
 
 export default function AdminTournamentsList({

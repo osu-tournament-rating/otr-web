@@ -1,3 +1,4 @@
+import { adminPanelSaveVerified } from '@/app/actions';
 import CtbSVG from '@/public/icons/Ruleset Catch.svg';
 import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
 import StandardSVG from '@/public/icons/Ruleset Standard.svg';
@@ -130,10 +131,38 @@ export const matchesVerificationStatuses = {
 
 export const statusButtonTypes = {
   0: { order: 0, className: 'pending', text: 'Pending' }, // None
-  1: { order: 3, className: 'rejected', text: 'Pre-rejected' }, // PreRejected
-  2: { order: 2, className: 'verified', text: 'Pre-verified' }, // PreVerified
-  3: { order: 4, className: 'rejected', text: 'Rejected' }, // Rejected
-  4: { order: 1, className: 'verified', text: 'Verified' }, // Verified
+  1: {
+    order: 3,
+    className: 'rejected',
+    text: 'Pre-rejected',
+    display: true,
+    verificationValue: 1,
+    function: () => {},
+  }, // PreRejected
+  2: {
+    order: 2,
+    className: 'verified',
+    text: 'Pre-verified',
+    display: true,
+    verificationValue: 2,
+    function: () => {},
+  }, // PreVerified
+  3: {
+    order: 4,
+    className: 'rejected',
+    text: 'Rejected',
+    display: true,
+    verificationValue: 3,
+    function: () => {},
+  }, // Rejected
+  4: {
+    order: 1,
+    className: 'verified',
+    text: 'Verified',
+    display: true,
+    verificationValue: 4,
+    function: adminPanelSaveVerified,
+  }, // Verified
 };
 
 export interface SessionUser {

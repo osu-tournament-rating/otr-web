@@ -1,5 +1,7 @@
 'use client';
 
+import { fetchTournamentPage } from '@/app/actions';
+import StatusButton from '@/components/StatusButton/StatusButton';
 import { dateFormatOptions, modeIcons, statusButtonTypes } from '@/lib/types';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -7,22 +9,40 @@ import { useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 import InfoContainer from '../InfoContainer/InfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
-import styles from './ExpandableRow.module.css';
+import SimpleExpandableRow from '../SimpleExpandableRow/SimpleExpandableRow';
+import styles from './MainExpandableRow.module.css';
 
-export default function ExpandableRow({ tournament }: { tournament: {} }) {
+export default function MainExpandableRow({ tournament }: { tournament: {} }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
 
   const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
   const IconComponent = modeIcons[tournament?.ruleset]?.image;
   const status = tournament?.verificationStatus;
-  console.log(status);
+
+  const handleToggle = async () => {
+    setExpanded(true);
+
+    if (!expanded && !fetchedData && tournament) {
+      setFetchLoading(true);
+      try {
+        const expandedData = await fetchTournamentPage(tournament.id);
+        setFetchedData(expandedData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setFetchLoading(false);
+      }
+    }
+  };
 
   return (
     <AnimatePresence>
       <motion.div
         className={!expanded ? parentStyles.row : styles.expandedRow}
-        onClick={() => setExpanded((prev) => !prev)}
+        onClick={() => !expanded && handleToggle()}
+        style={{ cursor: !expanded ? 'pointer' : 'default' }}
       >
         {!expanded ? (
           <>
@@ -75,17 +95,34 @@ export default function ExpandableRow({ tournament }: { tournament: {} }) {
             </span>
           </>
         ) : (
-          <ExpandedRow tournament={tournament} data={fetchedData} />
+          <ExpandedRow
+            tournament={tournament}
+            fetchedData={fetchedData}
+            setExpanded={setExpanded}
+            fetchLoading={fetchLoading}
+          />
         )}
       </motion.div>
     </AnimatePresence>
   );
 }
 
-const ExpandedRow = ({ tournament, data }: { tournament: any; data: any }) => {
+const ExpandedRow = ({
+  tournament,
+  fetchedData,
+  setExpanded,
+  fetchLoading,
+}: {
+  tournament: any;
+  fetchedData: any;
+  setExpanded: any;
+  fetchLoading: boolean;
+}) => {
+  console.log(fetchedData);
+
   return (
     <>
-      <div className={styles.header}>
+      <div className={styles.header} onClick={() => setExpanded(false)}>
         <motion.h1
           layout="preserve-aspect"
           layoutId={`${tournament?.name}-title`}
@@ -100,7 +137,28 @@ const ExpandedRow = ({ tournament, data }: { tournament: any; data: any }) => {
           )}
         </div>
       </div>
-      <InfoContainer data={tournament} isAdminView={true} />
+      <div className={styles.content}>
+        <InfoContainer data={tournament} isAdminView={true} />
+        {!fetchLoading ? (
+          <div className={styles.matchesList}>
+            {fetchedData?.matches.map((match, index) => {
+              return (
+                <SimpleExpandableRow key={index}>
+                  <span id="matchName">{match.name}</span>
+                  <StatusButton
+                    status={match.verificationStatus}
+                    canChange
+                    id={match.id}
+                    path="matches"
+                  />
+                </SimpleExpandableRow>
+              );
+            })}
+          </div>
+        ) : (
+          <>Loading</>
+        )}
+      </div>
     </>
   );
 };

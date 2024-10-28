@@ -36,7 +36,7 @@
   transition: all 0.2s ease-out;
 }
 
-.tooltipContent > :is(div, button) {
+.tooltipContent > :is(div, button, a) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,6 +44,7 @@
   transition: color 0.2s ease;
   border-radius: 4px;
   color: hsla(var(--foreground-inactive-hsl));
+  text-align: center;
 }
 
 .tooltipContent > :is(div, button):hover {

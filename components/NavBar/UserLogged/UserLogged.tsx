@@ -10,7 +10,7 @@ import Tooltip from './../Tooltip/Tooltip';
 
 const tooltipContent = (
   <>
-    <Link href={'/admin'}>Admin Panel</Link>
+    <Link href={'/admin'}>Admin</Link>
     <div>
       <form action={logout}>
         <button>Sign out</button>

@@ -768,3 +768,45 @@ export async function fetchTournamentsForAdminPage(params: {}) {
 
   return data;
 }
+
+export async function adminPanelSaveVerified(params) {
+  const session = await getSession(true);
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
+  const body = [
+    {
+      path: '/verificationStatus',
+      op: 'replace',
+      value: params.status,
+    },
+    {
+      path: '/rejectionReason',
+      op: 'replace',
+      value: 0,
+    },
+  ];
+
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/${params.path}/${params.id}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
+
+  if (!data.ok) {
+    return {
+      error: { statusText: data.statusText, status: data.status },
+    };
+  }
+
+  data = await data.json();
+
+  return data;
+}

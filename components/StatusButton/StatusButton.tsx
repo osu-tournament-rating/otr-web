@@ -47,25 +47,45 @@ const listItemVariants = {
 export default function StatusButton({
   status,
   canChange = false,
+  path,
+  id,
 }: {
   status: number;
   canChange: boolean;
+  path: string;
+  id: string | number;
 }) {
+  const [currentStatus, setCurrentStatus] = useState(status);
   const [isOpen, setIsOpen] = useState(false);
+
+  const statusClick = async (intStatus) => {
+    const res = await intStatus.function({
+      status: intStatus.verificationValue,
+      path: path,
+      id: id,
+    });
+    setIsOpen(false);
+
+    if (!res.error) {
+      setCurrentStatus(res.verificationStatus);
+    }
+  };
 
   return (
     <div className={styles.container}>
       <div
         className={clsx(
           styles.button,
-          styles[statusButtonTypes[status]?.className],
+          styles[statusButtonTypes[currentStatus]?.className],
           canChange ? styles.canChange : ''
         )}
         onClick={() => {
           canChange && setIsOpen((prev) => !prev);
         }}
       >
-        <span className={styles.text}>{statusButtonTypes[status]?.text}</span>
+        <span className={styles.text}>
+          {statusButtonTypes[currentStatus]?.text}
+        </span>
         {canChange && (
           <motion.span
             className={styles.icon}
@@ -92,16 +112,23 @@ export default function StatusButton({
             >
               {Object.values(statusButtonTypes)
                 .sort((a, b) => (a.order < b.order ? -1 : 1))
-                .map((status, index) => {
-                  return (
-                    <motion.div
-                      key={index}
-                      className={styles.item}
-                      variants={listItemVariants}
-                    >
-                      {status.text}
-                    </motion.div>
-                  );
+                .map((intStatus, index) => {
+                  if (intStatus?.display) {
+                    return (
+                      <motion.div
+                        key={index}
+                        className={styles.item}
+                        variants={listItemVariants}
+                        onClick={() => {
+                          if (intStatus.function) {
+                            statusClick(intStatus);
+                          }
+                        }}
+                      >
+                        {intStatus.text}
+                      </motion.div>
+                    );
+                  }
                 })}
             </motion.div>
           )}

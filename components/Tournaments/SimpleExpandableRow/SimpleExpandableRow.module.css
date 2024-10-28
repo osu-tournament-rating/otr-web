@@ -1,0 +1,16 @@
+.row {
+  display: flex;
+  flex-flow: row;
+  border-radius: 0.4rem;
+  align-items: center;
+  font-size: 1rem;
+  padding: 1.2rem 2rem;
+  height: 4rem;
+  width: 100%;
+  justify-content: space-between;
+  background-color: hsl(220, 13%, 87%);
+}
+
+[data-theme='dark'] .row {
+  background-color: hsl(240, 4%, 17%);
+}
