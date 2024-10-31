@@ -1,8 +1,8 @@
 'use client';
-import { getSession } from '@/app/actions';
-/* import { User } from '@/lib/types'; */
+
+import { getSessionData } from '@/app/actions';
+import { SessionUser } from '@/lib/types';
 import {
-  DependencyList,
   createContext,
   useEffect,
   useMemo,
@@ -11,25 +11,13 @@ import {
 
 import type { ReactNode } from 'react';
 
-export const UserLoggedContext = createContext<object | undefined>(undefined);
-
-type Props = {
-  children: ReactNode;
-};
-
-function useAsyncEffect(effect: () => Promise<void>, deps?: DependencyList) {
-  useEffect(() => {
-    effect();
-  }, deps);
-}
+export const UserLoggedContext = createContext<SessionUser | undefined>(undefined);
 
 export default function UserProvider({ children }: Props): JSX.Element {
-  const [user, setUser] = useState<object | undefined>(undefined);
+  const [user, setUser] = useState<SessionUser | undefined>(undefined);
 
-  useAsyncEffect(async (): Promise<void> => {
-    let resp: object | undefined = await getSession(true);
-
-    setUser(resp);
+  useEffect(() => {
+    getSessionData().then((sessionData) => { setUser(sessionData) });
   }, []);
 
   return (
@@ -38,3 +26,7 @@ export default function UserProvider({ children }: Props): JSX.Element {
     </UserLoggedContext.Provider>
   );
 }
+
+type Props = {
+  children: ReactNode;
+};

@@ -1,6 +1,6 @@
 import Guidelines from '@/components/SubmitMatches/Guidelines/Guidelines';
 import MatchForm from '@/components/SubmitMatches/MatchForm/MatchForm';
-import { getSession } from '../actions';
+import { getSessionData } from '../actions';
 import styles from './page.module.css';
 
 import type { Metadata } from 'next';
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function page() {
-  const { scopes } = await getSession(true);
+  const { scopes } = await getSessionData();
 
   return (
     <main className={styles.pageContainer}>

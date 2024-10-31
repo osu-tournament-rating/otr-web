@@ -1,5 +1,5 @@
 'use client';
-import { loginIntoWebsite } from '@/app/actions';
+import { prepareLogin } from '@/app/actions/login';
 import { useUser } from '@/util/hooks';
 
 export default function LoginButton() {
@@ -10,7 +10,7 @@ export default function LoginButton() {
       <button
         onClick={(e) => {
           e.preventDefault();
-          return loginIntoWebsite();
+          return prepareLogin();
         }}
         style={{
           padding: '1.2rem 5rem',

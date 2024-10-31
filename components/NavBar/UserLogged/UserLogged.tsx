@@ -1,6 +1,6 @@
 'use client';
 
-import { logout } from '@/app/actions';
+import { logout } from '@/app/actions/login';
 import { useUser } from '@/util/hooks';
 import Image from 'next/image';
 import styles from '../NavBar.module.css';
