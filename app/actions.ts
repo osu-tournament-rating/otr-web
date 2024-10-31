@@ -3,63 +3,12 @@
 import {
   LeaderboardsQuerySchema,
   MatchesSubmitFormSchema,
-  SessionUser,
   TournamentsQuerySchema,
-  UserpageQuerySchema,
-  sessionOptions,
+  UserpageQuerySchema
 } from '@/lib/types';
-import { getIronSession } from 'iron-session';
-import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-
-export async function getSession() {
-  return await getIronSession<SessionUser>(cookies(), sessionOptions);
-}
-
-export async function getSessionData() {
-  return JSON.parse(JSON.stringify((await getSession() as SessionUser)));
-}
-
-export async function refreshAccessToken() {
-  let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
-
-  /* Return if there is no refresh token */
-  if (refreshToken == null) return;
-
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/oauth/refresh?refreshToken=${refreshToken}`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      },
-    }
-  );
-
-  if (!res?.ok) {
-    const errorMessage = await res.text();
-
-    console.log(errorMessage);
-
-    return {
-      error: {
-        status: res?.status,
-        text: res?.statusText,
-        message: errorMessage,
-      },
-    };
-  }
-
-  res = await res.json();
-  return res;
-}
-
-export async function revalidateUserData() {
-  return revalidateTag('user-me');
-}
+import { getSessionData } from './actions/session';
 
 export async function saveTournamentMatches(
   prevState: any,

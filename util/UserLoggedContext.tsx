@@ -1,6 +1,6 @@
 'use client';
 
-import { getSessionData } from '@/app/actions';
+import { getSessionData } from '@/app/actions/session';
 import { SessionUser } from '@/lib/types';
 import {
   createContext,

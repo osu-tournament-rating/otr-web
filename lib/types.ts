@@ -2,12 +2,7 @@ import CtbSVG from '@/public/icons/Ruleset Catch.svg';
 import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
 import StandardSVG from '@/public/icons/Ruleset Standard.svg';
 import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import { AxiosHeaders } from 'axios';
-import { IOtrApiWrapperConfiguration } from '@osu-tournament-rating/otr-api-client';
-import { SessionOptions } from 'iron-session';
 import { z } from 'zod';
-import { validateAccessCredentials } from '@/app/actions/login';
-import { getSession } from '@/app/actions';
 
 export const modeIcons: {
   [key: string]: { image: any; alt: string; altTournamentList: string };
@@ -148,45 +143,8 @@ export interface SessionUser {
   osuPlayMode?: number;
   username?: string;
   scopes?: string[];
+  isLogged: boolean;
+  osuOauthState?: string;
   accessToken?: string;
   refreshToken?: string;
-  isLogged: boolean;
-  isWhitelisted?: boolean;
-  osuOauthState?: string;
-}
-
-export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET!,
-  cookieName: 'otr-session',
-  cookieOptions: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 3550, //3600
-  },
-};
-
-export const wrapperConfiguration: IOtrApiWrapperConfiguration = {
-  baseUrl: 'http://localhost:5075',
-  clientConfiguration: { 
-    headers: new AxiosHeaders()
-      .setContentType('application/json') 
-      .set('Access-Control-Allow-Origin', process.env.REACT_APP_ORIGIN_URL as string)
-  },
-  postConfigureClientMethod(instance) {
-    // Interceptor for handling access credentials
-    instance.interceptors.request.use(async (config) => {
-      if (!(config as any).requiresAuth) {
-        return config;
-      }
-
-      // Silently update the access token if needed
-      await validateAccessCredentials();
-      const session = await getSession();
-      config.headers.setAuthorization(`Bearer ${session.accessToken}`);
-
-      return config;
-    }, (error) => {
-      return Promise.reject(error);
-    });
-  },
 };

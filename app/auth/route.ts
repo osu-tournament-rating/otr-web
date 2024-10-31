@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getSession } from '../actions';
 import { login } from '../actions/login';
+import { getSession } from '../actions/session';
 
 export async function GET(request: Request) {
   const session = await getSession();

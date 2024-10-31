@@ -1,6 +1,6 @@
 import Guidelines from '@/components/SubmitMatches/Guidelines/Guidelines';
 import MatchForm from '@/components/SubmitMatches/MatchForm/MatchForm';
-import { getSessionData } from '../actions';
+import { getSessionData } from '../actions/session';
 import styles from './page.module.css';
 
 import type { Metadata } from 'next';
