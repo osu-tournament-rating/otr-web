@@ -1,11 +1,10 @@
 'use server';
 
 import { apiWrapperConfiguration } from '@/lib/auth';
-import { IAccessCredentialsDTO, MeWrapper, OAuthWrapper, Ruleset } from '@osu-tournament-rating/otr-api-client';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { IAccessCredentialsDTO, MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
 import { redirect } from 'next/navigation';
-import { getSession } from './session';
+import { NextResponse } from 'next/server';
+import { clearCookies, getSession, populateSessionUserData } from './session';
 
 /**
  * Prepares the login flow and redirects to the osu! oauth portal
@@ -66,25 +65,7 @@ export async function login(code: string) {
 
   try {
     const { result } = await meWrapper.get();
-    session.id = result.id;
-    session.playerId = result.player?.id;
-    session.osuId = result.player?.osuId;
-    session.osuCountry = result.player?.country;
-    session.osuPlayMode = result.settings?.ruleset ?? Ruleset.Osu;
-    session.username = result.player?.username;
-    session.scopes = result.scopes;
-  
-    cookies().set({
-      name: 'OTR-user-selected-osu-mode',
-      value: session.osuPlayMode?.toString() ?? Ruleset.Osu.toString(),
-      httpOnly: true,
-      path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1209600,
-    });
-
-    await session.save();
+    await populateSessionUserData(result);
   } catch (err) { 
     console.log(err);
   }
@@ -101,7 +82,7 @@ export async function logout() {
 
   try {
     session.destroy();
-    cookies().delete('OTR-user-selected-osu-mode');
+    await clearCookies();
   } catch (error) {
     console.log(error);
   } finally {

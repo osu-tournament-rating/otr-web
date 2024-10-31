@@ -148,3 +148,9 @@ export interface SessionUser {
   accessToken?: string;
   refreshToken?: string;
 };
+
+/** Names of available cookies */
+export enum CookieNames {
+  /** The {@link Ruleset} currently selected by the user in the navbar */
+  UserSelectedRuleset = 'OTR-user-selected-ruleset'
+}

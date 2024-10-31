@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { getSession } from './app/actions';
 import { validateAccessCredentials } from './app/actions/login';
+import { getSession } from '@/app/actions/session';
 
 export async function middleware(request: NextRequest) {
   const session = await getSession();

@@ -1,6 +1,7 @@
 'use client';
 
-import { getCookie } from '@/app/actions/session';
+import { getCookieValue } from '@/app/actions/session';
+import { CookieNames } from '@/lib/types';
 import Logo from '@/public/logos/small.svg';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
@@ -13,10 +14,14 @@ import SearchButton from './SearchButton/SearchButton';
 import UserLogged from './UserLogged/UserLogged';
 
 export default function NavBar() {
-  const [cookieMode, setCookieMode] = useState({});
+  const [rulesetState, setRulesetState] = useState<Ruleset>(Ruleset.Osu);
 
   useEffect(() => {
-    setCookieMode(getCookie('OTR-user-selected-osu-mode') ?? Ruleset.Osu);
+    getCookieValue(CookieNames.UserSelectedRuleset).then((value) => {
+      if (value) {
+        setRulesetState(Ruleset[value as keyof typeof Ruleset]);
+      }
+    });
   }, []);
 
   return (
@@ -29,7 +34,7 @@ export default function NavBar() {
         {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
           <SearchButton />
-          {cookieMode && <ModeSwitcher mode={cookieMode as string} />}
+          {rulesetState && <ModeSwitcher ruleset={rulesetState} />}
           <UserLogged />
         </div>
       </div>
