@@ -5,7 +5,7 @@ import { AxiosHeaders } from 'axios';
 import { SessionOptions } from 'iron-session';
 
 export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
-  baseUrl: 'http://localhost:5075',
+  baseUrl: process.env.REACT_APP_API_BASE_URL as string,
   clientConfiguration: {
     headers: new AxiosHeaders()
       .setContentType('application/json')
