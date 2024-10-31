@@ -101,15 +101,6 @@ export async function saveTournamentMatches(
   }
 }
 
-export async function getOsuModeCookie() {
-  return cookies().get('OTR-user-selected-osu-mode');
-}
-
-export async function changeOsuModeCookie(mode?: string) {
-  await cookies().set('OTR-user-selected-osu-mode', mode ?? '0');
-  return;
-}
-
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
 }

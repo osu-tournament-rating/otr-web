@@ -1,12 +1,14 @@
 'use client';
-import { changeOsuModeCookie } from '@/app/actions';
+
 import ctbSVG from '@/public/icons/ctb.svg?url';
 import maniaSVG from '@/public/icons/mania.svg?url';
 import standardSVG from '@/public/icons/osu.svg?url';
 import taikoSVG from '@/public/icons/taiko.svg?url';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
+import { setCookie } from '@/app/actions/session';
 
 const modeIcons: { [key: string]: { image: any; alt: string } } = {
   '0': {
@@ -29,7 +31,7 @@ const modeIcons: { [key: string]: { image: any; alt: string } } = {
 
 export default function ModeSwitcher({ mode }: { mode: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(mode ?? '0');
+  const [selectedMode, setSelectedMode] = useState(mode ?? Ruleset.Osu.toString());
 
   return (
     <div className={styles.modeSwitcher}>
@@ -51,9 +53,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={async () => {
-              setSelectedMode('0');
+              setSelectedMode(Ruleset.Osu.toString());
               setIsOpen(false);
-              return await changeOsuModeCookie('0');
+              return setCookie('OTR-user-selected-osu-mode', Ruleset.Osu.toString());
             }}
           >
             osu!
@@ -61,9 +63,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('3');
+              setSelectedMode(Ruleset.ManiaOther.toString());
               setIsOpen(false);
-              return changeOsuModeCookie('3');
+              return setCookie('OTR-user-selected-osu-mode', Ruleset.ManiaOther.toString());
             }}
           >
             osu!Mania
@@ -71,9 +73,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('1');
+              setSelectedMode(Ruleset.Taiko.toString());
               setIsOpen(false);
-              return changeOsuModeCookie('1');
+              return setCookie('OTR-user-selected-osu-mode', Ruleset.Taiko.toString());
             }}
           >
             osu!Taiko
@@ -81,9 +83,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('2');
+              setSelectedMode(Ruleset.Catch.toString());
               setIsOpen(false);
-              return changeOsuModeCookie('2');
+              return setCookie('OTR-user-selected-osu-mode', Ruleset.Catch.toString());
             }}
           >
             osu!Catch

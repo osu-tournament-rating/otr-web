@@ -1,8 +1,8 @@
 'use client';
 
-import { getOsuModeCookie } from '@/app/actions';
+import { getCookie } from '@/app/actions/session';
 import Logo from '@/public/logos/small.svg';
-import Image from 'next/image';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
@@ -16,10 +16,7 @@ export default function NavBar() {
   const [cookieMode, setCookieMode] = useState({});
 
   useEffect(() => {
-    const cookie = Promise.resolve(getOsuModeCookie());
-    cookie.then((value) => {
-      setCookieMode(value);
-    });
+    setCookieMode(getCookie('OTR-user-selected-osu-mode') ?? Ruleset.Osu);
   }, []);
 
   return (
@@ -32,7 +29,7 @@ export default function NavBar() {
         {/* <Link href={'/donate'}>Donate</Link> */}
         <div className={styles.actions}>
           <SearchButton />
-          {cookieMode?.value && <ModeSwitcher mode={cookieMode?.value} />}
+          {cookieMode && <ModeSwitcher mode={cookieMode as string} />}
           <UserLogged />
         </div>
       </div>
