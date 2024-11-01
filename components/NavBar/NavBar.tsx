@@ -17,7 +17,7 @@ export default function NavBar() {
   const [rulesetState, setRulesetState] = useState<Ruleset>(Ruleset.Osu);
 
   useEffect(() => {
-    getCookieValue(CookieNames.UserSelectedRuleset).then((value) => {
+    getCookieValue(CookieNames.SelectedRuleset).then((value) => {
       if (value) {
         setRulesetState(Ruleset[value as keyof typeof Ruleset]);
       }

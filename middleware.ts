@@ -3,18 +3,20 @@ import { NextResponse } from 'next/server';
 import { validateAccessCredentials } from '@/app/actions/login';
 import { getSession } from '@/app/actions/session';
 
-export async function middleware(request: NextRequest) {
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+
   // Validate access credentials if possible
-  await validateAccessCredentials({ middleware: true });
-  const session = await getSession();
+  await validateAccessCredentials({ req, res });
+  const session = await getSession({ req, res });
 
   // Redirect users that arent logged in
   if (!session.isLogged) {
-    console.log('mw: redirected unauthed user');
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // Pass through the existing response headers in case cookies are set
+    return NextResponse.redirect(new URL('/unauthorized', req.url), { headers: res.headers });
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {

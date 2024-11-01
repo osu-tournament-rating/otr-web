@@ -46,7 +46,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={async () => {
               setSelectedRuleset(Ruleset.Osu);
               setIsOpen(false);
-              return setCookieValue(CookieNames.UserSelectedRuleset, Ruleset.Osu.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Osu.toString());
             }}
           >
             osu!
@@ -56,7 +56,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.ManiaOther);
               setIsOpen(false);
-              return setCookieValue(CookieNames.UserSelectedRuleset, Ruleset.ManiaOther.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.ManiaOther.toString());
             }}
           >
             osu!Mania
@@ -66,7 +66,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.Taiko);
               setIsOpen(false);
-              return setCookieValue(CookieNames.UserSelectedRuleset, Ruleset.Taiko.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Taiko.toString());
             }}
           >
             osu!Taiko
@@ -76,7 +76,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.Catch);
               setIsOpen(false);
-              return setCookieValue(CookieNames.UserSelectedRuleset, Ruleset.Catch.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Catch.toString());
             }}
           >
             osu!Catch

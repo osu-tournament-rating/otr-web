@@ -1,11 +1,11 @@
 'use server';
 
-import { CookieNames, SessionUser } from '@/lib/types';
+import { CookieNames, GetSessionParams, SessionUser } from '@/lib/types';
 import { getIronSession } from 'iron-session';
 import { ironSessionOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { Ruleset, UserDTO } from '@osu-tournament-rating/otr-api-client';
-import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { ResponseCookie, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
 
 /** Cookie options (omits name, value) */
 const cookieOptions: Partial<ResponseCookie> = {
@@ -20,7 +20,11 @@ const cookieOptions: Partial<ResponseCookie> = {
  * Gets the current session
  * @returns The current session
  */
-export async function getSession() {
+export async function getSession(params?: GetSessionParams) {
+  if (params) {
+    const { req, res } = params;
+    return await getIronSession<SessionUser>(req, res, ironSessionOptions);
+  }
   return await getIronSession<SessionUser>(cookies(), ironSessionOptions);
 }
 
@@ -48,7 +52,7 @@ export async function populateSessionUserData(user: UserDTO) {
   session.scopes = user.scopes;
 
   cookies().set({
-    name: CookieNames.UserSelectedRuleset,
+    name: CookieNames.SelectedRuleset,
     value: session.osuPlayMode?.toString() ?? Ruleset.Osu.toString(),
     ...cookieOptions
   });
@@ -76,9 +80,10 @@ export async function setCookieValue(cookie: CookieNames, value: any) {
 
 /**
  * Clears all cookies
+ * @param cookieStore Optional cookies to use in place of {@link cookies}
  */
-export async function clearCookies() {
+export async function clearCookies(cookieStore?: ResponseCookies) {
   Object.keys(CookieNames).forEach((name) => {
-    cookies().delete(name);
+    (cookieStore ?? cookies()).delete(name);
   });
 }

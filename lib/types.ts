@@ -2,6 +2,7 @@ import CtbSVG from '@/public/icons/Ruleset Catch.svg';
 import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
 import StandardSVG from '@/public/icons/Ruleset Standard.svg';
 import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 export const modeIcons: {
@@ -152,5 +153,11 @@ export interface SessionUser {
 /** Names of available cookies */
 export enum CookieNames {
   /** The {@link Ruleset} currently selected by the user in the navbar */
-  UserSelectedRuleset = 'OTR-user-selected-ruleset',
+  SelectedRuleset = 'OTR-selected-ruleset'
 }
+
+/** Parameters used to get the session as an alternative to using read only cookies */
+export type GetSessionParams = {
+  req: NextRequest,
+  res: NextResponse<unknown>
+};

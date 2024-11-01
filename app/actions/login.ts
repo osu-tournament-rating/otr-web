@@ -5,6 +5,7 @@ import { IAccessCredentialsDTO, MeWrapper, OAuthWrapper } from '@osu-tournament-
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 import { clearCookies, getSession, populateSessionUserData } from './session';
+import { GetSessionParams } from '@/lib/types';
 
 /**
  * Prepares the login flow and redirects to the osu! oauth portal
@@ -75,38 +76,27 @@ export async function login(code: string) {
 
 /**
  * Destroys the current session and removes any cookies
- * @returns A client redirect to /unauthorized
+ * @param getSessionParams Optional parameters used to fetch the session
+ * @returns If {@link getSessionParams} are not present, returns a client redirect to root
  */
-export async function logout() {
-  const session = await getSession();
+export async function logout(getSessionParams?: GetSessionParams) {
+  const session = await getSession(getSessionParams);
 
-  try {
-    session.destroy();
-    await clearCookies();
-  } catch (error) {
-    console.log(error);
-  } finally {
+  session.destroy();
+  await clearCookies(getSessionParams?.res?.cookies);
+
+  if (!getSessionParams) {
     return redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL).toString());
   }
-}
-
-export async function refreshAccessToken(refreshToken: string) {
-  const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
-  const { result } = await oauthWrapper.refresh(refreshToken);
-  return result.accessToken!;
 }
 
 /**
  * Checks the expiration of the current access credentials, and refreshes the access token if needed.
  * If the refresh token has expired, the current session is destroyed / user is logged out.
- * 
- * Since we cannot modify cookies directly from middleware, instead of using the logout or refresh
- * actions directly a request is made to the respective route.
- * @param param0 Denotes if the function is being called from middleware
  * @returns A redirect based on the validity of the access credentials
  */
-export async function validateAccessCredentials({ middleware }: { middleware: boolean } = { middleware: false }) {
-  const session = await getSession();
+export async function validateAccessCredentials(getSessionParams?: GetSessionParams) {
+  const session = await getSession(getSessionParams);
   if (!session.isLogged || !session.accessToken || !session.refreshToken) {
     return;
   }
@@ -115,48 +105,33 @@ export async function validateAccessCredentials({ middleware }: { middleware: bo
 
   // If the access token is still valid no action is needed
   if (!accessTokenExpired) {
-    console.log(`validateAccessCredentials: access token not expired`);
     return;
   }
 
   // If the refresh token is expired we need to log in again
   if (refreshTokenExpired) {
-    console.log(`validateAccessCredentials: refresh token expired`);
-    if (middleware) {
-      // If calling from middleware, fetch the logout route instead
-      return await fetch(`${process.env.REACT_APP_ORIGIN_URL}logout`, {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken: session.refreshToken })
-      });
-    } else {
-      // If calling from a server action, log out directly
-      return await logout();
-    }
+    return await logout(getSessionParams);
   }
 
-  if (middleware) {
-    // If calling from middleware, fetch the refresh route instead
-    return await fetch(`${process.env.REACT_APP_ORIGIN_URL}refresh`, {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken: session.refreshToken })
-    });
-  }
+  // Refresh the access token
+  const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
+  const { result } = await oauthWrapper.refresh(session.refreshToken);
+  session.accessToken = result.accessToken;
 
-  // If calling from a server action, refresh directly
-  session.accessToken = await refreshAccessToken(session.refreshToken!);
   await session.save();
 }
 
+/**
+ * Checks the expiration of access credentials
+ * @param accessCredentials Access credentials to check. If not given, they will be retrieved from the session
+ * @returns Whether each token has expired
+ */
 async function checkAccessCredentialsValidity(accessCredentials?: { accessToken?: string, refreshToken?: string }) {
-  accessCredentials ??= await getSession();
-
-  if (!accessCredentials.accessToken || !accessCredentials.refreshToken) {
-    return { accessTokenExpired: true, refreshTokenExpired: true };
-  }
+  const { accessToken, refreshToken } = (accessCredentials ?? await getSession());
 
   return {
-    accessTokenExpired: isTokenExpired(accessCredentials.accessToken), 
-    refreshTokenExpired: isTokenExpired(accessCredentials.refreshToken)
+    accessTokenExpired: accessToken ? isTokenExpired(accessToken) : true, 
+    refreshTokenExpired: refreshToken ? isTokenExpired(refreshToken) : true
   };
 }
 
