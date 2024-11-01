@@ -14,12 +14,12 @@ export async function GET(request: Request) {
   }
 
   if (!code) {
-  console.log('Code was not given');
+    console.log('Code was not given');
     return redirect('/');
   }
 
   if (!state || session.osuOauthState !== state) {
-  console.log('State was not given or does not match the stored state');
+    console.log('State was not given or does not match the stored state');
     return redirect('/');
   }
 

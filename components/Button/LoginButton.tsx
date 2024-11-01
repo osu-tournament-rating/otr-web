@@ -1,11 +1,12 @@
 'use client';
+
 import { prepareLogin } from '@/app/actions/login';
 import { useUser } from '@/util/hooks';
 
 export default function LoginButton() {
   const user = useUser();
 
-  if (!user?.osuId)
+  if (!user?.isLogged)
     return (
       <button
         onClick={(e) => {

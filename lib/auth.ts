@@ -22,7 +22,7 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
       await validateAccessCredentials();
       const session = await getSession();
 
-      // If the access token is not present after the previous, abort the request
+      // If the access token is not present after validating, abort the request
       if (!session.accessToken) {
         return Promise.reject(new Error("Access is required for this request"));
       }

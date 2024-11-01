@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 
 export const UserLoggedContext = createContext<SessionUser | undefined>(undefined);
 
-export default function UserProvider({ children }: Props): JSX.Element {
+export default function UserProvider({ children }: { children: ReactNode }): JSX.Element {
   const [user, setUser] = useState<SessionUser | undefined>(undefined);
 
   useEffect(() => {
@@ -26,7 +26,3 @@ export default function UserProvider({ children }: Props): JSX.Element {
     </UserLoggedContext.Provider>
   );
 }
-
-type Props = {
-  children: ReactNode;
-};

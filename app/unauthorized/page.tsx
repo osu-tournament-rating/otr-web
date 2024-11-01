@@ -3,7 +3,6 @@
 import LoginButton from '@/components/Button/LoginButton';
 import Card from '@/components/Card/Card';
 import { useSetError, useUser } from '@/util/hooks';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
@@ -12,7 +11,8 @@ export default function Unauthorized() {
   const user = useUser();
   const setError = useSetError();
 
-  if (user?.osuId) {
+  if (user?.isLogged) {
+    console.log('/unauthorized: user is logged redirecting')
     return router.push('/');
   }
 

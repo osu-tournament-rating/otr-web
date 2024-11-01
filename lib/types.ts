@@ -152,5 +152,5 @@ export interface SessionUser {
 /** Names of available cookies */
 export enum CookieNames {
   /** The {@link Ruleset} currently selected by the user in the navbar */
-  UserSelectedRuleset = 'OTR-user-selected-ruleset'
+  UserSelectedRuleset = 'OTR-user-selected-ruleset',
 }
