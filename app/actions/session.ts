@@ -7,17 +7,9 @@ import { cookies } from 'next/headers';
 import { Ruleset, UserDTO } from '@osu-tournament-rating/otr-api-client';
 import { ResponseCookie, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
 
-/** Cookie options (omits name, value) */
-const cookieOptions: Partial<ResponseCookie> = {
-  httpOnly: true,
-  path: '/',
-  sameSite: 'strict',
-  secure: process.env.NODE_ENV === 'production',
-  maxAge: 1209600,
-};
-
 /**
  * Gets the current session
+ * @param params Optionally pass a request and response to use as a cookie store instead of {@link cookies}
  * @returns The current session
  */
 export async function getSession(params?: GetSessionParams) {
@@ -30,10 +22,11 @@ export async function getSession(params?: GetSessionParams) {
 
 /**
  * Gets the raw data for the current session
+ * @param params Optionally pass a request and response to use as a cookie store instead of {@link cookies}
  * @returns A {@link SessionUser} serialized as a plain object
  */
-export async function getSessionData() {
-  return JSON.parse(JSON.stringify((await getSession() as SessionUser)));
+export async function getSessionData(params?: GetSessionParams) {
+  return JSON.parse(JSON.stringify((await getSession(params) as SessionUser)));
 }
 
 /**
@@ -51,12 +44,7 @@ export async function populateSessionUserData(user: UserDTO) {
   session.username = user.player?.username;
   session.scopes = user.scopes;
 
-  cookies().set({
-    name: CookieNames.SelectedRuleset,
-    value: session.osuPlayMode?.toString() ?? Ruleset.Osu.toString(),
-    ...cookieOptions
-  });
-
+  await setCookieValue(CookieNames.SelectedRuleset, session.osuPlayMode);
   await session.save();
 }
 
@@ -75,7 +63,7 @@ export async function getCookieValue(cookie: CookieNames) {
  * @param value The value to set
  */
 export async function setCookieValue(cookie: CookieNames, value: any) {
-  cookies().set(cookie, value);
+  cookies().set(cookie, value, cookieOptions);
 }
 
 /**
@@ -87,3 +75,12 @@ export async function clearCookies(cookieStore?: ResponseCookies) {
     (cookieStore ?? cookies()).delete(name);
   });
 }
+
+/** Cookie options (omits name, value) */
+const cookieOptions: Partial<ResponseCookie> = {
+  httpOnly: true,
+  path: '/',
+  sameSite: 'strict',
+  secure: process.env.NODE_ENV === 'production',
+  maxAge: 1209600,
+};

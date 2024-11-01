@@ -1,24 +1,11 @@
 'use client';
 
-import ctbSVG from '@/public/icons/ctb.svg?url';
-import maniaSVG from '@/public/icons/mania.svg?url';
-import standardSVG from '@/public/icons/osu.svg?url';
-import taikoSVG from '@/public/icons/taiko.svg?url';
+import { setCookieValue } from '@/app/actions/session';
+import { CookieNames, rulesetIcons } from '@/lib/types';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
-import { setCookieValue } from '@/app/actions/session';
-import { CookieNames } from '@/lib/types';
-
-function getRulesetIcon(ruleset: Ruleset): { image: any, alt: string } {
-  switch(ruleset) {
-    case Ruleset.Taiko: return { image: taikoSVG, alt: 'osu!Taiko' };
-    case Ruleset.Catch: return { image: ctbSVG, alt: 'osu!Catch' };
-    case Ruleset.ManiaOther: return { image: maniaSVG, alt: 'osu!Mania' };
-    default: return { image: standardSVG, alt: 'osu!' };
-  }
-}
 
 export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,8 +21,8 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
         }}
       >
         <Image
-          src={getRulesetIcon(selectedRuleset).image}
-          alt={getRulesetIcon(selectedRuleset).alt}
+          src={rulesetIcons[selectedRuleset].image}
+          alt={rulesetIcons[selectedRuleset].alt}
           fill
         />
       </button>
@@ -46,7 +33,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={async () => {
               setSelectedRuleset(Ruleset.Osu);
               setIsOpen(false);
-              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Osu.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Osu);
             }}
           >
             osu!
@@ -56,7 +43,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.ManiaOther);
               setIsOpen(false);
-              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.ManiaOther.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.ManiaOther);
             }}
           >
             osu!Mania
@@ -66,7 +53,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.Taiko);
               setIsOpen(false);
-              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Taiko.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Taiko);
             }}
           >
             osu!Taiko
@@ -76,7 +63,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.Catch);
               setIsOpen(false);
-              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Catch.toString());
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Catch);
             }}
           >
             osu!Catch
