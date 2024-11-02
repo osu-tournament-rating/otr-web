@@ -11,8 +11,8 @@ export default function Unauthorized() {
   const user = useUser();
   const setError = useSetError();
 
-  if (user?.isLogged) {
-    console.log('/unauthorized: user is logged redirecting')
+  // TODO: Use an enum for scopes instead of checking against a string literal
+  if (user?.isLogged && user.scopes?.includes('whitelist')) {
     return router.push('/');
   }
 
