@@ -38,9 +38,10 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
 export const ironSessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET!,
   cookieName: 'otr-session',
+  ttl: 1_209_600,
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 3550, //3600
+    sameSite: 'strict'
   },
 };
