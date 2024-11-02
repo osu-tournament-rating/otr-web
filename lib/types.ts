@@ -1,7 +1,7 @@
-import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
+import CtbSVG from '@/public/icons/Ruleset Catch.svg?url';
+import ManiaSVG from '@/public/icons/Ruleset Mania.svg?url';
+import StandardSVG from '@/public/icons/Ruleset Standard.svg?url';
+import TaikoSVG from '@/public/icons/Ruleset Taiko.svg?url';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -49,8 +49,8 @@ export const rulesetIcons: { [key in Ruleset]: RulesetIcon } = {
     image: ManiaSVG,
     alt: 'osu!Mania 7K',
     altTournamentsList: 'Mania 7K',
-  },
-} as const;
+  }
+};
 
 export const dateFormatOptions = {
   tournaments: {

@@ -19,7 +19,7 @@ export default function NavBar() {
   useEffect(() => {
     getCookieValue(CookieNames.SelectedRuleset).then((value) => {
       if (value) {
-        setRulesetState(Ruleset[value as keyof typeof Ruleset]);
+        setRulesetState(value as any as Ruleset);
       }
     });
   }, []);

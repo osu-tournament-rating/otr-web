@@ -8,7 +8,7 @@ import {
 } from '@/lib/types';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { getSessionData } from './actions/session';
+import { getSessionData } from '@/app/actions/session';
 
 export async function saveTournamentMatches(
   prevState: any,

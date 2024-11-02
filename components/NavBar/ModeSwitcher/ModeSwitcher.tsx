@@ -10,7 +10,8 @@ import styles from './ModeSwitcher.module.css';
 export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(ruleset);
-
+  const selectedRulesetIcon = rulesetIcons[selectedRuleset];
+  
   return (
     <div className={styles.modeSwitcher}>
       <button
@@ -21,8 +22,8 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
         }}
       >
         <Image
-          src={rulesetIcons[selectedRuleset].image}
-          alt={rulesetIcons[selectedRuleset].alt}
+          src={selectedRulesetIcon.image}
+          alt={selectedRulesetIcon.alt}
           fill
         />
       </button>
