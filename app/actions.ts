@@ -188,7 +188,7 @@ export async function revalidateUserData() {
 
 export async function loginIntoWebsite() {
   return redirect(
-    `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public`
+    `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public+friends.read`
   );
 }
 
