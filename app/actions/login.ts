@@ -26,7 +26,7 @@ export async function prepareLogin() {
   url.searchParams.set('client_id', process.env.REACT_APP_OSU_CLIENT_ID as string);
   url.searchParams.set('redirect_uri', process.env.REACT_APP_OSU_CALLBACK_URL as string);
   url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', 'public');
+  url.searchParams.set('scope', 'public+friends.read');
   url.searchParams.set('state', state);
 
   return redirect(url.toString());
