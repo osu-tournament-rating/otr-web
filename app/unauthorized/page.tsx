@@ -8,7 +8,7 @@ import styles from './page.module.css';
 
 export default function Unauthorized() {
   const router = useRouter();
-  const user = useUser();
+  const { user } = useUser();
   const setError = useSetError();
 
   // TODO: Use an enum for scopes instead of checking against a string literal

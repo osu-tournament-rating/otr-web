@@ -4,24 +4,38 @@ import { getSessionData } from '@/app/actions/session';
 import { SessionUser } from '@/lib/types';
 import {
   createContext,
+  useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
 import type { ReactNode } from 'react';
 
-export const UserLoggedContext = createContext<SessionUser | undefined>(undefined);
+interface UserContextProps {
+  user: SessionUser | undefined;
+  logout: () => void;
+}
+
+export const UserLoggedContext = createContext<UserContextProps | undefined>(undefined);
 
 export default function UserProvider({ children }: { children: ReactNode }): JSX.Element {
   const [user, setUser] = useState<SessionUser | undefined>(undefined);
 
+  const fetchUser = useCallback(async () => {
+    const sessionData = await getSessionData();
+    setUser(sessionData);
+  }, []);
+
   useEffect(() => {
-    getSessionData().then((sessionData) => { setUser(sessionData) });
+    fetchUser();
+  }, [fetchUser]);
+
+  const logout = useCallback(() => {
+    setUser(undefined);
   }, []);
 
   return (
-    <UserLoggedContext.Provider value={useMemo(() => user, [user])}>
+    <UserLoggedContext.Provider value={{ user, logout }}>
       {children}
     </UserLoggedContext.Provider>
   );

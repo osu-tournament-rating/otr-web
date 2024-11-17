@@ -41,7 +41,6 @@ export const ironSessionOptions: SessionOptions = {
   ttl: 1_209_600,
   cookieOptions: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: process.env.NODE_ENV === 'production'
   },
 };

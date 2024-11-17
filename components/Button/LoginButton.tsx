@@ -4,7 +4,7 @@ import { prepareLogin } from '@/app/actions/login';
 import { useUser } from '@/util/hooks';
 
 export default function LoginButton() {
-  const user = useUser();
+  const { user } = useUser();
 
   if (!user?.isLogged)
     return (

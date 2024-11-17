@@ -26,7 +26,7 @@ export async function prepareLogin() {
   url.searchParams.set('client_id', process.env.REACT_APP_OSU_CLIENT_ID as string);
   url.searchParams.set('redirect_uri', process.env.REACT_APP_OSU_CALLBACK_URL as string);
   url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', 'public+friends.read');
+  url.searchParams.set('scope', 'public friends.read');
   url.searchParams.set('state', state);
 
   return redirect(url.toString());
@@ -86,7 +86,7 @@ export async function logout(getSessionParams?: GetSessionParams) {
   await clearCookies(getSessionParams?.res?.cookies);
 
   if (!getSessionParams) {
-    return redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL).toString());
+    return redirect(new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL).toString());
   }
 }
 
