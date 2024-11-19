@@ -1,7 +1,7 @@
 'use server';
 
 import { apiWrapperConfiguration } from '@/lib/auth';
-import { IAccessCredentialsDTO, MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
+import { AccessCredentialsDTO, MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 import { clearCookies, getSession, populateSessionUserData } from './session';
@@ -47,9 +47,9 @@ export async function login(code: string) {
   // Exchange the osu! auth code for o!TR credentials
   const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
 
-  let accessCredentials: IAccessCredentialsDTO;
+  let accessCredentials: AccessCredentialsDTO;
   try {
-    accessCredentials = (await oauthWrapper.authorize(code)).result;
+    accessCredentials = (await oauthWrapper.authorize({ code })).result;
   } catch (err) {
     console.log(err);
     return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
@@ -115,7 +115,7 @@ export async function validateAccessCredentials(getSessionParams?: GetSessionPar
 
   // Refresh the access token
   const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
-  const { result } = await oauthWrapper.refresh(session.refreshToken);
+  const { result } = await oauthWrapper.refresh({ refreshToken: session.refreshToken });
   session.accessToken = result.accessToken;
 
   await session.save();
