@@ -1,46 +1,27 @@
 import { redirect } from 'next/navigation';
-import { login } from '../actions';
+import { login } from '@/app/actions/login'
+import { getSession } from '@/app/actions/session';
 
 export async function GET(request: Request) {
+  const session = await getSession();
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const refreshToken = searchParams.get('refreshToken');
-  const accessToken = searchParams.get('accessToken');
+  const state = searchParams.get('state');
 
-  // Refresh session if refreshToken is set
-  if (refreshToken && accessToken) {
-    return await login({ accessToken });
+  if (!session.osuOauthState) {
+    console.log('State was not stored');
+    return redirect('/');
   }
 
-  if (code) {
-    await fetch(
-      `${process.env.REACT_APP_API_URL}/oauth/authorize?code=${code}`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-          Authorization: `${process.env.REACT_APP_AUTHORIZATION_SECRET}`,
-        },
-      }
-    )
-      .then((response) => {
-        if (response.status !== 200) {
-          throw new Error('Authorization failed!');
-        }
-
-        return response.json();
-      })
-      .then(async (data) => {
-        if (data) {
-          return await login(data);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  if (!code) {
+    console.log('Code was not given');
+    return redirect('/');
   }
 
-  return redirect('/');
+  if (!state || session.osuOauthState !== state) {
+    console.log('State was not given or does not match the stored state');
+    return redirect('/');
+  }
+
+  return await login(code);
 }

@@ -6,7 +6,7 @@ import styles from '../NavBar.module.css';
 
 export default function Routes() {
   let pathname = usePathname();
-  const user = useUser();
+  const { user } = useUser();
 
   return (
     <div className={styles.routes}>

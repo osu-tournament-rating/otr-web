@@ -16,7 +16,7 @@ export default function Leaderboard({
   params: {};
   data: {};
 }) {
-  const user = useUser();
+  const { user } = useUser();
 
   return (
     <div className={styles.leaderboardContainer} id="leaderboard">

@@ -1,36 +1,17 @@
 'use client';
-import { changeOsuModeCookie } from '@/app/actions';
-import ctbSVG from '@/public/icons/ctb.svg?url';
-import maniaSVG from '@/public/icons/mania.svg?url';
-import standardSVG from '@/public/icons/osu.svg?url';
-import taikoSVG from '@/public/icons/taiko.svg?url';
+
+import { setCookieValue } from '@/app/actions/session';
+import { CookieNames, rulesetIcons } from '@/lib/types';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
 
-const modeIcons: { [key: string]: { image: any; alt: string } } = {
-  '0': {
-    image: standardSVG,
-    alt: 'Standard',
-  },
-  '1': {
-    image: taikoSVG,
-    alt: 'Taiko',
-  },
-  '2': {
-    image: ctbSVG,
-    alt: 'CTB',
-  },
-  '3': {
-    image: maniaSVG,
-    alt: 'Mania',
-  },
-};
-
-export default function ModeSwitcher({ mode }: { mode: string }) {
+export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(mode ?? '0');
-
+  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(ruleset);
+  const selectedRulesetIcon = rulesetIcons[selectedRuleset];
+  
   return (
     <div className={styles.modeSwitcher}>
       <button
@@ -41,8 +22,8 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
         }}
       >
         <Image
-          src={modeIcons[`${selectedMode}`].image}
-          alt={modeIcons[`${selectedMode}`].alt}
+          src={selectedRulesetIcon.image}
+          alt={selectedRulesetIcon.alt}
           fill
         />
       </button>
@@ -51,9 +32,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={async () => {
-              setSelectedMode('0');
+              setSelectedRuleset(Ruleset.Osu);
               setIsOpen(false);
-              return await changeOsuModeCookie('0');
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Osu);
             }}
           >
             osu!
@@ -61,9 +42,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('3');
+              setSelectedRuleset(Ruleset.ManiaOther);
               setIsOpen(false);
-              return changeOsuModeCookie('3');
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.ManiaOther);
             }}
           >
             osu!Mania
@@ -71,9 +52,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('1');
+              setSelectedRuleset(Ruleset.Taiko);
               setIsOpen(false);
-              return changeOsuModeCookie('1');
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Taiko);
             }}
           >
             osu!Taiko
@@ -81,9 +62,9 @@ export default function ModeSwitcher({ mode }: { mode: string }) {
           <button
             className={styles.item}
             onClick={() => {
-              setSelectedMode('2');
+              setSelectedRuleset(Ruleset.Catch);
               setIsOpen(false);
-              return changeOsuModeCookie('2');
+              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.Catch);
             }}
           >
             osu!Catch

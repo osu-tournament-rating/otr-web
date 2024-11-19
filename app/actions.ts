@@ -3,200 +3,18 @@
 import {
   LeaderboardsQuerySchema,
   MatchesSubmitFormSchema,
-  SessionUser,
   TournamentsQuerySchema,
-  UserpageQuerySchema,
-  defaultSessionUser,
-  sessionOptions,
+  UserpageQuerySchema
 } from '@/lib/types';
-import { getIronSession } from 'iron-session';
-import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { NextResponse } from 'next/server';
-
-export async function getSession(onlyData: boolean = false) {
-  const session = await getIronSession<SessionUser>(cookies(), sessionOptions);
-
-  if (!session.isLogged) {
-    session.isLogged = defaultSessionUser.isLogged;
-  }
-
-  // onlyData field will be true only when the website need to get the fields without the full IronSession
-  if (onlyData)
-    return {
-      isLogged: session?.isLogged,
-      id: session?.id,
-      playerId: session?.playerId,
-      osuId: session?.osuId,
-      osuCountry: session?.osuCountry,
-      osuPlayMode: session?.osuPlayMode,
-      osuPlayModeSelected: session?.osuPlayModeSelected,
-      username: session?.username,
-      scopes: session?.scopes,
-      accessToken: session?.accessToken,
-    };
-
-  return session;
-}
-
-export async function login(cookie: {
-  accessToken: string;
-  refreshToken?: string;
-  accessExpiration?: number;
-}) {
-  const session = await getSession();
-
-  if (!cookie)
-    return {
-      error: {
-        status: 400,
-        text: 'Bad Request',
-        message: 'Received bad cookies from osu!.',
-      },
-    };
-
-  session.accessToken = cookie.accessToken;
-
-  if (cookie?.refreshToken) {
-    await cookies().set('OTR-Refresh-Token', cookie.refreshToken, {
-      httpOnly: true,
-      path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1209600,
-    });
-  }
-
-  const loggedUser = await getLoggedUser(cookie.accessToken);
-
-  if (loggedUser.error) {
-    return NextResponse.redirect(
-      new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL)
-    );
-  }
-
-  session.id = loggedUser.id;
-  session.playerId = loggedUser.playerId;
-  session.osuId = loggedUser.osuId;
-  session.osuCountry = loggedUser.country;
-  session.osuPlayMode = loggedUser.settings.ruleset ?? '0';
-  session.osuPlayModeSelected = loggedUser.settings.ruleset ?? '0'; // maybe to delete
-  session.username = loggedUser.username;
-  session.scopes = loggedUser.scopes;
-  session.isLogged = true;
-
-  await cookies().set(
-    'OTR-user-selected-osu-mode',
-    loggedUser.settings.ruleset ?? '0',
-    {
-      httpOnly: true,
-      path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1209600,
-    }
-  );
-
-  await session.save();
-
-  return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
-}
-
-export async function logout() {
-  const session = await getSession();
-
-  if (session) {
-    try {
-      session.destroy(); // delete the session made with IronSession - delete it's session cookie
-      await cookies().delete('OTR-Refresh-Token'); // delete the cookie that contains the refresh token
-      await cookies().delete('OTR-user-selected-osu-mode'); // delete the cookie that contains the selected osu mode
-    } catch (error) {
-      console.log(error);
-    } finally {
-      return redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
-    }
-  }
-}
-
-export async function getLoggedUser(accessToken: string) {
-  let res = await fetch(`${process.env.REACT_APP_API_URL}/me`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!res?.ok) {
-    const errorMessage = await res.text();
-
-    return {
-      error: {
-        status: res.status,
-        text: res.statusText,
-        message: errorMessage,
-      },
-    };
-  }
-
-  res = await res.json();
-  return res;
-}
-
-export async function refreshAccessToken() {
-  let refreshToken = cookies().get('OTR-Refresh-Token')?.value || null;
-
-  /* Return if there is no refresh token */
-  if (refreshToken == null) return;
-
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/oauth/refresh?refreshToken=${refreshToken}`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-      },
-    }
-  );
-
-  if (!res?.ok) {
-    const errorMessage = await res.text();
-
-    console.log(errorMessage);
-
-    return {
-      error: {
-        status: res?.status,
-        text: res?.statusText,
-        message: errorMessage,
-      },
-    };
-  }
-
-  res = await res.json();
-  return res;
-}
-
-export async function revalidateUserData() {
-  return revalidateTag('user-me');
-}
-
-export async function loginIntoWebsite() {
-  return redirect(
-    `https://osu.ppy.sh/oauth/authorize?client_id=${process.env.REACT_APP_OSU_CLIENT_ID}&redirect_uri=${process.env.REACT_APP_OSU_CALLBACK_URL}&response_type=code&scope=public+friends.read`
-  );
-}
+import { getSessionData } from '@/app/actions/session';
 
 export async function saveTournamentMatches(
   prevState: any,
   formData: FormData
 ) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
@@ -283,15 +101,6 @@ export async function saveTournamentMatches(
   }
 }
 
-export async function getOsuModeCookie() {
-  return cookies().get('OTR-user-selected-osu-mode');
-}
-
-export async function changeOsuModeCookie(mode?: string) {
-  await cookies().set('OTR-user-selected-osu-mode', mode ?? '0');
-  return;
-}
-
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
 }
@@ -328,7 +137,7 @@ export async function applyLeaderboardFilters(params: {}) {
 }
 
 export async function fetchLeaderboard(params: {}) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   const osuMode =
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
@@ -491,7 +300,7 @@ export async function fetchLeaderboard(params: {}) {
 }
 
 export async function fetchDashboard(params: {}) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   const osuMode =
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
@@ -585,7 +394,7 @@ export async function fetchMatchPage(match: string | number) {
 }
 
 export async function fetchUserPageTitle(player: string | number) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   let res = await fetch(
     `${process.env.REACT_APP_API_URL}/players/${player}`,
@@ -606,7 +415,7 @@ export async function fetchUserPageTitle(player: string | number) {
 }
 
 export async function fetchUserPage(player: string | number, params) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   const osuMode =
     (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
@@ -687,7 +496,7 @@ export async function paginationParamsToURL(params: {}) {
 }
 
 export async function fetchSearchData(prevState: any, formData: FormData) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   if (!session.id) return redirect('/');
 
