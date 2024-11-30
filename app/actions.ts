@@ -362,19 +362,15 @@ export async function fetchTournamentsPage(params: {}) {
     return console.log('error');
   }
 
-  let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments?verified=false`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
 
-  data = await data.json();
+  let data = await wrapper.list({
+    page: 1,
+    pageSize: 30,
+    verified: false,
+  });
 
-  return data;
+  return data.result;
 }
 
 export async function fetchTournamentPage(tournament: string | number) {

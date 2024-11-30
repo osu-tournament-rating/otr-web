@@ -21,11 +21,7 @@ export default async function page({
     <main className={styles.container}>
       <div className={styles.content}>
         <h1 className={styles.title}>All tournaments</h1>
-        <TournamentsList
-          params={searchParams}
-          data={tournamentsData}
-          /* data={tournamentsData.results} */ //! .results is for the new pagination system
-        />
+        <TournamentsList params={searchParams} data={tournamentsData} />
       </div>
     </main>
   );
