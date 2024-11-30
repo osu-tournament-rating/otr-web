@@ -20,6 +20,8 @@ export default async function page({
 }) {
   const tournamentsData = await fetchTournamentsForAdminPage(searchParams);
 
+  console.log(tournamentsData);
+
   return (
     <main className={styles.container}>
       <div className={styles.leftNavigationContainer}>
@@ -30,7 +32,7 @@ export default async function page({
       </div>
       <div className={styles.content}>
         <h1 className={styles.title}>Tournaments</h1>
-        <AdminTournamentsList data={tournamentsData} />
+        {<AdminTournamentsList data={tournamentsData} />}
       </div>
     </main>
   );

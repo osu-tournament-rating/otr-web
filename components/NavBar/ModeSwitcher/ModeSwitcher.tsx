@@ -11,7 +11,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(ruleset);
   const selectedRulesetIcon = rulesetIcons[selectedRuleset];
-  
+
   return (
     <div className={styles.modeSwitcher}>
       <button
@@ -22,7 +22,7 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
         }}
       >
         <Image
-          src={selectedRulesetIcon.image}
+          src={selectedRulesetIcon.imageUrl}
           alt={selectedRulesetIcon.alt}
           fill
         />
@@ -44,7 +44,10 @@ export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
             onClick={() => {
               setSelectedRuleset(Ruleset.ManiaOther);
               setIsOpen(false);
-              return setCookieValue(CookieNames.SelectedRuleset, Ruleset.ManiaOther);
+              return setCookieValue(
+                CookieNames.SelectedRuleset,
+                Ruleset.ManiaOther
+              );
             }}
           >
             osu!Mania

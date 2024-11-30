@@ -2,7 +2,11 @@
 
 import { fetchTournamentPage } from '@/app/actions';
 import StatusButton from '@/components/StatusButton/StatusButton';
-import { dateFormatOptions, modeIcons, statusButtonTypes } from '@/lib/types';
+import {
+  dateFormatOptions,
+  rulesetIcons,
+  statusButtonTypes,
+} from '@/lib/types';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
@@ -18,7 +22,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
   const [fetchLoading, setFetchLoading] = useState(false);
 
   const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
-  const IconComponent = modeIcons[tournament?.ruleset]?.image;
+  const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
   const status = tournament?.verificationStatus;
 
   const handleToggle = async () => {
@@ -79,7 +83,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
                     className="fill"
                     data-tooltip-id={`tooltip-${tournament.ruleset}`}
                     data-tooltip-content={
-                      modeIcons[tournament.ruleset]?.altTournamentsList
+                      rulesetIcons[tournament.ruleset]?.altTournamentsList
                     }
                     data-tooltip-delay-show={400}
                   />

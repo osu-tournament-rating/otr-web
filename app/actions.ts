@@ -1,14 +1,16 @@
 'use server';
 
+import { getSessionData } from '@/app/actions/session';
+import { apiWrapperConfiguration } from '@/lib/auth';
 import {
   LeaderboardsQuerySchema,
   MatchesSubmitFormSchema,
   TournamentsQuerySchema,
-  UserpageQuerySchema
+  UserpageQuerySchema,
 } from '@/lib/types';
+import { TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { getSessionData } from '@/app/actions/session';
 
 export async function saveTournamentMatches(
   prevState: any,
@@ -345,7 +347,7 @@ export async function fetchDashboard(params: {}) {
 }
 
 export async function fetchTournamentsPage(params: {}) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
@@ -376,7 +378,7 @@ export async function fetchTournamentsPage(params: {}) {
 }
 
 export async function fetchTournamentPage(tournament: string | number) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
@@ -397,7 +399,7 @@ export async function fetchTournamentPage(tournament: string | number) {
 }
 
 export async function fetchMatchPage(match: string | number) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
@@ -417,15 +419,12 @@ export async function fetchMatchPage(match: string | number) {
 export async function fetchUserPageTitle(player: string | number) {
   const session = await getSessionData();
 
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/players/${player}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  let res = await fetch(`${process.env.REACT_APP_API_URL}/players/${player}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+  });
 
   if (res?.ok) {
     res = await res.json();
@@ -558,28 +557,24 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
 }
 
 export async function fetchTournamentsForAdminPage(params: {}) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
 
-  let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments?verified=false`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
 
-  data = await data.json();
+  let data = await wrapper.list({
+    page: 1,
+    pageSize: 30,
+    verified: false,
+  });
 
-  return data;
+  return data.result;
 }
 
 export async function adminPanelSaveVerified(params) {
-  const session = await getSession(true);
+  const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');

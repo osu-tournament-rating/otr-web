@@ -9,9 +9,6 @@ export default function AdminTournamentsList({
   params: {};
   data: {};
 }) {
-  //! to remove, just to avoid massive data on the page
-  data.length = 30;
-
   return (
     <div className={styles.gridList}>
       <div className={styles.row}>
