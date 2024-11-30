@@ -1,6 +1,6 @@
 'use client';
 
-import { logout } from '@/app/actions';
+import { logout } from '@/app/actions/login';
 import { useUser } from '@/util/hooks';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,13 +8,16 @@ import styles from '../NavBar.module.css';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import Tooltip from './../Tooltip/Tooltip';
 
-const tooltipContent = (
+const tooltipContent = (contextLogout: (() => void)) => (
   <>
     <Link href={'/admin'}>Admin</Link>
     <div>
-      <form action={logout}>
-        <button>Sign out</button>
-      </form>
+      <button onClick={() => {
+        contextLogout();
+        return logout();
+      }}>
+        Sign out
+      </button>
     </div>
     <div className={styles.iconContainer}>
       <ThemeSwitcher />
@@ -23,11 +26,11 @@ const tooltipContent = (
 );
 
 export default function UserLogged() {
-  const user = useUser();
+  const { user, logout: contextLogout } = useUser();
 
   if (user?.osuId)
     return (
-      <Tooltip content={tooltipContent}>
+      <Tooltip content={tooltipContent(contextLogout)}>
         <div className={styles.userPropic}>
           <Image
             src={`http://s.ppy.sh/a/${user?.osuId}`}

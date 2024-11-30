@@ -1,60 +1,36 @@
-import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { getSession, refreshAccessToken } from './app/actions';
+import { validateAccessCredentials } from '@/app/actions/login';
+import { getSession } from '@/app/actions/session';
 
-export async function middleware(request: NextRequest) {
-  const session = await getSession();
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
 
-  const { pathname } = request.nextUrl;
+  // Validate access credentials if possible
+  await validateAccessCredentials({ req, res });
+  const session = await getSession({ req, res });
 
-  const PUBLIC_FILE = /.(.*)$/;
-
-  if (
-    !session.isLogged ||
-    (request.nextUrl.pathname.startsWith('/unauthorized') && !session.isLogged)
-  ) {
-    if (cookies().get('OTR-Refresh-Token')?.value) {
-      const refresh = await refreshAccessToken();
-      if (refresh.accessToken) {
-        return NextResponse.redirect(
-          new URL(
-            `/auth?accessToken=${refresh.accessToken}&refreshToken=${refresh.refreshToken}`,
-            request.url
-          )
-        );
-      }
-    }
-
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  // Redirect users that arent logged in
+  // TODO: Use an enum for scopes instead of checking against a string literal
+  if (!session.isLogged || !session.scopes?.includes('whitelist')) {
+    // Pass through the existing response headers in case cookies are set
+    return NextResponse.redirect(new URL('/unauthorized', req.url), { headers: res.headers });
   }
 
-  if (
-    request.nextUrl.pathname.startsWith('/unauthorized') &&
-    session.isLogged
-  ) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  if (
-    pathname.startsWith('/_next') || // exclude Next.js internals
-    pathname.startsWith('/api') || // exclude all API routes
-    pathname.startsWith('/static') || // exclude static files
-    pathname.startsWith('/favicon.ico') || // exclude static files
-    PUBLIC_FILE.test(pathname) // exclude all files in the public folder
-  )
-    return NextResponse.next();
-
-  /* RESTRICT ACCESS OF THESE ROUTES TO ONLY AUTHORIZED USERS */
-  /* if (
-    (request.nextUrl.pathname.startsWith('/dashboard') ||
-      request.nextUrl.pathname.startsWith('/submit')) &&
-    !user?.osuId
-  ) {
-    return NextResponse.redirect(new URL('/', request.url));
-  } */
+  return res;
 }
 
 export const config = {
-  matcher: ['/', '/dashboard', '/leaderboards', '/submit', '/users/:id*'],
+  matcher: [
+    /*
+     * Match all paths except:
+     * - '/api/*' API routes
+     * - '/auth'
+     * - '/unauthorized' Has its own access control
+     * - '/_next/*' Next.js internals
+     * - '/static/*' Static assets
+     * - '/favicon.ico' Static assets
+     */
+    '/((?!api|auth|unauthorized|_next|static|favicon.ico).*)'
+  ]
 };

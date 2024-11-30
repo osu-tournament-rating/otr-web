@@ -1,7 +1,7 @@
 'use client';
 
 import Pagination from '@/components/Pagination/Pagination';
-import { dateFormatOptions, modeIcons } from '@/lib/types';
+import { dateFormatOptions, rulesetIcons } from '@/lib/types';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
@@ -98,7 +98,7 @@ export default function TournamentsList({
         <tbody>
           {data.map((tournament, index) => {
             const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
-            const IconComponent = modeIcons[tournament?.ruleset]?.image;
+            const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
 
             return (
               <tr key={index}>
@@ -125,7 +125,7 @@ export default function TournamentsList({
                         className="fill"
                         data-tooltip-id={`tooltip-${tournament.ruleset}`}
                         data-tooltip-content={
-                          modeIcons[tournament.ruleset]?.altTournamentsList
+                          rulesetIcons[tournament.ruleset]?.altTournamentsList
                         }
                         data-tooltip-delay-show={400}
                       />

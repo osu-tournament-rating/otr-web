@@ -1,5 +1,5 @@
 import StatusButton from '@/components/StatusButton/StatusButton';
-import { modeIcons } from '@/lib/types';
+import { rulesetIcons } from '@/lib/types';
 import Link from 'next/link';
 import styles from './InfoContainer.module.css';
 
@@ -36,7 +36,7 @@ export default function InfoContainer({
         <div className={styles.field}>
           <div className={styles.name}>Ruleset</div>
           <div className={styles.value}>
-            {modeIcons[data?.ruleset]?.altTournamentsList}
+            {rulesetIcons[data?.ruleset]?.altTournamentsList}
           </div>
         </div>
         {isAdminView && (

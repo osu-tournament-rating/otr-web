@@ -1,45 +1,57 @@
 import { adminPanelSaveVerified } from '@/app/actions';
-import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import { SessionOptions } from 'iron-session';
+import CtbSVG from '@/public/icons/Ruleset Catch.svg?url';
+import ManiaSVG from '@/public/icons/Ruleset Mania.svg?url';
+import StandardSVG from '@/public/icons/Ruleset Standard.svg?url';
+import TaikoSVG from '@/public/icons/Ruleset Taiko.svg?url';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-export const modeIcons: {
-  [key: string]: { image: any; alt: string; altTournamentList: string };
-} = {
-  '0': {
+/** Represents an icon for a {@link Ruleset} */
+export interface RulesetIcon {
+  /** Image ref */
+  image: any;
+
+  /** Alt text */
+  alt: string;
+
+  /** Alt text for tournaments list */
+  altTournamentsList: string;
+}
+
+/** Mapping of {@link RulesetIcon}s indexed by {@link Ruleset} */
+export const rulesetIcons: { [key in Ruleset]: RulesetIcon } = {
+  [Ruleset.Osu]: {
     image: StandardSVG,
-    alt: 'Standard',
+    alt: 'osu!',
     altTournamentsList: 'Standard',
   },
-  '1': {
+  [Ruleset.Taiko]: {
     image: TaikoSVG,
-    alt: 'Taiko',
+    alt: 'osu!Taiko',
     altTournamentsList: 'Taiko',
   },
-  '2': {
+  [Ruleset.Catch]: {
     image: CtbSVG,
-    alt: 'CTB',
+    alt: 'osu!Catch',
     altTournamentsList: 'Catch',
   },
-  '3': {
+  [Ruleset.ManiaOther]: {
     image: ManiaSVG,
-    alt: 'Mania (Other)',
+    alt: 'osu!Mania',
     altTournamentsList: 'Mania (Other)',
   },
-  '4': {
+  [Ruleset.Mania4k]: {
     image: ManiaSVG,
-    alt: 'Mania 4K',
+    alt: 'osu!Mania 4K',
     altTournamentsList: 'Mania 4K',
   },
-  '5': {
+  [Ruleset.Mania7k]: {
     image: ManiaSVG,
-    alt: 'Mania 7K',
+    alt: 'osu!Mania 7K',
     altTournamentsList: 'Mania 7K',
   },
-} as const;
+};
 
 export const dateFormatOptions = {
   tournaments: {
@@ -171,25 +183,22 @@ export interface SessionUser {
   osuId?: number;
   osuCountry?: string;
   osuPlayMode?: number;
-  osuPlayModeSelected?: number;
   username?: string;
-  scopes?: [string];
+  scopes?: string[];
+  isLogged: boolean;
+  osuOauthState?: string;
   accessToken?: string;
   refreshToken?: string;
-  isLogged: boolean;
-  isWhitelisted?: boolean;
 }
 
-export const defaultSessionUser: SessionUser = {
-  isLogged: false,
-};
+/** Names of available cookies */
+export enum CookieNames {
+  /** The {@link Ruleset} currently selected by the user in the navbar */
+  SelectedRuleset = 'OTR-selected-ruleset',
+}
 
-export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET!,
-  cookieName: 'otr-session',
-  cookieOptions: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 3550, //3600
-  },
+/** Parameters used to get the session as an alternative to using read only cookies */
+export type GetSessionParams = {
+  req: NextRequest;
+  res: NextResponse<unknown>;
 };
