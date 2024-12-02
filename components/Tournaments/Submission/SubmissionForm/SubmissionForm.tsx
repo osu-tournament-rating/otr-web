@@ -2,13 +2,16 @@
 
 import { handleTournamentFormState } from '@/app/actions/tournaments';
 import Form from '@/components/Form/Form';
+import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
+import { isAdmin } from '@/lib/api';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
-import FormInputError from '@/components/Form/InputError/InputError';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { rulesetIcons } from '@/lib/types';
 
 function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
   const { pending } = useFormStatus();
@@ -23,6 +26,7 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
 export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
   const [formState, formAction] = useFormState(handleTournamentFormState, { success: false, message: '', errors: {} });
   const formRef = useRef<HTMLFormElement>(null);
+  const userIsAdmin = isAdmin(userScopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -66,12 +70,12 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                     id={styles.ruleset}
                     required={true}
                   >
-                    <option value={0}>osu!</option>
-                    <option value={1}>osu!taiko</option>
-                    <option value={2}>osu!catch</option>
-                    <option value={4}>osu!mania 4K</option>
-                    <option value={5}>osu!mania 7K</option>
-                    <option value={3}>osu!mania (Other)</option>
+                    <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
+                    <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
+                    <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
+                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{rulesetIcons[Ruleset.ManiaOther].alt}</option>)}
+                    <option value={Ruleset.Mania4k}>{rulesetIcons[Ruleset.Mania4k].alt}</option>
+                    <option value={Ruleset.Mania7k}>{rulesetIcons[Ruleset.Mania7k].alt}</option>
                   </select>
                 </div>
               </div>
