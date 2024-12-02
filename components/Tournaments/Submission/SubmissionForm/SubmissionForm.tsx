@@ -1,89 +1,69 @@
 'use client';
 
-import { saveTournamentMatches } from '@/app/actions';
+import { handleTournamentFormState } from '@/app/actions/tournaments';
 import Form from '@/components/Form/Form';
-import InfoIcon from '@/components/Form/InfoIcon/InfoIcon';
+import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
-import { useSetError } from '@/util/hooks';
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import styles from './MatchForm.module.css';
+import styles from './SubmissionForm.module.css';
+import FormInputError from '@/components/Form/InputError/InputError';
 
-const initialState = {
-  message: null,
-};
-
-function SubmitButton() {
+function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <button type="submit" aria-disabled={pending}>
+    <button type="submit" aria-disabled={pending || !rulesAccepted}>
       {pending ? <span aria-saving="true" /> : 'Submit'}
     </button>
   );
 }
 
-export default function MatchForm({
-  userScopes,
-}: {
-  userScopes: Array<string>;
-}) {
-  const [state, formAction] = useFormState(saveTournamentMatches, initialState);
+export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
+  const [formState, formAction] = useFormState(handleTournamentFormState, { success: false, message: '', errors: {} });
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
-  const [verifierAccepted, setVerifierAccepted] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const setError = useSetError();
-
   useEffect(() => {
-    // Shows toast for both success or error, but need better implementation for errors
-    /* if (state?.status) {
-      setShowToast(true);
-      setTimeout(() => {
-        setShowToast(false);
-      }, 6000);
-    } */
-
-    if (state?.error) {
-      setError(state?.error);
+    // Clear the form after successful submission
+    if (formState.success) {
+      formRef.current?.reset();
     }
 
-    if (state?.success) {
-      document.getElementById('tournament-form')?.reset();
+    // If there is a message, display it in a toast
+    if (formState.message !== '') {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
       }, 6000);
     }
-
-    return () => {};
-  }, [state]);
+  }, [formState]);
 
   return (
     <>
       <div className={styles.formContainer}>
-        <Form action={formAction}>
+        <Form action={formAction} ref={formRef}>
           <div className={styles.section}>
             <div className={styles.header}>
               <h1>Tournament Submission</h1>
               <p>
-                Any tournament, regardless of badge status, may be submitted, so
-                long as it follows our rules.
+                Any tournament, regardless of badge status, may be submitted so
+                long as it adheres to our submission guidelines.
               </p>
             </div>
             <div className={styles.fields}>
               <div className={styles.row}>
+                {/* Ruleset */}
                 <div className={styles.field}>
-                  <label htmlFor="gameMode">Game mode</label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.ruleset}
-                  </span>
+                  <label htmlFor="ruleset">Ruleset</label>
+                  <FormInputError message={formState.errors.ruleset} />
                   <select
                     className="formField"
-                    name="gameMode"
-                    id={styles.gamemode}
+                    name="ruleset"
+                    id={styles.ruleset}
                     required={true}
                   >
                     <option value={0}>osu!</option>
@@ -96,11 +76,10 @@ export default function MatchForm({
                 </div>
               </div>
               <div className={styles.row}>
+                {/* Forum post URL */}
                 <div className={styles.field}>
                   <label htmlFor="forumPostURL">Forum post link</label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.forumPost}
-                  </span>
+                  <FormInputError message={formState.errors.forumUrl} />
                   <input
                     required={true}
                     type="url"
@@ -112,41 +91,37 @@ export default function MatchForm({
                 </div>
               </div>
               <div className={styles.row}>
+                {/* Name */}
                 <div className={styles.field}>
-                  <label htmlFor="tournamentName">Tournament name</label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.tournamentName}
-                  </span>
+                  <label htmlFor="name">Name</label>
+                  <FormInputError message={formState.errors.name} />
                   <input
                     required={true}
                     type="text"
-                    name="tournamentName"
-                    id="tournamentName"
+                    name="name"
+                    id="name"
                     className="formField"
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
-                <div
-                  className={styles.field}
-                  id={styles.tournamentAbbreviation}
-                >
-                  <label htmlFor="tournamentAbbreviation">Abbreviation</label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.abbreviation}
-                  </span>
+                {/* Abbreviation */}
+                <div className={styles.field} id={styles.abbreviation}>
+                  <label htmlFor="abbreviation">Abbreviation</label>
+                  <FormInputError message={formState.errors.abbreviation} />
                   <input
                     type="text"
                     required={true}
-                    name="tournamentAbbreviation"
-                    id="tournamentAbbreviation"
+                    name="abbreviation"
+                    id="abbreviation"
                     className="formField"
                     placeholder={'OWC2023'}
                   />
                 </div>
               </div>
               <div className={styles.row}>
+                {/* Rank restriction */}
                 <div className={styles.field}>
-                  <label htmlFor="rankRestriction">
+                  <label htmlFor="rankRangeLowerBound">
                     Rank restriction{' '}
                     <InfoIcon>
                       <p>
@@ -172,23 +147,22 @@ export default function MatchForm({
                       </p>
                     </InfoIcon>
                   </label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.rankRangeLowerBound}
-                  </span>
+                  <FormInputError message={formState.errors.rankRangeLowerBound} />
                   <input
                     required={true}
                     min={1}
                     type="number"
-                    name="rankRestriction"
-                    id="rankRestriction"
+                    name="rankRangeLowerBound"
+                    id="rankRangeLowerBound"
                     className="formField"
                     placeholder={'1000'}
                   />
                 </div>
               </div>
               <div className={styles.row}>
+                {/* Lobby size */}
                 <div className={styles.field}>
-                  <label htmlFor="teamSize">
+                  <label htmlFor="lobbySize">
                     Lobby size
                     <InfoIcon>
                       <p>
@@ -210,13 +184,11 @@ export default function MatchForm({
                       </p>
                     </InfoIcon>
                   </label>
-                  <span className={styles.inputError}>
-                    {state?.errors?.teamSize}
-                  </span>
+                  <FormInputError message={formState.errors.lobbySize} />
                   <select
                     className="formField"
-                    name="teamSize"
-                    id={styles.teamsize}
+                    name="lobbySize"
+                    id={styles.lobbySize}
                     required={true}
                   >
                     <option value={1}>1v1</option>
@@ -233,11 +205,11 @@ export default function MatchForm({
               </div>
             </div>
           </div>
+          {/** MP links */}
           <div className={styles.section}>
             <div className={styles.header}>
               <h1>
                 Match links
-                {/* // ? ADD INFO TO MATCH  */}
                 <InfoIcon
                   infoText={
                     'One or more osu! multiplayer match links or ids, separated by a new line'
@@ -248,20 +220,53 @@ export default function MatchForm({
             <div className={styles.fields}>
               <div className={styles.row}>
                 <div className={styles.field}>
-                  <span className={styles.inputError}>
-                    {state?.errors?.ids}
-                  </span>
+                  <FormInputError message={formState.errors.ids} />
                   <textarea
                     required={true}
                     className="formField"
-                    name="matchLinks"
-                    id="matchLinks"
-                    placeholder="1 or more separated match links"
+                    name="ids"
+                    id="ids"
+                    placeholder={"https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249"}
                     cols={30}
                     rows={6}
                   ></textarea>
                 </div>
               </div>
+            </div>
+          </div>
+          {/** Mappool links */}
+          <div className={styles.section}>
+            <div className={styles.header}>
+              <h1>
+                Beatmap links
+                <InfoIcon
+                  infoText={
+                    'Optionally include links to all beatmaps that were pooled by the tournament. This helps us greatly when verifying match data!'
+                  }
+                />
+              </h1>
+            </div>
+            <div className={styles.fields}>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <FormInputError message={formState.errors.beatmapIds} />
+                  <textarea
+                    required={true}
+                    className="formField"
+                    name="beatmapIds"
+                    id="beatmapIds"
+                    placeholder="1 or more separated beatmap links"
+                    cols={30}
+                    rows={6}
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/** Accept rules and submit */}
+          <div className={styles.section}>
+            <div className={styles.fields}>
+              {/** Rules checkbox */}
               <div className={clsx(styles.row, styles.checkbox)}>
                 <input
                   required={true}
@@ -272,26 +277,15 @@ export default function MatchForm({
                   onChange={(e) => setRulesAccepted(e.target.checked)}
                 />
                 <span onClick={() => setRulesAccepted((prev) => !prev)}>
-                  I read the rules and I understand that submitting irrelevant
-                  matches can lead to a restriction
+                  I have read the rules and understand that abusing tournament submission can lead to a restriction
                 </span>
               </div>
+              <SubmitButton rulesAccepted={rulesAccepted} />
             </div>
-            <div className={styles.field}>
-              <span className={styles.inputError}>
-                {state?.errors?.serverError}
-              </span>
-            </div>
-            <SubmitButton />
           </div>
         </Form>
       </div>
-      {showToast && (
-        <Toast
-          status={state?.success ? 'success' : ''}
-          message={state?.success ? state?.success.message : ''}
-        />
-      )}
+      {showToast && (<Toast success={formState.success} message={formState.message}/>)}
     </>
   );
 }

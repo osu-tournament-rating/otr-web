@@ -173,3 +173,15 @@ export type GetSessionParams = {
   req: NextRequest,
   res: NextResponse<unknown>
 };
+
+/** Describes the state of a form */
+export type FormState<T> = {
+  /** Denotes if the submission was successful */
+  success: boolean;
+
+  /** Seccess / fail detail to display in a toast */
+  message: string | React.JSX.Element;
+
+  /** Any errors specific to a form property */
+  errors: { [K in keyof T]?: string[]; };
+}
