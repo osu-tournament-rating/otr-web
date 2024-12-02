@@ -8,7 +8,7 @@ import { FormState } from "@/lib/types";
 import { TournamentSubmissionDTO, TournamentsWrapper } from "@osu-tournament-rating/otr-api-client";
 import { ZodError } from "zod";
 
-export async function handleTournamentFormState(
+export async function tournamentSubmissionFormAction(
   previousState: FormState<TournamentSubmissionDTO>,
   formData: FormData
 ): Promise<FormState<TournamentSubmissionDTO>> {

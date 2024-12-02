@@ -1,6 +1,6 @@
 'use client';
 
-import { handleTournamentFormState } from '@/app/actions/tournaments';
+import { tournamentSubmissionFormAction } from '@/app/actions/tournaments';
 import Form from '@/components/Form/Form';
 import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
@@ -24,7 +24,7 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
 }
 
 export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
-  const [formState, formAction] = useFormState(handleTournamentFormState, { success: false, message: '', errors: {} });
+  const [formState, formAction] = useFormState(tournamentSubmissionFormAction, { success: false, message: '', errors: {} });
   const formRef = useRef<HTMLFormElement>(null);
   const userIsAdmin = isAdmin(userScopes);
 

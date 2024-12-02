@@ -14,6 +14,7 @@
   padding: 0.8rem 1rem;
   font-size: 1rem;
   font-weight: 500;
+  resize: none;
 }
 
 .form :is(input:is(:not([type='checkbox'])), select, button) {
