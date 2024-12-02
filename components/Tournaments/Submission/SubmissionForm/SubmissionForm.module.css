@@ -70,16 +70,8 @@
   padding: 0.08rem;
 }
 
-.field #ruleset {
-  max-width: 30%;
-}
-
-.field #abbreviation {
-  width: 65%;
-}
-
-.field #lobbySize {
-  max-width: fit-content;
+.field#abbreviation {
+  max-width: 33%;
 }
 
 .fields .row.checkbox {

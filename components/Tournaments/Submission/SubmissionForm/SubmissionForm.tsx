@@ -60,51 +60,14 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
             </div>
             <div className={styles.fields}>
               <div className={styles.row}>
-                {/* Ruleset */}
-                <div className={styles.field}>
-                  <label htmlFor="ruleset">Ruleset</label>
-                  <FormInputError message={formState.errors.ruleset} />
-                  <select
-                    className="formField"
-                    name="ruleset"
-                    id={styles.ruleset}
-                    required={true}
-                  >
-                    <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
-                    <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
-                    <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
-                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{rulesetIcons[Ruleset.ManiaOther].alt}</option>)}
-                    <option value={Ruleset.Mania4k}>{rulesetIcons[Ruleset.Mania4k].alt}</option>
-                    <option value={Ruleset.Mania7k}>{rulesetIcons[Ruleset.Mania7k].alt}</option>
-                  </select>
-                </div>
-              </div>
-              <div className={styles.row}>
-                {/* Forum post URL */}
-                <div className={styles.field}>
-                  <label htmlFor="forumPostURL">Forum post link</label>
-                  <FormInputError message={formState.errors.forumUrl} />
-                  <input
-                    required={true}
-                    type="url"
-                    name="forumPostURL"
-                    id="forumPostURL"
-                    className="formField"
-                    placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
-                  />
-                </div>
-              </div>
-              <div className={styles.row}>
                 {/* Name */}
-                <div className={styles.field}>
+                <div className={styles.field} id={styles.name}>
                   <label htmlFor="name">Name</label>
                   <FormInputError message={formState.errors.name} />
                   <input
-                    required={true}
+                    required
                     type="text"
                     name="name"
-                    id="name"
-                    className="formField"
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
@@ -113,20 +76,44 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <label htmlFor="abbreviation">Abbreviation</label>
                   <FormInputError message={formState.errors.abbreviation} />
                   <input
+                    required
                     type="text"
-                    required={true}
                     name="abbreviation"
-                    id="abbreviation"
-                    className="formField"
                     placeholder={'OWC2023'}
                   />
                 </div>
               </div>
               <div className={styles.row}>
+                {/* Forum post URL */}
+                <div className={styles.field}>
+                  <label htmlFor="forumPostURL">Forum post link</label>
+                  <FormInputError message={formState.errors.forumUrl} />
+                  <input
+                    required
+                    type="url"
+                    name="forumPostURL"
+                    placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
+                  />
+                </div>
+              </div>
+              <div className={styles.row}>
+                {/* Ruleset */}
+                <div className={styles.field}>
+                  <label htmlFor="ruleset">Ruleset</label>
+                  <FormInputError message={formState.errors.ruleset} />
+                  <select required name="ruleset">
+                    <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
+                    <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
+                    <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
+                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{rulesetIcons[Ruleset.ManiaOther].alt}</option>)}
+                    <option value={Ruleset.Mania4k}>{rulesetIcons[Ruleset.Mania4k].alt}</option>
+                    <option value={Ruleset.Mania7k}>{rulesetIcons[Ruleset.Mania7k].alt}</option>
+                  </select>
+                </div>
                 {/* Rank restriction */}
                 <div className={styles.field}>
                   <label htmlFor="rankRangeLowerBound">
-                    Rank restriction{' '}
+                    Rank restriction
                     <InfoIcon>
                       <p>
                         <span>
@@ -153,17 +140,13 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   </label>
                   <FormInputError message={formState.errors.rankRangeLowerBound} />
                   <input
-                    required={true}
-                    min={1}
+                    required
                     type="number"
                     name="rankRangeLowerBound"
-                    id="rankRangeLowerBound"
-                    className="formField"
+                    min={1}
                     placeholder={'1000'}
                   />
                 </div>
-              </div>
-              <div className={styles.row}>
                 {/* Lobby size */}
                 <div className={styles.field}>
                   <label htmlFor="lobbySize">
@@ -189,12 +172,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                     </InfoIcon>
                   </label>
                   <FormInputError message={formState.errors.lobbySize} />
-                  <select
-                    className="formField"
-                    name="lobbySize"
-                    id={styles.lobbySize}
-                    required={true}
-                  >
+                  <select required name="lobbySize">
                     <option value={1}>1v1</option>
                     <option value={2}>2v2</option>
                     <option value={3}>3v3</option>
@@ -226,10 +204,8 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                 <div className={styles.field}>
                   <FormInputError message={formState.errors.ids} />
                   <textarea
-                    required={true}
-                    className="formField"
+                    required
                     name="ids"
-                    id="ids"
                     placeholder={"https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249"}
                     cols={30}
                     rows={6}
@@ -255,10 +231,8 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                 <div className={styles.field}>
                   <FormInputError message={formState.errors.beatmapIds} />
                   <textarea
-                    required={true}
-                    className="formField"
+                    required
                     name="beatmapIds"
-                    id="beatmapIds"
                     placeholder="1 or more separated beatmap links"
                     cols={30}
                     rows={6}
