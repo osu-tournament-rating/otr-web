@@ -6,7 +6,7 @@ export default function Toast({
   message,
 }: {
   success: boolean;
-  message: string | React.JSX.Element;
+  message: string;
 }) {
   return (
     <div className={clsx(styles.toast, success ? styles.success : styles.error)}>

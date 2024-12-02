@@ -149,7 +149,7 @@ export type FormState<T> = {
   success: boolean;
 
   /** Seccess / fail detail to display in a toast */
-  message: string | React.JSX.Element;
+  message: string;
 
   /** Any errors specific to a form property */
   errors: { [K in keyof T]?: string[]; };
