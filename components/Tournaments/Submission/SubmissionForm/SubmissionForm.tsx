@@ -54,7 +54,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
             <div className={styles.header}>
               <h1>Tournament Submission</h1>
               <p>
-                Any tournament, regardless of badge status, may be submitted so
+                Any tournament regardless of badge status may be submitted so
                 long as it adheres to our submission guidelines.
               </p>
             </div>

@@ -21,10 +21,6 @@
   height: 3.2rem;
 }
 
-.form input:is(:focus, :focus-visible) {
-  outline: 0;
-}
-
 .form :is(input, textarea)::placeholder {
   font-weight: 500;
   color: hsla(var(--gray-600));
