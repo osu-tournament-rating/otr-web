@@ -70,28 +70,10 @@
   padding: 0.08rem;
 }
 
-.field #gamemode {
-  max-width: 30%;
-}
-
-.field#tournamentAbbreviation {
-  width: 65%;
-}
-
-.field #teamsize {
-  max-width: fit-content;
+.field#abbreviation {
+  max-width: 33%;
 }
 
 .fields .row.checkbox {
   align-items: flex-start;
-}
-
-.field .inputError {
-  color: hsla(var(--red-600));
-  font-weight: 500;
-  font-size: 0.8rem;
-}
-
-.field .inputError:empty {
-  display: none;
 }

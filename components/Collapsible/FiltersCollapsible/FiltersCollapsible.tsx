@@ -3,7 +3,7 @@ import {
   applyLeaderboardFilters,
   resetLeaderboardFilters,
 } from '@/app/actions';
-import InfoIcon from '@/components/Form/InfoIcon/InfoIcon';
+import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import RangeSlider from '@/components/Range/RangeSlider';
 import TierSelector from '@/components/TierSelector/TierSelector';
 import { AnimatePresence, motion } from 'framer-motion';

@@ -1,4 +1,5 @@
 'use client';
+
 import Card from '@/components/Card/Card';
 import styles from './Guidelines.module.css';
 

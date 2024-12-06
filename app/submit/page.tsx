@@ -1,12 +1,12 @@
-import Guidelines from '@/components/SubmitMatches/Guidelines/Guidelines';
-import MatchForm from '@/components/SubmitMatches/MatchForm/MatchForm';
+import Guidelines from '@/components/Tournaments/Submission/Guidelines/Guidelines';
+import SubmissionForm from '@/components/Tournaments/Submission/SubmissionForm/SubmissionForm';
 import { getSessionData } from '../actions/session';
 import styles from './page.module.css';
 
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Submit',
+  title: 'Tournament Submission',
 };
 
 export default async function page() {
@@ -15,7 +15,7 @@ export default async function page() {
   return (
     <main className={styles.pageContainer}>
       <Guidelines />
-      <MatchForm userScopes={scopes} />
+      <SubmissionForm userScopes={scopes} />
     </main>
   );
 }

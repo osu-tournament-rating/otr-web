@@ -105,37 +105,6 @@ export const TournamentsQuerySchema = z.object({
   page: z.number().gte(1).default(1),
 });
 
-export const MatchesSubmitFormSchema = z.object({
-  name: z.string().min(1),
-  abbreviation: z.string().min(1),
-  forumUrl: z.union([
-    z
-      .string()
-      .url()
-      .startsWith('https://osu.ppy.sh/community/forums/topics/')
-      .min(1),
-    z
-      .string()
-      .url()
-      .startsWith('https://osu.ppy.sh/wiki/en/Tournaments/')
-      .min(1),
-  ]),
-  rankRangeLowerBound: z.number().min(1),
-  lobbySize: z.number().min(1).max(8),
-  ruleset: z.number().min(0).max(5),
-  ids: z
-    .array(
-      z
-        .number({
-          required_error: 'osu! match link or lobby id required',
-          invalid_type_error:
-            'Failed to parse one or more entries, ensure all entries are match IDs or osu! match URLs only, one per line',
-        })
-        .positive()
-    )
-    .min(1),
-});
-
 export const matchesVerificationStatuses = {
   '0': {},
 };
@@ -173,3 +142,15 @@ export type GetSessionParams = {
   req: NextRequest,
   res: NextResponse<unknown>
 };
+
+/** Describes the state of a form */
+export type FormState<T> = {
+  /** Denotes if the submission was successful */
+  success: boolean;
+
+  /** Seccess / fail detail to display in a toast */
+  message: string;
+
+  /** Any errors specific to a form property */
+  errors: { [K in keyof T]?: string[]; };
+}
