@@ -5,6 +5,7 @@ import { apiWrapperConfiguration } from "@/lib/auth";
 import { BeatmapLinkPattern, MatchLinkPattern } from "@/lib/regex";
 import { TournamentSubmissionFormSchema } from "@/lib/schemas";
 import { FormState } from "@/lib/types";
+import { extractFormData } from "@/util/forms";
 import { TournamentSubmissionDTO, TournamentsWrapper } from "@osu-tournament-rating/otr-api-client";
 import { ZodError } from "zod";
 
@@ -25,52 +26,40 @@ export async function tournamentSubmissionFormAction(
   };
 
   try {
-    // Format mp and beatmap ids
-    const ids = (formData.get('ids') as string)
-      // Split at new lines
-      .split(/\r?\n/g)
-      // Filter out empty strings
-      .filter(s => s.trim() !== '')
-      .map(s => {
-        // Trim whitespace
-        s = s.trim();
+    const parsedForm = TournamentSubmissionFormSchema.parse(extractFormData<TournamentSubmissionDTO>(formData, {
+      ruleset: value => parseInt(value),
+      ids: value => value
+        // Split at new lines
+        .split(/\r?\n/g)
+        // Filter out empty strings
+        .filter(s => s.trim() !== '')
+        .map(s => {
+          // Trim whitespace
+          s = s.trim();
 
-        // If the string is parseable to an int as is, do so
-        if (!isNaN(parseFloat(s))) {
-          return parseFloat(s);
-        }
-        
-        // Try to extract the id using regex
-        const match = MatchLinkPattern.exec(s);
-        return match ? parseFloat(match[1]) : s;
-      });
+          // If the string is parseable to an int as is, do so
+          if (!isNaN(parseFloat(s))) {
+            return parseFloat(s);
+          }
+          
+          // Try to extract the id using regex
+          const match = MatchLinkPattern.exec(s);
+          return match ? parseFloat(match[1]) : s;
+        }),
+      beatmapIds: value => value
+        .split(/\r?\n/g)
+        .filter(s => s.trim() !== '')
+        .map(s => {
+          s = s.trim();
 
-    const beatmapIds = (formData.get('beatmapIds') as string)
-      .split(/\r?\n/g)
-      .filter(s => s.trim() !== '')
-      .map(s => {
-        s = s.trim();
+          if (!isNaN(parseFloat(s))) {
+            return parseFloat(s);
+          }
 
-        if (!isNaN(parseFloat(s))) {
-          return parseFloat(s);
-        }
-
-        // Try to extract the beatmap id using regex
-        const match = BeatmapLinkPattern.exec(s);
-        return match ? parseFloat(match[1]) : s;
-      });
-
-    // Parse form data
-    const parsedForm = TournamentSubmissionFormSchema.parse({
-      name: formData.get('name'),
-      abbreviation: formData.get('abbreviation'),
-      forumUrl: formData.get('forumPostURL'),
-      rankRangeLowerBound: parseInt(formData.get('rankRangeLowerBound') as string),
-      lobbySize: parseInt(formData.get('lobbySize') as string),
-      ruleset: parseInt(formData.get('ruleset') as string),
-      ids,
-      beatmapIds
-    });
+          const match = BeatmapLinkPattern.exec(s);
+          return match ? parseFloat(match[1]) : s;
+        })
+    }));
 
     const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
     await wrapper.create({ body: parsedForm });

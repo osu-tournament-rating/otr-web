@@ -6,12 +6,15 @@ import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
 import { isAdmin } from '@/lib/api';
+import { rulesetIcons } from '@/lib/types';
+import { keysOf } from '@/util/forms';
+import { Ruleset, TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
-import { rulesetIcons } from '@/lib/types';
+
+const formFieldNames = keysOf<TournamentSubmissionDTO>();
 
 function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
   const { pending } = useFormStatus();
@@ -61,24 +64,24 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
             <div className={styles.fields}>
               <div className={styles.row}>
                 {/* Name */}
-                <div className={styles.field} id={styles.name}>
-                  <label htmlFor="name">Name</label>
+                <div className={styles.field} id={styles[formFieldNames.name]}>
+                  <label htmlFor={formFieldNames.name}>Name</label>
                   <FormInputError message={formState.errors.name} />
                   <input
                     required
-                    type="text"
-                    name="name"
+                    type='text'
+                    name={formFieldNames.name}
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
                 {/* Abbreviation */}
-                <div className={styles.field} id={styles.abbreviation}>
-                  <label htmlFor="abbreviation">Abbreviation</label>
+                <div className={styles.field} id={styles[formFieldNames.abbreviation]}>
+                  <label htmlFor={formFieldNames.abbreviation}>Abbreviation</label>
                   <FormInputError message={formState.errors.abbreviation} />
                   <input
                     required
-                    type="text"
-                    name="abbreviation"
+                    type='text'
+                    name={formFieldNames.abbreviation}
                     placeholder={'OWC2023'}
                   />
                 </div>
@@ -86,12 +89,12 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
               <div className={styles.row}>
                 {/* Forum post URL */}
                 <div className={styles.field}>
-                  <label htmlFor="forumPostURL">Forum post link</label>
+                  <label htmlFor={formFieldNames.forumUrl}>Forum post link</label>
                   <FormInputError message={formState.errors.forumUrl} />
                   <input
                     required
-                    type="url"
-                    name="forumPostURL"
+                    type='url'
+                    name={formFieldNames.forumUrl}
                     placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
                   />
                 </div>
@@ -99,9 +102,9 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
               <div className={styles.row}>
                 {/* Ruleset */}
                 <div className={styles.field}>
-                  <label htmlFor="ruleset">Ruleset</label>
+                  <label htmlFor={formFieldNames.ruleset}>Ruleset</label>
                   <FormInputError message={formState.errors.ruleset} />
-                  <select required name="ruleset">
+                  <select required name={formFieldNames.ruleset}>
                     <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
                     <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
                     <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
@@ -112,7 +115,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                 </div>
                 {/* Rank restriction */}
                 <div className={styles.field}>
-                  <label htmlFor="rankRangeLowerBound">
+                  <label htmlFor={formFieldNames.rankRangeLowerBound}>
                     Rank restriction
                     <InfoIcon>
                       <p>
@@ -141,15 +144,15 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <FormInputError message={formState.errors.rankRangeLowerBound} />
                   <input
                     required
-                    type="number"
-                    name="rankRangeLowerBound"
+                    type='number'
+                    name={formFieldNames.rankRangeLowerBound}
                     min={1}
                     placeholder={'1000'}
                   />
                 </div>
                 {/* Lobby size */}
                 <div className={styles.field}>
-                  <label htmlFor="lobbySize">
+                  <label htmlFor={formFieldNames.lobbySize}>
                     Lobby size
                     <InfoIcon>
                       <p>
@@ -172,7 +175,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                     </InfoIcon>
                   </label>
                   <FormInputError message={formState.errors.lobbySize} />
-                  <select required name="lobbySize">
+                  <select required name={formFieldNames.lobbySize}>
                     <option value={1}>1v1</option>
                     <option value={2}>2v2</option>
                     <option value={3}>3v3</option>
@@ -181,7 +184,6 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                     <option value={6}>6v6</option>
                     <option value={7}>7v7</option>
                     <option value={8}>8v8</option>
-                    {/* <option value={-1}>Other (even team size)</option> */}
                   </select>
                 </div>
               </div>
@@ -205,8 +207,8 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <FormInputError message={formState.errors.ids} />
                   <textarea
                     required
-                    name="ids"
-                    placeholder={"https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249"}
+                    name={formFieldNames.ids}
+                    placeholder={'https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249'}
                     cols={30}
                     rows={6}
                   ></textarea>
@@ -219,6 +221,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
             <div className={styles.header}>
               <h1>
                 Beatmap links
+                {/** Info text is placeholder and should be replaced. Ideally when moving submission guidelines to docs */}
                 <InfoIcon
                   infoText={
                     'Optionally include links to all beatmaps that were pooled by the tournament. This helps us greatly when verifying match data!'
@@ -232,8 +235,8 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <FormInputError message={formState.errors.beatmapIds} />
                   <textarea
                     required
-                    name="beatmapIds"
-                    placeholder="1 or more separated beatmap links"
+                    name={formFieldNames.beatmapIds}
+                    placeholder={'1 or more separated beatmap links'}
                     cols={30}
                     rows={6}
                   ></textarea>
