@@ -1,14 +1,13 @@
+import { DetailedHTMLProps, FormHTMLAttributes } from 'react';
 import styles from './Form.module.css';
 
 export default function Form({
-  action,
   children,
-}: {
-  action: any;
-  children: React.ReactNode;
-}) {
+  ...rest
+}: Omit<DetailedHTMLProps<FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>, 'className'> & { children: React.ReactNode }
+) {
   return (
-    <form action={action} className={styles.form} id={'tournament-form'}>
+    <form className={styles.form} {...rest}>
       {children}
     </form>
   );

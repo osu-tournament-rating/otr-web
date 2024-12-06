@@ -2,23 +2,14 @@ import clsx from 'clsx';
 import styles from './Toast.module.css';
 
 export default function Toast({
-  status,
+  success,
   message,
 }: {
-  status: string;
+  success: boolean;
   message: string;
 }) {
   return (
-    <div
-      className={clsx(
-        styles.toast,
-        status === 'success'
-          ? styles.success
-          : status === 'error'
-          ? styles.error
-          : ''
-      )}
-    >
+    <div className={clsx(styles.toast, success ? styles.success : styles.error)}>
       {message}
     </div>
   );

@@ -4,104 +4,12 @@ import { getSessionData } from '@/app/actions/session';
 import { apiWrapperConfiguration } from '@/lib/auth';
 import {
   LeaderboardsQuerySchema,
-  MatchesSubmitFormSchema,
   TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
 import { TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-
-export async function saveTournamentMatches(
-  prevState: any,
-  formData: FormData
-) {
-  const session = await getSessionData();
-
-  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.id) return redirect('/');
-
-  try {
-    /* REGEX TO REMOVE ALL SPACES AND ENTERS */
-    let matchIDs = await formData
-      .get('matchLinks')
-      .split(/\r?\n/g)
-      .map((value: string) => {
-        if (value.startsWith('https://osu.ppy.sh/community/matches/'))
-          value = value.replace('https://osu.ppy.sh/community/matches/', '');
-
-        if (value.startsWith('https://osu.ppy.sh/mp/')) {
-          value = value.replace('https://osu.ppy.sh/mp/', '');
-        }
-
-        /* REGEX TO CHECK IF VALUE HAS ONLY DIGITS */
-        if (!/^\d+$/.test(value)) {
-          return value;
-        }
-
-        return parseFloat(value);
-      });
-
-    const data = MatchesSubmitFormSchema.parse({
-      name: formData.get('tournamentName'),
-      abbreviation: formData.get('tournamentAbbreviation'),
-      forumUrl: formData.get('forumPostURL'),
-      rankRangeLowerBound: parseInt(formData.get('rankRestriction')),
-      lobbySize: parseInt(formData.get('teamSize')),
-      ruleset: parseInt(formData.get('gameMode')),
-      ids: matchIDs,
-    });
-
-    let tournamentSubmit = await fetch(
-      `${process.env.REACT_APP_API_URL}/tournaments`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      }
-    );
-
-    if (!tournamentSubmit?.ok) {
-      const errorMessage = await tournamentSubmit.text();
-
-      return {
-        error: {
-          status: tournamentSubmit.status,
-          text: tournamentSubmit.statusText,
-          message: errorMessage,
-        },
-      };
-    }
-
-    return {
-      success: {
-        status: tournamentSubmit.status,
-        text: tournamentSubmit.statusText,
-        message: 'Tournament submitted successfully',
-      },
-    };
-  } catch (error) {
-    let errors = {};
-
-    if (error) {
-      if (error?.issues?.length > 0) {
-        error?.issues.forEach((err) => {
-          return (errors[`${err.path[0]}`] = err.message);
-        });
-      }
-    }
-
-    return {
-      status: 'error',
-      errors,
-    };
-  }
-}
 
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
