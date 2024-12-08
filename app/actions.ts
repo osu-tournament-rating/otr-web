@@ -139,7 +139,7 @@ export async function fetchLeaderboard(params: {}) {
 
   /* Check page number */
   if (queryCheck.data.page) {
-    backendObject.page = queryCheck.data.page - 1;
+    backendObject.page = queryCheck.data.page;
   }
 
   /* Assign page size */
