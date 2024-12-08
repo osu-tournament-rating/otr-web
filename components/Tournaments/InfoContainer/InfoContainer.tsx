@@ -2,6 +2,7 @@ import StatusButton from '@/components/Button/StatusButton/StatusButton';
 import Link from 'next/link';
 import styles from './InfoContainer.module.css';
 import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+
 import { rulesetIcons } from '@/lib/api';
 import { patchTournamentData } from '@/app/actions/tournaments';
 

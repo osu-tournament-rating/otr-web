@@ -7,7 +7,7 @@ import {
   TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
-import { TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
+import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
@@ -86,26 +86,26 @@ export async function fetchLeaderboard(params: {}) {
     ? Array.isArray(matches)
       ? (paramsToProcess.matches = matches.map(Number).sort(compareNumbers))
       : (paramsToProcess.matches = Array(matches)
-          .map(Number)
-          .sort(compareNumbers))
+        .map(Number)
+        .sort(compareNumbers))
     : undefined;
 
   rating
     ? Array.isArray(rating)
       ? (paramsToProcess.rating = rating.map(Number).sort(compareNumbers))
       : (paramsToProcess.rating = Array(rating)
-          .map(Number)
-          .sort(compareNumbers))
+        .map(Number)
+        .sort(compareNumbers))
     : undefined;
 
   winRate
     ? Array.isArray(winRate)
       ? (paramsToProcess.winRate = winRate
-          .map((value) => Number(value) / 100)
-          .sort(compareNumbers))
+        .map((value) => Number(value) / 100)
+        .sort(compareNumbers))
       : (paramsToProcess.winRate = Array(winRate)
-          .map((value) => Number(value) / 100)
-          .sort(compareNumbers))
+        .map((value) => Number(value) / 100)
+        .sort(compareNumbers))
     : undefined;
 
   tiers
@@ -133,13 +133,13 @@ export async function fetchLeaderboard(params: {}) {
     queryCheck.data.type === 'global'
       ? (backendObject.chartType = 0)
       : queryCheck.data.type === 'country'
-      ? (backendObject.chartType = 1)
-      : null;
+        ? (backendObject.chartType = 1)
+        : null;
   }
 
   /* Check page number */
   if (queryCheck.data.page) {
-    backendObject.page = queryCheck.data.page - 1;
+    backendObject.page = queryCheck.data.page;
   }
 
   /* Assign page size */
@@ -281,43 +281,35 @@ export async function fetchTournamentsPage(params: {}) {
   return data.result;
 }
 
-export async function fetchTournamentPage(tournament: string | number) {
+export async function fetchTournamentPage(tournamentId: number | string) {
   const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
 
-  let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?verified=false`, //! to remove unfiltered
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
 
-  data = await data.json();
+  let data = await wrapper.get({
+    id: tournamentId as number,
+    verified: false
+  })
 
-  return data;
+  return data.result;
 }
 
-export async function fetchMatchPage(match: string | number) {
+export async function fetchMatchPage(matchId: string | number) {
   const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
 
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.accessToken}`,
-    },
+  const wrapper = new MatchesWrapper(apiWrapperConfiguration);
+
+  let data = await wrapper.get({
+    id: matchId as number,
   });
 
-  data = await data.json();
-
-  return data;
+  return data.result;
 }
 
 export async function fetchUserPageTitle(player: string | number) {
@@ -402,17 +394,15 @@ export async function paginationParamsToURL(params: {}) {
         let string = `${index !== 0 ? '&' : ''}${key}=`;
 
         params[key].forEach((value, index) => {
-          string += `${value}${
-            index < params[key].length - 1 ? `&${key}=` : ''
-          }`;
+          string += `${value}${index < params[key].length - 1 ? `&${key}=` : ''
+            }`;
         });
 
         return (url += `${string}`);
       }
 
-      return (url += `${index !== 0 ? '&' : ''}${key}=${params[key]}${
-        index === Object.keys(params).length - 1 ? '&' : ''
-      }`);
+      return (url += `${index !== 0 ? '&' : ''}${key}=${params[key]}${index === Object.keys(params).length - 1 ? '&' : ''
+        }`);
     });
   }
 

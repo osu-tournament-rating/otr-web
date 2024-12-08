@@ -8,13 +8,14 @@ import { Tooltip } from 'react-tooltip';
 import FormattedNumber from '../FormattedNumber/FormattedNumber';
 import Pagination from '../Pagination/Pagination';
 import styles from './Leaderboard.module.css';
+import { LeaderboardDTO, LeaderboardPlayerInfoDTO } from '@osu-tournament-rating/otr-api-client';
 
 export default function Leaderboard({
   params,
   data,
 }: {
   params: {};
-  data: {};
+  data: LeaderboardDTO;
 }) {
   const { user } = useUser();
 
