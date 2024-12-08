@@ -44,7 +44,14 @@ export default function InfoContainer({
           <div className={styles.field}>
             <div className={styles.name}>Submitter</div>
             <div className={styles.value}>
-              {data.submittedByUser?.player.username ?? 'Unknown submitter'}
+              {data.submittedByUser
+                ? (
+                    <Link href={`/players/${data.submittedByUser.player.id}`}>
+                    {data.submittedByUser.player.username}
+                    </Link>
+                  )
+                : ('Unknown submitter')
+              }
             </div>
           </div>
         )}
@@ -54,7 +61,7 @@ export default function InfoContainer({
         >
           <div className={styles.name}>Forum post link</div>
           <div className={styles.value}>
-            <Link href={data.forumUrl ?? ''} target='_blank'>
+            <Link href={data.forumUrl} target='_blank'>
               {data.forumUrl}
             </Link>
           </div>
