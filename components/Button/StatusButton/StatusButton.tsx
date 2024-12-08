@@ -4,9 +4,10 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { LegacyRef, useState } from 'react';
 import styles from './StatusButton.module.css';
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import { useClickAway } from '@uidotdev/usehooks';
 
 /** Motion animation variants for the dropdown button */
 const dropdownVariants: Variants = {
@@ -101,6 +102,10 @@ export default function StatusButton({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const ref = useClickAway(() => {
+    setIsOpen(false);
+  }) as LegacyRef<any>;
+
   const handleStatusChange = async (newStatus: VerificationStatus) => {
     setIsOpen(false);
     setIsLoading(true);
@@ -119,7 +124,7 @@ export default function StatusButton({
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} ref={ref}>
       <div
         className={clsx(
           styles.button,
