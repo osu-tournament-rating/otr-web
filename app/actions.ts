@@ -7,7 +7,7 @@ import {
   TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
-import { TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
+import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
@@ -297,22 +297,19 @@ export async function fetchTournamentPage(tournament_id: number | string) {
   return data.result;
 }
 
-export async function fetchMatchPage(match: string | number) {
+export async function fetchMatchPage(match_id: string | number) {
   const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
   if (!session.id) return redirect('/');
 
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.accessToken}`,
-    },
+  const wrapper = new MatchesWrapper(apiWrapperConfiguration);
+
+  let data = await wrapper.get({
+    id: match_id as number,
   });
 
-  data = await data.json();
-
-  return data;
+  return data.result;
 }
 
 export async function fetchUserPageTitle(player: string | number) {
