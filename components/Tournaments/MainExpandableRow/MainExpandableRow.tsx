@@ -15,8 +15,9 @@ import InfoContainer from '../InfoContainer/InfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
 import SimpleExpandableRow from '../SimpleExpandableRow/SimpleExpandableRow';
 import styles from './MainExpandableRow.module.css';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 
-export default function MainExpandableRow({ tournament }: { tournament: {} }) {
+export default function MainExpandableRow({ tournament }: { tournament: TournamentDTO }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -90,7 +91,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
                 )}
               </div>
             </span>
-            <span>Missing Submitter</span>
+            <span>{tournament.submittedByUser?.player.username}</span>
             <span>
               {new Date(tournament.startTime).toLocaleDateString(
                 'en-US',
@@ -117,13 +118,11 @@ const ExpandedRow = ({
   setExpanded,
   fetchLoading,
 }: {
-  tournament: any;
+  tournament: TournamentDTO;
   fetchedData: any;
   setExpanded: any;
   fetchLoading: boolean;
 }) => {
-  console.log(fetchedData);
-
   return (
     <>
       <div className={styles.header} onClick={() => setExpanded(false)}>
