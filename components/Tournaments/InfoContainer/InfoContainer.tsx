@@ -2,6 +2,7 @@ import StatusButton from '@/components/StatusButton/StatusButton';
 import { rulesetIcons } from '@/lib/types';
 import Link from 'next/link';
 import styles from './InfoContainer.module.css';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 
 export default function InfoContainer({
   data,
@@ -9,7 +10,7 @@ export default function InfoContainer({
   headerText,
   isAdminView = false,
 }: {
-  data: {};
+  data: TournamentDTO;
   showHeader?: boolean;
   headerText?: string;
   isAdminView?: boolean;
@@ -43,7 +44,7 @@ export default function InfoContainer({
           <div className={styles.field}>
             <div className={styles.name}>Submitter</div>
             <div className={styles.value}>
-              {data?.submitter ?? 'Missing submitter'}
+              {data?.submittedByUser?.player.username ?? 'Missing submitter'}
             </div>
           </div>
         )}

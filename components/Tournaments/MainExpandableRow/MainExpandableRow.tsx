@@ -21,7 +21,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
   const [fetchedData, setFetchedData] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
+  const lobby_size = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
   const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
   const status = tournament?.verificationStatus;
 
@@ -65,7 +65,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
                 {tournament.name}
               </motion.span>
             </div>
-            <span>{format}</span>
+            <span>{lobby_size}</span>
             <span>
               <div className={parentStyles.rulesetIcon}>
                 <Tooltip
