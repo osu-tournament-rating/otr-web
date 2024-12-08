@@ -14,14 +14,18 @@ import InfoContainer from '../InfoContainer/InfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
 import SimpleExpandableRow from '../SimpleExpandableRow/SimpleExpandableRow';
 import styles from './MainExpandableRow.module.css';
+
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+
 import { rulesetIcons } from '@/lib/api';
 
-export default function MainExpandableRow({ tournament }: { tournament: {} }) {
+
+export default function MainExpandableRow({ tournament }: { tournament: TournamentDTO }) {
   const [expanded, setExpanded] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
+  const lobbySize = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
   const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
   const status = tournament?.verificationStatus;
 
@@ -65,7 +69,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
                 {tournament.name}
               </motion.span>
             </div>
-            <span>{format}</span>
+            <span>{lobbySize}</span>
             <span>
               <div className={parentStyles.rulesetIcon}>
                 <Tooltip
@@ -90,7 +94,7 @@ export default function MainExpandableRow({ tournament }: { tournament: {} }) {
                 )}
               </div>
             </span>
-            <span>Missing Submitter</span>
+            <span>{tournament.submittedByUser?.player.username ?? 'Missing Submitter'}</span>
             <span>
               {new Date(tournament.startTime).toLocaleDateString(
                 'en-US',
@@ -117,13 +121,11 @@ const ExpandedRow = ({
   setExpanded,
   fetchLoading,
 }: {
-  tournament: any;
+  tournament: TournamentDTO;
   fetchedData: any;
   setExpanded: any;
   fetchLoading: boolean;
 }) => {
-  console.log(fetchedData);
-
   return (
     <>
       <div className={styles.header} onClick={() => setExpanded(false)}>
