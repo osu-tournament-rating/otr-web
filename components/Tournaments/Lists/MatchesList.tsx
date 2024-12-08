@@ -1,7 +1,7 @@
 'use client';
 
 import Pagination from '@/components/Pagination/Pagination';
-import StatusButton from '@/components/StatusButton/StatusButton';
+import StatusButton from '@/components/Button/StatusButton/StatusButton';
 import { dateFormatOptions } from '@/lib/types';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -37,7 +37,7 @@ export default function MatchesList({ data }: { data: {} }) {
                   )}
                 </td>
                 <td className={styles.status}>
-                  <StatusButton status={match.verificationStatus} />
+                  <StatusButton initialStatus={match.verificationStatus} />
                 </td>
               </tr>
             );

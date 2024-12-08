@@ -1,8 +1,9 @@
-import StatusButton from '@/components/StatusButton/StatusButton';
-import { rulesetIcons } from '@/lib/types';
+import StatusButton from '@/components/Button/StatusButton/StatusButton';
 import Link from 'next/link';
 import styles from './InfoContainer.module.css';
 import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+import { rulesetIcons } from '@/lib/api';
+import { patchTournamentData } from '@/app/actions/tournaments';
 
 export default function InfoContainer({
   data,
@@ -21,7 +22,18 @@ export default function InfoContainer({
       <div className={styles.infoContainer}>
         {isAdminView && (
           <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-            <StatusButton status={data.verificationStatus} canChange />
+            <StatusButton
+              initialStatus={data.verificationStatus}
+              isAdminView
+              onChange={(status) => {
+                console.log('verification status changed', status);
+                // patchTournamentData({
+                //   id: data.id,
+                //   prop: "verificationStatus",
+                //   value: status
+                // });
+              }}
+            />
           </div>
         )}
         <div className={styles.field}>

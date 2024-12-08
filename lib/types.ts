@@ -1,19 +1,11 @@
 import { adminPanelSaveVerified } from '@/app/actions';
-import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import CtbSVGurl from '@/public/icons/Ruleset Catch.svg?url';
-import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import ManiaSVGurl from '@/public/icons/Ruleset Mania.svg?url';
-import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import StandardSVGurl from '@/public/icons/Ruleset Standard.svg?url';
-import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg?url';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset, VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { FC, SVGProps } from 'react';
 
 /** Represents an icon for a {@link Ruleset} */
-export interface RulesetIcon {
+export interface RulesetIconContent {
   /**
    * Icon image as a React element
    * @example
@@ -47,45 +39,17 @@ export interface RulesetIcon {
   shortAlt: string;
 }
 
-/** Mapping of {@link RulesetIcon}s indexed by {@link Ruleset} */
-export const rulesetIcons: { [key in Ruleset]: RulesetIcon } = {
-  [Ruleset.Osu]: {
-    image: StandardSVG,
-    imageUrl: StandardSVGurl,
-    alt: 'osu!',
-    shortAlt: 'Standard',
-  },
-  [Ruleset.Taiko]: {
-    image: TaikoSVG,
-    imageUrl: TaikoSVGurl,
-    alt: 'osu!Taiko',
-    shortAlt: 'Taiko',
-  },
-  [Ruleset.Catch]: {
-    image: CtbSVG,
-    imageUrl: CtbSVGurl,
-    alt: 'osu!Catch',
-    shortAlt: 'Catch',
-  },
-  [Ruleset.ManiaOther]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania',
-    shortAlt: 'Mania (Other)',
-  },
-  [Ruleset.Mania4k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania 4K',
-    shortAlt: 'Mania 4K',
-  },
-  [Ruleset.Mania7k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania 7K',
-    shortAlt: 'Mania 7K',
-  }
-};
+/** Represents a button for a {@link VerificationStatus} */
+export interface VerificationStatusButtonContent {
+  /** CSS Class name */
+  className: string,
+
+  /** Text to display on the button */
+  text: string,
+
+  // /** Text to display on the button's tooltip */
+  // tooltipText: string;
+}
 
 export const dateFormatOptions = {
   tournaments: {
