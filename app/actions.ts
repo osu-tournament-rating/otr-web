@@ -281,7 +281,7 @@ export async function fetchTournamentsPage(params: {}) {
   return data.result;
 }
 
-export async function fetchTournamentPage(tournament_id: number | string) {
+export async function fetchTournamentPage(tournamentId: number | string) {
   const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
@@ -290,14 +290,14 @@ export async function fetchTournamentPage(tournament_id: number | string) {
   const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
 
   let data = await wrapper.get({
-    id: tournament_id as number,
+    id: tournamentId as number,
     verified: false
   })
 
   return data.result;
 }
 
-export async function fetchMatchPage(match_id: string | number) {
+export async function fetchMatchPage(matchId: string | number) {
   const session = await getSessionData();
 
   /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
@@ -306,7 +306,7 @@ export async function fetchMatchPage(match_id: string | number) {
   const wrapper = new MatchesWrapper(apiWrapperConfiguration);
 
   let data = await wrapper.get({
-    id: match_id as number,
+    id: matchId as number,
   });
 
   return data.result;
