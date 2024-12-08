@@ -16,7 +16,7 @@ import {
 import { ZodError } from 'zod';
 
 /**
- * Handles parsing, submiting, and handling errors for tournament submission data
+ * Handles parsing, submitting, and handling errors for tournament submission data
  * @param _previousState Previous form state
  * @param formData Form data
  * @returns The state of the form after performing the action
@@ -111,22 +111,27 @@ export async function getTournament(params: TournamentsGetRequestParams){
  */
 export async function patchTournamentData<K extends keyof TournamentDTO>({
   id,
-  prop,
+  path,
   value
 }: {
   id: number;
-  prop: K;
+  path: K;
   value: TournamentDTO[K];
 }) {
   const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-  await wrapper.update({
+  const { result } = await wrapper.update({
     id,
     body: [
       {
+        // Client code requires supplying the operation type, but it has no effect
+        // 'op' however is required and needs to be a valid operation type
         operationType: OperationType.Replace,
-        path: prop,
+        op: 'replace',
+        path,
         value
       }
     ]
   });
+
+  return result;
 }

@@ -25,13 +25,22 @@ export default function InfoContainer({
             <StatusButton
               initialStatus={data.verificationStatus}
               isAdminView
-              onChange={(status) => {
-                console.log('verification status changed', status);
-                // patchTournamentData({
-                //   id: data.id,
-                //   prop: "verificationStatus",
-                //   value: status
-                // });
+              onChange={async (status) => {
+                // if (status === VerificationStatus.Rejected) {
+                //   // select rejection reason with modal
+                // } else {
+                //   // await patchTournamentData({
+                //   //   id: data.id,
+                //   //   path: 'verificationStatus',
+                //   //   value: status
+                //   // });
+                // }
+                const updatedTournament = await patchTournamentData({
+                  id: data.id,
+                  path: 'verificationStatus',
+                  value: status
+                });
+                Object.assign(data, updatedTournament);
               }}
             />
           </div>
