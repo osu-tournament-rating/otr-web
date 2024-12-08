@@ -10,20 +10,41 @@ import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg?url';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { FC, SVGProps } from 'react';
 
 /** Represents an icon for a {@link Ruleset} */
 export interface RulesetIcon {
-  /** Image ref */
-  image: any;
+  /**
+   * Icon image as a React element
+   * @example
+   * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
+   * return (<taikoIcon />);
+   */
+  image: FC<SVGProps<SVGElement>>;
 
-  /** Relative image url */
+  /**
+   * Icon image as a relative URL
+   * @example
+   * const taikoIconUrl = rulesetIcons[Ruleset.Taiko].imageUrl;
+   * return (<img href={taikoIconUrl} />);
+   */
   imageUrl: any;
 
-  /** Alt text */
+  /**
+   * Alt text
+   *
+   * Example:
+   * For {@link Ruleset.Taiko} - 'osu!Taiko'
+   */
   alt: string;
 
-  /** Alt text for tournaments list */
-  altTournamentsList: string;
+  /**
+   * Shortened alt text
+   *
+   * Example:
+   * For {@link Ruleset.Taiko} - 'Taiko'
+   */
+  shortAlt: string;
 }
 
 /** Mapping of {@link RulesetIcon}s indexed by {@link Ruleset} */
@@ -32,37 +53,37 @@ export const rulesetIcons: { [key in Ruleset]: RulesetIcon } = {
     image: StandardSVG,
     imageUrl: StandardSVGurl,
     alt: 'osu!',
-    altTournamentsList: 'Standard',
+    shortAlt: 'Standard',
   },
   [Ruleset.Taiko]: {
     image: TaikoSVG,
     imageUrl: TaikoSVGurl,
     alt: 'osu!Taiko',
-    altTournamentsList: 'Taiko',
+    shortAlt: 'Taiko',
   },
   [Ruleset.Catch]: {
     image: CtbSVG,
     imageUrl: CtbSVGurl,
     alt: 'osu!Catch',
-    altTournamentsList: 'Catch',
+    shortAlt: 'Catch',
   },
   [Ruleset.ManiaOther]: {
     image: ManiaSVG,
     imageUrl: ManiaSVGurl,
     alt: 'osu!Mania',
-    altTournamentsList: 'Mania (Other)',
+    shortAlt: 'Mania (Other)',
   },
   [Ruleset.Mania4k]: {
     image: ManiaSVG,
     imageUrl: ManiaSVGurl,
     alt: 'osu!Mania 4K',
-    altTournamentsList: 'Mania 4K',
+    shortAlt: 'Mania 4K',
   },
   [Ruleset.Mania7k]: {
     image: ManiaSVG,
     imageUrl: ManiaSVGurl,
     alt: 'osu!Mania 7K',
-    altTournamentsList: 'Mania 7K',
+    shortAlt: 'Mania 7K',
   }
 };
 

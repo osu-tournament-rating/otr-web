@@ -2,24 +2,25 @@ import { fetchTournamentPage } from '@/app/actions';
 import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
 import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import styles from './modalTournament.module.css';
+import { getTournament } from '@/app/actions/tournaments';
 
 export default async function TournamentModal({
   params: { id },
 }: {
-  params: { id: string | number };
+  params: { id: number };
 }) {
-  const tournamentData = await fetchTournamentPage(id);
+  const tournament = await getTournament({ id, verified: false });
 
   return (
     <div className={styles.modal}>
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <h1 className={styles.title}>{tournamentData?.name}</h1>
+            <h1 className={styles.title}>{tournament.name}</h1>
             <div className={styles.date}>Missing Date</div>
           </div>
-          <InfoContainer data={tournamentData} />
-          <MatchesList data={tournamentData?.matches} />
+          <InfoContainer data={tournament} />
+          <MatchesList data={tournament.matches} />
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { BeatmapLinkPattern, MatchLinkPattern } from "@/lib/regex";
 import { TournamentSubmissionFormSchema } from "@/lib/schemas";
 import { FormState } from "@/lib/types";
 import { extractFormData } from "@/util/forms";
-import { TournamentSubmissionDTO, TournamentsWrapper } from "@osu-tournament-rating/otr-api-client";
+import { TournamentSubmissionDTO, TournamentsWrapper, TournamentsGetRequestParams } from "@osu-tournament-rating/otr-api-client";
 import { ZodError } from "zod";
 
 /**
@@ -82,6 +82,17 @@ export async function tournamentSubmissionFormAction(
       result.message += " The server rejected your submission.";
     }
   }
+
+  return result;
+}
+
+/**
+ * Get a single tournament with complete data
+ * @param params see {@link TournamentsGetRequestParams}
+ */
+export async function getTournament(params: TournamentsGetRequestParams){
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.get(params);
 
   return result;
 }

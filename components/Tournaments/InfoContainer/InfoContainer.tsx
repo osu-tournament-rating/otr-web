@@ -2,6 +2,7 @@ import StatusButton from '@/components/StatusButton/StatusButton';
 import { rulesetIcons } from '@/lib/types';
 import Link from 'next/link';
 import styles from './InfoContainer.module.css';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 
 export default function InfoContainer({
   data,
@@ -9,7 +10,7 @@ export default function InfoContainer({
   headerText,
   isAdminView = false,
 }: {
-  data: {};
+  data: TournamentDTO;
   showHeader?: boolean;
   headerText?: string;
   isAdminView?: boolean;
@@ -25,25 +26,25 @@ export default function InfoContainer({
         )}
         <div className={styles.field}>
           <div className={styles.name}>Format</div>
-          <div
-            className={styles.value}
-          >{`${data?.lobbySize}v${data?.lobbySize}`}</div>
+          <div className={styles.value}>
+            {`${data.lobbySize}v${data.lobbySize}`}
+          </div>
         </div>
         <div className={styles.field}>
           <div className={styles.name}>Abbreviation</div>
-          <div className={styles.value}>{data?.abbreviation}</div>
+          <div className={styles.value}>{data.abbreviation}</div>
         </div>
         <div className={styles.field}>
           <div className={styles.name}>Ruleset</div>
           <div className={styles.value}>
-            {rulesetIcons[data?.ruleset]?.altTournamentsList}
+            {rulesetIcons[data.ruleset].shortAlt}
           </div>
         </div>
         {isAdminView && (
           <div className={styles.field}>
             <div className={styles.name}>Submitter</div>
             <div className={styles.value}>
-              {data?.submitter ?? 'Missing submitter'}
+              {data.submittedByUser?.player.username ?? 'Unknown submitter'}
             </div>
           </div>
         )}
@@ -53,12 +54,8 @@ export default function InfoContainer({
         >
           <div className={styles.name}>Forum post link</div>
           <div className={styles.value}>
-            <Link
-              href={data?.forumUrl ?? ''}
-              alt={'Forum Post'}
-              target="_blank"
-            >
-              {data?.forumUrl}
+            <Link href={data.forumUrl ?? ''} target='_blank'>
+              {data.forumUrl}
             </Link>
           </div>
         </div>
