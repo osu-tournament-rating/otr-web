@@ -7,13 +7,13 @@ import {
   Ruleset
 } from '@osu-tournament-rating/otr-api-client';
 import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import StandardSVGurl from '@/public/icons/Ruleset Standard.svg';
+import StandardSVGurl from '@/public/icons/Ruleset Standard.svg?url';
 import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg';
+import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg?url';
 import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import CtbSVGurl from '@/public/icons/Ruleset Catch.svg';
+import CtbSVGurl from '@/public/icons/Ruleset Catch.svg?url';
 import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import ManiaSVGurl from '@/public/icons/Ruleset Mania.svg';
+import ManiaSVGurl from '@/public/icons/Ruleset Mania.svg?url';
 import { RulesetIconContent } from '@/lib/types';
 
 /** Type guard for determining if an object is {@link ProblemDetails} */
