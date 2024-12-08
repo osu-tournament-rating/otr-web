@@ -35,8 +35,13 @@
   margin-left: auto;
 }
 
-.canChange {
+.canOpen {
   cursor: pointer;
+}
+
+.loading {
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 .dropdown {

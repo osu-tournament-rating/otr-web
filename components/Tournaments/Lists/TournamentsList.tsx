@@ -1,7 +1,7 @@
 'use client';
 
 import Pagination from '@/components/Pagination/Pagination';
-import { dateFormatOptions, rulesetIcons } from '@/lib/types';
+import { dateFormatOptions } from '@/lib/types';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 import styles from './Lists.module.css';
+import { rulesetIcons } from '@/lib/api';
 
 export default function TournamentsList({
   params,

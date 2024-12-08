@@ -1,11 +1,12 @@
 'use client';
 
 import { setCookieValue } from '@/app/actions/session';
-import { CookieNames, rulesetIcons } from '@/lib/types';
+import { CookieNames } from '@/lib/types';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
+import { rulesetIcons } from '@/lib/api';
 
 export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);

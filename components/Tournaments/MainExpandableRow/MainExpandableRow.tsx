@@ -1,10 +1,9 @@
 'use client';
 
 import { fetchTournamentPage } from '@/app/actions';
-import StatusButton from '@/components/StatusButton/StatusButton';
+import StatusButton from '@/components/Button/StatusButton/StatusButton';
 import {
   dateFormatOptions,
-  rulesetIcons,
   statusButtonTypes,
 } from '@/lib/types';
 import clsx from 'clsx';
@@ -15,7 +14,11 @@ import InfoContainer from '../InfoContainer/InfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
 import SimpleExpandableRow from '../SimpleExpandableRow/SimpleExpandableRow';
 import styles from './MainExpandableRow.module.css';
+
 import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+
+import { rulesetIcons } from '@/lib/api';
+
 
 export default function MainExpandableRow({ tournament }: { tournament: TournamentDTO }) {
   const [expanded, setExpanded] = useState(false);
@@ -149,10 +152,8 @@ const ExpandedRow = ({
                 <SimpleExpandableRow key={index}>
                   <span id="matchName">{match.name}</span>
                   <StatusButton
-                    status={match.verificationStatus}
-                    canChange
-                    id={match.id}
-                    path="matches"
+                    initialStatus={match.verificationStatus}
+                    isAdminView
                   />
                 </SimpleExpandableRow>
               );

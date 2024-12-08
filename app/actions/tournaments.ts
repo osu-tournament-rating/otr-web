@@ -1,13 +1,19 @@
 'use server';
 
-import { isHttpValidationProblemDetails } from "@/lib/api";
-import { apiWrapperConfiguration } from "@/lib/auth";
-import { BeatmapLinkPattern, MatchLinkPattern } from "@/lib/regex";
-import { TournamentSubmissionFormSchema } from "@/lib/schemas";
-import { FormState } from "@/lib/types";
-import { extractFormData } from "@/util/forms";
-import { TournamentSubmissionDTO, TournamentsWrapper } from "@osu-tournament-rating/otr-api-client";
-import { ZodError } from "zod";
+import { isHttpValidationProblemDetails } from '@/lib/api';
+import { apiWrapperConfiguration } from '@/lib/auth';
+import { BeatmapLinkPattern, MatchLinkPattern } from '@/lib/regex';
+import { TournamentSubmissionFormSchema } from '@/lib/schemas';
+import { FormState } from '@/lib/types';
+import { extractFormData } from '@/util/forms';
+import {
+  OperationType,
+  TournamentDTO,
+  TournamentsGetRequestParams,
+  TournamentSubmissionDTO,
+  TournamentsWrapper
+} from '@osu-tournament-rating/otr-api-client';
+import { ZodError } from 'zod';
 
 /**
  * Handles parsing, submiting, and handling errors for tournament submission data
@@ -84,4 +90,43 @@ export async function tournamentSubmissionFormAction(
   }
 
   return result;
+}
+
+/**
+ * Get a single tournament with complete data
+ * @param params see {@link TournamentsGetRequestParams}
+ */
+export async function getTournament(params: TournamentsGetRequestParams){
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.get(params);
+
+  return result;
+}
+
+/**
+ * Updates a tournament
+ * @param id Tournament id
+ * @param prop Property to update
+ * @param value New value for the property
+ */
+export async function patchTournamentData<K extends keyof TournamentDTO>({
+  id,
+  prop,
+  value
+}: {
+  id: number;
+  prop: K;
+  value: TournamentDTO[K];
+}) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  await wrapper.update({
+    id,
+    body: [
+      {
+        operationType: OperationType.Replace,
+        path: prop,
+        value
+      }
+    ]
+  });
 }
