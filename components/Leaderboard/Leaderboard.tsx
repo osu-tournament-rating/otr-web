@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
-import FormattedNumber from '../FormattedNumber/FormattedNumber';
+import FormattedNumber from '../FormattedData/FormattedNumber';
 import Pagination from '../Pagination/Pagination';
 import styles from './Leaderboard.module.css';
 import { LeaderboardDTO, LeaderboardPlayerInfoDTO } from '@osu-tournament-rating/otr-api-client';

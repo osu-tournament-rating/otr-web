@@ -1,0 +1,33 @@
+.content {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem 2rem;
+}
+
+.content a {
+  transition: all 0.2s ease-out;
+
+  &:hover {
+    color: hsl(var(--foreground-hsl), 0.8);
+  }
+
+  &:active {
+    color: hsl(var(--accent-color));
+  }
+}
+
+.content .field {
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  gap: 1rem;
+}
+
+.field#tournamentName {
+  grid-column: span 2;
+}
+
+.field .value {
+  font-weight: 600;
+}

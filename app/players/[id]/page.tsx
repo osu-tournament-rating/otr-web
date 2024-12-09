@@ -10,7 +10,7 @@ import GridCard from '@/components/Dashboard/GridCard/GridCard';
 import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/UserTotalMatches';
 import NoDataContainer from '@/components/Dashboard/NoDataContainer/NoDataContainer';
 import StatsGrid from '@/components/Dashboard/StatsGrid/StatsGrid';
-import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
+import FormattedNumber from '@/components/FormattedData/FormattedNumber';
 import UserMainCard from '@/components/Profile/UserMainCard/UserMainCard';
 import clsx from 'clsx';
 import styles from './page.module.css';

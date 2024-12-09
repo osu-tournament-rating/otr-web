@@ -10,7 +10,7 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Tooltip } from 'react-tooltip';
-import InfoContainer from '../InfoContainer/InfoContainer';
+import TournamentInfoContainer from '../InfoContainer/TournamentInfoContainer';
 import parentStyles from '../Lists/Lists.module.css';
 import SimpleExpandableRow from '../SimpleExpandableRow/SimpleExpandableRow';
 import styles from './MainExpandableRow.module.css';
@@ -144,7 +144,7 @@ const ExpandedRow = ({
         </div>
       </div>
       <div className={styles.content}>
-        <InfoContainer data={tournament} isAdminView={true} />
+        <TournamentInfoContainer data={tournament} isAdminView={true} />
         {!fetchLoading ? (
           <div className={styles.matchesList}>
             {fetchedData?.matches.map((match, index) => {

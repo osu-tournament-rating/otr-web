@@ -1,5 +1,5 @@
 import { fetchTournamentPage } from '@/app/actions';
-import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
+import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
 import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import styles from './modalTournament.module.css';
 import { getTournament } from '@/app/actions/tournaments';
@@ -19,7 +19,7 @@ export default async function TournamentModal({
             <h1 className={styles.title}>{tournament.name}</h1>
             <div className={styles.date}>Missing Date</div>
           </div>
-          <InfoContainer data={tournament} />
+          <TournamentInfoContainer data={tournament} />
           <MatchesList data={tournament.matches} />
         </div>
       </div>

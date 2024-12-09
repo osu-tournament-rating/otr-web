@@ -1,10 +1,10 @@
 // noinspection SpellCheckingInspection
 
 import {
-  HttpValidationProblemDetails, Operation,
+  HttpValidationProblemDetails,
   ProblemDetails,
   Roles,
-  Ruleset, TournamentDTO
+  Ruleset
 } from '@osu-tournament-rating/otr-api-client';
 import StandardSVG from '@/public/icons/Ruleset Standard.svg';
 import StandardSVGurl from '@/public/icons/Ruleset Standard.svg?url';

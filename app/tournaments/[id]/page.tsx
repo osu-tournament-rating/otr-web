@@ -1,47 +1,29 @@
 import styles from './page.module.css';
+import { getTournament } from '@/app/actions/tournaments';
+import TournamentPageContent from '@/components/Tournaments/TournamentPageContent';
 
 export const revalidate = 60;
-
-import { fetchTournamentPage } from '@/app/actions';
-import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
-import MatchesList from '@/components/Tournaments/Lists/MatchesList';
-import { dateFormatOptions } from '@/lib/types';
-import type { Metadata } from 'next';
 
 export async function generateMetadata({
   params: { id },
 }: {
-  params: { id: string | number };
+  params: { id: number };
 }) {
-  let tournament = await fetchTournamentPage(id);
+  const tournament = await getTournament({ id, verified: true });
 
-  return {
-    title: tournament !== null ? `${tournament?.name}` : 'User profile',
-  };
+  return { title: tournament.name };
 }
 
-export default async function page({
+export default async function Page({
   params: { id },
 }: {
-  params: { id: string | number };
+  params: { id: number };
 }) {
-  const tournamentData = await fetchTournamentPage(id);
+  const tournament = await getTournament({ id, verified: false });
 
   return (
     <main className={styles.container}>
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>{tournamentData?.name}</h1>
-          <div className={styles.date}>
-            {new Date(tournamentData?.startTime).toLocaleDateString(
-              'en-US',
-              dateFormatOptions.tournaments.header
-            )}
-          </div>
-        </div>
-        <InfoContainer data={tournamentData} />
-        <MatchesList data={tournamentData?.matches} />
-      </div>
+      <TournamentPageContent tournament={tournament} />
     </main>
   );
 }

@@ -1,0 +1,39 @@
+.content {
+    display: flex;
+    flex-flow: column;
+    gap: var(--internal-gap);
+    background-color: hsl(var(--background-content-hsl));
+    border-radius: var(--main-borderRadius);
+    padding: var(--main-padding);
+}
+
+.header {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-flow: row;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.header span {
+    display: flex;
+    flex-flow: row;
+    gap: var(--internal-gap);
+}
+
+.header .outIcon {
+    /** I have no idea how to make the link icon take up more space LOL */
+    object-fit: fill;
+    fill: hsla(var(--foreground-hsl));
+    transition: all 0.2s ease-out;
+
+    &:hover {
+        fill-opacity: 0.8;
+    }
+}
+
+.header .date {
+    width: fit-content;
+    margin-right: 0.2em;
+}

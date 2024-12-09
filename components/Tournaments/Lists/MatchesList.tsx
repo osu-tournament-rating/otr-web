@@ -44,11 +44,6 @@ export default function MatchesList({ data }: { data: {} }) {
           })}
         </tbody>
       </table>
-      {/* <Pagination
-        pageSize={25}
-        totalCount={data.totalPlayerCount}
-        params={params}
-      /> */}
     </div>
   );
 }
