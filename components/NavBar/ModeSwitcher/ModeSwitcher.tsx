@@ -6,12 +6,13 @@ import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ModeSwitcher.module.css';
-import { rulesetIcons } from '@/lib/api';
+
+import { RulesetMetadata } from '@/lib/enums';
 
 export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(ruleset);
-  const selectedRulesetIcon = rulesetIcons[selectedRuleset];
+  const selectedRulesetIcon = RulesetMetadata[selectedRuleset];
 
   return (
     <div className={styles.modeSwitcher}>

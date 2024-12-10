@@ -4,3 +4,12 @@
   gap: var(--main-padding);
   padding: var(--main-padding);
 }
+
+.content {
+  display: flex;
+  flex-flow: column;
+  gap: var(--internal-gap);
+  background-color: hsl(var(--background-content-hsl));
+  border-radius: var(--main-borderRadius);
+  padding: var(--main-padding);
+}

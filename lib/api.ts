@@ -1,20 +1,6 @@
 // noinspection SpellCheckingInspection
 
-import {
-  HttpValidationProblemDetails,
-  ProblemDetails,
-  Roles,
-  Ruleset
-} from '@osu-tournament-rating/otr-api-client';
-import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import StandardSVGurl from '@/public/icons/Ruleset Standard.svg?url';
-import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg?url';
-import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import CtbSVGurl from '@/public/icons/Ruleset Catch.svg?url';
-import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import ManiaSVGurl from '@/public/icons/Ruleset Mania.svg?url';
-import { RulesetIconContent } from '@/lib/types';
+import { HttpValidationProblemDetails, ProblemDetails, Roles } from '@osu-tournament-rating/otr-api-client';
 
 /** Type guard for determining if an object is {@link ProblemDetails} */
 export function isProblemDetails(obj: any): obj is ProblemDetails {
@@ -48,42 +34,3 @@ export function isAdmin(scopes: string[]) {
 // == Enums ==
 // ===========
 
-/** Mapping of {@link RulesetIconContent} indexed by {@link Ruleset} */
-export const rulesetIcons: { [key in Ruleset]: RulesetIconContent } = {
-  [Ruleset.Osu]: {
-    image: StandardSVG,
-    imageUrl: StandardSVGurl,
-    alt: 'osu!',
-    shortAlt: 'Standard'
-  },
-  [Ruleset.Taiko]: {
-    image: TaikoSVG,
-    imageUrl: TaikoSVGurl,
-    alt: 'osu!Taiko',
-    shortAlt: 'Taiko'
-  },
-  [Ruleset.Catch]: {
-    image: CtbSVG,
-    imageUrl: CtbSVGurl,
-    alt: 'osu!Catch',
-    shortAlt: 'Catch'
-  },
-  [Ruleset.ManiaOther]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania',
-    shortAlt: 'Mania (Other)'
-  },
-  [Ruleset.Mania4k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania 4K',
-    shortAlt: 'Mania 4K'
-  },
-  [Ruleset.Mania7k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
-    alt: 'osu!Mania 7K',
-    shortAlt: 'Mania 7K'
-  }
-};

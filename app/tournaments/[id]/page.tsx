@@ -1,6 +1,7 @@
 import styles from './page.module.css';
 import { getTournament } from '@/app/actions/tournaments';
-import TournamentPageContent from '@/components/Tournaments/TournamentPageContent';
+import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
+import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
 export const revalidate = 60;
 
@@ -23,7 +24,12 @@ export default async function Page({
 
   return (
     <main className={styles.container}>
-      <TournamentPageContent tournament={tournament} />
+      <div className={styles.content}>
+        <TournamentPageHeader forumUrl={tournament.forumUrl} date={tournament.startTime}>
+          <h1>{tournament.name}</h1>
+        </TournamentPageHeader>
+        <TournamentPageContent tournament={tournament} />
+      </div>
     </main>
   );
 }

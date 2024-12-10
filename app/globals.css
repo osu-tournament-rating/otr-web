@@ -146,6 +146,7 @@
   --search-bar-foreground: 0, 0%, 15%;
 
   /* ROW STATUS CIRCLE */
+  --status-circle-pending: 37, 87%, 94%;
   --status-circle-verified: 118, 66%, 67%;
   --status-circle-preverified: 36, 100%, 65%;
   --status-circle-rejected: 0, 66%, 67%;
@@ -307,6 +308,7 @@
   --search-bar-foreground: 0, 0%, 75%;
 
   /* ROW STATUS CIRCLE */
+  --status-circle-pending: 33, 63%, 37%;
   --status-circle-verified: 118, 66%, 67%;
   --status-circle-preverified: 36, 100%, 65%;
   --status-circle-rejected: 0, 66%, 67%;

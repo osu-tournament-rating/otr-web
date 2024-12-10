@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import ExpandableRow from '../MainExpandableRow/MainExpandableRow';
 import styles from './Lists.module.css';
 

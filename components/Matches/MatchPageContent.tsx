@@ -1,5 +1,5 @@
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
-import styles from '@/components/tournaments/TournamentPageContent.module.css';
+import styles from '@/components/Tournaments/TournamentPageContent/TournamentPageContent.module.css';
 import Link from 'next/link';
 import OutIcon from '@/public/icons/out.svg';
 import FormattedDate from '@/components/FormattedData/FormattedDate';

@@ -1,10 +1,10 @@
-import StatusButton from '@/components/Button/StatusButton/StatusButton';
+import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import Link from 'next/link';
 import styles from './TournamentInfoContainer.module.css';
 import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 
-import { rulesetIcons } from '@/lib/api';
 import { patchTournamentData } from '@/app/actions/tournaments';
+import { RulesetMetadata } from '@/lib/enums';
 
 export default function TournamentInfoContainer({
   data,
@@ -22,7 +22,7 @@ export default function TournamentInfoContainer({
       {/** Verification Status */}
       {isAdminView && (
         <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-          <StatusButton
+          <VerificationStatusButton
             initialStatus={data.verificationStatus}
             isAdminView
             onChange={async (status) => {
@@ -59,7 +59,7 @@ export default function TournamentInfoContainer({
       <div className={styles.field}>
         <div className={styles.name}>Ruleset</div>
         <div className={styles.value}>
-          {rulesetIcons[data.ruleset].shortAlt}
+          {RulesetMetadata[data.ruleset].shortAlt}
         </div>
       </div>
       {/** Forum URL */}

@@ -1,10 +1,9 @@
 'use client';
 
 import { fetchTournamentPage } from '@/app/actions';
-import StatusButton from '@/components/Button/StatusButton/StatusButton';
+import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import {
   dateFormatOptions,
-  statusButtonTypes,
 } from '@/lib/types';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -17,20 +16,21 @@ import styles from './MainExpandableRow.module.css';
 
 import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 
-import { rulesetIcons } from '@/lib/api';
+
+import { RulesetMetadata, VerificationStatusMetadata } from '@/lib/enums';
 
 
 export default function MainExpandableRow({ tournament }: { tournament: TournamentDTO }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setexpanded] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
   const lobbySize = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
-  const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
+  const IconComponent = RulesetMetadata[tournament?.ruleset]?.image;
   const status = tournament?.verificationStatus;
 
   const handleToggle = async () => {
-    setExpanded(true);
+    setexpanded(true);
 
     if (!expanded && !fetchedData && tournament) {
       setFetchLoading(true);
@@ -58,7 +58,7 @@ export default function MainExpandableRow({ tournament }: { tournament: Tourname
               <span
                 className={clsx(
                   parentStyles.status,
-                  parentStyles[statusButtonTypes[status]?.className]
+                  parentStyles[VerificationStatusMetadata[status]?.className]
                 )}
               />
               <motion.span
@@ -87,7 +87,7 @@ export default function MainExpandableRow({ tournament }: { tournament: Tourname
                     className="fill"
                     data-tooltip-id={`tooltip-${tournament.ruleset}`}
                     data-tooltip-content={
-                      rulesetIcons[tournament.ruleset]?.altTournamentsList
+                      RulesetMetadata[tournament.ruleset]?.altTournamentsList
                     }
                     data-tooltip-delay-show={400}
                   />
@@ -106,7 +106,7 @@ export default function MainExpandableRow({ tournament }: { tournament: Tourname
           <ExpandedRow
             tournament={tournament}
             fetchedData={fetchedData}
-            setExpanded={setExpanded}
+            setExpanded={setexpanded}
             fetchLoading={fetchLoading}
           />
         )}
@@ -151,7 +151,7 @@ const ExpandedRow = ({
               return (
                 <SimpleExpandableRow key={index}>
                   <span id="matchName">{match.name}</span>
-                  <StatusButton
+                  <VerificationStatusButton
                     initialStatus={match.verificationStatus}
                     isAdminView
                   />

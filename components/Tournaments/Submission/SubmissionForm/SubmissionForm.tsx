@@ -5,13 +5,14 @@ import Form from '@/components/Form/Form';
 import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
-import { isAdmin, rulesetIcons } from '@/lib/api';
+import { isAdmin } from '@/lib/api';
 import { keysOf } from '@/util/forms';
 import { Ruleset, TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
+import { RulesetMetadata } from '@/lib/enums';
 
 const formFieldNames = keysOf<TournamentSubmissionDTO>();
 
@@ -104,12 +105,12 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <label htmlFor={formFieldNames.ruleset}>Ruleset</label>
                   <FormInputError message={formState.errors.ruleset} />
                   <select required name={formFieldNames.ruleset}>
-                    <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
-                    <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
-                    <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
-                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{rulesetIcons[Ruleset.ManiaOther].alt}</option>)}
-                    <option value={Ruleset.Mania4k}>{rulesetIcons[Ruleset.Mania4k].alt}</option>
-                    <option value={Ruleset.Mania7k}>{rulesetIcons[Ruleset.Mania7k].alt}</option>
+                    <option value={Ruleset.Osu}>{RulesetMetadata[Ruleset.Osu].alt}</option>
+                    <option value={Ruleset.Taiko}>{RulesetMetadata[Ruleset.Taiko].alt}</option>
+                    <option value={Ruleset.Catch}>{RulesetMetadata[Ruleset.Catch].alt}</option>
+                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{RulesetMetadata[Ruleset.ManiaOther].alt}</option>)}
+                    <option value={Ruleset.Mania4k}>{RulesetMetadata[Ruleset.Mania4k].alt}</option>
+                    <option value={Ruleset.Mania7k}>{RulesetMetadata[Ruleset.Mania7k].alt}</option>
                   </select>
                 </div>
                 {/* Rank restriction */}

@@ -1,55 +1,5 @@
-import { adminPanelSaveVerified } from '@/app/actions';
-import { Ruleset, VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { FC, SVGProps } from 'react';
-
-/** Represents an icon for a {@link Ruleset} */
-export interface RulesetIconContent {
-  /**
-   * Icon image as a React element
-   * @example
-   * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
-   * return (<taikoIcon />);
-   */
-  image: FC<SVGProps<SVGElement>>;
-
-  /**
-   * Icon image as a relative URL
-   * @example
-   * const taikoIconUrl = rulesetIcons[Ruleset.Taiko].imageUrl;
-   * return (<img href={taikoIconUrl} />);
-   */
-  imageUrl: any;
-
-  /**
-   * Alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'osu!Taiko'
-   */
-  alt: string;
-
-  /**
-   * Shortened alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'Taiko'
-   */
-  shortAlt: string;
-}
-
-/** Represents a button for a {@link VerificationStatus} */
-export interface VerificationStatusButtonContent {
-  /** CSS Class name */
-  className: string,
-
-  /** Text to display on the button */
-  text: string,
-
-  // /** Text to display on the button's tooltip */
-  // tooltipText: string;
-}
 
 export const dateFormatOptions = {
   tournaments: {
@@ -108,42 +58,6 @@ export const matchesVerificationStatuses = {
   '0': {},
 };
 
-export const statusButtonTypes = {
-  0: { order: 0, className: 'pending', text: 'Pending' }, // None
-  1: {
-    order: 3,
-    className: 'rejected',
-    text: 'Pre-rejected',
-    display: true,
-    verificationValue: 1,
-    function: () => {},
-  }, // PreRejected
-  2: {
-    order: 2,
-    className: 'verified',
-    text: 'Pre-verified',
-    display: true,
-    verificationValue: 2,
-    function: () => {},
-  }, // PreVerified
-  3: {
-    order: 4,
-    className: 'rejected',
-    text: 'Rejected',
-    display: true,
-    verificationValue: 3,
-    function: () => {},
-  }, // Rejected
-  4: {
-    order: 1,
-    className: 'verified',
-    text: 'Verified',
-    display: true,
-    verificationValue: 4,
-    function: adminPanelSaveVerified,
-  }, // Verified
-};
-
 export interface SessionUser {
   id?: number;
   playerId?: number;
@@ -160,7 +74,7 @@ export interface SessionUser {
 
 /** Names of available cookies */
 export enum CookieNames {
-  /** The {@link Ruleset} currently selected by the user in the navbar */
+  /** The Ruleset currently selected by the user in the navbar */
   SelectedRuleset = 'OTR-selected-ruleset',
 }
 

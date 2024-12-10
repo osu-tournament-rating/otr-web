@@ -9,7 +9,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 import styles from './Lists.module.css';
-import { rulesetIcons } from '@/lib/api';
+
+import { RulesetMetadata } from '@/lib/enums';
 
 export default function TournamentsList({
   params,
@@ -99,7 +100,7 @@ export default function TournamentsList({
         <tbody>
           {data.map((tournament, index) => {
             const format = `${tournament?.lobbySize}v${tournament?.lobbySize}`;
-            const IconComponent = rulesetIcons[tournament?.ruleset]?.image;
+            const IconComponent = RulesetMetadata[tournament?.ruleset]?.image;
 
             return (
               <tr key={index}>
@@ -126,7 +127,7 @@ export default function TournamentsList({
                         className="fill"
                         data-tooltip-id={`tooltip-${tournament.ruleset}`}
                         data-tooltip-content={
-                          rulesetIcons[tournament.ruleset]?.altTournamentsList
+                          RulesetMetadata[tournament.ruleset]?.altTournamentsList
                         }
                         data-tooltip-delay-show={400}
                       />

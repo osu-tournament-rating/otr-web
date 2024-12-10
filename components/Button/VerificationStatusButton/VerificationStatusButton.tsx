@@ -5,9 +5,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
 import { LegacyRef, useState } from 'react';
-import styles from './StatusButton.module.css';
+import styles from './VerificationStatusButton.module.css';
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { useClickAway } from '@uidotdev/usehooks';
+import { VerificationStatusMetadata } from '@/lib/enums';
 
 /** Motion animation variants for the dropdown button */
 const dropdownVariants: Variants = {
@@ -45,40 +46,6 @@ const listItemVariants: Variants = {
   },
 };
 
-/** Button content for each {@link VerificationStatus} */
-const buttonVariants: {
-  [key in VerificationStatus]: {
-    className: string;
-    text: string;
-    displayInDropdown?: boolean;
-  }
-} = {
-  [VerificationStatus.None]: {
-    className: 'pending',
-    text: 'Pending'
-  },
-  [VerificationStatus.PreRejected]: {
-    className: 'rejected',
-    text: 'Pre-rejected',
-    displayInDropdown: true
-  },
-  [VerificationStatus.PreVerified]: {
-    className: 'verified',
-    text: 'Pre-verified',
-    displayInDropdown: true
-  },
-  [VerificationStatus.Rejected]: {
-    className: 'rejected',
-    text: 'Rejected',
-    displayInDropdown: true
-  },
-  [VerificationStatus.Verified]: {
-    className: 'verified',
-    text: 'Verified',
-    displayInDropdown: true
-  }
-}
-
 type VerificationStatusButtonProps = {
   /** Initial status to display */
   initialStatus: VerificationStatus;
@@ -93,7 +60,7 @@ type VerificationStatusButtonProps = {
   onChange?: (newStatus: VerificationStatus) => Promise<void> | void;
 }
 
-export default function StatusButton({
+export default function VerificationStatusButton({
   initialStatus,
   isAdminView,
   onChange
@@ -128,7 +95,7 @@ export default function StatusButton({
       <div
         className={clsx(
           styles.button,
-          styles[buttonVariants[currentStatus].className],
+          styles[VerificationStatusMetadata[currentStatus].className],
           isAdminView ? styles.canOpen : '',
           isLoading && styles.loading
         )}
@@ -137,7 +104,7 @@ export default function StatusButton({
         }}
       >
         <span className={styles.text}>
-          {buttonVariants[currentStatus].text}
+          {VerificationStatusMetadata[currentStatus].text}
         </span>
         {isAdminView && (
           <motion.span
@@ -161,7 +128,7 @@ export default function StatusButton({
               animate={'animate'}
               exit={'exit'}
             >
-              {Object.entries(buttonVariants).map(([value, { text, displayInDropdown }]) => {
+              {Object.entries(VerificationStatusMetadata).map(([value, { text, displayInDropdown }]) => {
                   if (displayInDropdown && !((value as any as VerificationStatus) == currentStatus)) {
                     return (
                       <motion.div

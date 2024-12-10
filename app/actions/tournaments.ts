@@ -9,7 +9,7 @@ import { extractFormData } from '@/util/forms';
 import {
   OperationType,
   TournamentDTO,
-  TournamentsGetRequestParams,
+  TournamentsGetRequestParams, TournamentsListRequestParams,
   TournamentSubmissionDTO,
   TournamentsWrapper
 } from '@osu-tournament-rating/otr-api-client';
@@ -99,6 +99,13 @@ export async function tournamentSubmissionFormAction(
 export async function getTournament(params: TournamentsGetRequestParams){
   const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
   const { result } = await wrapper.get(params);
+
+  return result;
+}
+
+export async function getTournamentList(params: TournamentsListRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.list(params);
 
   return result;
 }
