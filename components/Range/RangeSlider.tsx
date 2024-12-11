@@ -7,7 +7,7 @@ export default function RangeSlider({
   name,
   step = 1,
   min = 1,
-  max,
+  max = 100,
   rtl = false,
   value,
   setParamsToPush,
@@ -15,7 +15,7 @@ export default function RangeSlider({
   name: string;
   step?: number;
   min?: number;
-  max: number;
+  max?: number;
   rtl?: boolean;
   value: any;
   setParamsToPush: any;

@@ -101,3 +101,9 @@
         }
     }
 }
+
+.filterContainer {
+    display: flex;
+    flex-flow: row;
+    gap: var(--internal-gap);
+}

@@ -1,0 +1,29 @@
+.filterContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--internal-gap);
+
+    .collapsible {
+        padding: 1.2rem 2rem;
+        background-color: hsla(var(--background-content-childs-hsl));
+    }
+}
+
+.searchBarContainer {
+    display: flex;
+    flex-direction: row;
+    gap: var(--internal-gap);
+}
+
+.filterButton {
+    aspect-ratio: 1;
+    height: 3rem;
+    border-radius: 5px;
+    padding: 0.75rem;
+    background-color: hsla(var(--background-content-childs-hsl));
+
+    /* Needs visual hover feedback */
+    &:hover {
+        cursor: pointer;
+    }
+}

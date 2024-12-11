@@ -1,3 +1,5 @@
+import TournamentListFilter from '@/components/Tournaments/TournamentList/Filter/TournamentListFilter';
+
 export const revalidate = 60;
 
 import type { Metadata } from 'next';
@@ -11,13 +13,14 @@ export const metadata: Metadata = {
 export default async function Page() {
   const tournaments = await getTournamentList({
     page: 1,
-    pageSize: 5,
+    pageSize: 15,
     verified: false
   });
 
   return (
     <div className={'content'}>
       <h1>All tournaments</h1>
+      <TournamentListFilter/>
       <TournamentList tournaments={tournaments} />
     </div>
   );

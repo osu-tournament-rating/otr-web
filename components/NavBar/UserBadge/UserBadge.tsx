@@ -19,9 +19,6 @@ const tooltipContent = (contextLogout: (() => void)) => (
         Sign out
       </button>
     </div>
-    <div className={styles.iconContainer}>
-      <ThemeSwitcher />
-    </div>
   </>
 );
 
