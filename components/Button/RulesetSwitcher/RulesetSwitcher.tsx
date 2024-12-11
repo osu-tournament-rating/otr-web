@@ -5,11 +5,10 @@ import { CookieNames } from '@/lib/types';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
-import styles from './ModeSwitcher.module.css';
-
+import styles from './RulesetSwitcher.module.css';
 import { RulesetMetadata } from '@/lib/enums';
 
-export default function ModeSwitcher({ ruleset }: { ruleset: Ruleset }) {
+export default function RulesetSwitcher({ ruleset }: { ruleset: Ruleset }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(ruleset);
   const selectedRulesetIcon = RulesetMetadata[selectedRuleset];
