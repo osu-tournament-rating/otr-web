@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { validateAccessCredentials } from '@/app/actions/login';
 import { getSession } from '@/app/actions/session';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -10,9 +11,8 @@ export async function middleware(req: NextRequest) {
   await validateAccessCredentials({ req, res });
   const session = await getSession({ req, res });
 
-  // Redirect users that arent logged in
-  // TODO: Use an enum for scopes instead of checking against a string literal
-  if (!session.isLogged || !session.scopes?.includes('whitelist')) {
+  // Redirect users that aren't logged in
+  if (!session.isLogged || !session.user?.scopes?.includes(Roles.Whitelist)) {
     // Pass through the existing response headers in case cookies are set
     return NextResponse.redirect(new URL('/unauthorized', req.url), { headers: res.headers });
   }

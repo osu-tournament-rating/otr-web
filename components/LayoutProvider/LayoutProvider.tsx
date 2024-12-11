@@ -1,15 +1,14 @@
 'use client';
 
-// Use usePathname for catching route name.
-import { usePathname } from 'next/navigation';
-import NavBar from '../NavBar/NavBar';
+import NavBar from '@/components/NavBar/NavBar';
+import Footer from '@/components/Footer/Footer';
 
 export const LayoutProvider = ({ children }: { children: React.ReactNode }) => {
-  const pathname = usePathname();
   return (
     <>
-      {pathname !== '/unauthorized' && <NavBar />}
+      <NavBar />
       {children}
+      <Footer />
     </>
   );
 };

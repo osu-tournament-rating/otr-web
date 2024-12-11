@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 
 export const dateFormatOptions = {
   tournaments: {
@@ -54,21 +55,20 @@ export const TournamentsQuerySchema = z.object({
   page: z.number().gte(1).default(1),
 });
 
-export const matchesVerificationStatuses = {
-  '0': {},
-};
+export interface SessionData {
+  /** User data */
+  user?: UserDTO;
 
-export interface SessionUser {
-  id?: number;
-  playerId?: number;
-  osuId?: number;
-  osuCountry?: string;
-  osuPlayMode?: number;
-  username?: string;
-  scopes?: string[];
+  /** Denotes if the user is logged in */
   isLogged: boolean;
+
+  /** State variable used to authenticate osu! OAuth attempts */
   osuOauthState?: string;
+
+  /** API access token */
   accessToken?: string;
+
+  /** API refresh token */
   refreshToken?: string;
 }
 
@@ -89,7 +89,7 @@ export type FormState<T> = {
   /** Denotes if the submission was successful */
   success: boolean;
 
-  /** Seccess / fail detail to display in a toast */
+  /** Success / fail detail to display in a toast */
   message: string;
 
   /** Any errors specific to a form property */

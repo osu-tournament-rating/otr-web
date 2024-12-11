@@ -1,7 +1,6 @@
 'use server';
 
-import { isHttpValidationProblemDetails } from '@/lib/api';
-import { apiWrapperConfiguration } from '@/lib/auth';
+import { apiWrapperConfiguration, isHttpValidationProblemDetails } from '@/lib/api';
 import { BeatmapLinkPattern, MatchLinkPattern } from '@/lib/regex';
 import { TournamentSubmissionFormSchema } from '@/lib/schemas';
 import { FormState } from '@/lib/types';

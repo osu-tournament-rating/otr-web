@@ -1,38 +1,32 @@
 'use client';
 
-import { getSessionData } from '@/app/actions/session';
-import { SessionUser } from '@/lib/types';
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, useState, } from 'react';
 
 import type { ReactNode } from 'react';
+import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 
 interface UserContextProps {
-  user: SessionUser | undefined;
+  /** The currently logged-in user */
+  user: UserDTO | undefined;
+
+  /** Clears the currently logged-in user on the client side */
   logout: () => void;
 }
 
 export const UserLoggedContext = createContext<UserContextProps | undefined>(undefined);
 
-export default function UserProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [user, setUser] = useState<SessionUser | undefined>(undefined);
+export default function UserProvider({
+  initialUser,
+  children
+}: {
+  initialUser?: UserDTO;
+  children: ReactNode
+}) {
+  const [user, setUser] = useState<UserDTO | undefined>(initialUser);
 
-  const fetchUser = useCallback(async () => {
-    const sessionData = await getSessionData();
-    setUser(sessionData);
-  }, []);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  const logout = useCallback(() => {
+  const logout = () => {
     setUser(undefined);
-  }, []);
+  }
 
   return (
     <UserLoggedContext.Provider value={{ user, logout }}>

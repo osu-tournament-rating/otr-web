@@ -1,7 +1,6 @@
 'use server';
 
 import { getSessionData } from '@/app/actions/session';
-import { apiWrapperConfiguration } from '@/lib/auth';
 import {
   LeaderboardsQuerySchema,
   TournamentsQuerySchema,
@@ -10,6 +9,7 @@ import {
 import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
+import { apiWrapperConfiguration } from '@/lib/api';
 
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);

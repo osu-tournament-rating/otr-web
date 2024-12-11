@@ -1,4 +1,3 @@
-import Footer from '@/components/Footer/Footer';
 import { LayoutProvider } from '@/components/LayoutProvider/LayoutProvider';
 import ErrorProvider from '@/util/ErrorContext';
 import UserProvider from '@/util/UserLoggedContext';
@@ -7,6 +6,8 @@ import { Viewport } from 'next';
 import { ThemeProvider } from 'next-themes';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import React from 'react';
+import { getSession } from '@/app/actions/session';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-Inter' });
 
@@ -26,20 +27,21 @@ export const viewport: Viewport = {
   themeColor: '#FFFFFF',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = await getSession();
+
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <ErrorProvider>
-            <UserProvider>
+            <UserProvider initialUser={user}>
               <LayoutProvider>
                 {children}
-                <Footer />
               </LayoutProvider>
             </UserProvider>
           </ErrorProvider>

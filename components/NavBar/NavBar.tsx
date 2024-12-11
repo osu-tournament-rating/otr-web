@@ -6,24 +6,31 @@ import HamburgerMobile from './HamburgerMobile/HamburgerMobile';
 import styles from './NavBar.module.css';
 import Routes from './Routes/Routes';
 import SearchButton from './SearchButton/SearchButton';
-import UserLogged from './UserLogged/UserLogged';
+import UserBadge from '@/components/NavBar/UserBadge/UserBadge';
+import { useUser } from '@/util/hooks';
 
 export default function NavBar() {
+  const { user } = useUser();
+
   return (
-    <nav className={styles.navbar}>
-      <Link href={'/'} className={styles.logoLink}>
-        <Logo />
-      </Link>
-      <div className={styles.content}>
-        <Routes />
-        {/* <Link href={'/donate'}>Donate</Link> */}
-        <div className={styles.actions}>
-          <SearchButton />
-          <UserLogged />
-        </div>
-      </div>
-      {/* Hamburger Menu Icon for mobile */}
-      <HamburgerMobile />
-    </nav>
+    <>
+      {user && (
+        <nav className={styles.navbar}>
+          <Link href={'/'} className={styles.logoLink}>
+            <Logo />
+          </Link>
+          <div className={styles.content}>
+            <Routes />
+            {/* <Link href={'/donate'}>Donate</Link> */}
+            <div className={styles.actions}>
+              <SearchButton />
+              <UserBadge />
+            </div>
+          </div>
+          {/* Hamburger Menu Icon for mobile */}
+          <HamburgerMobile />
+        </nav>
+      )}
+    </>
   );
 }

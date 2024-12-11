@@ -1,11 +1,11 @@
 'use server';
 
-import { apiWrapperConfiguration } from '@/lib/auth';
-import { AccessCredentialsDTO, MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
+import { MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
-import { clearCookies, getSession, populateSessionUserData } from './session';
+import { clearCookies, getSession } from './session';
 import { GetSessionParams } from '@/lib/types';
+import { apiWrapperConfiguration } from '@/lib/api';
 
 /**
  * Prepares the login flow and redirects to the osu! oauth portal
@@ -46,27 +46,24 @@ export async function login(code: string) {
 
   // Exchange the osu! auth code for o!TR credentials
   const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
-
-  let accessCredentials: AccessCredentialsDTO;
   try {
-    accessCredentials = (await oauthWrapper.authorize({ code })).result;
+    const { result } = await oauthWrapper.authorize({ code });
+
+    session.accessToken = result.accessToken;
+    session.refreshToken = result.refreshToken;
+    session.isLogged = true;
+    await session.save();
   } catch (err) {
     console.log(err);
     return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
   }
 
-  // This is technically all that's required for login
-  session.accessToken = accessCredentials.accessToken;
-  session.refreshToken = accessCredentials.refreshToken;
-  session.isLogged = true;
-  await session.save();
-
   // Try to get the user and populate the rest of the session
   const meWrapper = new MeWrapper(apiWrapperConfiguration);
-
   try {
     const { result } = await meWrapper.get();
-    await populateSessionUserData(result);
+    session.user = result;
+    await session.save();
   } catch (err) { 
     console.log(err);
   }
