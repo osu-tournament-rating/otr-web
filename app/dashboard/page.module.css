@@ -1,4 +1,6 @@
 .main {
+  display: flex;
+  flex-direction: column;
   gap: var(--main-padding);
 }
 

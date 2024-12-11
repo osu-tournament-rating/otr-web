@@ -1,6 +1,6 @@
-.pageContainer {
+.page {
   display: grid;
   grid-template-columns: 52% auto;
-  gap: var(--main-padding);
+  gap: var(--internal-gap);
   grid-template-areas: 'guidelines form';
 }

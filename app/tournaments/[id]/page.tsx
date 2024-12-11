@@ -1,4 +1,3 @@
-import styles from './page.module.css';
 import { getTournament } from '@/app/actions/tournaments';
 import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
@@ -23,13 +22,11 @@ export default async function Page({
   const tournament = await getTournament({ id, verified: false });
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <TournamentPageHeader forumUrl={tournament.forumUrl} date={tournament.startTime}>
-          <h1>{tournament.name}</h1>
-        </TournamentPageHeader>
-        <TournamentPageContent tournament={tournament} />
-      </div>
-    </main>
+    <div className={'content'}>
+      <TournamentPageHeader forumUrl={tournament.forumUrl} date={tournament.startTime}>
+        <h1>{tournament.name}</h1>
+      </TournamentPageHeader>
+      <TournamentPageContent tournament={tournament} />
+    </div>
   );
 }

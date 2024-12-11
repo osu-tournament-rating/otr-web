@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
 import { RulesetMetadata } from '@/lib/enums';
+import { useUser } from '@/util/hooks';
 
 const formFieldNames = keysOf<TournamentSubmissionDTO>();
 
@@ -26,10 +27,10 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
   );
 }
 
-export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
+export default function SubmissionForm() {
   const [formState, formAction] = useFormState(tournamentSubmissionFormAction, { success: false, message: '', errors: {} });
   const formRef = useRef<HTMLFormElement>(null);
-  const userIsAdmin = isAdmin(userScopes);
+  const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [showToast, setShowToast] = useState(false);

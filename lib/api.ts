@@ -65,6 +65,6 @@ export function isHttpValidationProblemDetails(obj: any): obj is HttpValidationP
 }
 
 /** Denotes if a list of scopes contains the admin scope */
-export function isAdmin(scopes: string[]) {
-  return scopes.includes(Roles.Admin);
+export function isAdmin(scopes?: string[]) {
+  return (scopes ?? []).includes(Roles.Admin);
 }

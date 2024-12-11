@@ -32,14 +32,9 @@ export default async function page({
   await catchErrors(searchParams, leaderboardData);
 
   return (
-    <main className={styles.container}>
-      {/* {leaderboardData?.playerChart && (
-        <UserStats data={leaderboardData.playerChart} />
-      )} */}
-      <div className={styles.content}>
-        <FilterButtons params={searchParams} data={leaderboardData} />
-        <Leaderboard params={searchParams} data={leaderboardData} />
-      </div>
-    </main>
+    <div className={styles.content}>
+      <FilterButtons params={searchParams} data={leaderboardData} />
+      <Leaderboard params={searchParams} data={leaderboardData} />
+    </div>
   );
 }

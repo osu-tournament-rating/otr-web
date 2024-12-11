@@ -2,11 +2,10 @@
   border-radius: var(--main-borderRadius);
   padding: 1rem 1.2rem;
   background-color: hsla(var(--background-content-hsl));
-  margin: var(--main-padding);
   display: flex;
   flex-flow: row;
   align-items: center;
-  margin-top: auto;
+  margin-top: var(--main-padding);
   justify-content: space-between;
   /* font-weight: 300; */
   font-size: 0.95rem;

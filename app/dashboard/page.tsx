@@ -33,7 +33,7 @@ export default async function page({
   const data = await fetchDashboard(searchParams);
 
   return (
-    <main className={styles.main}>
+    <div className={styles.main}>
       <UserMainCard data={data?.baseStats} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
@@ -194,6 +194,6 @@ export default async function page({
           </StatsGrid>
         </>
       )}
-    </main>
+    </div>
   );
 }

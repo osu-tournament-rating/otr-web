@@ -1,5 +1,3 @@
-import styles from './page.module.css';
-
 export const revalidate = 60;
 
 import type { Metadata } from 'next';
@@ -18,11 +16,9 @@ export default async function Page() {
   });
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <h1 className={styles.title}>All tournaments</h1>
-        <TournamentList tournaments={tournaments} />
-      </div>
-    </main>
+    <div className={'content'}>
+      <h1>All tournaments</h1>
+      <TournamentList tournaments={tournaments} />
+    </div>
   );
 }
