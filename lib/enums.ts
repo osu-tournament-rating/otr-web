@@ -4,14 +4,11 @@ import {
   Ruleset,
   VerificationStatus
 } from '@osu-tournament-rating/otr-api-client';
-import StandardSVG from '@/public/icons/Ruleset Standard.svg';
-import StandardSVGurl from '@/public/icons/Ruleset Standard.svg?url';
-import TaikoSVG from '@/public/icons/Ruleset Taiko.svg';
-import TaikoSVGurl from '@/public/icons/Ruleset Taiko.svg?url';
-import CtbSVG from '@/public/icons/Ruleset Catch.svg';
-import CtbSVGurl from '@/public/icons/Ruleset Catch.svg?url';
-import ManiaSVG from '@/public/icons/Ruleset Mania.svg';
-import ManiaSVGurl from '@/public/icons/Ruleset Mania.svg?url';
+import AllRulesetIcon from '@/public/icons/Ruleset All.svg';
+import StandardIcon from '@/public/icons/Ruleset Standard.svg';
+import TaikoIcon from '@/public/icons/Ruleset Taiko.svg';
+import CatchIcon from '@/public/icons/Ruleset Catch.svg';
+import ManiaIcon from '@/public/icons/Ruleset Mania.svg';
 import { FC, SVGProps } from 'react';
 
 /** Gets an array of individual flags from a bitwise enumeration */
@@ -66,77 +63,82 @@ export const VerificationStatusMetadata: {
   }
 }
 
+type RulesetMetadata = {
+  /**
+   * Icon image as a React element
+   * @example
+   * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
+   * return (<taikoIcon />);
+   */
+  image: FC<SVGProps<SVGElement>>;
+
+  /**
+   * Alt text
+   *
+   * Example:
+   * For {@link Ruleset.Taiko} - 'osu!Taiko'
+   */
+  alt: string;
+
+  /**
+   * Shortened alt text
+   *
+   * Example:
+   * For {@link Ruleset.Taiko} - 'Taiko'
+   */
+  shortAlt: string;
+
+  /** Whether to display this ruleset in the selector */
+  displayInSelector?: boolean;
+}
+
 /** Stylistic metadata for each {@link Ruleset} */
 export const RulesetMetadata: {
-  [key in Ruleset]: {
-    /**
-     * Icon image as a React element
-     * @example
-     * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
-     * return (<taikoIcon />);
-     */
-    image: FC<SVGProps<SVGElement>>;
-
-    /**
-     * Icon image as a relative URL
-     * @example
-     * const taikoIconUrl = rulesetIcons[Ruleset.Taiko].imageUrl;
-     * return (<img href={taikoIconUrl} />);
-     */
-    imageUrl: any;
-
-    /**
-     * Alt text
-     *
-     * Example:
-     * For {@link Ruleset.Taiko} - 'osu!Taiko'
-     */
-    alt: string;
-
-    /**
-     * Shortened alt text
-     *
-     * Example:
-     * For {@link Ruleset.Taiko} - 'Taiko'
-     */
-    shortAlt: string;
-  }
+  [key in Ruleset]: RulesetMetadata;
+} & {
+  /** The special case 'All Rulesets' icon */
+  All: RulesetMetadata
 } = {
-  [Ruleset.Osu]: {
-    image: StandardSVG,
-    imageUrl: StandardSVGurl,
+  All: {
+    image: AllRulesetIcon,
     alt: 'osu!',
-    shortAlt: 'Standard'
+    shortAlt: 'All Rulesets',
+    displayInSelector: true
+  },
+  [Ruleset.Osu]: {
+    image: StandardIcon,
+    alt: 'osu!',
+    shortAlt: 'Standard',
+    displayInSelector: true
   },
   [Ruleset.Taiko]: {
-    image: TaikoSVG,
-    imageUrl: TaikoSVGurl,
+    image: TaikoIcon,
     alt: 'osu!Taiko',
-    shortAlt: 'Taiko'
+    shortAlt: 'Taiko',
+    displayInSelector: true
   },
   [Ruleset.Catch]: {
-    image: CtbSVG,
-    imageUrl: CtbSVGurl,
+    image: CatchIcon,
     alt: 'osu!Catch',
-    shortAlt: 'Catch'
+    shortAlt: 'Catch',
+    displayInSelector: true
   },
   [Ruleset.ManiaOther]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
+    image: ManiaIcon,
     alt: 'osu!Mania',
     shortAlt: 'Mania (Other)'
   },
   [Ruleset.Mania4k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
+    image: ManiaIcon,
     alt: 'osu!Mania 4K',
-    shortAlt: 'Mania 4K'
+    shortAlt: 'Mania 4K',
+    displayInSelector: true
   },
   [Ruleset.Mania7k]: {
-    image: ManiaSVG,
-    imageUrl: ManiaSVGurl,
+    image: ManiaIcon,
     alt: 'osu!Mania 7K',
-    shortAlt: 'Mania 7K'
+    shortAlt: 'Mania 7K',
+    displayInSelector: true
   }
 };
 

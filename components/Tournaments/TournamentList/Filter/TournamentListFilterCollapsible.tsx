@@ -3,6 +3,7 @@
 import styles from './TournamentListFilter.module.css';
 import { AnimationProps, motion } from 'framer-motion';
 import clsx from 'clsx';
+import RulesetSelector from '@/components/Button/RulesetSwitcher/RulesetSelector';
 
 // TODO: Clean up this animation
 const collapsibleAnimationProps: AnimationProps = {
@@ -35,10 +36,10 @@ export default function TournamentListFilterCollapsible() {
       className={clsx('content', styles.collapsible)}
       {...collapsibleAnimationProps}
     >
-      <h1>tons of shit</h1>
-      <h1>tons of shit</h1>
-      <h1>tons of shit</h1>
-      <h1>tons of shit</h1>
+      <RulesetSelector />
+      <h1>yep placeholder</h1>
+      <h1>yep placeholder</h1>
+      <h1>yep placeholder</h1>
     </motion.div>
   );
 }

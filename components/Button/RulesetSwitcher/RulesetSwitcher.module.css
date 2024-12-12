@@ -1,49 +1,25 @@
-.modeSwitcher {
-  height: 1.9rem;
-  width: 1.9rem;
-  aspect-ratio: 1;
-  position: relative;
-}
-
-.modeSwitcher .switchButton {
-  height: 1.9rem;
-  width: 1.9rem;
-  aspect-ratio: 1;
-}
-
-.dropdown {
+.rulesetSwitcher {
   display: flex;
-  flex-flow: column;
-  position: absolute;
-  top: 3.4rem;
-  right: 0;
-  background-color: hsla(var(--background-content-hsl));
-  border-radius: var(--main-borderRadius);
-  overflow: hidden;
-  z-index: 2;
+  flex-direction: row;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  /* TODO: better colors */
+  background-color: hsla(var(--tier-bar-background));
 }
 
-.item {
-  font-weight: 400;
-  font-size: 1.1rem;
-  padding: 0.5rem 1.4rem;
-  cursor: pointer;
-}
+.switchButton {
+  height: 2rem;
+  width: 2rem;
+  aspect-ratio: 1;
+  background: none;
 
-.item:first-child {
-  padding: 0.8rem 1.4rem 0.5rem 1.4rem;
-}
+  /* TODO: svg fill hover feedback */
+  &:hover {
+    cursor: pointer;
+  }
 
-.item:last-child {
-  padding: 0.5rem 1.4rem 0.8rem 1.4rem;
-}
-
-.item:hover {
-  /* background-color: hsla(0, 0%, 0%, 0.05); */
-  color: hsla(var(--gray-600));
-}
-
-[data-theme='dark'] .switchButton img {
-  -webkit-filter: invert(75%);
-  filter: invert(75%);
+  &.active > svg {
+    fill: hsla(var(--accent-color));
+  }
 }

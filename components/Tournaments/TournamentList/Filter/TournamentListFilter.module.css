@@ -6,6 +6,8 @@
     .collapsible {
         padding: 1.2rem 2rem;
         background-color: hsla(var(--background-content-childs-hsl));
+        /** TODO: Remove, for development */
+        align-items: center;
     }
 }
 
