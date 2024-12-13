@@ -50,7 +50,10 @@ type VerificationStatusButtonProps = {
   /** Initial status to display */
   initialStatus: VerificationStatus;
 
-  /** If true, enables the dropdown selection of a new status */
+  /**
+   * If true, enables the dropdown selection of a new status
+   * TODO: Change this to something like 'enableDropdown'
+   */
   isAdminView?: boolean;
 
   /**

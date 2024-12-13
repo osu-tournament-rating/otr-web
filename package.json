@@ -23,9 +23,11 @@
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",
+    "react-datepicker": "^7.5.0",
     "react-dom": "^18",
     "react-hotkeys-hook": "^4.5.0",
     "react-range": "^1.8.14",
+    "react-select": "^5.9.0",
     "react-tooltip": "^5.28.0",
     "react-wrap-balancer": "^1.1.0",
     "zod": "^3.22.4"

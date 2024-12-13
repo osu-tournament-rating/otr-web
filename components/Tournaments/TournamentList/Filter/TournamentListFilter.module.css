@@ -29,3 +29,37 @@
         cursor: pointer;
     }
 }
+
+.field {
+    display: flex;
+    flex-flow: row;
+    gap: 0.7rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.field .checkbox {
+    height: 100%;
+    aspect-ratio: 1;
+    border: 1px solid hsla(var(--gray-600));
+    border-radius: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    transition: all 0.2s ease-out;
+
+    .selected {
+        background-color: hsla(var(--green-500), 0.75);
+        border: 1px solid transparent;
+    }
+
+    .excluded {
+        background-color: hsla(var(--red-500), 0.75);
+        border: 1px solid transparent;
+    }
+}
