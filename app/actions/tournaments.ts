@@ -2,13 +2,14 @@
 
 import { apiWrapperConfiguration, isHttpValidationProblemDetails } from '@/lib/api';
 import { BeatmapLinkPattern, MatchLinkPattern } from '@/lib/regex';
-import { TournamentSubmissionFormSchema } from '@/lib/schemas';
-import { FormState } from '@/lib/types';
+import { TournamentsListFilterSchema, TournamentSubmissionFormSchema } from '@/lib/schemas';
+import { FormState, TournamentListFilter } from '@/lib/types';
 import { extractFormData } from '@/util/forms';
 import {
   OperationType,
   TournamentDTO,
-  TournamentsGetRequestParams, TournamentsListRequestParams,
+  TournamentsGetRequestParams,
+  TournamentsListRequestParams,
   TournamentSubmissionDTO,
   TournamentsWrapper
 } from '@osu-tournament-rating/otr-api-client';
@@ -100,6 +101,21 @@ export async function getTournament(params: TournamentsGetRequestParams){
   const { result } = await wrapper.get(params);
 
   return result;
+}
+
+export async function buildTournamentListFilter(
+  queryParams: object,
+  defaultFilter?: TournamentListFilter
+) {
+  const parsed = TournamentsListFilterSchema.safeParse(Object.assign(
+    {},
+    defaultFilter,
+    queryParams
+  ));
+
+  return parsed.success
+    ? parsed.data as TournamentListFilter
+    : defaultFilter ?? {};
 }
 
 export async function getTournamentList(params: TournamentsListRequestParams) {

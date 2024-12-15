@@ -1,14 +1,36 @@
-import { Ruleset, TournamentRejectionReason, TournamentSubmissionDTO } from "@osu-tournament-rating/otr-api-client";
-import { EnumLike, CustomErrorParams, z } from "zod";
+import {
+  Ruleset,
+  TournamentProcessingStatus,
+  TournamentQuerySortType,
+  TournamentRejectionReason,
+  TournamentSubmissionDTO,
+  VerificationStatus
+} from '@osu-tournament-rating/otr-api-client';
+import { EnumLike, z } from 'zod';
 
-function nativeBitwiseEnum<T extends EnumLike>(enumType: T, params?: CustomErrorParams) {
-  const validFlags = Object.values(enumType).filter(v => typeof v === 'number');
-  const allFlags = validFlags.reduce((acc, flag) => acc | flag, 0);
+/** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
+const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) => z
+  .coerce
+  .number()
+  .refine((val) => {
+    const validFlags = Object.values(enumType).filter((enumValue) : enumValue is number => typeof enumValue === 'number');
+    const allFlags = validFlags.reduce((acc, flag) => acc | flag, 0);
 
-  return z.custom<T>((value) => {
-    return typeof value === 'number' && (validFlags.includes(value) || (value & ~allFlags) === 0);
-  }, params);
-}
+    return validFlags.includes(val) || (val & ~allFlags) === 0;
+  })
+
+/** Schema that ensures a numeric input is assignable to a given enumeration */
+const numericEnumValueSchema = <T extends EnumLike>(enumType: T) => z
+  .coerce
+  .number()
+  .refine((val) => Object.values(enumType).includes(val))
+
+/** Schema that will convert string input of 'true' or 'false' to a boolean */
+const booleanStringSchema = z
+  .string()
+  .toLowerCase()
+  .refine((val) => val === 'true' || val === 'false')
+  .transform((val) => val === 'true');
 
 /** Helper function to create an error map while exposing the original value for use */
 const makeErrorMap = (messages: { [Code in z.ZodIssueCode]?: (value: unknown) => string; }): z.ZodErrorMap => {
@@ -54,3 +76,24 @@ export const TournamentSubmissionFormSchema = z.object({
  * will ensure that type errors are raised if this DTO happens to change in the future
  */
 }) satisfies z.ZodSchema<TournamentSubmissionDTO>;
+
+export const TournamentsListFilterSchema = z.object({
+  verified: z.union([
+    z.boolean(),
+    booleanStringSchema
+  ]).catch(false),
+  ruleset: numericEnumValueSchema(Ruleset).optional(),
+  name: z.string().optional(),
+  dateMin: z.date().optional(),
+  dateMax: z.date().optional(),
+  verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
+  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus).optional(),
+  submittedBy: z.coerce.number().optional(),
+  verifiedBy: z.coerce.number().optional(),
+  sort: numericEnumValueSchema(TournamentQuerySortType).optional(),
+  descending: z.union([
+    z.boolean(),
+    booleanStringSchema
+  ]).catch(false)
+});

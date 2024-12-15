@@ -4,13 +4,22 @@ import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { useState } from 'react';
 import styles from './RulesetSwitcher.module.css';
 import { RulesetMetadata } from '@/lib/enums';
-import { useUser } from '@/util/hooks';
 import clsx from 'clsx';
 import { Tooltip } from 'react-tooltip';
 
-export default function RulesetSelector() {
-  const { user } = useUser();
-  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | undefined>(user?.settings?.ruleset);
+export default function RulesetSelector({
+  initialRuleset,
+  onChange,
+} : {
+  /** Initial ruleset for the selector */
+  initialRuleset?: Ruleset;
+  /**
+   * Callback fired when selected value changes
+   * Value undefined when 'All Rulesets' selected
+   */
+  onChange?: (value: Ruleset | undefined) => void;
+}) {
+  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | undefined>(initialRuleset);
 
   const isSelected = (value: string) => {
     if (selectedRuleset === undefined) {
@@ -20,9 +29,17 @@ export default function RulesetSelector() {
   }
 
   const handleClick = (value: string) => {
-    return value === 'All'
-      ? setSelectedRuleset(undefined)
-      : setSelectedRuleset(parseInt(value) as Ruleset);
+    if (isSelected(value)) {
+      return;
+    }
+
+    const newValue = value === 'All'
+      ? undefined : (parseInt(value) as Ruleset);
+
+    setSelectedRuleset(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
   }
 
   return (

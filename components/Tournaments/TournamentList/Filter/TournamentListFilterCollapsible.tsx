@@ -8,11 +8,11 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useState } from 'react';
 import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
-import { TournamentProcessingStatus, VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { TournamentProcessingStatusMetadata } from '@/lib/enums';
 import Select from 'react-select';
+import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 
 // TODO: Clean up this animation
 const collapsibleAnimationProps: AnimationProps = {
@@ -40,14 +40,17 @@ const collapsibleAnimationProps: AnimationProps = {
 }
 
 export default function TournamentListFilterCollapsible() {
-  const [paramsToPush, setParamsToPush] = useState({});
+  const { filter: { ruleset }, setFilterValue } = useTournamentListData()
 
   return (
     <motion.div
       className={clsx('content', styles.collapsible)}
       {...collapsibleAnimationProps}
     >
-      <RulesetSelector />
+      <RulesetSelector
+        initialRuleset={ruleset}
+        onChange={value => setFilterValue('ruleset', value)}
+      />
       {/**
        * Date range picker
        * I have no idea what is going on with the styling here :/
@@ -93,7 +96,7 @@ export default function TournamentListFilterCollapsible() {
         {/*/>*/}
       </section>
       {/** Verified data checkbox */}
-      <section  className={styles.field}>
+      <section className={styles.field}>
         <div className={styles.checkbox}>
           <FontAwesomeIcon icon={faCheck} />
         </div>
@@ -121,22 +124,38 @@ export default function TournamentListFilterCollapsible() {
           <option>Any</option>
           {Object.entries(TournamentProcessingStatusMetadata)
             .map(([value, { text, description }]) => (
-              <option
-                key={value}
-                value={value}
-                /**
-                 * TODO: Set the 'data-tooltip-content' content of the parent
-                 * <select> so hovering the closed selector shows the tooltip
-                 * content of the currently selected option
-                 */
-                data-tooltip-id={'processing-status-tooltip'}
-                data-tooltip-content={description}
-              >
-                {text}
-              </option>
-            )
-          )}
+                <option
+                  key={value}
+                  value={value}
+                  /**
+                   * TODO: Set the 'data-tooltip-content' content of the parent
+                   * <select> so hovering the closed selector shows the tooltip
+                   * content of the currently selected option
+                   */
+                  data-tooltip-id={'processing-status-tooltip'}
+                  data-tooltip-content={description}
+                >
+                  {text}
+                </option>
+              )
+            )}
         </select>
+      </section>
+      {/** Submitter */}
+      <section className={styles.field}>
+        <span>Submitter (user id)</span>
+        <input
+          type='number'
+          min={0}
+        />
+      </section>
+      {/** Verifier */}
+      <section className={styles.field}>
+        <span>Verifier (user id)</span>
+        <input
+          type='number'
+          min={0}
+        />
       </section>
     </motion.div>
   );

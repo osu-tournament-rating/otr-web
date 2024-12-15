@@ -5,8 +5,7 @@ import FilterIcon from '@/public/icons/Filter.svg';
 import BasicSearchBar from '@/components/SearchBar/BasicSearchBar';
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import TournamentListFilterCollapsible
-  from '@/components/Tournaments/TournamentList/Filter/TournamentListFilterCollapsible';
+import TournamentListFilterCollapsible from '@/components/Tournaments/TournamentList/Filter/TournamentListFilterCollapsible';
 
 export default function TournamentListFilter() {
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);

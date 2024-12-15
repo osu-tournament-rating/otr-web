@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { UserDTO } from '@osu-tournament-rating/otr-api-client';
+import { TournamentsListRequestParams, UserDTO } from '@osu-tournament-rating/otr-api-client';
 
 export const dateFormatOptions = {
   tournaments: {
@@ -95,3 +95,9 @@ export type FormState<T> = {
   /** Any errors specific to a form property */
   errors: { [K in keyof T]?: string[]; };
 }
+
+/** {@link TournamentsListRequestParams} without the pagination parameters */
+export type TournamentListFilter = Omit<TournamentsListRequestParams, 'page' | 'pageSize'>
+
+/** Pagination properties for API requests */
+export type PaginationProps = { page: number, pageSize: number };
