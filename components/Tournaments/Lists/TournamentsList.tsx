@@ -127,7 +127,8 @@ export default function TournamentsList({
                         className="fill"
                         data-tooltip-id={`tooltip-${tournament.ruleset}`}
                         data-tooltip-content={
-                          RulesetMetadata[tournament.ruleset]?.altTournamentsList
+                          RulesetMetadata[tournament.ruleset]
+                            ?.altTournamentsList
                         }
                         data-tooltip-delay-show={400}
                       />

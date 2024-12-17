@@ -27,8 +27,8 @@ function kFormatter(num: number) {
   return Math.abs(num) > 999999
     ? Math.sign(num) * (Math.abs(num) / 1000000).toFixed(1) + 'M'
     : Math.abs(num) > 999
-    ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + 'k'
-    : Math.sign(num) * Math.abs(num);
+      ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + 'k'
+      : Math.sign(num) * Math.abs(num);
 }
 
 export default function RadarChart({
@@ -81,8 +81,8 @@ export default function RadarChart({
         a.label === 'NM'
           ? a > b
           : a.value === b.value
-          ? a.label > b.label
-          : null /* a.value < b.value */
+            ? a.label > b.label
+            : null /* a.value < b.value */
     );
 
     mods = mods.filter((mod) => mod.value !== 0);
@@ -99,8 +99,8 @@ export default function RadarChart({
         a.label === 'NM'
           ? a > b
           : a.value === b.value
-          ? a.label > b.label
-          : null /* a.value < b.value */
+            ? a.label > b.label
+            : null /* a.value < b.value */
     );
 
     mods = mods.filter((mod) => mod.value !== 0);
@@ -125,8 +125,8 @@ export default function RadarChart({
         label: winRateModData
           ? 'Winrate %'
           : averageModScore
-          ? 'AVG Score'
-          : 'Winrate %',
+            ? 'AVG Score'
+            : 'Winrate %',
         data: mods.map((mod) => mod.value),
         backgroundColor: `hsla(${colors[0]}, 0.15)`,
         borderWidth: 0,

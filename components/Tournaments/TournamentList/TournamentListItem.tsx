@@ -1,6 +1,9 @@
 'use client';
 
-import { TournamentCompactDTO, TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  TournamentCompactDTO,
+  TournamentDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import styles from './TournamentList.module.css';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,16 +17,18 @@ import TournamentPageContent from '@/components/Tournaments/TournamentPageConten
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
 export default function TournamentListItem({
-  tournament
+  tournament,
 }: {
-  tournament: TournamentCompactDTO
+  tournament: TournamentCompactDTO;
 }) {
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [fullTournament, setFullTournament] = useState<TournamentDTO | undefined>(undefined);
+  const [fullTournament, setFullTournament] = useState<
+    TournamentDTO | undefined
+  >(undefined);
 
   const expandRow = async () => {
     setIsExpanded(true);
@@ -32,7 +37,7 @@ export default function TournamentListItem({
     // if (!fullTournament) {
     //   setIsLoading(true);
     // }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -43,48 +48,47 @@ export default function TournamentListItem({
         )}
         onClick={() => !isExpanded && expandRow()}
       >
-        {isExpanded
-          ? (
-            // Expanded: Shows tournament page content
-            <>
-              <div
-                className={styles.header}
-                onClick={() => setIsExpanded(false)}
+        {isExpanded ? (
+          // Expanded: Shows tournament page content
+          <>
+            <div className={styles.header} onClick={() => setIsExpanded(false)}>
+              <TournamentPageHeader
+                forumUrl={tournament.forumUrl}
+                date={tournament.startTime}
               >
-                <TournamentPageHeader forumUrl={tournament.forumUrl} date={tournament.startTime}>
-                  <motion.h1
-                    layoutId={`${tournament.name}-title`}
-                    layout='size'
-                  >
-                    {tournament.name}
-                  </motion.h1>
-                </TournamentPageHeader>
-              </div>
-              <div className={styles.content}>
-                <TournamentPageContent tournament={{ ...tournament, matches: [], adminNotes: [] }} />
-              </div>
-            </>
-          )
-          : (
-            // Collapsed: Shows basic information in row format
-            <>
-              <div className={styles.nameField}>
-                {/** Verification status bubble */}
-                <VerificationStatusCircle verificationStatus={tournament.verificationStatus}/>
-                {/** Name */}
-                <motion.span
-                  className={styles.nameValue}
-                  layoutId={`${tournament.name}-title`}
-                  layout='size'
-                >
+                <motion.h1 layoutId={`${tournament.name}-title`} layout="size">
                   {tournament.name}
-                </motion.span>
-              </div>
-              <span>{`${tournament.lobbySize}v${tournament.lobbySize}`}</span>
-              <span>
+                </motion.h1>
+              </TournamentPageHeader>
+            </div>
+            <div className={styles.content}>
+              <TournamentPageContent
+                tournament={{ ...tournament, matches: [], adminNotes: [] }}
+              />
+            </div>
+          </>
+        ) : (
+          // Collapsed: Shows basic information in row format
+          <>
+            <div className={styles.nameField}>
+              {/** Verification status bubble */}
+              <VerificationStatusCircle
+                verificationStatus={tournament.verificationStatus}
+              />
+              {/** Name */}
+              <motion.span
+                className={styles.nameValue}
+                layoutId={`${tournament.name}-title`}
+                layout="size"
+              >
+                {tournament.name}
+              </motion.span>
+            </div>
+            <span>{`${tournament.lobbySize}v${tournament.lobbySize}`}</span>
+            <span>
               <div className={styles.rulesetField}>
                 <RulesetIcon
-                  className='fill'
+                  className="fill"
                   data-tooltip-id={`tooltip-ruleset-${tournament.ruleset}`}
                   data-tooltip-content={rulesetMetadata.shortAlt}
                   data-tooltip-delay-show={400}
@@ -95,13 +99,16 @@ export default function TournamentListItem({
                 />
               </div>
             </span>
-              <span>{tournament.submittedByUser?.player.username ?? 'Missing Submitter'}</span>
-              <FormattedDate
-                date={tournament.startTime}
-                format={dateFormats.tournaments.listItem}
-              />
-            </>
-          )}
+            <span>
+              {tournament.submittedByUser?.player.username ??
+                'Missing Submitter'}
+            </span>
+            <FormattedDate
+              date={tournament.startTime}
+              format={dateFormats.tournaments.listItem}
+            />
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );

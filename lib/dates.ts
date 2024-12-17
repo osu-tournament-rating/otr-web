@@ -14,4 +14,4 @@ export const dateFormats = {
       day: 'numeric',
     } as Intl.DateTimeFormatOptions,
   },
-}
+};

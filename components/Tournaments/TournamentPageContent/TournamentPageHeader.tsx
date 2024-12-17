@@ -8,7 +8,7 @@ import React from 'react';
 export default function TournamentPageHeader({
   forumUrl,
   date,
-  children
+  children,
 }: {
   forumUrl: string;
   date: Date | string;

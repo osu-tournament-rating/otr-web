@@ -61,12 +61,12 @@ type VerificationStatusButtonProps = {
    * Only used if {@link isAdminView} is true
    */
   onChange?: (newStatus: VerificationStatus) => Promise<void> | void;
-}
+};
 
 export default function VerificationStatusButton({
   initialStatus,
   isAdminView,
-  onChange
+  onChange,
 }: VerificationStatusButtonProps) {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +91,7 @@ export default function VerificationStatusButton({
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className={styles.container} ref={ref}>
@@ -131,21 +131,28 @@ export default function VerificationStatusButton({
               animate={'animate'}
               exit={'exit'}
             >
-              {Object.entries(VerificationStatusMetadata).map(([value, { text, displayInDropdown }]) => {
-                  if (displayInDropdown && !((value as any as VerificationStatus) == currentStatus)) {
+              {Object.entries(VerificationStatusMetadata).map(
+                ([value, { text, displayInDropdown }]) => {
+                  if (
+                    displayInDropdown &&
+                    !((value as any as VerificationStatus) == currentStatus)
+                  ) {
                     return (
                       <motion.div
                         key={value}
                         className={styles.item}
                         variants={listItemVariants}
-                        onClick={() => !isLoading && handleStatusChange(value as any as VerificationStatus)}
+                        onClick={() =>
+                          !isLoading &&
+                          handleStatusChange(value as any as VerificationStatus)
+                        }
                       >
                         {text}
                       </motion.div>
                     );
                   }
-                })
-              }
+                }
+              )}
             </motion.div>
           )}
         </AnimatePresence>

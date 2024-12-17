@@ -11,11 +11,8 @@ export default function TournamentList() {
   const endOfPageRef = useRef(null);
   const endOfPageInView = useInView(endOfPageRef);
 
-  const {
-    tournaments,
-    canRequestNextPage,
-    requestNextPage
-  } = useTournamentListData();
+  const { tournaments, canRequestNextPage, requestNextPage } =
+    useTournamentListData();
 
   useEffect(() => {
     if (canRequestNextPage && endOfPageInView) {
@@ -25,44 +22,33 @@ export default function TournamentList() {
 
   return (
     <div className={styles.gridList}>
-      <div className={clsx(
-        styles.row,
-        styles.collapsed,
-        styles.columnHeadings
-      )}>
+      <div
+        className={clsx(styles.row, styles.collapsed, styles.columnHeadings)}
+      >
         <span>Name</span>
         <span>Format</span>
         <span>Ruleset</span>
         <span>Submitter</span>
         <span>Date</span>
       </div>
-      {tournaments.map(tournament => {
+      {tournaments.map((tournament) => {
         return (
           <TournamentListItem key={tournament.id} tournament={tournament} />
         );
       })}
-      <div className={clsx(
-        styles.row,
-        styles.collapsed,
-        styles.columnHeadings
-      )}>
+      <div
+        className={clsx(styles.row, styles.collapsed, styles.columnHeadings)}
+      >
         {/*
-          * TODO: improve bottom of the page
-          * animate while requesting |
+         * TODO: improve bottom of the page
+         * animate while requesting |
          */}
-        {canRequestNextPage
-          ? (
-            <span ref={endOfPageRef}>
-            Loading...
-            </span>
-          )
-          : (
-            <span>
-            No more results!
-            </span>
-          )
-        }
+        {canRequestNextPage ? (
+          <span ref={endOfPageRef}>Loading...</span>
+        ) : (
+          <span>No more results!</span>
+        )}
       </div>
     </div>
-  )
+  );
 }

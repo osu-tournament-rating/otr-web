@@ -29,7 +29,7 @@ export default function TournamentInfoContainer({
               const updatedTournament = await patchTournamentData({
                 id: data.id,
                 path: 'verificationStatus',
-                value: status
+                value: status,
               });
               Object.assign(data, updatedTournament);
             }}
@@ -66,7 +66,7 @@ export default function TournamentInfoContainer({
       <div className={styles.field}>
         <div className={styles.name}>Forum post link</div>
         <div className={styles.value}>
-          <Link href={data.forumUrl} target='_blank'>
+          <Link href={data.forumUrl} target="_blank">
             {data.forumUrl}
           </Link>
         </div>
@@ -75,28 +75,26 @@ export default function TournamentInfoContainer({
       <div className={styles.field}>
         <div className={styles.name}>Submitter</div>
         <div className={styles.value}>
-          {data.submittedByUser
-            ? (
-              <Link href={`/players/${data.submittedByUser.player.id}`}>
-                {data.submittedByUser.player.username}
-              </Link>
-            )
-            : ('Unknown submitter')
-          }
+          {data.submittedByUser ? (
+            <Link href={`/players/${data.submittedByUser.player.id}`}>
+              {data.submittedByUser.player.username}
+            </Link>
+          ) : (
+            'Unknown submitter'
+          )}
         </div>
       </div>
       {/** Verifier */}
       <div className={styles.field}>
         <div className={styles.name}>Verifier</div>
         <div className={styles.value}>
-          {data.verifiedByUser
-            ? (
-              <Link href={`/players/${data.verifiedByUser.player.id}`}>
-                {data.verifiedByUser.player.username}
-              </Link>
-            )
-            : ('Unknown verifier')
-          }
+          {data.verifiedByUser ? (
+            <Link href={`/players/${data.verifiedByUser.player.id}`}>
+              {data.verifiedByUser.player.username}
+            </Link>
+          ) : (
+            'Unknown verifier'
+          )}
         </div>
       </div>
     </div>

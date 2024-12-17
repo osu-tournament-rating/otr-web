@@ -1,22 +1,22 @@
 .statusCircle {
-    width: 0.5rem;
-    height: 0.5rem;
-    aspect-ratio: 1;
-    border-radius: 50vh;
+  width: 0.5rem;
+  height: 0.5rem;
+  aspect-ratio: 1;
+  border-radius: 50vh;
 
-    &.pending {
-        background-color: hsla(var(--status-circle-pending));
-    }
+  &.pending {
+    background-color: hsla(var(--status-circle-pending));
+  }
 
-    &.verified {
-        background-color: hsla(var(--status-circle-verified));
-    }
+  &.verified {
+    background-color: hsla(var(--status-circle-verified));
+  }
 
-    &.preverified {
-        background-color: hsla(var(--status-circle-preverified));
-    }
+  &.preverified {
+    background-color: hsla(var(--status-circle-preverified));
+  }
 
-    &.rejected {
-        background-color: hsla(var(--status-circle-rejected));
-    }
+  &.rejected {
+    background-color: hsla(var(--status-circle-rejected));
+  }
 }

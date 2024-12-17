@@ -37,7 +37,9 @@ export default function MatchesList({ data }: { data: {} }) {
                   )}
                 </td>
                 <td className={styles.status}>
-                  <VerificationStatusButton initialStatus={match.verificationStatus} />
+                  <VerificationStatusButton
+                    initialStatus={match.verificationStatus}
+                  />
                 </td>
               </tr>
             );

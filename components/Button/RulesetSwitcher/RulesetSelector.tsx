@@ -10,7 +10,7 @@ import { Tooltip } from 'react-tooltip';
 export default function RulesetSelector({
   initialRuleset,
   onChange,
-} : {
+}: {
   /** Initial ruleset for the selector */
   initialRuleset?: Ruleset;
   /**
@@ -19,28 +19,29 @@ export default function RulesetSelector({
    */
   onChange?: (value: Ruleset | undefined) => void;
 }) {
-  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | undefined>(initialRuleset);
+  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | undefined>(
+    initialRuleset
+  );
 
   const isSelected = (value: string) => {
     if (selectedRuleset === undefined) {
       return value === 'All';
     }
     return (parseInt(value) as Ruleset) === selectedRuleset;
-  }
+  };
 
   const handleClick = (value: string) => {
     if (isSelected(value)) {
       return;
     }
 
-    const newValue = value === 'All'
-      ? undefined : (parseInt(value) as Ruleset);
+    const newValue = value === 'All' ? undefined : (parseInt(value) as Ruleset);
 
     setSelectedRuleset(newValue);
     if (onChange) {
       onChange(newValue);
     }
-  }
+  };
 
   return (
     <div className={styles.rulesetSwitcher}>
@@ -54,7 +55,7 @@ export default function RulesetSelector({
               key={value}
               className={clsx(
                 styles.switchButton,
-                isSelected(value) && styles.active,
+                isSelected(value) && styles.active
               )}
               data-tooltip-id={'ruleset-selector-tooltip'}
               data-tooltip-content={shortAlt}
@@ -63,8 +64,7 @@ export default function RulesetSelector({
               <Icon className={'fill'} />
             </button>
           );
-        })
-      }
+        })}
       <Tooltip id={'ruleset-selector-tooltip'} delayShow={300} />
     </div>
   );

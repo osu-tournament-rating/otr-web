@@ -1,8 +1,8 @@
 .searchBar {
-    display: flex;
-    flex: auto;
+  display: flex;
+  flex: auto;
 }
 
 .searchBar input {
-    flex: auto;
+  flex: auto;
 }

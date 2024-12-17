@@ -35,14 +35,12 @@ export default async function RootLayout({
   const { user } = await getSession();
 
   return (
-    <html lang='en' className={inter.variable}>
+    <html lang="en" className={inter.variable}>
       <body>
-        <ThemeProvider defaultTheme='light' enableSystem={false}>
+        <ThemeProvider defaultTheme="light" enableSystem={false}>
           <ErrorProvider>
             <UserProvider initialUser={user}>
-              <RootLayoutProvider>
-                {children}
-              </RootLayoutProvider>
+              <RootLayoutProvider>{children}</RootLayoutProvider>
             </UserProvider>
           </ErrorProvider>
         </ThemeProvider>

@@ -1,28 +1,28 @@
 .navigation {
-    width: 100%;
-    height: fit-content;
-    padding: 1.8rem 1.2rem;
-    background-color: hsl(var(--background-content-hsl));
-    border-radius: var(--main-borderRadius);
-    display: flex;
-    flex-flow: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.6rem;
+  width: 100%;
+  height: fit-content;
+  padding: 1.8rem 1.2rem;
+  background-color: hsl(var(--background-content-hsl));
+  border-radius: var(--main-borderRadius);
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
 }
 
 .navCell > svg {
-    height: 1.5rem;
-    width: auto;
-    transition: stroke 0.2s ease-out;
+  height: 1.5rem;
+  width: auto;
+  transition: stroke 0.2s ease-out;
 }
 
 .navCell:hover > svg {
-    stroke: hsla(var(--foreground-active-hsl));
+  stroke: hsla(var(--foreground-active-hsl));
 }
 
 .navCell.active > svg {
-    fill: hsl(var(--accent-color));
-    stroke: hsl(var(--accent-color));
-    stroke-width: 0.06rem;
+  fill: hsl(var(--accent-color));
+  stroke: hsl(var(--accent-color));
+  stroke-width: 0.06rem;
 }

@@ -4,7 +4,10 @@ import { CookieNames, GetSessionParams, SessionData } from '@/lib/types';
 import { getIronSession } from 'iron-session';
 import { ironSessionOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
-import { ResponseCookie, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
+import {
+  ResponseCookie,
+  ResponseCookies,
+} from 'next/dist/compiled/@edge-runtime/cookies';
 
 /**
  * Gets the current session
@@ -25,7 +28,7 @@ export async function getSession(params?: GetSessionParams) {
  * @returns A {@link SessionData} serialized as a plain object
  */
 export async function getSessionData(params?: GetSessionParams) {
-  return JSON.parse(JSON.stringify((await getSession(params) as SessionData)));
+  return JSON.parse(JSON.stringify((await getSession(params)) as SessionData));
 }
 
 /**
@@ -34,7 +37,7 @@ export async function getSessionData(params?: GetSessionParams) {
  * @returns The value of the cookie
  */
 export async function getCookieValue(cookie: CookieNames) {
-  return (cookies().get(cookie))?.value;
+  return cookies().get(cookie)?.value;
 }
 
 /**

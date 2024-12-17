@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { PaginationProps, TournamentListFilter } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
@@ -16,7 +22,7 @@ function buildFilter(
 ) {
   return Object.entries(currentFilter)
     .filter(([k, v]) => defaultFilter[k as keyof TournamentListFilter] !== v)
-    .map(([k, v]) => ([k, String(v)]));
+    .map(([k, v]) => [k, String(v)]);
 }
 
 /** Properties exposed by the {@link TournamentListDataContext} */
@@ -25,7 +31,10 @@ type TournamentListDataContextProps = {
   readonly filter: TournamentListFilter;
 
   /** Sets a  */
-  setFilterValue<K extends keyof TournamentListFilter>(item: K, value: TournamentListFilter[K]): void;
+  setFilterValue<K extends keyof TournamentListFilter>(
+    item: K,
+    value: TournamentListFilter[K]
+  ): void;
 
   /** Clears all filters */
   clearFilter(): void;
@@ -41,32 +50,37 @@ type TournamentListDataContextProps = {
 
   /** Request the next page of tournaments */
   requestNextPage(): Promise<void>;
-}
+};
 
-const TournamentListDataContext = createContext<TournamentListDataContextProps | undefined>(undefined);
+const TournamentListDataContext = createContext<
+  TournamentListDataContextProps | undefined
+>(undefined);
 
 /** State manager and provider for the {@link TournamentListDataContext} */
-export default function TournamentListDataProvider(
-{
+export default function TournamentListDataProvider({
   initialFilter,
   defaultFilter,
   initialPagination,
   initialData,
-  children
+  children,
 }: {
-  initialFilter: TournamentListFilter
-  defaultFilter: TournamentListFilter
-  initialPagination: PaginationProps
-  initialData: TournamentCompactDTO[]
-  children: ReactNode
+  initialFilter: TournamentListFilter;
+  defaultFilter: TournamentListFilter;
+  initialPagination: PaginationProps;
+  initialData: TournamentCompactDTO[];
+  children: ReactNode;
 }) {
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
-  const [results, setResults] = useState<TournamentCompactDTO[]>([...initialData]);
+  const [results, setResults] = useState<TournamentCompactDTO[]>([
+    ...initialData,
+  ]);
   const [isRequesting, setIsRequesting] = useState(false);
-  const [canRequestNextPage, setCanRequestNextPage] = useState(initialPagination.pageSize === initialData.length);
+  const [canRequestNextPage, setCanRequestNextPage] = useState(
+    initialPagination.pageSize === initialData.length
+  );
   const [pagination, setPagination] = useState({
     ...initialPagination,
-    page: initialPagination.page + 1
+    page: initialPagination.page + 1,
   });
 
   const pathName = usePathname();
@@ -74,7 +88,9 @@ export default function TournamentListDataProvider(
 
   // Handle changes in the filter by pushing query params
   useEffect(() => {
-    const searchParams = new URLSearchParams(buildFilter(filter, defaultFilter));
+    const searchParams = new URLSearchParams(
+      buildFilter(filter, defaultFilter)
+    );
 
     searchParams.size
       ? router.push(pathName + '?' + searchParams.toString(), { scroll: false })
@@ -87,11 +103,11 @@ export default function TournamentListDataProvider(
     setFilterValue(item, value) {
       setFilter((prevState) => ({
         ...prevState,
-        [item]: value
-      }))
+        [item]: value,
+      }));
     },
 
-    clearFilter: () => setFilter({ }),
+    clearFilter: () => setFilter({}),
 
     tournaments: results,
 
@@ -110,21 +126,18 @@ export default function TournamentListDataProvider(
         // Make the request
         const nextPage = await getTournamentList({
           ...filter,
-          ...pagination
+          ...pagination,
         });
 
         // Update pagination props
         setCanRequestNextPage(nextPage.length === pagination.pageSize);
         setPagination((prev) => ({
           ...prev,
-          page: prev.page + 1
+          page: prev.page + 1,
         }));
 
         // Update results
-        setResults((prev) => ([
-          ...prev,
-          ...nextPage
-        ]));
+        setResults((prev) => [...prev, ...nextPage]);
       } catch (e) {
         console.log(e);
         // If there is an error, freeze infinite scrolling until refresh
@@ -132,8 +145,8 @@ export default function TournamentListDataProvider(
       } finally {
         setIsRequesting(false);
       }
-    }
-  }
+    },
+  };
 
   return (
     <TournamentListDataContext.Provider value={props}>
@@ -147,7 +160,9 @@ export function useTournamentListData() {
   const context = useContext(TournamentListDataContext);
 
   if (!context) {
-    throw new Error('useTournamentListData() must be used within a TournamentListDataContext');
+    throw new Error(
+      'useTournamentListData() must be used within a TournamentListDataContext'
+    );
   }
 
   return context;

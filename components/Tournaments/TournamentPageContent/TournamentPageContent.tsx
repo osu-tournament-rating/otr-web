@@ -6,9 +6,9 @@ import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 
 export default function TournamentPageContent({
-  tournament
+  tournament,
 }: {
-  tournament: TournamentDTO
+  tournament: TournamentDTO;
 }) {
   return (
     <div className={styles.container}>

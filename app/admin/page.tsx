@@ -10,7 +10,5 @@ export default async function Page() {
   // const tournamentsData = await fetchTournamentsForAdminPage(searchParams);
   // console.log(tournamentsData);
 
-  return (
-    <h1>LANDING</h1>
-  );
+  return <h1>LANDING</h1>;
 }

@@ -8,14 +8,16 @@ import styles from '../NavBar.module.css';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import Tooltip from './../Tooltip/Tooltip';
 
-const tooltipContent = (contextLogout: (() => void)) => (
+const tooltipContent = (contextLogout: () => void) => (
   <>
     <Link href={'/admin'}>Admin</Link>
     <div>
-      <button onClick={() => {
-        contextLogout();
-        return logout();
-      }}>
+      <button
+        onClick={() => {
+          contextLogout();
+          return logout();
+        }}
+      >
         Sign out
       </button>
     </div>

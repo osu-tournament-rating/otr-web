@@ -7,13 +7,7 @@ import clsx from 'clsx';
 export default function BasicSearchBar() {
   return (
     <div className={styles.searchBar}>
-      <input
-        className={clsx(
-          'formField'
-        )}
-        placeholder='Search'
-      >
-      </input>
+      <input className={clsx('formField')} placeholder="Search"></input>
     </div>
   );
 }

@@ -10,4 +10,5 @@
   height: min-content;
   grid-area: nav;
   position: sticky;
+  top: var(--main-padding);
 }

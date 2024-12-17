@@ -262,8 +262,8 @@ export default function AreaChart({
           match.ratingChange.toFixed(1) > 0
             ? styles.gain
             : match.ratingChange.toFixed(1) < 0
-            ? styles.loss
-            : ''
+              ? styles.loss
+              : ''
         );
 
         li.appendChild(matchName);

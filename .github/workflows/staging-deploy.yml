@@ -2,25 +2,25 @@ name: Web deploy
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      with:
-        ref: master
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: master
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Install
-      run: npm ci
+      - name: Install
+        run: npm ci
 
   publish:
     needs: build
@@ -58,8 +58,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: ".env"
-          target: "~/otr-web/"
+          source: '.env'
+          target: '~/otr-web/'
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:

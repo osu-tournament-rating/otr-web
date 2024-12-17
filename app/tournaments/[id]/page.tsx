@@ -23,7 +23,10 @@ export default async function Page({
 
   return (
     <div className={'content'}>
-      <TournamentPageHeader forumUrl={tournament.forumUrl} date={tournament.startTime}>
+      <TournamentPageHeader
+        forumUrl={tournament.forumUrl}
+        date={tournament.startTime}
+      >
         <h1>{tournament.name}</h1>
       </TournamentPageHeader>
       <TournamentPageContent tournament={tournament} />

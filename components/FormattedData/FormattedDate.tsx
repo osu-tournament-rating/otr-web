@@ -6,14 +6,11 @@ export default function FormattedDate({
   date,
   format,
   ...rest
-}: DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>
-  & {
+}: DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> & {
   date: string | Date;
   format: Intl.DateTimeFormatOptions;
 }) {
   return (
-  <div {...rest}>
-    {new Date(date).toLocaleDateString('en-US', format)}
-  </div>
+    <div {...rest}>{new Date(date).toLocaleDateString('en-US', format)}</div>
   );
 }

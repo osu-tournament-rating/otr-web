@@ -14,7 +14,9 @@ export async function middleware(req: NextRequest) {
   // Redirect users that aren't logged in
   if (!session.isLogged || !session.user?.scopes?.includes(Roles.Whitelist)) {
     // Pass through the existing response headers in case cookies are set
-    return NextResponse.redirect(new URL('/unauthorized', req.url), { headers: res.headers });
+    return NextResponse.redirect(new URL('/unauthorized', req.url), {
+      headers: res.headers,
+    });
   }
 
   return res;
@@ -31,6 +33,6 @@ export const config = {
      * - '/static/*' Static assets
      * - '/favicon.ico' Static assets
      */
-    '/((?!api|auth|unauthorized|_next|static|favicon.ico).*)'
-  ]
+    '/((?!api|auth|unauthorized|_next|static|favicon.ico).*)',
+  ],
 };

@@ -1,9 +1,15 @@
 import TournamentListFilter from '@/components/Tournaments/TournamentList/Filter/TournamentListFilter';
 import type { Metadata } from 'next';
-import { buildTournamentListFilter, getTournamentList } from '@/app/actions/tournaments';
+import {
+  buildTournamentListFilter,
+  getTournamentList,
+} from '@/app/actions/tournaments';
 import TournamentList from '@/components/Tournaments/TournamentList/TournamentList';
 import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
-import { PaginationProps, TournamentListFilter as TournamentListFilterType } from '@/lib/types';
+import {
+  PaginationProps,
+  TournamentListFilter as TournamentListFilterType,
+} from '@/lib/types';
 import TournamentListDataProvider from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 
 export const revalidate = 60;
@@ -15,23 +21,26 @@ export const metadata: Metadata = {
 const defaultFilter: TournamentListFilterType = {
   verified: false,
   sort: TournamentQuerySortType.StartTime,
-  descending: true
+  descending: true,
 };
 
 const initialPagination: PaginationProps = {
   page: 1,
-  pageSize: 20
-}
+  pageSize: 20,
+};
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{}>
+  searchParams: Promise<{}>;
 }) {
-  const requestParams = await buildTournamentListFilter(await(searchParams), defaultFilter);
+  const requestParams = await buildTournamentListFilter(
+    await searchParams,
+    defaultFilter
+  );
   const tournaments = await getTournamentList({
     ...requestParams,
-    ...initialPagination
+    ...initialPagination,
   });
 
   return (
@@ -43,7 +52,7 @@ export default async function Page({
         initialPagination={initialPagination}
         initialData={tournaments}
       >
-        <TournamentListFilter/>
+        <TournamentListFilter />
         <TournamentList />
       </TournamentListDataProvider>
     </div>

@@ -11,7 +11,7 @@ export default async function page({
 
   return (
     <main className={styles.container}>
-      <MatchesPageContent match={match} showTournament/>
+      <MatchesPageContent match={match} showTournament />
     </main>
   );
 }

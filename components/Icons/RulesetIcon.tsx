@@ -6,9 +6,9 @@ export default function RulesetIcon({
   ruleset,
   ...rest
 }: SVGProps<SVGElement> & {
-  ruleset: Ruleset
+  ruleset: Ruleset;
 }) {
   const IconComponent = RulesetMetadata[ruleset].image;
 
-  return ( <IconComponent {...rest} /> );
+  return <IconComponent {...rest} />;
 }

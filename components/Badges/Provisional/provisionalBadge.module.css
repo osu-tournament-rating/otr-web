@@ -34,7 +34,9 @@
   border-radius: 4px;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0.2s ease-out;
   z-index: 2;
   font-weight: 600;
 }

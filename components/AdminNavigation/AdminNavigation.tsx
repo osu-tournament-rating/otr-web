@@ -11,7 +11,7 @@ import PlaceholderLandingIcon from '@/public/logos/small.svg';
 
 const NavCell = ({
   href,
-  children
+  children,
 }: {
   href: string;
   children: React.ReactNode;
@@ -20,22 +20,19 @@ const NavCell = ({
 
   return (
     <Link
-      className={clsx(
-        styles.navCell,
-        pathName === href ? styles.active : ''
-      )}
+      className={clsx(styles.navCell, pathName === href ? styles.active : '')}
       href={href}
     >
       {children}
     </Link>
-  )
-}
+  );
+};
 
 export default function AdminNavigation() {
   return (
     <div className={styles.navigation}>
       <NavCell href={'/admin'}>
-        <PlaceholderLandingIcon className={'fill'}/>
+        <PlaceholderLandingIcon className={'fill'} />
       </NavCell>
       <NavCell href={'/admin/tournaments'}>
         <CupIcon className={'fill'} />

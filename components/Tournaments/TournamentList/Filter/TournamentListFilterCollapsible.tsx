@@ -28,7 +28,7 @@ const collapsibleAnimationProps: AnimationProps = {
     opacity: 1,
     gap: 'var(--internal-gap)',
     padding: '1.2rem 2rem',
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   exit: {
     height: 0,
@@ -36,11 +36,14 @@ const collapsibleAnimationProps: AnimationProps = {
     gap: 0,
     padding: '0 2rem',
     overflow: 'hidden',
-  }
-}
+  },
+};
 
 export default function TournamentListFilterCollapsible() {
-  const { filter: { ruleset }, setFilterValue } = useTournamentListData()
+  const {
+    filter: { ruleset },
+    setFilterValue,
+  } = useTournamentListData();
 
   return (
     <motion.div
@@ -49,7 +52,7 @@ export default function TournamentListFilterCollapsible() {
     >
       <RulesetSelector
         initialRuleset={ruleset}
-        onChange={value => setFilterValue('ruleset', value)}
+        onChange={(value) => setFilterValue('ruleset', value)}
       />
       {/**
        * Date range picker
@@ -106,56 +109,55 @@ export default function TournamentListFilterCollapsible() {
       <section className={styles.field}>
         <span>Rejection reason</span>
         <Select
-          options={Object.entries(TournamentProcessingStatusMetadata).map(([value, { text }]) => {
-            return { value, label: text };
-          })}
+          options={Object.entries(TournamentProcessingStatusMetadata).map(
+            ([value, { text }]) => {
+              return { value, label: text };
+            }
+          )}
           isMulti
         />
       </section>
       {/** Verification status dropdown */}
       <section className={styles.field}>
         <span>Verification status</span>
-        <VerificationStatusButton initialStatus={VerificationStatus.None} isAdminView />
+        <VerificationStatusButton
+          initialStatus={VerificationStatus.None}
+          isAdminView
+        />
       </section>
       {/** Processing status dropdown */}
       <section className={styles.field}>
         <span>Processing status</span>
         <select>
           <option>Any</option>
-          {Object.entries(TournamentProcessingStatusMetadata)
-            .map(([value, { text, description }]) => (
-                <option
-                  key={value}
-                  value={value}
-                  /**
-                   * TODO: Set the 'data-tooltip-content' content of the parent
-                   * <select> so hovering the closed selector shows the tooltip
-                   * content of the currently selected option
-                   */
-                  data-tooltip-id={'processing-status-tooltip'}
-                  data-tooltip-content={description}
-                >
-                  {text}
-                </option>
-              )
-            )}
+          {Object.entries(TournamentProcessingStatusMetadata).map(
+            ([value, { text, description }]) => (
+              <option
+                key={value}
+                value={value}
+                /**
+                 * TODO: Set the 'data-tooltip-content' content of the parent
+                 * <select> so hovering the closed selector shows the tooltip
+                 * content of the currently selected option
+                 */
+                data-tooltip-id={'processing-status-tooltip'}
+                data-tooltip-content={description}
+              >
+                {text}
+              </option>
+            )
+          )}
         </select>
       </section>
       {/** Submitter */}
       <section className={styles.field}>
         <span>Submitter (user id)</span>
-        <input
-          type='number'
-          min={0}
-        />
+        <input type="number" min={0} />
       </section>
       {/** Verifier */}
       <section className={styles.field}>
         <span>Verifier (user id)</span>
-        <input
-          type='number'
-          min={0}
-        />
+        <input type="number" min={0} />
       </section>
     </motion.div>
   );

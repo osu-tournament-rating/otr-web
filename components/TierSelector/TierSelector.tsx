@@ -80,7 +80,7 @@ export default function TierSelector({
   };
 
   useEffect(() => {
-    setTiers(typeof value === 'string' ? [value] : value ?? []);
+    setTiers(typeof value === 'string' ? [value] : (value ?? []));
   }, [value]);
 
   return (

@@ -23,8 +23,14 @@ export async function prepareLogin() {
   await session.save();
 
   const url = new URL('https://osu.ppy.sh/oauth/authorize');
-  url.searchParams.set('client_id', process.env.REACT_APP_OSU_CLIENT_ID as string);
-  url.searchParams.set('redirect_uri', process.env.REACT_APP_OSU_CALLBACK_URL as string);
+  url.searchParams.set(
+    'client_id',
+    process.env.REACT_APP_OSU_CLIENT_ID as string
+  );
+  url.searchParams.set(
+    'redirect_uri',
+    process.env.REACT_APP_OSU_CALLBACK_URL as string
+  );
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', 'public friends.read');
   url.searchParams.set('state', state);
@@ -55,7 +61,9 @@ export async function login(code: string) {
     await session.save();
   } catch (err) {
     console.log(err);
-    return NextResponse.redirect(new URL('/', process.env.REACT_APP_ORIGIN_URL));
+    return NextResponse.redirect(
+      new URL('/', process.env.REACT_APP_ORIGIN_URL)
+    );
   }
 
   // Try to get the user and populate the rest of the session
@@ -64,7 +72,7 @@ export async function login(code: string) {
     const { result } = await meWrapper.get();
     session.user = result;
     await session.save();
-  } catch (err) { 
+  } catch (err) {
     console.log(err);
   }
 
@@ -83,7 +91,9 @@ export async function logout(getSessionParams?: GetSessionParams) {
   await clearCookies(getSessionParams?.res?.cookies);
 
   if (!getSessionParams) {
-    return redirect(new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL).toString());
+    return redirect(
+      new URL('/unauthorized', process.env.REACT_APP_ORIGIN_URL).toString()
+    );
   }
 }
 
@@ -92,13 +102,16 @@ export async function logout(getSessionParams?: GetSessionParams) {
  * If the refresh token has expired, the current session is destroyed / user is logged out.
  * @returns A redirect based on the validity of the access credentials
  */
-export async function validateAccessCredentials(getSessionParams?: GetSessionParams) {
+export async function validateAccessCredentials(
+  getSessionParams?: GetSessionParams
+) {
   const session = await getSession(getSessionParams);
   if (!session.isLogged || !session.accessToken || !session.refreshToken) {
     return;
   }
 
-  const { accessTokenExpired, refreshTokenExpired } = await checkAccessCredentialsValidity(session);
+  const { accessTokenExpired, refreshTokenExpired } =
+    await checkAccessCredentialsValidity(session);
 
   // If the access token is still valid no action is needed
   if (!accessTokenExpired) {
@@ -112,7 +125,9 @@ export async function validateAccessCredentials(getSessionParams?: GetSessionPar
 
   // Refresh the access token
   const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
-  const { result } = await oauthWrapper.refresh({ refreshToken: session.refreshToken });
+  const { result } = await oauthWrapper.refresh({
+    refreshToken: session.refreshToken,
+  });
   session.accessToken = result.accessToken;
 
   await session.save();
@@ -123,12 +138,16 @@ export async function validateAccessCredentials(getSessionParams?: GetSessionPar
  * @param accessCredentials Access credentials to check. If not given, they will be retrieved from the session
  * @returns Whether each token has expired
  */
-async function checkAccessCredentialsValidity(accessCredentials?: { accessToken?: string, refreshToken?: string }) {
-  const { accessToken, refreshToken } = (accessCredentials ?? await getSession());
+async function checkAccessCredentialsValidity(accessCredentials?: {
+  accessToken?: string;
+  refreshToken?: string;
+}) {
+  const { accessToken, refreshToken } =
+    accessCredentials ?? (await getSession());
 
   return {
-    accessTokenExpired: accessToken ? isTokenExpired(accessToken) : true, 
-    refreshTokenExpired: refreshToken ? isTokenExpired(refreshToken) : true
+    accessTokenExpired: accessToken ? isTokenExpired(accessToken) : true,
+    refreshTokenExpired: refreshToken ? isTokenExpired(refreshToken) : true,
   };
 }
 

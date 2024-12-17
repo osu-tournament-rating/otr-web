@@ -12,7 +12,7 @@ export default function TournamentListFilter() {
 
   return (
     <div className={styles.filterContainer}>
-      <div className={styles.searchBarContainer} >
+      <div className={styles.searchBarContainer}>
         <BasicSearchBar />
         {/**
          * TODO: Style this to fit the div instead of 'height: 3rem' ?
@@ -22,7 +22,7 @@ export default function TournamentListFilter() {
           className={styles.filterButton}
           onClick={() => setIsCollapsibleOpen(!isCollapsibleOpen)}
         >
-          <FilterIcon className={'fill'}/>
+          <FilterIcon className={'fill'} />
         </button>
       </div>
       <AnimatePresence>

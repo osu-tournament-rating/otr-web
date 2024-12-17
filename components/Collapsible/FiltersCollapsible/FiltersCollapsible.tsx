@@ -38,10 +38,10 @@ export default function FiltersCollapsible({
         tiers == null
           ? []
           : typeof tiers === 'string'
-          ? [tiers]
-          : typeof tiers === 'object'
-          ? tiers
-          : [],
+            ? [tiers]
+            : typeof tiers === 'object'
+              ? tiers
+              : [],
       rank: rank != null ? rank : [],
       rating: rating != null ? rating : [],
       matches: matches != null ? matches : [],

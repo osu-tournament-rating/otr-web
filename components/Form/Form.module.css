@@ -66,8 +66,8 @@
   height: 100%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(farthest-side, #000 94%, #0000) top/4px 4px
-      no-repeat,
+  background:
+    radial-gradient(farthest-side, #000 94%, #0000) top/4px 4px no-repeat,
     conic-gradient(#0000 30%, #000);
   -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 4px), #000 0);
   animation: l13 1s infinite linear;

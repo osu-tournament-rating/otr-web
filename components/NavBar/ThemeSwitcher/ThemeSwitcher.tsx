@@ -11,7 +11,7 @@ export default function ThemeSwitcher() {
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
-  }
+  };
 
   useHotkeys('ctrl+l', (e) => {
     e.preventDefault();

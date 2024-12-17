@@ -6,7 +6,10 @@ import {
   TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
-import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
+import {
+  MatchesWrapper,
+  TournamentsWrapper,
+} from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { apiWrapperConfiguration } from '@/lib/api';
@@ -86,26 +89,26 @@ export async function fetchLeaderboard(params: {}) {
     ? Array.isArray(matches)
       ? (paramsToProcess.matches = matches.map(Number).sort(compareNumbers))
       : (paramsToProcess.matches = Array(matches)
-        .map(Number)
-        .sort(compareNumbers))
+          .map(Number)
+          .sort(compareNumbers))
     : undefined;
 
   rating
     ? Array.isArray(rating)
       ? (paramsToProcess.rating = rating.map(Number).sort(compareNumbers))
       : (paramsToProcess.rating = Array(rating)
-        .map(Number)
-        .sort(compareNumbers))
+          .map(Number)
+          .sort(compareNumbers))
     : undefined;
 
   winRate
     ? Array.isArray(winRate)
       ? (paramsToProcess.winRate = winRate
-        .map((value) => Number(value) / 100)
-        .sort(compareNumbers))
+          .map((value) => Number(value) / 100)
+          .sort(compareNumbers))
       : (paramsToProcess.winRate = Array(winRate)
-        .map((value) => Number(value) / 100)
-        .sort(compareNumbers))
+          .map((value) => Number(value) / 100)
+          .sort(compareNumbers))
     : undefined;
 
   tiers
@@ -291,8 +294,8 @@ export async function fetchTournamentPage(tournamentId: number | string) {
 
   let data = await wrapper.get({
     id: tournamentId as number,
-    verified: false
-  })
+    verified: false,
+  });
 
   return data.result;
 }
@@ -394,15 +397,17 @@ export async function paginationParamsToURL(params: {}) {
         let string = `${index !== 0 ? '&' : ''}${key}=`;
 
         params[key].forEach((value, index) => {
-          string += `${value}${index < params[key].length - 1 ? `&${key}=` : ''
-            }`;
+          string += `${value}${
+            index < params[key].length - 1 ? `&${key}=` : ''
+          }`;
         });
 
         return (url += `${string}`);
       }
 
-      return (url += `${index !== 0 ? '&' : ''}${key}=${params[key]}${index === Object.keys(params).length - 1 ? '&' : ''
-        }`);
+      return (url += `${index !== 0 ? '&' : ''}${key}=${params[key]}${
+        index === Object.keys(params).length - 1 ? '&' : ''
+      }`);
     });
   }
 

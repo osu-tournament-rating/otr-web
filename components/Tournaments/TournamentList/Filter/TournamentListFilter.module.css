@@ -1,65 +1,65 @@
 .filterContainer {
-    display: flex;
-    flex-direction: column;
-    gap: var(--internal-gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--internal-gap);
 
-    .collapsible {
-        padding: 1.2rem 2rem;
-        background-color: hsla(var(--background-content-childs-hsl));
-        /** TODO: Remove, for development */
-        align-items: center;
-    }
+  .collapsible {
+    padding: 1.2rem 2rem;
+    background-color: hsla(var(--background-content-childs-hsl));
+    /** TODO: Remove, for development */
+    align-items: center;
+  }
 }
 
 .searchBarContainer {
-    display: flex;
-    flex-direction: row;
-    gap: var(--internal-gap);
+  display: flex;
+  flex-direction: row;
+  gap: var(--internal-gap);
 }
 
 .filterButton {
-    aspect-ratio: 1;
-    height: 3rem;
-    border-radius: 5px;
-    padding: 0.75rem;
-    background-color: hsla(var(--background-content-childs-hsl));
+  aspect-ratio: 1;
+  height: 3rem;
+  border-radius: 5px;
+  padding: 0.75rem;
+  background-color: hsla(var(--background-content-childs-hsl));
 
-    /* Needs visual hover feedback */
-    &:hover {
-        cursor: pointer;
-    }
+  /* Needs visual hover feedback */
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .field {
-    display: flex;
-    flex-flow: row;
-    gap: 0.7rem;
-    height: 1.2rem;
-    line-height: 1.2rem;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
+  display: flex;
+  flex-flow: row;
+  gap: 0.7rem;
+  height: 1.2rem;
+  line-height: 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
 }
 
 .field .checkbox {
-    height: 100%;
-    aspect-ratio: 1;
-    border: 1px solid hsla(var(--gray-600));
-    border-radius: 0.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.65rem;
-    transition: all 0.2s ease-out;
+  height: 100%;
+  aspect-ratio: 1;
+  border: 1px solid hsla(var(--gray-600));
+  border-radius: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: all 0.2s ease-out;
 
-    .selected {
-        background-color: hsla(var(--green-500), 0.75);
-        border: 1px solid transparent;
-    }
+  .selected {
+    background-color: hsla(var(--green-500), 0.75);
+    border: 1px solid transparent;
+  }
 
-    .excluded {
-        background-color: hsla(var(--red-500), 0.75);
-        border: 1px solid transparent;
-    }
+  .excluded {
+    background-color: hsla(var(--red-500), 0.75);
+    border: 1px solid transparent;
+  }
 }

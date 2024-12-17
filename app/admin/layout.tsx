@@ -19,11 +19,9 @@ export default async function Layout({
   return (
     <div className={styles.adminLayout}>
       <div className={styles.navigationContainer}>
-        <AdminNavigation/>
+        <AdminNavigation />
       </div>
-      <div className={'container'}>
-        {children}
-      </div>
+      <div className={'container'}>{children}</div>
     </div>
   );
 }

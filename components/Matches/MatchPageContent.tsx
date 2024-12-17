@@ -8,7 +8,7 @@ import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/Tour
 
 export default function MatchesPageContent({
   match,
-  showTournament = false
+  showTournament = false,
 }: {
   match: MatchDTO;
   showTournament?: boolean;
@@ -19,7 +19,7 @@ export default function MatchesPageContent({
         <span>
           <h1 className={styles.title}>{match.name}</h1>
           <Link href={`https://osu.ppy.sh/mp/${match.osuId}`}>
-            <OutIcon className={styles.outIcon}/>
+            <OutIcon className={styles.outIcon} />
           </Link>
         </span>
         <FormattedDate
@@ -31,7 +31,7 @@ export default function MatchesPageContent({
       {showTournament && (
         <div>
           <h1 className={styles.title}>Tournament</h1>
-          <TournamentInfoContainer data={match.tournament} showName/>
+          <TournamentInfoContainer data={match.tournament} showName />
         </div>
       )}
     </div>

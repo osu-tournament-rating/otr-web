@@ -9,7 +9,9 @@ export default function Toast({
   message: string;
 }) {
   return (
-    <div className={clsx(styles.toast, success ? styles.success : styles.error)}>
+    <div
+      className={clsx(styles.toast, success ? styles.success : styles.error)}
+    >
       {message}
     </div>
   );
