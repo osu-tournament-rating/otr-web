@@ -365,7 +365,7 @@ export async function fetchUserPage(player: string | number, params) {
   );
 
   let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}?${urlParams}`,
+    `${process.env.REACT_APP_API_URL}/players/${player}/stats?${urlParams}`,
     {
       headers: {
         'Content-Type': 'application/json',
