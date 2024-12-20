@@ -7,7 +7,7 @@ import {
   TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
-import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
+import { MatchesWrapper, PlayersWrapper, TournamentsWrapper, Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
@@ -330,57 +330,29 @@ export async function fetchUserPageTitle(player: string | number) {
   return null;
 }
 
-export async function fetchUserPage(player: string | number, params) {
-  const session = await getSessionData();
-
+export async function fetchPlayerStats(player: string | number, params) {
   const osuMode =
-    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
-
-  let urlStringObject = {
-    ruleset: osuMode,
-  };
-
-  if (session?.playerId) {
-    urlStringObject.comparerId = session?.playerId;
-  }
+    (await cookies().get('OTR-user-selected-osu-mode')?.value as Ruleset | undefined) ?? Ruleset.Osu;
 
   const queryCheck = await UserpageQuerySchema.safeParse({
     time: params?.time,
   });
 
-  // put time on the url only if the value is not undefined and without errors
+  const wrapper = new PlayersWrapper(apiWrapperConfiguration);
+
+  let minDate = undefined;
   if (queryCheck.success && queryCheck.data.time) {
-    let minDate = new Date();
+    minDate = new Date();
     minDate.setDate(minDate.getDate() - params?.time);
-    let year = minDate.getFullYear();
-    let month = String(minDate.getMonth() + 1).padStart(2, '0');
-    let day = String(minDate.getDate()).padStart(2, '0');
-    minDate = `${year}-${month}-${day}`;
-
-    urlStringObject.dateMin = minDate;
   }
 
-  const urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
-  );
+  const statsResponse = await wrapper.getStats({ key: player as string, ruleset: osuMode, dateMin: minDate });
 
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/players/${player}/stats?${urlParams}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
-    }
-  );
-
-  if (!res?.ok) {
-    return res?.status === 404 ? notFound() : redirect('/');
+  if (statsResponse.status != 200) {
+    return statsResponse.status === 404 ? notFound() : redirect('/');
   }
 
-  res = await res.json();
-
-  return res;
+  return statsResponse.result;
 }
 
 export async function paginationParamsToURL(params: {}) {
