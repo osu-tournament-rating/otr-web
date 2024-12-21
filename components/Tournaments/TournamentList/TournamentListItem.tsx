@@ -18,26 +18,15 @@ import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent
 
 export default function TournamentListItem({
   tournament,
+  isExpanded,
+  onClick
 }: {
   tournament: TournamentCompactDTO;
+  isExpanded: boolean;
+  onClick: () => void;
 }) {
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
-
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fullTournament, setFullTournament] = useState<
-    TournamentDTO | undefined
-  >(undefined);
-
-  const expandRow = async () => {
-    setIsExpanded(true);
-    //
-    // // Fetch the full tournament
-    // if (!fullTournament) {
-    //   setIsLoading(true);
-    // }
-  };
 
   return (
     <AnimatePresence>
@@ -46,12 +35,12 @@ export default function TournamentListItem({
           styles.row,
           isExpanded ? styles.expanded : styles.collapsed
         )}
-        onClick={() => !isExpanded && expandRow()}
+        onClick={isExpanded ? undefined : onClick}
       >
         {isExpanded ? (
           // Expanded: Shows tournament page content
           <>
-            <div className={styles.header} onClick={() => setIsExpanded(false)}>
+            <div className={styles.header} onClick={onClick}>
               <TournamentPageHeader
                 forumUrl={tournament.forumUrl}
                 date={tournament.startTime}
