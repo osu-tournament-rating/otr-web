@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 import { useInView } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import { AutoSizer, List, WindowScroller } from 'react-virtualized';
 
 export default function TournamentList() {
   const endOfPageRef = useRef(null);
@@ -14,41 +15,37 @@ export default function TournamentList() {
   const { tournaments, canRequestNextPage, requestNextPage } =
     useTournamentListData();
 
-  useEffect(() => {
-    if (canRequestNextPage && endOfPageInView) {
-      requestNextPage();
-    }
-  }, [canRequestNextPage, endOfPageInView, requestNextPage]);
+  // useEffect(() => {
+  //   if (canRequestNextPage && endOfPageInView) {
+  //     requestNextPage();
+  //   }
+  // }, [canRequestNextPage, endOfPageInView, requestNextPage]);
 
   return (
-    <div className={styles.gridList}>
-      <div
-        className={clsx(styles.row, styles.collapsed, styles.columnHeadings)}
-      >
-        <span>Name</span>
-        <span>Format</span>
-        <span>Ruleset</span>
-        <span>Submitter</span>
-        <span>Date</span>
-      </div>
-      {tournaments.map((tournament) => {
-        return (
-          <TournamentListItem key={tournament.id} tournament={tournament} />
-        );
-      })}
-      <div
-        className={clsx(styles.row, styles.collapsed, styles.columnHeadings)}
-      >
-        {/*
-         * TODO: improve bottom of the page
-         * animate while requesting |
-         */}
-        {canRequestNextPage ? (
-          <span ref={endOfPageRef}>Loading...</span>
-        ) : (
-          <span>No more results!</span>
-        )}
-      </div>
-    </div>
+    <WindowScroller>
+      {({ height, isScrolling, onChildScroll, scrollTop }) => (
+        <AutoSizer disableHeight>
+          {({ width })=> (
+            <List
+              autoHeight
+              height={height}
+              isScrolling={isScrolling}
+              onScroll={onChildScroll}
+              scrollTop={scrollTop}
+              width={width}
+              rowCount={tournaments.length}
+              rowHeight={64}
+              rowRenderer={({ index, style }) => (
+                <div
+                  key={tournaments[index].id}
+                  style={style}>
+                  <TournamentListItem tournament={tournaments[index]} />
+                </div>
+              )}
+            />
+          )}
+        </AutoSizer>
+      )}
+    </WindowScroller>
   );
 }
