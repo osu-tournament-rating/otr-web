@@ -24,8 +24,6 @@ export default function TournamentListItem({
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
 
-  console.log(tournament);
-
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fullTournament, setFullTournament] = useState<

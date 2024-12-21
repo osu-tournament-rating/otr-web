@@ -2,13 +2,11 @@
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
-import { useInView } from 'framer-motion';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { AutoSizer, InfiniteLoader, List, ListRowProps, WindowScroller } from 'react-virtualized';
 
 export default function TournamentList() {
-  const endOfPageRef = useRef(null);
-  const endOfPageInView = useInView(endOfPageRef);
+  const windowScrollerRef = useRef<WindowScroller>(null);
 
   const { tournaments, canRequestNextPage, requestNextPage } =
     useTournamentListData();
@@ -38,14 +36,19 @@ export default function TournamentList() {
       rowCount={tournaments.length + 1}
     >
       {({ onRowsRendered, registerChild }) => (
-        <WindowScroller>
+        <WindowScroller ref={windowScrollerRef}>
           {({ height, isScrolling, onChildScroll, scrollTop }) => (
             <AutoSizer disableHeight>
               {({ width }) => (
                 <List
                   autoHeight
                   ref={registerChild}
-                  onRowsRendered={onRowsRendered}
+                  onRowsRendered={(...args) => {
+                    onRowsRendered(...args);
+                    if (windowScrollerRef.current) {
+                      windowScrollerRef.current.updatePosition();
+                    }
+                  }}
                   height={height}
                   isScrolling={isScrolling}
                   onScroll={onChildScroll}
