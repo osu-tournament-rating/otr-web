@@ -79,7 +79,17 @@ export default function TournamentList() {
     <InfiniteLoader
       threshold={5}
       isRowLoaded={isRowLoaded}
-      loadMoreRows={requestNextPage}
+      loadMoreRows={() => {
+        // Store final index before requesting, as the length will likely change
+        const prevFinalItemIdx = tournaments.length;
+        requestNextPage().then(() => {
+          // After requesting, recalculate the height of the final item
+          // (which used to be the 'loading...' placeholder row
+          rowHeightCache.current.clear(prevFinalItemIdx, 0);
+        });
+
+        return Promise.resolve();
+      }}
       rowCount={tournaments.length + 1}
     >
       {({ onRowsRendered, registerChild }) => (
