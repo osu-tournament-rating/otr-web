@@ -71,9 +71,7 @@ export default function TournamentListDataProvider({
   children: ReactNode;
 }) {
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
-  const [results, setResults] = useState<TournamentCompactDTO[]>([
-    ...initialData,
-  ]);
+  const [results, setResults] = useState<TournamentCompactDTO[]>(initialData);
   const [isRequesting, setIsRequesting] = useState(false);
   const [canRequestNextPage, setCanRequestNextPage] = useState(
     initialPagination.pageSize === initialData.length

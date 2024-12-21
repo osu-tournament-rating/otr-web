@@ -38,7 +38,8 @@ export default function TournamentList() {
       return newIndices;
     })
   }
-  
+
+  // Logic for determining row content
   const rowRenderer = ({ parent, index, key, style }: ListRowProps) => (
     <CellMeasurer
       cache={rowHeightCache.current}
@@ -47,7 +48,13 @@ export default function TournamentList() {
       rowIndex={index}
       columnIndex={0}
     >
-      <div key={key} style={style}>
+      <div
+        key={key}
+        style={{
+          ...style,
+          padding: '0.3rem 0'
+        }}
+      >
         {index < tournaments.length ? (
           // Index in data range, build a tournament list item
           <TournamentListItem
