@@ -40,35 +40,43 @@ export default function TournamentList() {
   }
 
   // Logic for determining row content
-  const rowRenderer = ({ parent, index, key, style }: ListRowProps) => (
-    <CellMeasurer
+  const rowRenderer = ({ parent, index, key, style }: ListRowProps) => {
+    if (tournaments[index]) {
+      console.log('rendering row: ', tournaments[index].name ?? 'last')
+    } else {
+      console.log('rendering row: last')
+    }
+
+    return (
+      <CellMeasurer
       cache={rowHeightCache.current}
       parent={parent}
       key={key}
       rowIndex={index}
       columnIndex={0}
-    >
-      <div
-        key={key}
-        style={{
-          ...style,
-          padding: '0.3rem 0'
-        }}
       >
-        {index < tournaments.length ? (
-          // Index in data range, build a tournament list item
-          <TournamentListItem
-            tournament={tournaments[index]}
-            isExpanded={expandedRowIndices.has(index)}
-            onClick={() => toggleRowIsExpanded(index)}
-          />
-        ) : (
-          // Index out of data range, show last row
-          <span>{canRequestNextPage ? 'Loading...' : 'No more results'}</span>
-        )}
-      </div>
-    </CellMeasurer>
-  );
+        <div
+          key={key}
+          style={{
+            ...style,
+            padding: '0.3rem 0',
+          }}
+        >
+          {index < tournaments.length ? (
+            // Index in data range, build a tournament list item
+            <TournamentListItem
+              tournament={tournaments[index]}
+              isExpanded={expandedRowIndices.has(index)}
+              onClick={() => toggleRowIsExpanded(index)}
+            />
+          ) : (
+            // Index out of data range, show last row
+            <span>{canRequestNextPage ? 'Loading...' : 'No more results'}</span>
+          )}
+        </div>
+      </CellMeasurer>
+    );
+  };
 
   const isRowLoaded = useCallback(
     ({ index }: { index: number }) => index < tournaments.length,
@@ -80,13 +88,16 @@ export default function TournamentList() {
       threshold={5}
       isRowLoaded={isRowLoaded}
       loadMoreRows={() => {
-        // Store final index before requesting, as the length will likely change
-        const prevFinalItemIdx = tournaments.length;
-        requestNextPage().then(() => {
-          // After requesting, recalculate the height of the final item
-          // (which used to be the 'loading...' placeholder row
-          rowHeightCache.current.clear(prevFinalItemIdx, 0);
-        });
+        // Avoid recalculating row height if we don't need to
+        if (canRequestNextPage) {
+          // Store final index before requesting, as the length will likely change
+          const prevFinalItemIdx = tournaments.length;
+          requestNextPage().then(() => {
+            // After requesting, recalculate the height of the final item
+            // (which used to be the 'loading...' placeholder row
+            rowHeightCache.current.clear(prevFinalItemIdx, 0);
+          });
+        }
 
         return Promise.resolve();
       }}

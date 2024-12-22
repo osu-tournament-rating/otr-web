@@ -26,7 +26,7 @@ const defaultFilter: TournamentListFilterType = {
 
 const initialPagination: PaginationProps = {
   page: 1,
-  pageSize: 20,
+  pageSize: 40,
 };
 
 export default async function Page({

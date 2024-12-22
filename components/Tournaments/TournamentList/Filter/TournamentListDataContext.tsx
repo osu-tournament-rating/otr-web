@@ -84,6 +84,11 @@ export default function TournamentListDataProvider({
   const pathName = usePathname();
   const router = useRouter();
 
+  // Ensure list updates when filter changes and page re-requests the initial list
+  useEffect(() => {
+    setResults(initialData);
+  }, [initialData]);
+
   // Handle changes in the filter by pushing query params
   useEffect(() => {
     const searchParams = new URLSearchParams(
