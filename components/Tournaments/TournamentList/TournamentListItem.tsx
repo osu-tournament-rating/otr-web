@@ -73,7 +73,9 @@ export default function TournamentListItem({
                 {tournament.name}
               </motion.span>
             </div>
+            {/** Lobby size */}
             <span>{`${tournament.lobbySize}v${tournament.lobbySize}`}</span>
+            {/** Ruleset Icon */}
             <span>
               <div className={styles.rulesetField}>
                 <RulesetIcon
@@ -88,12 +90,19 @@ export default function TournamentListItem({
                 />
               </div>
             </span>
+            {/** Submitter */}
             <span>
               {tournament.submittedByUser?.player.username ??
                 'Missing Submitter'}
             </span>
+            {/** Start Date */}
             <FormattedDate
               date={tournament.startTime}
+              format={dateFormats.tournaments.listItem}
+            />
+            {/** End Date */}
+            <FormattedDate
+              date={tournament.endTime}
               format={dateFormats.tournaments.listItem}
             />
           </>

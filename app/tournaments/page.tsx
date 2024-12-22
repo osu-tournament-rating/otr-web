@@ -11,6 +11,7 @@ import {
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
 import TournamentListDataProvider from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
 
 export const revalidate = 60;
 
@@ -53,6 +54,7 @@ export default async function Page({
         initialData={tournaments}
       >
         <TournamentListFilter />
+        <TournamentListHeader />
         <TournamentList />
       </TournamentListDataProvider>
     </div>

@@ -7,12 +7,6 @@
 .row {
   border-radius: 0.4rem;
   background-color: hsla(var(--background-content-childs-hsl));
-
-  &.columnHeadings {
-    padding: 0.6rem 2rem 0.4rem 2rem;
-    background-color: transparent;
-    font-weight: 600;
-  }
 }
 
 .row.expanded {
@@ -49,12 +43,17 @@
 .row.collapsed {
   cursor: pointer;
   display: grid;
-  grid-template-columns: 50% 6% 6% 25% 13%;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   text-align: center;
   height: 4rem;
   align-items: center;
-  font-size: 1rem;
   padding: 1.2rem 2rem;
+
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 
   & > :not(:only-child) {
     width: 100%;
@@ -63,11 +62,20 @@
   & > :first-child {
     margin-right: auto;
     text-align: left;
+    grid-column: span 2;
   }
 
   & > :last-child {
     margin-left: auto;
     text-align: right;
+  }
+
+  &.headings {
+    cursor: auto;
+    height: 1.5rem;
+    padding: 0 2rem;
+    background-color: transparent;
+    font-weight: 600;
   }
 
   .nameField {
@@ -76,12 +84,6 @@
     align-items: center;
     justify-content: flex-start;
     gap: 0.8rem;
-
-    .nameValue {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    }
   }
 
   .rulesetField {
@@ -93,17 +95,10 @@
     position: relative;
 
     .tooltip {
-      padding: var(--main-padding);
       border-radius: var(--main-borderRadius);
       font-weight: 500;
       background: hsl(0, 0%, 82%);
       color: #333;
     }
   }
-}
-
-.filterContainer {
-  display: flex;
-  flex-flow: row;
-  gap: var(--internal-gap);
 }
