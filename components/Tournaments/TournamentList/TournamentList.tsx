@@ -2,7 +2,7 @@
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AutoSizer,
   CellMeasurer,
@@ -14,8 +14,12 @@ import {
 } from 'react-virtualized';
 
 export default function TournamentList() {
-  const { tournaments, canRequestNextPage, requestNextPage } =
-    useTournamentListData();
+  const {
+    tournaments,
+    canRequestNextPage,
+    requestNextPage,
+    filter
+  } = useTournamentListData();
 
   const windowScrollerRef = useRef<WindowScroller>(null);
 
@@ -82,6 +86,13 @@ export default function TournamentList() {
     ({ index }: { index: number }) => index < tournaments.length,
     [tournaments]
   );
+
+  // When filter changes (completely new data is requested), collapse all rows
+  // and recalculate dynamic row heights
+  useEffect(() => {
+    setExpandedRowIndices(new Set());
+    rowHeightCache.current.clearAll();
+  }, [filter]);
 
   return (
     <InfiniteLoader
