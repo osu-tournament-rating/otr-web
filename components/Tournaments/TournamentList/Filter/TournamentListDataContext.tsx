@@ -3,7 +3,6 @@
 import {
   type ReactNode,
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -104,26 +103,23 @@ export default function TournamentListDataProvider({
   }, [pathName, router, filter, defaultFilter]);
 
   // Handle updating filter values and debouncing
-  const setFilterValue = useCallback(
-    <K extends keyof TournamentListFilter>(
-      item: K,
-      value: TournamentListFilter[K]
-    ) => {
-      // Clear the previous timeout if it exists
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
+  const setFilterValue = <K extends keyof TournamentListFilter>(
+    item: K,
+    value: TournamentListFilter[K]
+  ) => {
+    // Clear the previous timeout if it exists
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
 
-      // Set a new timeout to debounce the update
-      debounceTimeout.current = setTimeout(() => {
-        setFilter((prevState) => ({
-          ...prevState,
-          [item]: value,
-        }));
-      }, 300);
-    },
-    []
-  );
+    // Set a new timeout to debounce the update
+    debounceTimeout.current = setTimeout(() => {
+      setFilter((prevState) => ({
+        ...prevState,
+        [item]: value,
+      }));
+    }, 300);
+  };
 
   const props: TournamentListDataContextProps = {
     filter,

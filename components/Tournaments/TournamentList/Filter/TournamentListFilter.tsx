@@ -10,6 +10,7 @@ import { useTournamentListData } from '@/components/Tournaments/TournamentList/F
 
 export default function TournamentListFilter() {
   const { filter: { searchQuery }, setFilterValue } = useTournamentListData();
+  const [inputSearchValue, setInputSearchValue] = useState(searchQuery);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
 
   return (
@@ -17,7 +18,11 @@ export default function TournamentListFilter() {
       <div className={styles.searchBarContainer}>
         <BasicSearchBar
           placeholder={'Search'}
-          value={searchQuery}
+          value={inputSearchValue}
+          onChange={(e) => {
+            setInputSearchValue(e.target.value);
+            setFilterValue('searchQuery', searchQuery);
+          }}
         />
         {/**
          * TODO: Style this to fit the div instead of 'height: 3rem' ?
