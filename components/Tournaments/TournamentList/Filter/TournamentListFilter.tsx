@@ -6,14 +6,19 @@ import BasicSearchBar from '@/components/SearchBar/BasicSearchBar';
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TournamentListFilterCollapsible from '@/components/Tournaments/TournamentList/Filter/TournamentListFilterCollapsible';
+import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 
 export default function TournamentListFilter() {
+  const { filter: { searchQuery }, setFilterValue } = useTournamentListData();
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
 
   return (
     <div className={styles.filterContainer}>
       <div className={styles.searchBarContainer}>
-        <BasicSearchBar />
+        <BasicSearchBar
+          placeholder={'Search'}
+          value={searchQuery}
+        />
         {/**
          * TODO: Style this to fit the div instead of 'height: 3rem' ?
          * I couldn't figure out a better way to do it :P

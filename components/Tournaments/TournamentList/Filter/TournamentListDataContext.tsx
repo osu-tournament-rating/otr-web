@@ -1,10 +1,12 @@
 'use client';
 
 import {
-  createContext,
   type ReactNode,
+  createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { PaginationProps, TournamentListFilter } from '@/lib/types';
@@ -30,7 +32,7 @@ type TournamentListDataContextProps = {
   /** Current values in the filter */
   readonly filter: TournamentListFilter;
 
-  /** Sets a  */
+  /** Sets a value of the {@link filter} */
   setFilterValue<K extends keyof TournamentListFilter>(
     item: K,
     value: TournamentListFilter[K]
@@ -71,6 +73,7 @@ export default function TournamentListDataProvider({
   children: ReactNode;
 }) {
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const [results, setResults] = useState<TournamentCompactDTO[]>(initialData);
   const [isRequesting, setIsRequesting] = useState(false);
   const [canRequestNextPage, setCanRequestNextPage] = useState(
@@ -100,15 +103,32 @@ export default function TournamentListDataProvider({
       : router.push(pathName, { scroll: false });
   }, [pathName, router, filter, defaultFilter]);
 
+  // Handle updating filter values and debouncing
+  const setFilterValue = useCallback(
+    <K extends keyof TournamentListFilter>(
+      item: K,
+      value: TournamentListFilter[K]
+    ) => {
+      // Clear the previous timeout if it exists
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+
+      // Set a new timeout to debounce the update
+      debounceTimeout.current = setTimeout(() => {
+        setFilter((prevState) => ({
+          ...prevState,
+          [item]: value,
+        }));
+      }, 300);
+    },
+    []
+  );
+
   const props: TournamentListDataContextProps = {
     filter,
 
-    setFilterValue(item, value) {
-      setFilter((prevState) => ({
-        ...prevState,
-        [item]: value,
-      }));
-    },
+    setFilterValue,
 
     clearFilter: () => setFilter({}),
 
