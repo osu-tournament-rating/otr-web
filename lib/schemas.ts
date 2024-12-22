@@ -91,7 +91,7 @@ export const TournamentSubmissionFormSchema = z.object({
 export const TournamentsListFilterSchema = z.object({
   verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
-  name: z.string().optional(),
+  searchQuery: z.string().optional(),
   dateMin: z.date().optional(),
   dateMax: z.date().optional(),
   verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
@@ -101,6 +101,7 @@ export const TournamentsListFilterSchema = z.object({
   ).optional(),
   submittedBy: z.coerce.number().optional(),
   verifiedBy: z.coerce.number().optional(),
+  lobbySize: z.coerce.number().min(1).max(8).optional(),
   sort: numericEnumValueSchema(TournamentQuerySortType).optional(),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(false),
 });
