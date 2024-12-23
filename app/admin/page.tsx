@@ -20,8 +20,6 @@ export default async function page({
 }) {
   const tournamentsData = await fetchTournamentsForAdminPage(searchParams);
 
-  console.log(tournamentsData);
-
   return (
     <main className={styles.container}>
       <div className={styles.leftNavigationContainer}>
