@@ -7,8 +7,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  // const tournamentsData = await fetchTournamentsForAdminPage(searchParams);
-  // console.log(tournamentsData);
-
-  return <h1>LANDING</h1>;
+  return (
+    <div>
+      <h1>This is the admin page</h1>
+      <p>some description here</p>
+    </div>
+  );
 }
