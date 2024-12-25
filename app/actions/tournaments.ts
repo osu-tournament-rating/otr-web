@@ -34,15 +34,11 @@ export async function tournamentSubmissionFormAction(
         // Filter out empty strings
         .filter(s => s.trim() !== '')
         .map(s => {
-          console.log('DICK');
           // Trim whitespace
           s = s.trim();
-          console.log(s);
 
           // If the string is parseable to an int as is, do so
           if (/^\d+$/.test(s)) {
-            console.log(true);
-            console.log(parseFloat(s));
             return parseFloat(s);
           }
           
