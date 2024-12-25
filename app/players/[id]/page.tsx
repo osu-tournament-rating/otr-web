@@ -1,8 +1,7 @@
-import { fetchPlayerStats, fetchUserPageTitle } from '@/app/actions';
+import { fetchUserPageTitle } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
-import MiddleBarChart from '@/components/Charts/MiddleBarChart/MiddleBarChart';
 import PlayersBarChart from '@/components/Charts/PlayersBarChart/PlayersBarChart';
 import RadarChart from '@/components/Charts/RadarChart/RadarChart';
 import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
@@ -14,6 +13,7 @@ import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
 import UserMainCard from '@/components/Profile/UserMainCard/UserMainCard';
 import clsx from 'clsx';
 import styles from './page.module.css';
+import { fetchPlayerStats } from '@/app/actions/players';
 
 export async function generateMetadata({
   params: { id },
