@@ -34,17 +34,27 @@ export async function tournamentSubmissionFormAction(
         // Filter out empty strings
         .filter(s => s.trim() !== '')
         .map(s => {
+          console.log('DICK');
           // Trim whitespace
           s = s.trim();
+          console.log(s);
 
           // If the string is parseable to an int as is, do so
           if (/^\d+$/.test(s)) {
+            console.log(true);
+            console.log(parseFloat(s));
             return parseFloat(s);
           }
           
           // Try to extract the id using regex
           const match = MatchLinkPattern.exec(s);
-          return match ? parseFloat(match[1]) : s;
+
+          if (match == null) {
+            return "<Invalid match link>";
+          }
+
+          const url = match[0];
+          return match ? parseFloat(url.substring(url.lastIndexOf('/') + 1)) : s;
         }),
       beatmapIds: value => value
         .split(/\r?\n/g)
