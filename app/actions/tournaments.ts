@@ -43,8 +43,9 @@ export async function tournamentSubmissionFormAction(
           }
           
           // Try to extract the id using regex
-          const match = MatchLinkPattern.exec(s);
-          return match ? parseFloat(match[1]) : s;
+          return MatchLinkPattern.test(s) 
+          ? parseFloat(s.substring(s.lastIndexOf('/') + 1)) 
+          : s;
         }),
       beatmapIds: value => value
         .split(/\r?\n/g)
