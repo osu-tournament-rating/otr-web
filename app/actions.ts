@@ -1,7 +1,7 @@
 'use server';
 
 import { getSessionData } from '@/app/actions/session';
-import { apiWrapperConfiguration } from '@/lib/auth';
+import { apiWrapperConfiguration } from '@/lib/api';
 import {
   LeaderboardsQuerySchema,
   TournamentsQuerySchema,

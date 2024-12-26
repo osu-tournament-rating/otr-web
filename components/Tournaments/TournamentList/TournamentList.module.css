@@ -102,3 +102,7 @@
     }
   }
 }
+
+.sortableHeader {
+  cursor: pointer;
+}
