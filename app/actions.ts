@@ -1,6 +1,7 @@
 'use server';
 
 import { getSessionData } from '@/app/actions/session';
+import { apiWrapperConfiguration } from '@/lib/auth';
 import {
   LeaderboardsQuerySchema,
   TournamentsQuerySchema,
@@ -8,11 +9,12 @@ import {
 } from '@/lib/types';
 import {
   MatchesWrapper,
+  PlayersWrapper,
   TournamentsWrapper,
+  Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { apiWrapperConfiguration } from '@/lib/api';
 
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
@@ -331,59 +333,6 @@ export async function fetchUserPageTitle(player: string | number) {
   }
 
   return null;
-}
-
-export async function fetchUserPage(player: string | number, params) {
-  const session = await getSessionData();
-
-  const osuMode =
-    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
-
-  let urlStringObject = {
-    ruleset: osuMode,
-  };
-
-  if (session?.playerId) {
-    urlStringObject.comparerId = session?.playerId;
-  }
-
-  const queryCheck = await UserpageQuerySchema.safeParse({
-    time: params?.time,
-  });
-
-  // put time on the url only if the value is not undefined and without errors
-  if (queryCheck.success && queryCheck.data.time) {
-    let minDate = new Date();
-    minDate.setDate(minDate.getDate() - params?.time);
-    let year = minDate.getFullYear();
-    let month = String(minDate.getMonth() + 1).padStart(2, '0');
-    let day = String(minDate.getDate()).padStart(2, '0');
-    minDate = `${year}-${month}-${day}`;
-
-    urlStringObject.dateMin = minDate;
-  }
-
-  const urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
-  );
-
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}?${urlParams}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
-    }
-  );
-
-  if (!res?.ok) {
-    return res?.status === 404 ? notFound() : redirect('/');
-  }
-
-  res = await res.json();
-
-  return res;
 }
 
 export async function paginationParamsToURL(params: {}) {
