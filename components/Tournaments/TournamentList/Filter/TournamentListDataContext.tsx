@@ -5,7 +5,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import { PaginationProps, TournamentListFilter } from '@/lib/types';
@@ -72,7 +71,6 @@ export default function TournamentListDataProvider({
   children: ReactNode;
 }) {
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const [results, setResults] = useState<TournamentCompactDTO[]>(initialData);
   const [isRequesting, setIsRequesting] = useState(false);
   const [canRequestNextPage, setCanRequestNextPage] = useState(
@@ -106,20 +104,42 @@ export default function TournamentListDataProvider({
   const setFilterValue = <K extends keyof TournamentListFilter>(
     item: K,
     value: TournamentListFilter[K]
-  ) => {
-    // Clear the previous timeout if it exists
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
+  ) => setFilter((prevState) => ({
+    ...prevState,
+    [item]: value,
+  }));
+  
+  const requestNextPage = async () => {
+    // Check if we can request
+    if (isRequesting || !canRequestNextPage) {
+      return;
     }
 
-    // Set a new timeout to debounce the update
-    debounceTimeout.current = setTimeout(() => {
-      setFilter((prevState) => ({
-        ...prevState,
-        [item]: value,
+    setIsRequesting(true);
+    try {
+      // Make the request
+      const nextPage = await getTournamentList({
+        ...filter,
+        ...pagination,
+      });
+
+      // Update pagination props
+      setCanRequestNextPage(nextPage.length === pagination.pageSize);
+      setPagination((prev) => ({
+        ...prev,
+        page: prev.page + 1,
       }));
-    }, 300);
-  };
+
+      // Update results
+      setResults((prev) => [...prev, ...nextPage]);
+    } catch (e) {
+      console.log(e);
+      // If there is an error, freeze infinite scrolling until refresh
+      setCanRequestNextPage(false);
+    } finally {
+      setIsRequesting(false);
+    }
+  }
 
   const props: TournamentListDataContextProps = {
     filter,
@@ -134,37 +154,7 @@ export default function TournamentListDataProvider({
 
     canRequestNextPage,
 
-    async requestNextPage() {
-      // Check if we can request
-      if (isRequesting || !canRequestNextPage) {
-        return;
-      }
-
-      setIsRequesting(true);
-      try {
-        // Make the request
-        const nextPage = await getTournamentList({
-          ...filter,
-          ...pagination,
-        });
-
-        // Update pagination props
-        setCanRequestNextPage(nextPage.length === pagination.pageSize);
-        setPagination((prev) => ({
-          ...prev,
-          page: prev.page + 1,
-        }));
-
-        // Update results
-        setResults((prev) => [...prev, ...nextPage]);
-      } catch (e) {
-        console.log(e);
-        // If there is an error, freeze infinite scrolling until refresh
-        setCanRequestNextPage(false);
-      } finally {
-        setIsRequesting(false);
-      }
-    },
+    requestNextPage,
   };
 
   return (
