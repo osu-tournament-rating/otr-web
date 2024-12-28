@@ -72,8 +72,7 @@ export default function UserMainCard({ data }: { data: {} }) {
           </>
         ) : (
           <div>
-            You haven&apos;t played any tournaments that are approved by o!TR
-            yet
+            Play some tournaments and check back later! Ratings are updated weekly.
           </div>
         )}
       </div>
