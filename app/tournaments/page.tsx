@@ -12,6 +12,7 @@ import {
 } from '@/lib/types';
 import TournamentListDataProvider from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
+import AdminViewProvider from '@/components/AdminViewContext/AdminViewContext';
 
 export const revalidate = 60;
 
@@ -47,16 +48,18 @@ export default async function Page({
   return (
     <div className={'content'}>
       <h1>All tournaments</h1>
-      <TournamentListDataProvider
-        defaultFilter={defaultFilter}
-        initialFilter={requestParams}
-        initialPagination={initialPagination}
-        initialData={tournaments}
-      >
-        <TournamentListFilter />
-        <TournamentListHeader />
-        <TournamentList />
-      </TournamentListDataProvider>
+      <AdminViewProvider>
+        <TournamentListDataProvider
+          defaultFilter={defaultFilter}
+          initialFilter={requestParams}
+          initialPagination={initialPagination}
+          initialData={tournaments}
+        >
+          <TournamentListFilter />
+          <TournamentListHeader />
+          <TournamentList />
+        </TournamentListDataProvider>
+      </AdminViewProvider>
     </div>
   );
 }
