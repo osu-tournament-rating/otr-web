@@ -4,7 +4,7 @@ import { isHttpValidationProblemDetails } from '@/lib/api';
 import { apiWrapperConfiguration } from '@/lib/auth';
 import { BeatmapLinkPattern, MatchLinkPattern } from '@/lib/regex';
 import { TournamentSubmissionFormSchema } from '@/lib/schemas';
-import { FormState } from '@/lib/types';
+import { FormState, TournamentsQuerySchema } from '@/lib/types';
 import { extractFormData } from '@/util/forms';
 import {
   OperationType,
@@ -14,6 +14,8 @@ import {
   TournamentsWrapper
 } from '@osu-tournament-rating/otr-api-client';
 import { ZodError } from 'zod';
+import { getSessionData } from './session';
+import { redirect } from 'next/navigation';
 
 /**
  * Handles parsing, submitting, and handling errors for tournament submission data
