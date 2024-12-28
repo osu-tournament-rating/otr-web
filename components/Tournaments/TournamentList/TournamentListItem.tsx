@@ -9,12 +9,14 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 import { RulesetMetadata } from '@/lib/enums';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FormattedDate from '@/components/FormattedData/FormattedDate';
 import { dateFormats } from '@/lib/dates';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
+import { getTournament } from '@/app/actions/tournaments';
+import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 
 export default function TournamentListItem({
   tournament,
@@ -27,6 +29,22 @@ export default function TournamentListItem({
 }) {
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
+
+  const { filter: { verified } } = useTournamentListData();
+
+  const [fullTournament, setFullTournament] = useState<TournamentDTO | undefined>(undefined);
+  useEffect(() => {
+    if (!fullTournament && isExpanded) {
+      try {
+        getTournament({ id: tournament.id, verified })
+          .then((fetchedTournament) => {
+            setFullTournament(fetchedTournament);
+          });
+      } catch (e) {
+        setFullTournament({ ...tournament, matches: [], adminNotes: [] });
+      }
+    }
+  }, [isExpanded, tournament, verified, fullTournament]);
 
   return (
     <AnimatePresence>
@@ -52,7 +70,7 @@ export default function TournamentListItem({
             </div>
             <div className={styles.content}>
               <TournamentPageContent
-                tournament={{ ...tournament, matches: [], adminNotes: [] }}
+                tournament={fullTournament ?? { ...tournament, matches: [], adminNotes: [] }}
               />
             </div>
           </>
