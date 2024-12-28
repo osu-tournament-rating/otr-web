@@ -16,7 +16,7 @@ export default function Home() {
       <div className={styles.row}>
         <div className={styles.box}>
           <Balancer ratio={0.4}>
-            Suite of tools designed to make osu! tournaments better for everyone
+            A one-stop shop for osu! tournament performance statistics
           </Balancer>
           <LoginButton />
         </div>
@@ -26,20 +26,18 @@ export default function Home() {
       </div>
       <div className={styles.row}>
         <div className={styles.info}>
-          <h1>Tournament Rating</h1>
+          <h1>Tournament rating</h1>
           <p>
-            A rating system that aims to predict your performance in tournaments
-            relative to others
+            Tournament Rating, or TR, is a value which ranks how well you perform relative to others. 
           </p>
         </div>
         <div className={styles.decoration}></div>
       </div>
       <div className={styles.row}>
         <div className={styles.info}>
-          <h1>Rank restricted tournaments</h1>
+          <h1>Fair competition</h1>
           <p>
-            o!TR combined with BWS opens the door to an all-new level of fair
-            competition in tournaments targeting specific skill brackets
+            Accurately filter players who excel in performance compared to their peers.
           </p>
         </div>
         <div className={styles.decoration}>
@@ -50,8 +48,7 @@ export default function Home() {
         <div className={styles.info}>
           <h1>Verified Tournaments</h1>
           <p>
-            Our goal is to only include legitimate tournament matches in the
-            rating algorithm
+            Only human-verified tournament data is included in our rating algorithm.
           </p>
         </div>
         <div className={styles.decoration}>
@@ -60,11 +57,9 @@ export default function Home() {
       </div>
       <div className={styles.row}>
         <div className={styles.info}>
-          <h1>Stat nerd&apos;s heaven</h1>
+          <h1>Transparency</h1>
           <p>
-            We have a huge assortment of tools for players and teams. Dive into
-            all of your previous matches, compare your team to another team, see
-            exactly how your performance has changed overtime, and so much more
+            o!TR is built from the ground up to be fully public and verifiable by third parties.
           </p>
         </div>
         <div className={styles.decoration}>
@@ -80,10 +75,9 @@ export default function Home() {
       </div>
       <div className={styles.row}>
         <div className={styles.info}>
-          <h1>100% Open Source</h1>
+          <h1>By the community, for the community</h1>
           <p>
-            We are committed to remaining open source and transparent with our
-            algorithm
+            The o!TR team is comprised of seasoned tournament players, staff, and hosts.
           </p>
         </div>
         <div className={styles.decoration}>
@@ -92,12 +86,9 @@ export default function Home() {
       </div>
       <div className={styles.row}>
         <div className={styles.info}>
-          <h1>99.9999%</h1>
+          <h1>Weekly updates</h1>
           <p>
-            Our goal is to provide a service for all of osu!, so we want to
-            remain as reliable as possible. Outside of planned maintenance, we
-            aim to have a reliability of 99.9999%. That’s 31 seconds of
-            unexpected downtime per year.
+            Each Wednesday at 00:00 UTC, we reprocesses tournament match data. Will there be a new #1?
           </p>
         </div>
         <div className={styles.decoration}></div>
