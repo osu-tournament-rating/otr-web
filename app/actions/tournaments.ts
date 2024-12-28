@@ -44,7 +44,7 @@ export async function tournamentSubmissionFormAction(
           s = s.trim();
 
           // If the string is parseable to an int as is, do so
-          if (!isNaN(parseFloat(s))) {
+          if (/^\d+$/.test(s)) {
             return parseFloat(s);
           }
           
@@ -58,7 +58,7 @@ export async function tournamentSubmissionFormAction(
         .map(s => {
           s = s.trim();
 
-          if (!isNaN(parseFloat(s))) {
+          if (/^\d+$/.test(s)) {
             return parseFloat(s);
           }
 

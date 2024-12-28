@@ -9,10 +9,11 @@ import { isAdmin, rulesetIcons } from '@/lib/api';
 import { keysOf } from '@/util/forms';
 import { Ruleset, TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
 
+const formId = 'tournament-submission-form';
 const formFieldNames = keysOf<TournamentSubmissionDTO>();
 
 function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
@@ -27,7 +28,6 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
 
 export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
   const [formState, formAction] = useFormState(tournamentSubmissionFormAction, { success: false, message: '', errors: {} });
-  const formRef = useRef<HTMLFormElement>(null);
   const userIsAdmin = isAdmin(userScopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
@@ -36,7 +36,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
   useEffect(() => {
     // Clear the form after successful submission
     if (formState.success) {
-      formRef.current?.reset();
+      (document.getElementById(formId) as HTMLFormElement).reset();
     }
 
     // If there is a message, display it in a toast
@@ -51,7 +51,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
   return (
     <>
       <div className={styles.formContainer}>
-        <Form action={formAction} ref={formRef}>
+        <Form action={formAction} id={formId}>
           <div className={styles.section}>
             <div className={styles.header}>
               <h1>Tournament Submission</h1>
@@ -233,7 +233,6 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                 <div className={styles.field}>
                   <FormInputError message={formState.errors.beatmapIds} />
                   <textarea
-                    required
                     name={formFieldNames.beatmapIds}
                     placeholder={'1 or more separated beatmap links'}
                     cols={30}
@@ -249,7 +248,7 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
               {/** Rules checkbox */}
               <div className={clsx(styles.row, styles.checkbox)}>
                 <input
-                  required={true}
+                  required
                   type="checkbox"
                   name="rulesCheckBox"
                   id="rulesCheckBox"
