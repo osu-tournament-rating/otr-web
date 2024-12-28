@@ -254,49 +254,6 @@ export async function fetchDashboard(params: {}) {
   return data;
 }
 
-export async function fetchTournamentsPage(params: {}) {
-  const session = await getSessionData();
-
-  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.id) return redirect('/');
-
-  const { page } = params;
-
-  const queryCheck = await TournamentsQuerySchema.safeParse({
-    page: page ? +page : page,
-  });
-
-  if (!queryCheck.success) {
-    return console.log('error');
-  }
-
-  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-
-  let data = await wrapper.list({
-    page: 1,
-    pageSize: 30,
-    verified: false,
-  });
-
-  return data.result;
-}
-
-export async function fetchTournamentPage(tournamentId: number | string) {
-  const session = await getSessionData();
-
-  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
-  if (!session.id) return redirect('/');
-
-  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-
-  let data = await wrapper.get({
-    id: tournamentId as number,
-    verified: false
-  })
-
-  return data.result;
-}
-
 export async function fetchMatchPage(matchId: string | number) {
   const session = await getSessionData();
 

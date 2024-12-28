@@ -1,6 +1,6 @@
 'use client';
 
-import { fetchTournamentPage } from '@/app/actions';
+import { fetchTournamentPage } from '@/app/actions/tournaments';
 import StatusButton from '@/components/Button/StatusButton/StatusButton';
 import { dateFormatOptions, statusButtonTypes } from '@/lib/types';
 import clsx from 'clsx';

@@ -3,7 +3,7 @@ import styles from './page.module.css';
 
 export const revalidate = 60;
 
-import { fetchTournamentsPage } from '@/app/actions';
+import { fetchTournamentsPage } from '@/app/actions/tournaments';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {

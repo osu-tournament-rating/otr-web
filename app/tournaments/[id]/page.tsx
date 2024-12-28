@@ -2,7 +2,7 @@ import styles from './page.module.css';
 
 export const revalidate = 60;
 
-import { fetchTournamentPage } from '@/app/actions';
+import { fetchTournamentPage } from '@/app/actions/tournaments';
 import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
 import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import { dateFormatOptions } from '@/lib/types';
