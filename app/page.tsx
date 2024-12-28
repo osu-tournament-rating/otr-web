@@ -4,8 +4,6 @@ import decoration1 from '@/public/decorations/decoration-1.svg?url';
 import decoration2 from '@/public/decorations/decoration-2.svg?url';
 import decoration3 from '@/public/decorations/decoration-3.svg?url';
 import decoration4 from '@/public/decorations/decoration-4.svg?url';
-import fullLogoDark from '@/public/logos/full-logo-dark.svg?url';
-import fullLogo from '@/public/logos/full-logo.svg?url';
 import Image from 'next/image';
 import Balancer from 'react-wrap-balancer';
 import styles from './page.module.css';

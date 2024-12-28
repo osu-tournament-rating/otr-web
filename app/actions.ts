@@ -4,12 +4,11 @@ import { getSessionData } from '@/app/actions/session';
 import { apiWrapperConfiguration } from '@/lib/auth';
 import {
   LeaderboardsQuerySchema,
-  TournamentsQuerySchema,
   UserpageQuerySchema,
 } from '@/lib/types';
-import { MatchesWrapper, PlayersWrapper, TournamentsWrapper, Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { MatchesWrapper, TournamentsWrapper } from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
