@@ -22,6 +22,10 @@
   display: flex;
   flex-flow: row;
   gap: 1rem;
+
+  &.single {
+    grid-column: 1 / -1;
+  }
 }
 
 .field svg {
