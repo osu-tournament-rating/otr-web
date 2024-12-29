@@ -11,8 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
 import { AnimationProps, motion } from 'framer-motion';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 import styles from './TournamentListFilter.module.css';
 
 // TODO: Clean up this animation
