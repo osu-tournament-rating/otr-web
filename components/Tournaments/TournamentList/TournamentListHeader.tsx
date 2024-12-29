@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function TournamentListHeader() {
   return (
-    <div className={clsx(styles.row, styles.collapsed, styles.headings)}>
+    <div className={clsx(styles.gridRow, styles.headings)}>
       <span>Name</span>
       <SortableHeader targetSort={TournamentQuerySortType.LobbySize}>
         Format
@@ -28,7 +28,7 @@ export default function TournamentListHeader() {
 
 function SortableHeader({
   targetSort,
-  children
+  children,
 }: {
   targetSort: TournamentQuerySortType;
   children: string;
@@ -45,15 +45,17 @@ function SortableHeader({
     } else {
       setFilterValue('sort', targetSort);
     }
-  }
+  };
 
   return (
     <span className={styles.sortableHeader} onClick={handleClick}>
       {children}
-      {isSorting && (descending
-        ? (<FontAwesomeIcon icon={faAngleDown} />)
-        : (<FontAwesomeIcon icon={faAngleUp} />)
-      )}
+      {isSorting &&
+        (descending ? (
+          <FontAwesomeIcon icon={faAngleDown} />
+        ) : (
+          <FontAwesomeIcon icon={faAngleUp} />
+        ))}
     </span>
   );
 }

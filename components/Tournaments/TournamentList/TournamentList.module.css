@@ -4,18 +4,18 @@
   gap: 0.8rem;
 }
 
-.row {
+.listItem {
   border-radius: 0.4rem;
   background-color: hsla(var(--background-content-childs-hsl));
 }
 
-.row.expanded {
+.expanded {
   cursor: default;
   display: flex;
   flex-flow: column;
 
   .content {
-    padding: 1.2rem 2rem;
+    padding: 0 2rem;
   }
 
   .header {
@@ -40,20 +40,34 @@
   }
 }
 
-.row.collapsed {
-  cursor: pointer;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  text-align: center;
-  height: 4rem;
-  align-items: center;
+.collapsed {
+  display: flex;
+  flex-flow: column;
   padding: 1.2rem 2rem;
+  gap: 0.5rem;
 
+  cursor: pointer;
   font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.gridRow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  text-align: center;
+  align-items: center;
+
+  &.headings {
+    cursor: auto;
+    height: 1.5rem;
+    width: 100%;
+    padding: 0 2rem;
+    background-color: transparent;
+    font-weight: 600;
+  }
 
   & > :not(:only-child) {
     width: 100%;
@@ -68,14 +82,6 @@
   & > :last-child {
     margin-left: auto;
     text-align: right;
-  }
-
-  &.headings {
-    cursor: auto;
-    height: 1.5rem;
-    padding: 0 2rem;
-    background-color: transparent;
-    font-weight: 600;
   }
 
   .nameField {

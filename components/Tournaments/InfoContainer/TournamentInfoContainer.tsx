@@ -17,6 +17,8 @@ import { useAdminViewContext } from '@/components/AdminViewContext/AdminViewCont
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 import DropdownRulesetSelector
   from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
+import TournamentRejectionReason
+  from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
 
 export default function TournamentInfoContainer({
   data,
@@ -33,20 +35,23 @@ export default function TournamentInfoContainer({
     <div className={styles.content}>
       {/** Verification Status */}
       {isAdminView && (
-        <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-          <VerificationStatusButton
-            initialStatus={data.verificationStatus}
-            isAdminView
-            onChange={async (status) => {
-              const updatedTournament = await patchTournamentData({
-                id: data.id,
-                path: 'verificationStatus',
-                value: status,
-              });
-              Object.assign(data, updatedTournament);
-            }}
-          />
-        </div>
+        <>
+          <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
+            <VerificationStatusButton
+              initialStatus={data.verificationStatus}
+              isAdminView
+              onChange={async (status) => {
+                const updatedTournament = await patchTournamentData({
+                  id: data.id,
+                  path: 'verificationStatus',
+                  value: status,
+                });
+                Object.assign(data, updatedTournament);
+              }}
+            />
+          </div>
+          <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+        </>
       )}
       {/** Name */}
       {showName && (
