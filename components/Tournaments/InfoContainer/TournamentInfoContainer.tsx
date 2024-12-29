@@ -1,7 +1,7 @@
 import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import Link from 'next/link';
 import styles from './TournamentInfoContainer.module.css';
-import { TournamentCompactDTO, TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { patchTournamentData } from '@/app/actions/tournaments';
 import { RulesetMetadata } from '@/lib/enums';
 import EditIcon from '@/public/icons/Edit.svg';
@@ -189,7 +189,7 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
         setValue: setEditableValue,
         submitValue,
       })}
-      {!isEditing && (
+      {(isEditable && !isEditing) && (
         <EditIcon
           className={'fill'}
           onClick={() => {
