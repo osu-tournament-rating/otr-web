@@ -19,6 +19,7 @@ import DropdownRulesetSelector
   from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
 import TournamentRejectionReason
   from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
+import clsx from 'clsx';
 
 export default function TournamentInfoContainer({
   data,
@@ -36,7 +37,7 @@ export default function TournamentInfoContainer({
       {/** Verification Status */}
       {isAdminView && (
         <>
-          <div className={styles.field} style={{ gridColumn: '1 / 3' }}>
+          <div className={clsx(styles.field, styles.single)}>
             <VerificationStatusButton
               initialStatus={data.verificationStatus}
               isAdminView
@@ -50,7 +51,9 @@ export default function TournamentInfoContainer({
               }}
             />
           </div>
-          <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+          <div className={clsx(styles.field, styles.single)}>
+            <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+          </div>
         </>
       )}
       {/** Name */}

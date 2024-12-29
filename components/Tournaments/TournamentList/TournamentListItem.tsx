@@ -80,6 +80,7 @@ export default function TournamentListItem({
 }
 
 function CollapsedContent({ tournament }: { tournament: TournamentCompactDTO }) {
+  const { filter: { verified } } = useTournamentListData();
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
 
@@ -132,7 +133,9 @@ function CollapsedContent({ tournament }: { tournament: TournamentCompactDTO }) 
           format={dateFormats.tournaments.listItem}
         />
       </div>
-      <TournamentRejectionReason rejectionReason={tournament.rejectionReason} />
+      {!verified && (
+        <TournamentRejectionReason rejectionReason={tournament.rejectionReason} />
+      )}
     </>
   );
 }
