@@ -1,19 +1,20 @@
 'use client';
 
-import styles from './TournamentListFilter.module.css';
-import { AnimationProps, motion } from 'framer-motion';
-import clsx from 'clsx';
 import RulesetSelector from '@/components/Button/RulesetSelector/RulesetSelector';
+import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
+import RangeSlider from '@/components/Range/RangeSlider';
+import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
+import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import { TournamentProcessingStatusMetadata } from '@/lib/enums';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import clsx from 'clsx';
+import { AnimationProps, motion } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
-import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
-import { TournamentProcessingStatusMetadata } from '@/lib/enums';
 import Select from 'react-select';
-import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
-import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
+import styles from './TournamentListFilter.module.css';
 
 // TODO: Clean up this animation
 const collapsibleAnimationProps: AnimationProps = {
@@ -51,59 +52,40 @@ export default function TournamentListFilterCollapsible() {
       className={clsx('content', styles.collapsible)}
       {...collapsibleAnimationProps}
     >
-      <RulesetSelector
-        initialRuleset={ruleset}
-        onChange={(value) => setFilterValue('ruleset', value)}
-      />
-      {/**
-       * Date range picker
-       * I have no idea what is going on with the styling here :/
-       */}
-      <section className={styles.field}>
-        <span>Start date from: </span>
-        <DatePicker
-          className={'formField'}
-          showIcon
-          timeInputLabel={'Time:'}
-          dateFormat={'MM/dd/yyyy h:mm aa'}
-          showTimeInput
+      <section className={clsx(styles.containerField, styles.fill)}>
+        <RulesetSelector
+          initialRuleset={ruleset}
+          onChange={(value) => setFilterValue('ruleset', value)}
         />
-        <span> to </span>
-        <DatePicker
-          className={'formField'}
-          showIcon
-          timeInputLabel="Time:"
-          dateFormat={'MM/dd/yyyy h:mm aa'}
-          showTimeInput
+      </section>
+      {/** Date range picker */}
+      <section className={styles.containerField}>
+        <span className={styles.label}>Date</span>
+        <div className={styles.field}>
+          <input type="date" name="startDate" id="startDate" />
+          <span>to</span>
+          <input type="date" name="endDate" id="endDate" />
+        </div>
+      </section>
+      {/** Rank range slider */}
+      <section className={styles.containerField}>
+        <span className={styles.label}>{'Rank Range'}</span>
+        {/** TODO: Implement the correct change to the object that changes the URL, passing the correct function to setParamsToPush */}
+        <RangeSlider
+          name={'rankRange'}
+          min={1}
+          max={100}
+          setParamsToPush={setFilterValue}
         />
       </section>
       {/** Format dropdown */}
-      <section className={styles.field}>
-        <span>Format</span>
-        <FormatSelector showAnyOption/>
-      </section>
-      {/** Rank range slider */}
-      <section className={styles.field}>
-        <span>{'Rank Range {range slider here}'}</span>
-        {/** TODO: Lots of bugs with the range slider */}
-        {/*<RangeSlider*/}
-        {/*  name={'rankRange'}*/}
-        {/*  value={[]}*/}
-        {/*  min={1}*/}
-        {/*  max={100}*/}
-        {/*  setParamsToPush={setParamsToPush}*/}
-        {/*/>*/}
-      </section>
-      {/** Verified data checkbox */}
-      <section className={styles.field}>
-        <div className={styles.checkbox}>
-          <FontAwesomeIcon icon={faCheck} />
-        </div>
-        <span>Show only verified data</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Format</span>
+        <FormatSelector showAnyOption />
       </section>
       {/** Rejection reason dropdown */}
-      <section className={styles.field}>
-        <span>Rejection reason</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Rejection reason</span>
         <Select
           options={Object.entries(TournamentProcessingStatusMetadata).map(
             ([value, { text }]) => {
@@ -114,16 +96,16 @@ export default function TournamentListFilterCollapsible() {
         />
       </section>
       {/** Verification status dropdown */}
-      <section className={styles.field}>
-        <span>Verification status</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Verification status</span>
         <VerificationStatusButton
           initialStatus={VerificationStatus.None}
           isAdminView
         />
       </section>
       {/** Processing status dropdown */}
-      <section className={styles.field}>
-        <span>Processing status</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Processing status</span>
         <select>
           <option>Any</option>
           {Object.entries(TournamentProcessingStatusMetadata).map(
@@ -146,14 +128,21 @@ export default function TournamentListFilterCollapsible() {
         </select>
       </section>
       {/** Submitter */}
-      <section className={styles.field}>
-        <span>Submitter (user id)</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Submitter (user id)</span>
         <input type="number" min={0} />
       </section>
       {/** Verifier */}
-      <section className={styles.field}>
-        <span>Verifier (user id)</span>
+      <section className={styles.containerField}>
+        <span className={styles.label}>Verifier (user id)</span>
         <input type="number" min={0} />
+      </section>
+      {/** Verified data checkbox */}
+      <section className={styles.containerField}>
+        <div className={styles.checkbox}>
+          <FontAwesomeIcon icon={faCheck} />
+        </div>
+        <span>Show only verified data</span>
       </section>
     </motion.div>
   );
