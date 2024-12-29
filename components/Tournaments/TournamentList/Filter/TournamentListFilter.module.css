@@ -62,7 +62,7 @@
   }
 }
 
-.field .checkbox {
+.checkbox {
   height: 100%;
   aspect-ratio: 1;
   border: 1px solid hsla(var(--gray-600));
@@ -73,12 +73,12 @@
   font-size: 0.65rem;
   transition: all 0.2s ease-out;
 
-  .selected {
+  &.selected {
     background-color: hsla(var(--green-500), 0.75);
     border: 1px solid transparent;
   }
 
-  .excluded {
+  &.excluded {
     background-color: hsla(var(--red-500), 0.75);
     border: 1px solid transparent;
   }

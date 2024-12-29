@@ -13,7 +13,6 @@ import clsx from 'clsx';
 import { AnimationProps, motion } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import Select from 'react-select';
 import styles from './TournamentListFilter.module.css';
 
 // TODO: Clean up this animation
@@ -52,7 +51,9 @@ export default function TournamentListFilterCollapsible() {
       className={clsx('content', styles.collapsible)}
       {...collapsibleAnimationProps}
     >
-      <section className={clsx(styles.containerField, styles.fill)}>
+      <section
+        className={clsx(styles.containerField, styles.fill, styles.centered)}
+      >
         <RulesetSelector
           initialRuleset={ruleset}
           onChange={(value) => setFilterValue('ruleset', value)}
@@ -86,14 +87,18 @@ export default function TournamentListFilterCollapsible() {
       {/** Rejection reason dropdown */}
       <section className={styles.containerField}>
         <span className={styles.label}>Rejection reason</span>
-        <Select
-          options={Object.entries(TournamentProcessingStatusMetadata).map(
+        <select /* multiple */>
+          {/* //? have to be multiple? */}
+          {Object.entries(TournamentProcessingStatusMetadata).map(
             ([value, { text }]) => {
-              return { value, label: text };
+              return (
+                <option key={value} value={value}>
+                  {text}
+                </option>
+              );
             }
           )}
-          isMulti
-        />
+        </select>
       </section>
       {/** Verification status dropdown */}
       <section className={styles.containerField}>
@@ -130,19 +135,23 @@ export default function TournamentListFilterCollapsible() {
       {/** Submitter */}
       <section className={styles.containerField}>
         <span className={styles.label}>Submitter (user id)</span>
-        <input type="number" min={0} />
+        <input type="number" min={0} placeholder="4001304" />
       </section>
       {/** Verifier */}
       <section className={styles.containerField}>
         <span className={styles.label}>Verifier (user id)</span>
-        <input type="number" min={0} />
+        <input type="number" min={0} placeholder="4001304" />
       </section>
       {/** Verified data checkbox */}
-      <section className={styles.containerField}>
-        <div className={styles.checkbox}>
-          <FontAwesomeIcon icon={faCheck} />
+      <section
+        className={clsx(styles.containerField, styles.fill, styles.centered)}
+      >
+        <div className={styles.field}>
+          <span>Show only verified data</span>
+          <div className={styles.checkbox}>
+            <FontAwesomeIcon icon={faCheck} />
+          </div>
         </div>
-        <span>Show only verified data</span>
       </section>
     </motion.div>
   );
