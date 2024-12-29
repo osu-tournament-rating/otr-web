@@ -24,6 +24,12 @@
   gap: 1rem;
 }
 
+.field svg {
+  cursor: pointer;
+  height: 1rem;
+  width: auto;
+}
+
 .field#tournamentName {
   grid-column: span 2;
 }

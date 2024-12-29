@@ -3,7 +3,7 @@
 import styles from './TournamentListFilter.module.css';
 import { AnimationProps, motion } from 'framer-motion';
 import clsx from 'clsx';
-import RulesetSelector from '@/components/Button/RulesetSwitcher/RulesetSelector';
+import RulesetSelector from '@/components/Button/RulesetSelector/RulesetSelector';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DatePicker from 'react-datepicker';
@@ -13,6 +13,7 @@ import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { TournamentProcessingStatusMetadata } from '@/lib/enums';
 import Select from 'react-select';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 
 // TODO: Clean up this animation
 const collapsibleAnimationProps: AnimationProps = {
@@ -79,12 +80,7 @@ export default function TournamentListFilterCollapsible() {
       {/** Format dropdown */}
       <section className={styles.field}>
         <span>Format</span>
-        <select>
-          <option>Any</option>
-          {[...Array(8)].map((_, i) => (
-            <option key={i + 1} value={i + 1}>{`${i + 1}v${i + 1}`}</option>
-          ))}
-        </select>
+        <FormatSelector showAnyOption/>
       </section>
       {/** Rank range slider */}
       <section className={styles.field}>

@@ -2,7 +2,7 @@
 
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { useState } from 'react';
-import styles from './RulesetSwitcher.module.css';
+import styles from './RulesetSelector.module.css';
 import { RulesetMetadata } from '@/lib/enums';
 import clsx from 'clsx';
 import { Tooltip } from 'react-tooltip';

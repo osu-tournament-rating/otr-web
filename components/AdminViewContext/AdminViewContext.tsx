@@ -14,7 +14,7 @@ type AdminViewContextProps = {
 
 const AdminViewContext = createContext<AdminViewContextProps>({
   isAdminView: false,
-  setIsAdminView: (isAdminView: boolean) => {}
+  setIsAdminView: (_) => {}
 });
 
 export default function AdminViewProvider({

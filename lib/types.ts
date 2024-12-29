@@ -107,3 +107,6 @@ export type TournamentListFilter = Omit<
 
 /** Pagination properties for API requests */
 export type PaginationProps = { page: number; pageSize: number };
+
+/** Creates a type by picking all properties of U from T */
+export type PickByType<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? K : never; }[keyof T]>
