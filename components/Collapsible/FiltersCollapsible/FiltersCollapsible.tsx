@@ -121,29 +121,32 @@ export default function FiltersCollapsible({
                 />
               </div>
               <RangeSlider
-                name={'rank'}
                 max={data.maxRank}
                 value={rank}
-                setParamsToPush={setParamsToPush}
+                onChange={({ value }) => {
+                  setParamsToPush((prev) => ({ ...prev, rank: value }));
+                }}
               />
             </motion.div>
             <motion.div className={styles.filter}>
               <h2>Rating</h2>
               <RangeSlider
-                name={'rating'}
                 min={100}
                 max={5000}
                 value={rating}
-                setParamsToPush={setParamsToPush}
+                onChange={({ value }) => {
+                  setParamsToPush((prev) => ({ ...prev, rating: value }));
+                }}
               />
             </motion.div>
             <motion.div className={styles.filter}>
               <h2>Matches</h2>
               <RangeSlider
-                name={'matches'}
                 max={1000}
                 value={matches}
-                setParamsToPush={setParamsToPush}
+                onChange={({ value }) => {
+                  setParamsToPush((prev) => ({ ...prev, matches: value }));
+                }}
               />
             </motion.div>
             <motion.div className={styles.filter}>

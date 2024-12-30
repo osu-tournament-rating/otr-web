@@ -69,12 +69,13 @@ export default function TournamentListFilterCollapsible() {
       {/** Rank range slider */}
       <section className={styles.containerField}>
         <span className={styles.label}>{'Rank Range'}</span>
-        {/** TODO: Implement the correct change to the object that changes the URL, passing the correct function to setParamsToPush */}
         <RangeSlider
-          name={'rankRange'}
           min={1}
-          max={100}
-          setParamsToPush={setFilterValue}
+          max={100000}
+          // TODO: Pending API support
+          // onChange={() => {
+          //   setFilterValue()
+          // }}
         />
       </section>
       {/** Format dropdown */}

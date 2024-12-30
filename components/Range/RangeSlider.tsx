@@ -1,117 +1,123 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { useCallback, useState } from 'react';
 import { Range, getTrackBackground } from 'react-range';
 import styles from './RangeSlider.module.css';
 
+export type RangeSliderValue = [number, number];
+
+export type RangeSliderProps = {
+  /** Class name */
+  className?: string;
+
+  /** Initial value */
+  value?: RangeSliderValue;
+
+  /** Slider step */
+  step?: number;
+
+  /** Minimum value */
+  min?: number;
+
+  /** Maximum value */
+  max?: number;
+
+  /** Callback for value change */
+  onChange?: ({
+    min,
+    max,
+    value,
+  }: {
+    min: number;
+    max: number;
+    value: RangeSliderValue;
+  }) => void;
+};
+
 export default function RangeSlider({
-  name,
+  className = '',
   step = 1,
   min = 1,
   max = 100,
-  rtl = false,
-  value,
-  setParamsToPush,
-}: {
-  name: string;
-  step?: number;
-  min?: number;
-  max?: number;
-  rtl?: boolean;
-  value: any;
-  setParamsToPush: any;
-}) {
-  function checkValues(array: any) {
-    if (array.length > 2) {
-      array.length = 2;
-    }
-    if (array.length !== 1) {
-      array = array.map(
-        (value: string, index: number) =>
-          !isNaN(parseInt(value)) ? parseInt(value) : index === 0 ? min : max
-        /* return number > 0 && number < 1 ? number * 100 : number; */
-      );
-    }
-    if (array?.length === 1) {
-      array[0] = parseInt(array[0]);
-      array[1] = max;
-    }
-    if (array?.length === 2) {
-      if (array[0] > array[1]) {
-        array.reverse();
-      }
-      if (array[0] < min) {
-        array[0] = min;
-      }
-      if (array[1] > max) {
-        array[1] = max;
-      }
-    }
-    return array;
+  value = [min, max],
+  onChange = () => {},
+}: RangeSliderProps) {
+  if (min > max) {
+    throw new Error('Min must be less than max');
   }
 
-  const [values, setValues] = useState([min, max]);
+  const validateValues = useCallback(
+    (values: RangeSliderValue): RangeSliderValue => {
+      let [lower, upper] = values;
 
-  useEffect(() => {
-    setValues(value !== undefined ? checkValues(value) : [min, max]);
+      if (lower > upper) {
+        upper = [lower, (lower = upper)][0];
+      }
 
-    return () => {};
-  }, [value]);
+      if (lower < min) {
+        lower = min;
+      }
+
+      if (upper > max) {
+        upper = max;
+      }
+
+      return [lower, upper];
+    },
+    [max, min]
+  );
+
+  // Slider values can overlap (val[0] being greater than val[1])
+  // while the input values are kept clamped to the min and max allowing the track ends
+  // to be able to drag past each other while the displayed numbers are always correct
+  const [sliderValues, setSliderValues] = useState(validateValues(value));
+  const [inputValues, setInputValues] = useState(sliderValues);
+  const [lower, upper] = inputValues;
+
+  const setValues = (values: RangeSliderValue) => {
+    setInputValues(values);
+    setSliderValues(values);
+  };
+
+  const onChangeCallback = useCallback(() => {
+    onChange({ min, max, value: inputValues });
+  }, [inputValues, max, min, onChange]);
 
   return (
     <div className={styles.container}>
       <div className={styles.rangeValues}>
-        <span className={styles[name]}>
+        <span className={styles[className]}>
           <input
-            type="number"
             className={styles.value}
-            value={values[0]}
-            onChange={(e) => {
-              setValues((prev: any) => [
-                Math.max(min - 1, Math.min(values[1], Number(e.target.value))) <
-                1
-                  ? ''
-                  : Math.max(min, Math.min(values[1], Number(e.target.value))),
-                prev[1],
-              ]);
-              setParamsToPush((prev: any) => ({
-                ...prev,
-                [name]: [
-                  Math.max(
-                    min - 1,
-                    Math.min(values[1], Number(e.target.value))
-                  ) < min
-                    ? min
-                    : Math.min(max, Number(e.target.value)),
-                  values[1],
-                ],
-              }));
-            }}
             required
+            type={'number'}
+            value={lower}
+            onChange={(e) => {
+              setValues(
+                validateValues([
+                  isNaN(e.target.valueAsNumber) ? min : e.target.valueAsNumber,
+                  upper,
+                ])
+              );
+              onChangeCallback();
+            }}
           />
         </span>
-        <span className={styles[name]}>
+        <span className={styles[className]}>
           <input
-            type="number"
             className={styles.value}
-            value={values[1]}
-            onChange={(e) => {
-              setValues((prev: any) => [
-                prev[0],
-                Math.min(max, Number(e.target.value)) === 0
-                  ? ''
-                  : Math.min(max, Number(e.target.value)),
-              ]);
-              setParamsToPush((prev: any) => ({
-                ...prev,
-                [name]: [
-                  values[0],
-                  Math.min(max, Number(e.target.value)) < values[0]
-                    ? values[0]
-                    : Math.min(max, Number(e.target.value)),
-                ],
-              }));
-            }}
             required
+            type={'number'}
+            value={upper}
+            onChange={(e) => {
+              setValues(
+                validateValues([
+                  lower,
+                  isNaN(e.target.valueAsNumber) ? max : e.target.valueAsNumber,
+                ])
+              );
+              onChangeCallback();
+            }}
           />
         </span>
       </div>
@@ -119,30 +125,31 @@ export default function RangeSlider({
         step={step}
         min={min}
         max={max}
-        rtl={rtl}
-        values={values}
-        allowOverlap={false}
+        values={sliderValues}
+        allowOverlap
         onChange={(values) => {
-          setValues(values);
-          setParamsToPush((prev) => ({
-            ...prev,
-            [name]: values,
-          }));
+          setSliderValues(values as RangeSliderValue);
+          setInputValues(validateValues(values as RangeSliderValue));
         }}
-        renderTrack={({ props, children }) => (
+        onFinalChange={() => {
+          onChangeCallback();
+        }}
+        renderTrack={({
+          props: { onMouseDown, onTouchStart, ref, style },
+          children,
+        }) => (
           <div
-            onMouseDown={props.onMouseDown}
-            onTouchStart={props.onTouchStart}
-            style={{
-              ...props.style,
-            }}
+            onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
+            style={{ ...style }}
             className={styles.rangeContainer}
           >
             <div
-              ref={props.ref}
+              ref={ref}
+              className={styles.rangeTrack}
               style={{
                 background: getTrackBackground({
-                  values,
+                  values: sliderValues,
                   colors: [
                     'hsla(var(--gray-600))',
                     'hsla(var(--accent-secondary-color))',
@@ -150,16 +157,14 @@ export default function RangeSlider({
                   ],
                   min: min,
                   max: max,
-                  rtl,
                 }),
               }}
-              className={styles.rangeTrack}
             >
               {children}
             </div>
           </div>
         )}
-        renderThumb={({ props, isDragged }) => (
+        renderThumb={({ props }) => (
           <div
             {...props}
             key={props.key}
@@ -170,11 +175,6 @@ export default function RangeSlider({
           />
         )}
       />
-      {/* <input
-        type="hidden"
-        name={name}
-        value={JSON.stringify({ min: values[0], max: values[1] })}
-      /> */}
     </div>
   );
 }
