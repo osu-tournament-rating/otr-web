@@ -5,10 +5,13 @@ export default function FormatSelector({
   ...rest
 }: {
   showAnyOption?: boolean;
-} & DetailedHTMLProps<SelectHTMLAttributes<HTMLSelectElement>, HTMLSelectElement>) {
+} & DetailedHTMLProps<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  HTMLSelectElement
+>) {
   return (
     <select {...rest}>
-      {showAnyOption && (<option>Any</option>)}
+      {showAnyOption && <option>Any</option>}
       {[...Array(8)].map((_, i) => (
         <option key={i + 1} value={i + 1}>{`${i + 1}v${i + 1}`}</option>
       ))}

@@ -14,8 +14,15 @@ import ManiaIcon from '@/public/icons/Ruleset Mania.svg';
 import { FC, SVGProps } from 'react';
 
 /** Gets an array of individual flags from a bitwise enumeration */
-export function getEnumFlags<T extends object>(value: number, enumType: T) {
-  const flags = [];
+export function getEnumFlags<T extends object>(
+  value: number | undefined,
+  enumType: T
+) {
+  const flags: T[keyof T][] = [];
+
+  if (!value) {
+    return flags;
+  }
 
   for (const [enumKey, enumValue] of Object.entries(enumType)) {
     if (

@@ -1,14 +1,16 @@
 'use client';
 
 import RulesetSelector from '@/components/Button/RulesetSelector/RulesetSelector';
-import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import RangeSlider from '@/components/Range/RangeSlider';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
-import { TournamentProcessingStatusMetadata } from '@/lib/enums';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import {
+  getEnumFlags,
+  TournamentProcessingStatusMetadata,
+  TournamentRejectionReasonMetadata,
+  VerificationStatusMetadata,
+} from '@/lib/enums';
+import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
 import { AnimationProps, motion } from 'framer-motion';
 import styles from './TournamentListFilter.module.css';
@@ -40,8 +42,7 @@ const collapsibleAnimationProps: AnimationProps = {
 
 export default function TournamentListFilterCollapsible() {
   const {
-    filter: { ruleset },
-    setFilterValue,
+    filter: { verified },
   } = useTournamentListData();
 
   return (
@@ -49,109 +50,278 @@ export default function TournamentListFilterCollapsible() {
       className={clsx('content', styles.collapsible)}
       {...collapsibleAnimationProps}
     >
-      <section
-        className={clsx(styles.containerField, styles.fill, styles.centered)}
+      <RulesetSelectorSection />
+      <DateRangeSection />
+      <RankRangeSection />
+      <FormatSection />
+      <SubmitterSection />
+      <VerifierSection />
+      <VerifiedOnlyCheckbox />
+      {!verified && (
+        <>
+          <RejectionReasonSection />
+          <VerificationStatusSection />
+          <ProcessingStatusSection />
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+function RulesetSelectorSection() {
+  const {
+    filter: { ruleset },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section
+      className={clsx(styles.containerField, styles.fill, styles.centered)}
+    >
+      <RulesetSelector
+        initialRuleset={ruleset}
+        onChange={(value) => setFilterValue('ruleset', value)}
+      />
+    </section>
+  );
+}
+
+function DateRangeSection() {
+  const {
+    filter: { dateMin, dateMax },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Date</span>
+      <div className={styles.field}>
+        <input type="date" name="startDate" id="startDate" />
+        <span>to</span>
+        <input type="date" name="endDate" id="endDate" />
+      </div>
+    </section>
+  );
+}
+
+function RankRangeSection() {
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>{'Rank Range'}</span>
+      <RangeSlider
+        min={1}
+        max={100000}
+        // TODO: Pending API support
+        // onChange={() => {
+        //   setFilterValue()
+        // }}
+      />
+    </section>
+  );
+}
+
+function FormatSection() {
+  const {
+    filter: { lobbySize },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Format</span>
+      <FormatSelector
+        value={lobbySize}
+        showAnyOption
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          setFilterValue('lobbySize', isNaN(value) ? undefined : value);
+        }}
+      />
+    </section>
+  );
+}
+
+function RejectionReasonSection() {
+  const {
+    filter: { rejectionReason },
+    setFilterValue,
+  } = useTournamentListData();
+  const flags = getEnumFlags(rejectionReason, TournamentRejectionReason);
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Rejection reason</span>
+      <select
+        multiple
+        onChange={(e) => {
+          const values = Array.from(
+            e.target.selectedOptions,
+            (option) => option.value
+          ).map((v) => parseInt(v));
+
+          let value: TournamentRejectionReason | undefined = undefined;
+          if (values.length > 0) {
+            value = TournamentRejectionReason.None;
+            values.forEach((v) => {
+              value! |= v;
+            });
+          }
+
+          setFilterValue('rejectionReason', value);
+        }}
       >
-        <RulesetSelector
-          initialRuleset={ruleset}
-          onChange={(value) => setFilterValue('ruleset', value)}
-        />
-      </section>
-      {/** Date range picker */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Date</span>
-        <div className={styles.field}>
-          <input type="date" name="startDate" id="startDate" />
-          <span>to</span>
-          <input type="date" name="endDate" id="endDate" />
-        </div>
-      </section>
-      {/** Rank range slider */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>{'Rank Range'}</span>
-        <RangeSlider
-          min={1}
-          max={100000}
-          // TODO: Pending API support
-          // onChange={() => {
-          //   setFilterValue()
-          // }}
-        />
-      </section>
-      {/** Format dropdown */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Format</span>
-        <FormatSelector showAnyOption />
-      </section>
-      {/** Rejection reason dropdown */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Rejection reason</span>
-        <select /* multiple */>
-          {/* //? have to be multiple? */}
-          {Object.entries(TournamentProcessingStatusMetadata).map(
-            ([value, { text }]) => {
-              return (
-                <option key={value} value={value}>
-                  {text}
-                </option>
-              );
-            }
-          )}
-        </select>
-      </section>
-      {/** Verification status dropdown */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Verification status</span>
-        <VerificationStatusButton
-          initialStatus={VerificationStatus.None}
-          isAdminView
-        />
-      </section>
-      {/** Processing status dropdown */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Processing status</span>
-        <select>
-          <option>Any</option>
-          {Object.entries(TournamentProcessingStatusMetadata).map(
-            ([value, { text, description }]) => (
+        {Object.entries(TournamentRejectionReasonMetadata).map(
+          ([value, { text }]) => {
+            return (
               <option
+                selected={flags.includes(Number(value))}
                 key={value}
                 value={value}
-                /**
-                 * TODO: Set the 'data-tooltip-content' content of the parent
-                 * <select> so hovering the closed selector shows the tooltip
-                 * content of the currently selected option
-                 */
-                data-tooltip-id={'processing-status-tooltip'}
-                data-tooltip-content={description}
               >
                 {text}
               </option>
-            )
-          )}
-        </select>
-      </section>
-      {/** Submitter */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Submitter (user id)</span>
-        <input type="number" min={0} placeholder="4001304" />
-      </section>
-      {/** Verifier */}
-      <section className={styles.containerField}>
-        <span className={styles.label}>Verifier (user id)</span>
-        <input type="number" min={0} placeholder="4001304" />
-      </section>
-      {/** Verified data checkbox */}
-      <section
-        className={clsx(styles.containerField, styles.fill, styles.centered)}
+            );
+          }
+        )}
+      </select>
+    </section>
+  );
+}
+
+function VerificationStatusSection() {
+  const {
+    filter: { verificationStatus },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Verification status</span>
+      <select
+        value={verificationStatus}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          setFilterValue(
+            'verificationStatus',
+            isNaN(value) ? undefined : value
+          );
+        }}
       >
-        <div className={styles.field}>
-          <span>Show only verified data</span>
-          <div className={styles.checkbox}>
-            <FontAwesomeIcon icon={faCheck} />
-          </div>
-        </div>
-      </section>
-    </motion.div>
+        <option>Any</option>
+        {Object.entries(VerificationStatusMetadata)
+          .filter(([, { displayInDropdown }]) => displayInDropdown)
+          .map(([value, { text }]) => (
+            <option value={value} key={value}>
+              {text}
+            </option>
+          ))}
+      </select>
+    </section>
+  );
+}
+
+function ProcessingStatusSection() {
+  const {
+    filter: { processingStatus },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Processing status</span>
+      <select
+        value={processingStatus}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          setFilterValue('processingStatus', isNaN(value) ? undefined : value);
+        }}
+      >
+        <option>Any</option>
+        {Object.entries(TournamentProcessingStatusMetadata).map(
+          ([value, { text }]) => (
+            <option key={value} value={value}>
+              {text}
+            </option>
+          )
+        )}
+      </select>
+    </section>
+  );
+}
+
+function SubmitterSection() {
+  const {
+    filter: { submittedBy },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Submitter (user id)</span>
+      <input
+        type={'number'}
+        min={0}
+        placeholder={'4001304'}
+        value={submittedBy}
+        onChange={(e) => {
+          setFilterValue(
+            'submittedBy',
+            isNaN(e.target.valueAsNumber) ? undefined : e.target.valueAsNumber
+          );
+        }}
+      />
+    </section>
+  );
+}
+
+function VerifierSection() {
+  const {
+    filter: { verifiedBy },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section className={styles.containerField}>
+      <span className={styles.label}>Verifier (user id)</span>
+      <input
+        type={'number'}
+        min={0}
+        placeholder={'4001304'}
+        value={verifiedBy}
+        onChange={(e) => {
+          setFilterValue(
+            'verifiedBy',
+            isNaN(e.target.valueAsNumber) ? undefined : e.target.valueAsNumber
+          );
+        }}
+      />
+    </section>
+  );
+}
+
+function VerifiedOnlyCheckbox() {
+  const {
+    filter: { verified },
+    setFilterValue,
+  } = useTournamentListData();
+
+  return (
+    <section
+      className={clsx(styles.containerField, styles.fill, styles.centered)}
+    >
+      <div className={styles.field}>
+        <input
+          type={'checkbox'}
+          checked={verified}
+          onChange={() => setFilterValue('verified', !verified)}
+        />
+        <span
+          style={{ cursor: 'pointer' }}
+          onClick={() => setFilterValue('verified', !verified)}
+        >
+          Show only verified data
+        </span>
+      </div>
+    </section>
   );
 }
