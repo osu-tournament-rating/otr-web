@@ -2,53 +2,32 @@
 
 import {
   TournamentCompactDTO,
-  TournamentDTO
+  TournamentDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import styles from './TournamentList.module.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 import { RulesetMetadata } from '@/lib/enums';
-import { useEffect, useState } from 'react';
 import FormattedDate from '@/components/FormattedData/FormattedDate';
 import { dateFormats } from '@/lib/dates';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
-import { getTournament } from '@/app/actions/tournaments';
 import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
 import TournamentRejectionReason from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
 
 export default function TournamentListItem({
   tournament,
   isExpanded,
-  onClick
+  onClick,
 }: {
-  tournament: TournamentCompactDTO;
+  tournament: TournamentCompactDTO | TournamentDTO;
   isExpanded: boolean;
   onClick: () => void;
 }) {
-  const { filter: { verified } } = useTournamentListData();
-
-  const [fullTournament, setFullTournament] = useState<TournamentDTO | undefined>(undefined);
-  useEffect(() => {
-    if (!fullTournament && isExpanded) {
-      try {
-        getTournament({ id: tournament.id, verified })
-          .then((fetchedTournament) => {
-            setFullTournament(fetchedTournament);
-          });
-      } catch (e) {
-        setFullTournament({ ...tournament, matches: [], adminNotes: [] });
-      }
-    }
-  }, [isExpanded, tournament, verified, fullTournament]);
-
   return (
     <AnimatePresence>
-      <motion.div
-        className={styles.listItem}
-        onClick={isExpanded ? undefined : onClick}
-      >
+      <motion.div className={styles.listItem}>
         {isExpanded ? (
           // Expanded: Shows tournament page content
           <motion.div className={styles.expanded}>
@@ -63,14 +42,12 @@ export default function TournamentListItem({
               </TournamentPageHeader>
             </div>
             <div className={styles.content}>
-              <TournamentPageContent
-                tournament={fullTournament ?? { ...tournament, matches: [], adminNotes: [] }}
-              />
+              <TournamentPageContent tournament={tournament} />
             </div>
           </motion.div>
         ) : (
           // Collapsed: Shows basic information in row format
-          <motion.div className={styles.collapsed}>
+          <motion.div className={styles.collapsed} onClick={onClick}>
             <CollapsedContent tournament={tournament} />
           </motion.div>
         )}
@@ -79,8 +56,14 @@ export default function TournamentListItem({
   );
 }
 
-function CollapsedContent({ tournament }: { tournament: TournamentCompactDTO }) {
-  const { filter: { verified } } = useTournamentListData();
+function CollapsedContent({
+  tournament,
+}: {
+  tournament: TournamentCompactDTO;
+}) {
+  const {
+    filter: { verified },
+  } = useTournamentListData();
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
 
@@ -134,7 +117,9 @@ function CollapsedContent({ tournament }: { tournament: TournamentCompactDTO }) 
         />
       </div>
       {!verified && (
-        <TournamentRejectionReason rejectionReason={tournament.rejectionReason} />
+        <TournamentRejectionReason
+          rejectionReason={tournament.rejectionReason}
+        />
       )}
     </>
   );

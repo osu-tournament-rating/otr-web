@@ -9,8 +9,11 @@ import {
 } from 'react';
 import { PaginationProps, TournamentListFilter } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
-import { getTournamentList } from '@/app/actions/tournaments';
+import {
+  TournamentCompactDTO,
+  TournamentDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import { getTournament, getTournamentList } from '@/app/actions/tournaments';
 
 /**
  * Creates a {@link TournamentListFilter} containing only values
@@ -24,6 +27,14 @@ function buildFilter(
     .filter(([k, v]) => defaultFilter[k as keyof TournamentListFilter] !== v)
     .map(([k, v]) => [k, String(v)]);
 }
+
+type TournamentListResult = {
+  /** Tournament */
+  data: TournamentDTO;
+
+  /** If the data is "full" including optional data */
+  isFullData: boolean;
+};
 
 /** Properties exposed by the {@link TournamentListDataContext} */
 type TournamentListDataContextProps = {
@@ -40,7 +51,7 @@ type TournamentListDataContextProps = {
   clearFilter(): void;
 
   /** Results */
-  readonly tournaments: TournamentCompactDTO[];
+  readonly tournaments: TournamentListResult[];
 
   /** If the next page is currently being requested */
   readonly isRequesting: boolean;
@@ -50,6 +61,9 @@ type TournamentListDataContextProps = {
 
   /** Request the next page of tournaments */
   requestNextPage(): Promise<void>;
+
+  /** Update the current {@link results} in place with the full data for a tournament by the list result if possible */
+  requestFullData(item: TournamentListResult): Promise<void>;
 };
 
 const TournamentListDataContext = createContext<
@@ -67,11 +81,13 @@ export default function TournamentListDataProvider({
   initialFilter: TournamentListFilter;
   defaultFilter: TournamentListFilter;
   initialPagination: PaginationProps;
-  initialData: TournamentCompactDTO[];
+  initialData: (TournamentCompactDTO | TournamentDTO)[];
   children: ReactNode;
 }) {
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
-  const [results, setResults] = useState<TournamentCompactDTO[]>(initialData);
+  const [results, setResults] = useState<TournamentListResult[]>(
+    initialData.map((t) => ({ data: t, isFullData: false }))
+  );
   const [isRequesting, setIsRequesting] = useState(false);
   const [canRequestNextPage, setCanRequestNextPage] = useState(
     initialPagination.pageSize === initialData.length
@@ -86,7 +102,7 @@ export default function TournamentListDataProvider({
 
   // Ensure list updates when filter changes and page re-requests the initial list
   useEffect(() => {
-    setResults(initialData);
+    setResults(initialData.map((t) => ({ data: t, isFullData: false })));
   }, [initialData]);
 
   // Handle changes in the filter by pushing query params
@@ -104,11 +120,12 @@ export default function TournamentListDataProvider({
   const setFilterValue = <K extends keyof TournamentListFilter>(
     item: K,
     value: TournamentListFilter[K]
-  ) => setFilter((prevState) => ({
-    ...prevState,
-    [item]: value,
-  }));
-  
+  ) =>
+    setFilter((prevState) => ({
+      ...prevState,
+      [item]: value,
+    }));
+
   const requestNextPage = async () => {
     // Check if we can request
     if (isRequesting || !canRequestNextPage) {
@@ -131,7 +148,10 @@ export default function TournamentListDataProvider({
       }));
 
       // Update results
-      setResults((prev) => [...prev, ...nextPage]);
+      setResults((prev) => [
+        ...prev,
+        ...nextPage.map((t) => ({ data: t, isFullData: false })),
+      ]);
     } catch (e) {
       console.log(e);
       // If there is an error, freeze infinite scrolling until refresh
@@ -139,7 +159,35 @@ export default function TournamentListDataProvider({
     } finally {
       setIsRequesting(false);
     }
-  }
+  };
+
+  const requestFullData = async (item: TournamentListResult) => {
+    const { data, isFullData } = item;
+    const itemIdx = results.indexOf(item);
+    if (isRequesting || isFullData || itemIdx === -1) {
+      return;
+    }
+
+    try {
+      setIsRequesting(true);
+
+      const fullTournament = await getTournament({
+        id: data.id,
+        verified: filter.verified,
+      });
+      // Replace the compact DTO in place with the full data
+      setResults(
+        results.with(itemIdx, { data: fullTournament, isFullData: true })
+      );
+    } catch (e) {
+      // TODO: error toast
+      console.log(e);
+      // Even if we failed to get the full data, prevent it from being fetched again until refresh
+      setResults(results.with(itemIdx, { data, isFullData: true }));
+    } finally {
+      setIsRequesting(false);
+    }
+  };
 
   const props: TournamentListDataContextProps = {
     filter,
@@ -155,6 +203,8 @@ export default function TournamentListDataProvider({
     canRequestNextPage,
 
     requestNextPage,
+
+    requestFullData,
   };
 
   return (

@@ -5,6 +5,8 @@ import {
   IOtrApiWrapperConfiguration,
   ProblemDetails,
   Roles,
+  TournamentCompactDTO,
+  TournamentDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { AxiosHeaders } from 'axios';
 import { validateAccessCredentials } from '@/app/actions/login';
@@ -73,6 +75,13 @@ export function isHttpValidationProblemDetails(
         Array.isArray(value) && value.every((v) => typeof v === 'string')
     )
   );
+}
+
+/** Type guard for determining if a {@link TournamentCompactDTO} is a full {@link TournamentDTO} */
+export function isFullTournament(
+  tournament: TournamentCompactDTO
+): tournament is TournamentDTO {
+  return 'matches' in tournament;
 }
 
 /** Denotes if a list of scopes contains the admin scope */
