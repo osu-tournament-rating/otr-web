@@ -3,7 +3,7 @@
 import RulesetSelector from '@/components/Button/RulesetSelector/RulesetSelector';
 import RangeSlider from '@/components/Range/RangeSlider';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
-import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import {
   getEnumFlags,
   TournamentProcessingStatusMetadata,

@@ -1,7 +1,7 @@
 'use client';
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
-import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CellMeasurer,

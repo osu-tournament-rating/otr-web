@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { useClickAway } from '@uidotdev/usehooks';
-import { useAdminViewContext } from '@/components/AdminViewContext/AdminViewContext';
+import { useAdminViewContext } from '@/components/Context/AdminViewContext/AdminViewContext';
 import styles from './DropdownRulesetSelector.module.css';
 import { RulesetMetadata } from '@/lib/enums';
 
@@ -12,7 +12,7 @@ type DropdownOptionTextFormat = 'full' | 'short';
 export default function DropdownRulesetSelector({
   value = Ruleset.Osu,
   textFormat = 'full',
-  onSelect
+  onSelect,
 }: {
   /** Initial value for the selector. Defaults to {@link Ruleset.Osu} */
   value?: Ruleset;
@@ -39,7 +39,7 @@ export default function DropdownRulesetSelector({
         await onSelect(value);
         setSelected(value);
       } else {
-        setSelected(value)
+        setSelected(value);
       }
     } catch (e) {
       // TODO: Error toast
@@ -47,22 +47,21 @@ export default function DropdownRulesetSelector({
     } finally {
       setIsOpen(false);
     }
-  }
+  };
 
   return (
     <div className={styles.dropdownContainer}>
-      <button
-        className={styles.dropdownSelected}
-        onClick={toggleDropdown}
-      >
+      <button className={styles.dropdownSelected} onClick={toggleDropdown}>
         {getSelectorOptionNodes({ ruleset: selected, textFormat })}
       </button>
       {isOpen && (
         <ul className={styles.dropdownOptionsContainer} role={'listbox'}>
           {Object.entries(RulesetMetadata)
-            .filter(([r, { displayInSelector }]) =>
-              // Type hack because enums suck
-              r as any as Ruleset !== selected && (displayInSelector || isAdminView)
+            .filter(
+              ([r, { displayInSelector }]) =>
+                // Type hack because enums suck
+                (r as any as Ruleset) !== selected &&
+                (displayInSelector || isAdminView)
             )
             .map(([r]) => {
               const ruleset = r as any as Ruleset;

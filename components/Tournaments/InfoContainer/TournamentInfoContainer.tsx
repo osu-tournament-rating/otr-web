@@ -1,3 +1,5 @@
+'use client';
+
 import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import Link from 'next/link';
 import styles from './TournamentInfoContainer.module.css';
@@ -13,23 +15,22 @@ import {
   useState,
 } from 'react';
 import { useClickAway } from '@uidotdev/usehooks';
-import { useAdminViewContext } from '@/components/AdminViewContext/AdminViewContext';
+import { useAdminViewContext } from '@/components/Context/AdminViewContext/AdminViewContext';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
-import DropdownRulesetSelector
-  from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
-import TournamentRejectionReason
-  from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
+import DropdownRulesetSelector from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
+import TournamentRejectionReason from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
 import clsx from 'clsx';
 
 export default function TournamentInfoContainer({
   data,
-  showName = false
+  showName = false,
 }: {
   /** Tournament data */
   data: TournamentCompactDTO;
   /** Whether to show the tournament's name */
   showName?: boolean;
 }) {
+  // TODO: Also need a way of determining whether data is verified only
   const { isAdminView } = useAdminViewContext();
 
   return (
@@ -37,7 +38,15 @@ export default function TournamentInfoContainer({
       {/** Verification Status */}
       {isAdminView && (
         <>
-          <div className={clsx(styles.field, styles.single)}>
+          {/* Shows confirmation modal */}
+          <div className={styles.field}>
+            <button>Delete</button>
+          </div>
+          {/* Active / visible if processing status == awaiting verification */}
+          <div className={styles.field}>
+            <button>Accept pre-status</button>
+          </div>
+          <div className={styles.field}>
             <VerificationStatusButton
               initialStatus={data.verificationStatus}
               isAdminView
@@ -51,9 +60,6 @@ export default function TournamentInfoContainer({
               }}
             />
           </div>
-          <div className={clsx(styles.field, styles.single)}>
-            <TournamentRejectionReason rejectionReason={data.rejectionReason} />
-          </div>
         </>
       )}
       {/** Name */}
@@ -63,20 +69,13 @@ export default function TournamentInfoContainer({
           <div className={styles.value}>{data.name}</div>
         </div>
       )}
-      {/** Abbreviation */}
+      <div className={clsx(styles.field, styles.single)}>
+        <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+      </div>
       <AbbreviationField data={data} />
-      {/** Format */}
       <FormatField data={data} />
-      {/** Ruleset */}
-      {/*<Field label={'Ruleset'}>*/}
-      {/*  <div className={styles.value}>*/}
-      {/*    {RulesetMetadata[data.ruleset].shortAlt}*/}
-      {/*  </div>*/}
-      {/*</Field>*/}
       <RulesetField data={data} />
-      {/** Forum URL */}
       <ForumPostField data={data} />
-      {/** Submitter */}
       <Field label={'Submitter'}>
         <div className={styles.value}>
           {data.submittedByUser ? (
@@ -110,14 +109,14 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <div className={styles.name}>{label}</div>
       {children}
     </div>
-  )
+  );
 }
 
 // Acts as a state manager for editable values
 function EditableFieldValue<K extends keyof TournamentCompactDTO>({
   data,
   target,
-  children
+  children,
 }: {
   data: TournamentCompactDTO;
   target: K;
@@ -128,7 +127,7 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
     isSubmitting,
     value,
     setValue,
-    submitValue
+    submitValue,
   }: {
     /** Reference to attach to the editable input, controls click away */
     editableRef: MutableRefObject<any>;
@@ -157,7 +156,7 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
   const abortEdit = () => {
     setEditableValue(originalValue);
     setIsEditing(false);
-  }
+  };
 
   // Handle submitting an edit
   const submitValue = () => {
@@ -173,18 +172,18 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
       patchTournamentData({
         id: data.id,
         path: target!,
-        value: editableValue
+        value: editableValue,
       }).then((updatedTournament) => {
         setOriginalValue(updatedTournament[target]);
         setIsEditing(false);
-      })
+      });
     } catch (e) {
       // TODO: Show error toast
       abortEdit();
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <>
@@ -197,7 +196,7 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
         setValue: setEditableValue,
         submitValue,
       })}
-      {(isEditable && !isEditing) && (
+      {isEditable && !isEditing && (
         <EditIcon
           className={'fill'}
           onClick={() => {
@@ -213,7 +212,15 @@ function AbbreviationField({ data }: { data: TournamentCompactDTO }) {
   return (
     <Field label={'Abbreviation'}>
       <EditableFieldValue data={data} target={'abbreviation'}>
-        {({ editableRef, isEditable, isEditing, isSubmitting, value, setValue, submitValue }) => {
+        {({
+          editableRef,
+          isEditable,
+          isEditing,
+          isSubmitting,
+          value,
+          setValue,
+          submitValue,
+        }) => {
           if (!isEditable || (isEditable && !isEditing)) {
             return <div className={styles.value}>{value}</div>;
           }
@@ -226,7 +233,7 @@ function AbbreviationField({ data }: { data: TournamentCompactDTO }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isSubmitting) submitValue()
+                if (e.key === 'Enter' && !isSubmitting) submitValue();
               }}
               autoFocus
               disabled={isSubmitting}
@@ -242,7 +249,14 @@ function FormatField({ data }: { data: TournamentCompactDTO }) {
   return (
     <Field label={'Format'}>
       <EditableFieldValue data={data} target={'lobbySize'}>
-        {({ editableRef, isEditable, isEditing, isSubmitting, value, submitValue }) => {
+        {({
+          editableRef,
+          isEditable,
+          isEditing,
+          isSubmitting,
+          value,
+          submitValue,
+        }) => {
           if (!isEditable || (isEditable && !isEditing)) {
             return <div className={styles.value}>{`${value}v${value}`}</div>;
           }
@@ -267,9 +281,20 @@ function RulesetField({ data }: { data: TournamentCompactDTO }) {
   return (
     <Field label={'Ruleset'}>
       <EditableFieldValue data={data} target={'ruleset'}>
-        {({ editableRef, isEditable, isEditing, isSubmitting, value, submitValue }) => {
+        {({
+          editableRef,
+          isEditable,
+          isEditing,
+          isSubmitting,
+          value,
+          submitValue,
+        }) => {
           if (!isEditable || (isEditable && !isEditing)) {
-            return <div className={styles.value}>{RulesetMetadata[value].shortAlt}</div>;
+            return (
+              <div className={styles.value}>
+                {RulesetMetadata[value].shortAlt}
+              </div>
+            );
           }
 
           return (
@@ -287,7 +312,15 @@ function ForumPostField({ data }: { data: TournamentCompactDTO }) {
   return (
     <Field label={'Forum post'}>
       <EditableFieldValue data={data} target={'forumUrl'}>
-        {({ editableRef, isEditable, isEditing, isSubmitting, value, setValue, submitValue }) => {
+        {({
+          editableRef,
+          isEditable,
+          isEditing,
+          isSubmitting,
+          value,
+          setValue,
+          submitValue,
+        }) => {
           if (!isEditable || (isEditable && !isEditing)) {
             return (
               <div className={styles.value}>
@@ -306,7 +339,7 @@ function ForumPostField({ data }: { data: TournamentCompactDTO }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isSubmitting) submitValue()
+                if (e.key === 'Enter' && !isSubmitting) submitValue();
               }}
               autoFocus
               disabled={isSubmitting}

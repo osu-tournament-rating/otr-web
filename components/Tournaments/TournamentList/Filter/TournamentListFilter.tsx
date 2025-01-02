@@ -6,10 +6,13 @@ import BasicSearchBar from '@/components/SearchBar/BasicSearchBar';
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TournamentListFilterCollapsible from '@/components/Tournaments/TournamentList/Filter/TournamentListFilterCollapsible';
-import { useTournamentListData } from '@/components/Tournaments/TournamentList/Filter/TournamentListDataContext';
+import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 
 export default function TournamentListFilter() {
-  const { filter: { searchQuery }, setFilterValue } = useTournamentListData();
+  const {
+    filter: { searchQuery },
+    setFilterValue,
+  } = useTournamentListData();
   const [inputSearchValue, setInputSearchValue] = useState(searchQuery);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
 
