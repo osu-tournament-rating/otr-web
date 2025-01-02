@@ -126,16 +126,15 @@ export default function TournamentList() {
                 autoHeight
                 autoWidth
                 ref={registerChild}
-                // onRowsRendered={(...args) => {
-                //   onRowsRendered(...args);
-                //   if (windowScrollerRef.current) {
-                //     // Hack to dynamically update the vertical position of the list
-                //     // when things like the expandable filter change the height.
-                //     // Could be a point to optimize in the future if needed
-                //     windowScrollerRef.current.updatePosition();
-                //   }
-                // }}
-                onRowsRendered={onRowsRendered}
+                onRowsRendered={(...args) => {
+                  onRowsRendered(...args);
+                  if (windowScrollerRef.current) {
+                    // Hack to dynamically update the vertical position of the list
+                    // when things like the expandable filter change the height.
+                    // Could be a point to optimize in the future if needed
+                    windowScrollerRef.current.updatePosition();
+                  }
+                }}
                 height={height}
                 width={width}
                 isScrolling={isScrolling}
