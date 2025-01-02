@@ -34,7 +34,8 @@ export default function TournamentListItem({
             <div className={styles.header} onClick={onClick}>
               <TournamentPageHeader
                 forumUrl={tournament.forumUrl}
-                date={tournament.startTime}
+                startDate={tournament.startTime}
+                endDate={tournament.endTime}
               >
                 <motion.h1 layoutId={`${tournament.name}-title`} layout="size">
                   {tournament.name}

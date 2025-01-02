@@ -20,7 +20,7 @@
 }
 
 .header .outIcon {
-  /** I have no idea how to make the link icon take up more space LOL */
+  /** TODO: I have no idea how to make the link icon take up more space LOL */
   object-fit: fill;
   fill: hsla(var(--foreground-hsl));
   transition: all 0.2s ease-out;

@@ -7,11 +7,13 @@ import React from 'react';
 
 export default function TournamentPageHeader({
   forumUrl,
-  date,
+  startDate,
+  endDate,
   children,
 }: {
   forumUrl: string;
-  date: Date | string;
+  startDate: Date | string;
+  endDate: Date | string;
   children: React.ReactNode;
 }) {
   return (
@@ -22,11 +24,19 @@ export default function TournamentPageHeader({
           <OutIcon className={styles.outIcon} />
         </Link>
       </span>
-      <FormattedDate
-        className={styles.date}
-        date={date}
-        format={dateFormats.tournaments.header}
-      />
+      <span>
+        <FormattedDate
+          className={styles.date}
+          date={startDate}
+          format={dateFormats.tournaments.header}
+        />
+        <span>to</span>
+        <FormattedDate
+          className={styles.date}
+          date={endDate}
+          format={dateFormats.tournaments.header}
+        />
+      </span>
     </div>
   );
 }
