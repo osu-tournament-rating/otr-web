@@ -93,7 +93,14 @@ export default function TournamentList() {
 
   return (
     <WindowScroller ref={windowScrollerRef}>
-      {({ height, width, isScrolling, onChildScroll, scrollTop }) => (
+      {({
+        height,
+        width,
+        isScrolling,
+        onChildScroll,
+        scrollTop,
+        registerChild: registerWinScrollChild,
+      }) => (
         <InfiniteLoader
           threshold={5}
           isRowLoaded={isRowLoaded}
@@ -114,30 +121,32 @@ export default function TournamentList() {
           rowCount={tournaments.length + 1}
         >
           {({ onRowsRendered, registerChild }) => (
-            <List
-              autoHeight
-              autoWidth
-              ref={registerChild}
-              // onRowsRendered={(...args) => {
-              //   onRowsRendered(...args);
-              //   if (windowScrollerRef.current) {
-              //     // Hack to dynamically update the vertical position of the list
-              //     // when things like the expandable filter change the height.
-              //     // Could be a point to optimize in the future if needed
-              //     windowScrollerRef.current.updatePosition();
-              //   }
-              // }}
-              onRowsRendered={onRowsRendered}
-              height={height}
-              width={width}
-              isScrolling={isScrolling}
-              onScroll={onChildScroll}
-              scrollTop={scrollTop}
-              rowCount={tournaments.length + 1}
-              deferredMeasurementCache={rowHeightCache}
-              rowHeight={rowHeightCache.rowHeight}
-              rowRenderer={rowRenderer}
-            />
+            <div ref={registerWinScrollChild as any}>
+              <List
+                autoHeight
+                autoWidth
+                ref={registerChild}
+                // onRowsRendered={(...args) => {
+                //   onRowsRendered(...args);
+                //   if (windowScrollerRef.current) {
+                //     // Hack to dynamically update the vertical position of the list
+                //     // when things like the expandable filter change the height.
+                //     // Could be a point to optimize in the future if needed
+                //     windowScrollerRef.current.updatePosition();
+                //   }
+                // }}
+                onRowsRendered={onRowsRendered}
+                height={height}
+                width={width}
+                isScrolling={isScrolling}
+                onScroll={onChildScroll}
+                scrollTop={scrollTop}
+                rowCount={tournaments.length + 1}
+                deferredMeasurementCache={rowHeightCache}
+                rowHeight={rowHeightCache.rowHeight}
+                rowRenderer={rowRenderer}
+              />
+            </div>
           )}
         </InfiniteLoader>
       )}
