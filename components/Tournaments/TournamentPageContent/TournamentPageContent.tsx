@@ -1,8 +1,8 @@
 'use client';
 
+import MatchesList from '@/components/Matches/List/MatchesList';
 import styles from './TournamentPageContent.module.css';
 import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
-import MatchesList from '@/components/Tournaments/Lists/MatchesList';
 import { isFullTournament } from '@/lib/api';
 import {
   TournamentCompactDTO,
@@ -19,7 +19,7 @@ export default function TournamentPageContent({
   return (
     <div className={styles.container}>
       <TournamentInfoContainer data={tournament} showName={false} />
-      <MatchesList data={matches} />
+      <MatchesList data={matches!} />
     </div>
   );
 }

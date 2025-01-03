@@ -7,6 +7,10 @@
 .listItem {
   border-radius: 0.4rem;
   background-color: hsla(var(--background-content-childs-hsl));
+
+  &.matchesListItem {
+    background-color: #333;
+  }
 }
 
 .expanded {

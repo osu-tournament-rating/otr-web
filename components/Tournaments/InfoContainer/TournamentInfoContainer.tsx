@@ -18,8 +18,8 @@ import { useClickAway } from '@uidotdev/usehooks';
 import { useAdminViewContext } from '@/components/Context/AdminViewContext';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 import DropdownRulesetSelector from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
-import TournamentRejectionReason from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
 import clsx from 'clsx';
+import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
 
 export default function TournamentInfoContainer({
   data,

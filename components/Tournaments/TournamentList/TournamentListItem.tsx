@@ -14,7 +14,7 @@ import VerificationStatusCircle from '@/components/Tournaments/VerificationStatu
 import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
-import TournamentRejectionReason from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
+import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
 
 export default function TournamentListItem({
   tournament,
