@@ -6,7 +6,7 @@ import BasicSearchBar from '@/components/SearchBar/BasicSearchBar';
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TournamentListFilterCollapsible from '@/components/Tournaments/TournamentList/Filter/TournamentListFilterCollapsible';
-import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
 
 export default function TournamentListFilter() {
   const {

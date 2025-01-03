@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminViewContext } from '@/components/Context/AdminViewContext/AdminViewContext';
+import { useAdminViewContext } from '@/components/Context/AdminViewContext';
 
 export default function AdminViewToggle() {
   const { isAdminView, setIsAdminView } = useAdminViewContext();

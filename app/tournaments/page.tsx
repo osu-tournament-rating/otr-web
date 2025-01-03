@@ -11,9 +11,9 @@ import {
   SessionData,
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
-import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext';
 import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
-import AdminViewProvider from '@/components/Context/AdminViewContext/AdminViewContext';
+import AdminViewProvider from '@/components/Context/AdminViewContext';
 import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
 import { isAdmin } from '@/lib/api';
 import { getSessionData } from '@/app/actions/session';

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { useClickAway } from '@uidotdev/usehooks';
-import { useAdminViewContext } from '@/components/Context/AdminViewContext/AdminViewContext';
+import { useAdminViewContext } from '@/components/Context/AdminViewContext';
 import styles from './DropdownRulesetSelector.module.css';
 import { RulesetMetadata } from '@/lib/enums';
 

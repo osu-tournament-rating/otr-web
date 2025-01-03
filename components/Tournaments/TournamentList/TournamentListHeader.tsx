@@ -3,7 +3,7 @@
 import styles from './TournamentList.module.css';
 import clsx from 'clsx';
 import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
-import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
 import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
