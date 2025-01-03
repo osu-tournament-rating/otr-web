@@ -1,3 +1,5 @@
+'use client';
+
 import styles from './TournamentPageContent.module.css';
 import Link from 'next/link';
 import OutIcon from '@/public/icons/out.svg';

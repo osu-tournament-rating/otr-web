@@ -3,7 +3,7 @@
 import RulesetSelector from '@/components/Button/RulesetSelector/RulesetSelector';
 import RangeSlider from '@/components/Range/RangeSlider';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
-import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import {
   getEnumFlags,
   TournamentProcessingStatusMetadata,
@@ -43,7 +43,7 @@ const collapsibleAnimationProps: AnimationProps = {
 export default function TournamentListFilterCollapsible() {
   const {
     filter: { verified },
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <motion.div
@@ -72,7 +72,7 @@ function RulesetSelectorSection() {
   const {
     filter: { ruleset },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section
@@ -90,7 +90,7 @@ function DateRangeSection() {
   const {
     filter: { dateMin, dateMax },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -124,7 +124,7 @@ function FormatSection() {
   const {
     filter: { lobbySize },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -145,7 +145,7 @@ function RejectionReasonSection() {
   const {
     filter: { rejectionReason },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
   const flags = getEnumFlags(rejectionReason, TournamentRejectionReason);
 
   return (
@@ -192,7 +192,7 @@ function VerificationStatusSection() {
   const {
     filter: { verificationStatus },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -224,7 +224,7 @@ function ProcessingStatusSection() {
   const {
     filter: { processingStatus },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -253,7 +253,7 @@ function SubmitterSection() {
   const {
     filter: { submittedBy },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -278,7 +278,7 @@ function VerifierSection() {
   const {
     filter: { verifiedBy },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section className={styles.containerField}>
@@ -303,7 +303,7 @@ function VerifiedOnlyCheckbox() {
   const {
     filter: { verified },
     setFilterValue,
-  } = useTournamentListData();
+  } = useTournamentListFilter();
 
   return (
     <section

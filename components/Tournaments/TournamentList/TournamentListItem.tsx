@@ -13,7 +13,7 @@ import { dateFormats } from '@/lib/dates';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
-import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import TournamentRejectionReason from '@/components/Tournaments/TournamentPageContent/TournamentRejectionReason/TournamentRejectionReason';
 
 export default function TournamentListItem({
@@ -64,7 +64,7 @@ function CollapsedContent({
 }) {
   const {
     filter: { verified },
-  } = useTournamentListData();
+  } = useTournamentListFilter();
   const rulesetMetadata = RulesetMetadata[tournament.ruleset];
   const RulesetIcon = rulesetMetadata.image;
 

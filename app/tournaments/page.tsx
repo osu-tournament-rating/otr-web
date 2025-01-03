@@ -2,20 +2,16 @@ import TournamentListFilter from '@/components/Tournaments/TournamentList/Filter
 import type { Metadata } from 'next';
 import {
   buildTournamentListFilter,
-  getTournament,
   getTournamentList,
 } from '@/app/actions/tournaments';
 import TournamentList from '@/components/Tournaments/TournamentList/TournamentList';
-import {
-  TournamentQuerySortType,
-  UserDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
 import {
   PaginationProps,
   SessionData,
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
-import TournamentListDataProvider from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
 import AdminViewProvider from '@/components/Context/AdminViewContext/AdminViewContext';
 import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
@@ -62,16 +58,14 @@ export default async function Page({
       <h1>All tournaments</h1>
       <AdminViewProvider>
         {isAdminUser && <AdminViewToggle />}
-        <TournamentListDataProvider
+        <TournamentListFilterProvider
           defaultFilter={defaultFilter}
           initialFilter={requestParams}
-          initialPagination={initialPagination}
-          initialData={tournaments}
         >
           <TournamentListFilter />
           <TournamentListHeader />
-          <TournamentList />
-        </TournamentListDataProvider>
+          <TournamentList tournaments={tournaments} {...initialPagination} />
+        </TournamentListFilterProvider>
       </AdminViewProvider>
     </div>
   );

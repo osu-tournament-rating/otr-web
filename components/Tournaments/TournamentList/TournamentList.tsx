@@ -1,25 +1,120 @@
 'use client';
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
-import { useTournamentListData } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
+import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext/TournamentListDataContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CellMeasurer,
   CellMeasurerCache,
   InfiniteLoader,
   List,
-  ListRowProps,
+  ListRowRenderer,
   WindowScroller,
 } from 'react-virtualized';
+import {
+  TournamentCompactDTO,
+  TournamentDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import { PaginationProps } from '@/lib/types';
+import { getTournament, getTournamentList } from '@/app/actions/tournaments';
 
-export default function TournamentList() {
-  const {
-    tournaments,
-    canRequestNextPage,
-    requestNextPage,
-    requestFullData,
-    filter,
-  } = useTournamentListData();
+type TournamentListItemData = {
+  /** Tournament */
+  data: TournamentDTO;
+
+  /** If the data is "full" including optional data */
+  isFullData: boolean;
+};
+
+function mapItemData(
+  tournaments: (TournamentCompactDTO | TournamentDTO)[]
+): TournamentListItemData[] {
+  return tournaments.map((t) => ({
+    data: t as TournamentDTO,
+    isFullData: false,
+  }));
+}
+
+export default function TournamentList({
+  tournaments = [],
+  page = 1,
+  pageSize = 20,
+}: {
+  tournaments: (TournamentCompactDTO | TournamentDTO)[];
+} & PaginationProps) {
+  // Manage list data fetching
+  const { filter } = useTournamentListFilter();
+  const [listData, setListData] = useState<TournamentListItemData[]>(() =>
+    mapItemData(tournaments)
+  );
+
+  const [pageNumber, setPageNumber] = useState<number>(page);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [canRequestNextPage, setCanRequestNextPage] = useState(
+    tournaments.length === pageSize
+  );
+
+  const requestNextPage = async () => {
+    // Check if we can request
+    if (isRequesting || !canRequestNextPage) {
+      return;
+    }
+
+    setIsRequesting(true);
+    try {
+      // Make the request
+      const nextPage = await getTournamentList({
+        ...filter,
+        pageSize,
+        page: pageNumber,
+      });
+
+      // Update pagination props
+      setCanRequestNextPage(nextPage.length === pageSize);
+      setPageNumber((prev) => prev + 1);
+
+      // Update results
+      setListData((prev) => [...prev, ...mapItemData(nextPage)]);
+    } catch (e) {
+      console.log(e);
+      // TODO: toast
+      // If there is an error, freeze infinite scrolling until refresh
+      setCanRequestNextPage(false);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const requestFullItem = async (
+    item: TournamentListItemData,
+    refresh: boolean = false
+  ) => {
+    const { data, isFullData } = item;
+    const itemIdx = listData.indexOf(item);
+    if (isRequesting || itemIdx === -1 || (isFullData && !refresh)) {
+      return;
+    }
+
+    try {
+      setIsRequesting(true);
+
+      const fullTournament = await getTournament({
+        id: data.id,
+        verified: filter.verified,
+      });
+      // Replace the item in place with the full data
+      setListData((prev) =>
+        prev.with(itemIdx, { data: fullTournament, isFullData: true })
+      );
+    } catch (e) {
+      // TODO: error toast
+      console.log(e);
+      // Even if we failed to get the full data, prevent it from being fetched again until refresh
+      setListData((prev) => prev.with(itemIdx, { data, isFullData: true }));
+    } finally {
+      setIsRequesting(false);
+    }
+  };
 
   const windowScrollerRef = useRef<WindowScroller>(null);
 
@@ -43,7 +138,7 @@ export default function TournamentList() {
   };
 
   // Logic for determining row content
-  const rowRenderer = ({ parent, index, key, style }: ListRowProps) => (
+  const rowRenderer: ListRowRenderer = ({ parent, index, key, style }) => (
     <CellMeasurer
       cache={rowHeightCache}
       parent={parent}
@@ -60,14 +155,14 @@ export default function TournamentList() {
             padding: '0.3rem 0',
           }}
         >
-          {index < tournaments.length ? (
+          {index < listData.length ? (
             // Index in data range, build a tournament list item
             <TournamentListItem
-              tournament={tournaments[index].data}
+              tournament={listData[index].data}
               isExpanded={expandedRowIndices.has(index)}
               onClick={() => {
                 toggleRowIsExpanded(index);
-                requestFullData(tournaments[index]);
+                requestFullItem(listData[index]);
               }}
             />
           ) : (
@@ -79,17 +174,24 @@ export default function TournamentList() {
     </CellMeasurer>
   );
 
-  const isRowLoaded = useCallback(
-    ({ index }: { index: number }) => index < tournaments.length,
-    [tournaments]
+  const noRowsRenderer = () => (
+    // TODO: this should be a component
+    <div>
+      <span>This query returned no content!</span>
+    </div>
   );
 
-  // When filter changes (completely new data is requested), collapse all rows
-  // and recalculate dynamic row heights
+  const isRowLoaded = useCallback(
+    ({ index }: { index: number }) => index < listData.length,
+    [listData]
+  );
+
+  // When initial data changes, collapse all rows and recalculate dynamic row heights
   useEffect(() => {
     setExpandedRowIndices(new Set());
     rowHeightCache.clearAll();
-  }, [filter]);
+    setListData(mapItemData(tournaments));
+  }, [tournaments]);
 
   return (
     <WindowScroller ref={windowScrollerRef}>
@@ -104,21 +206,8 @@ export default function TournamentList() {
         <InfiniteLoader
           threshold={5}
           isRowLoaded={isRowLoaded}
-          loadMoreRows={() => {
-            // Avoid recalculating row height if we don't need to
-            if (canRequestNextPage) {
-              // Store final index before requesting, as the length will likely change
-              const prevFinalItemIdx = tournaments.length;
-              requestNextPage().then(() => {
-                // After requesting, recalculate the height of the final item
-                // (which used to be the 'loading...' placeholder row
-                rowHeightCache.clear(prevFinalItemIdx, 0);
-              });
-            }
-
-            return Promise.resolve();
-          }}
-          rowCount={tournaments.length + 1}
+          loadMoreRows={requestNextPage}
+          rowCount={listData.length + 1}
         >
           {({ onRowsRendered, registerChild }) => (
             <div ref={registerWinScrollChild as any}>
@@ -135,12 +224,13 @@ export default function TournamentList() {
                     windowScrollerRef.current.updatePosition();
                   }
                 }}
+                noRowsRenderer={noRowsRenderer}
                 height={height}
                 width={width}
                 isScrolling={isScrolling}
                 onScroll={onChildScroll}
                 scrollTop={scrollTop}
-                rowCount={tournaments.length + 1}
+                rowCount={listData.length + 1}
                 deferredMeasurementCache={rowHeightCache}
                 rowHeight={rowHeightCache.rowHeight}
                 rowRenderer={rowRenderer}
