@@ -2,7 +2,7 @@
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CellMeasurer,
   CellMeasurerCache,
@@ -122,7 +122,10 @@ export default function TournamentList({
   const [expandedRowIndices, setExpandedRowIndices] = useState<Set<number>>(
     new Set()
   );
-  const rowHeightCache = new CellMeasurerCache({ fixedWidth: true });
+  const rowHeightCache = useMemo(
+    () => new CellMeasurerCache({ fixedWidth: true }),
+    []
+  );
 
   const toggleRowIsExpanded = (index: number) => {
     setExpandedRowIndices((prev) => {
@@ -191,7 +194,7 @@ export default function TournamentList({
     setExpandedRowIndices(new Set());
     rowHeightCache.clearAll();
     setListData(mapItemData(tournaments));
-  }, [tournaments]);
+  }, [rowHeightCache, tournaments]);
 
   return (
     <WindowScroller ref={windowScrollerRef}>
