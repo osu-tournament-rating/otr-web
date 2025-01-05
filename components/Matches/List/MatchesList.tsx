@@ -7,11 +7,7 @@ export default function MatchesList({ data }: { data: MatchDTO[] }) {
     <div className={styles.gridList}>
       {data.map((match) => (
         <div key={match.id}>
-          <MatchesListItem
-            match={match}
-            isExpanded={false}
-            onClick={() => {}}
-          />
+          <MatchesListItem data={match} isExpanded={false} onClick={() => {}} />
         </div>
       ))}
     </div>

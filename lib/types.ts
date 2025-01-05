@@ -5,24 +5,6 @@ import {
   UserDTO,
 } from '@osu-tournament-rating/otr-api-client';
 
-export const dateFormatOptions = {
-  tournaments: {
-    header: {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    },
-    listItem: {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    },
-  },
-};
-
 const userpageTimeValues = ['90', '180', '365', '730'] as const;
 
 export const UserpageQuerySchema = z.object({
@@ -109,4 +91,7 @@ export type TournamentListFilter = Omit<
 export type PaginationProps = { page: number; pageSize: number };
 
 /** Creates a type by picking all properties of U from T */
-export type PickByType<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? K : never; }[keyof T]>
+export type PickByType<T, U> = Pick<
+  T,
+  { [K in keyof T]: T[K] extends U ? K : never }[keyof T]
+>;

@@ -44,7 +44,7 @@ export default function TournamentList({
 } & PaginationProps) {
   // Manage list data fetching
   const { filter } = useTournamentListFilter();
-  const [listData, setListData] = useState<TournamentListItemData[]>(() =>
+  const [listData, setListData] = useState<TournamentListItemData[]>(
     mapItemData(tournaments)
   );
 
@@ -66,7 +66,7 @@ export default function TournamentList({
       const nextPage = await getTournamentList({
         ...filter,
         pageSize,
-        page: pageNumber,
+        page: pageNumber + 1,
       });
 
       // Update pagination props
