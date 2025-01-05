@@ -1,3 +1,5 @@
+'use client';
+
 import ErrorTriangle from '@/public/icons/ErrorTriangle.svg';
 import styles from './RejectionReason.module.css';
 

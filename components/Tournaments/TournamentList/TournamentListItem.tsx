@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  TournamentCompactDTO,
-  TournamentDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 import styles from './TournamentList.module.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -11,19 +8,22 @@ import { RulesetMetadata } from '@/lib/enums';
 import FormattedDate from '@/components/FormattedData/FormattedDate';
 import { dateFormats } from '@/lib/dates';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
-import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
 import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
+import TournamentInfoContainer from '../InfoContainer/TournamentInfoContainer';
+import MatchesList from '@/components/Matches/List/MatchesList';
 
 export default function TournamentListItem({
-  tournament,
+  data,
   isExpanded,
   onClick,
+  onDataChanged = () => {},
 }: {
-  tournament: TournamentCompactDTO | TournamentDTO;
+  data: TournamentDTO;
   isExpanded: boolean;
   onClick: () => void;
+  onDataChanged?: (data: TournamentDTO) => void;
 }) {
   return (
     <AnimatePresence>
@@ -31,25 +31,16 @@ export default function TournamentListItem({
         {isExpanded ? (
           // Expanded: Shows tournament page content
           <motion.div className={styles.expanded}>
-            <div className={styles.header} onClick={onClick}>
-              <TournamentPageHeader
-                forumUrl={tournament.forumUrl}
-                startDate={tournament.startTime}
-                endDate={tournament.endTime}
-              >
-                <motion.h1 layoutId={`${tournament.name}-title`} layout="size">
-                  {tournament.name}
-                </motion.h1>
-              </TournamentPageHeader>
-            </div>
-            <div className={styles.content}>
-              <TournamentPageContent tournament={tournament} />
-            </div>
+            <ExpandedContent
+              tournament={data}
+              onHeaderClick={onClick}
+              onDataChanged={onDataChanged}
+            />
           </motion.div>
         ) : (
           // Collapsed: Shows basic information in row format
           <motion.div className={styles.collapsed} onClick={onClick}>
-            <CollapsedContent tournament={tournament} />
+            <CollapsedContent tournament={data} />
           </motion.div>
         )}
       </motion.div>
@@ -57,11 +48,41 @@ export default function TournamentListItem({
   );
 }
 
-function CollapsedContent({
+function ExpandedContent({
   tournament,
+  onHeaderClick,
+  onDataChanged = () => {},
 }: {
-  tournament: TournamentCompactDTO;
+  tournament: TournamentDTO;
+  onHeaderClick: () => void;
+  onDataChanged?: (data: TournamentDTO) => void;
 }) {
+  return (
+    <>
+      <div className={styles.header} onClick={onHeaderClick}>
+        <TournamentPageHeader
+          forumUrl={tournament.forumUrl}
+          startDate={tournament.startTime}
+          endDate={tournament.endTime}
+        >
+          <motion.h1 layoutId={`${tournament.name}-title`} layout="size">
+            {tournament.name}
+          </motion.h1>
+        </TournamentPageHeader>
+      </div>
+      <div className={styles.content}>
+        <TournamentInfoContainer
+          data={tournament}
+          showName={false}
+          onDataChanged={onDataChanged}
+        />
+        <MatchesList data={tournament.matches ?? []} />
+      </div>
+    </>
+  );
+}
+
+function CollapsedContent({ tournament }: { tournament: TournamentDTO }) {
   const {
     filter: { verified },
   } = useTournamentListFilter();

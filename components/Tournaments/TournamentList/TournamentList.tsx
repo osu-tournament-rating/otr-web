@@ -2,7 +2,7 @@
 
 import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CellMeasurer,
   CellMeasurerCache,
@@ -20,7 +20,7 @@ import { getTournament, getTournamentList } from '@/app/actions/tournaments';
 
 type TournamentListItemData = {
   /** Tournament */
-  data: TournamentDTO;
+  tournament: TournamentDTO;
 
   /** If the data is "full" including optional data */
   isFullData: boolean;
@@ -30,7 +30,7 @@ function mapItemData(
   tournaments: (TournamentCompactDTO | TournamentDTO)[]
 ): TournamentListItemData[] {
   return tournaments.map((t) => ({
-    data: t as TournamentDTO,
+    tournament: t as TournamentDTO,
     isFullData: false,
   }));
 }
@@ -89,7 +89,7 @@ export default function TournamentList({
     item: TournamentListItemData,
     refresh: boolean = false
   ) => {
-    const { data, isFullData } = item;
+    const { tournament, isFullData } = item;
     const itemIdx = listData.indexOf(item);
     if (isRequesting || itemIdx === -1 || (isFullData && !refresh)) {
       return;
@@ -99,18 +99,20 @@ export default function TournamentList({
       setIsRequesting(true);
 
       const fullTournament = await getTournament({
-        id: data.id,
+        id: tournament.id,
         verified: filter.verified,
       });
       // Replace the item in place with the full data
       setListData((prev) =>
-        prev.with(itemIdx, { data: fullTournament, isFullData: true })
+        prev.with(itemIdx, { tournament: fullTournament, isFullData: true })
       );
     } catch (e) {
       // TODO: error toast
       console.log(e);
       // Even if we failed to get the full data, prevent it from being fetched again until refresh
-      setListData((prev) => prev.with(itemIdx, { data, isFullData: true }));
+      setListData((prev) =>
+        prev.with(itemIdx, { tournament, isFullData: true })
+      );
     } finally {
       setIsRequesting(false);
     }
@@ -122,10 +124,7 @@ export default function TournamentList({
   const [expandedRowIndices, setExpandedRowIndices] = useState<Set<number>>(
     new Set()
   );
-  const rowHeightCache = useMemo(
-    () => new CellMeasurerCache({ fixedWidth: true }),
-    []
-  );
+  const rowHeightCache = new CellMeasurerCache({ fixedWidth: true });
 
   const toggleRowIsExpanded = (index: number) => {
     setExpandedRowIndices((prev) => {
@@ -140,6 +139,9 @@ export default function TournamentList({
     });
   };
 
+  const isRowLoaded = ({ index }: { index: number }) =>
+    !canRequestNextPage || index < listData.length;
+
   // Logic for determining row content
   const rowRenderer: ListRowRenderer = ({ parent, index, key, style }) => (
     <CellMeasurer
@@ -149,31 +151,47 @@ export default function TournamentList({
       rowIndex={index}
       columnIndex={0}
     >
-      {({ registerChild }) => (
-        <div
-          ref={registerChild}
-          key={key}
-          style={{
-            ...style,
-            padding: '0.3rem 0',
-          }}
-        >
-          {index < listData.length ? (
-            // Index in data range, build a tournament list item
+      {({ registerChild }) => {
+        let content;
+
+        if (isRowLoaded({ index })) {
+          const itemData = listData[index];
+
+          content = (
             <TournamentListItem
-              tournament={listData[index].data}
+              data={itemData.tournament}
               isExpanded={expandedRowIndices.has(index)}
               onClick={() => {
                 toggleRowIsExpanded(index);
-                requestFullItem(listData[index]);
+                requestFullItem(itemData);
+              }}
+              onDataChanged={(newData) => {
+                setListData((prev) =>
+                  prev.with(index, {
+                    ...itemData,
+                    tournament: newData,
+                  })
+                );
               }}
             />
-          ) : (
-            // Index out of data range, show last row
-            <span>{canRequestNextPage ? 'Loading...' : 'No more results'}</span>
-          )}
-        </div>
-      )}
+          );
+        } else {
+          content = <span>Loading...</span>;
+        }
+
+        return (
+          <div
+            ref={registerChild}
+            key={key}
+            style={{
+              ...style,
+              padding: '0.3rem 0',
+            }}
+          >
+            {content}
+          </div>
+        );
+      }}
     </CellMeasurer>
   );
 
@@ -184,17 +202,13 @@ export default function TournamentList({
     </div>
   );
 
-  const isRowLoaded = useCallback(
-    ({ index }: { index: number }) => index < listData.length,
-    [listData]
-  );
+  const rowCount = canRequestNextPage ? listData.length + 1 : listData.length;
 
   // When initial data changes, collapse all rows and recalculate dynamic row heights
   useEffect(() => {
     setExpandedRowIndices(new Set());
-    rowHeightCache.clearAll();
     setListData(mapItemData(tournaments));
-  }, [rowHeightCache, tournaments]);
+  }, [tournaments]);
 
   return (
     <WindowScroller ref={windowScrollerRef}>
@@ -210,7 +224,7 @@ export default function TournamentList({
           threshold={5}
           isRowLoaded={isRowLoaded}
           loadMoreRows={requestNextPage}
-          rowCount={listData.length + 1}
+          rowCount={rowCount}
         >
           {({ onRowsRendered, registerChild }) => (
             <div ref={registerWinScrollChild as any}>
@@ -233,7 +247,7 @@ export default function TournamentList({
                 isScrolling={isScrolling}
                 onScroll={onChildScroll}
                 scrollTop={scrollTop}
-                rowCount={listData.length + 1}
+                rowCount={rowCount}
                 deferredMeasurementCache={rowHeightCache}
                 rowHeight={rowHeightCache.rowHeight}
                 rowRenderer={rowRenderer}

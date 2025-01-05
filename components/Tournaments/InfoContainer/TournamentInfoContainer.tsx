@@ -24,11 +24,14 @@ import TournamentRejectionReason from '@/components/RejectionReason/TournamentRe
 export default function TournamentInfoContainer({
   data,
   showName = false,
+  onDataChanged = () => {},
 }: {
   /** Tournament data */
   data: TournamentCompactDTO;
   /** Whether to show the tournament's name */
   showName?: boolean;
+  /** Callback function invoked when any of the given data changes */
+  onDataChanged?: (data: TournamentCompactDTO) => void;
 }) {
   // TODO: Also need a way of determining whether data is verified only
   const { isAdminView } = useAdminViewContext();
@@ -72,10 +75,10 @@ export default function TournamentInfoContainer({
       <div className={clsx(styles.field, styles.single)}>
         <TournamentRejectionReason rejectionReason={data.rejectionReason} />
       </div>
-      <AbbreviationField data={data} />
-      <FormatField data={data} />
-      <RulesetField data={data} />
-      <ForumPostField data={data} />
+      <AbbreviationField data={data} onDataChanged={onDataChanged} />
+      <FormatField data={data} onDataChanged={onDataChanged} />
+      <RulesetField data={data} onDataChanged={onDataChanged} />
+      <ForumPostField data={data} onDataChanged={onDataChanged} />
       <Field label={'Submitter'}>
         <div className={styles.value}>
           {data.submittedByUser ? (
@@ -116,10 +119,12 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function EditableFieldValue<K extends keyof TournamentCompactDTO>({
   data,
   target,
+  onDataChanged,
   children,
 }: {
   data: TournamentCompactDTO;
   target: K;
+  onDataChanged: (data: TournamentCompactDTO) => void;
   children: ({
     editableRef,
     isEditable,
@@ -175,6 +180,7 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
         value: editableValue,
       }).then((updatedTournament) => {
         setOriginalValue(updatedTournament[target]);
+        onDataChanged({ ...data, [target]: updatedTournament[target] });
         setIsEditing(false);
       });
     } catch (e) {
@@ -208,10 +214,20 @@ function EditableFieldValue<K extends keyof TournamentCompactDTO>({
   );
 }
 
-function AbbreviationField({ data }: { data: TournamentCompactDTO }) {
+function AbbreviationField({
+  data,
+  onDataChanged,
+}: {
+  data: TournamentCompactDTO;
+  onDataChanged: (data: TournamentCompactDTO) => void;
+}) {
   return (
     <Field label={'Abbreviation'}>
-      <EditableFieldValue data={data} target={'abbreviation'}>
+      <EditableFieldValue
+        data={data}
+        target={'abbreviation'}
+        onDataChanged={onDataChanged}
+      >
         {({
           editableRef,
           isEditable,
@@ -245,10 +261,20 @@ function AbbreviationField({ data }: { data: TournamentCompactDTO }) {
   );
 }
 
-function FormatField({ data }: { data: TournamentCompactDTO }) {
+function FormatField({
+  data,
+  onDataChanged,
+}: {
+  data: TournamentCompactDTO;
+  onDataChanged: (data: TournamentCompactDTO) => void;
+}) {
   return (
     <Field label={'Format'}>
-      <EditableFieldValue data={data} target={'lobbySize'}>
+      <EditableFieldValue
+        data={data}
+        target={'lobbySize'}
+        onDataChanged={onDataChanged}
+      >
         {({
           editableRef,
           isEditable,
@@ -277,10 +303,20 @@ function FormatField({ data }: { data: TournamentCompactDTO }) {
   );
 }
 
-function RulesetField({ data }: { data: TournamentCompactDTO }) {
+function RulesetField({
+  data,
+  onDataChanged,
+}: {
+  data: TournamentCompactDTO;
+  onDataChanged: (data: TournamentCompactDTO) => void;
+}) {
   return (
     <Field label={'Ruleset'}>
-      <EditableFieldValue data={data} target={'ruleset'}>
+      <EditableFieldValue
+        data={data}
+        target={'ruleset'}
+        onDataChanged={onDataChanged}
+      >
         {({
           editableRef,
           isEditable,
@@ -308,10 +344,20 @@ function RulesetField({ data }: { data: TournamentCompactDTO }) {
   );
 }
 
-function ForumPostField({ data }: { data: TournamentCompactDTO }) {
+function ForumPostField({
+  data,
+  onDataChanged,
+}: {
+  data: TournamentCompactDTO;
+  onDataChanged: (data: TournamentCompactDTO) => void;
+}) {
   return (
     <Field label={'Forum post'}>
-      <EditableFieldValue data={data} target={'forumUrl'}>
+      <EditableFieldValue
+        data={data}
+        target={'forumUrl'}
+        onDataChanged={onDataChanged}
+      >
         {({
           editableRef,
           isEditable,

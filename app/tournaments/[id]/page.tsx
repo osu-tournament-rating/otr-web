@@ -1,5 +1,6 @@
 import { getTournament } from '@/app/actions/tournaments';
-import TournamentPageContent from '@/components/Tournaments/TournamentPageContent/TournamentPageContent';
+import MatchesList from '@/components/Matches/List/MatchesList';
+import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
 export const revalidate = 60;
@@ -30,7 +31,8 @@ export default async function Page({
       >
         <h1>{tournament.name}</h1>
       </TournamentPageHeader>
-      <TournamentPageContent tournament={tournament} />
+      <TournamentInfoContainer data={tournament} showName={false} />
+      <MatchesList data={tournament.matches ?? []} />
     </div>
   );
 }

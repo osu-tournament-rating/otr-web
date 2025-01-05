@@ -1,3 +1,5 @@
+'use client';
+
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { VerificationStatusMetadata } from '@/lib/enums';
 import styles from './VerificationStatusCircle.module.css';

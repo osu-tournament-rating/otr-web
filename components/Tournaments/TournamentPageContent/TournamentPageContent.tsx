@@ -10,16 +10,20 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 
 export default function TournamentPageContent({
-  tournament,
+  data,
+  onDataChanged = () => {},
 }: {
-  tournament: TournamentCompactDTO | TournamentDTO;
+  data: TournamentDTO;
+  onDataChanged?: (data: TournamentCompactDTO) => void;
 }) {
-  const matches = isFullTournament(tournament) ? tournament.matches : [];
-
   return (
     <div className={styles.container}>
-      <TournamentInfoContainer data={tournament} showName={false} />
-      <MatchesList data={matches!} />
+      <TournamentInfoContainer
+        data={data}
+        showName={false}
+        onDataChanged={onDataChanged}
+      />
+      <MatchesList data={data.matches ?? []} />
     </div>
   );
 }

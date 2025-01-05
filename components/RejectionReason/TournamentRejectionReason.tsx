@@ -1,3 +1,5 @@
+'use client';
+
 import { TournamentRejectionReason as TournamentRejectionReasonEnum } from '@osu-tournament-rating/otr-api-client';
 import { getEnumFlags, TournamentRejectionReasonMetadata } from '@/lib/enums';
 import RejectionReason from './RejectionReason';
