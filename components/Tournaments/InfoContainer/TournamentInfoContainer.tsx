@@ -20,6 +20,7 @@ import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/F
 import DropdownRulesetSelector from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
 import clsx from 'clsx';
 import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
+import InfoContainerField from './InfoContainerField';
 
 export default function TournamentInfoContainer({
   data,
@@ -65,6 +66,9 @@ export default function TournamentInfoContainer({
           </div>
         </>
       )}
+      <div className={clsx(styles.field, styles.single)}>
+        <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+      </div>
       {/** Name */}
       {showName && (
         <div className={styles.field} id={styles.tournamentName}>
@@ -72,14 +76,11 @@ export default function TournamentInfoContainer({
           <div className={styles.value}>{data.name}</div>
         </div>
       )}
-      <div className={clsx(styles.field, styles.single)}>
-        <TournamentRejectionReason rejectionReason={data.rejectionReason} />
-      </div>
       <AbbreviationField data={data} onDataChanged={onDataChanged} />
       <FormatField data={data} onDataChanged={onDataChanged} />
       <RulesetField data={data} onDataChanged={onDataChanged} />
       <ForumPostField data={data} onDataChanged={onDataChanged} />
-      <Field label={'Submitter'}>
+      <InfoContainerField label={'Submitter'}>
         <div className={styles.value}>
           {data.submittedByUser ? (
             <Link href={`/players/${data.submittedByUser.player.id}`}>
@@ -89,9 +90,9 @@ export default function TournamentInfoContainer({
             'Unknown submitter'
           )}
         </div>
-      </Field>
+      </InfoContainerField>
       {/** Verifier */}
-      <Field label={'Verifier'}>
+      <InfoContainerField label={'Verifier'}>
         <div className={styles.value}>
           {data.verifiedByUser ? (
             <Link href={`/players/${data.verifiedByUser.player.id}`}>
@@ -101,16 +102,7 @@ export default function TournamentInfoContainer({
             'Unknown verifier'
           )}
         </div>
-      </Field>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className={styles.field}>
-      <div className={styles.name}>{label}</div>
-      {children}
+      </InfoContainerField>
     </div>
   );
 }
@@ -222,7 +214,7 @@ function AbbreviationField({
   onDataChanged: (data: TournamentCompactDTO) => void;
 }) {
   return (
-    <Field label={'Abbreviation'}>
+    <InfoContainerField label={'Abbreviation'}>
       <EditableFieldValue
         data={data}
         target={'abbreviation'}
@@ -257,7 +249,7 @@ function AbbreviationField({
           );
         }}
       </EditableFieldValue>
-    </Field>
+    </InfoContainerField>
   );
 }
 
@@ -269,7 +261,7 @@ function FormatField({
   onDataChanged: (data: TournamentCompactDTO) => void;
 }) {
   return (
-    <Field label={'Format'}>
+    <InfoContainerField label={'Format'}>
       <EditableFieldValue
         data={data}
         target={'lobbySize'}
@@ -299,7 +291,7 @@ function FormatField({
           );
         }}
       </EditableFieldValue>
-    </Field>
+    </InfoContainerField>
   );
 }
 
@@ -311,7 +303,7 @@ function RulesetField({
   onDataChanged: (data: TournamentCompactDTO) => void;
 }) {
   return (
-    <Field label={'Ruleset'}>
+    <InfoContainerField label={'Ruleset'}>
       <EditableFieldValue
         data={data}
         target={'ruleset'}
@@ -340,7 +332,7 @@ function RulesetField({
           );
         }}
       </EditableFieldValue>
-    </Field>
+    </InfoContainerField>
   );
 }
 
@@ -352,7 +344,7 @@ function ForumPostField({
   onDataChanged: (data: TournamentCompactDTO) => void;
 }) {
   return (
-    <Field label={'Forum post'}>
+    <InfoContainerField label={'Forum post'}>
       <EditableFieldValue
         data={data}
         target={'forumUrl'}
@@ -393,6 +385,6 @@ function ForumPostField({
           );
         }}
       </EditableFieldValue>
-    </Field>
+    </InfoContainerField>
   );
 }

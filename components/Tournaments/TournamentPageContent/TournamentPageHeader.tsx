@@ -22,7 +22,7 @@ export default function TournamentPageHeader({
     <div className={styles.header}>
       <span>
         {children}
-        <Link href={forumUrl}>
+        <Link href={forumUrl} target={'_blank'}>
           <OutIcon className={styles.outIcon} />
         </Link>
       </span>

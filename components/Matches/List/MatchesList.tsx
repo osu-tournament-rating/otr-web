@@ -1,3 +1,5 @@
+'use client';
+
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import styles from '@/components/Tournaments/TournamentList/TournamentList.module.css';
 import MatchesListItem from './MatchesListItem';
