@@ -1,7 +1,10 @@
 'use client';
 
-import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
+import { getTournamentList } from '@/app/actions/tournaments';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
+import TournamentListItem from '@/components/Tournaments/TournamentList/TournamentListItem';
+import { PaginationProps } from '@/lib/types';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 import { useEffect, useRef, useState } from 'react';
 import {
   CellMeasurer,
@@ -11,44 +14,21 @@ import {
   ListRowRenderer,
   WindowScroller,
 } from 'react-virtualized';
-import {
-  TournamentCompactDTO,
-  TournamentDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { PaginationProps } from '@/lib/types';
-import { getTournament, getTournamentList } from '@/app/actions/tournaments';
-
-type TournamentListItemData = {
-  /** Tournament */
-  tournament: TournamentDTO;
-
-  /** If the data is "full" including optional data */
-  isFullData: boolean;
-};
-
-function mapItemData(
-  tournaments: (TournamentCompactDTO | TournamentDTO)[]
-): TournamentListItemData[] {
-  return tournaments.map((t) => ({
-    tournament: t as TournamentDTO,
-    isFullData: false,
-  }));
-}
+import TournamentListHeader from './TournamentListHeader';
+import Link from 'next/link';
 
 export default function TournamentList({
   tournaments = [],
   page = 1,
   pageSize = 20,
 }: {
-  tournaments: (TournamentCompactDTO | TournamentDTO)[];
+  tournaments: TournamentDTO[];
 } & PaginationProps) {
   // Manage list data fetching
   const { filter } = useTournamentListFilter();
-  const [listData, setListData] = useState<TournamentListItemData[]>(
-    mapItemData(tournaments)
-  );
+  const [listData, setListData] = useState(tournaments);
 
-  const [pageNumber, setPageNumber] = useState<number>(page);
+  const [pageNumber, setPageNumber] = useState(page);
   const [isRequesting, setIsRequesting] = useState(false);
   const [canRequestNextPage, setCanRequestNextPage] = useState(
     tournaments.length === pageSize
@@ -74,7 +54,7 @@ export default function TournamentList({
       setPageNumber((prev) => prev + 1);
 
       // Update results
-      setListData((prev) => [...prev, ...mapItemData(nextPage)]);
+      setListData((prev) => [...prev, ...nextPage]);
     } catch (e) {
       console.log(e);
       // TODO: toast
@@ -85,59 +65,10 @@ export default function TournamentList({
     }
   };
 
-  const requestFullItem = async (
-    item: TournamentListItemData,
-    refresh: boolean = false
-  ) => {
-    const { tournament, isFullData } = item;
-    const itemIdx = listData.indexOf(item);
-    if (isRequesting || itemIdx === -1 || (isFullData && !refresh)) {
-      return;
-    }
-
-    try {
-      setIsRequesting(true);
-
-      const fullTournament = await getTournament({
-        id: tournament.id,
-        verified: filter.verified,
-      });
-      // Replace the item in place with the full data
-      setListData((prev) =>
-        prev.with(itemIdx, { tournament: fullTournament, isFullData: true })
-      );
-    } catch (e) {
-      // TODO: error toast
-      console.log(e);
-      // Even if we failed to get the full data, prevent it from being fetched again until refresh
-      setListData((prev) =>
-        prev.with(itemIdx, { tournament, isFullData: true })
-      );
-    } finally {
-      setIsRequesting(false);
-    }
-  };
-
   const windowScrollerRef = useRef<WindowScroller>(null);
 
   // State to control dynamic row heights
-  const [expandedRowIndices, setExpandedRowIndices] = useState<Set<number>>(
-    new Set()
-  );
   const rowHeightCache = new CellMeasurerCache({ fixedWidth: true });
-
-  const toggleRowIsExpanded = (index: number) => {
-    setExpandedRowIndices((prev) => {
-      const newIndices = new Set(prev);
-      if (prev.has(index)) {
-        newIndices.delete(index);
-      } else {
-        newIndices.add(index);
-      }
-
-      return newIndices;
-    });
-  };
 
   const isRowLoaded = ({ index }: { index: number }) =>
     !canRequestNextPage || index < listData.length;
@@ -155,25 +86,10 @@ export default function TournamentList({
         let content;
 
         if (isRowLoaded({ index })) {
-          const itemData = listData[index];
-
           content = (
-            <TournamentListItem
-              data={itemData.tournament}
-              isExpanded={expandedRowIndices.has(index)}
-              onClick={() => {
-                toggleRowIsExpanded(index);
-                requestFullItem(itemData);
-              }}
-              onDataChanged={(newData) => {
-                setListData((prev) =>
-                  prev.with(index, {
-                    ...itemData,
-                    tournament: newData,
-                  })
-                );
-              }}
-            />
+            <Link href={`/tournaments/${listData[index].id}`}>
+              <TournamentListItem data={listData[index]} />
+            </Link>
           );
         } else {
           content = <span>Loading...</span>;
@@ -196,7 +112,7 @@ export default function TournamentList({
   );
 
   const noRowsRenderer = () => (
-    // TODO: this should be a component
+    // TODO: this should be a component, can be shared with other lists
     <div>
       <span>This query returned no content!</span>
     </div>
@@ -206,8 +122,7 @@ export default function TournamentList({
 
   // When initial data changes, collapse all rows and recalculate dynamic row heights
   useEffect(() => {
-    setExpandedRowIndices(new Set());
-    setListData(mapItemData(tournaments));
+    setListData(tournaments);
   }, [tournaments]);
 
   return (
@@ -227,31 +142,42 @@ export default function TournamentList({
           rowCount={rowCount}
         >
           {({ onRowsRendered, registerChild }) => (
-            <div ref={registerWinScrollChild as any}>
-              <List
-                autoHeight
-                autoWidth
-                ref={registerChild}
-                onRowsRendered={(...args) => {
-                  onRowsRendered(...args);
-                  if (windowScrollerRef.current) {
-                    // Hack to dynamically update the vertical position of the list
-                    // when things like the expandable filter change the height.
-                    // Could be a point to optimize in the future if needed
-                    windowScrollerRef.current.updatePosition();
-                  }
-                }}
-                noRowsRenderer={noRowsRenderer}
-                height={height}
-                width={width}
-                isScrolling={isScrolling}
-                onScroll={onChildScroll}
-                scrollTop={scrollTop}
-                rowCount={rowCount}
-                deferredMeasurementCache={rowHeightCache}
-                rowHeight={rowHeightCache.rowHeight}
-                rowRenderer={rowRenderer}
-              />
+            <div>
+              {/* TODO: Fix padding between header and list */}
+              <div>
+                <TournamentListHeader />
+              </div>
+              <div ref={registerWinScrollChild as any}>
+                <List
+                  autoHeight
+                  autoWidth
+                  ref={registerChild}
+                  onRowsRendered={onRowsRendered}
+                  // TODO: This hack causes the scroll to be jumpy and look pretty jank all around
+                  // Proper solution would probably be to pass a WindowScroller ref down from the
+                  // collapsible filter so that it is responsible for updating the position when needed
+                  //
+                  // onRowsRendered={(...args) => {
+                  //   onRowsRendered(...args);
+                  //   if (windowScrollerRef.current) {
+                  //     // Hack to dynamically update the vertical position of the list
+                  //     // when things like the expandable filter change the height.
+                  //     // Could be a point to optimize in the future if needed
+                  //     windowScrollerRef.current.updatePosition();
+                  //   }
+                  // }}
+                  noRowsRenderer={noRowsRenderer}
+                  height={height}
+                  width={width}
+                  isScrolling={isScrolling}
+                  onScroll={onChildScroll}
+                  scrollTop={scrollTop}
+                  rowCount={rowCount}
+                  deferredMeasurementCache={rowHeightCache}
+                  rowHeight={rowHeightCache.rowHeight}
+                  rowRenderer={rowRenderer}
+                />
+              </div>
             </div>
           )}
         </InfiniteLoader>

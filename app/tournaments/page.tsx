@@ -63,7 +63,6 @@ export default async function Page({
           initialFilter={requestParams}
         >
           <TournamentListFilter />
-          <TournamentListHeader />
           <TournamentList tournaments={tournaments} {...initialPagination} />
         </TournamentListFilterProvider>
       </AdminViewProvider>

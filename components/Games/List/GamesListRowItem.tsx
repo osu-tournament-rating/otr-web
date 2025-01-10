@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import RejectionReason from '@/components/Enums/RejectionReason';
 import WarningFlags from '@/components/Enums/WarningFlags';
+import Link from 'next/link';
 
 export default function GamesListRowItem({ data }: { data: GameDTO }) {
   return (

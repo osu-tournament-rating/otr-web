@@ -3,6 +3,7 @@
 import { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import styles from '@/components/Tournaments/TournamentList/TournamentList.module.css';
 import GamesListRowItem from './GamesListRowItem';
+import Link from 'next/link';
 
 export type GamesListItemStyle = 'rows' | 'chips';
 
@@ -16,9 +17,9 @@ export default function GamesList({
   return (
     <div className={styles.gridList}>
       {data.map((game) => (
-        <div key={game.id}>
+        <Link key={game.id} href={`/games/${game.id}`}>
           <GamesListRowItem data={game} />
-        </div>
+        </Link>
       ))}
     </div>
   );
