@@ -6,8 +6,8 @@ import clsx from 'clsx';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import { dateFormats } from '@/lib/dates';
 import FormattedDate from '@/components/FormattedData/FormattedDate';
-import MatchRejectionReason from '@/components/RejectionReason/MatchRejectionReason';
-import MatchWarningFlags from '@/components/RejectionReason/MatchWarningFlag';
+import WarningFlags from '@/components/Enums/WarningFlags';
+import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function MatchesListItem({
   data,
@@ -68,8 +68,8 @@ function CollapsedContent({
           <span>Missing end time</span>
         )}
       </div>
-      <MatchRejectionReason rejectionReason={data.rejectionReason} />
-      <MatchWarningFlags warningFlags={data.warningFlags} />
+      <RejectionReason itemType={'match'} value={data.rejectionReason} />
+      <WarningFlags itemType={'match'} value={data.warningFlags} />
     </div>
   );
 }

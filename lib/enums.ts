@@ -1,16 +1,22 @@
+import AllRulesetIcon from '@/public/icons/Ruleset All.svg';
+import CatchIcon from '@/public/icons/Ruleset Catch.svg';
+import ManiaIcon from '@/public/icons/Ruleset Mania.svg';
+import StandardIcon from '@/public/icons/Ruleset Standard.svg';
+import TaikoIcon from '@/public/icons/Ruleset Taiko.svg';
 import {
+  GameProcessingStatus,
+  GameRejectionReason,
+  GameWarningFlags,
+  MatchProcessingStatus,
   MatchRejectionReason,
   MatchWarningFlags,
   Ruleset,
+  ScoreProcessingStatus,
+  ScoreRejectionReason,
   TournamentProcessingStatus,
   TournamentRejectionReason,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import AllRulesetIcon from '@/public/icons/Ruleset All.svg';
-import StandardIcon from '@/public/icons/Ruleset Standard.svg';
-import TaikoIcon from '@/public/icons/Ruleset Taiko.svg';
-import CatchIcon from '@/public/icons/Ruleset Catch.svg';
-import ManiaIcon from '@/public/icons/Ruleset Mania.svg';
 import { FC, SVGProps } from 'react';
 
 /** Gets an array of individual flags from a bitwise enumeration */
@@ -67,6 +73,16 @@ type RulesetMetadata = {
 
   /** 0-Index position in the selector (from left -> right || top -> bottom) */
   selectorIndex?: number;
+};
+
+export type EnumMetadata = {
+  text: string;
+  description: string;
+};
+
+const noneEnumMetadata: EnumMetadata = {
+  text: 'None',
+  description: 'No description',
 };
 
 /** Stylistic metadata for each {@link Ruleset} */
@@ -164,14 +180,11 @@ export const VerificationStatusMetadata: {
 };
 
 /** Stylistic metadata for each {@link TournamentProcessingStatus} */
-export const TournamentProcessingStatusMetadata: {
-  [key in TournamentProcessingStatus]: {
-    text: string;
-    description: string;
-  };
+export const tournamentProcessingStatusMetadata: {
+  [key in TournamentProcessingStatus]: EnumMetadata;
 } = {
   [TournamentProcessingStatus.NeedsApproval]: {
-    text: 'Needs Approval',
+    text: 'Awaiting Approval',
     description:
       'Tournament is awaiting approval from a verifier before processing begins',
   },
@@ -180,28 +193,25 @@ export const TournamentProcessingStatusMetadata: {
     description: 'Tournament is awaiting data collection from the osu! API',
   },
   [TournamentProcessingStatus.NeedsAutomationChecks]: {
-    text: 'Needs Automated Checks',
+    text: 'Awaiting Automated Checks',
     description: 'Tournament is awaiting the completion of automated checks',
   },
   [TournamentProcessingStatus.NeedsVerification]: {
-    text: 'Needs Verification',
+    text: 'Awaiting Verification',
     description: 'Tournament is awaiting review from a verifier',
   },
   [TournamentProcessingStatus.NeedsStatCalculation]: {
-    text: 'Needs Stat Calculation',
+    text: 'Awaiting Stat Calculation',
     description: 'Tournament is awaiting statistics calculation',
   },
   [TournamentProcessingStatus.Done]: {
-    text: 'Done',
+    text: 'Processing Completing',
     description: 'Tournament has completed processing',
   },
 };
 
-export const TournamentRejectionReasonMetadata: {
-  [key in TournamentRejectionReason]: {
-    text: string;
-    description: string;
-  };
+export const tournamentRejectionReasonMetadata: {
+  [key in TournamentRejectionReason]: EnumMetadata;
 } = {
   [TournamentRejectionReason.None]: {
     text: 'No Rejection Reason',
@@ -233,17 +243,40 @@ export const TournamentRejectionReasonMetadata: {
   },
 };
 
-/** Text for displaying {@link MatchRejectionReason} */
-export const MatchRejectionReasonMetadata: {
-  [key in MatchRejectionReason]: {
-    text: string;
-    description: string;
-  };
+export const matchProcessingStatusMetadata: {
+  [key in MatchProcessingStatus]: EnumMetadata;
 } = {
-  [MatchRejectionReason.None]: {
-    text: 'None',
-    description: 'No description',
+  [MatchProcessingStatus.NeedsData]: {
+    text: 'Awaiting osu! API Data',
+    description: 'placeholder',
   },
+  [MatchProcessingStatus.NeedsAutomationChecks]: {
+    text: 'Awaiting Automated Checks',
+    description: 'placeholder',
+  },
+  [MatchProcessingStatus.NeedsVerification]: {
+    text: 'Awaiting Verification',
+    description: 'placeholder',
+  },
+  [MatchProcessingStatus.NeedsStatCalculation]: {
+    text: 'Awaiting Stat Calculation',
+    description: 'placeholder',
+  },
+  [MatchProcessingStatus.NeedsRatingProcessorData]: {
+    text: 'Awaiting Ratings Processor Run',
+    description: 'placeholder',
+  },
+  [MatchProcessingStatus.Done]: {
+    text: 'Processing Complete',
+    description: 'placeholder',
+  },
+};
+
+/** Text for displaying {@link MatchRejectionReason} */
+export const matchRejectionReasonMetadata: {
+  [key in MatchRejectionReason]: EnumMetadata;
+} = {
+  [MatchRejectionReason.None]: noneEnumMetadata,
   [MatchRejectionReason.NoData]: {
     text: 'No data',
     description: 'The osu! API returned invalid or no data for the match',
@@ -260,7 +293,7 @@ export const MatchRejectionReasonMetadata: {
   [MatchRejectionReason.FailedTeamVsConversion]: {
     text: 'Failed TeamVs Conversion',
     description:
-      'The match was eligible for TeamVs Conversion, but the conversion was not successful',
+      'The match was eligible for TeamVs Conversion, but the attempted conversion was not successful',
   },
   [MatchRejectionReason.NoValidGames]: {
     text: 'No valid games',
@@ -282,16 +315,10 @@ export const MatchRejectionReasonMetadata: {
 };
 
 /** Text for displaying {@link MatchWarningFlags} */
-export const MatchWarningFlagMetadata: {
-  [key in MatchWarningFlags]: {
-    text: string;
-    description: string;
-  };
+export const matchWarningFlagMetadata: {
+  [key in MatchWarningFlags]: EnumMetadata;
 } = {
-  [MatchWarningFlags.None]: {
-    text: 'None',
-    description: 'No description',
-  },
+  [MatchWarningFlags.None]: noneEnumMetadata,
   [MatchWarningFlags.UnexpectedNameFormat]: {
     text: 'Unexpected name format',
     description: "The match's name does not follow expected title formatting",
@@ -307,16 +334,128 @@ export const MatchWarningFlagMetadata: {
   },
 };
 
-/** Formats a {@link MatchRejectionReason} into displayable text */
-export function formatMatchRejectionReasons(value: MatchRejectionReason) {
-  return getEnumFlags(value, MatchRejectionReason).map(
-    (flag) => MatchRejectionReasonMetadata[flag]
-  );
-}
+export const gameProcessingStatusMetadata: {
+  [key in GameProcessingStatus]: EnumMetadata;
+} = {
+  [GameProcessingStatus.NeedsAutomationChecks]: {
+    text: 'Awaiting Automated Checks',
+    description: 'placeholder',
+  },
+  [GameProcessingStatus.NeedsVerification]: {
+    text: 'Awaiting Verification',
+    description: 'placeholder',
+  },
+  [GameProcessingStatus.NeedsStatCalculation]: {
+    text: 'Awaiting Stat Calculation',
+    description: 'placeholder',
+  },
+  [GameProcessingStatus.Done]: {
+    text: 'Processing Complete',
+    description: 'placeholder',
+  },
+};
 
-/** Formats a {@link MatchRejectionReason} into displayable text */
-export function formatMatchWarningFlags(value: MatchWarningFlags) {
-  return getEnumFlags(value, MatchWarningFlags).map(
-    (flag) => MatchWarningFlagMetadata[flag]
-  );
-}
+export const gameRejectionReasonMetadata: {
+  [key in GameRejectionReason]: EnumMetadata;
+} = {
+  [GameRejectionReason.None]: noneEnumMetadata,
+  [GameRejectionReason.NoScores]: {
+    text: 'No Scores',
+    description: 'The osu! API returned no scores for the game',
+  },
+  [GameRejectionReason.InvalidMods]: {
+    text: 'Invalid Mods',
+    description: 'The game was played with invalid mods applied',
+  },
+  [GameRejectionReason.RulesetMismatch]: {
+    text: 'Ruleset Mismatch',
+    description:
+      "The game was played in a ruleset differing from it's tournament",
+  },
+  [GameRejectionReason.InvalidScoringType]: {
+    text: 'Invalid Scoring Type',
+    description: 'The game was played with a scoring type that is not ScoreV2',
+  },
+  [GameRejectionReason.InvalidTeamType]: {
+    text: 'Invalid Team Type',
+    description: "The game was played with a team type that is not 'TeamVs'",
+  },
+  [GameRejectionReason.FailedTeamVsConversion]: {
+    text: 'Failed TeamVs Conversion',
+    description:
+      'The game was eligible for TeamVs Conversion, but the attempted conversion was not successful',
+  },
+  [GameRejectionReason.NoValidScores]: {
+    text: 'No Valid Scores',
+    description:
+      'The game has less than two scores that are Verified or PreVerified',
+  },
+  [GameRejectionReason.LobbySizeMismatch]: {
+    text: 'Lobby Size Mismatch',
+    description:
+      "The number of scores submitted in the game differs from the lobby size of it's tournament",
+  },
+  [GameRejectionReason.NoEndTime]: {
+    text: 'No End Time',
+    description: 'The end time of the game could not be determined',
+  },
+  [GameRejectionReason.RejectedMatch]: {
+    text: 'Rejected Match',
+    description: "The game's match was rejected",
+  },
+  [GameRejectionReason.BeatmapNotPooled]: {
+    text: 'Beatmap Not Pooled',
+    description:
+      'The tournament has a submitted mappool, but the game was played on a map outside of the pool',
+  },
+};
+
+export const gameWarningFlagsMetadata: {
+  [key in GameWarningFlags]: EnumMetadata;
+} = {
+  [GameWarningFlags.None]: noneEnumMetadata,
+  [GameWarningFlags.BeatmapUsedOnce]: {
+    text: 'Beatmap Only Used Once',
+    description:
+      'The tournament does not have a submitted mappool and the map was only played once throughout',
+  },
+};
+
+export const scoreProcessingStatusMetadata: {
+  [key in ScoreProcessingStatus]: EnumMetadata;
+} = {
+  [ScoreProcessingStatus.NeedsAutomationChecks]: {
+    text: 'Awaiting Automated Checks',
+    description: 'placeholder',
+  },
+  [ScoreProcessingStatus.NeedsVerification]: {
+    text: 'Awaiting Verification',
+    description: 'placeholder',
+  },
+  [ScoreProcessingStatus.Done]: {
+    text: 'Processing Complete',
+    description: 'placeholder',
+  },
+};
+
+export const scoreRejectionReasonMetadata: {
+  [key in ScoreRejectionReason]: EnumMetadata;
+} = {
+  [ScoreRejectionReason.None]: noneEnumMetadata,
+  [ScoreRejectionReason.ScoreBelowMinimum]: {
+    text: 'Below Minimum Score',
+    description: 'placeholder',
+  },
+  [ScoreRejectionReason.InvalidMods]: {
+    text: 'Invalid Mods',
+    description: 'placeholder',
+  },
+  [ScoreRejectionReason.RulesetMismatch]: {
+    text: 'Ruleset Mismatch',
+    description: 'placeholder',
+  },
+  [ScoreRejectionReason.RejectedGame]: {
+    text: 'Rejected Game',
+    description: 'placeholder',
+  },
+};

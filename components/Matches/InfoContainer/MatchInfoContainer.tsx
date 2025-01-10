@@ -6,11 +6,11 @@ import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/Tour
 import { useAdminViewContext } from '@/components/Context/AdminViewContext';
 import VerificationStatusButton from '@/components/Button/VerificationStatusButton/VerificationStatusButton';
 import { patchMatchData } from '@/app/actions/matches';
-import MatchRejectionReason from '@/components/RejectionReason/MatchRejectionReason';
 import clsx from 'clsx';
-import MatchWarningFlags from '@/components/RejectionReason/MatchWarningFlag';
 import InfoContainerField from '@/components/Tournaments/InfoContainer/InfoContainerField';
 import Link from 'next/link';
+import WarningFlags from '@/components/Enums/WarningFlags';
+import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function MatchInfoContainer({
   data,
@@ -58,10 +58,10 @@ export default function MatchInfoContainer({
         </InfoContainerField>
       )}
       <div className={clsx(styles.field, styles.single)}>
-        <MatchRejectionReason rejectionReason={data.rejectionReason} />
+        <RejectionReason itemType={'match'} value={data.rejectionReason} />
       </div>
       <div className={clsx(styles.field, styles.single)}>
-        <MatchWarningFlags warningFlags={data.warningFlags} />
+        <WarningFlags itemType={'match'} value={data.warningFlags} />
       </div>
       {showTournament && (
         <div>

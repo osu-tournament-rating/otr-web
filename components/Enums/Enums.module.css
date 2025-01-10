@@ -1,4 +1,4 @@
-.container {
+.enumContainer {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -12,6 +12,18 @@
   .icon {
     height: 0.8rem;
     width: 0.8rem;
+  }
+
+  .individualItem {
+    cursor: pointer;
+  }
+
+  &.processingStatus {
+    color: hsla(var(--gray-400));
+
+    .icon {
+      fill: hsla(var(--gray-400));
+    }
   }
 
   &.rejectionReason {

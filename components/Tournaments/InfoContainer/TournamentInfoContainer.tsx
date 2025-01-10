@@ -19,8 +19,8 @@ import { useAdminViewContext } from '@/components/Context/AdminViewContext';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 import DropdownRulesetSelector from '@/components/Tournaments/Submission/SubmissionForm/DropdownRulesetSelector/DropdownRulesetSelector';
 import clsx from 'clsx';
-import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
 import InfoContainerField from './InfoContainerField';
+import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function TournamentInfoContainer({
   data,
@@ -67,7 +67,7 @@ export default function TournamentInfoContainer({
         </>
       )}
       <div className={clsx(styles.field, styles.single)}>
-        <TournamentRejectionReason rejectionReason={data.rejectionReason} />
+        <RejectionReason itemType={'tournament'} value={data.rejectionReason} />
       </div>
       {/** Name */}
       {showName && (

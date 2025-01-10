@@ -10,9 +10,9 @@ import { dateFormats } from '@/lib/dates';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
-import TournamentRejectionReason from '@/components/RejectionReason/TournamentRejectionReason';
 import TournamentInfoContainer from '../InfoContainer/TournamentInfoContainer';
 import MatchesList from '@/components/Matches/List/MatchesList';
+import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function TournamentListItem({
   data,
@@ -139,8 +139,9 @@ function CollapsedContent({ tournament }: { tournament: TournamentDTO }) {
         />
       </div>
       {!verified && (
-        <TournamentRejectionReason
-          rejectionReason={tournament.rejectionReason}
+        <RejectionReason
+          itemType={'tournament'}
+          value={tournament.rejectionReason}
         />
       )}
     </>
