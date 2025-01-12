@@ -9,67 +9,39 @@ import FormattedDate from '@/components/FormattedData/FormattedDate';
 import WarningFlags from '@/components/Enums/WarningFlags';
 import RejectionReason from '@/components/Enums/RejectionReason';
 
-export default function MatchesListItem({
-  data,
-  isExpanded,
-  onClick,
-}: {
-  data: MatchDTO;
-  isExpanded: boolean;
-  onClick: () => void;
-}) {
+export default function MatchesListItem({ data }: { data: MatchDTO }) {
   return (
     <div className={clsx(styles.listItem, styles.matchesListItem)}>
-      {isExpanded ? (
-        <ExpandedContent />
-      ) : (
-        <CollapsedContent data={data} onClick={onClick} />
-      )}
-    </div>
-  );
-}
-
-function ExpandedContent() {
-  return <div className={styles.expanded}> </div>;
-}
-
-function CollapsedContent({
-  data,
-  onClick,
-}: {
-  data: MatchDTO;
-  onClick: () => void;
-}) {
-  return (
-    <div className={styles.collapsed} onClick={onClick}>
-      <div className={styles.gridRow}>
-        <div className={styles.nameField}>
-          <VerificationStatusCircle
-            verificationStatus={data.verificationStatus}
-          />
-          <span>{data.name}</span>
+      <div className={styles.collapsed}>
+        <div className={styles.gridRow}>
+          <div className={styles.nameField}>
+            <VerificationStatusCircle
+              verificationStatus={data.verificationStatus}
+            />
+            <span>{data.name}</span>
+          </div>
+          {/** Start Date */}
+          {data.startTime ? (
+            <FormattedDate
+              date={data.startTime}
+              format={dateFormats.tournaments.listItem}
+            />
+          ) : (
+            <span>Missing start time</span>
+          )}
+          {/** End Date */}
+          {data.endTime ? (
+            <FormattedDate
+              date={data.endTime}
+              format={dateFormats.tournaments.listItem}
+            />
+          ) : (
+            <span>Missing end time</span>
+          )}
         </div>
-        {/** Start Date */}
-        {data.startTime ? (
-          <FormattedDate
-            date={data.startTime}
-            format={dateFormats.tournaments.listItem}
-          />
-        ) : (
-          <span>Missing start time</span>
-        )}
-        {/** End Date */}
-        {data.endTime ? (
-          <FormattedDate
-            date={data.endTime}
-            format={dateFormats.tournaments.listItem}
-          />
-        ) : (
-          <span>Missing end time</span>
-        )}
+        <RejectionReason itemType={'match'} value={data.rejectionReason} />
+        <WarningFlags itemType={'match'} value={data.warningFlags} />
       </div>
-      <RejectionReason itemType={'match'} value={data.rejectionReason} />
-      <WarningFlags itemType={'match'} value={data.warningFlags} />
     </div>
   );
 }

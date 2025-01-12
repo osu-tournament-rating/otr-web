@@ -5,10 +5,8 @@ import styles from './Enums.module.css';
 import clsx from 'clsx';
 import { ApiItemType } from '@/lib/types';
 import {
-  EnumMetadata,
-  gameWarningFlagsMetadata,
-  getEnumFlags,
-  matchWarningFlagMetadata,
+  GameWarningFlagsEnumHelper,
+  MatchWarningFlagsEnumHelper,
 } from '@/lib/enums';
 import {
   GameWarningFlags,
@@ -23,29 +21,24 @@ export default function WarningFlags({
   itemType: Omit<ApiItemType, 'tournament' | 'score'>;
   value: number;
 }) {
-  let reasonMetadata: EnumMetadata[] = [];
-
   if (value === 0) {
     return null;
   }
 
+  let metadata;
   switch (itemType) {
     case 'match':
-      reasonMetadata = getEnumFlags(value, MatchWarningFlags).map(
-        (flag) => matchWarningFlagMetadata[flag]
-      );
+      metadata = MatchWarningFlagsEnumHelper.getMetadata(value);
       break;
-    case 'game':
-      reasonMetadata = getEnumFlags(value, GameWarningFlags).map(
-        (flag) => gameWarningFlagsMetadata[flag]
-      );
+    default:
+      metadata = GameWarningFlagsEnumHelper.getMetadata(value);
       break;
   }
 
   return (
     <span className={clsx(styles.enumContainer, styles.warningFlag)}>
       <ErrorCircle className={styles.icon} />
-      {reasonMetadata.map(({ text, description }, idx) => (
+      {metadata.map(({ text, description }, idx) => (
         <span
           key={idx}
           className={styles.individualItem}

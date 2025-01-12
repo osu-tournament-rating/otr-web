@@ -5,19 +5,10 @@ import styles from './Enums.module.css';
 import clsx from 'clsx';
 import { ApiItemType } from '@/lib/types';
 import {
-  EnumMetadata,
-  gameRejectionReasonMetadata,
-  getEnumFlags,
-  matchRejectionReasonMetadata,
-  scoreRejectionReasonMetadata,
-  tournamentRejectionReasonMetadata,
+  MatchRejectionReasonEnumHelper,
+  ScoreRejectionReasonEnumHelper,
+  TournamentRejectionReasonEnumHelper,
 } from '@/lib/enums';
-import {
-  GameRejectionReason,
-  MatchRejectionReason,
-  ScoreRejectionReason,
-  TournamentRejectionReason,
-} from '@osu-tournament-rating/otr-api-client';
 import { Tooltip } from 'react-tooltip';
 
 export default function RejectionReason({
@@ -27,39 +18,30 @@ export default function RejectionReason({
   itemType: ApiItemType;
   value: number;
 }) {
-  let reasonMetadata: EnumMetadata[] = [];
-
   if (value === 0) {
     return null;
   }
 
+  let metadata;
   switch (itemType) {
     case 'tournament':
-      reasonMetadata = getEnumFlags(value, TournamentRejectionReason).map(
-        (flag) => tournamentRejectionReasonMetadata[flag]
-      );
+      metadata = TournamentRejectionReasonEnumHelper.getMetadata(value);
       break;
     case 'match':
-      reasonMetadata = getEnumFlags(value, MatchRejectionReason).map(
-        (flag) => matchRejectionReasonMetadata[flag]
-      );
+      metadata = MatchRejectionReasonEnumHelper.getMetadata(value);
       break;
     case 'game':
-      reasonMetadata = getEnumFlags(value, GameRejectionReason).map(
-        (flag) => gameRejectionReasonMetadata[flag]
-      );
+      metadata = MatchRejectionReasonEnumHelper.getMetadata(value);
       break;
     case 'score':
-      reasonMetadata = getEnumFlags(value, ScoreRejectionReason).map(
-        (flag) => scoreRejectionReasonMetadata[flag]
-      );
+      metadata = ScoreRejectionReasonEnumHelper.getMetadata(value);
       break;
   }
 
   return (
     <span className={clsx(styles.enumContainer, styles.rejectionReason)}>
       <ErrorTriangle className={styles.icon} />
-      {reasonMetadata.map(({ text, description }, idx) => (
+      {metadata.map(({ text, description }, idx) => (
         <span
           key={idx}
           className={styles.individualItem}

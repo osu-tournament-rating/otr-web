@@ -6,8 +6,8 @@ import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/F
 import { useTournamentListFilter } from '@/components/Context/TournamentListFilterContext';
 import {
   getEnumFlags,
-  tournamentProcessingStatusMetadata,
-  tournamentRejectionReasonMetadata,
+  TournamentProcessingStatusEnumHelper,
+  TournamentRejectionReasonEnumHelper,
   VerificationStatusMetadata,
 } from '@/lib/enums';
 import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client';
@@ -170,7 +170,7 @@ function RejectionReasonSection() {
           setFilterValue('rejectionReason', value);
         }}
       >
-        {Object.entries(tournamentRejectionReasonMetadata).map(
+        {Object.entries(TournamentRejectionReasonEnumHelper.metadata).map(
           ([value, { text }]) => {
             return (
               <option
@@ -237,7 +237,7 @@ function ProcessingStatusSection() {
         }}
       >
         <option>Any</option>
-        {Object.entries(tournamentProcessingStatusMetadata).map(
+        {Object.entries(TournamentProcessingStatusEnumHelper.metadata).map(
           ([value, { text }]) => (
             <option key={value} value={value}>
               {text}
