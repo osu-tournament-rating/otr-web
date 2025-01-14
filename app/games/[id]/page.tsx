@@ -1,4 +1,5 @@
 import GameInfoContainer from '@/components/Games/InfoContainer/GameInfoContainer';
+import ScoresList from '@/components/Scores/List/ScoresList';
 import { GameDTO } from '@osu-tournament-rating/otr-api-client';
 
 const tempdata: GameDTO = {
@@ -99,6 +100,7 @@ export default async function Page({
     <div className={'content'}>
       <h1>GAME ID {tempdata.id}</h1>
       <GameInfoContainer data={tempdata} />
+      <ScoresList data={tempdata.scores} />
     </div>
   );
 }

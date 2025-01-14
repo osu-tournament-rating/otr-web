@@ -8,10 +8,6 @@ import {
   GameWarningFlagsEnumHelper,
   MatchWarningFlagsEnumHelper,
 } from '@/lib/enums';
-import {
-  GameWarningFlags,
-  MatchWarningFlags,
-} from '@osu-tournament-rating/otr-api-client';
 import { Tooltip } from 'react-tooltip';
 
 export default function WarningFlags({

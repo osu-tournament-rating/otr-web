@@ -7,7 +7,11 @@ import clsx from 'clsx';
 import InfoContainerField from '@/components/Tournaments/InfoContainer/InfoContainerField';
 import WarningFlags from '@/components/Enums/WarningFlags';
 import RejectionReason from '@/components/Enums/RejectionReason';
-import { RulesetMetadata } from '@/lib/enums';
+import {
+  ModsEnumHelper,
+  RulesetMetadata,
+  ScoringTypeEnumHelper,
+} from '@/lib/enums';
 
 export default function GameInfoContainer({
   data,
@@ -55,8 +59,20 @@ export default function GameInfoContainer({
       <div className={clsx(styles.field, styles.single)}>
         <WarningFlags itemType={'game'} value={data.warningFlags} />
       </div>
-      <InfoContainerField label="Ruleset">
+      <InfoContainerField label={'Ruleset'}>
         <div className={styles.value}>{rulesetMeta.shortAlt}</div>
+      </InfoContainerField>
+      <InfoContainerField label={'Scoring Type'}>
+        <div className={styles.value}>
+          {ScoringTypeEnumHelper.getMetadata(data.scoringType).text}
+        </div>
+      </InfoContainerField>
+      <InfoContainerField label={'Mods'}>
+        <div className={styles.value}>
+          {ModsEnumHelper.getMetadata(data.mods)
+            .map(({ text }) => text)
+            .join(', ')}
+        </div>
       </InfoContainerField>
     </div>
   );

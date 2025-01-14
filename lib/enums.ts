@@ -10,10 +10,12 @@ import {
   MatchProcessingStatus,
   MatchRejectionReason,
   MatchWarningFlags,
+  Mods,
   Ruleset,
   ScoreProcessingStatus,
   ScoreRejectionReason,
   ScoringType,
+  TeamType,
   TournamentProcessingStatus,
   TournamentRejectionReason,
   VerificationStatus,
@@ -129,7 +131,7 @@ export function getEnumFlags<T extends object>(
 /**
  * Creates a default implementation of an {@link IBitwiseEnumHelper}
  *
- * {@link IEnumHelperBase.metadata} should always be overwritten
+ * {@link IBitwiseEnumHelper.metadata} should always be overwritten
  * @template T Enumeration type
  * @template M Metadata type
  */
@@ -599,19 +601,190 @@ export const ScoringTypeEnumHelper: IEnumHelper<ScoringType> = {
 
   metadata: {
     [ScoringType.Score]: {
-      text: '',
-      description: '',
+      text: 'ScoreV1',
+      description: 'placeholder',
     },
     [ScoringType.Accuracy]: {
-      text: '',
-      description: '',
+      text: 'Accuracy',
+      description: 'placeholder',
     },
     [ScoringType.Combo]: {
+      text: 'Combo',
+      description: 'placeholder',
+    },
+    [ScoringType.ScoreV2]: {
+      text: 'ScoreV2',
+      description: 'placeholder',
+    },
+  },
+};
+
+export const TeamTypeEnumHelper: IEnumHelper<TeamType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [TeamType.HeadToHead]: {
+      text: 'Head to Head',
+      description: 'Free for all',
+    },
+    [TeamType.TagCoop]: {
+      text: 'Tag Co-op',
+      description: 'Free for all in tag format',
+    },
+    [TeamType.TeamVs]: {
+      text: 'Team Vs',
+      description: 'Team red vs team blue',
+    },
+    [TeamType.TagTeamVs]: {
+      text: 'Tag Team Vs',
+      description: 'Team red vs team blue in tag format',
+    },
+  },
+};
+
+export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
+  ...defaultBitwiseEnumHelper(Mods),
+
+  metadata: {
+    [Mods.None]: noneEnumMetadata,
+    [Mods.NoFail]: {
+      text: 'NF',
+      description: 'No fail',
+    },
+    [Mods.Easy]: {
+      text: 'EZ',
+      description: 'Easy',
+    },
+    [Mods.TouchDevice]: {
+      text: 'TD',
+      description: 'Touch device',
+    },
+    [Mods.Hidden]: {
+      text: 'HD',
+      description: 'Hidden',
+    },
+    [Mods.HardRock]: {
+      text: 'HR',
+      description: 'Hard rock',
+    },
+    [Mods.SuddenDeath]: {
+      text: 'SD',
+      description: 'Sudden death',
+    },
+    [Mods.DoubleTime]: {
+      text: 'DT',
+      description: 'Double time',
+    },
+    [Mods.Relax]: {
+      text: 'RX',
+      description: 'Relax',
+    },
+    [Mods.HalfTime]: {
+      text: 'HT',
+      description: 'Half time',
+    },
+    [Mods.Nightcore]: {
+      text: 'NC',
+      description: 'Nightcore',
+    },
+    [Mods.Flashlight]: {
+      text: 'FL',
+      description: 'Flashlight',
+    },
+    [Mods.Autoplay]: {
+      text: 'AT',
+      description: 'Auto',
+    },
+    [Mods.SpunOut]: {
+      text: 'SO',
+      description: 'Spun out',
+    },
+    [Mods.Relax2]: {
+      text: 'AP',
+      description: 'Autopilot',
+    },
+    [Mods.Perfect]: {
+      text: 'PF',
+      description: 'Perfect',
+    },
+    [Mods.InvalidMods]: {
+      text: 'Invalid Mods',
+      description: '',
+    },
+    [Mods.Key4]: {
+      text: '4K',
+      description: 'Mania 4 key',
+    },
+    [Mods.Key5]: {
+      text: '5K',
+      description: 'Mania 5 key',
+    },
+    [Mods.Key6]: {
+      text: '6K',
+      description: 'Mania 6 key',
+    },
+    [Mods.Key7]: {
       text: '',
       description: '',
     },
-    [ScoringType.ScoreV2]: {
+    [Mods.Key8]: {
       text: '',
+      description: '',
+    },
+    [Mods.FadeIn]: {
+      text: 'FI',
+      description: 'Fade in',
+    },
+    [Mods.ScoreIncreaseMods]: {
+      text: '',
+      description: '',
+    },
+    [Mods.Random]: {
+      text: 'RD',
+      description: 'Random',
+    },
+    [Mods.Cinema]: {
+      text: 'CM',
+      description: 'Cinema',
+    },
+    [Mods.Target]: {
+      text: '',
+      description: '',
+    },
+    [Mods.Key9]: {
+      text: '',
+      description: '',
+    },
+    [Mods.KeyCoop]: {
+      text: '',
+      description: '',
+    },
+    [Mods.Key1]: {
+      text: '',
+      description: '',
+    },
+    [Mods.Key3]: {
+      text: '',
+      description: '',
+    },
+    [Mods.Key2]: {
+      text: '',
+      description: '',
+    },
+    [Mods.KeyMod]: {
+      text: '',
+      description: '',
+    },
+    [Mods.FreeModAllowed]: {
+      text: '',
+      description: '',
+    },
+    [Mods.ScoreV2]: {
+      text: 'V2',
+      description: '',
+    },
+    [Mods.Mirror]: {
+      text: 'MR',
       description: '',
     },
   },
