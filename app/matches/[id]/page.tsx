@@ -4,11 +4,11 @@ import MatchInfoContainer from '@/components/Matches/InfoContainer/MatchInfoCont
 import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
 export default async function Page({
-  params: { id },
+  params,
 }: {
-  params: { id: number };
+  params: Promise<{ id: number }>;
 }) {
-  const match = await getMatch({ id });
+  const match = await getMatch({ id: (await params).id, verified: false });
 
   return (
     <div className={'content'}>
@@ -19,7 +19,7 @@ export default async function Page({
       >
         <h1>{match.name}</h1>
       </TournamentPageHeader>
-      <MatchInfoContainer data={match} showTournament />
+      <MatchInfoContainer data={match} />
       <h1>Games</h1>
       <GamesList
         data={match.games.toSorted(

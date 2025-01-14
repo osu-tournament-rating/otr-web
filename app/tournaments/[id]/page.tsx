@@ -6,21 +6,21 @@ import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent
 export const revalidate = 60;
 
 export async function generateMetadata({
-  params: { id },
+  params,
 }: {
-  params: { id: number };
+  params: Promise<{ id: number }>;
 }) {
-  const tournament = await getTournament({ id, verified: true });
+  const tournament = await getTournament({ id: (await params).id, verified: false });
 
   return { title: tournament.name };
 }
 
 export default async function Page({
-  params: { id },
+  params,
 }: {
-  params: { id: number };
+  params: Promise<{ id: number }>;
 }) {
-  const tournament = await getTournament({ id, verified: false });
+  const tournament = await getTournament({ id: (await params).id, verified: false });
 
   return (
     <div className={'content'}>
