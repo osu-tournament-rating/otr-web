@@ -69,7 +69,7 @@ export default function GameInfoContainer({
       </InfoContainerField>
       <InfoContainerField label={'Mods'}>
         <div className={styles.value}>
-          {ModsEnumHelper.getMetadata(data.mods)
+          {data.isFreeMod ? 'FM' : ModsEnumHelper.getMetadata(data.mods)
             .map(({ text }) => text)
             .join(', ')}
         </div>

@@ -11,10 +11,10 @@ import {
   MatchRejectionReason,
   MatchWarningFlags,
   Mods,
-  Ruleset,
+  Ruleset, ScoreGrade,
   ScoreProcessingStatus,
   ScoreRejectionReason,
-  ScoringType,
+  ScoringType, Team,
   TeamType,
   TournamentProcessingStatus,
   TournamentRejectionReason,
@@ -789,3 +789,61 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
     },
   },
 };
+
+export const TeamEnumHelper: IEnumHelper<Team> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [Team.NoTeam]: {
+      text: 'No Team',
+      description: '',
+    },
+    [Team.Blue]: {
+      text: 'Blue',
+      description: '',
+    },
+    [Team.Red]: {
+      text: 'Red',
+      description: '',
+    },
+  },
+};
+
+export const ScoreGradeEnumHelper: IEnumHelper<ScoreGrade> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [ScoreGrade.SSH]: {
+      text: 'SSH',
+      description: '',
+    },
+    [ScoreGrade.SH]: {
+      text: 'SH',
+      description: '',
+    },
+    [ScoreGrade.SS]: {
+      text: 'SS',
+      description: '',
+    },
+    [ScoreGrade.S]: {
+      text: 'S',
+      description: '',
+    },
+    [ScoreGrade.A]: {
+      text: 'A',
+      description: '',
+    },
+    [ScoreGrade.B]: {
+      text: 'B',
+      description: '',
+    },
+    [ScoreGrade.C]: {
+      text: 'C',
+      description: '',
+    },
+    [ScoreGrade.D]: {
+      text: 'D',
+      description: '',
+    },
+  }
+}

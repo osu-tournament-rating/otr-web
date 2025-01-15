@@ -13,7 +13,7 @@ export default async function Page({
     <div className={'content'}>
       <h1>{game.beatmap.title} [{game.beatmap.diffName}]</h1>
       <GameInfoContainer data={game} />
-      <ScoresList data={game.scores} />
+      <ScoresList data={game.scores} players={game.players} />
     </div>
   );
 }

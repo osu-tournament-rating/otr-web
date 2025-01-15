@@ -32,6 +32,7 @@ export default async function Page({
         <h1>{tournament.name}</h1>
       </TournamentPageHeader>
       <TournamentInfoContainer data={tournament} showName={false} />
+      <h1>Matches</h1>
       <MatchesList data={tournament.matches ?? []} />
     </div>
   );

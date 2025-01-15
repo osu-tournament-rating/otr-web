@@ -5,6 +5,7 @@ import styles from './Enums.module.css';
 import clsx from 'clsx';
 import { ApiItemType } from '@/lib/types';
 import {
+  GameRejectionReasonEnumHelper,
   MatchRejectionReasonEnumHelper,
   ScoreRejectionReasonEnumHelper,
   TournamentRejectionReasonEnumHelper,
@@ -31,7 +32,7 @@ export default function RejectionReason({
       metadata = MatchRejectionReasonEnumHelper.getMetadata(value);
       break;
     case 'game':
-      metadata = MatchRejectionReasonEnumHelper.getMetadata(value);
+      metadata = GameRejectionReasonEnumHelper.getMetadata(value);
       break;
     case 'score':
       metadata = ScoreRejectionReasonEnumHelper.getMetadata(value);
