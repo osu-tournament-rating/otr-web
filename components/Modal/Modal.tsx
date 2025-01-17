@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useClickAway } from '@uidotdev/usehooks';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './Modal.module.css';
+import { ReactNode } from 'react';
 
 const transition = {
   type: 'ease-out',
@@ -42,8 +43,18 @@ const modalVariants = {
   },
 };
 
-export default function Modal({ isOpen, setIsOpen, title, children }) {
-  const ref = useClickAway(() => {
+export default function Modal({
+  isOpen,
+  setIsOpen,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  title: string;
+  children: ReactNode;
+}) {
+  const ref = useClickAway<HTMLDivElement>(() => {
     setIsOpen(false);
   });
 

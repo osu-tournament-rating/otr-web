@@ -19,4 +19,5 @@
 
 .gameFooter {
   display: grid;
+  justify-items: center;
 }
