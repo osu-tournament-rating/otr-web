@@ -358,11 +358,11 @@ main {
   padding: var(--main-padding);
 }
 
-div.container {
+.container {
   flex: 1;
 }
 
-div.content {
+.content {
   display: flex;
   flex-flow: column;
   gap: var(--internal-gap);

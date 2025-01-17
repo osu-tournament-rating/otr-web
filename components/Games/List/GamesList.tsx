@@ -1,25 +1,29 @@
 'use client';
 
-import { GameDTO } from '@osu-tournament-rating/otr-api-client';
-import styles from '@/components/Tournaments/TournamentList/TournamentList.module.css';
-import GamesListRowItem from './GamesListRowItem';
-import Link from 'next/link';
-
-export type GamesListItemStyle = 'rows' | 'chips';
+import {
+  GameDTO,
+  PlayerCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import styles from './GamesList.module.css';
+import GamesListItem from '@/components/Games/List/ListItem/GamesListItem';
 
 export default function GamesList({
   data,
-  itemStyle = 'rows',
+  players,
 }: {
   data: GameDTO[];
-  itemStyle?: GamesListItemStyle;
+  players: PlayerCompactDTO[];
 }) {
   return (
-    <div className={styles.gridList}>
+    <div className={styles.gameListContainer}>
       {data.map((game) => (
-        <Link key={game.id} href={`/games/${game.id}`}>
-          <GamesListRowItem data={game} />
-        </Link>
+        <GamesListItem
+          key={game.id}
+          data={game}
+          players={players.filter((player) =>
+            game.scores.map((s) => s.playerId).includes(player.id)
+          )}
+        />
       ))}
     </div>
   );

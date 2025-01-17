@@ -44,15 +44,19 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
-        protocol: 'http',
+        protocol: 'https',
         hostname: 's.ppy.sh',
       },
       {
-        protocol: 'http',
+        protocol: 'https',
         hostname: 'a.ppy.sh',
       },
       {
-        protocol: 'http',
+        protocol: 'https',
+        hostname: 'assets.ppy.sh',
+      },
+      {
+        protocol: 'https',
         hostname: 'i.ppy.sh',
       },
     ],

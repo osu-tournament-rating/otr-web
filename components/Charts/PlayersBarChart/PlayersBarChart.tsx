@@ -210,7 +210,7 @@ export default function PlayersBarChart({ players }: { players: [] }) {
 
       data.datasets[0].propicIDs.forEach((image, index) => {
         const chartImage = new (Image as any)();
-        chartImage.src = `http://s.ppy.sh/a/${image}`;
+        chartImage.src = `https://s.ppy.sh/a/${image}`;
         chartImage.classList.add(styles.graphPropic);
 
         const yPos = chart.getDatasetMeta(0).data[index].y;

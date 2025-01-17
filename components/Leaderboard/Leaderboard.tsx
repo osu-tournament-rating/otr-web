@@ -53,7 +53,7 @@ export default function Leaderboard({
                   <Link href={`/players/${player.playerId}`}>
                     <div className={styles.propic}>
                       <Image
-                        src={`http://a.ppy.sh/${player.osuId}`}
+                        src={`https://a.ppy.sh/${player.osuId}`}
                         alt={`${player.name}'s Propic`}
                         fill
                       />

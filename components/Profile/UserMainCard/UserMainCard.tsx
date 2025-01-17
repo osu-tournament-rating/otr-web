@@ -25,7 +25,7 @@ export default function UserMainCardProfile({
       <div className={styles.header}>
         <div className={styles.propic}>
           <Image
-            src={`http://s.ppy.sh/a/${playerInfo?.osuId}`}
+            src={`https://s.ppy.sh/a/${playerInfo?.osuId}`}
             alt={"Player's propic"}
             fill
           />

@@ -22,36 +22,9 @@ export default function MatchInfoContainer({
   showName?: boolean;
 }) {
   // const { isAdminView } = useAdminViewContext();
-  const isAdminView = true;
 
   return (
     <div className={styles.content}>
-      {isAdminView && (
-        <>
-          {/* Shows confirmation modal */}
-          <div className={styles.field}>
-            <button>Delete</button>
-          </div>
-          {/* Active / visible if processing status == awaiting verification */}
-          <div className={styles.field}>
-            <button>Accept pre-status</button>
-          </div>
-          <div className={styles.field}>
-            <VerificationStatusButton
-              initialStatus={data.verificationStatus}
-              isAdminView
-              onChange={async (status) => {
-                const updatedMatch = await patchMatchData({
-                  id: data.id,
-                  path: 'verificationStatus',
-                  value: status,
-                });
-                Object.assign(data, updatedMatch);
-              }}
-            />
-          </div>
-        </>
-      )}
       {showName && (
         <InfoContainerField label={'Name'} single>
           <div className={styles.value}>{data.name}</div>

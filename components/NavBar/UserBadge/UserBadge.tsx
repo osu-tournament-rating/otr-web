@@ -33,7 +33,7 @@ export default function UserBadge() {
         <Tooltip content={tooltipContent(contextLogout)}>
           <div className={styles.userPropic}>
             <Image
-              src={`http://s.ppy.sh/a/${user.player.osuId}`}
+              src={`https://s.ppy.sh/a/${user.player.osuId}`}
               alt="User Propic"
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

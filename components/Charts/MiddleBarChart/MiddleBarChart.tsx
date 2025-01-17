@@ -1343,7 +1343,7 @@ export default function MiddleBarChart() {
 
         const chartImage = new (Image as any)();
 
-        chartImage.src = `http://s.ppy.sh/a/${image}`;
+        chartImage.src = `https://s.ppy.sh/a/${image}`;
 
         ctx.drawImage(
           chartImage,

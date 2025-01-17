@@ -1,0 +1,24 @@
+/* TODO: temp style for skeleton, see figma */
+
+.scoreContainer {
+  background-color: hsl(var(--gray-300));
+  padding: 1rem;
+
+  &.team-NoTeam {
+    grid-column: span 2;
+  }
+
+  &.team-Red {
+    text-align: left;
+    grid-column: 1;
+
+    background-color: hsl(var(--red-900));
+  }
+
+  &.team-Blue {
+    text-align: right;
+    grid-column: 2;
+
+    background-color: hsl(var(--blue-900));
+  }
+}
