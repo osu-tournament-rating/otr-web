@@ -8,9 +8,8 @@
   position: absolute;
   z-index: 1000;
   top: calc(100% - 0.6rem);
-  left: calc(
-    -1 * (1.9rem + (1.4rem / 2))
-  ); /* calc(-1 * (profile image width + (horizontal padding of content below / 2))) */
+  left: 50%;
+  transform: translateX(-50%);
   white-space: nowrap;
   opacity: 0;
   padding-top: 0.7rem;
@@ -37,7 +36,7 @@
   transition: all 0.2s ease-out;
 }
 
-.tooltipContent > :is(div, button) {
+.tooltipContent > :is(div, button, a) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,6 +44,7 @@
   transition: color 0.2s ease;
   border-radius: 4px;
   color: hsla(var(--foreground-inactive-hsl));
+  text-align: center;
 }
 
 .tooltipContent > :is(div, button):hover {

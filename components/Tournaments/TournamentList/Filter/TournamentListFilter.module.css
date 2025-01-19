@@ -1,0 +1,101 @@
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--internal-gap);
+
+  & .collapsible {
+    padding: 1.2rem 2rem;
+    background-color: hsla(var(--background-content-childs-hsl));
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    justify-content: center;
+  }
+}
+
+.searchBarContainer {
+  display: flex;
+  flex-direction: row;
+  gap: var(--internal-gap);
+}
+
+.filterButton {
+  aspect-ratio: 1;
+  height: 3rem;
+  border-radius: 5px;
+  padding: 0.75rem;
+  background-color: hsla(var(--background-content-childs-hsl));
+
+  /* Needs visual hover feedback */
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.containerField {
+  display: flex;
+  flex-flow: column;
+  gap: 0.7rem;
+  height: fit-content;
+  line-height: 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  user-select: none;
+  justify-content: center;
+
+  &.fill {
+    grid-column: 1/3;
+  }
+
+  &.centered {
+    margin: 0 auto;
+  }
+
+  & .label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  & .field {
+    display: flex;
+    flex-flow: row;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+}
+
+.checkbox {
+  height: 100%;
+  aspect-ratio: 1;
+  border: 1px solid hsla(var(--gray-600));
+  border-radius: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: all 0.2s ease-out;
+
+  &.selected {
+    background-color: hsla(var(--green-500), 0.75);
+    border: 1px solid transparent;
+  }
+
+  &.excluded {
+    background-color: hsla(var(--red-500), 0.75);
+    border: 1px solid transparent;
+  }
+}
+
+.containerField :is(input, select) {
+  width: 100%;
+  background-color: hsla(var(--background-content-hsl));
+  border: 1px solid hsla(var(--gray-500));
+  border-radius: 5px;
+  font-family: var(--font-families);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  resize: none;
+}

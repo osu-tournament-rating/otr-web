@@ -1,8 +1,7 @@
-import { fetchUserPage, fetchUserPageTitle } from '@/app/actions';
+import { fetchUserPageTitle } from '@/app/actions';
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
 import BarChart from '@/components/Charts/BarChart/BarChart';
 import DoughnutChart from '@/components/Charts/DoughnutChart/DoughnutChart';
-import MiddleBarChart from '@/components/Charts/MiddleBarChart/MiddleBarChart';
 import PlayersBarChart from '@/components/Charts/PlayersBarChart/PlayersBarChart';
 import RadarChart from '@/components/Charts/RadarChart/RadarChart';
 import FilterButtons from '@/components/Dashboard/FilterButtons/FilterButtons';
@@ -10,10 +9,11 @@ import GridCard from '@/components/Dashboard/GridCard/GridCard';
 import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/UserTotalMatches';
 import NoDataContainer from '@/components/Dashboard/NoDataContainer/NoDataContainer';
 import StatsGrid from '@/components/Dashboard/StatsGrid/StatsGrid';
-import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
+import FormattedNumber from '@/components/FormattedData/FormattedNumber';
 import UserMainCard from '@/components/Profile/UserMainCard/UserMainCard';
 import clsx from 'clsx';
 import styles from './page.module.css';
+import { fetchPlayerStats } from '@/app/actions/players';
 
 export async function generateMetadata({
   params: { id },
@@ -36,7 +36,7 @@ export default async function page({
   searchParams: URLSearchParams;
   params: { id: string | number };
 }) {
-  const data = await fetchUserPage(id, searchParams);
+  const data = await fetchPlayerStats(id, searchParams);
 
   return (
     <main className={styles.main}>
@@ -45,8 +45,8 @@ export default async function page({
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
           {data?.baseStats &&
-          data?.matchStats &&
-          data?.matchStats.gamesPlayed > 0 ? (
+            data?.matchStats &&
+            data?.matchStats.gamesPlayed > 0 ? (
             <>
               <div className={styles.header}>
                 <div className={styles.rating}>

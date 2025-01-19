@@ -1,11 +1,13 @@
 'use server';
 
-import { CookieNames, GetSessionParams, SessionUser } from '@/lib/types';
+import { CookieNames, GetSessionParams, SessionData } from '@/lib/types';
 import { getIronSession } from 'iron-session';
 import { ironSessionOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
-import { Ruleset, UserDTO } from '@osu-tournament-rating/otr-api-client';
-import { ResponseCookie, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
+import {
+  ResponseCookie,
+  ResponseCookies,
+} from 'next/dist/compiled/@edge-runtime/cookies';
 
 /**
  * Gets the current session
@@ -15,37 +17,18 @@ import { ResponseCookie, ResponseCookies } from 'next/dist/compiled/@edge-runtim
 export async function getSession(params?: GetSessionParams) {
   if (params) {
     const { req, res } = params;
-    return await getIronSession<SessionUser>(req, res, ironSessionOptions);
+    return await getIronSession<SessionData>(req, res, ironSessionOptions);
   }
-  return await getIronSession<SessionUser>(cookies(), ironSessionOptions);
+  return await getIronSession<SessionData>(cookies(), ironSessionOptions);
 }
 
 /**
  * Gets the raw data for the current session
  * @param params Optionally pass a request and response to use as a cookie store instead of {@link cookies}
- * @returns A {@link SessionUser} serialized as a plain object
+ * @returns A {@link SessionData} serialized as a plain object
  */
 export async function getSessionData(params?: GetSessionParams) {
-  return JSON.parse(JSON.stringify((await getSession(params) as SessionUser)));
-}
-
-/**
- * Populates the current session with data from the given user
- * @param user The user data to populate the session with
- */
-export async function populateSessionUserData(user: UserDTO) {
-  const session = await getSession();
-
-  session.id = user.id;
-  session.playerId = user.player?.id;
-  session.osuId = user.player?.osuId;
-  session.osuCountry = user.player?.country;
-  session.osuPlayMode = user.settings?.ruleset ?? Ruleset.Osu;
-  session.username = user.player?.username;
-  session.scopes = user.scopes;
-
-  await setCookieValue(CookieNames.SelectedRuleset, session.osuPlayMode);
-  await session.save();
+  return JSON.parse(JSON.stringify((await getSession(params)) as SessionData));
 }
 
 /**
@@ -54,7 +37,7 @@ export async function populateSessionUserData(user: UserDTO) {
  * @returns The value of the cookie
  */
 export async function getCookieValue(cookie: CookieNames) {
-  return (cookies().get(cookie))?.value;
+  return cookies().get(cookie)?.value;
 }
 
 /**

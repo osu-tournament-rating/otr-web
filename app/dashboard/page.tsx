@@ -11,7 +11,7 @@ import UserTotalMatches from '@/components/Dashboard/Matches/UserTotalMatches/Us
 import NoDataContainer from '@/components/Dashboard/NoDataContainer/NoDataContainer';
 import StatsGrid from '@/components/Dashboard/StatsGrid/StatsGrid';
 import UserMainCard from '@/components/Dashboard/UserMainCard/UserMainCard';
-import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
+import FormattedNumber from '@/components/FormattedData/FormattedNumber';
 import Notice from '@/components/Notice/Notice';
 import clsx from 'clsx';
 import Image from 'next/image';
@@ -33,7 +33,7 @@ export default async function page({
   const data = await fetchDashboard(searchParams);
 
   return (
-    <main className={styles.main}>
+    <div className={styles.main}>
       <UserMainCard data={data?.baseStats} />
       <div className={styles.mainGraphContainer}>
         <FilterButtons params={searchParams} />
@@ -194,6 +194,6 @@ export default async function page({
           </StatsGrid>
         </>
       )}
-    </main>
+    </div>
   );
 }

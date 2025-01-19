@@ -5,16 +5,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
-import FormattedNumber from '../FormattedNumber/FormattedNumber';
+import FormattedNumber from '../FormattedData/FormattedNumber';
 import Pagination from '../Pagination/Pagination';
 import styles from './Leaderboard.module.css';
+import {
+  LeaderboardDTO,
+  LeaderboardPlayerInfoDTO,
+} from '@osu-tournament-rating/otr-api-client';
 
 export default function Leaderboard({
   params,
   data,
 }: {
   params: {};
-  data: {};
+  data: LeaderboardDTO;
 }) {
   const { user } = useUser();
 
@@ -49,7 +53,7 @@ export default function Leaderboard({
                   <Link href={`/players/${player.playerId}`}>
                     <div className={styles.propic}>
                       <Image
-                        src={`http://a.ppy.sh/${player.osuId}`}
+                        src={`https://a.ppy.sh/${player.osuId}`}
                         alt={`${player.name}'s Propic`}
                         fill
                       />
@@ -79,11 +83,11 @@ export default function Leaderboard({
                         player.tier === 'Elite Grandmaster'
                           ? { transform: 'scale(1.25)' }
                           : player.tier.includes('Silver')
-                          ? {
-                              filter:
-                                'drop-shadow(rgba(0, 0, 0, 0.1) 0px 0.2px 0.2px)',
-                            }
-                          : {}
+                            ? {
+                                filter:
+                                  'drop-shadow(rgba(0, 0, 0, 0.1) 0px 0.2px 0.2px)',
+                              }
+                            : {}
                       }
                       fill
                     />

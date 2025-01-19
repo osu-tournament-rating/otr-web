@@ -1,0 +1,25 @@
+.rulesetSwitcher {
+  display: flex;
+  flex-direction: row;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  /* TODO: better colors */
+  background-color: hsla(var(--tier-bar-background));
+}
+
+.switchButton {
+  height: 2rem;
+  width: 2rem;
+  aspect-ratio: 1;
+  background: none;
+
+  /* TODO: svg fill hover feedback */
+  &:hover {
+    cursor: pointer;
+  }
+
+  &.active > svg {
+    fill: hsla(var(--accent-color));
+  }
+}

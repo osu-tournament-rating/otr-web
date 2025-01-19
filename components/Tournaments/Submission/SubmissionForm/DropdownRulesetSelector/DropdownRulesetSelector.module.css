@@ -1,0 +1,15 @@
+.dropdownContainer {
+    position: relative;
+}
+
+.dropdownSelected {
+    width: 100%;
+}
+
+.dropdownOptionsContainer {
+
+}
+
+.dropdownOption {
+    padding: var(--internal-gap);
+}

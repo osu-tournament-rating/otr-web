@@ -17,8 +17,14 @@
   font-family: var(--font-families);
   transform: translateY(2em);
   opacity: 0;
-  -webkit-animation: fadein 0.5s, stay 5s 0.5s, fadeout 0.5s 5s;
-  animation: fadein 0.5s, stay 5s 0.5s, fadeout 0.5s 5s;
+  -webkit-animation:
+    fadein 0.5s,
+    stay 5s 0.5s,
+    fadeout 0.5s 5s;
+  animation:
+    fadein 0.5s,
+    stay 5s 0.5s,
+    fadeout 0.5s 5s;
 }
 
 .toast.success {

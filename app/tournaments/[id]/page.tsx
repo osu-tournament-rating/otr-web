@@ -1,41 +1,39 @@
-import styles from './page.module.css';
+import { getTournament } from '@/app/actions/tournaments';
+import MatchesList from '@/components/Matches/List/MatchesList';
+import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
+import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
 export const revalidate = 60;
 
-import { fetchTournamentPage } from '@/app/actions';
-import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
-import MatchesList from '@/components/Tournaments/Lists/MatchesList';
-import type { Metadata } from 'next';
-
 export async function generateMetadata({
-  params: { id },
+  params,
 }: {
-  params: { id: string | number };
+  params: Promise<{ id: number }>;
 }) {
-  let tournament = await fetchTournamentPage(id);
+  const tournament = await getTournament({ id: (await params).id, verified: false });
 
-  return {
-    title: tournament !== null ? `${tournament?.name}` : 'User profile',
-  };
+  return { title: tournament.name };
 }
 
-export default async function page({
-  params: { id },
+export default async function Page({
+  params,
 }: {
-  params: { id: string | number };
+  params: Promise<{ id: number }>;
 }) {
-  const tournamentData = await fetchTournamentPage(id);
+  const tournament = await getTournament({ id: (await params).id, verified: false });
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>{tournamentData?.name}</h1>
-          <div className={styles.date}>Missing Date</div>
-        </div>
-        <InfoContainer data={tournamentData} />
-        <MatchesList data={tournamentData?.matches} />
-      </div>
-    </main>
+    <div className={'content'}>
+      <TournamentPageHeader
+        forumUrl={tournament.forumUrl}
+        startDate={tournament.startTime}
+        endDate={tournament.startTime}
+      >
+        <h1>{tournament.name}</h1>
+      </TournamentPageHeader>
+      <TournamentInfoContainer data={tournament} showName={false} />
+      <h1>Matches</h1>
+      <MatchesList data={tournament.matches ?? []} />
+    </div>
   );
 }

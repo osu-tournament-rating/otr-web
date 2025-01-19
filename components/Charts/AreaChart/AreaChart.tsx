@@ -23,6 +23,7 @@ import { Line } from 'react-chartjs-2';
 import styles from './AreaChart.module.css';
 
 import 'chartjs-adapter-date-fns';
+import { PlayerStatsDTO } from '@osu-tournament-rating/otr-api-client';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -65,11 +66,9 @@ function formatDateTooltip(date) {
 }
 
 export default function AreaChart({
-  ratingStats,
-  rankChart,
+  playerStats,
 }: {
-  ratingStats?: [];
-  rankChart?: [];
+  playerStats: PlayerStatsDTO;
 }) {
   const [colors, setColors] = useState<string[]>([]);
   const [font, setFont] = useState('');
@@ -137,7 +136,7 @@ export default function AreaChart({
 
   let labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
   let dataForGraph: number[] = labels.map(() => Math.ceil(Math.random() * 100));
-  let tournamentsTooltip: object[];
+  let entryTooltip: object[];
 
   const formatDate = (date = new Date()) => {
     const year = date.toLocaleString('default', { year: 'numeric' });
@@ -149,47 +148,47 @@ export default function AreaChart({
     return [year, month, day].join('-');
   };
 
-  if (ratingStats) {
-    labels = ratingStats.map((day) => {
-      return new Date(day[0].timestamp).toLocaleDateString(
+  if (playerStats && playerStats.ratingChart) {
+    labels = playerStats.ratingChart.chartData.map((day) => {
+      return new Date(day[0].timestamp!).toLocaleDateString(
         'en-US',
         dateFormatOptions
       );
     });
 
-    tournamentsTooltip = ratingStats.map((day) => {
-      let matches = [];
-      day.forEach((match) => {
-        match.timestamp = new Date(match.timestamp).toLocaleDateString(
+    entryTooltip = playerStats.ratingChart.chartData.map((day) => {
+      let entries = [];
+      day.forEach((entry) => {
+        entry.timestamp = new Date(entry.timestamp).toLocaleDateString(
           'en-US',
           dateFormatOptions
         );
 
-        return matches.push(match);
+        return entries.push(entry);
       });
-      return matches;
+      return entries;
     });
-    dataForGraph = ratingStats.map((day) => {
-      if (day.length > 1) {
+    dataForGraph = playerStats.ratingChart.chartData.map((dataPoints) => {
+      if (dataPoints.length > 1) {
         return {
-          x: new Date(day[day.length - 1].timestamp),
-          y: day[day.length - 1].ratingAfter.toFixed(0),
+          x: new Date(dataPoints[dataPoints.length - 1].timestamp!),
+          y: dataPoints[dataPoints.length - 1].ratingAfter.toFixed(0),
         };
       }
 
-      if (day.length === 1) {
+      if (dataPoints.length === 1) {
         return {
-          x: new Date(day[0].timestamp),
-          y: day[0].ratingAfter.toFixed(0),
+          x: new Date(dataPoints[0].timestamp!),
+          y: dataPoints[0].ratingAfter.toFixed(0),
         };
       }
     });
   }
 
-  /* if (rankChart) {
-    labels = rankChart.map((match) => match.matchName);
-    dataForGraph = rankChart.map((match) => match.rank.toFixed(0));
-  } */
+  if (playerStats.ratingChart?.chartData) {
+    labels = playerStats.ratingChart.chartData.flatMap((dataPoint) => dataPoint.flatMap((dp => dp.name)));
+    dataForGraph = playerStats.ratingChart.chartData.flatMap((dataPoint) => dataPoint.flatMap((dp => dp.ratingAfter)));
+  }
 
   const data = {
     labels,
@@ -221,21 +220,24 @@ export default function AreaChart({
       return;
     }
 
-    if (tooltip.body && ratingStats) {
+    if (tooltip.body && playerStats) {
       const tooltipTitle = tooltip.title[0].split(',', 2).join(',');
       const matchesLines = new Set(
-        ...tournamentsTooltip.filter((day) => day[0].timestamp == tooltipTitle)
+        ...entryTooltip.filter((day) => day[0].timestamp == tooltipTitle)
       );
 
       /* TOOLTIP HEADER */
       const header = document.createElement('div');
       header.className = styles.header;
+
       const headerProperty = document.createElement('span');
       headerProperty.className = styles.headerProperty;
       headerProperty.innerHTML = 'Rating:';
+
       const headerValue = document.createElement('span');
       headerValue.className = styles.headerValue;
       headerValue.innerHTML = tooltip.body[0].lines[0];
+      
       const headerDate = document.createElement('span');
       headerDate.className = styles.headerDate;
       matchesLines.forEach((match) => (headerDate.innerHTML = match.timestamp));
@@ -262,8 +264,8 @@ export default function AreaChart({
           match.ratingChange.toFixed(1) > 0
             ? styles.gain
             : match.ratingChange.toFixed(1) < 0
-            ? styles.loss
-            : ''
+              ? styles.loss
+              : ''
         );
 
         li.appendChild(matchName);
@@ -313,7 +315,7 @@ export default function AreaChart({
       tooltip: {
         enabled: false,
         position: 'nearest',
-        external: ratingStats ? externalTooltipHandler : null,
+        external: playerStats ? externalTooltipHandler : null,
       },
       customCanvasBackgroundColor: {
         color: canvasColor[0]

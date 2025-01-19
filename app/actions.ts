@@ -1,13 +1,20 @@
 'use server';
 
+import { getSessionData } from '@/app/actions/session';
+import { apiWrapperConfiguration } from '@/lib/api';
 import {
   LeaderboardsQuerySchema,
   TournamentsQuerySchema,
-  UserpageQuerySchema
+  UserpageQuerySchema,
 } from '@/lib/types';
+import {
+  MatchesWrapper,
+  PlayersWrapper,
+  TournamentsWrapper,
+  Ruleset,
+} from '@osu-tournament-rating/otr-api-client';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { getSessionData } from '@/app/actions/session';
 
 export async function resetLeaderboardFilters(string: string) {
   return redirect(string);
@@ -131,13 +138,13 @@ export async function fetchLeaderboard(params: {}) {
     queryCheck.data.type === 'global'
       ? (backendObject.chartType = 0)
       : queryCheck.data.type === 'country'
-      ? (backendObject.chartType = 1)
-      : null;
+        ? (backendObject.chartType = 1)
+        : null;
   }
 
   /* Check page number */
   if (queryCheck.data.page) {
-    backendObject.page = queryCheck.data.page - 1;
+    backendObject.page = queryCheck.data.page;
   }
 
   /* Assign page size */
@@ -253,6 +260,11 @@ export async function fetchDashboard(params: {}) {
 }
 
 export async function fetchTournamentsPage(params: {}) {
+  const session = await getSessionData();
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
   const { page } = params;
 
   const queryCheck = await TournamentsQuerySchema.safeParse({
@@ -263,56 +275,57 @@ export async function fetchTournamentsPage(params: {}) {
     return console.log('error');
   }
 
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/tournaments`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+
+  let data = await wrapper.list({
+    page: 1,
+    pageSize: 30,
+    verified: false,
   });
 
-  data = await data.json();
-
-  return data;
+  return data.result;
 }
 
-export async function fetchTournamentPage(tournament: string | number) {
-  let data = await fetch(
-    `${process.env.REACT_APP_API_URL}/tournaments/${tournament}?unfiltered=true`, //! to remove unfiltered
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+export async function fetchTournamentPage(tournamentId: number | string) {
+  const session = await getSessionData();
 
-  data = await data.json();
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
 
-  return data;
-}
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
 
-export async function fetchMatchPage(match: string | number) {
-  let data = await fetch(`${process.env.REACT_APP_API_URL}/matches/${match}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  let data = await wrapper.get({
+    id: tournamentId as number,
+    verified: false,
   });
 
-  data = await data.json();
+  return data.result;
+}
 
-  return data;
+export async function fetchMatchPage(matchId: string | number) {
+  const session = await getSessionData();
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
+  const wrapper = new MatchesWrapper(apiWrapperConfiguration);
+
+  let data = await wrapper.get({
+    id: matchId as number,
+  });
+
+  return data.result;
 }
 
 export async function fetchUserPageTitle(player: string | number) {
   const session = await getSessionData();
 
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/players/${player}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  let res = await fetch(`${process.env.REACT_APP_API_URL}/players/${player}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+  });
 
   if (res?.ok) {
     res = await res.json();
@@ -320,59 +333,6 @@ export async function fetchUserPageTitle(player: string | number) {
   }
 
   return null;
-}
-
-export async function fetchUserPage(player: string | number, params) {
-  const session = await getSessionData();
-
-  const osuMode =
-    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
-
-  let urlStringObject = {
-    ruleset: osuMode,
-  };
-
-  if (session?.playerId) {
-    urlStringObject.comparerId = session?.playerId;
-  }
-
-  const queryCheck = await UserpageQuerySchema.safeParse({
-    time: params?.time,
-  });
-
-  // put time on the url only if the value is not undefined and without errors
-  if (queryCheck.success && queryCheck.data.time) {
-    let minDate = new Date();
-    minDate.setDate(minDate.getDate() - params?.time);
-    let year = minDate.getFullYear();
-    let month = String(minDate.getMonth() + 1).padStart(2, '0');
-    let day = String(minDate.getDate()).padStart(2, '0');
-    minDate = `${year}-${month}-${day}`;
-
-    urlStringObject.dateMin = minDate;
-  }
-
-  const urlParams = decodeURIComponent(
-    new URLSearchParams(urlStringObject).toString()
-  );
-
-  let res = await fetch(
-    `${process.env.REACT_APP_API_URL}/stats/${player}?${urlParams}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
-    }
-  );
-
-  if (!res?.ok) {
-    return res?.status === 404 ? notFound() : redirect('/');
-  }
-
-  res = await res.json();
-
-  return res;
 }
 
 export async function paginationParamsToURL(params: {}) {
@@ -442,4 +402,63 @@ export async function fetchSearchData(prevState: any, formData: FormData) {
     status: 'success',
     search: searchData,
   };
+}
+
+export async function fetchTournamentsForAdminPage(params: {}) {
+  const session = await getSessionData();
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+
+  let data = await wrapper.list({
+    page: 1,
+    pageSize: 30,
+    verified: false,
+  });
+
+  return data.result;
+}
+
+export async function adminPanelSaveVerified(params) {
+  const session = await getSessionData();
+
+  /* IF USER IS UNAUTHORIZED REDIRECT TO HOMEPAGE */
+  if (!session.id) return redirect('/');
+
+  const body = [
+    {
+      path: '/verificationStatus',
+      op: 'replace',
+      value: params.status,
+    },
+    {
+      path: '/rejectionReason',
+      op: 'replace',
+      value: 0,
+    },
+  ];
+
+  let data = await fetch(
+    `${process.env.REACT_APP_API_URL}/${params.path}/${params.id}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
+
+  if (!data.ok) {
+    return {
+      error: { statusText: data.statusText, status: data.status },
+    };
+  }
+
+  data = await data.json();
+
+  return data;
 }

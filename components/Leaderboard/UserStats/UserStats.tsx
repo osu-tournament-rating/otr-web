@@ -1,7 +1,7 @@
 'use client';
 
 import AreaChart from '@/components/Charts/AreaChart/AreaChart';
-import FormattedNumber from '@/components/FormattedNumber/FormattedNumber';
+import FormattedNumber from '@/components/FormattedData/FormattedNumber';
 import styles from './UserStats.module.css';
 
 export default function UserStats({ data }: { data: {} }) {

@@ -6,13 +6,17 @@ import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
 import Toast from '@/components/Toast/Toast';
 import { isAdmin } from '@/lib/api';
-import { rulesetIcons } from '@/lib/types';
 import { keysOf } from '@/util/forms';
-import { Ruleset, TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  Ruleset,
+  TournamentSubmissionDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
+import { RulesetMetadata } from '@/lib/enums';
+import { useUser } from '@/util/hooks';
 
 const formId = 'tournament-submission-form';
 const formFieldNames = keysOf<TournamentSubmissionDTO>();
@@ -27,9 +31,14 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
   );
 }
 
-export default function SubmissionForm({ userScopes }: { userScopes: Array<string> }) {
-  const [formState, formAction] = useFormState(tournamentSubmissionFormAction, { success: false, message: '', errors: {} });
-  const userIsAdmin = isAdmin(userScopes);
+export default function SubmissionForm() {
+  const [formState, formAction] = useFormState(tournamentSubmissionFormAction, {
+    success: false,
+    message: '',
+    errors: {},
+  });
+  const formRef = useRef<HTMLFormElement>(null);
+  const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -69,18 +78,23 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <FormInputError message={formState.errors.name} />
                   <input
                     required
-                    type='text'
+                    type="text"
                     name={formFieldNames.name}
                     placeholder={'osu! World Cup 2023'}
                   />
                 </div>
                 {/* Abbreviation */}
-                <div className={styles.field} id={styles[formFieldNames.abbreviation]}>
-                  <label htmlFor={formFieldNames.abbreviation}>Abbreviation</label>
+                <div
+                  className={styles.field}
+                  id={styles[formFieldNames.abbreviation]}
+                >
+                  <label htmlFor={formFieldNames.abbreviation}>
+                    Abbreviation
+                  </label>
                   <FormInputError message={formState.errors.abbreviation} />
                   <input
                     required
-                    type='text'
+                    type="text"
                     name={formFieldNames.abbreviation}
                     placeholder={'OWC2023'}
                   />
@@ -89,11 +103,13 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
               <div className={styles.row}>
                 {/* Forum post URL */}
                 <div className={styles.field}>
-                  <label htmlFor={formFieldNames.forumUrl}>Forum post link</label>
+                  <label htmlFor={formFieldNames.forumUrl}>
+                    Forum post link
+                  </label>
                   <FormInputError message={formState.errors.forumUrl} />
                   <input
                     required
-                    type='url'
+                    type="url"
                     name={formFieldNames.forumUrl}
                     placeholder={'osu.ppy.sh/community/forums/topics/1234567'}
                   />
@@ -105,12 +121,26 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <label htmlFor={formFieldNames.ruleset}>Ruleset</label>
                   <FormInputError message={formState.errors.ruleset} />
                   <select required name={formFieldNames.ruleset}>
-                    <option value={Ruleset.Osu}>{rulesetIcons[Ruleset.Osu].alt}</option>
-                    <option value={Ruleset.Taiko}>{rulesetIcons[Ruleset.Taiko].alt}</option>
-                    <option value={Ruleset.Catch}>{rulesetIcons[Ruleset.Catch].alt}</option>
-                    {userIsAdmin && (<option value={Ruleset.ManiaOther}>{rulesetIcons[Ruleset.ManiaOther].alt}</option>)}
-                    <option value={Ruleset.Mania4k}>{rulesetIcons[Ruleset.Mania4k].alt}</option>
-                    <option value={Ruleset.Mania7k}>{rulesetIcons[Ruleset.Mania7k].alt}</option>
+                    <option value={Ruleset.Osu}>
+                      {RulesetMetadata[Ruleset.Osu].alt}
+                    </option>
+                    <option value={Ruleset.Taiko}>
+                      {RulesetMetadata[Ruleset.Taiko].alt}
+                    </option>
+                    <option value={Ruleset.Catch}>
+                      {RulesetMetadata[Ruleset.Catch].alt}
+                    </option>
+                    {userIsAdmin && (
+                      <option value={Ruleset.ManiaOther}>
+                        {RulesetMetadata[Ruleset.ManiaOther].alt}
+                      </option>
+                    )}
+                    <option value={Ruleset.Mania4k}>
+                      {RulesetMetadata[Ruleset.Mania4k].alt}
+                    </option>
+                    <option value={Ruleset.Mania7k}>
+                      {RulesetMetadata[Ruleset.Mania7k].alt}
+                    </option>
                   </select>
                 </div>
                 {/* Rank restriction */}
@@ -141,10 +171,12 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                       </p>
                     </InfoIcon>
                   </label>
-                  <FormInputError message={formState.errors.rankRangeLowerBound} />
+                  <FormInputError
+                    message={formState.errors.rankRangeLowerBound}
+                  />
                   <input
                     required
-                    type='number'
+                    type="number"
                     name={formFieldNames.rankRangeLowerBound}
                     min={1}
                     placeholder={'1000'}
@@ -208,7 +240,9 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   <textarea
                     required
                     name={formFieldNames.ids}
-                    placeholder={'https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249'}
+                    placeholder={
+                      'https://osu.ppy.sh/mp/111555364\nhttps://osu.ppy.sh/mp/111534249'
+                    }
                     cols={30}
                     rows={6}
                   ></textarea>
@@ -257,7 +291,8 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
                   onChange={(e) => setRulesAccepted(e.target.checked)}
                 />
                 <span onClick={() => setRulesAccepted((prev) => !prev)}>
-                  I have read the rules and understand that abusing tournament submission can lead to a restriction
+                  I have read the rules and understand that abusing tournament
+                  submission can lead to a restriction
                 </span>
               </div>
               <SubmitButton rulesAccepted={rulesAccepted} />
@@ -265,7 +300,9 @@ export default function SubmissionForm({ userScopes }: { userScopes: Array<strin
           </div>
         </Form>
       </div>
-      {showToast && (<Toast success={formState.success} message={formState.message}/>)}
+      {showToast && (
+        <Toast success={formState.success} message={formState.message} />
+      )}
     </>
   );
 }

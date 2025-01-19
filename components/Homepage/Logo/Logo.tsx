@@ -23,8 +23,8 @@ export default function Logo() {
           activeTheme === 'dark'
             ? fullLogoDark
             : activeTheme === 'light'
-            ? fullLogo
-            : ''
+              ? fullLogo
+              : ''
         }
         alt={'o!TR logo'}
         fill

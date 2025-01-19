@@ -1,0 +1,44 @@
+.enumContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+
+  .icon {
+    height: 0.8rem;
+    width: 0.8rem;
+  }
+
+  .individualItem {
+    cursor: pointer;
+  }
+
+  &.processingStatus {
+    color: hsla(var(--gray-400));
+
+    .icon {
+      fill: hsla(var(--gray-400));
+    }
+  }
+
+  &.rejectionReason {
+    color: hsla(var(--red-400));
+
+    .icon {
+      fill: hsla(var(--red-400));
+    }
+  }
+
+  &.warningFlag {
+    color: hsla(var(--yellow-400));
+
+    .icon {
+      fill: hsla(var(--yellow-400));
+    }
+  }
+}

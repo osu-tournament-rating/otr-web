@@ -1,0 +1,14 @@
+.adminLayout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'nav content';
+  gap: var(--main-padding);
+}
+
+.navigationContainer {
+  width: fit-content;
+  height: min-content;
+  grid-area: nav;
+  position: sticky;
+  top: var(--main-padding);
+}

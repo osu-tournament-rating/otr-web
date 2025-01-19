@@ -160,8 +160,8 @@
   height: 100%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(farthest-side, #444 94%, #4440) top/4px 4px
-      no-repeat,
+  background:
+    radial-gradient(farthest-side, #444 94%, #4440) top/4px 4px no-repeat,
     conic-gradient(#4440 30%, #444);
   -webkit-mask: radial-gradient(farthest-side, #4440 calc(100% - 4px), #444 0);
   animation: l13 1s infinite linear;
@@ -171,8 +171,8 @@
 }
 
 [data-theme='dark'] .bar .icon span[aria-saving='true'] {
-  background: radial-gradient(farthest-side, #ddd 94%, #ddd0) top/4px 4px
-      no-repeat,
+  background:
+    radial-gradient(farthest-side, #ddd 94%, #ddd0) top/4px 4px no-repeat,
     conic-gradient(#ddd0 30%, #ddd);
   -webkit-mask: radial-gradient(farthest-side, #ddd0 calc(100% - 4px), #ddd 0);
   animation: l13 1s infinite linear;

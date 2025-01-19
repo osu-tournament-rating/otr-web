@@ -1,4 +1,5 @@
 'use client';
+
 import { useUser } from '@/util/hooks';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -10,7 +11,7 @@ export default function Routes() {
 
   return (
     <div className={styles.routes}>
-      {user?.osuId && (
+      {user && (
         <Link
           href={'/dashboard'}
           className={pathname === '/dashboard' ? styles.active : ''}
@@ -30,7 +31,7 @@ export default function Routes() {
       >
         Tournaments
       </Link>
-      {user?.osuId && (
+      {user && (
         <Link
           href={'/submit'}
           className={pathname === '/submit' ? styles.active : ''}

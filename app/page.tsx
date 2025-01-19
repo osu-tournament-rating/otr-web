@@ -12,7 +12,7 @@ import styles from './page.module.css';
 
 export default function Home() {
   return (
-    <main className={styles.main}>
+    <div className={styles.main}>
       <div className={styles.row}>
         <div className={styles.box}>
           <Balancer ratio={0.4}>
@@ -102,6 +102,6 @@ export default function Home() {
         </div>
         <div className={styles.decoration}></div>
       </div>
-    </main>
+    </div>
   );
 }

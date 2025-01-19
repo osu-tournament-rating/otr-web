@@ -1,32 +1,71 @@
-import TournamentsList from '@/components/Tournaments/Lists/TournamentsList';
-import styles from './page.module.css';
+import TournamentListFilter from '@/components/Tournaments/TournamentList/Filter/TournamentListFilter';
+import type { Metadata } from 'next';
+import {
+  buildTournamentListFilter,
+  getTournamentList,
+} from '@/app/actions/tournaments';
+import TournamentList from '@/components/Tournaments/TournamentList/TournamentList';
+import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
+import {
+  PaginationProps,
+  SessionData,
+  TournamentListFilter as TournamentListFilterType,
+} from '@/lib/types';
+import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext';
+import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
+import AdminViewProvider from '@/components/Context/AdminViewContext';
+import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
+import { isAdmin } from '@/lib/api';
+import { getSessionData } from '@/app/actions/session';
 
 export const revalidate = 60;
-
-import { fetchTournamentsPage } from '@/app/actions';
-import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Tournaments',
 };
 
-export default async function page({
+const defaultFilter: TournamentListFilterType = {
+  verified: false,
+  sort: TournamentQuerySortType.StartTime,
+  descending: true,
+};
+
+const initialPagination: PaginationProps = {
+  page: 1,
+  pageSize: 40,
+};
+
+export default async function Page({
   searchParams,
 }: {
-  searchParams: URLSearchParams;
+  searchParams: Promise<{}>;
 }) {
-  const tournamentsData = await fetchTournamentsPage(searchParams);
+  const requestParams = await buildTournamentListFilter(
+    await searchParams,
+    defaultFilter
+  );
+  const tournaments = await getTournamentList({
+    ...requestParams,
+    ...initialPagination,
+  });
+
+  const isAdminUser = isAdmin(
+    ((await getSessionData()) as SessionData).user?.scopes
+  );
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <h1 className={styles.title}>All tournaments</h1>
-        <TournamentsList
-          params={searchParams}
-          data={tournamentsData}
-          /* data={tournamentsData.results} */ //! .results is for the new pagination system
-        />
-      </div>
-    </main>
+    <div className={'content'}>
+      <h1>All tournaments</h1>
+      <AdminViewProvider>
+        {isAdminUser && <AdminViewToggle />}
+        <TournamentListFilterProvider
+          defaultFilter={defaultFilter}
+          initialFilter={requestParams}
+        >
+          <TournamentListFilter />
+          <TournamentList tournaments={tournaments} {...initialPagination} />
+        </TournamentListFilterProvider>
+      </AdminViewProvider>
+    </div>
   );
 }

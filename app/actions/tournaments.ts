@@ -1,16 +1,28 @@
 'use server';
 
-import { isHttpValidationProblemDetails } from "@/lib/api";
-import { apiWrapperConfiguration } from "@/lib/auth";
-import { BeatmapLinkPattern, MatchLinkPattern } from "@/lib/regex";
-import { TournamentSubmissionFormSchema } from "@/lib/schemas";
-import { FormState } from "@/lib/types";
-import { extractFormData } from "@/util/forms";
-import { TournamentSubmissionDTO, TournamentsWrapper } from "@osu-tournament-rating/otr-api-client";
-import { ZodError } from "zod";
+import {
+  apiWrapperConfiguration,
+  isHttpValidationProblemDetails,
+} from '@/lib/api';
+import { BeatmapLinkPattern, MatchLinkPattern } from '@/lib/regex';
+import {
+  TournamentsListFilterSchema,
+  TournamentSubmissionFormSchema,
+} from '@/lib/schemas';
+import { FormState, TournamentListFilter } from '@/lib/types';
+import { extractFormData } from '@/util/forms';
+import {
+  OperationType,
+  TournamentDTO,
+  TournamentsGetRequestParams,
+  TournamentsListRequestParams,
+  TournamentSubmissionDTO,
+  TournamentsWrapper,
+} from '@osu-tournament-rating/otr-api-client';
+import { ZodError } from 'zod';
 
 /**
- * Handles parsing, submiting, and handling errors for tournament submission data
+ * Handles parsing, submitting, and handling errors for tournament submission data
  * @param _previousState Previous form state
  * @param formData Form data
  * @returns The state of the form after performing the action
@@ -21,8 +33,8 @@ export async function tournamentSubmissionFormAction(
 ): Promise<FormState<TournamentSubmissionDTO>> {
   const result: FormState<TournamentSubmissionDTO> = {
     success: false,
-    message: "",
-    errors: {}
+    message: '',
+    errors: {},
   };
 
   try {
@@ -65,24 +77,89 @@ export async function tournamentSubmissionFormAction(
     const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
     await wrapper.create({ body: parsedForm });
 
-    result.message = "Successfully processed your submission. Thank you for contributing!";
+    result.message =
+      'Successfully processed your submission. Thank you for contributing!';
     result.success = true;
   } catch (err) {
-    result.message = "Submission was not successful.";
+    result.message = 'Submission was not successful.';
     result.success = false;
 
     // Handle parsing errors
     if (err instanceof ZodError) {
       Object.assign(result.errors, err.flatten().fieldErrors);
-      result.message += " There was a problem processing your submission.";
+      result.message += ' There was a problem processing your submission.';
     }
 
     // Handle API errors
     if (isHttpValidationProblemDetails(err)) {
       Object.assign(result.errors, err.errors);
-      result.message += " The server rejected your submission.";
+      result.message += ' The server rejected your submission.';
     }
   }
+
+  return result;
+}
+
+/**
+ * Get a single tournament with complete data
+ * @param params see {@link TournamentsGetRequestParams}
+ */
+export async function getTournament(params: TournamentsGetRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.get(params);
+
+  return result;
+}
+
+export async function buildTournamentListFilter(
+  queryParams: object,
+  defaultFilter?: TournamentListFilter
+) {
+  const parsed = TournamentsListFilterSchema.safeParse(
+    Object.assign({}, defaultFilter, queryParams)
+  );
+
+  return parsed.success
+    ? (parsed.data as TournamentListFilter)
+    : (defaultFilter ?? {});
+}
+
+export async function getTournamentList(params: TournamentsListRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.list(params);
+
+  return result;
+}
+
+/**
+ * Updates a tournament
+ * @param id Tournament id
+ * @param prop Property to update
+ * @param value New value for the property
+ */
+export async function patchTournamentData<K extends keyof TournamentDTO>({
+  id,
+  path,
+  value,
+}: {
+  id: number;
+  path: K;
+  value: TournamentDTO[K];
+}) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.update({
+    id,
+    body: [
+      {
+        // Client code requires supplying the operation type, but it has no effect
+        // 'op' however is required and needs to be a valid operation type
+        operationType: OperationType.Replace,
+        op: 'replace',
+        path,
+        value,
+      },
+    ],
+  });
 
   return result;
 }

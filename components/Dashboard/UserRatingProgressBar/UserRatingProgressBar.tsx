@@ -29,10 +29,10 @@ export default function UserRatingProgressBar({ data }: { data: {} }) {
                   index + 1 === currentTier
                     ? { width: `${data.subTierFillPercentage * 100}%` }
                     : index + 1 > currentTier
-                    ? { width: '0%' }
-                    : index + 1 < currentTier
-                    ? { width: `100%` }
-                    : null
+                      ? { width: '0%' }
+                      : index + 1 < currentTier
+                        ? { width: `100%` }
+                        : null
                 }
               />
             </div>

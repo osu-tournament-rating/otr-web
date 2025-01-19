@@ -1,0 +1,23 @@
+.gameContainer {
+  background-color: hsl(var(--background-content-childs-hsl));
+  padding: 1rem;
+}
+
+.gameHeader {
+  display: grid;
+
+  .beatmapCover {
+    border-radius: var(--border-radius);
+  }
+}
+
+.scoresContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.gameFooter {
+  display: grid;
+  justify-items: center;
+}

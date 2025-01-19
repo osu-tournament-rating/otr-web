@@ -1,44 +1,30 @@
-import { fetchMatchPage } from '@/app/actions';
-import InfoContainer from '@/components/Tournaments/InfoContainer/InfoContainer';
-import { dateFormatOptions } from '@/lib/types';
-import LinkIcon from '@/public/icons/out.svg';
-import Link from 'next/link';
-import styles from './page.module.css';
+import { getMatch } from '@/app/actions/matches';
+import GamesList from '@/components/Games/List/GamesList';
+import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
 
-export default async function page({
-  params: { id },
+export default async function Page({
+  params,
 }: {
-  params: { id: string | number };
+  params: Promise<{ id: number }>;
 }) {
-  const matchData = await fetchMatchPage(id);
-
-  console.log(matchData);
+  const match = await getMatch({ id: (await params).id, verified: false });
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            <span>Missing</span>
-            <span className={styles.score}>6 - 1</span>
-            <span>Missing</span>
-            <Link href={'#'} className={styles.icon} target="_blank">
-              <LinkIcon className="fill" />
-            </Link>
-          </h1>
-          <div className={styles.date}>
-            {new Date(matchData?.startTime).toLocaleDateString(
-              'en-US',
-              dateFormatOptions.tournaments.header
-            )}
-          </div>
-        </div>
-        <InfoContainer
-          data={matchData}
-          headerText={'Tournament information'}
-          showHeader={true}
-        />
-      </div>
-    </main>
+    <div className={'content'}>
+      <TournamentPageHeader
+        forumUrl={`https://osu.ppy.sh/mp/${match.osuId}`}
+        startDate={match.startTime ?? ''}
+        endDate={match.endTime ?? ''}
+      >
+        <h1>{match.name}</h1>
+      </TournamentPageHeader>
+      <GamesList
+        data={match.games.toSorted(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )}
+        players={match.players}
+      />
+    </div>
   );
 }
