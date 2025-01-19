@@ -38,44 +38,41 @@ export async function tournamentSubmissionFormAction(
   };
 
   try {
-    const parsedForm = TournamentSubmissionFormSchema.parse(
-      extractFormData<TournamentSubmissionDTO>(formData, {
-        ruleset: (value) => parseInt(value),
-        ids: (value) =>
-          value
-            // Split at new lines
-            .split(/\r?\n/g)
-            // Filter out empty strings
-            .filter((s) => s.trim() !== '')
-            .map((s) => {
-              // Trim whitespace
-              s = s.trim();
+    const parsedForm = TournamentSubmissionFormSchema.parse(extractFormData<TournamentSubmissionDTO>(formData, {
+      ruleset: value => parseInt(value),
+      ids: value => value
+        // Split at new lines
+        .split(/\r?\n/g)
+        // Filter out empty strings
+        .filter(s => s.trim() !== '')
+        .map(s => {
+          // Trim whitespace
+          s = s.trim();
 
-              // If the string is parseable to an int as is, do so
-              if (!isNaN(parseFloat(s))) {
-                return parseFloat(s);
-              }
+          // If the string is parseable to an int as is, do so
+          if (/^\d+$/.test(s)) {
+            return parseFloat(s);
+          }
+          
+          // Try to extract the id using regex
+          return MatchLinkPattern.test(s) 
+          ? parseFloat(s.substring(s.lastIndexOf('/') + 1)) 
+          : s;
+        }),
+      beatmapIds: value => value
+        .split(/\r?\n/g)
+        .filter(s => s.trim() !== '')
+        .map(s => {
+          s = s.trim();
 
-              // Try to extract the id using regex
-              const match = MatchLinkPattern.exec(s);
-              return match ? parseFloat(match[1]) : s;
-            }),
-        beatmapIds: (value) =>
-          value
-            .split(/\r?\n/g)
-            .filter((s) => s.trim() !== '')
-            .map((s) => {
-              s = s.trim();
+          if (/^\d+$/.test(s)) {
+            return parseFloat(s);
+          }
 
-              if (!isNaN(parseFloat(s))) {
-                return parseFloat(s);
-              }
-
-              const match = BeatmapLinkPattern.exec(s);
-              return match ? parseFloat(match[1]) : s;
-            }),
-      })
-    );
+          const match = BeatmapLinkPattern.exec(s);
+          return match ? parseFloat(match[1]) : s;
+        })
+    }));
 
     const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
     await wrapper.create({ body: parsedForm });
