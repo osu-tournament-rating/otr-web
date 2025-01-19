@@ -23,7 +23,7 @@ import {
 import { FC, SVGProps } from 'react';
 
 /** Basic enum metadata */
-type EnumMetadata = {
+export type EnumMetadata = {
   text: string;
   description: string;
 };
@@ -52,7 +52,7 @@ interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
  * @template T Enumeration type
  * @template M Metadata type
  */
-interface IEnumHelper<T extends number, M extends EnumMetadata = EnumMetadata>
+export interface IEnumHelper<T extends number, M extends EnumMetadata = EnumMetadata>
   extends IEnumHelperBase<T, M> {
   /**
    * Gets the metadata describing a given enum value
@@ -85,7 +85,7 @@ const defaultEnumHelper = <
  * @template T Bitwise enumeration type
  * @template M Metadata type
  */
-interface IBitwiseEnumHelper<
+export interface IBitwiseEnumHelper<
   T extends number,
   M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
@@ -189,6 +189,7 @@ const noneEnumMetadata: EnumMetadata = {
   description: 'No description',
 };
 
+// TODO: Refactor in favor of 'RulesetEnumHelper'
 /** Stylistic metadata for each {@link Ruleset} */
 export const RulesetMetadata: {
   [key in Ruleset]: RulesetMetadata;
@@ -280,6 +281,37 @@ export const VerificationStatusMetadata: {
     className: 'verified',
     text: 'Verified',
     displayInDropdown: true,
+  },
+};
+
+export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [Ruleset.Osu]: {
+      text: 'Standard',
+      description: '',
+    },
+    [Ruleset.Taiko]: {
+      text: 'Taiko',
+      description: '',
+    },
+    [Ruleset.Catch]: {
+      text: 'Catch',
+      description: '',
+    },
+    [Ruleset.ManiaOther]: {
+      text: 'Mania',
+      description: '',
+    },
+    [Ruleset.Mania4k]: {
+      text: 'Mania 4K',
+      description: '',
+    },
+    [Ruleset.Mania7k]: {
+      text: 'Mania 7K',
+      description: '',
+    },
   },
 };
 

@@ -77,13 +77,6 @@ export function isHttpValidationProblemDetails(
   );
 }
 
-/** Type guard for determining if a {@link TournamentCompactDTO} is a full {@link TournamentDTO} */
-export function isFullTournament(
-  tournament: TournamentCompactDTO
-): tournament is TournamentDTO {
-  return 'matches' in tournament;
-}
-
 /** Denotes if a list of scopes contains the admin scope */
 export function isAdmin(scopes?: string[]) {
   return (scopes ?? []).includes(Roles.Admin);

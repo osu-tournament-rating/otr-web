@@ -15,7 +15,10 @@ import {
   VerificationStatusMetadata,
 } from '@/lib/enums';
 import RejectionReason from '@/components/Enums/RejectionReason';
-import { Attributes } from 'react';
+import { Attributes, useState } from 'react';
+import EditIcon from '@/public/icons/Edit.svg';
+import Modal from '@/components/Modal/Modal';
+import ScoreAdminView from '@/components/Scores/AdminView/ScoreAdminView';
 
 export default function GameScore({
   key,
@@ -27,6 +30,8 @@ export default function GameScore({
   data: GameScoreDTO;
   player?: PlayerCompactDTO;
 } & Pick<Attributes, 'key'>) {
+  const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
+
   return (
     <div
       key={key}
@@ -61,6 +66,18 @@ export default function GameScore({
         }
       </span>
       <RejectionReason itemType={'score'} value={data.rejectionReason} />
+      <EditIcon
+        className={'fill'}
+        style={{ height: '1rem', width: '1rem', cursor: 'pointer' }}
+        onClick={() => setIsAdminViewOpen(true)}
+      />
+      <Modal
+        title={`Editing Score Id: ${data.id}`}
+        isOpen={isAdminViewOpen}
+        setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
+      >
+        <ScoreAdminView data={data} />
+      </Modal>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { GameDTO, PlayerCompactDTO, Team } from '@osu-tournament-rating/otr-api-
 import styles from './GamesListItem.module.css';
 import clsx from 'clsx';
 import GamesListItemHeader from '@/components/Games/List/ListItem/GamesListItemHeader';
-import GameScore from '@/components/Games/List/Scores/GameScore';
+import GameScore from '@/components/Scores/GameScore';
 import GamesListItemFooter from '@/components/Games/List/ListItem/GamesListItemFooter';
 import { Attributes } from 'react';
 
