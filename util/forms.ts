@@ -25,3 +25,12 @@ export function extractFormData<T>(
 
   return result;
 }
+
+/**
+ * Performs a shallow equality comparison of two objects
+ * @param obj1 Object one
+ * @param obj2 Object two
+ */
+export const isObjectEqual = <T>(obj1: T, obj2: T) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+};
