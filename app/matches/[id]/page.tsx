@@ -1,6 +1,6 @@
 import { getMatch } from '@/app/actions/matches';
 import GamesList from '@/components/Games/List/GamesList';
-import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
+import MatchPageHeader from '@/components/Matches/PageContent/MatchPageHeader';
 
 export default async function Page({
   params,
@@ -11,13 +11,7 @@ export default async function Page({
 
   return (
     <div className={'content'}>
-      <TournamentPageHeader
-        forumUrl={`https://osu.ppy.sh/mp/${match.osuId}`}
-        startDate={match.startTime ?? ''}
-        endDate={match.endTime ?? ''}
-      >
-        <h1>{match.name}</h1>
-      </TournamentPageHeader>
+      <MatchPageHeader data={match} />
       <GamesList
         data={match.games.toSorted(
           (a, b) =>
