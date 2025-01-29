@@ -37,7 +37,6 @@ export default function SubmissionForm() {
     message: '',
     errors: {},
   });
-  const formRef = useRef<HTMLFormElement>(null);
   const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
