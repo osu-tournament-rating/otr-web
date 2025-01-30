@@ -1,12 +1,16 @@
 'use client';
 
-import { GameDTO, PlayerCompactDTO, Team } from '@osu-tournament-rating/otr-api-client';
-import styles from './GamesListItem.module.css';
-import clsx from 'clsx';
+import GamesListItemFooter from '@/components/Games/List/ListItem/GamesListItemFooter';
 import GamesListItemHeader from '@/components/Games/List/ListItem/GamesListItemHeader';
 import GameScore from '@/components/Scores/GameScore';
-import GamesListItemFooter from '@/components/Games/List/ListItem/GamesListItemFooter';
+import {
+  GameDTO,
+  PlayerCompactDTO,
+  Team,
+} from '@osu-tournament-rating/otr-api-client';
+import clsx from 'clsx';
 import { Attributes } from 'react';
+import styles from './GamesListItem.module.css';
 
 export default function GamesListItem({
   data,
@@ -21,32 +25,34 @@ export default function GamesListItem({
     nBlue = 0;
 
   return (
-    <div key={key} className={clsx('content', styles.gameContainer)}>
+    <div key={key} className={styles.gameContainer}>
       <GamesListItemHeader data={data} />
       <div className={styles.scoresContainer}>
-        {data.scores.toSorted((a, b) => a.team - b.team).map((score) => {
-          let row = 1;
-          switch (score.team) {
-            case Team.NoTeam:
-              row += nNoTeam++;
-              break;
-            case Team.Red:
-              row += nNoTeam + nRed++;
-              break;
-            case Team.Blue:
-              row += nNoTeam + nBlue++;
-              break;
-          }
+        {data.scores
+          .toSorted((a, b) => a.team - b.team)
+          .map((score) => {
+            let row = 1;
+            switch (score.team) {
+              case Team.NoTeam:
+                row += nNoTeam++;
+                break;
+              case Team.Red:
+                row += nNoTeam + nRed++;
+                break;
+              case Team.Blue:
+                row += nNoTeam + nBlue++;
+                break;
+            }
 
-          return (
-            <GameScore
-              row={row}
-              key={score.id}
-              data={score}
-              player={players.find((player) => player.id === score.playerId)}
-            />
-          );
-        })}
+            return (
+              <GameScore
+                row={row}
+                key={score.id}
+                data={score}
+                player={players.find((player) => player.id === score.playerId)}
+              />
+            );
+          })}
       </div>
       <GamesListItemFooter data={data} />
     </div>
