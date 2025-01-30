@@ -15,11 +15,17 @@ import clsx from 'clsx';
 import styles from './page.module.css';
 import { fetchPlayerStats } from '@/app/actions/players';
 
-export async function generateMetadata({
-  params: { id },
-}: {
-  params: { id: string | number };
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string | number }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
   let player = await fetchUserPageTitle(id);
 
   return {
@@ -29,13 +35,19 @@ export async function generateMetadata({
 
 export const revalidate = 60;
 
-export default async function page({
-  searchParams,
-  params: { id },
-}: {
-  searchParams: URLSearchParams;
-  params: { id: string | number };
-}) {
+export default async function page(
+  props: {
+    searchParams: Promise<URLSearchParams>;
+    params: Promise<{ id: string | number }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
+  const searchParams = await props.searchParams;
   const data = await fetchPlayerStats(id, searchParams);
 
   return (

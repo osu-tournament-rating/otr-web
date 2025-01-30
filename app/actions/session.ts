@@ -19,7 +19,7 @@ export async function getSession(params?: GetSessionParams) {
     const { req, res } = params;
     return await getIronSession<SessionData>(req, res, ironSessionOptions);
   }
-  return await getIronSession<SessionData>(cookies(), ironSessionOptions);
+  return await getIronSession<SessionData>(await cookies(), ironSessionOptions);
 }
 
 /**
@@ -36,8 +36,8 @@ export async function getSessionData(params?: GetSessionParams) {
  * @param cookie The desired cookie
  * @returns The value of the cookie
  */
-export async function getCookieValue(cookie: CookieNames) {
-  return cookies().get(cookie)?.value;
+export async function getCookieValue<T>(cookie: CookieNames) {
+  return (await cookies()).get(cookie)?.value as T | undefined;
 }
 
 /**
@@ -45,8 +45,8 @@ export async function getCookieValue(cookie: CookieNames) {
  * @param cookie The desired cookie
  * @param value The value to set
  */
-export async function setCookieValue(cookie: CookieNames, value: any) {
-  cookies().set(cookie, value, cookieOptions);
+export async function setCookieValue(cookie: CookieNames, value: unknown) {
+  (await cookies()).set(cookie, value as string, cookieOptions);
 }
 
 /**
@@ -54,8 +54,10 @@ export async function setCookieValue(cookie: CookieNames, value: any) {
  * @param cookieStore Optional cookies to use in place of {@link cookies}
  */
 export async function clearCookies(cookieStore?: ResponseCookies) {
+  cookieStore ??= await cookies();
+
   Object.keys(CookieNames).forEach((name) => {
-    (cookieStore ?? cookies()).delete(name);
+    cookieStore.delete(name);
   });
 }
 

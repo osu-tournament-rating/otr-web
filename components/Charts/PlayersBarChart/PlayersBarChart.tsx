@@ -244,7 +244,7 @@ export default function PlayersBarChart({ players }: { players: [] }) {
     }
   };
 
-  const chartRef: { current: any } = useRef();
+  const chartRef: { current: any } = useRef(undefined);
 
   return (
     <div className={styles.playersChart}>

@@ -12,7 +12,6 @@ import {
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
 import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext';
-import TournamentListHeader from '@/components/Tournaments/TournamentList/TournamentListHeader';
 import AdminViewProvider from '@/components/Context/AdminViewContext';
 import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
 import { isAdmin } from '@/lib/api';
@@ -38,8 +37,9 @@ const initialPagination: PaginationProps = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{}>;
+  searchParams: Promise<object>;
 }) {
+  console.log('why');
   const requestParams = await buildTournamentListFilter(
     await searchParams,
     defaultFilter

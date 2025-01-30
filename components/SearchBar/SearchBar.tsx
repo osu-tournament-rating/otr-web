@@ -6,8 +6,7 @@ import { useClickAway } from '@uidotdev/usehooks';
 import { AnimatePresence, motion, stagger } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useFormState } from 'react-dom';
+import { useEffect, useState, useActionState } from 'react';
 import styles from './SearchBar.module.css';
 
 const initialState = {
@@ -98,7 +97,7 @@ const highlightMatch = (text, query) => {
 
 export default function SearchBar({ setIsSeachBarOpen }) {
   const [searchValue, setSearchValue] = useState('');
-  const [state, formAction] = useFormState(fetchSearchData, initialState);
+  const [state, formAction] = useActionState(fetchSearchData, initialState);
   const [isLoading, setIsLoading] = useState(false);
 
   const ref = useClickAway(() => {

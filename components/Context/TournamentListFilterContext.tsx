@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { TournamentListFilter } from '@/lib/types';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * Creates a {@link TournamentListFilter} containing only values
@@ -55,18 +55,27 @@ export default function TournamentListFilterProvider({
   const [filter, setFilter] = useState<TournamentListFilter>(initialFilter);
 
   const pathName = usePathname();
+  const queryParams = useSearchParams();
   const router = useRouter();
 
   // Handle changes in the filter by pushing query params
   useEffect(() => {
-    const searchParams = new URLSearchParams(
+    const builtSearchParams = new URLSearchParams(
       buildFilter(filter, defaultFilter)
     );
 
-    searchParams.size
-      ? router.push(pathName + '?' + searchParams.toString(), { scroll: false })
-      : router.push(pathName, { scroll: false });
-  }, [pathName, router, filter, defaultFilter]);
+    if (queryParams.toString() === builtSearchParams.toString()) {
+      return;
+    }
+
+    if (builtSearchParams.size > 0) {
+      router.push(pathName + '?' + builtSearchParams.toString(), {
+        scroll: false,
+      });
+    } else {
+      router.push(pathName, { scroll: false });
+    }
+  }, [pathName, router, filter, defaultFilter, queryParams]);
 
   // Handle updating filter values and debouncing
   const setFilterValue = <K extends keyof TournamentListFilter>(

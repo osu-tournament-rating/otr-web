@@ -1,3 +1,5 @@
+'use server';
+
 import { GamesGetRequestParams, GamesWrapper } from '@osu-tournament-rating/otr-api-client';
 import { apiWrapperConfiguration } from '@/lib/api';
 
