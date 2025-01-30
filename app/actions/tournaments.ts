@@ -13,7 +13,7 @@ import { FormState, TournamentListFilter } from '@/lib/types';
 import { extractFormData } from '@/util/forms';
 import {
   OperationType,
-  TournamentDTO,
+  TournamentDTO, TournamentsAcceptPreVerificationStatusesRequestParams, TournamentsDeleteRequestParams,
   TournamentsGetRequestParams,
   TournamentsListRequestParams,
   TournamentSubmissionDTO,
@@ -111,6 +111,39 @@ export async function getTournament(params: TournamentsGetRequestParams) {
   return result;
 }
 
+/**
+ * Gets a list of tournaments
+ * @param params see {@link TournamentsListRequestParams}
+ */
+export async function getTournamentList(params: TournamentsListRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.list(params);
+
+  return result;
+}
+
+/**
+ * Deletes a tournament
+ * @param params see {@link TournamentsDeleteRequestParams}
+ */
+export async function deleteTournament(params: TournamentsDeleteRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.delete(params);
+
+  return result;
+}
+
+/**
+ * "Accepts" the pre-verification or pre-rejection of a tournament and all of its children
+ * @param params see {@link TournamentsAcceptPreVerificationStatusesRequestParams}
+ */
+export async function acceptTournamentPreStatus(params: TournamentsAcceptPreVerificationStatusesRequestParams) {
+  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
+  const { result } = await wrapper.acceptPreVerificationStatuses(params);
+
+  return result;
+}
+
 export async function buildTournamentListFilter(
   queryParams: object,
   defaultFilter?: TournamentListFilter
@@ -122,13 +155,6 @@ export async function buildTournamentListFilter(
   return parsed.success
     ? (parsed.data as TournamentListFilter)
     : (defaultFilter ?? {});
-}
-
-export async function getTournamentList(params: TournamentsListRequestParams) {
-  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-  const { result } = await wrapper.list(params);
-
-  return result;
 }
 
 /**
