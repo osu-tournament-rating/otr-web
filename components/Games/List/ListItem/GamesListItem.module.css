@@ -1,12 +1,13 @@
 .gameContainer {
   --padding: 1rem;
+  --inner-gap: 0.6rem;
 
   background-color: hsl(var(--background-content-childs-hsl));
   padding: var(--padding);
   border-radius: calc(var(--border-radius) + 0.5rem);
   display: flex;
   flex-flow: column;
-  gap: var(--padding);
+  gap: var(--inner-gap);
 }
 
 .gameHeader {
@@ -69,9 +70,16 @@
     width: 100%;
     flex: 1;
     display: flex;
-    flex-flow: column;
-    justify-content: flex-end;
+    flex-flow: row;
+    justify-content: flex-start;
     padding: var(--sections-padding);
+
+    & .column {
+      display: flex;
+      flex-flow: column;
+      justify-content: flex-end;
+      flex: 1;
+    }
 
     & .row {
       width: 100%;
@@ -80,12 +88,44 @@
       text-shadow: 0px 0px 0.6rem rgba(0, 0, 0, 0.3);
       display: inline-flex;
       gap: 0.8rem;
+      align-items: center;
 
-      &#title {
+      &:has(#title) {
+        justify-content: space-between;
+      }
+
+      & > #title {
         font-size: 1.8rem;
         font-weight: 700;
         letter-spacing: 0.063rem;
         color: #fff;
+      }
+    }
+    & .modsContainer {
+      display: flex;
+      flex-flow: row;
+      align-items: flex-end;
+      justify-content: flex-end;
+      max-width: 10rem;
+      height: 100%;
+
+      & .mod {
+        height: 100%;
+        max-height: 3.2rem;
+        position: relative;
+        aspect-ratio: 60/45;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+        transition: margin-left 0.2s ease-out;
+
+        &:not(:first-child) {
+          margin-left: -2.1rem;
+        }
+      }
+
+      &:hover {
+        & :not(:first-child) {
+          margin-left: -1rem;
+        }
       }
     }
   }

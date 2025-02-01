@@ -14,6 +14,10 @@ import {
   VerificationStatusMetadata,
 } from '@/lib/enums';
 import EditIcon from '@/public/icons/Edit.svg';
+import ModEZ from '@/public/icons/mods/ModEZ.svg?url';
+import ModFM from '@/public/icons/mods/ModFM.svg?url';
+import ModHD from '@/public/icons/mods/ModHD.svg?url';
+import ModHR from '@/public/icons/mods/ModHR.svg?url';
 import { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -54,12 +58,35 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
           <div className={styles.wrap}>{`${startDate} - ${endDate}`}</div>
         </div>
         <div className={styles.bottomSection}>
-          <div className={styles.row}>
-            <span>{data.beatmap.mapperName}</span>
-            <span>{`★${data.beatmap.sr.toFixed(2)} • ${data.beatmap.bpm}bpm`}</span>
+          <div className={styles.column}>
+            <div className={styles.row}>
+              <span>{data.beatmap.mapperName}</span>
+              <span>{`★${data.beatmap.sr.toFixed(2)} • ${data.beatmap.bpm}bpm`}</span>
+            </div>
+            <div className={styles.row}>
+              <span id={styles.title}>
+                {data.beatmap.title} [{data.beatmap.diffName}]
+              </span>
+            </div>
           </div>
-          <div className={styles.row} id={styles.title}>
-            {data.beatmap.title} [{data.beatmap.diffName}]
+          <div className={styles.modsContainer}>
+            {data.isFreeMod ? (
+              <div className={styles.mod}>
+                <Image src={ModFM} alt={'Mod'} fill />
+              </div>
+            ) : (
+              <>
+                <div className={styles.mod}>
+                  <Image src={ModEZ} alt={'Mod'} fill />
+                </div>
+                <div className={styles.mod}>
+                  <Image src={ModHD} alt={'Mod'} fill />
+                </div>
+                <div className={styles.mod}>
+                  <Image src={ModHR} alt={'Mod'} fill />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
