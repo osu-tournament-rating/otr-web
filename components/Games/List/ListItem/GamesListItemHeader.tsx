@@ -13,19 +13,15 @@ import {
   TeamTypeEnumHelper,
   VerificationStatusMetadata,
 } from '@/lib/enums';
-import EditIcon from '@/public/icons/Edit.svg';
-import ModEZ from '@/public/icons/mods/ModEZ.svg?url';
 import ModFM from '@/public/icons/mods/ModFM.svg?url';
-import ModHD from '@/public/icons/mods/ModHD.svg?url';
-import ModHR from '@/public/icons/mods/ModHR.svg?url';
-import { GameDTO } from '@osu-tournament-rating/otr-api-client';
+import ModNM from '@/public/icons/mods/ModNM.svg?url';
+import { GameDTO, Mods } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import styles from './GamesListItem.module.css';
 
 export default function GamesListItemHeader({ data }: { data: GameDTO }) {
   const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
-
   const startDate = new Date(data.startTime).toLocaleDateString(
     'en-US',
     dateFormats.tournaments.header
@@ -69,25 +65,7 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
               </span>
             </div>
           </div>
-          <div className={styles.modsContainer}>
-            {data.isFreeMod ? (
-              <div className={styles.mod}>
-                <Image src={ModFM} alt={'Mod'} fill />
-              </div>
-            ) : (
-              <>
-                <div className={styles.mod}>
-                  <Image src={ModEZ} alt={'Mod'} fill />
-                </div>
-                <div className={styles.mod}>
-                  <Image src={ModHD} alt={'Mod'} fill />
-                </div>
-                <div className={styles.mod}>
-                  <Image src={ModHR} alt={'Mod'} fill />
-                </div>
-              </>
-            )}
-          </div>
+          <ModsDisplay data={data} />
         </div>
 
         {/* {data.isFreeMod ? (
@@ -131,4 +109,40 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
       </Modal>
     </div>
   );
+}
+
+function ModsDisplay({ data }: { data: GameDTO }) {
+  const wrap = (children: ReactNode) => (
+    <div className={styles.modsContainer}>{children}</div>
+  );
+
+  if (data.isFreeMod) {
+    return (wrap(
+      <div className={styles.mod}>
+        <Image src={ModFM} alt={'Mod'} fill />
+      </div>
+    ))
+  }
+
+  if (data.mods === Mods.NoFail) {
+    return (wrap(
+      <div className={styles.mod}>
+        <Image src={ModNM} alt={'Mod'} fill />
+      </div>
+    ))
+  }
+
+  return (wrap(
+    ModsEnumHelper.getMetadata(data.mods).map(({ text }) => {
+      return (
+        <div className={styles.mod} key={text}>
+          <Image
+            src={`/icons/mods/Mod${text}.svg`}
+            alt={`mod-${text}`}
+            fill
+          />
+        </div>
+      )
+    })
+  ))
 }
