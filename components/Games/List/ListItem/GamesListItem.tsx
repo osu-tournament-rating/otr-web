@@ -8,24 +8,22 @@ import {
   PlayerCompactDTO,
   Team,
 } from '@osu-tournament-rating/otr-api-client';
-import clsx from 'clsx';
-import { Attributes } from 'react';
+import { Fragment } from 'react';
 import styles from './GamesListItem.module.css';
 
 export default function GamesListItem({
   data,
   players,
-  key,
 }: {
   data: GameDTO;
   players: PlayerCompactDTO[];
-} & Pick<Attributes, 'key'>) {
+}) {
   let nNoTeam = 0,
     nRed = 0,
     nBlue = 0;
 
   return (
-    <div key={key} className={styles.gameContainer}>
+    <div className={styles.gameContainer}>
       <GamesListItemHeader data={data} />
       <div className={styles.scoresContainer}>
         {data.scores
@@ -45,12 +43,13 @@ export default function GamesListItem({
             }
 
             return (
-              <GameScore
-                row={row}
-                key={score.id}
-                data={score}
-                player={players.find((player) => player.id === score.playerId)}
-              />
+              <Fragment key={score.id}>
+                <GameScore
+                  row={row}
+                  data={score}
+                  player={players.find((player) => player.id === score.playerId)}
+                />
+              </Fragment>
             );
           })}
       </div>

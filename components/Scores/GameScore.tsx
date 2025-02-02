@@ -15,13 +15,12 @@ import {
   VerificationStatusMetadata,
 } from '@/lib/enums';
 import RejectionReason from '@/components/Enums/RejectionReason';
-import { Attributes, useState } from 'react';
+import { useState } from 'react';
 import EditIcon from '@/public/icons/Edit.svg';
 import Modal from '@/components/Modal/Modal';
 import ScoreAdminView from '@/components/Scores/AdminView/ScoreAdminView';
 
 export default function GameScore({
-  key,
   row,
   data,
   player,
@@ -29,12 +28,11 @@ export default function GameScore({
   row: number;
   data: GameScoreDTO;
   player?: PlayerCompactDTO;
-} & Pick<Attributes, 'key'>) {
+}) {
   const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
 
   return (
     <div
-      key={key}
       className={clsx(
         'content',
         styles.scoreContainer,

@@ -6,6 +6,7 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import styles from './GamesList.module.css';
 import GamesListItem from '@/components/Games/List/ListItem/GamesListItem';
+import { Fragment } from 'react';
 
 export default function GamesList({
   data,
@@ -17,13 +18,14 @@ export default function GamesList({
   return (
     <div className={styles.gameListContainer}>
       {data.map((game) => (
-        <GamesListItem
-          key={game.id}
-          data={game}
-          players={players.filter((player) =>
-            game.scores.map((s) => s.playerId).includes(player.id)
-          )}
-        />
+        <Fragment key={game.id}>
+          <GamesListItem
+            data={game}
+            players={players.filter((player) =>
+              game.scores.map((s) => s.playerId).includes(player.id)
+            )}
+          />
+        </Fragment>
       ))}
     </div>
   );

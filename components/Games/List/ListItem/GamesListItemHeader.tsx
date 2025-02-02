@@ -6,12 +6,10 @@ import GameAdminView from '@/components/Games/AdminView/GameAdminView';
 import Modal from '@/components/Modal/Modal';
 import { dateFormats } from '@/lib/dates';
 import {
-  GameProcessingStatusEnumHelper,
   ModsEnumHelper,
   RulesetMetadata,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
-  VerificationStatusMetadata,
 } from '@/lib/enums';
 import ModFM from '@/public/icons/mods/ModFM.svg?url';
 import ModNM from '@/public/icons/mods/ModNM.svg?url';
@@ -19,9 +17,13 @@ import { GameDTO, Mods } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import { useState, ReactNode } from 'react';
 import styles from './GamesListItem.module.css';
+import { isAdmin } from '@/lib/api';
+import { useUser } from '@/util/hooks';
+import EditIcon from '@/public/icons/Edit.svg';
 
 export default function GamesListItemHeader({ data }: { data: GameDTO }) {
   const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
+  const isViewerAdmin = isAdmin(useUser().user?.scopes);
   const startDate = new Date(data.startTime).toLocaleDateString(
     'en-US',
     dateFormats.tournaments.header
@@ -38,7 +40,7 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
       <div className={styles.beatmapDim} />
       <Image
         className={styles.beatmapCover}
-        src={'https://assets.ppy.sh/beatmaps/4392/covers/cover@2x.jpg'}
+        src={`https://assets.ppy.sh/beatmaps/${data.beatmap.beatmapSet?.osuId}/covers/cover@2x.jpg`}
         alt={'beatmap cover'}
         fill
       />
@@ -50,63 +52,44 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
               {ScoringTypeEnumHelper.getMetadata(data.scoringType).text}
             </span>
             <span>{TeamTypeEnumHelper.getMetadata(data.teamType).text}</span>
+            <RejectionReason itemType={'game'} value={data.rejectionReason} />
+            <WarningFlags itemType={'game'} value={data.warningFlags} />
           </div>
-          <div className={styles.wrap}>{`${startDate} - ${endDate}`}</div>
+          <div className={styles.wrap}>
+            {`${startDate} - ${endDate}`}
+            {isViewerAdmin && (
+              <EditIcon
+                className={'fill'}
+                style={{ height: '1rem', width: '1rem', cursor: 'pointer' }}
+                onClick={() => setIsAdminViewOpen(true)}
+              />
+            )}
+          </div>
         </div>
         <div className={styles.bottomSection}>
           <div className={styles.column}>
             <div className={styles.row}>
-              <span>{data.beatmap.mapperName}</span>
+              <span>Set by {data.beatmap.beatmapSet?.creator?.username} • Map by {data.beatmap.creators.map(p => p.username).join()}</span>
               <span>{`★${data.beatmap.sr.toFixed(2)} • ${data.beatmap.bpm}bpm`}</span>
             </div>
             <div className={styles.row}>
               <span id={styles.title}>
-                {data.beatmap.title} [{data.beatmap.diffName}]
+                {data.beatmap.beatmapSet?.title} [{data.beatmap.diffName}]
               </span>
             </div>
           </div>
           <ModsDisplay data={data} />
         </div>
-
-        {/* {data.isFreeMod ? (
-          <span>Free Mod</span>
-        ) : (
-          <span>
-            Force Mod:{' '}
-            {ModsEnumHelper.getMetadata(data.mods)
-              .map(({ text }) => text)
-              .join(', ')}
-          </span>
-        )} */}
-
-        {/* TODO: Contingent on verified? */}
-        {/* <span>
-          Verification Status:{' '}
-          {VerificationStatusMetadata[data.verificationStatus].text}
-        </span>
-        <span>
-          Processing Status:{' '}
-          {
-            GameProcessingStatusEnumHelper.getMetadata(data.processingStatus)
-              .text
-          }
-        </span>
-        <RejectionReason itemType={'game'} value={data.rejectionReason} />
-        <WarningFlags itemType={'game'} value={data.warningFlags} />
-        TODO: Contingent on admin view
-        <EditIcon
-          className={'fill'}
-          style={{ height: '1rem', width: '1rem', cursor: 'pointer' }}
-          onClick={() => setIsAdminViewOpen(true)}
-        /> */}
       </div>
-      <Modal
-        title={`Editing Game Id: ${data.id}`}
-        isOpen={isAdminViewOpen}
-        setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
-      >
-        <GameAdminView data={data} />
-      </Modal>
+      {isViewerAdmin && (
+        <Modal
+          title={`Editing Game Id: ${data.id}`}
+          isOpen={isAdminViewOpen}
+          setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
+        >
+          <GameAdminView data={data} />
+        </Modal>
+      )}
     </div>
   );
 }
