@@ -95,37 +95,18 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
 }
 
 function ModsDisplay({ data }: { data: GameDTO }) {
-  const wrap = (children: ReactNode) => (
-    <div className={styles.modsContainer}>{children}</div>
-  );
-
-  if (data.isFreeMod) {
-    return (wrap(
-      <div className={styles.mod}>
-        <Image src={ModFM} alt={'Mod'} fill />
-      </div>
-    ))
-  }
-
-  if (data.mods === Mods.NoFail) {
-    return (wrap(
-      <div className={styles.mod}>
-        <Image src={ModNM} alt={'Mod'} fill />
-      </div>
-    ))
-  }
-
-  return (wrap(
-    ModsEnumHelper.getMetadata(data.mods).map(({ text }) => {
-      return (
+  return (
+    <div className={styles.modsContainer}>
+      {ModsEnumHelper.getMetadata(data.mods).map(({ text }) => (
         <div className={styles.mod} key={text}>
-          <Image
-            src={`/icons/mods/Mod${text}.svg`}
-            alt={`mod-${text}`}
-            fill
-          />
+          <Image src={`/icons/mods/Mod${text}.svg`} alt={`mod-${text}`} fill />
         </div>
-      )
-    })
-  ))
+      ))}
+      {data.isFreeMod && (
+        <div className={styles.mod} key={'FM'}>
+          <Image src={ModFM} alt={'Mod'} fill />
+        </div>
+      )}
+    </div>
+  );
 }
