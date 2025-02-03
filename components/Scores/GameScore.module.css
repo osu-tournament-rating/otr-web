@@ -217,7 +217,10 @@
       & .scoreInfo {
         display: flex;
         flex-flow: row;
-        gap: 0.4rem;
+        gap: 0.6rem;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
 
         & .score {
           font-size: 1.1rem;
@@ -229,6 +232,34 @@
           );
           font-variant-numeric: tabular-nums;
           letter-spacing: -0.063rem;
+        }
+
+        & .modsContainer {
+          display: flex;
+          flex-flow: row;
+          align-items: center;
+          justify-content: flex-end;
+          max-width: 10rem;
+          height: 100%;
+
+          & .mod {
+            height: 100%;
+            max-height: 1.8rem;
+            position: relative;
+            aspect-ratio: 60/45;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            transition: margin-left 0.2s ease-out;
+
+            &:not(:first-child) {
+              margin-left: -1.2rem;
+            }
+          }
+
+          &:hover {
+            & :not(:first-child) {
+              margin-left: -0.6rem;
+            }
+          }
         }
       }
     }

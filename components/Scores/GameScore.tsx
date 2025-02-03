@@ -19,6 +19,7 @@ import {
 import clsx from 'clsx';
 import Image from 'next/image';
 import { useState } from 'react';
+import ModsDisplay from '../Enums/ModsDisplay/ModsDisplay';
 import FormattedNumber from '../FormattedData/FormattedNumber';
 import styles from './GameScore.module.css';
 
@@ -63,7 +64,12 @@ export default function GameScore({
             <div className={styles.score}>
               {FormattedNumber({ number: data.score })}
             </div>
-            <div className={styles.mods}></div>
+            <ModsDisplay
+              mods={data.mods}
+              containerClass={styles.modsContainer}
+              modClass={styles.mod}
+              reverse={Team[data.team] === 'Blue'}
+            />
             <div className={styles.grade}></div>
           </div>
         </div>

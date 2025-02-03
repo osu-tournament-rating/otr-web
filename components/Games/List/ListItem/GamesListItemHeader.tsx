@@ -1,9 +1,11 @@
 'use client';
 
+import ModsDisplay from '@/components/Enums/ModsDisplay/ModsDisplay';
 import RejectionReason from '@/components/Enums/RejectionReason';
 import WarningFlags from '@/components/Enums/WarningFlags';
 import GameAdminView from '@/components/Games/AdminView/GameAdminView';
 import Modal from '@/components/Modal/Modal';
+import { isAdmin } from '@/lib/api';
 import { dateFormats } from '@/lib/dates';
 import {
   ModsEnumHelper,
@@ -11,15 +13,12 @@ import {
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
 } from '@/lib/enums';
-import ModFM from '@/public/icons/mods/ModFM.svg?url';
-import ModNM from '@/public/icons/mods/ModNM.svg?url';
+import EditIcon from '@/public/icons/Edit.svg';
+import { useUser } from '@/util/hooks';
 import { GameDTO, Mods } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
-import { useState, ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import styles from './GamesListItem.module.css';
-import { isAdmin } from '@/lib/api';
-import { useUser } from '@/util/hooks';
-import EditIcon from '@/public/icons/Edit.svg';
 
 export default function GamesListItemHeader({ data }: { data: GameDTO }) {
   const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
@@ -69,7 +68,10 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
         <div className={styles.bottomSection}>
           <div className={styles.column}>
             <div className={styles.row}>
-              <span>Set by {data.beatmap.beatmapSet?.creator?.username} • Map by {data.beatmap.creators.map(p => p.username).join()}</span>
+              <span>
+                Set by {data.beatmap.beatmapSet?.creator?.username} • Map by{' '}
+                {data.beatmap.creators.map((p) => p.username).join()}
+              </span>
               <span>{`★${data.beatmap.sr.toFixed(2)} • ${data.beatmap.bpm}bpm`}</span>
             </div>
             <div className={styles.row}>
@@ -78,7 +80,14 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
               </span>
             </div>
           </div>
-          <ModsDisplay data={data} />
+          <div className={styles.modsContainer}>
+            <ModsDisplay
+              mods={data.mods}
+              isFreeMod={data.isFreeMod}
+              containerClass={styles.modsContainer}
+              modClass={styles.mod}
+            />
+          </div>
         </div>
       </div>
       {isViewerAdmin && (
@@ -89,23 +98,6 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
         >
           <GameAdminView data={data} />
         </Modal>
-      )}
-    </div>
-  );
-}
-
-function ModsDisplay({ data }: { data: GameDTO }) {
-  return (
-    <div className={styles.modsContainer}>
-      {ModsEnumHelper.getMetadata(data.mods).map(({ text }) => (
-        <div className={styles.mod} key={text}>
-          <Image src={`/icons/mods/Mod${text}.svg`} alt={`mod-${text}`} fill />
-        </div>
-      ))}
-      {data.isFreeMod && (
-        <div className={styles.mod} key={'FM'}>
-          <Image src={ModFM} alt={'Mod'} fill />
-        </div>
       )}
     </div>
   );
