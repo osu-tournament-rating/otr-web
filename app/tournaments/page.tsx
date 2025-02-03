@@ -39,7 +39,6 @@ export default async function Page({
 }: {
   searchParams: Promise<object>;
 }) {
-  console.log('why');
   const requestParams = await buildTournamentListFilter(
     await searchParams,
     defaultFilter
