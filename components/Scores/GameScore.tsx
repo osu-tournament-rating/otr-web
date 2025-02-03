@@ -17,7 +17,9 @@ import {
   Team,
 } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
+import Image from 'next/image';
 import { useState } from 'react';
+import FormattedNumber from '../FormattedData/FormattedNumber';
 import styles from './GameScore.module.css';
 
 export default function GameScore({
@@ -46,6 +48,26 @@ export default function GameScore({
       <div className={styles.teamColor} />
       <div className={styles.backgroundColor} />
       <div className={styles.column}>
+        <div className={styles.row}>
+          <div className={styles.playerInfo}>
+            <span className={styles.country}>
+              <Image
+                src={`https://osu.ppy.sh/images/flags/${player?.country}.png`}
+                alt={`country-${player?.country}`}
+                fill
+              />
+            </span>
+            <span className={styles.name}>{player?.username}</span>
+          </div>
+          <div className={styles.scoreInfo}>
+            <div className={styles.score}>
+              {FormattedNumber({ number: data.score })}
+            </div>
+            <div className={styles.mods}></div>
+            <div className={styles.grade}></div>
+          </div>
+        </div>
+        <div className={styles.row}></div>
         {/* <span>{player?.username ?? `Player ${data.playerId}`}</span>
       <span>
         {ScoreGradeEnumHelper.getMetadata(data.grade).text} |{' '}

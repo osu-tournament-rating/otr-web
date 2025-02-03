@@ -3,12 +3,11 @@
   --grid-column: span 2;
   --text-align: left;
   --team-color: 0, 0%, 20%;
-  --team-color-size: 0.4rem;
+  --team-color-size: 0.3rem;
 
   display: grid;
   grid-template-columns: var(--team-color-size) 1fr;
   grid-template-areas: 'teamColor info';
-  gap: 0.5rem;
   border-radius: var(--border-radius);
   border: 1px solid hsl(var(--player-score-border-color));
   width: 100%;
@@ -22,7 +21,7 @@
   transition: grid-template-columns 0.12s ease-out;
 
   &:hover {
-    --team-color-size: 0.6rem;
+    --team-color-size: 0.5rem;
   }
 
   &[aria-team='NoTeam'] {
@@ -31,19 +30,31 @@
     --team-color: #333;
 
     & .propic {
-      left: 0.2rem;
+      left: 0;
       right: unset;
       -webkit-mask-image: linear-gradient(
         to right,
-        hsl(0, 0%, 0%, 0.5) 10%,
+        hsl(0, 0%, 0%, 0.4) 10%,
         transparent
       );
       mask-image: linear-gradient(
         to right,
-        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.4) 0%,
         hsl(0, 0%, 0%, 0.25) 45%,
         transparent
       );
+    }
+
+    & .column .row {
+      flex-flow: row;
+
+      & .playerInfo {
+        flex-flow: row;
+      }
+
+      & .scoreInfo {
+        flex-flow: row;
+      }
     }
   }
 
@@ -56,19 +67,31 @@
     grid-template-areas: 'teamColor info';
 
     & .propic {
-      left: 0.2rem;
+      left: 0;
       right: unset;
       -webkit-mask-image: linear-gradient(
         to right,
-        hsl(0, 0%, 0%, 0.5) 10%,
+        hsl(0, 0%, 0%, 0.4) 10%,
         transparent
       );
       mask-image: linear-gradient(
         to right,
-        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.4) 0%,
         hsl(0, 0%, 0%, 0.25) 45%,
         transparent
       );
+    }
+
+    & .column .row {
+      flex-flow: row;
+
+      & .playerInfo {
+        flex-flow: row;
+      }
+
+      & .scoreInfo {
+        flex-flow: row;
+      }
     }
   }
 
@@ -82,27 +105,39 @@
 
     & .propic {
       left: unset;
-      right: 0.2rem;
+      right: 0;
       -webkit-mask-image: linear-gradient(
         to left,
-        hsl(0, 0%, 0%, 0.5) 10%,
+        hsl(0, 0%, 0%, 0.4) 10%,
         transparent
       );
       mask-image: linear-gradient(
         to left,
-        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.4) 0%,
         hsl(0, 0%, 0%, 0.25) 45%,
         transparent
       );
+    }
+
+    & .column .row {
+      flex-flow: row-reverse;
+
+      & .playerInfo {
+        flex-flow: row-reverse;
+      }
+
+      & .scoreInfo {
+        flex-flow: row-reverse;
+      }
     }
   }
 
   & .propic {
     position: absolute;
     top: 50%;
-    left: 0.2rem;
+    left: 0;
     right: unset;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(1);
     width: 40%;
     aspect-ratio: 1;
     object-fit: cover;
@@ -111,15 +146,16 @@
     z-index: 1;
     -webkit-mask-image: linear-gradient(
       to right,
-      hsl(0, 0%, 0%, 0.5) 10%,
+      hsl(0, 0%, 0%, 0.4) 10%,
       transparent
     );
     mask-image: linear-gradient(
       to right,
-      hsl(0, 0%, 0%, 0.5) 0%,
+      hsl(0, 0%, 0%, 0.4) 0%,
       hsl(0, 0%, 0%, 0.25) 45%,
       transparent
     );
+    transition: transform 0.16s ease-out;
   }
 
   & .backgroundColor {
@@ -147,5 +183,64 @@
     height: 100%;
     grid-area: info;
     z-index: 3;
+    padding: 0 0.5rem;
+
+    & .row {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-flow: row;
+      align-items: center;
+      justify-content: space-between;
+
+      & .playerInfo {
+        height: 100%;
+        width: fit-content;
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+      }
+
+      & .country {
+        height: 46%;
+        aspect-ratio: 70/47;
+        position: relative;
+      }
+
+      & .name {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      & .scoreInfo {
+        display: flex;
+        flex-flow: row;
+        gap: 0.4rem;
+
+        & .score {
+          font-size: 1.1rem;
+          font-weight: 650;
+          color: color-mix(
+            in oklab,
+            hsl(var(--foreground-hsl)) 60%,
+            hsl(var(--team-color)) 40%
+          );
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.063rem;
+        }
+      }
+    }
+  }
+}
+
+.scoreContainer:hover {
+  &[aria-team='Red'] .propic {
+    transform: translateY(-50%) translateX(0.4rem) /* scale(1.02) */;
+  }
+
+  &[aria-team='Blue'] .propic {
+    transform: translateY(-50%) translateX(-0.4rem) /* scale(1.02) */;
   }
 }
