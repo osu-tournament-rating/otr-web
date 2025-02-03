@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server';
 import { clearCookies, getSession } from './session';
 import { GetSessionParams } from '@/lib/types';
 import { apiWrapperConfiguration } from '@/lib/api';
+import { isTokenExpired } from '@/lib/auth';
+import { cache } from 'react';
 
 /**
  * Prepares the login flow and redirects to the osu! oauth portal
@@ -133,6 +135,16 @@ export async function validateAccessCredentials(
   await session.save();
 }
 
+export const refreshAccessToken = cache(async (refreshToken: string) => {
+  const oauthWrapper = new OAuthWrapper(apiWrapperConfiguration);
+  try {
+    const { result } = await oauthWrapper.refresh({ refreshToken });
+    return result.accessToken;
+  } catch {
+    return undefined;
+  }
+});
+
 /**
  * Checks the expiration of access credentials
  * @param accessCredentials Access credentials to check. If not given, they will be retrieved from the session
@@ -149,14 +161,4 @@ async function checkAccessCredentialsValidity(accessCredentials?: {
     accessTokenExpired: accessToken ? isTokenExpired(accessToken) : true,
     refreshTokenExpired: refreshToken ? isTokenExpired(refreshToken) : true,
   };
-}
-
-/**
- * Checks the expiration of a JWT (JSON Web Token)
- * @param token The token to check
- * @returns Whether or not the given token has expired
- */
-function isTokenExpired(token: string) {
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  return Date.now() >= payload.exp * 1000;
 }

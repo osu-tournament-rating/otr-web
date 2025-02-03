@@ -55,6 +55,8 @@ export interface SessionData {
 
   /** API refresh token */
   refreshToken?: string;
+
+  testValue?: string;
 }
 
 /** Names of available cookies */
