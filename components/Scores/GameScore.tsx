@@ -1,12 +1,8 @@
 'use client';
 
-import clsx from 'clsx';
-import styles from './GameScore.module.css';
-import {
-  GameScoreDTO,
-  PlayerCompactDTO,
-  Team,
-} from '@osu-tournament-rating/otr-api-client';
+import RejectionReason from '@/components/Enums/RejectionReason';
+import Modal from '@/components/Modal/Modal';
+import ScoreAdminView from '@/components/Scores/AdminView/ScoreAdminView';
 import {
   ModsEnumHelper,
   ScoreGradeEnumHelper,
@@ -14,11 +10,15 @@ import {
   TeamEnumHelper,
   VerificationStatusMetadata,
 } from '@/lib/enums';
-import RejectionReason from '@/components/Enums/RejectionReason';
-import { useState } from 'react';
 import EditIcon from '@/public/icons/Edit.svg';
-import Modal from '@/components/Modal/Modal';
-import ScoreAdminView from '@/components/Scores/AdminView/ScoreAdminView';
+import {
+  GameScoreDTO,
+  PlayerCompactDTO,
+  Team,
+} from '@osu-tournament-rating/otr-api-client';
+import clsx from 'clsx';
+import { useState } from 'react';
+import styles from './GameScore.module.css';
 
 export default function GameScore({
   row,
@@ -33,14 +33,20 @@ export default function GameScore({
 
   return (
     <div
-      className={clsx(
-        'content',
-        styles.scoreContainer,
-        styles[`team-${Team[data.team]}`]
-      )}
-      style={{ gridRow: row }}
+      className={styles.scoreContainer}
+      aria-team={Team[data.team]}
+      style={{
+        gridRow: row,
+      }}
     >
-      <span>{player?.username ?? `Player ${data.playerId}`}</span>
+      <div
+        className={styles.propic}
+        style={{ backgroundImage: `url(https://s.ppy.sh/a/${player?.osuId})` }}
+      />
+      <div className={styles.teamColor} />
+      <div className={styles.backgroundColor} />
+      <div className={styles.column}>
+        {/* <span>{player?.username ?? `Player ${data.playerId}`}</span>
       <span>
         {ScoreGradeEnumHelper.getMetadata(data.grade).text} |{' '}
         {ModsEnumHelper.getMetadata(data.mods)
@@ -75,7 +81,8 @@ export default function GameScore({
         setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
       >
         <ScoreAdminView data={data} />
-      </Modal>
+      </Modal> */}
+      </div>
     </div>
   );
 }

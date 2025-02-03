@@ -1,24 +1,151 @@
-/* TODO: temp style for skeleton, see figma */
-
 .scoreContainer {
-  background-color: hsl(var(--gray-300));
-  padding: 1rem;
+  --border-radius: 0.5rem;
+  --grid-column: span 2;
+  --text-align: left;
+  --team-color: 0, 0%, 20%;
+  --team-color-size: 0.4rem;
 
-  &.team-NoTeam {
-    grid-column: span 2;
+  display: grid;
+  grid-template-columns: var(--team-color-size) 1fr;
+  grid-template-areas: 'teamColor info';
+  gap: 0.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid hsl(var(--player-score-border-color));
+  width: 100%;
+  text-align: var(--text-align);
+  grid-column: var(--grid-column);
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-size: 50%;
+  background-position: 0.4rem 50%;
+  position: relative;
+  transition: grid-template-columns 0.12s ease-out;
+
+  &:hover {
+    --team-color-size: 0.6rem;
   }
 
-  &.team-Red {
-    text-align: left;
-    grid-column: 1;
+  &[aria-team='NoTeam'] {
+    --text-align: left;
+    --grid-column: span 2;
+    --team-color: #333;
 
-    background-color: hsl(var(--red-900));
+    & .propic {
+      left: 0.2rem;
+      right: unset;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.5) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
   }
 
-  &.team-Blue {
-    text-align: right;
-    grid-column: 2;
+  &[aria-team='Red'] {
+    --text-align: left;
+    --grid-column: 1;
+    --team-color: var(--team-red-color);
 
-    background-color: hsl(var(--blue-900));
+    grid-template-columns: var(--team-color-size) 1fr;
+    grid-template-areas: 'teamColor info';
+
+    & .propic {
+      left: 0.2rem;
+      right: unset;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.5) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
+  }
+
+  &[aria-team='Blue'] {
+    --text-align: right;
+    --grid-column: 2;
+    --team-color: var(--team-blue-color);
+
+    grid-template-columns: 1fr var(--team-color-size);
+    grid-template-areas: 'info teamColor';
+
+    & .propic {
+      left: unset;
+      right: 0.2rem;
+      -webkit-mask-image: linear-gradient(
+        to left,
+        hsl(0, 0%, 0%, 0.5) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to left,
+        hsl(0, 0%, 0%, 0.5) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
+  }
+
+  & .propic {
+    position: absolute;
+    top: 50%;
+    left: 0.2rem;
+    right: unset;
+    transform: translateY(-50%);
+    width: 40%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background-repeat: no-repeat;
+    background-size: cover;
+    z-index: 1;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      hsl(0, 0%, 0%, 0.5) 10%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      hsl(0, 0%, 0%, 0.5) 0%,
+      hsl(0, 0%, 0%, 0.25) 45%,
+      transparent
+    );
+  }
+
+  & .backgroundColor {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: hsl(var(--team-color), 0.1);
+    z-index: 2;
+  }
+
+  & .teamColor {
+    height: 100%;
+    width: 100%;
+    grid-area: teamColor;
+    background-color: hsl(var(--team-color));
+    z-index: 3;
+  }
+
+  & .column {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    grid-area: info;
+    z-index: 3;
   }
 }
