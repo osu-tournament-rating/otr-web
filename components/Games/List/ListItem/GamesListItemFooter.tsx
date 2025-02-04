@@ -22,8 +22,13 @@ export default function GamesListItemFooter({ data }: { data: GameDTO }) {
 
   return (
     <div className={styles.gameFooter}>
-      <h1>{redScore.toLocaleString()} - {blueScore.toLocaleString()}</h1>
-      <h1>{TeamEnumHelper.getMetadata(winRecord.winnerTeam).text} Wins by {(winRecord.winnerScore - winRecord.loserScore).toLocaleString()}</h1>
+      <h1>
+        {redScore.toLocaleString()} - {blueScore.toLocaleString()}
+      </h1>
+      <h1>
+        {TeamEnumHelper.getMetadata(winRecord.winnerTeam).text} Wins by{' '}
+        {(winRecord.winnerScore - winRecord.loserScore).toLocaleString()}
+      </h1>
       {isProvisional && (
         <span>game outcome is provisional (no stats generated yet)</span>
       )}

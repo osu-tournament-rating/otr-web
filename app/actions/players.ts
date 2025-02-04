@@ -1,16 +1,15 @@
-import { apiWrapperConfiguration } from '@/lib/auth';
-import { UserpageQuerySchema } from '@/lib/types';
+'use server';
+
+import { apiWrapperConfiguration } from '@/lib/api';
+import { CookieNames, UserpageQuerySchema } from '@/lib/types';
 import { PlayersWrapper, Ruleset } from '@osu-tournament-rating/otr-api-client';
-import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
+import { getCookieValue } from './session';
 
 export async function fetchPlayerStats(player: string | number, params) {
-  const osuMode =
-    ((await cookies().get('OTR-user-selected-osu-mode')?.value) as
-      | Ruleset
-      | undefined) ?? Ruleset.Osu;
+  const osuMode = await getCookieValue<Ruleset>(CookieNames.SelectedRuleset);
 
-  const queryCheck = await UserpageQuerySchema.safeParse({
+  const queryCheck = UserpageQuerySchema.safeParse({
     time: params?.time,
   });
 
@@ -24,7 +23,7 @@ export async function fetchPlayerStats(player: string | number, params) {
 
   const statsResponse = await wrapper.getStats({
     key: player as string,
-    ruleset: osuMode,
+    ruleset: osuMode ?? Ruleset.Osu,
     dateMin: minDate,
   });
 

@@ -1,15 +1,14 @@
 .dropdownContainer {
-    position: relative;
+  position: relative;
 }
 
 .dropdownSelected {
-    width: 100%;
+  width: 100%;
 }
 
 .dropdownOptionsContainer {
-
 }
 
 .dropdownOption {
-    padding: var(--internal-gap);
+  padding: var(--internal-gap);
 }

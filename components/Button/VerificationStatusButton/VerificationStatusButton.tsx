@@ -4,7 +4,7 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
-import { LegacyRef, useState } from 'react';
+import { Ref, useState } from 'react';
 import styles from './VerificationStatusButton.module.css';
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
 import { useClickAway } from '@uidotdev/usehooks';
@@ -74,7 +74,7 @@ export default function VerificationStatusButton({
 
   const ref = useClickAway(() => {
     setIsOpen(false);
-  }) as LegacyRef<any>;
+  }) as Ref<any>;
 
   const handleStatusChange = async (newStatus: VerificationStatus) => {
     setIsOpen(false);

@@ -10,7 +10,10 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: number }>;
 }) {
-  const tournament = await getTournament({ id: (await params).id, verified: false });
+  const tournament = await getTournament({
+    id: (await params).id,
+    verified: false,
+  });
 
   return { title: tournament.name };
 }
@@ -20,7 +23,10 @@ export default async function Page({
 }: {
   params: Promise<{ id: number }>;
 }) {
-  const tournament = await getTournament({ id: (await params).id, verified: false });
+  const tournament = await getTournament({
+    id: (await params).id,
+    verified: false,
+  });
 
   return (
     <div className={'content'}>

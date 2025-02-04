@@ -11,10 +11,12 @@ import {
   MatchRejectionReason,
   MatchWarningFlags,
   Mods,
-  Ruleset, ScoreGrade,
+  Ruleset,
+  ScoreGrade,
   ScoreProcessingStatus,
   ScoreRejectionReason,
-  ScoringType, Team,
+  ScoringType,
+  Team,
   TeamType,
   TournamentProcessingStatus,
   TournamentRejectionReason,
@@ -52,8 +54,10 @@ interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
  * @template T Enumeration type
  * @template M Metadata type
  */
-export interface IEnumHelper<T extends number, M extends EnumMetadata = EnumMetadata>
-  extends IEnumHelperBase<T, M> {
+export interface IEnumHelper<
+  T extends number,
+  M extends EnumMetadata = EnumMetadata,
+> extends IEnumHelperBase<T, M> {
   /**
    * Gets the metadata describing a given enum value
    * @param value Enum value
@@ -877,5 +881,5 @@ export const ScoreGradeEnumHelper: IEnumHelper<ScoreGrade> = {
       text: 'D',
       description: '',
     },
-  }
-}
+  },
+};

@@ -1,6 +1,6 @@
 'use client';
 import { AnimatePresence } from 'framer-motion';
-import { createContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState, type JSX } from 'react';
 
 import ErrorToast from '@/components/ErrorToast/ErrorToast';
 
