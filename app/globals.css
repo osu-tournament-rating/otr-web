@@ -163,6 +163,7 @@
   --player-score-border-color: 220, 13%, 88%;
   --team-red-color: 348, 72%, 52%;
   --team-blue-color: 228, 72%, 52%;
+  --performance-label: 51, 96%, 62%;
 }
 
 [data-theme='dark'] {
@@ -330,6 +331,7 @@
   --player-score-border-color: 240, 5%, 12%;
   --team-red-color: 348, 72%, 52%;
   --team-blue-color: 228, 72%, 52%;
+  --performance-label: 51, 60%, 55%;
 }
 
 * {

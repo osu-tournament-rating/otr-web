@@ -27,6 +27,7 @@ export default function GamesListItem({
       <GamesListItemHeader data={data} />
       <div className={styles.scoresContainer}>
         {data.scores
+          .toSorted((a, b) => b.score - a.score)
           .toSorted((a, b) => a.team - b.team)
           .map((score) => {
             let row = 1;
@@ -47,7 +48,9 @@ export default function GamesListItem({
                 <GameScore
                   row={row}
                   data={score}
-                  player={players.find((player) => player.id === score.playerId)}
+                  player={players.find(
+                    (player) => player.id === score.playerId
+                  )}
                 />
               </Fragment>
             );

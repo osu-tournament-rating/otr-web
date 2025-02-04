@@ -55,6 +55,12 @@
       & .scoreInfo {
         flex-flow: row;
       }
+
+      & .performanceInfo:first-child {
+        margin-left: auto;
+        margin-right: 0;
+        justify-content: flex-end;
+      }
     }
   }
 
@@ -92,6 +98,12 @@
       & .scoreInfo {
         flex-flow: row;
       }
+
+      & .performanceInfo:first-child {
+        margin-left: auto;
+        margin-right: 0;
+        justify-content: flex-end;
+      }
     }
   }
 
@@ -128,6 +140,16 @@
 
       & .scoreInfo {
         flex-flow: row-reverse;
+      }
+
+      &:has(.performanceInfo) {
+        flex-flow: row;
+      }
+
+      & .performanceInfo:last-child {
+        margin-left: 0;
+        margin-right: auto;
+        justify-content: flex-start;
       }
     }
   }
@@ -192,6 +214,7 @@
       flex-flow: row;
       align-items: center;
       justify-content: space-between;
+      gap: 3rem;
 
       & .playerInfo {
         height: 100%;
@@ -259,6 +282,60 @@
             & :not(:first-child) {
               margin-left: -0.6rem;
             }
+          }
+        }
+      }
+
+      & .performanceInfo {
+        --info-gap: 1rem;
+
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+
+        & .item {
+          display: flex;
+          flex-flow: column;
+          align-items: flex-start;
+          justify-content: center;
+          text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+          gap: 0.063rem;
+          position: relative;
+
+          &:not(:first-child)::before {
+            content: '/';
+            position: absolute;
+            font-size: 0.9rem;
+            font-weight: 400;
+            bottom: 0.125rem;
+            left: calc(-1 * (var(--info-gap) / 1.6));
+            text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+            color: color-mix(
+              in oklab,
+              hsl(var(--foreground-hsl), 0.4) 80%,
+              hsl(var(--team-color)) 20%
+            );
+          }
+
+          & .label {
+            font-size: 0.68rem;
+            font-weight: 650;
+            color: hsl(var(--performance-label));
+            opacity: 0.95;
+          }
+
+          & .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: color-mix(
+              in oklab,
+              hsl(var(--foreground-hsl)) 90%,
+              hsl(var(--team-color)) 10%
+            );
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.063rem;
           }
         }
       }

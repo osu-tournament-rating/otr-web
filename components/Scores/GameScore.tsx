@@ -71,21 +71,46 @@ export default function GameScore({
               reverse={Team[data.team] === 'Blue'}
             />
             <div className={styles.grade}>
-              {/* {ScoreGradeEnumHelper.getMetadata(data.grade).text} */}
+              {ScoreGradeEnumHelper.getMetadata(data.grade).text}
             </div>
           </div>
         </div>
-        <div className={styles.row}></div>
+        <div className={styles.row}>
+          <div className={styles.performanceInfo}>
+            <div className={styles.item}>
+              <div className={styles.label}>300</div>
+              <div className={styles.value}>{data.count300}x</div>
+            </div>
+            <div className={styles.item}>
+              <div className={styles.label}>100</div>
+              <div className={styles.value}>{data.count100}x</div>
+            </div>
+            <div className={styles.item}>
+              <div className={styles.label}>50</div>
+              <div className={styles.value}>{data.count50}x</div>
+            </div>
+            <div className={styles.item}>
+              <div className={styles.label}>Miss</div>
+              <div className={styles.value}>{data.countMiss}x</div>
+            </div>
+          </div>
+          <div className={styles.performanceInfo}>
+            <div className={styles.item}>
+              <div className={styles.label}>Combo</div>
+              <div className={styles.value}>{data.maxCombo}x</div>
+            </div>
+            <div className={styles.item}>
+              <div className={styles.label}>Accuracy</div>
+              <div className={styles.value}>{data.accuracy.toFixed(2)}%</div>
+            </div>
+          </div>
+        </div>
         {/* <span>{player?.username ?? `Player ${data.playerId}`}</span>
       <span>
         {ScoreGradeEnumHelper.getMetadata(data.grade).text} |{' '}
         {ModsEnumHelper.getMetadata(data.mods)
           .map(({ text }) => text)
           .join(', ')}
-      </span>
-      <span>
-        {data.score} {data.maxCombo}x [{data.count300}/{data.count100}/
-        {data.count50}/{data.countMiss}] {data.accuracy.toFixed(2)}%
       </span>
       <span>Team {TeamEnumHelper.getMetadata(data.team).text}</span>
       <span>
