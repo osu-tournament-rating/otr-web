@@ -223,7 +223,7 @@
         justify-content: center;
 
         & .score {
-          font-size: 1.1rem;
+          font-size: 1.18rem;
           font-weight: 650;
           color: color-mix(
             in oklab,

@@ -70,7 +70,9 @@ export default function GameScore({
               modClass={styles.mod}
               reverse={Team[data.team] === 'Blue'}
             />
-            <div className={styles.grade}></div>
+            <div className={styles.grade}>
+              {/* {ScoreGradeEnumHelper.getMetadata(data.grade).text} */}
+            </div>
           </div>
         </div>
         <div className={styles.row}></div>
