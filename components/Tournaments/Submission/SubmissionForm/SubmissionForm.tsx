@@ -4,7 +4,6 @@ import { tournamentSubmissionFormAction } from '@/app/actions/tournaments';
 import Form from '@/components/Form/Form';
 import FormInputError from '@/components/Form/InputError/InputError';
 import InfoIcon from '@/components/Icons/InfoIcon/InfoIcon';
-import Toast from '@/components/Toast/Toast';
 import { isAdmin } from '@/lib/api';
 import { keysOf } from '@/util/forms';
 import {
@@ -43,7 +42,6 @@ export default function SubmissionForm() {
   const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     // Clear the form after successful submission
@@ -52,12 +50,6 @@ export default function SubmissionForm() {
     }
 
     // If there is a message, display it in a toast
-    if (formState.message !== '') {
-      setShowToast(true);
-      setTimeout(() => {
-        setShowToast(false);
-      }, 6000);
-    }
   }, [formState]);
 
   return (
@@ -302,9 +294,9 @@ export default function SubmissionForm() {
           </div>
         </Form>
       </div>
-      {showToast && (
-        <Toast success={formState.success} message={formState.message} />
-      )}
+      {/*{showToast && (*/}
+      {/*  <Toast success={formState.success} message={formState.message} />*/}
+      {/*)}*/}
     </>
   );
 }

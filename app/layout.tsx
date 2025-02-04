@@ -1,5 +1,4 @@
 import { RootLayoutProvider } from '@/components/RootLayoutProvider/RootLayoutProvider';
-import ErrorProvider from '@/util/ErrorContext';
 import UserProvider from '@/util/UserLoggedContext';
 import type { Metadata } from 'next';
 import { Viewport } from 'next';
@@ -38,11 +37,9 @@ export default async function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <ThemeProvider defaultTheme="light" enableSystem={false}>
-          <ErrorProvider>
-            <UserProvider initialUser={user}>
-              <RootLayoutProvider>{children}</RootLayoutProvider>
-            </UserProvider>
-          </ErrorProvider>
+          <UserProvider initialUser={user}>
+            <RootLayoutProvider>{children}</RootLayoutProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>
