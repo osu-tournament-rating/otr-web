@@ -39,9 +39,6 @@ interface EnvironmentVariables {
    */
   readonly REACT_APP_ORIGIN_URL: string;
 
-  /** Connection string for the redis server */
-  readonly REACT_APP_REDIS_CONNECTION_STRING: string;
-
   /** Secret value used to encrypt session data */
   readonly SESSION_SECRET: string;
 
@@ -55,7 +52,6 @@ const env: EnvironmentVariables = z.object({
   REACT_APP_API_URL: z.string(),
   REACT_APP_API_BASE_URL: z.string(),
   REACT_APP_ORIGIN_URL: z.string(),
-  REACT_APP_REDIS_CONNECTION_STRING: z.string(),
   SESSION_SECRET: z.string(),
   NODE_ENV: z.string(),
 }).parse(process.env);
