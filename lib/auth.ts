@@ -12,8 +12,8 @@ export const ironSessionOptions: SessionOptions = {
 };
 
 export const defaultSessionData: SessionData = {
-  isLogged: false
-}
+  isLogged: false,
+};
 
 /**
  * Checks the expiration of a JWT (JSON Web Token)

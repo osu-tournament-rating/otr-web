@@ -17,16 +17,16 @@ export default function SingleEnumSelect<
   >) {
   return (
     <select {...rest}>
-      {showAnyOption && (
-        <option>Any</option>
-      )}
+      {showAnyOption && <option>Any</option>}
       {Object.entries(enumHelper.metadata).map(([k, v]) => {
         const key = Number(k);
         const { text } = v as M;
 
         return (
-          <option key={key} value={key}>{text}</option>
-        )
+          <option key={key} value={key}>
+            {text}
+          </option>
+        );
       })}
       {children}
     </select>

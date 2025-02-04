@@ -1,7 +1,8 @@
 'use client';
 
 import {
-  MatchDTO, MatchProcessingStatus,
+  MatchDTO,
+  MatchProcessingStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { useEffect, useState } from 'react';
 import {

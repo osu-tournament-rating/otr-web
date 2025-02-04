@@ -15,16 +15,12 @@ import clsx from 'clsx';
 import styles from './page.module.css';
 import { fetchPlayerStats } from '@/app/actions/players';
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ id: string | number }>;
-  }
-) {
+export async function generateMetadata(props: {
+  params: Promise<{ id: string | number }>;
+}) {
   const params = await props.params;
 
-  const {
-    id
-  } = params;
+  const { id } = params;
 
   let player = await fetchUserPageTitle(id);
 
@@ -35,17 +31,13 @@ export async function generateMetadata(
 
 export const revalidate = 60;
 
-export default async function page(
-  props: {
-    searchParams: Promise<URLSearchParams>;
-    params: Promise<{ id: string | number }>;
-  }
-) {
+export default async function page(props: {
+  searchParams: Promise<URLSearchParams>;
+  params: Promise<{ id: string | number }>;
+}) {
   const params = await props.params;
 
-  const {
-    id
-  } = params;
+  const { id } = params;
 
   const searchParams = await props.searchParams;
   const data = await fetchPlayerStats(id, searchParams);
@@ -57,8 +49,8 @@ export default async function page(
         <FilterButtons params={searchParams} />
         <div className={styles.graphContainer}>
           {data?.baseStats &&
-            data?.matchStats &&
-            data?.matchStats.gamesPlayed > 0 ? (
+          data?.matchStats &&
+          data?.matchStats.gamesPlayed > 0 ? (
             <>
               <div className={styles.header}>
                 <div className={styles.rating}>

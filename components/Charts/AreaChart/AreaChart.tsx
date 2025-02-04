@@ -186,8 +186,12 @@ export default function AreaChart({
   }
 
   if (playerStats.ratingChart?.chartData) {
-    labels = playerStats.ratingChart.chartData.flatMap((dataPoint) => dataPoint.flatMap((dp => dp.name)));
-    dataForGraph = playerStats.ratingChart.chartData.flatMap((dataPoint) => dataPoint.flatMap((dp => dp.ratingAfter)));
+    labels = playerStats.ratingChart.chartData.flatMap((dataPoint) =>
+      dataPoint.flatMap((dp) => dp.name)
+    );
+    dataForGraph = playerStats.ratingChart.chartData.flatMap((dataPoint) =>
+      dataPoint.flatMap((dp) => dp.ratingAfter)
+    );
   }
 
   const data = {
@@ -237,7 +241,7 @@ export default function AreaChart({
       const headerValue = document.createElement('span');
       headerValue.className = styles.headerValue;
       headerValue.innerHTML = tooltip.body[0].lines[0];
-      
+
       const headerDate = document.createElement('span');
       headerDate.className = styles.headerDate;
       matchesLines.forEach((match) => (headerDate.innerHTML = match.timestamp));

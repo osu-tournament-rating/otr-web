@@ -10,22 +10,23 @@ type AdminViewContextProps = {
 
   /** Enable or disable the admin view */
   setIsAdminView: (isAdminView: boolean) => void;
-}
+};
 
 const AdminViewContext = createContext<AdminViewContextProps>({
   isAdminView: false,
-  setIsAdminView: (_) => {}
+  setIsAdminView: (_) => {},
 });
 
 export default function AdminViewProvider({
-  children
+  children,
 }: {
   children: ReactNode;
 }) {
   const { user } = useUser();
   const [isAdminView, setIsAdminViewState] = useState(isAdmin(user?.scopes));
 
-  const setIsAdminView = (isAdminView: boolean) => setIsAdminViewState(isAdminView);
+  const setIsAdminView = (isAdminView: boolean) =>
+    setIsAdminViewState(isAdminView);
 
   const props: AdminViewContextProps = { isAdminView, setIsAdminView };
 
@@ -33,7 +34,7 @@ export default function AdminViewProvider({
     <AdminViewContext.Provider value={props}>
       {children}
     </AdminViewContext.Provider>
-  )
+  );
 }
 
 /** Hook for accessing the {@link AdminViewContext} */

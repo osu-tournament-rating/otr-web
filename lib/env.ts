@@ -46,14 +46,16 @@ interface EnvironmentVariables {
   readonly NODE_ENV: string;
 }
 
-const env: EnvironmentVariables = z.object({
-  REACT_APP_OSU_CLIENT_ID: z.string(),
-  REACT_APP_OSU_CALLBACK_URL: z.string(),
-  REACT_APP_API_URL: z.string(),
-  REACT_APP_API_BASE_URL: z.string(),
-  REACT_APP_ORIGIN_URL: z.string(),
-  SESSION_SECRET: z.string(),
-  NODE_ENV: z.string(),
-}).parse(process.env);
+const env: EnvironmentVariables = z
+  .object({
+    REACT_APP_OSU_CLIENT_ID: z.string(),
+    REACT_APP_OSU_CALLBACK_URL: z.string(),
+    REACT_APP_API_URL: z.string(),
+    REACT_APP_API_BASE_URL: z.string(),
+    REACT_APP_ORIGIN_URL: z.string(),
+    SESSION_SECRET: z.string(),
+    NODE_ENV: z.string(),
+  })
+  .parse(process.env);
 
 export default env;

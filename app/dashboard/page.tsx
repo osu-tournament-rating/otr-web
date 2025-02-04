@@ -25,11 +25,9 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-export default async function page(
-  props: {
-    searchParams: Promise<URLSearchParams>;
-  }
-) {
+export default async function page(props: {
+  searchParams: Promise<URLSearchParams>;
+}) {
   const searchParams = await props.searchParams;
   const data = await fetchDashboard(searchParams);
 

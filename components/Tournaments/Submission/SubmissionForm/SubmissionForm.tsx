@@ -32,11 +32,14 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
 }
 
 export default function SubmissionForm() {
-  const [formState, formAction] = useActionState(tournamentSubmissionFormAction, {
-    success: false,
-    message: '',
-    errors: {},
-  });
+  const [formState, formAction] = useActionState(
+    tournamentSubmissionFormAction,
+    {
+      success: false,
+      message: '',
+      errors: {},
+    }
+  );
   const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);

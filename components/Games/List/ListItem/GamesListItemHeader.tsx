@@ -8,12 +8,13 @@ import {
   ModsEnumHelper,
   RulesetMetadata,
   ScoringTypeEnumHelper,
-  TeamTypeEnumHelper, VerificationStatusMetadata,
+  TeamTypeEnumHelper,
+  VerificationStatusMetadata,
 } from '@/lib/enums';
 import { dateFormats } from '@/lib/dates';
 import RejectionReason from '@/components/Enums/RejectionReason';
 import WarningFlags from '@/components/Enums/WarningFlags';
-import EditIcon from '@/public/icons/Edit.svg'
+import EditIcon from '@/public/icons/Edit.svg';
 import Modal from '@/components/Modal/Modal';
 import GameAdminView from '@/components/Games/AdminView/GameAdminView';
 import { useState } from 'react';
@@ -63,13 +64,15 @@ export default function GamesListItemHeader({ data }: { data: GameDTO }) {
       <span>
         {data.beatmap.title} [{data.beatmap.diffName}]
       </span>
-      <br/>
+      <br />
       {/* TODO: Contingent on verified? */}
       <span>
-        Verification Status: {VerificationStatusMetadata[data.verificationStatus].text}
+        Verification Status:{' '}
+        {VerificationStatusMetadata[data.verificationStatus].text}
       </span>
       <span>
-        Processing Status: {GameProcessingStatusEnumHelper.getMetadata(data.processingStatus).text}
+        Processing Status:{' '}
+        {GameProcessingStatusEnumHelper.getMetadata(data.processingStatus).text}
       </span>
       <RejectionReason itemType={'game'} value={data.rejectionReason} />
       <WarningFlags itemType={'game'} value={data.warningFlags} />

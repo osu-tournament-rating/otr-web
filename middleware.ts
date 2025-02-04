@@ -1,6 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { defaultSessionData, ironSessionOptions, isTokenExpired } from '@/lib/auth';
+import {
+  defaultSessionData,
+  ironSessionOptions,
+  isTokenExpired,
+} from '@/lib/auth';
 import { sealData, unsealData } from 'iron-session';
 import { SessionData } from '@/lib/types';
 import { refreshAccessToken } from '@/app/actions/login';
@@ -27,18 +31,26 @@ export async function middleware(req: NextRequest) {
 
 async function middlewareGetSession(req: NextRequest, res: NextResponse) {
   // Decode session from cookie
-  const sessionCookieValue = req.cookies.get(ironSessionOptions.cookieName)?.value;
+  const sessionCookieValue = req.cookies.get(
+    ironSessionOptions.cookieName
+  )?.value;
   const session = sessionCookieValue
     ? await unsealData<SessionData>(sessionCookieValue, ironSessionOptions)
     : defaultSessionData;
 
   // Access token is valid
-  if (!session.accessToken || (session.accessToken && !isTokenExpired(session.accessToken))) {
+  if (
+    !session.accessToken ||
+    (session.accessToken && !isTokenExpired(session.accessToken))
+  ) {
     return session;
   }
 
   // Refresh token is expired
-  if (!session.refreshToken || (session.refreshToken && isTokenExpired(session.refreshToken))) {
+  if (
+    !session.refreshToken ||
+    (session.refreshToken && isTokenExpired(session.refreshToken))
+  ) {
     middlewareLogout(res);
     return session;
   }
@@ -65,7 +77,10 @@ async function middlewareGetSession(req: NextRequest, res: NextResponse) {
   return session;
 }
 
-async function middlewareSaveSession(sessionData: SessionData, res: NextResponse) {
+async function middlewareSaveSession(
+  sessionData: SessionData,
+  res: NextResponse
+) {
   const encodedSessionData = await sealData(sessionData, ironSessionOptions);
   res.cookies.set(
     ironSessionOptions.cookieName,
