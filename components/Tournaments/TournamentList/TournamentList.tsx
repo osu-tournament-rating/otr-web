@@ -153,20 +153,6 @@ export default function TournamentList({
                   autoWidth
                   ref={registerChild}
                   onRowsRendered={onRowsRendered}
-                  // TODO: This hack causes the scroll to be jumpy and look pretty jank all around
-                  // Proper solution would probably be to pass a WindowScroller ref down from the
-                  // collapsible filter so that it is responsible for updating the position when needed
-                  //
-                  // onRowsRendered={(...args) => {
-                  //   onRowsRendered(...args);
-                  //   if (windowScrollerRef.current) {
-                  //     // Hack to dynamically update the vertical position of the list
-                  //     // when things like the expandable filter change the height.
-                  //     // Could be a point to optimize in the future if needed
-                  //     windowScrollerRef.current.updatePosition();
-                  //   }
-                  // }}
-                  noRowsRenderer={noRowsRenderer}
                   height={height}
                   width={width}
                   isScrolling={isScrolling}
@@ -175,6 +161,7 @@ export default function TournamentList({
                   rowCount={rowCount}
                   deferredMeasurementCache={rowHeightCache}
                   rowHeight={rowHeightCache.rowHeight}
+                  noRowsRenderer={noRowsRenderer}
                   rowRenderer={rowRenderer}
                 />
               </div>

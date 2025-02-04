@@ -77,7 +77,7 @@ export default function TournamentListFilterProvider({
     }
   }, [pathName, router, filter, defaultFilter, queryParams]);
 
-  // Handle updating filter values and debouncing
+  // Handle updating filter values
   const setFilterValue = <K extends keyof TournamentListFilter>(
     item: K,
     value: TournamentListFilter[K]
