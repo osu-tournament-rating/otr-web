@@ -1,9 +1,3 @@
-.container {
-  display: flex;
-  flex-flow: column;
-  gap: var(--internal-gap);
-}
-
 .header {
   width: 100%;
   height: auto;
@@ -13,24 +7,35 @@
   justify-content: space-between;
 }
 
-.header span {
+.header .title {
   display: flex;
   flex-flow: row;
-  gap: var(--internal-gap);
+  gap: calc(var(--internal-gap) / 2);
+  align-items: baseline;
 }
 
-.header .outIcon {
-  /** TODO: I have no idea how to make the link icon take up more space LOL */
-  object-fit: fill;
+.title svg {
+  height: 1rem;
+  width: 1rem;
   fill: hsla(var(--foreground-hsl));
   transition: all 0.2s ease-out;
 
   &:hover {
     fill-opacity: 0.8;
   }
+
+  &.editIcon {
+    cursor: pointer;
+  }
 }
 
-.header .date {
+.header .timeDisplay {
+  display: flex;
+  flex-flow: row;
+  gap: var(--internal-gap);
+}
+
+.timeDisplay .date {
   width: fit-content;
   margin-right: 0.2em;
 }
