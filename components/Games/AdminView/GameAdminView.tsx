@@ -2,11 +2,12 @@
 
 import {
   GameDTO,
-  GameProcessingStatus
+  GameProcessingStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { useEffect, useState } from 'react';
 import {
-  GameProcessingStatusEnumHelper, RulesetEnumHelper,
+  GameProcessingStatusEnumHelper,
+  RulesetEnumHelper,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
   VerificationStatusMetadata,

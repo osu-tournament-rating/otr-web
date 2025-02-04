@@ -12,8 +12,8 @@ import {
   TournamentSubmissionDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import styles from './SubmissionForm.module.css';
 import { RulesetMetadata } from '@/lib/enums';
 import { useUser } from '@/util/hooks';
@@ -32,11 +32,14 @@ function SubmitButton({ rulesAccepted }: { rulesAccepted: boolean }) {
 }
 
 export default function SubmissionForm() {
-  const [formState, formAction] = useFormState(tournamentSubmissionFormAction, {
-    success: false,
-    message: '',
-    errors: {},
-  });
+  const [formState, formAction] = useActionState(
+    tournamentSubmissionFormAction,
+    {
+      success: false,
+      message: '',
+      errors: {},
+    }
+  );
   const userIsAdmin = isAdmin(useUser().user?.scopes);
 
   const [rulesAccepted, setRulesAccepted] = useState(false);

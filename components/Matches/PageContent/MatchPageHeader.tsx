@@ -56,10 +56,10 @@ export default function MatchPageHeader({ data }: { data: MatchDTO }) {
         </div>
       </div>
       <div className={styles.subHeader}>
-        <span>
-          Played in
-        </span>
-        <Link href={`/tournaments/${data.tournament.id}`}><h3>{data.tournament.name}</h3></Link>
+        <span>Played in</span>
+        <Link href={`/tournaments/${data.tournament.id}`}>
+          <h3>{data.tournament.name}</h3>
+        </Link>
       </div>
     </div>
   );

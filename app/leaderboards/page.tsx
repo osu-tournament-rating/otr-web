@@ -23,11 +23,10 @@ const catchErrors = async (params: {}, leaderboard: any) => {
   return;
 };
 
-export default async function page({
-  searchParams,
-}: {
-  searchParams: URLSearchParams;
+export default async function page(props: {
+  searchParams: Promise<URLSearchParams>;
 }) {
+  const searchParams = await props.searchParams;
   const leaderboardData = await fetchLeaderboard(searchParams);
   await catchErrors(searchParams, leaderboardData);
 

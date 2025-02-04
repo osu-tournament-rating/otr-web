@@ -5,8 +5,6 @@ import {
   IOtrApiWrapperConfiguration,
   ProblemDetails,
   Roles,
-  TournamentCompactDTO,
-  TournamentDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { AxiosHeaders } from 'axios';
 import { validateAccessCredentials } from '@/app/actions/login';
@@ -26,7 +24,8 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
     // Interceptor for handling access credentials
     instance.interceptors.request.use(
       async (config) => {
-        if (!(config as any).requiresAuth) {
+        // 'requiresAuth' is a magic value set by the client lib
+        if (!('requiresAuth' in config) || !config.requiresAuth) {
           return config;
         }
 
@@ -52,7 +51,7 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
 };
 
 /** Type guard for determining if an object is {@link ProblemDetails} */
-export function isProblemDetails(obj: any): obj is ProblemDetails {
+export function isProblemDetails(obj: unknown): obj is ProblemDetails {
   return (
     obj !== null &&
     obj !== undefined &&
@@ -64,7 +63,7 @@ export function isProblemDetails(obj: any): obj is ProblemDetails {
 
 /** Type guard for determining if an object is {@link HttpValidationProblemDetails} */
 export function isHttpValidationProblemDetails(
-  obj: any
+  obj: unknown
 ): obj is HttpValidationProblemDetails {
   return (
     isProblemDetails(obj) &&

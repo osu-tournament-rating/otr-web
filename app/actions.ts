@@ -55,7 +55,7 @@ export async function fetchLeaderboard(params: {}) {
   const session = await getSessionData();
 
   const osuMode =
-    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+    (await (await cookies()).get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
   /* PLAYERID */
 
@@ -218,7 +218,7 @@ export async function fetchDashboard(params: {}) {
   const session = await getSessionData();
 
   const osuMode =
-    (await cookies().get('OTR-user-selected-osu-mode')?.value) ?? '0';
+    (await (await cookies()).get('OTR-user-selected-osu-mode')?.value) ?? '0';
 
   let urlStringObject = {
     ruleset: osuMode,
