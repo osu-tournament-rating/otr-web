@@ -20,6 +20,9 @@ export default function TournamentListFilter() {
   // Handle debouncing search bar
   const handleSetSearchQuery = (value: string | undefined) => {
     // Immediately set the front-facing value
+    if (value === '') {
+      value = undefined;
+    }
     setSearchBarValue(value);
 
     // Cancel the current queued update if possible

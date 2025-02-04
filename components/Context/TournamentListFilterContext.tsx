@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { TournamentListFilter } from '@/lib/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { formatDateForFilter } from '@/lib/dates';
 
 /**
  * Creates a {@link TournamentListFilter} containing only values
@@ -20,7 +21,13 @@ function buildFilter(
 ) {
   return Object.entries(currentFilter)
     .filter(([k, v]) => defaultFilter[k as keyof TournamentListFilter] !== v)
-    .map(([k, v]) => [k, String(v)]);
+    .map(([k, v]) => {
+      if (v instanceof Date) {
+        return [k, formatDateForFilter(v)];
+      }
+
+      return [k, String(v)];
+    });
 }
 
 /** Properties exposed by the {@link TournamentListFilterContext} */
