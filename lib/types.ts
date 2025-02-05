@@ -98,3 +98,12 @@ export type PickByType<T, U> = Pick<
 
 /** Types of items in the main structure */
 export type ApiItemType = 'tournament' | 'match' | 'game' | 'score';
+
+/** Error content returned by a server action */
+export type ServerActionError = {
+  /** Error message */
+  message: string;
+
+  /** HTTP Status code */
+  statusCode?: number;
+}

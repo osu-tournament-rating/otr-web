@@ -7,6 +7,7 @@ import {
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
+import { ServerActionError } from '@/lib/types';
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
@@ -38,6 +39,14 @@ const makeErrorMap = (messages: {
     return { message: messages[issue.code]?.(ctx.data) || ctx.defaultError };
   };
 };
+
+/** Determines if an object is a {@link ServerActionError} */
+export function isServerActionError(obj: unknown): obj is ServerActionError {
+  return obj !== null
+    && obj !== undefined
+    && typeof obj === 'object'
+    && 'message' in obj;
+}
 
 export const TournamentSubmissionFormSchema = z.object({
   name: z.string().min(1),
@@ -105,3 +114,4 @@ export const TournamentsListFilterSchema = z.object({
   sort: numericEnumValueSchema(TournamentQuerySortType).optional(),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(false),
 });
+

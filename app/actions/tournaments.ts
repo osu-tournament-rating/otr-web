@@ -20,6 +20,7 @@ import {
   TournamentsWrapper,
 } from '@osu-tournament-rating/otr-api-client';
 import { ZodError } from 'zod';
+import { handleOtrApiWrapperAction, OtrApiWrapperActionHandlerOptions } from '@/app/actions/common';
 
 /**
  * Handles parsing, submitting, and handling errors for tournament submission data
@@ -128,24 +129,32 @@ export async function getTournamentList(params: TournamentsListRequestParams) {
 
 /**
  * Deletes a tournament
- * @param params see {@link TournamentsDeleteRequestParams}
+ * @param requestParams see {@link TournamentsDeleteRequestParams}
+ * @param handlerParams see {@link OtrApiWrapperActionHandlerOptions}
  */
-export async function deleteTournament(params: TournamentsDeleteRequestParams) {
-  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-  const { result } = await wrapper.delete(params);
-
-  return result;
+export async function deleteTournament(
+  requestParams: TournamentsDeleteRequestParams,
+  handlerParams?: OtrApiWrapperActionHandlerOptions
+) {
+  return await handleOtrApiWrapperAction(() =>
+    new TournamentsWrapper(apiWrapperConfiguration).delete(requestParams),
+    handlerParams
+  );
 }
 
 /**
  * "Accepts" the pre-verification or pre-rejection of a tournament and all of its children
- * @param params see {@link TournamentsAcceptPreVerificationStatusesRequestParams}
+ * @param requestParams see {@link TournamentsAcceptPreVerificationStatusesRequestParams}
+ * @param handlerParams see {@link OtrApiWrapperActionHandlerOptions}
  */
-export async function acceptTournamentPreStatus(params: TournamentsAcceptPreVerificationStatusesRequestParams) {
-  const wrapper = new TournamentsWrapper(apiWrapperConfiguration);
-  const { result } = await wrapper.acceptPreVerificationStatuses(params);
-
-  return result;
+export async function acceptTournamentPreStatus(
+  requestParams: TournamentsAcceptPreVerificationStatusesRequestParams,
+  handlerParams?: OtrApiWrapperActionHandlerOptions
+) {
+  return await handleOtrApiWrapperAction(() =>
+    new TournamentsWrapper(apiWrapperConfiguration).acceptPreVerificationStatuses(requestParams),
+    handlerParams
+  );
 }
 
 export async function buildTournamentListFilter(

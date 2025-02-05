@@ -15,11 +15,16 @@ import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/F
 import SingleEnumSelect from '@/components/Enums/Input/SingleEnumSelect';
 import { useRouter } from 'next/navigation';
 import { acceptTournamentPreStatus, deleteTournament } from '@/app/actions/tournaments';
+import { handleApiCall } from '@/lib/api';
+import { toast } from 'sonner';
+
+type ButtonActionType = 'AcceptPreStatus' | 'Delete';
 
 export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
   const router = useRouter()
   const [tournament, setTournament] = useState(data);
   const [hasChanges, setHasChanges] = useState(isObjectEqual(data, tournament));
+  const [pendingAction, setPendingAction] = useState<ButtonActionType | undefined>(undefined)
 
   const setTournamentProp = <K extends keyof TournamentDTO>(
     propName: K,
@@ -31,21 +36,45 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
   }, [data, tournament]);
 
   const handleAcceptPreStatus = async () => {
-    try {
-      await acceptTournamentPreStatus({ id: tournament.id });
-      router.refresh();
-    } catch (e) {
-      console.error(e);
-    }
+    await handleApiCall(
+      () => acceptTournamentPreStatus({ id: tournament.id }),
+      {
+        onSuccess: () => {
+          const navRefresh = () => router.refresh();
+
+          toast.success('Pre-status accepted',
+            { onAutoClose: navRefresh, onDismiss: navRefresh }
+          );
+        }
+      }
+    )
   }
 
   const handleDelete = async () => {
-    try {
-      await deleteTournament({ id: tournament.id });
-      router.push('/tournaments');
-    } catch (e) {
-      console.error(e);
-    }
+    setPendingAction('Delete');
+    await handleApiCall(
+      () => deleteTournament({ id: 123123123123 }),
+      {
+        onError: (err, defaultCallback) => {
+          setPendingAction(undefined);
+          defaultCallback(err);
+        },
+        onSuccess: () => {
+          const navBack = () => router.push('/tournaments');
+          
+          toast.success(
+            () => (
+              <div>
+                <h1>Tournament deleted successfully</h1>
+                <br />
+                You will be redirected to the tournaments search page
+              </div>
+            ),
+            { onAutoClose: navBack, onDismiss: navBack, position: 'top-center' }
+          );
+        }
+      }
+    );
   }
 
   return (
@@ -56,7 +85,11 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
       </span>
       <span>
         Processing Status:{' '}
-        {TournamentProcessingStatusEnumHelper.getMetadata(data.processingStatus).text}
+        {
+          TournamentProcessingStatusEnumHelper.getMetadata(
+            data.processingStatus
+          ).text
+        }
       </span>
       <RejectionReason itemType={'match'} value={data.rejectionReason} />
       <br />
@@ -85,7 +118,9 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
         <span>Format</span>
         <FormatSelector
           value={tournament.lobbySize}
-          onChange={(e) => setTournamentProp('lobbySize', Number(e.target.value))}
+          onChange={(e) =>
+            setTournamentProp('lobbySize', Number(e.target.value))
+          }
         />
       </div>
       <div>
@@ -102,30 +137,43 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
           type={'number'}
           min={1}
           value={tournament.rankRangeLowerBound}
-          onChange={(e) => setTournamentProp('rankRangeLowerBound', e.target.valueAsNumber)}
+          onChange={(e) =>
+            setTournamentProp('rankRangeLowerBound', e.target.valueAsNumber)
+          }
         />
       </div>
       <br />
       {data.processingStatus === TournamentProcessingStatus.NeedsVerification && (
         <>
           <button
-            disabled={data.verificationStatus !== VerificationStatus.PreVerified && data.verificationStatus !== VerificationStatus.PreRejected}
+            disabled={
+              (data.verificationStatus !== VerificationStatus.PreVerified
+                && data.verificationStatus !== VerificationStatus.PreRejected
+              ) || !!pendingAction
+            }
           >
             Re-run automation checks
           </button>
           <button
-            disabled={data.verificationStatus !== VerificationStatus.PreVerified && data.verificationStatus !== VerificationStatus.PreRejected}
-            onClick={handleAcceptPreStatus}>
+            disabled={
+              (data.verificationStatus !== VerificationStatus.PreVerified
+                && data.verificationStatus !== VerificationStatus.PreRejected
+              ) || !!pendingAction
+            }
+            onClick={handleAcceptPreStatus}
+          >
             Accept pre-verification
           </button>
           <br />
         </>
       )}
-      <button disabled={hasChanges} onClick={() => setTournament(data)}>
+      <button disabled={hasChanges || !!pendingAction} onClick={() => setTournament(data)}>
         Clear Changes
       </button>
-      <button disabled={hasChanges}>Save Changes</button>
-      <button onClick={handleDelete}>Delete</button>
+      <button disabled={hasChanges || !!pendingAction}>Save Changes</button>
+      <button disabled={!!pendingAction} onClick={handleDelete}>
+        {(pendingAction && pendingAction === 'Delete') ? 'Deleting...' : 'Delete'}
+      </button>
     </>
   );
 }
