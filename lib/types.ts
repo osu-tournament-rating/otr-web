@@ -47,9 +47,6 @@ export interface SessionData {
   /** Denotes if the user is logged in */
   isLogged: boolean;
 
-  /** State variable used to authenticate osu! OAuth attempts */
-  osuOauthState?: string;
-
   /** API access token */
   accessToken?: string;
 
@@ -59,8 +56,17 @@ export interface SessionData {
 
 /** Names of available cookies */
 export enum CookieNames {
-  /** The Ruleset currently selected by the user in the navbar */
+  /**
+   * The Ruleset currently selected by the user in the navbar
+   * @deprecated
+   */
   SelectedRuleset = 'OTR-selected-ruleset',
+
+  /** XSRF token for osu! OAuth authentication */
+  AuthXSRFToken = 'otr-auth-xsrf-token',
+
+  /** Session data */
+  Session = 'otr-session',
 }
 
 /** Parameters used to get the session as an alternative to using read only cookies */

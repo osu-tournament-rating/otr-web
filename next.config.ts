@@ -1,7 +1,12 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  webpack(config) {
+import { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  webpack: (config) => {
+    // region svgr Config
+    // see https://react-svgr.com/docs/next/
+
     // Grab the existing rule that handles SVG imports
+    // @ts-expect-error - webpack config has incredibly loose typing
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg')
     );
@@ -37,40 +42,32 @@ const nextConfig = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    // endregion
+
     return config;
   },
   images: {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
+      // Allow proxying images from any osu! subdomain
       {
         protocol: 'https',
-        hostname: 's.ppy.sh',
-      },
-      {
-        protocol: 'https',
-        hostname: 'a.ppy.sh',
-      },
-      {
-        protocol: 'https',
-        hostname: 'assets.ppy.sh',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ppy.sh',
+        hostname: '**.ppy.sh',
       },
     ],
   },
+  experimental: {
+    typedRoutes: true,
+  },
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
+    // TODO: Fix all errors and remove
     ignoreBuildErrors: true,
   },
   eslint: {
+    // TODO: Fix all errors and remove
     ignoreDuringBuilds: true,
-  }
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

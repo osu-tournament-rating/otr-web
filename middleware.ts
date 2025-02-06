@@ -14,10 +14,6 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const session = await middlewareGetSession(req, res);
 
-  if (!session.isLogged) {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-
   // Redirect users that aren't logged in
   if (!session.isLogged || !session.user?.scopes?.includes(Roles.Whitelist)) {
     // Pass through the existing response headers in case cookies are set
