@@ -1,6 +1,5 @@
 import backgroundError from '@/public/images/error-background.svg?url';
 import Image from 'next/image';
-import Link from 'next/link';
 import styles from './error.module.css';
 
 export default function NotFound() {
