@@ -9,21 +9,17 @@ import {
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
 import { AxiosHeaders } from 'axios';
-import { validateAccessCredentials } from '@/app/actions/login';
 import { getSession } from '@/app/actions/session';
 import { toast } from 'sonner';
 import { ServerActionError } from '@/lib/types';
 import { isServerActionError } from '@/lib/schemas';
 
 export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
-  baseUrl: process.env.REACT_APP_API_BASE_URL as string,
+  baseUrl: process.env.REACT_APP_API_BASE_URL,
   clientConfiguration: {
     headers: new AxiosHeaders()
       .setContentType('application/json')
-      .set(
-        'Access-Control-Allow-Origin',
-        process.env.REACT_APP_ORIGIN_URL as string
-      ),
+      .set('Access-Control-Allow-Origin', process.env.REACT_APP_ORIGIN_URL),
   },
   postConfigureClientMethod(instance) {
     // Interceptor for handling access credentials
@@ -34,11 +30,7 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
           return config;
         }
 
-        // Silently update the access token if needed
-        await validateAccessCredentials();
         const session = await getSession();
-
-        // If the access token is not present after validating, abort the request
         if (!session.accessToken) {
           return Promise.reject(
             new Error('Access is required for this request')
@@ -87,7 +79,7 @@ export type ApiCallHandlerOptions<T> = {
     error: ServerActionError,
     defaultCallback: (error: ServerActionError) => void
   ) => void;
-}
+};
 
 export async function handleApiCall<T>(
   action: () => Promise<T | ServerActionError>,
@@ -135,13 +127,16 @@ export function createPatchOperations<T extends object>(
   orig: T,
   patched: T
 ): Operation[] {
-  return Array
-    .from(new Set([...Object.keys(orig), ...Object.keys(patched)]))
-    .filter(k => typeof orig[k as keyof T] !== 'object' && orig[k as keyof T] !== patched[k as keyof T])
-    .map<Operation>(k => ({
+  return Array.from(new Set([...Object.keys(orig), ...Object.keys(patched)]))
+    .filter(
+      (k) =>
+        typeof orig[k as keyof T] !== 'object' &&
+        orig[k as keyof T] !== patched[k as keyof T]
+    )
+    .map<Operation>((k) => ({
       operationType: OperationType.Replace,
       op: 'replace',
       path: `/${k}`,
-      value: patched[k as keyof T]
-    }))
+      value: patched[k as keyof T],
+    }));
 }

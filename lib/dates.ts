@@ -15,3 +15,7 @@ export const dateFormats = {
     } as Intl.DateTimeFormatOptions,
   },
 };
+
+export function formatDateForFilter(date: Date) {
+  return date.toISOString().split('T')[0];
+}

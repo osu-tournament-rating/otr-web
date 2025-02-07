@@ -42,10 +42,12 @@ const makeErrorMap = (messages: {
 
 /** Determines if an object is a {@link ServerActionError} */
 export function isServerActionError(obj: unknown): obj is ServerActionError {
-  return obj !== null
-    && obj !== undefined
-    && typeof obj === 'object'
-    && 'message' in obj;
+  return (
+    obj !== null &&
+    obj !== undefined &&
+    typeof obj === 'object' &&
+    'message' in obj
+  );
 }
 
 export const TournamentSubmissionFormSchema = z.object({
@@ -101,8 +103,8 @@ export const TournamentsListFilterSchema = z.object({
   verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
   searchQuery: z.string().optional(),
-  dateMin: z.date().optional(),
-  dateMax: z.date().optional(),
+  dateMin: z.coerce.date().optional(),
+  dateMax: z.coerce.date().optional(),
   verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
   processingStatus: numericEnumValueSchema(
@@ -114,4 +116,3 @@ export const TournamentsListFilterSchema = z.object({
   sort: numericEnumValueSchema(TournamentQuerySortType).optional(),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(false),
 });
-

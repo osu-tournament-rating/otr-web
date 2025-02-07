@@ -1,27 +1,44 @@
 import { redirect } from 'next/navigation';
-import { login } from '@/app/actions/login';
-import { getSession } from '@/app/actions/session';
+import { clearCookie, getCookieValue, getSession } from '@/app/actions/session';
+import { CookieNames } from '@/lib/types';
+import { MeWrapper, OAuthWrapper } from '@osu-tournament-rating/otr-api-client';
+import { apiWrapperConfiguration } from '@/lib/api';
 
 export async function GET(request: Request) {
-  const session = await getSession();
+  // Extract auth code and xsrf token from the request
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const state = searchParams.get('state');
+  const token = searchParams.get('state');
+  // Get the stored xsrf token
+  const storedToken = await getCookieValue(CookieNames.AuthXSRFToken);
 
-  if (!session.osuOauthState) {
-    console.log('State was not stored');
-    return redirect('/');
+  // Token should be cleared regardless of success
+  await clearCookie(CookieNames.AuthXSRFToken);
+
+  if (!storedToken || !token || !code || token !== storedToken) {
+    return redirect('/unauthorized');
   }
 
-  if (!code) {
-    console.log('Code was not given');
-    return redirect('/');
+  const session = await getSession();
+
+  try {
+    // Exchange osu! auth code for otr access credentials
+    const {
+      result: { accessToken, refreshToken },
+    } = await new OAuthWrapper(apiWrapperConfiguration).authorize({ code });
+    session.accessToken = accessToken;
+    session.refreshToken = refreshToken;
+    await session.save();
+
+    // Get user data
+    const { result: user } = await new MeWrapper(apiWrapperConfiguration).get();
+    session.user = user;
+    session.isLogged = true;
+    await session.save();
+  } catch {
+    session.destroy();
+    return redirect('/unauthorized');
   }
 
-  if (!state || session.osuOauthState !== state) {
-    console.log('State was not given or does not match the stored state');
-    return redirect('/');
-  }
-
-  return await login(code);
+  return redirect('/');
 }

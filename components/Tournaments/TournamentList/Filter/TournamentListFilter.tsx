@@ -13,24 +13,41 @@ export default function TournamentListFilter() {
     filter: { searchQuery },
     setFilterValue,
   } = useTournamentListFilter();
-  const [inputSearchValue, setInputSearchValue] = useState(searchQuery);
+  const [searchBarValue, setSearchBarValue] = useState(searchQuery);
+  const [searchUpdateAction, setSearchUpdateAction] = useState<
+    NodeJS.Timeout | undefined
+  >(undefined);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
+
+  // Handle debouncing search bar
+  const handleSetSearchQuery = (value: string | undefined) => {
+    // Immediately set the front-facing value
+    if (value === '') {
+      value = undefined;
+    }
+    setSearchBarValue(value);
+
+    // Cancel the current queued update if possible
+    if (searchUpdateAction) {
+      clearTimeout(searchUpdateAction);
+    }
+
+    // Queue the filter update
+    setSearchUpdateAction(
+      setTimeout(() => {
+        setFilterValue('searchQuery', value);
+      }, 500)
+    );
+  };
 
   return (
     <div className={styles.filterContainer}>
       <div className={styles.searchBarContainer}>
         <BasicSearchBar
           placeholder={'Search'}
-          value={inputSearchValue}
-          onChange={(e) => {
-            setInputSearchValue(e.target.value);
-            setFilterValue('searchQuery', searchQuery);
-          }}
+          value={searchBarValue}
+          onChange={(e) => handleSetSearchQuery(e.target.value)}
         />
-        {/**
-         * TODO: Style this to fit the div instead of 'height: 3rem' ?
-         * I couldn't figure out a better way to do it :P
-         */}
         <button
           className={styles.filterButton}
           onClick={() => setIsCollapsibleOpen(!isCollapsibleOpen)}

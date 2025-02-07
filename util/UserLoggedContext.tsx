@@ -1,5 +1,6 @@
 'use client';
 
+import { logout as serverLogout } from '@/app/actions/session';
 import { createContext, useState } from 'react';
 
 import type { ReactNode } from 'react';
@@ -9,7 +10,7 @@ interface UserContextProps {
   /** The currently logged-in user */
   user: UserDTO | undefined;
 
-  /** Clears the currently logged-in user on the client side */
+  /** Logs out of the current session */
   logout: () => void;
 }
 
@@ -28,6 +29,7 @@ export default function UserProvider({
 
   const logout = () => {
     setUser(undefined);
+    return serverLogout();
   };
 
   return (

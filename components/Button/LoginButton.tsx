@@ -1,6 +1,6 @@
 'use client';
 
-import { prepareLogin } from '@/app/actions/login';
+import { login } from '@/app/actions/session';
 import { useUser } from '@/util/hooks';
 
 export default function LoginButton() {
@@ -12,7 +12,7 @@ export default function LoginButton() {
         <button
           onClick={(e) => {
             e.preventDefault();
-            return prepareLogin();
+            return login();
           }}
           style={{
             padding: '1.2rem 5rem',
