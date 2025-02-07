@@ -92,8 +92,8 @@ export const TournamentsListFilterSchema = z.object({
   verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
   searchQuery: z.string().optional(),
-  dateMin: z.date().optional(),
-  dateMax: z.date().optional(),
+  dateMin: z.coerce.date().optional(),
+  dateMax: z.coerce.date().optional(),
   verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
   processingStatus: numericEnumValueSchema(

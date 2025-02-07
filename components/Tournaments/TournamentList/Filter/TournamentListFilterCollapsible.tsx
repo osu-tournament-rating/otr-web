@@ -14,6 +14,7 @@ import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client
 import clsx from 'clsx';
 import { AnimationProps, motion } from 'framer-motion';
 import styles from './TournamentListFilter.module.css';
+import { formatDateForFilter } from '@/lib/dates';
 
 // TODO: Clean up this animation
 const collapsibleAnimationProps: AnimationProps = {
@@ -92,13 +93,28 @@ function DateRangeSection() {
     setFilterValue,
   } = useTournamentListFilter();
 
+  const dateMinValue = dateMin ? formatDateForFilter(dateMin) : '';
+  const dateMaxValue = dateMax ? formatDateForFilter(dateMax) : '';
+
   return (
     <section className={styles.containerField}>
       <span className={styles.label}>Date</span>
       <div className={styles.field}>
-        <input type="date" name="startDate" id="startDate" />
+        <input
+          type={'date'}
+          value={dateMinValue}
+          onChange={(e) => {
+            setFilterValue('dateMin', e.target.valueAsDate ?? undefined);
+          }}
+        />
         <span>to</span>
-        <input type="date" name="endDate" id="endDate" />
+        <input
+          type={'date'}
+          value={dateMaxValue}
+          onChange={(e) => {
+            setFilterValue('dateMax', e.target.valueAsDate ?? undefined);
+          }}
+        />
       </div>
     </section>
   );
