@@ -9,7 +9,6 @@ import {
   ResponseCookies,
 } from 'next/dist/compiled/@edge-runtime/cookies';
 import { redirect, RedirectType } from 'next/navigation';
-import env from '@/lib/env';
 
 // region Iron Session
 
@@ -49,8 +48,8 @@ export async function login() {
   await setCookieValue(CookieNames.AuthXSRFToken, token);
 
   const query = new URLSearchParams([
-    ['client_id', env.REACT_APP_OSU_CLIENT_ID],
-    ['redirect_uri', env.REACT_APP_OSU_CALLBACK_URL],
+    ['client_id', process.env.REACT_APP_OSU_CLIENT_ID],
+    ['redirect_uri', process.env.REACT_APP_OSU_CALLBACK_URL],
     ['response_type', 'code'],
     ['scope', 'public friends.read'],
     ['state', token],

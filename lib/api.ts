@@ -13,14 +13,11 @@ import { getSession } from '@/app/actions/session';
 import { notFound } from 'next/navigation';
 
 export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
-  baseUrl: process.env.REACT_APP_API_BASE_URL as string,
+  baseUrl: process.env.REACT_APP_API_BASE_URL,
   clientConfiguration: {
     headers: new AxiosHeaders()
       .setContentType('application/json')
-      .set(
-        'Access-Control-Allow-Origin',
-        process.env.REACT_APP_ORIGIN_URL as string
-      ),
+      .set('Access-Control-Allow-Origin', process.env.REACT_APP_ORIGIN_URL),
   },
   postConfigureClientMethod(instance) {
     // Interceptor for handling access credentials
