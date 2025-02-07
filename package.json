@@ -54,7 +54,7 @@
     "typescript-eslint": "^8.22.0"
   },
   "lint-staged": {
-    "!(*.ts)": "prettier --write",
+    "!(*.ts)": "prettier --write --ignore-unknown",
     "*.ts": [
       "eslint --fix",
       "prettier --write"
