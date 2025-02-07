@@ -38,5 +38,10 @@ declare namespace NodeJS {
 
     /** Secret value used to encrypt session data */
     SESSION_SECRET: string;
+
+    /**
+     * (optional) Connection string for the OpenTelemetry Collector
+     */
+    COLLECTOR_CONNECTION?: string;
   }
 }
