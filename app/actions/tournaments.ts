@@ -13,14 +13,20 @@ import { FormState, TournamentListFilter } from '@/lib/types';
 import { extractFormData } from '@/util/forms';
 import {
   OperationType,
-  TournamentDTO, TournamentsAcceptPreVerificationStatusesRequestParams, TournamentsDeleteRequestParams,
+  TournamentDTO,
+  TournamentsAcceptPreVerificationStatusesRequestParams,
+  TournamentsDeleteRequestParams,
   TournamentsGetRequestParams,
   TournamentsListRequestParams,
   TournamentSubmissionDTO,
+  TournamentsUpdateRequestParams,
   TournamentsWrapper,
 } from '@osu-tournament-rating/otr-api-client';
 import { ZodError } from 'zod';
-import { handleOtrApiWrapperAction, OtrApiWrapperActionHandlerOptions } from '@/app/actions/common';
+import {
+  handleOtrApiWrapperAction,
+  OtrApiWrapperActionHandlerOptions,
+} from '@/app/actions/common';
 
 /**
  * Handles parsing, submitting, and handling errors for tournament submission data
@@ -136,8 +142,8 @@ export async function deleteTournament(
   requestParams: TournamentsDeleteRequestParams,
   handlerParams?: OtrApiWrapperActionHandlerOptions
 ) {
-  return await handleOtrApiWrapperAction(() =>
-    new TournamentsWrapper(apiWrapperConfiguration).delete(requestParams),
+  return await handleOtrApiWrapperAction(
+    () => new TournamentsWrapper(apiWrapperConfiguration).delete(requestParams),
     handlerParams
   );
 }
@@ -151,23 +157,28 @@ export async function acceptTournamentPreStatus(
   requestParams: TournamentsAcceptPreVerificationStatusesRequestParams,
   handlerParams?: OtrApiWrapperActionHandlerOptions
 ) {
-  return await handleOtrApiWrapperAction(() =>
-    new TournamentsWrapper(apiWrapperConfiguration).acceptPreVerificationStatuses(requestParams),
+  return await handleOtrApiWrapperAction(
+    () =>
+      new TournamentsWrapper(
+        apiWrapperConfiguration
+      ).acceptPreVerificationStatuses(requestParams),
     handlerParams
   );
 }
 
-export async function buildTournamentListFilter(
-  queryParams: object,
-  defaultFilter?: TournamentListFilter
+/**
+ * Patches tournament data
+ * @param requestParams see {@link TournamentsUpdateRequestParams}
+ * @param handlerParams see {@link OtrApiWrapperActionHandlerOptions}
+ */
+export async function updateTournament(
+  requestParams: TournamentsUpdateRequestParams,
+  handlerParams?: OtrApiWrapperActionHandlerOptions
 ) {
-  const parsed = TournamentsListFilterSchema.safeParse(
-    Object.assign({}, defaultFilter, queryParams)
+  return await handleOtrApiWrapperAction(
+    () => new TournamentsWrapper(apiWrapperConfiguration).update(requestParams),
+    handlerParams
   );
-
-  return parsed.success
-    ? (parsed.data as TournamentListFilter)
-    : (defaultFilter ?? {});
 }
 
 /**
@@ -175,6 +186,7 @@ export async function buildTournamentListFilter(
  * @param id Tournament id
  * @param prop Property to update
  * @param value New value for the property
+ * @deprecated
  */
 export async function patchTournamentData<K extends keyof TournamentDTO>({
   id,
@@ -201,4 +213,17 @@ export async function patchTournamentData<K extends keyof TournamentDTO>({
   });
 
   return result;
+}
+
+export async function buildTournamentListFilter(
+  queryParams: object,
+  defaultFilter?: TournamentListFilter
+) {
+  const parsed = TournamentsListFilterSchema.safeParse(
+    Object.assign({}, defaultFilter, queryParams)
+  );
+
+  return parsed.success
+    ? (parsed.data as TournamentListFilter)
+    : (defaultFilter ?? {});
 }
