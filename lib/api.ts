@@ -8,11 +8,12 @@ import {
   ProblemDetails,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
-import { AxiosHeaders } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { getSession } from '@/app/actions/session';
 import { toast } from 'sonner';
 import { ServerActionError } from '@/lib/types';
 import { isServerActionError } from '@/lib/schemas';
+import { notFound } from 'next/navigation';
 
 export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
   baseUrl: process.env.REACT_APP_API_BASE_URL,
@@ -41,6 +42,17 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
         return config;
       },
       (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    instance.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if ((error as AxiosError).status === 404) {
+          return notFound();
+        }
+
         return Promise.reject(error);
       }
     );
