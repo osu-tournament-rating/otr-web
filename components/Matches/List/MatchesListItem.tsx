@@ -19,6 +19,20 @@ export default function MatchesListItem({ data }: { data: MatchDTO }) {
             />
             <span>{data.name}</span>
           </div>
+          <div className={styles.gameVerificationPreview}>
+            {data.games
+              .toSorted(
+                (a, b) =>
+                  new Date(a.startTime).getTime() -
+                  new Date(b.startTime).getTime()
+              )
+              .map((g) => (
+                <VerificationStatusCircle
+                  key={g.id}
+                  verificationStatus={g.verificationStatus}
+                />
+              ))}
+          </div>
           {/** Start Date */}
           {data.startTime ? (
             <FormattedDate
