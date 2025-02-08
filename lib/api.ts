@@ -10,6 +10,9 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { getSession } from '@/app/actions/session';
+import { toast } from 'sonner';
+import { ServerActionError } from '@/lib/types';
+import { isServerActionError } from '@/lib/schemas';
 import { notFound } from 'next/navigation';
 
 export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
@@ -80,6 +83,48 @@ export function isHttpValidationProblemDetails(
         Array.isArray(value) && value.every((v) => typeof v === 'string')
     )
   );
+}
+
+export type ApiCallHandlerOptions<T> = {
+  onSuccess?: (result: T) => void;
+  onError?: (
+    error: ServerActionError,
+    defaultCallback: (error: ServerActionError) => void
+  ) => void;
+};
+
+export async function handleApiCall<T>(
+  action: () => Promise<T | ServerActionError>,
+  options: ApiCallHandlerOptions<T> = {}
+) {
+  const { onSuccess, onError } = options;
+  const defaultOnError = (error: ServerActionError) => {
+    let message = 'Unhandled Server Error\n';
+    if (error.statusCode) {
+      message += `Status: ${error.statusCode}\n`;
+    }
+    message += error.message;
+
+    toast.error(message);
+  };
+
+  const response = await action();
+
+  if (isServerActionError(response)) {
+    if (onError) {
+      onError(response, defaultOnError);
+    } else {
+      defaultOnError(response);
+    }
+
+    return response;
+  }
+
+  if (onSuccess) {
+    onSuccess(response);
+  }
+
+  return response;
 }
 
 /** Denotes if a list of scopes contains the admin scope */

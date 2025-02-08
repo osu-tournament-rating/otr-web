@@ -1,25 +1,41 @@
 'use client';
 
 import {
-  TournamentDTO, TournamentProcessingStatus, VerificationStatus,
+  TournamentDTO,
+  TournamentProcessingStatus,
+  VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   RulesetEnumHelper,
   TournamentProcessingStatusEnumHelper,
-  VerificationStatusMetadata,
+  VerificationStatusEnumHelper,
 } from '@/lib/enums';
 import RejectionReason from '@/components/Enums/RejectionReason';
 import { isObjectEqual } from '@/util/forms';
 import FormatSelector from '@/components/Tournaments/Submission/SubmissionForm/FormatSelector/FormatSelector';
 import SingleEnumSelect from '@/components/Enums/Input/SingleEnumSelect';
 import { useRouter } from 'next/navigation';
-import { acceptTournamentPreStatus, deleteTournament } from '@/app/actions/tournaments';
+import {
+  acceptTournamentPreStatus,
+  deleteTournament,
+  updateTournament,
+} from '@/app/actions/tournaments';
+import { createPatchOperations, handleApiCall } from '@/lib/api';
+import { toast } from 'sonner';
+
+type ButtonActionType = 'AcceptPreStatus' | 'Delete' | 'Edit';
 
 export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
-  const router = useRouter()
+  const router = useRouter();
+  const [origTournament, setOrigTournament] = useState(data);
   const [tournament, setTournament] = useState(data);
-  const [hasChanges, setHasChanges] = useState(isObjectEqual(data, tournament));
+  const hasChanges = useMemo(() => {
+    return isObjectEqual(origTournament, tournament);
+  }, [origTournament, tournament]);
+  const [pendingAction, setPendingAction] = useState<
+    ButtonActionType | undefined
+  >(undefined);
 
   const setTournamentProp = <K extends keyof TournamentDTO>(
     propName: K,
@@ -27,38 +43,93 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
   ) => setTournament((prev) => ({ ...prev, [propName]: value }));
 
   useEffect(() => {
-    setHasChanges(isObjectEqual(data, tournament));
-  }, [data, tournament]);
+    setTournament(data);
+    setOrigTournament(data);
+  }, [data]);
 
   const handleAcceptPreStatus = async () => {
-    try {
-      await acceptTournamentPreStatus({ id: tournament.id });
-      router.refresh();
-    } catch (e) {
-      console.error(e);
-    }
-  }
+    setPendingAction('AcceptPreStatus');
+    await handleApiCall(
+      () => acceptTournamentPreStatus({ id: tournament.id }),
+      {
+        onSuccess: () => {
+          router.refresh();
+          toast.success('Pre-status accepted', { position: 'top-center' });
+        },
+      }
+    );
+
+    setPendingAction(undefined);
+  };
 
   const handleDelete = async () => {
-    try {
-      await deleteTournament({ id: tournament.id });
-      router.push('/tournaments');
-    } catch (e) {
-      console.error(e);
-    }
-  }
+    setPendingAction('Delete');
+    await handleApiCall(() => deleteTournament({ id: tournament.id }), {
+      onError: (err, defaultCallback) => {
+        setPendingAction(undefined);
+        defaultCallback(err);
+      },
+      onSuccess: () => {
+        const navBack = () => router.push('/tournaments');
+
+        toast.success(
+          () => (
+            <div>
+              <h1>Tournament deleted successfully</h1>
+              <br />
+              You will be redirected to the tournaments search page
+            </div>
+          ),
+          {
+            onAutoClose: navBack,
+            onDismiss: navBack,
+            position: 'top-center',
+          }
+        );
+      },
+    });
+  };
+
+  const handleSaveChanges = async () => {
+    setPendingAction('Edit');
+    await handleApiCall(
+      () =>
+        updateTournament({
+          id: tournament.id,
+          body: createPatchOperations(origTournament, tournament),
+        }),
+      {
+        onSuccess: () => {
+          router.refresh();
+          toast.success('Changes saved', { position: 'top-center' });
+        },
+      }
+    );
+
+    setPendingAction(undefined);
+  };
 
   return (
     <>
-      <span>
-        Verification Status:{' '}
-        {VerificationStatusMetadata[data.verificationStatus].text}
-      </span>
+      <RejectionReason itemType={'tournament'} value={data.rejectionReason} />
       <span>
         Processing Status:{' '}
-        {TournamentProcessingStatusEnumHelper.getMetadata(data.processingStatus).text}
+        {
+          TournamentProcessingStatusEnumHelper.getMetadata(
+            data.processingStatus
+          ).text
+        }
       </span>
-      <RejectionReason itemType={'match'} value={data.rejectionReason} />
+      <div>
+        <span>Verification Status</span>
+        <SingleEnumSelect
+          enumHelper={VerificationStatusEnumHelper}
+          value={tournament.verificationStatus}
+          onChange={(e) =>
+            setTournamentProp('verificationStatus', Number(e.target.value))
+          }
+        />
+      </div>
       <br />
       <div>
         <span>Name</span>
@@ -85,7 +156,9 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
         <span>Format</span>
         <FormatSelector
           value={tournament.lobbySize}
-          onChange={(e) => setTournamentProp('lobbySize', Number(e.target.value))}
+          onChange={(e) =>
+            setTournamentProp('lobbySize', Number(e.target.value))
+          }
         />
       </div>
       <div>
@@ -102,30 +175,56 @@ export default function TournamentAdminView({ data }: { data: TournamentDTO }) {
           type={'number'}
           min={1}
           value={tournament.rankRangeLowerBound}
-          onChange={(e) => setTournamentProp('rankRangeLowerBound', e.target.valueAsNumber)}
+          onChange={(e) =>
+            setTournamentProp('rankRangeLowerBound', e.target.valueAsNumber)
+          }
         />
       </div>
       <br />
-      {data.processingStatus === TournamentProcessingStatus.NeedsVerification && (
+      {data.processingStatus ===
+        TournamentProcessingStatus.NeedsVerification && (
         <>
           <button
-            disabled={data.verificationStatus !== VerificationStatus.PreVerified && data.verificationStatus !== VerificationStatus.PreRejected}
+            disabled={
+              (data.verificationStatus !== VerificationStatus.PreVerified &&
+                data.verificationStatus !== VerificationStatus.PreRejected) ||
+              !!pendingAction
+            }
           >
             Re-run automation checks
           </button>
           <button
-            disabled={data.verificationStatus !== VerificationStatus.PreVerified && data.verificationStatus !== VerificationStatus.PreRejected}
-            onClick={handleAcceptPreStatus}>
-            Accept pre-verification
+            disabled={
+              (data.verificationStatus !== VerificationStatus.PreVerified &&
+                data.verificationStatus !== VerificationStatus.PreRejected) ||
+              !!pendingAction
+            }
+            onClick={handleAcceptPreStatus}
+          >
+            {pendingAction && pendingAction === 'AcceptPreStatus'
+              ? 'Accepting...'
+              : 'Accept pre-verification'}
           </button>
           <br />
         </>
       )}
-      <button disabled={hasChanges} onClick={() => setTournament(data)}>
+      <button
+        disabled={hasChanges || !!pendingAction}
+        onClick={() => setTournament(origTournament)}
+      >
         Clear Changes
       </button>
-      <button disabled={hasChanges}>Save Changes</button>
-      <button onClick={handleDelete}>Delete</button>
+      <button
+        disabled={hasChanges || !!pendingAction}
+        onClick={handleSaveChanges}
+      >
+        {pendingAction && pendingAction === 'Edit'
+          ? 'Saving changes...'
+          : 'Save Changes'}
+      </button>
+      <button disabled={!!pendingAction} onClick={handleDelete}>
+        {pendingAction && pendingAction === 'Delete' ? 'Deleting...' : 'Delete'}
+      </button>
     </>
   );
 }

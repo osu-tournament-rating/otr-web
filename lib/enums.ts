@@ -251,6 +251,7 @@ export const RulesetMetadata: {
   },
 };
 
+// TODO: Refactor in favor of 'VerificationStatusEnumHelper'
 /** Stylistic metadata for each {@link VerificationStatus} */
 export const VerificationStatusMetadata: {
   [key in VerificationStatus]: {
@@ -287,6 +288,33 @@ export const VerificationStatusMetadata: {
     className: 'verified',
     text: 'Verified',
     displayInDropdown: true,
+  },
+};
+
+export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [VerificationStatus.None]: {
+      text: 'Pending',
+      description: '',
+    },
+    [VerificationStatus.PreRejected]: {
+      text: 'Pre-rejected',
+      description: '',
+    },
+    [VerificationStatus.PreVerified]: {
+      text: 'Pre-verified',
+      description: '',
+    },
+    [VerificationStatus.Rejected]: {
+      text: 'Rejected',
+      description: '',
+    },
+    [VerificationStatus.Verified]: {
+      text: 'Verified',
+      description: '',
+    },
   },
 };
 

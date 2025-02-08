@@ -14,7 +14,9 @@ export default function TournamentListFilter() {
     setFilterValue,
   } = useTournamentListFilter();
   const [searchBarValue, setSearchBarValue] = useState(searchQuery);
-  const [searchUpdateAction, setSearchUpdateAction] = useState<NodeJS.Timeout | undefined>(undefined);
+  const [searchUpdateAction, setSearchUpdateAction] = useState<
+    NodeJS.Timeout | undefined
+  >(undefined);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
 
   // Handle debouncing search bar
@@ -31,10 +33,12 @@ export default function TournamentListFilter() {
     }
 
     // Queue the filter update
-    setSearchUpdateAction(setTimeout(() => {
-      setFilterValue('searchQuery', value);
-    }, 500));
-  }
+    setSearchUpdateAction(
+      setTimeout(() => {
+        setFilterValue('searchQuery', value);
+      }, 500)
+    );
+  };
 
   return (
     <div className={styles.filterContainer}>
