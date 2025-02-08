@@ -1,5 +1,4 @@
 import { ModsEnumHelper } from '@/lib/enums';
-import ModFM from '@/public/icons/mods/ModFM.svg?url';
 import { Mods } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 
@@ -16,11 +15,19 @@ export default function ModsDisplay({
   isFreeMod: boolean;
   reverse: boolean;
 }) {
-  const metadata = ModsEnumHelper.getMetadata(mods);
+  let metadata = ModsEnumHelper.getMetadata(mods).map(({ text }) => text);
+
+  if (mods === Mods.NoFail || (mods === Mods.None && !isFreeMod)) {
+    metadata = ['NM'];
+  }
+
+  if (isFreeMod) {
+    metadata.unshift('FM');
+  }
 
   return (
     <div className={containerClass}>
-      {metadata.map(({ text }, index) => (
+      {metadata.map((text, index) => (
         <div
           className={modClass}
           key={text}
@@ -31,11 +38,6 @@ export default function ModsDisplay({
           <Image src={`/icons/mods/Mod${text}.svg`} alt={`mod-${text}`} fill />
         </div>
       ))}
-      {isFreeMod && (
-        <div className={modClass} key={'FM'}>
-          <Image src={ModFM} alt={'mod-freemod'} fill />
-        </div>
-      )}
     </div>
   );
 }
