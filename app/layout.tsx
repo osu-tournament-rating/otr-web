@@ -1,5 +1,4 @@
 import { RootLayoutProvider } from '@/components/RootLayoutProvider/RootLayoutProvider';
-import ErrorProvider from '@/util/ErrorContext';
 import UserProvider from '@/util/UserLoggedContext';
 import type { Metadata } from 'next';
 import { Viewport } from 'next';
@@ -8,6 +7,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import React from 'react';
 import { getSession } from '@/app/actions/session';
+import ConfiguredToaster from '@/components/Toasts/ConfiguredToaster';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-Inter' });
 
@@ -38,11 +38,10 @@ export default async function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <ThemeProvider defaultTheme="light" enableSystem={false}>
-          <ErrorProvider>
-            <UserProvider initialUser={user}>
-              <RootLayoutProvider>{children}</RootLayoutProvider>
-            </UserProvider>
-          </ErrorProvider>
+          <ConfiguredToaster />
+          <UserProvider initialUser={user}>
+            <RootLayoutProvider>{children}</RootLayoutProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

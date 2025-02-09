@@ -31,6 +31,7 @@
     "react-tooltip": "^5.28.0",
     "react-virtualized": "^9.22.5",
     "react-wrap-balancer": "^1.1.0",
+    "sonner": "^1.7.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -54,7 +55,7 @@
     "typescript-eslint": "^8.22.0"
   },
   "lint-staged": {
-    "!(*.ts)": "prettier --write",
+    "!(*.ts)": "prettier --write --ignore-unknown",
     "*.ts": [
       "eslint --fix",
       "prettier --write"

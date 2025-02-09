@@ -1,8 +1,10 @@
-import AllRulesetIcon from '@/public/icons/Ruleset All.svg';
-import CatchIcon from '@/public/icons/Ruleset Catch.svg';
-import ManiaIcon from '@/public/icons/Ruleset Mania.svg';
-import StandardIcon from '@/public/icons/Ruleset Standard.svg';
-import TaikoIcon from '@/public/icons/Ruleset Taiko.svg';
+import AllRulesetIcon from '@/public/icons/rulesets/all.svg';
+import CatchIcon from '@/public/icons/rulesets/catch.svg';
+import ManiaIcon from '@/public/icons/rulesets/mania.svg';
+import Mania4kIcon from '@/public/icons/rulesets/mania4k.svg';
+import Mania7kIcon from '@/public/icons/rulesets/mania7k.svg';
+import StandardIcon from '@/public/icons/rulesets/osu.svg';
+import TaikoIcon from '@/public/icons/rulesets/taiko.svg';
 import {
   GameProcessingStatus,
   GameRejectionReason,
@@ -234,14 +236,14 @@ export const RulesetMetadata: {
     shortAlt: 'Mania (Other)',
   },
   [Ruleset.Mania4k]: {
-    image: ManiaIcon,
+    image: Mania4kIcon,
     alt: 'osu!Mania 4K',
     shortAlt: 'Mania 4K',
     displayInSelector: true,
     selectorIndex: 3,
   },
   [Ruleset.Mania7k]: {
-    image: ManiaIcon,
+    image: Mania7kIcon,
     alt: 'osu!Mania 7K',
     shortAlt: 'Mania 7K',
     displayInSelector: true,
@@ -249,6 +251,7 @@ export const RulesetMetadata: {
   },
 };
 
+// TODO: Refactor in favor of 'VerificationStatusEnumHelper'
 /** Stylistic metadata for each {@link VerificationStatus} */
 export const VerificationStatusMetadata: {
   [key in VerificationStatus]: {
@@ -285,6 +288,33 @@ export const VerificationStatusMetadata: {
     className: 'verified',
     text: 'Verified',
     displayInDropdown: true,
+  },
+};
+
+export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [VerificationStatus.None]: {
+      text: 'Pending',
+      description: '',
+    },
+    [VerificationStatus.PreRejected]: {
+      text: 'Pre-rejected',
+      description: '',
+    },
+    [VerificationStatus.PreVerified]: {
+      text: 'Pre-verified',
+      description: '',
+    },
+    [VerificationStatus.Rejected]: {
+      text: 'Rejected',
+      description: '',
+    },
+    [VerificationStatus.Verified]: {
+      text: 'Verified',
+      description: '',
+    },
   },
 };
 

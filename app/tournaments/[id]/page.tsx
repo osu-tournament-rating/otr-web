@@ -1,7 +1,7 @@
 import { getTournament } from '@/app/actions/tournaments';
 import MatchesList from '@/components/Matches/List/MatchesList';
 import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
-import TournamentPageHeader from '@/components/Tournaments/TournamentPageContent/TournamentPageHeader';
+import TournamentPageHeader from '@/components/Tournaments/PageContent/TournamentPageHeader';
 
 export const revalidate = 60;
 
@@ -30,13 +30,7 @@ export default async function Page({
 
   return (
     <div className={'content'}>
-      <TournamentPageHeader
-        forumUrl={tournament.forumUrl}
-        startDate={tournament.startTime}
-        endDate={tournament.startTime}
-      >
-        <h1>{tournament.name}</h1>
-      </TournamentPageHeader>
+      <TournamentPageHeader data={tournament} />
       <TournamentInfoContainer data={tournament} showName={false} />
       <h1>Matches</h1>
       <MatchesList data={tournament.matches ?? []} />

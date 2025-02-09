@@ -96,6 +96,13 @@
     gap: 0.8rem;
   }
 
+  .gameVerificationPreview {
+    display: flex;
+    flex-flow: row;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
   .rulesetField {
     aspect-ratio: 1;
     height: 1.5rem;
