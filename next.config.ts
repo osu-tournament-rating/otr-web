@@ -55,6 +55,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.ppy.sh',
       },
+      {
+        protocol: 'https',
+        hostname: 'osu.ppy.sh',
+      },
     ],
   },
   experimental: {

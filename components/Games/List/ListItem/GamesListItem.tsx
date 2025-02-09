@@ -1,34 +1,33 @@
 'use client';
 
+import GamesListItemFooter from '@/components/Games/List/ListItem/GamesListItemFooter';
+import GamesListItemHeader from '@/components/Games/List/ListItem/GamesListItemHeader';
+import GameScore from '@/components/Scores/GameScore';
 import {
   GameDTO,
   PlayerCompactDTO,
   Team,
 } from '@osu-tournament-rating/otr-api-client';
+import { Fragment } from 'react';
 import styles from './GamesListItem.module.css';
-import clsx from 'clsx';
-import GamesListItemHeader from '@/components/Games/List/ListItem/GamesListItemHeader';
-import GameScore from '@/components/Scores/GameScore';
-import GamesListItemFooter from '@/components/Games/List/ListItem/GamesListItemFooter';
-import { Attributes } from 'react';
 
 export default function GamesListItem({
   data,
   players,
-  key,
 }: {
   data: GameDTO;
   players: PlayerCompactDTO[];
-} & Pick<Attributes, 'key'>) {
+}) {
   let nNoTeam = 0,
     nRed = 0,
     nBlue = 0;
 
   return (
-    <div key={key} className={clsx('content', styles.gameContainer)}>
+    <div className={styles.gameContainer}>
       <GamesListItemHeader data={data} />
       <div className={styles.scoresContainer}>
         {data.scores
+          .toSorted((a, b) => b.score - a.score)
           .toSorted((a, b) => a.team - b.team)
           .map((score) => {
             let row = 1;
@@ -45,12 +44,15 @@ export default function GamesListItem({
             }
 
             return (
-              <GameScore
-                row={row}
-                key={score.id}
-                data={score}
-                player={players.find((player) => player.id === score.playerId)}
-              />
+              <Fragment key={score.id}>
+                <GameScore
+                  row={row}
+                  data={score}
+                  player={players.find(
+                    (player) => player.id === score.playerId
+                  )}
+                />
+              </Fragment>
             );
           })}
       </div>

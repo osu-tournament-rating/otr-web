@@ -158,6 +158,12 @@
   --status-btn-verified-foreground: 107, 47%, 38%;
   --status-btn-pending-background: 37, 87%, 94%;
   --status-btn-pending-foreground: 33, 63%, 47%;
+
+  /* MATCH COLORS */
+  --player-score-border-color: 220, 13%, 88%;
+  --team-red-color: 348, 72%, 52%;
+  --team-blue-color: 228, 72%, 52%;
+  --performance-label: 51, 96%, 62%;
 }
 
 [data-theme='dark'] {
@@ -320,6 +326,12 @@
   --status-btn-verified-foreground: 118, 64%, 24%;
   --status-btn-pending-background: 38, 88%, 84%;
   --status-btn-pending-foreground: 33, 63%, 37%;
+
+  /* MATCH COLORS */
+  --player-score-border-color: 240, 5%, 12%;
+  --team-red-color: 348, 72%, 52%;
+  --team-blue-color: 228, 72%, 52%;
+  --performance-label: 51, 60%, 55%;
 }
 
 * {

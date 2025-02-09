@@ -1,24 +1,354 @@
-/* TODO: temp style for skeleton, see figma */
-
 .scoreContainer {
-  background-color: hsl(var(--gray-300));
-  padding: 1rem;
+  --border-radius: 0.5rem;
+  --grid-column: span 2;
+  --text-align: left;
+  --team-color: 0, 0%, 20%;
+  --team-color-size: 0.3rem;
 
-  &.team-NoTeam {
-    grid-column: span 2;
+  display: grid;
+  grid-template-columns: var(--team-color-size) 1fr;
+  grid-template-areas: 'teamColor info';
+  border-radius: var(--border-radius);
+  border: 1px solid hsl(var(--player-score-border-color));
+  width: 100%;
+  text-align: var(--text-align);
+  grid-column: var(--grid-column);
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-size: 50%;
+  background-position: 0.4rem 50%;
+  position: relative;
+  transition: grid-template-columns 0.12s ease-out;
+
+  &:hover {
+    --team-color-size: 0.5rem;
   }
 
-  &.team-Red {
-    text-align: left;
-    grid-column: 1;
+  &[aria-team='NoTeam'] {
+    --text-align: left;
+    --grid-column: span 2;
+    --team-color: #333;
 
-    background-color: hsl(var(--red-900));
+    & .propic {
+      left: 0;
+      right: unset;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.4) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.4) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
+
+    & .column .row {
+      flex-flow: row;
+
+      & .playerInfo {
+        flex-flow: row;
+      }
+
+      & .scoreInfo {
+        flex-flow: row;
+      }
+
+      & .performanceInfo:first-child {
+        margin-left: auto;
+        margin-right: 0;
+        justify-content: flex-end;
+      }
+    }
   }
 
-  &.team-Blue {
-    text-align: right;
-    grid-column: 2;
+  &[aria-team='Red'] {
+    --text-align: left;
+    --grid-column: 1;
+    --team-color: var(--team-red-color);
 
-    background-color: hsl(var(--blue-900));
+    grid-template-columns: var(--team-color-size) 1fr;
+    grid-template-areas: 'teamColor info';
+
+    & .propic {
+      left: 0;
+      right: unset;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.4) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to right,
+        hsl(0, 0%, 0%, 0.4) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
+
+    & .column .row {
+      flex-flow: row;
+
+      & .playerInfo {
+        flex-flow: row;
+      }
+
+      & .scoreInfo {
+        flex-flow: row;
+      }
+
+      & .performanceInfo:first-child {
+        margin-left: auto;
+        margin-right: 0;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  &[aria-team='Blue'] {
+    --text-align: right;
+    --grid-column: 2;
+    --team-color: var(--team-blue-color);
+
+    grid-template-columns: 1fr var(--team-color-size);
+    grid-template-areas: 'info teamColor';
+
+    & .propic {
+      left: unset;
+      right: 0;
+      -webkit-mask-image: linear-gradient(
+        to left,
+        hsl(0, 0%, 0%, 0.4) 10%,
+        transparent
+      );
+      mask-image: linear-gradient(
+        to left,
+        hsl(0, 0%, 0%, 0.4) 0%,
+        hsl(0, 0%, 0%, 0.25) 45%,
+        transparent
+      );
+    }
+
+    & .column .row {
+      flex-flow: row-reverse;
+
+      & .playerInfo {
+        flex-flow: row-reverse;
+      }
+
+      & .scoreInfo {
+        flex-flow: row-reverse;
+      }
+
+      &:has(.performanceInfo) {
+        flex-flow: row;
+      }
+
+      & .performanceInfo:last-child {
+        margin-left: 0;
+        margin-right: auto;
+        justify-content: flex-start;
+      }
+    }
+  }
+
+  & .propic {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: unset;
+    transform: translateY(-50%) scale(1);
+    width: 40%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background-repeat: no-repeat;
+    background-size: cover;
+    z-index: 1;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      hsl(0, 0%, 0%, 0.4) 10%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      hsl(0, 0%, 0%, 0.4) 0%,
+      hsl(0, 0%, 0%, 0.25) 45%,
+      transparent
+    );
+    transition: transform 0.16s ease-out;
+  }
+
+  & .backgroundColor {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: hsl(var(--team-color), 0.1);
+    z-index: 2;
+  }
+
+  & .teamColor {
+    height: 100%;
+    width: 100%;
+    grid-area: teamColor;
+    background-color: hsl(var(--team-color));
+    z-index: 3;
+  }
+
+  & .column {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    grid-area: info;
+    z-index: 3;
+    padding: 0 0.5rem;
+
+    & .row {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-flow: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3rem;
+
+      & .playerInfo {
+        height: 100%;
+        width: fit-content;
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+      }
+
+      & .country {
+        height: 46%;
+        aspect-ratio: 70/47;
+        position: relative;
+      }
+
+      & .name {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      & .scoreInfo {
+        display: flex;
+        flex-flow: row;
+        gap: 0.6rem;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+
+        & .score {
+          font-size: 1.18rem;
+          font-weight: 650;
+          color: color-mix(
+            in oklab,
+            hsl(var(--foreground-hsl)) 60%,
+            hsl(var(--team-color)) 40%
+          );
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.063rem;
+        }
+
+        & .modsContainer {
+          display: flex;
+          flex-flow: row;
+          align-items: center;
+          justify-content: flex-end;
+          max-width: 10rem;
+          height: 100%;
+
+          & .mod {
+            height: 100%;
+            max-height: 1.8rem;
+            position: relative;
+            aspect-ratio: 60/45;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            transition: margin-left 0.2s ease-out;
+
+            &:not(:first-child) {
+              margin-left: -1.2rem;
+            }
+          }
+
+          &:hover {
+            & :not(:first-child) {
+              margin-left: -0.6rem;
+            }
+          }
+        }
+      }
+
+      & .performanceInfo {
+        --info-gap: 1rem;
+
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+
+        & .item {
+          display: flex;
+          flex-flow: column;
+          align-items: flex-start;
+          justify-content: center;
+          text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+          gap: 0.063rem;
+          position: relative;
+
+          &:not(:first-child)::before {
+            content: '/';
+            position: absolute;
+            font-size: 0.9rem;
+            font-weight: 400;
+            bottom: 0.125rem;
+            left: calc(-1 * (var(--info-gap) / 1.6));
+            text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+            color: color-mix(
+              in oklab,
+              hsl(var(--foreground-hsl), 0.4) 80%,
+              hsl(var(--team-color)) 20%
+            );
+          }
+
+          & .label {
+            font-size: 0.68rem;
+            font-weight: 650;
+            color: hsl(var(--performance-label));
+            opacity: 0.95;
+          }
+
+          & .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: color-mix(
+              in oklab,
+              hsl(var(--foreground-hsl)) 90%,
+              hsl(var(--team-color)) 10%
+            );
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.063rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.scoreContainer:hover {
+  &[aria-team='Red'] .propic {
+    transform: translateY(-50%) translateX(0.4rem) /* scale(1.02) */;
+  }
+
+  &[aria-team='Blue'] .propic {
+    transform: translateY(-50%) translateX(-0.4rem) /* scale(1.02) */;
   }
 }

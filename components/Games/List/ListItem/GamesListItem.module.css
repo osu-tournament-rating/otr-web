@@ -1,19 +1,149 @@
 .gameContainer {
+  --padding: 1rem;
+  --inner-gap: 0.6rem;
+
   background-color: hsl(var(--background-content-childs-hsl));
-  padding: 1rem;
+  padding: var(--padding);
+  border-radius: calc(var(--border-radius) + 0.5rem);
+  display: flex;
+  flex-flow: column;
+  gap: var(--inner-gap);
 }
 
 .gameHeader {
-  display: grid;
+  --sections-padding: 0.4rem 0.7rem;
 
-  .beatmapCover {
-    border-radius: var(--border-radius);
+  display: flex;
+  width: 100%;
+  height: 8.4rem;
+  position: relative;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex-flow: column;
+
+  & .beatmapCover {
+    position: absolute;
+    object-fit: cover;
+    z-index: 1;
   }
+
+  & .beatmapDim {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+  }
+
+  & .topSection {
+    --color: #eee;
+
+    width: 100%;
+    height: 2rem;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.94rem;
+    font-weight: 500;
+    text-shadow: 0px 0px 0.6rem rgba(0, 0, 0, 0.4);
+    color: var(--color);
+
+    & svg {
+      fill: var(--color);
+      width: fit-content !important;
+    }
+
+    & .wrap {
+      height: 100%;
+      width: fit-content;
+      display: flex;
+      flex-flow: row;
+      align-items: center;
+      white-space: nowrap;
+      gap: 1rem;
+      padding: var(--sections-padding);
+    }
+  }
+
+  & .bottomSection {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+    padding: var(--sections-padding);
+
+    & .column {
+      display: flex;
+      flex-flow: column;
+      justify-content: flex-end;
+      flex: 1;
+    }
+
+    & .row {
+      width: 100%;
+      height: fit-content;
+      color: #d9d9d9;
+      text-shadow: 0px 0px 0.6rem rgba(0, 0, 0, 0.3);
+      display: inline-flex;
+      gap: 0.8rem;
+      align-items: center;
+
+      &:has(#title) {
+        justify-content: space-between;
+      }
+
+      & > #title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.063rem;
+        color: #fff;
+      }
+    }
+    & .modsContainer {
+      display: flex;
+      flex-flow: row;
+      align-items: flex-end;
+      justify-content: flex-end;
+      max-width: 10rem;
+      height: 100%;
+
+      & .mod {
+        height: 100%;
+        max-height: 3.2rem;
+        position: relative;
+        aspect-ratio: 60/45;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+        transition: margin-left 0.2s ease-out;
+
+        &:not(:first-child) {
+          margin-left: -2.1rem;
+        }
+      }
+
+      &:hover {
+        & :not(:first-child) {
+          margin-left: -1rem;
+        }
+      }
+    }
+  }
+}
+
+.beatmapInfo {
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  flex-flow: column;
 }
 
 .scoresContainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 5rem;
   gap: 0.5rem;
 }
 

@@ -1,10 +1,10 @@
-import styles from './GamesListItem.module.css';
+import { TeamEnumHelper } from '@/lib/enums';
 import {
   GameDTO,
   GameWinRecordDTO,
   Team,
 } from '@osu-tournament-rating/otr-api-client';
-import { TeamEnumHelper } from '@/lib/enums';
+import styles from './GamesListItem.module.css';
 
 export default function GamesListItemFooter({ data }: { data: GameDTO }) {
   const isProvisional = !data.winRecord;
