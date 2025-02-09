@@ -1,27 +1,16 @@
 'use client';
 
-import RejectionReason from '@/components/Enums/RejectionReason';
-import Modal from '@/components/Modal/Modal';
-import ScoreAdminView from '@/components/Scores/AdminView/ScoreAdminView';
-import {
-  ModsEnumHelper,
-  ScoreGradeEnumHelper,
-  ScoreProcessingStatusEnumHelper,
-  TeamEnumHelper,
-  VerificationStatusMetadata,
-} from '@/lib/enums';
-import EditIcon from '@/public/icons/Edit.svg';
+import { ScoreGradeEnumHelper } from '@/lib/enums';
 import {
   GameScoreDTO,
   PlayerCompactDTO,
   Team,
 } from '@osu-tournament-rating/otr-api-client';
-import clsx from 'clsx';
 import Image from 'next/image';
-import { useState } from 'react';
 import ModsDisplay from '../Enums/ModsDisplay/ModsDisplay';
 import FormattedNumber from '../FormattedData/FormattedNumber';
 import styles from './GameScore.module.css';
+import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function GameScore({
   row,
@@ -32,8 +21,6 @@ export default function GameScore({
   data: GameScoreDTO;
   player?: PlayerCompactDTO;
 }) {
-  const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
-
   return (
     <div
       className={styles.scoreContainer}
@@ -68,7 +55,7 @@ export default function GameScore({
               mods={data.mods}
               containerClass={styles.modsContainer}
               modClass={styles.mod}
-              reverse={Team[data.team] === 'Blue'}
+              reverse={data.team === Team.Blue}
             />
             <div className={styles.grade}>
               {ScoreGradeEnumHelper.getMetadata(data.grade).text}
@@ -105,39 +92,8 @@ export default function GameScore({
             </div>
           </div>
         </div>
-        {/* <span>{player?.username ?? `Player ${data.playerId}`}</span>
-      <span>
-        {ScoreGradeEnumHelper.getMetadata(data.grade).text} |{' '}
-        {ModsEnumHelper.getMetadata(data.mods)
-          .map(({ text }) => text)
-          .join(', ')}
-      </span>
-      <span>Team {TeamEnumHelper.getMetadata(data.team).text}</span>
-      <span>
-        Verification Status:{' '}
-        {VerificationStatusMetadata[data.verificationStatus].text}
-      </span>
-      <span>
-        Processing Status:{' '}
-        {
-          ScoreProcessingStatusEnumHelper.getMetadata(data.processingStatus)
-            .text
-        }
-      </span>
-      <RejectionReason itemType={'score'} value={data.rejectionReason} />
-      <EditIcon
-        className={'fill'}
-        style={{ height: '1rem', width: '1rem', cursor: 'pointer' }}
-        onClick={() => setIsAdminViewOpen(true)}
-      />
-      <Modal
-        title={`Editing Score Id: ${data.id}`}
-        isOpen={isAdminViewOpen}
-        setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
-      >
-        <ScoreAdminView data={data} />
-      </Modal> */}
       </div>
+      <RejectionReason itemType={'score'} value={data.rejectionReason} />
     </div>
   );
 }

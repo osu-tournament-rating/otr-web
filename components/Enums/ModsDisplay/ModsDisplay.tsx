@@ -6,14 +6,14 @@ export default function ModsDisplay({
   containerClass,
   modClass,
   mods,
-  isFreeMod,
+  isFreeMod = false,
   reverse = false,
 }: {
   containerClass: string;
   modClass: string;
   mods: Mods;
-  isFreeMod: boolean;
-  reverse: boolean;
+  isFreeMod?: boolean;
+  reverse?: boolean;
 }) {
   let metadata = ModsEnumHelper.getMetadata(mods).map(({ text }) => text);
 
