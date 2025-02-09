@@ -11,8 +11,6 @@ export default function VerificationStatusCircle({
   verificationStatus: VerificationStatus;
   tooltipId?: string;
 }) {
-  console.log(VerificationStatus[verificationStatus]);
-
   return (
     <span
       className={clsx(
