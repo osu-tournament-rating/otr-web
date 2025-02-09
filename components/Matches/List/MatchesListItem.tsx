@@ -1,12 +1,16 @@
 'use client';
 
-import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  GameRejectionReason,
+  MatchDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import styles from '@/components/Tournaments/TournamentList/TournamentList.module.css';
 import VerificationStatusCircle from '@/components/Tournaments/VerificationStatusCircle/VerificationStatusCircle';
 import { dateFormats } from '@/lib/dates';
 import FormattedDate from '@/components/FormattedData/FormattedDate';
 import WarningFlags from '@/components/Enums/WarningFlags';
 import RejectionReason from '@/components/Enums/RejectionReason';
+import { Tooltip } from 'react-tooltip';
 
 export default function MatchesListItem({ data }: { data: MatchDTO }) {
   return (
@@ -26,12 +30,30 @@ export default function MatchesListItem({ data }: { data: MatchDTO }) {
                   new Date(a.startTime).getTime() -
                   new Date(b.startTime).getTime()
               )
-              .map((g) => (
-                <VerificationStatusCircle
-                  key={g.id}
-                  verificationStatus={g.verificationStatus}
-                />
-              ))}
+              .map((g) => {
+                const tooltipId =
+                  g.rejectionReason !== GameRejectionReason.None
+                    ? `${g.id}-rejection-tooltip`
+                    : undefined;
+
+                return (
+                  <>
+                    <VerificationStatusCircle
+                      key={`${g.id}-verification-status`}
+                      verificationStatus={g.verificationStatus}
+                      tooltipId={tooltipId}
+                    />
+                    {tooltipId && (
+                      <Tooltip id={tooltipId}>
+                        <RejectionReason
+                          itemType={'game'}
+                          value={g.rejectionReason}
+                        />
+                      </Tooltip>
+                    )}
+                  </>
+                );
+              })}
           </div>
           {/** Start Date */}
           {data.startTime ? (

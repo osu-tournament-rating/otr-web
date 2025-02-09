@@ -3,20 +3,21 @@
   height: 0.5rem;
   aspect-ratio: 1;
   border-radius: 50vh;
+  background-color: hsla(var(--status-circle-pending));
 
-  &.pending {
-    background-color: hsla(var(--status-circle-pending));
-  }
-
-  &.verified {
+  &.PreVerified {
     background-color: hsla(var(--status-circle-verified));
   }
 
-  &.preverified {
-    background-color: hsla(var(--status-circle-preverified));
+  &.Verified {
+    background-color: hsla(var(--status-circle-verified));
   }
 
-  &.rejected {
+  &.PreRejected {
+    background-color: hsla(var(--status-circle-rejected));
+  }
+
+  &.Rejected {
     background-color: hsla(var(--status-circle-rejected));
   }
 }
