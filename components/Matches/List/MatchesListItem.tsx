@@ -11,6 +11,7 @@ import FormattedDate from '@/components/FormattedData/FormattedDate';
 import WarningFlags from '@/components/Enums/WarningFlags';
 import RejectionReason from '@/components/Enums/RejectionReason';
 import { Tooltip } from 'react-tooltip';
+import { Fragment } from 'react';
 
 export default function MatchesListItem({ data }: { data: MatchDTO }) {
   return (
@@ -37,9 +38,8 @@ export default function MatchesListItem({ data }: { data: MatchDTO }) {
                     : undefined;
 
                 return (
-                  <>
+                  <Fragment key={`${g.id}-verification-status`}>
                     <VerificationStatusCircle
-                      key={`${g.id}-verification-status`}
                       verificationStatus={g.verificationStatus}
                       tooltipId={tooltipId}
                     />
@@ -51,7 +51,7 @@ export default function MatchesListItem({ data }: { data: MatchDTO }) {
                         />
                       </Tooltip>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
           </div>
