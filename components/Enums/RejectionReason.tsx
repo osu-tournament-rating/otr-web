@@ -1,23 +1,27 @@
 'use client';
 
-import ErrorTriangle from '@/public/icons/ErrorTriangle.svg';
-import styles from './Enums.module.css';
-import clsx from 'clsx';
-import { ApiItemType } from '@/lib/types';
 import {
   GameRejectionReasonEnumHelper,
   MatchRejectionReasonEnumHelper,
   ScoreRejectionReasonEnumHelper,
   TournamentRejectionReasonEnumHelper,
 } from '@/lib/enums';
+import { ApiItemType } from '@/lib/types';
+import ErrorTriangle from '@/public/icons/ErrorTriangle.svg';
+import clsx from 'clsx';
 import { Tooltip } from 'react-tooltip';
+import styles from './Enums.module.css';
 
 export default function RejectionReason({
   itemType,
   value,
+  alignment,
+  hoverable,
 }: {
   itemType: ApiItemType;
   value: number;
+  alignment: string;
+  hoverable: boolean;
 }) {
   if (value === 0) {
     return null;
@@ -40,7 +44,14 @@ export default function RejectionReason({
   }
 
   return (
-    <span className={clsx(styles.enumContainer, styles.rejectionReason)}>
+    <span
+      className={clsx(
+        styles.enumContainer,
+        styles.rejectionReason,
+        alignment === 'right' ? styles.reverse : null,
+        hoverable ? styles.hoverable : null
+      )}
+    >
       <ErrorTriangle className={styles.icon} />
       {metadata.map(({ text, description }, idx) => (
         <span

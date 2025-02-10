@@ -1,5 +1,6 @@
 'use client';
 
+import RejectionReason from '@/components/Enums/RejectionReason';
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import {
   GameScoreDTO,
@@ -10,7 +11,6 @@ import Image from 'next/image';
 import ModsDisplay from '../Enums/ModsDisplay/ModsDisplay';
 import FormattedNumber from '../FormattedData/FormattedNumber';
 import styles from './GameScore.module.css';
-import RejectionReason from '@/components/Enums/RejectionReason';
 
 export default function GameScore({
   row,
@@ -48,6 +48,12 @@ export default function GameScore({
             <span className={styles.name}>{player?.username}</span>
           </div>
           <div className={styles.scoreInfo}>
+            <RejectionReason
+              itemType={'score'}
+              alignment="right"
+              hoverable
+              value={data.rejectionReason}
+            />
             <div className={styles.score}>
               {FormattedNumber({ number: data.score })}
             </div>
@@ -93,7 +99,6 @@ export default function GameScore({
           </div>
         </div>
       </div>
-      <RejectionReason itemType={'score'} value={data.rejectionReason} />
     </div>
   );
 }
