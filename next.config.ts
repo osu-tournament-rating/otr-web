@@ -62,7 +62,28 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    typedRoutes: true,
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: [
+            {
+              loader: '@svgr/webpack',
+              options: {
+                svgoConfig: {
+                  plugins: [
+                    {
+                      name: 'removeAttrs',
+                      params: { attrs: '(fill|stroke)' },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          as: '*.js',
+        },
+      },
+    },
   },
   typescript: {
     // TODO: Fix all errors and remove

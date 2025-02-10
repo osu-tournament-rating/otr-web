@@ -1,12 +1,13 @@
 import LoginButton from '@/components/Button/LoginButton';
 import Logo from '@/components/Homepage/Logo/Logo';
-import decoration1 from '@/public/decorations/decoration-1.svg?url';
-import decoration2 from '@/public/decorations/decoration-2.svg?url';
-import decoration3 from '@/public/decorations/decoration-3.svg?url';
-import decoration4 from '@/public/decorations/decoration-4.svg?url';
 import Image from 'next/image';
 import Balancer from 'react-wrap-balancer';
 import styles from './page.module.css';
+
+const decoration1 = '/decorations/decoration-1.svg';
+const decoration2 = '/decorations/decoration-2.svg';
+const decoration3 = '/decorations/decoration-3.svg';
+const decoration4 = '/decorations/decoration-4.svg';
 
 export default function Home() {
   return (
@@ -41,7 +42,7 @@ export default function Home() {
           </p>
         </div>
         <div className={styles.decoration}>
-          <Image src={decoration1} alt="decoration-1" fill />
+          <Image src={decoration1} alt="decoration-1" fill priority />
         </div>
       </div>
       <div className={styles.row}>

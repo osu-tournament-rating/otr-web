@@ -1,31 +1,29 @@
 'use client';
-import fullLogoDark from '@/public/logos/full-logo-dark.svg?url';
-import fullLogo from '@/public/logos/full-logo.svg?url';
+
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
 import styles from './Logo.module.css';
+import { useEffect, useState } from 'react';
+
+const logoLight = '/logos/full-logo.svg';
+const logoDark = '/logos/full-logo-dark.svg';
 
 export default function Logo() {
   const { theme } = useTheme();
-  const [activeTheme, setTheme] = useState('light');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (theme) {
-      setTheme(theme);
-    }
-  }, [theme]);
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className={styles.logo}>
       <Image
-        src={
-          activeTheme === 'dark'
-            ? fullLogoDark
-            : activeTheme === 'light'
-              ? fullLogo
-              : ''
-        }
+        src={theme === 'dark' ? logoDark : logoLight}
         alt={'o!TR logo'}
         fill
       />

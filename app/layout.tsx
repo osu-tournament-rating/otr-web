@@ -35,7 +35,7 @@ export default async function RootLayout({
   const { user } = await getSession();
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <ConfiguredToaster />

@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "set PORT=3000 && next dev",
+    "dev": "set PORT=3000 && next dev --turbopack",
+    "dev:webpack": "set PORT=3000 && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -8,14 +8,9 @@ import TournamentList from '@/components/Tournaments/TournamentList/TournamentLi
 import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
 import {
   PaginationProps,
-  SessionData,
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
 import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext';
-import AdminViewProvider from '@/components/Context/AdminViewContext';
-import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
-import { isAdmin } from '@/lib/api';
-import { getSessionData } from '@/app/actions/session';
 
 export const revalidate = 60;
 
@@ -48,23 +43,16 @@ export default async function Page({
     ...initialPagination,
   });
 
-  const isAdminUser = isAdmin(
-    ((await getSessionData()) as SessionData).user?.scopes
-  );
-
   return (
     <div className={'content'}>
       <h1>All tournaments</h1>
-      <AdminViewProvider>
-        {isAdminUser && <AdminViewToggle />}
-        <TournamentListFilterProvider
-          defaultFilter={defaultFilter}
-          initialFilter={requestParams}
-        >
-          <TournamentListFilter />
-          <TournamentList tournaments={tournaments} {...initialPagination} />
-        </TournamentListFilterProvider>
-      </AdminViewProvider>
+      <TournamentListFilterProvider
+        defaultFilter={defaultFilter}
+        initialFilter={requestParams}
+      >
+        <TournamentListFilter />
+        <TournamentList tournaments={tournaments} {...initialPagination} />
+      </TournamentListFilterProvider>
     </div>
   );
 }
