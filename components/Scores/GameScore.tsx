@@ -1,5 +1,3 @@
-'use client';
-
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import {
   GameScoreDTO,
@@ -11,6 +9,7 @@ import ModsDisplay from '../Enums/ModsDisplay/ModsDisplay';
 import FormattedNumber from '../FormattedData/FormattedNumber';
 import styles from './GameScore.module.css';
 import RejectionReason from '@/components/Enums/RejectionReason';
+import clsx from 'clsx';
 
 export default function GameScore({
   row,
@@ -23,8 +22,7 @@ export default function GameScore({
 }) {
   return (
     <div
-      className={styles.scoreContainer}
-      aria-team={Team[data.team]}
+      className={clsx(styles.scoreContainer, styles[`team${Team[data.team]}`])}
       style={{
         gridRow: row,
       }}
