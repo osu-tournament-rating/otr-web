@@ -1,15 +1,21 @@
 'use client';
 
 import RejectionReason from '@/components/Enums/RejectionReason';
+import { isAdmin } from '@/lib/api';
 import { ScoreGradeEnumHelper } from '@/lib/enums';
+import EditIcon from '@/public/icons/Edit.svg';
+import { useUser } from '@/util/hooks';
 import {
   GameScoreDTO,
   PlayerCompactDTO,
   Team,
 } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
+import { useState } from 'react';
 import ModsDisplay from '../Enums/ModsDisplay/ModsDisplay';
 import FormattedNumber from '../FormattedData/FormattedNumber';
+import Modal from '../Modal/Modal';
+import ScoreAdminView from './AdminView/ScoreAdminView';
 import styles from './GameScore.module.css';
 
 export default function GameScore({
@@ -21,6 +27,9 @@ export default function GameScore({
   data: GameScoreDTO;
   player?: PlayerCompactDTO;
 }) {
+  const isEditable = isAdmin(useUser().user?.scopes);
+  const [isAdminViewOpen, setIsAdminViewOpen] = useState(false);
+
   return (
     <div
       className={styles.scoreContainer}
@@ -33,7 +42,14 @@ export default function GameScore({
         className={styles.propic}
         style={{ backgroundImage: `url(https://s.ppy.sh/a/${player?.osuId})` }}
       />
-      <div className={styles.teamColor} />
+      <div className={styles.teamColor}>
+        {isEditable && (
+          <EditIcon
+            className={styles.editButton}
+            onClick={() => setIsAdminViewOpen(true)}
+          />
+        )}
+      </div>
       <div className={styles.backgroundColor} />
       <div className={styles.column}>
         <div className={styles.row}>
@@ -99,6 +115,15 @@ export default function GameScore({
           </div>
         </div>
       </div>
+      {isEditable && (
+        <Modal
+          title={`Editing Match Id: ${data.id}`}
+          isOpen={isAdminViewOpen}
+          setIsOpen={(isOpen) => setIsAdminViewOpen(isOpen)}
+        >
+          <ScoreAdminView data={data} />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@
   width: 100%;
   text-align: var(--text-align);
   grid-column: var(--grid-column);
-  overflow: hidden;
+  overflow: clip;
   background-repeat: no-repeat;
   background-size: 50%;
   background-position: 0.4rem 50%;
@@ -22,6 +22,15 @@
 
   &:hover {
     --team-color-size: 0.5rem;
+  }
+
+  &:has(> .teamColor > .editButton):hover {
+    --team-color-size: 2rem;
+
+    & .editButton {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 
   &[aria-team='NoTeam'] {
@@ -195,6 +204,11 @@
     grid-area: teamColor;
     background-color: hsl(var(--team-color));
     z-index: 3;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
 
   & .column {
@@ -340,6 +354,16 @@
         }
       }
     }
+  }
+
+  & .editButton {
+    width: 1rem;
+    height: 1rem;
+    fill: color-mix(in oklab, hsla(var(--team-color)) 75%, #000 25%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.14s ease-out;
+    cursor: pointer;
   }
 }
 
