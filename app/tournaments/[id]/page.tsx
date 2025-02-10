@@ -31,7 +31,7 @@ export default async function Page({
   return (
     <div className={'content'}>
       <TournamentPageHeader data={tournament} />
-      <TournamentInfoContainer data={tournament} showName={false} />
+      <TournamentInfoContainer data={tournament} />
       <h1>Matches</h1>
       <MatchesList data={tournament.matches ?? []} />
     </div>
