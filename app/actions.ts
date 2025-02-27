@@ -363,47 +363,6 @@ export async function paginationParamsToURL(params: {}) {
   return url;
 }
 
-export async function fetchSearchData(prevState: any, formData: FormData) {
-  const session = await getSessionData();
-
-  if (!session.id) return redirect('/');
-
-  let searchText = formData.get('search').trim();
-
-  if (searchText === '')
-    return {
-      status: 'success',
-      search: {
-        players: [],
-        tournaments: [],
-        matches: [],
-      },
-    };
-
-  let searchData = await fetch(
-    `${process.env.REACT_APP_API_URL}/search?searchKey=${searchText}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': `${process.env.REACT_APP_ORIGIN_URL}`,
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
-
-  if (!searchData?.ok) {
-    throw new Error('Error from server on search!');
-  }
-
-  searchData = await searchData.json();
-
-  return {
-    status: 'success',
-    search: searchData,
-  };
-}
-
 export async function fetchTournamentsForAdminPage(params: {}) {
   const session = await getSessionData();
 
