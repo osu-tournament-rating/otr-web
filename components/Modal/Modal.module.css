@@ -4,7 +4,7 @@
   inset: 0;
   position: fixed;
   background-color: rgba(0, 0, 0, 0.2);
-  z-index: 2;
+  z-index: 10;
   margin: auto;
   display: flex;
   flex-flow: column;
@@ -38,7 +38,7 @@
   height: 100%;
   display: flex;
   flex-flow: column;
-  padding: 0.6rem;
+  padding: 1rem;
 }
 
 .closeButton {

@@ -15,14 +15,21 @@ export default function ModsDisplay({
   isFreeMod?: boolean;
   reverse?: boolean;
 }) {
+  // Clear NF
+  mods &= ~Mods.NoFail;
+
   let metadata = ModsEnumHelper.getMetadata(mods).map(({ text }) => text);
 
-  if (mods === Mods.NoFail || (mods === Mods.None && !isFreeMod)) {
+  if (mods === Mods.None && !isFreeMod) {
     metadata = ['NM'];
   }
 
   if (isFreeMod) {
     metadata.unshift('FM');
+  }
+
+  if (reverse) {
+    metadata.reverse();
   }
 
   return (

@@ -1,6 +1,8 @@
 .enumContainer {
+  --direction: row;
+
   display: flex;
-  flex-direction: row;
+  flex-direction: var(--direction);
   justify-content: flex-start;
   align-items: center;
   gap: 0.5rem;
@@ -8,6 +10,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  z-index: 2;
 
   .icon {
     height: 0.8rem;
@@ -16,6 +19,7 @@
 
   .individualItem {
     cursor: pointer;
+    user-select: none;
   }
 
   &.processingStatus {
@@ -39,6 +43,42 @@
 
     .icon {
       fill: hsla(var(--yellow-400));
+    }
+  }
+
+  &.reverse {
+    --direction: row-reverse;
+  }
+
+  &.hoverable {
+    & .individualItem {
+      visibility: hidden;
+      opacity: 0;
+      transition: all 0.2s ease-out;
+    }
+
+    &:not(.reverse) .individualItem {
+      left: -0.5rem;
+      right: auto;
+    }
+
+    &:not(.reverse):hover .individualItem {
+      left: 0rem;
+      right: auto;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    &.reverse .individualItem {
+      right: -0.5rem;
+      left: auto;
+    }
+
+    &.reverse:hover .individualItem {
+      right: 0rem;
+      left: auto;
+      opacity: 1;
+      visibility: visible;
     }
   }
 }
