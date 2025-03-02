@@ -1,0 +1,51 @@
+.buttonsRow {
+  --save-background-color: hsl(var(--blue-700), 0.2);
+  --delete-background-color: hsl(var(--red-500), 0.7);
+
+  display: flex;
+  flex-flow: row;
+  gap: 0 1rem;
+  height: 2.2rem;
+  & button {
+    flex: 1;
+    border-radius: 0.4rem;
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+  & #delete {
+    background-color: var(--delete-background-color);
+  }
+  & #save {
+    background-color: var(--save-background-color);
+
+    &:disabled {
+      color: hsla(0, 0%, 0%, 0.4);
+    }
+  }
+}
+
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+
+  & :is(input, select) {
+    height: 2rem;
+  }
+}
+
+[data-theme='dark'] .buttonsRow {
+  --delete-background-color: hsl(var(--red-400), 0.5);
+  --save-background-color: hsl(var(--blue-400), 0.7);
+}
