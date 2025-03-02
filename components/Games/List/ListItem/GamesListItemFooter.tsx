@@ -20,17 +20,40 @@ export default function GamesListItemFooter({ data }: { data: GameDTO }) {
       ? winRecord.winnerScore
       : winRecord.loserScore;
 
+  const winDifference = winRecord.winnerScore - winRecord.loserScore;
+
+  const winnerTeam = TeamEnumHelper.getMetadata(winRecord.winnerTeam);
+
   return (
     <div className={styles.gameFooter}>
-      <h1>
-        {redScore.toLocaleString()} - {blueScore.toLocaleString()}
-      </h1>
-      <h1>
-        {TeamEnumHelper.getMetadata(winRecord.winnerTeam).text} Wins by{' '}
-        {(winRecord.winnerScore - winRecord.loserScore).toLocaleString()}
-      </h1>
+      <div className={styles.scoreResultGrid}>
+        <span
+          className={styles.score}
+          id={'redScore'}
+          data-winner={winnerTeam.text.toLowerCase() === 'red'}
+        >
+          {redScore.toLocaleString()}
+        </span>
+        <span
+          className={styles.score}
+          id={'blueScore'}
+          data-winner={winnerTeam.text.toLowerCase() === 'blue'}
+        >
+          {blueScore.toLocaleString()}
+        </span>
+        <span className={styles.winnerTeam}>
+          {winnerTeam.text.toLowerCase() === 'red' &&
+            `${winnerTeam.text} wins by ${winDifference.toLocaleString()}`}
+        </span>
+        <span className={styles.winnerTeam}>
+          {winnerTeam.text.toLowerCase() === 'blue' &&
+            `${winnerTeam.text} wins by ${winDifference.toLocaleString()}`}
+        </span>
+      </div>
       {isProvisional && (
-        <span>game outcome is provisional (no stats generated yet)</span>
+        <span className={styles.provisional}>
+          game outcome is provisional &#40;no stats generated yet&#41;
+        </span>
       )}
     </div>
   );

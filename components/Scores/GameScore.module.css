@@ -33,7 +33,7 @@
     }
   }
 
-  &[aria-team='NoTeam'] {
+  &[data-team='NoTeam'] {
     --text-align: left;
     --grid-column: span 2;
     --team-color: #333;
@@ -73,7 +73,7 @@
     }
   }
 
-  &[aria-team='Red'] {
+  &[data-team='Red'] {
     --text-align: left;
     --grid-column: 1;
     --team-color: var(--team-red-color);
@@ -116,7 +116,7 @@
     }
   }
 
-  &[aria-team='Blue'] {
+  &[data-team='Blue'] {
     --text-align: right;
     --grid-column: 2;
     --team-color: var(--team-blue-color);
@@ -368,11 +368,11 @@
 }
 
 .scoreContainer:hover {
-  &[aria-team='Red'] .propic {
+  &[data-team='Red'] .propic {
     transform: translateY(-50%) translateX(0.4rem) /* scale(1.02) */;
   }
 
-  &[aria-team='Blue'] .propic {
+  &[data-team='Blue'] .propic {
     transform: translateY(-50%) translateX(-0.4rem) /* scale(1.02) */;
   }
 }

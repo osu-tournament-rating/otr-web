@@ -33,7 +33,7 @@ export default function GameScore({
   return (
     <div
       className={styles.scoreContainer}
-      aria-team={Team[data.team]}
+      data-team={Team[data.team]}
       style={{
         gridRow: row,
       }}
