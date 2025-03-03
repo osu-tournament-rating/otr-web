@@ -8,16 +8,13 @@ import { Tooltip } from 'react-tooltip';
 import FormattedNumber from '../FormattedData/FormattedNumber';
 import Pagination from '../Pagination/Pagination';
 import styles from './Leaderboard.module.css';
-import {
-  LeaderboardDTO,
-  LeaderboardPlayerInfoDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { LeaderboardDTO } from '@osu-tournament-rating/otr-api-client';
 
 export default function Leaderboard({
   params,
   data,
 }: {
-  params: {};
+  params: object;
   data: LeaderboardDTO;
 }) {
   const { user } = useUser();
@@ -38,33 +35,35 @@ export default function Leaderboard({
             <th>Tier</th>
             <th>Rating</th>
             <th>Matches</th>
-            <th>Winrate</th>
+            <th>Win rate</th>
           </tr>
         </thead>
         <tbody>
-          {data.leaderboard.map((player, index) => {
+          {data.leaderboard.map((lbPlayerInfo, index) => {
             return (
               <tr
-                className={user?.osuId === player.osuId ? styles.me : ''}
+                className={
+                  user?.id === lbPlayerInfo.player.userId ? styles.me : ''
+                }
                 key={index}
               >
-                <td>#{player.globalRank}</td>
+                <td>#{lbPlayerInfo.globalRank}</td>
                 <td>
-                  <Link href={`/players/${player.playerId}`}>
+                  <Link href={`/players/${lbPlayerInfo.player.osuId}`}>
                     <div className={styles.propic}>
                       <Image
-                        src={`https://a.ppy.sh/${player.osuId}`}
-                        alt={`${player.name}'s Propic`}
+                        src={`https://a.ppy.sh/${lbPlayerInfo.player.osuId}`}
+                        alt={`${lbPlayerInfo.player.username}'s Propic`}
                         fill
                       />
                     </div>
-                    {player.name}
+                    {lbPlayerInfo.player.username}
                   </Link>
                 </td>
                 <td>
                   <div className={styles.rank}>
                     <Tooltip
-                      id={`tooltip-${player.tier}`}
+                      id={`tooltip-${lbPlayerInfo.currentTier}`}
                       style={{
                         padding: '0.6em 1.2em',
                         borderRadius: '0.6em',
@@ -74,15 +73,15 @@ export default function Leaderboard({
                       }}
                     />
                     <Image
-                      src={`/icons/ranks/${player.tier}.svg`}
-                      alt={player.tier}
-                      data-tooltip-id={`tooltip-${player.tier}`}
-                      data-tooltip-content={player.tier}
+                      src={`/icons/ranks/${lbPlayerInfo.currentTier}.svg`}
+                      alt={lbPlayerInfo.currentTier ?? 'Unknown tier'}
+                      data-tooltip-id={`tooltip-${lbPlayerInfo.currentTier}`}
+                      data-tooltip-content={lbPlayerInfo.currentTier}
                       data-tooltip-delay-show={400}
                       style={
-                        player.tier === 'Elite Grandmaster'
+                        lbPlayerInfo.currentTier === 'Elite Grandmaster'
                           ? { transform: 'scale(1.25)' }
-                          : player.tier.includes('Silver')
+                          : lbPlayerInfo.currentTier?.includes('Silver')
                             ? {
                                 filter:
                                   'drop-shadow(rgba(0, 0, 0, 0.1) 0px 0.2px 0.2px)',
@@ -93,9 +92,9 @@ export default function Leaderboard({
                     />
                   </div>
                 </td>
-                <td>{Math.round(player.rating)}</td>
-                <td>{player.matchesPlayed}</td>
-                <td>{(player.winRate * 100).toFixed(1)}%</td>
+                <td>{Math.round(lbPlayerInfo.rating)}</td>
+                <td>{lbPlayerInfo.matchesPlayed}</td>
+                <td>{((lbPlayerInfo.winRate ?? 0) * 100).toFixed(1)}%</td>
               </tr>
             );
           })}
