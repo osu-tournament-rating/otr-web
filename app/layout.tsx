@@ -36,7 +36,11 @@ export default function RootLayout({
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider basePath={'/auth'}>
             <Nav />
-            {children}
+            <div className='flex justify-center w-full'>
+              <div className='max-w-xl w-full m-auto mt-0 mb-0'>
+                {children}
+              </div>
+            </div>
           </SessionProvider>
         </ThemeProvider>
       </body>

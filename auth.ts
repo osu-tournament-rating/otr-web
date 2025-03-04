@@ -4,6 +4,11 @@ import { OAuthConfig } from 'next-auth/providers';
 
 declare module 'next-auth' {
   interface User extends UserDTO {}
+
+  interface Session {
+    accessToken?: string;
+    refreshToken?: string;
+  }
 }
 
 const otrProvider: OAuthConfig<UserDTO> = {
@@ -16,11 +21,11 @@ const otrProvider: OAuthConfig<UserDTO> = {
     url: 'https://osu.ppy.sh/oauth/authorize',
     params: { scope: 'public friends.read' },
   },
-  token: `${process.env.OTR_API_ROOT}/oauth/authorize`,
+  token: `${process.env.OTR_API_ROOT}/api/v1/oauth/authorize`,
   userinfo: {
-    url: `${process.env.OTR_API_ROOT}/me`,
+    url: `${process.env.OTR_API_ROOT}/api/v1/me`,
     async request({ tokens }: unknown) {
-      const res = await fetch(`${process.env.OTR_API_ROOT}/me`, {
+      const res = await fetch(`${process.env.OTR_API_ROOT}/api/v1/me`, {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
         },
@@ -41,15 +46,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   basePath: '/auth',
   providers: [otrProvider],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, account }) {
       if (user) {
         token.user = user;
       }
+
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+      }
+
       return token;
     },
     session({ token, session }) {
       (session.user as unknown) = token.user;
       session.user.id = session.user.player.userId!.toString();
+
+      session.accessToken = token.accessToken as (string | undefined);
+      session.refreshToken = token.refreshToken as (string | undefined);
+
       return session;
     },
   },
