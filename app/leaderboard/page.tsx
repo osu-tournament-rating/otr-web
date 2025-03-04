@@ -1,3 +1,3 @@
 export default async function Page() {
-    return <h1>Tournaments</h1>
+    return <h1>Leaderboard</h1>
 }
