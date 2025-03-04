@@ -1,9 +1,24 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["a.ppy.sh", "osu.ppy.sh"]
-  }
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.ppy.sh',
+      },
+    ],
+  },
+  experimental: {
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+  },
 };
 
 export default nextConfig;
