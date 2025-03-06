@@ -1,7 +1,10 @@
 import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { rulesetString } from '@/lib/utils';
+import { rulesetString, verificationStatusString } from '@/lib/utils';
 import VerificationBadge from '../verification/VerificationBadge';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import SimpleTooltip from '../simple-tooltip';
 
 export default function TournamentCard({
   tournament,
@@ -14,9 +17,12 @@ export default function TournamentCard({
     <Card>
       <CardHeader>
         <div className="flex gap-3">
-          <VerificationBadge
-            verificationStatus={tournament.verificationStatus}
-          />
+          <SimpleTooltip content={verificationStatusString(tournament.verificationStatus)}>
+            <VerificationBadge
+              verificationStatus={tournament.verificationStatus}
+              text={true}
+            />
+          </SimpleTooltip>
           <CardTitle>{tournament.name}</CardTitle>
         </div>
         <CardDescription>
