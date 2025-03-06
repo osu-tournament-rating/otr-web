@@ -17,10 +17,10 @@ import { Button } from '../ui/button';
 
 export default function TournamentCard({
   tournament,
-  displayStatusText
+  displayStatusText,
 }: {
   tournament: TournamentCompactDTO;
-  displayStatusText: boolean
+  displayStatusText: boolean;
 }) {
   const date = new Date(tournament.startTime);
   const { data: session } = useSession();
@@ -30,16 +30,26 @@ export default function TournamentCard({
       <CardHeader>
         <div className="flex justify-between">
           <div className="flex gap-3">
-            <SimpleTooltip
-              content={verificationStatusString(tournament.verificationStatus)}
-            >
-              <VerificationBadge
-                verificationStatus={tournament.verificationStatus}
-                text={displayStatusText}
-              />
-            </SimpleTooltip>
-            <CardTitle>{tournament.name}</CardTitle>
+            <div>
+              <SimpleTooltip
+                content={verificationStatusString(
+                  tournament.verificationStatus
+                )}
+              >
+                <VerificationBadge
+                  verificationStatus={tournament.verificationStatus}
+                  text={displayStatusText}
+                />
+              </SimpleTooltip>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{tournament.abbreviation}</p>
+            </div>
+            <div>
+              <p className='font-bold'>{tournament.name}</p>
+            </div>
           </div>
+
           {session?.user?.scopes?.includes(Roles.Admin) && (
             <div className="flex">
               <Button className="h-5 w-5" variant={'ghost'}>
@@ -51,9 +61,8 @@ export default function TournamentCard({
         <CardDescription>
           <div className="flex font-mono justify-between">
             <p>
-              {tournament.abbreviation} • {rulesetString(tournament.ruleset)} •{' '}
-              {tournament.lobbySize}v{tournament.lobbySize} • #
-              {tournament.rankRangeLowerBound}+
+              {rulesetString(tournament.ruleset)} • {tournament.lobbySize}v
+              {tournament.lobbySize} • #{tournament.rankRangeLowerBound}+
             </p>
             <p className="text-xs">{date.toUTCString()}</p>
           </div>
