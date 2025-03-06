@@ -4,7 +4,7 @@ import {
   Roles,
   TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
-import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardDescription, CardHeader } from '../ui/card';
 import {
   rulesetString,
   verificationStatusString,
@@ -14,6 +14,17 @@ import SimpleTooltip from '../simple-tooltip';
 import { useSession } from 'next-auth/react';
 import { EditIcon } from 'lucide-react';
 import { Button } from '../ui/button';
+import { formatUTCDate } from '@/lib/utils/date-utils';
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
+import TournamentEditForm from './TournamentEditForm';
+import { formatRankString } from '@/lib/utils/number-utils';
+import { DialogContent } from '@radix-ui/react-dialog';
 
 export default function TournamentCard({
   tournament,
@@ -22,7 +33,8 @@ export default function TournamentCard({
   tournament: TournamentCompactDTO;
   displayStatusText: boolean;
 }) {
-  const date = new Date(tournament.startTime);
+  const startDate = new Date(tournament.startTime);
+  const endDate = new Date(tournament.endTime);
   const { data: session } = useSession();
 
   return (
@@ -46,15 +58,30 @@ export default function TournamentCard({
               <p className="text-muted-foreground">{tournament.abbreviation}</p>
             </div>
             <div>
-              <p className='font-bold'>{tournament.name}</p>
+              <p className="font-bold">{tournament.name}</p>
             </div>
           </div>
 
           {session?.user?.scopes?.includes(Roles.Admin) && (
             <div className="flex">
-              <Button className="h-5 w-5" variant={'ghost'}>
-                <EditIcon />
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="h-5 w-5" variant={'ghost'}>
+                    <EditIcon />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader className="sm:max-w-md">
+                    <DialogTitle>Edit Tournament</DialogTitle>
+                    <DialogDescription>
+                      Editing {tournament.name}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex items-center space-x-2">
+                    <TournamentEditForm tournament={tournament} />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>
@@ -62,9 +89,12 @@ export default function TournamentCard({
           <div className="flex font-mono justify-between">
             <p>
               {rulesetString(tournament.ruleset)} • {tournament.lobbySize}v
-              {tournament.lobbySize} • #{tournament.rankRangeLowerBound}+
+              {tournament.lobbySize} •{' '}
+              {formatRankString(tournament.rankRangeLowerBound)}+
             </p>
-            <p className="text-xs">{date.toUTCString()}</p>
+            <p className="text-xs">
+              {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
+            </p>
           </div>
         </CardDescription>
       </CardHeader>

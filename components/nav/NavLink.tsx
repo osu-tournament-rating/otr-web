@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { NavigationMenuLink } from '../ui/navigation-menu';
-import { cn } from '@/lib/utils/utils';
+import { cn } from '@/lib/utils';
 
 export default function NavLink({
   href,

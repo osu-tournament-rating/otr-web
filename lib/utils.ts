@@ -1,7 +1,5 @@
-import {
-  Ruleset,
-  VerificationStatus,
-} from '@osu-tournament-rating/otr-api-client';
+/** Do not move this file, used by shadcn */
+
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
