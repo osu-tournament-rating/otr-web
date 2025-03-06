@@ -13,7 +13,7 @@ export default async function Page() {
     <>
       {tournamentData.result.map((t) => (
         <div className="flex-1 mt-2" key={t.id}>
-          <TournamentCard tournament={t} />
+          <TournamentCard tournament={t} displayStatusText={false} />
         </div>
       ))}
     </>

@@ -35,7 +35,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <TournamentCard tournament={tournament} />
+      <TournamentCard tournament={tournament} displayStatusText={true} />
       <DataTable columns={columns} data={data} />
     </>
   );

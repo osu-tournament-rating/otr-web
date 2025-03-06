@@ -17,8 +17,10 @@ import { Button } from '../ui/button';
 
 export default function TournamentCard({
   tournament,
+  displayStatusText
 }: {
   tournament: TournamentCompactDTO;
+  displayStatusText: boolean
 }) {
   const date = new Date(tournament.startTime);
   const { data: session } = useSession();
@@ -33,7 +35,7 @@ export default function TournamentCard({
             >
               <VerificationBadge
                 verificationStatus={tournament.verificationStatus}
-                text={true}
+                text={displayStatusText}
               />
             </SimpleTooltip>
             <CardTitle>{tournament.name}</CardTitle>
