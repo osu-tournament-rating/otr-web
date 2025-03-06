@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { NavigationMenuLink } from '../ui/navigation-menu';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 export default function NavLink({
   href,
@@ -18,8 +18,8 @@ export default function NavLink({
     <NavigationMenuLink
       href={href}
       className={cn(
-        'hover:text-primary transition-colors sm:text-sm sm:font-medium',
-        isActive && 'underline underline-offset-4 decoration-1'
+        'hover:text-primary transition-colors',
+        isActive && 'font-extrabold'
       )}
     >
       {name}
