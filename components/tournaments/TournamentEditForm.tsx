@@ -12,13 +12,20 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  SelectContent,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+} from '../ui/select';
+import { rulesetString } from '@/lib/utils/enum-utils';
 
 const formSchema = z.object({
   name: z.string(),
@@ -32,15 +39,15 @@ const formSchema = z.object({
   lobbySize: z.number().min(1).max(8),
 });
 
+function OnSubmit(values: z.infer<typeof formSchema>) {
+  console.log(values);
+}
+
 export default function TournamentEditForm({
   tournament,
 }: {
   tournament: TournamentCompactDTO;
 }) {
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-  }
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,7 +63,10 @@ export default function TournamentEditForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(OnSubmit)}
+        className="space-y-4 w-full mt-5"
+      >
         <FormField
           control={form.control}
           name="name"
@@ -66,12 +76,75 @@ export default function TournamentEditForm({
               <FormControl>
                 <Input placeholder={tournament.name} {...field} />
               </FormControl>
-              <FormDescription>Tournament name</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Save</Button>
+        <FormField
+          control={form.control}
+          name="abbreviation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Abbreviation</FormLabel>
+              <FormControl>
+                <Input placeholder={tournament.abbreviation} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="ruleset"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ruleset</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ruleset" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="osu">
+                    {rulesetString(Ruleset.Osu)}
+                  </SelectItem>
+                  <SelectItem value="taiko">
+                    {rulesetString(Ruleset.Taiko)}
+                  </SelectItem>
+                  <SelectItem value="catch">
+                    {rulesetString(Ruleset.Catch)}
+                  </SelectItem>
+                  <SelectItem value="mania4k">
+                    {rulesetString(Ruleset.Mania4k)}
+                  </SelectItem>
+                  <SelectItem value="mania7k">
+                    {rulesetString(Ruleset.Mania7k)}
+                  </SelectItem>
+                  <SelectItem value="maniaOther">
+                    {rulesetString(Ruleset.ManiaOther)}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-between">
+          <div className="flex gap-3">
+            <Button
+              type="reset"
+              variant={'destructive'}
+              onClick={() =>
+                alert('Are you sure you want to delete this tournament?')
+              }
+            >
+              Delete
+            </Button>
+          </div>
+          <div className="flex gap-3">
+            <Button type="submit">Save</Button>
+          </div>
+        </div>
       </form>
     </Form>
   );
