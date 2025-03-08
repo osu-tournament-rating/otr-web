@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import DataTable from './data-table';
 import { MatchRow, columns } from './columns';
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
-import { get } from '@/lib/actions/tournaments'
+import { get } from '@/lib/actions/tournaments';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -18,7 +18,10 @@ export async function generateMetadata({
 function formatTableRows(matches: MatchDTO[]): MatchRow[] {
   return matches.map((match) => ({
     name: match.name,
-    verificationStatus: match.verificationStatus,
+    status: {
+      verificationStatus: match.verificationStatus,
+      warningFlags: match.warningFlags,
+    },
     startDate: match.startTime
       ? new Date(match.startTime).toLocaleDateString()
       : new Date().toLocaleDateString(),

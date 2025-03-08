@@ -1,10 +1,3 @@
-import AllRulesetIcon from '@/public/icons/rulesets/all.svg';
-import CatchIcon from '@/public/icons/rulesets/catch.svg';
-import ManiaIcon from '@/public/icons/rulesets/mania.svg';
-import Mania4kIcon from '@/public/icons/rulesets/mania4k.svg';
-import Mania7kIcon from '@/public/icons/rulesets/mania7k.svg';
-import StandardIcon from '@/public/icons/rulesets/osu.svg';
-import TaikoIcon from '@/public/icons/rulesets/taiko.svg';
 import {
   GameProcessingStatus,
   GameRejectionReason,
@@ -24,7 +17,6 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import { FC, SVGProps } from 'react';
 
 /** Basic enum metadata */
 export type EnumMetadata = {
@@ -158,137 +150,9 @@ const defaultBitwiseEnumHelper = <
   },
 });
 
-type RulesetMetadata = {
-  /**
-   * Icon image as a React element
-   * @example
-   * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
-   * return (<taikoIcon />);
-   */
-  image: FC<SVGProps<SVGElement>>;
-
-  /**
-   * Alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'osu!Taiko'
-   */
-  alt: string;
-
-  /**
-   * Shortened alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'Taiko'
-   */
-  shortAlt: string;
-
-  /** Whether to display this ruleset in the selector */
-  displayInSelector?: boolean;
-
-  /** 0-Index position in the selector (from left -> right || top -> bottom) */
-  selectorIndex?: number;
-};
-
 const noneEnumMetadata: EnumMetadata = {
   text: 'None',
   description: 'No description',
-};
-
-// TODO: Refactor in favor of 'RulesetEnumHelper'
-/** Stylistic metadata for each {@link Ruleset} */
-export const RulesetMetadata: {
-  [key in Ruleset]: RulesetMetadata;
-} & {
-  /** The special case 'All Rulesets' icon */
-  All: RulesetMetadata;
-} = {
-  All: {
-    image: AllRulesetIcon,
-    alt: 'osu!',
-    shortAlt: 'Any Ruleset',
-    displayInSelector: true,
-    selectorIndex: 0,
-  },
-  [Ruleset.Osu]: {
-    image: StandardIcon,
-    alt: 'osu!',
-    shortAlt: 'Standard',
-    displayInSelector: true,
-    selectorIndex: 1,
-  },
-  [Ruleset.Taiko]: {
-    image: TaikoIcon,
-    alt: 'osu!Taiko',
-    shortAlt: 'Taiko',
-    displayInSelector: true,
-  },
-  [Ruleset.Catch]: {
-    image: CatchIcon,
-    alt: 'osu!Catch',
-    shortAlt: 'Catch',
-    displayInSelector: true,
-    selectorIndex: 2,
-  },
-  [Ruleset.ManiaOther]: {
-    image: ManiaIcon,
-    alt: 'osu!Mania',
-    shortAlt: 'Mania (Other)',
-  },
-  [Ruleset.Mania4k]: {
-    image: Mania4kIcon,
-    alt: 'osu!Mania 4K',
-    shortAlt: 'Mania 4K',
-    displayInSelector: true,
-    selectorIndex: 3,
-  },
-  [Ruleset.Mania7k]: {
-    image: Mania7kIcon,
-    alt: 'osu!Mania 7K',
-    shortAlt: 'Mania 7K',
-    displayInSelector: true,
-    selectorIndex: 4,
-  },
-};
-
-// TODO: Refactor in favor of 'VerificationStatusEnumHelper'
-/** Stylistic metadata for each {@link VerificationStatus} */
-export const VerificationStatusMetadata: {
-  [key in VerificationStatus]: {
-    /** CSS class name */
-    className: string;
-
-    /** Display text */
-    text: string;
-
-    /** Whether to display this status in a selectable dropdown */
-    displayInDropdown?: boolean;
-  };
-} = {
-  [VerificationStatus.None]: {
-    className: 'pending',
-    text: 'Pending',
-  },
-  [VerificationStatus.PreRejected]: {
-    className: 'rejected',
-    text: 'Pre-rejected',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.PreVerified]: {
-    className: 'verified',
-    text: 'Pre-verified',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.Rejected]: {
-    className: 'rejected',
-    text: 'Rejected',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.Verified]: {
-    className: 'verified',
-    text: 'Verified',
-    displayInDropdown: true,
-  },
 };
 
 export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {

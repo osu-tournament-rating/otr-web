@@ -7,12 +7,6 @@ import {
   PauseIcon,
   XIcon,
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
 import SimpleTooltip from '../simple-tooltip';
 
 export default function VerificationBadge({
@@ -52,7 +46,7 @@ export default function VerificationBadge({
     case VerificationStatus.Rejected:
       return (
         <SimpleTooltip content={'Rejected'}>
-          <Badge className="bg-red-500">
+          <Badge className="text-red-500" variant={'outline'}>
             <XIcon /> {text && 'Rejected'}
           </Badge>
         </SimpleTooltip>

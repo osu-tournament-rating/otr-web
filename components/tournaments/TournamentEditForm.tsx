@@ -5,6 +5,7 @@ import {
   TournamentProcessingStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { useForm } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ export default function TournamentEditForm({
   });
 
   async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
-    console.log(values);
+    await new Promise(res => setTimeout(() => {}, 2000));
   }
 
   return (
@@ -50,7 +51,7 @@ export default function TournamentEditForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder={tournament.name} {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,7 +64,7 @@ export default function TournamentEditForm({
             <FormItem>
               <FormLabel>Forum URL</FormLabel>
               <FormControl>
-                <Input placeholder={tournament.forumUrl} {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -73,7 +74,7 @@ export default function TournamentEditForm({
           <FormField
             control={form.control}
             name="ruleset"
-            render={({ field: { value, onChange } }) => (
+            render={({ field: { onChange, value } }) => (
               <RulesetFormItem onChange={onChange} value={value.toString()} />
             )}
           />
@@ -84,7 +85,7 @@ export default function TournamentEditForm({
               <FormItem className="w-1/4">
                 <FormLabel>Abbreviation</FormLabel>
                 <FormControl>
-                  <Input placeholder={tournament.abbreviation} {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,7 +94,7 @@ export default function TournamentEditForm({
           <FormField
             control={form.control}
             name="lobbySize"
-            render={({ field: { value, onChange } }) => (
+            render={({ field: { onChange, value } }) => (
               <LobbySizeFormItem onChange={onChange} value={value.toString()} />
             )}
           />
@@ -144,12 +145,25 @@ export default function TournamentEditForm({
         />
         <div className="flex justify-between">
           <div className="flex gap-3">
-            <Button type="reset" variant={'destructive'}>
-              Delete
+            <Button
+              type="reset"
+              variant={'secondary'}
+              onClick={() => form.reset()}
+              disabled={!form.formState.isDirty || form.formState.isSubmitting}
+            >
+              Reset
             </Button>
           </div>
           <div className="flex gap-3">
-            <Button type="submit">Save</Button>
+            <Button 
+              type="submit" 
+              disabled={!form.formState.isDirty}
+            >
+              {form.formState.isSubmitting 
+                ? (<Loader2 className="animate-spin" />) 
+                : ("Save")
+              }
+            </Button>
           </div>
         </div>
       </form>

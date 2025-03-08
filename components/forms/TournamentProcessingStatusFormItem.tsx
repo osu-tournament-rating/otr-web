@@ -20,7 +20,7 @@ export default function TournamentProcessingStatusFormItem({
   return (
     <FormItem className="min-w-1/3">
       <FormLabel>Processing Status</FormLabel>
-      <Select onValueChange={onChange} defaultValue={value} disabled>
+      <Select onValueChange={onChange} value={value} disabled>
         <FormControl>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Processing Status" />

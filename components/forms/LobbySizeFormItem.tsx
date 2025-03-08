@@ -19,7 +19,7 @@ export default function LobbySizeFormItem({
   return (
     <FormItem className="min-w-1/3">
       <FormLabel>Format</FormLabel>
-      <Select onValueChange={onChange} defaultValue={value}>
+      <Select onValueChange={onChange} value={value}>
         <FormControl>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Format" />

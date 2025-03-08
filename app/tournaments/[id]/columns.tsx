@@ -1,35 +1,46 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
-import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import {
+  ColumnDef,
+  createColumnHelper,
+  useReactTable,
+} from '@tanstack/react-table';
+import {
+  MatchWarningFlags,
+  VerificationStatus,
+} from '@osu-tournament-rating/otr-api-client';
 import VerificationBadge from '@/components/badges/VerificationBadge';
+import WarningFlagsBadge from '@/components/badges/WarningFlagsBadge';
 
 export type MatchRow = {
   name: string;
-  verificationStatus: VerificationStatus;
+  status: {
+    verificationStatus: VerificationStatus;
+    warningFlags: MatchWarningFlags;
+  };
   startDate: string;
 };
 
-export const columns: ColumnDef<MatchRow>[] = [
-  {
-    accessorKey: 'verificationStatus',
+const columnHelper = createColumnHelper<MatchRow>();
+
+export const columns: ColumnDef<MatchRow, any>[] = [
+  columnHelper.accessor('status', {
     header: 'Status',
-    cell: ({ row }) => {
-      /** TODO: Add warning flags here too */
-      const status = row.getValue('verificationStatus') as VerificationStatus;
-      return <VerificationBadge verificationStatus={status} text={false} />;
-    },
-  },
-  {
-    accessorKey: 'name',
+    cell: ({ getValue }) => (
+      <div className="flex gap-1 -mr-3">
+        <VerificationBadge
+          verificationStatus={getValue().verificationStatus}
+          text={false}
+        />
+        <WarningFlagsBadge itemType={'match'} value={getValue().warningFlags} />
+      </div>
+    ),
+  }),
+  columnHelper.accessor('name', {
     header: 'Name',
-  },
-  {
-    accessorKey: 'startDate',
+  }),
+  columnHelper.accessor('startDate', {
     header: 'Start Date',
-    cell: ({ row }) => {
-      const date = new Date(row.getValue('startDate'));
-      return date.toLocaleDateString();
-    },
-  },
+    cell: ({ getValue }) => new Date(getValue()).toLocaleString(),
+  }),
 ];
