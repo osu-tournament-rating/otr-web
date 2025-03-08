@@ -5,10 +5,6 @@ import {
   TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { Card, CardDescription, CardHeader } from '../ui/card';
-import {
-  rulesetString,
-  verificationStatusString,
-} from '@/lib/utils/enum-utils';
 import VerificationBadge from '../verification/VerificationBadge';
 import SimpleTooltip from '../simple-tooltip';
 import { useSession } from 'next-auth/react';
@@ -24,6 +20,7 @@ import {
 } from '../ui/dialog';
 import TournamentEditForm from './TournamentEditForm';
 import { DialogContent } from '@radix-ui/react-dialog';
+import { RulesetEnumHelper, VerificationStatusEnumHelper } from '@/lib/enums';
 
 export default function TournamentCard({
   tournament,
@@ -44,9 +41,7 @@ export default function TournamentCard({
           <div className="flex gap-3">
             <div>
               <SimpleTooltip
-                content={verificationStatusString(
-                  tournament.verificationStatus
-                )}
+                content={VerificationStatusEnumHelper.getMetadata(tournament.verificationStatus).text}
               >
                 <VerificationBadge
                   verificationStatus={tournament.verificationStatus}
@@ -90,7 +85,7 @@ export default function TournamentCard({
         <CardDescription>
           <div className="flex font-mono justify-between">
             <p>
-              {rulesetString(tournament.ruleset)} • {tournament.lobbySize}v
+              {RulesetEnumHelper.getMetadata(tournament.ruleset).text} • {tournament.lobbySize}v
               {tournament.lobbySize} •{' '}
               {commaNumber(tournament.rankRangeLowerBound)}+
             </p>

@@ -3,6 +3,7 @@
 import {
   Ruleset,
   TournamentCompactDTO,
+  TournamentProcessingStatus,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { useForm } from 'react-hook-form';
@@ -19,6 +20,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import RulesetFormItem from '../forms/RulesetFormItem';
+import TournamentProcessingStatusFormItem from '../forms/TournamentProcessingStatusFormItem';
+import VerificationStatusFormItem from '../forms/VerificationStatusFormItem';
 
 const formSchema = z.object({
   name: z.string(),
@@ -30,6 +33,9 @@ const formSchema = z.object({
   ),
   forumUrl: z.string(),
   lobbySize: z.number().min(1).max(8),
+  processingStatus: z.enum(
+    Object.values(TournamentProcessingStatus) as [string, ...string[]]
+  ),
 });
 
 function onSubmit(values: z.infer<typeof formSchema>) {
@@ -51,6 +57,7 @@ export default function TournamentEditForm({
       verificationStatus: tournament.verificationStatus.toString(),
       forumUrl: tournament.forumUrl,
       lobbySize: tournament.lobbySize,
+      processingStatus: tournament.processingStatus.toString(),
     },
   });
 
@@ -78,7 +85,9 @@ export default function TournamentEditForm({
           <FormField
             control={form.control}
             name="ruleset"
-            render={({ field }) => <RulesetFormItem field={field} />}
+            render={({ field }) => (
+              <RulesetFormItem onChange={field.onChange} value={field.value} />
+            )}
           />
           <FormField
             control={form.control}
@@ -111,7 +120,6 @@ export default function TournamentEditForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="forumUrl"
@@ -123,6 +131,26 @@ export default function TournamentEditForm({
               </FormControl>
               <FormMessage />
             </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="verificationStatus"
+          render={({ field }) => (
+            <VerificationStatusFormItem
+              onChange={field.onChange}
+              value={field.value}
+            />
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="processingStatus"
+          render={({ field }) => (
+            <TournamentProcessingStatusFormItem
+              onChange={field.onChange}
+              value={field.value}
+            />
           )}
         />
         <div className="flex justify-between">

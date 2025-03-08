@@ -1,30 +1,29 @@
-import { rulesetString } from "@/lib/utils/enum-utils";
-import { Ruleset } from "@osu-tournament-rating/otr-api-client";
-import { FormControl, FormItem, FormLabel } from "../ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { ControllerRenderProps } from "react-hook-form";
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { FormControl, FormItem, FormLabel } from '../ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { RulesetEnumHelper } from '@/lib/enums';
 
 export default function RulesetFormItem({
-  field,
+  onChange,
+  value,
 }: {
-  field: ControllerRenderProps<
-    {
-      name: string;
-      abbreviation: string;
-      ruleset: string;
-      rankRange: number;
-      verificationStatus: string;
-      forumUrl: string;
-      lobbySize: number;
-    },
-    'ruleset'
-  >;
+  onChange: (...event: any[]) => void;
+  value: string;
 }) {
-    console.log(field);
+  function rulesetString(ruleset: Ruleset) {
+    return RulesetEnumHelper.getMetadata(ruleset).text;
+  }
+
   return (
     <FormItem className="min-w-1/3">
       <FormLabel>Ruleset</FormLabel>
-      <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Select onValueChange={onChange} defaultValue={value}>
         <FormControl>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Ruleset" />
@@ -34,15 +33,9 @@ export default function RulesetFormItem({
           <SelectItem value="0">{rulesetString(Ruleset.Osu)}</SelectItem>
           <SelectItem value="1">{rulesetString(Ruleset.Taiko)}</SelectItem>
           <SelectItem value="2">{rulesetString(Ruleset.Catch)}</SelectItem>
-          <SelectItem value="4">
-            {rulesetString(Ruleset.Mania4k)}
-          </SelectItem>
-          <SelectItem value="5">
-            {rulesetString(Ruleset.Mania7k)}
-          </SelectItem>
-          <SelectItem value="3">
-            {rulesetString(Ruleset.ManiaOther)}
-          </SelectItem>
+          <SelectItem value="4">{rulesetString(Ruleset.Mania4k)}</SelectItem>
+          <SelectItem value="5">{rulesetString(Ruleset.Mania7k)}</SelectItem>
+          <SelectItem value="3">{rulesetString(Ruleset.ManiaOther)}</SelectItem>
         </SelectContent>
       </Select>
     </FormItem>
