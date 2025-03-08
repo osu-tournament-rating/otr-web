@@ -144,10 +144,7 @@ export default function TournamentEditForm({
         />
         <div className="flex justify-between">
           <div className="flex gap-3">
-            <Button
-              type="reset"
-              variant={'destructive'}
-            >
+            <Button type="reset" variant={'destructive'}>
               Delete
             </Button>
           </div>

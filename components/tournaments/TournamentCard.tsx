@@ -5,7 +5,7 @@ import {
   TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { Card, CardDescription, CardHeader } from '../ui/card';
-import VerificationBadge from '../verification/VerificationBadge';
+import VerificationBadge from '../badges/VerificationBadge';
 import SimpleTooltip from '../simple-tooltip';
 import { useSession } from 'next-auth/react';
 import { EditIcon } from 'lucide-react';
