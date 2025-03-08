@@ -23,7 +23,6 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import TournamentEditForm from './TournamentEditForm';
-import { formatRankString } from '@/lib/utils/number-utils';
 import { DialogContent } from '@radix-ui/react-dialog';
 
 export default function TournamentCard({
@@ -36,6 +35,7 @@ export default function TournamentCard({
   const startDate = new Date(tournament.startTime);
   const endDate = new Date(tournament.endTime);
   const { data: session } = useSession();
+  const commaNumber = require('comma-number');
 
   return (
     <Card>
@@ -90,7 +90,7 @@ export default function TournamentCard({
             <p>
               {rulesetString(tournament.ruleset)} • {tournament.lobbySize}v
               {tournament.lobbySize} •{' '}
-              {formatRankString(tournament.rankRangeLowerBound)}+
+              {commaNumber(tournament.rankRangeLowerBound)}+
             </p>
             <p className="text-xs">
               {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
