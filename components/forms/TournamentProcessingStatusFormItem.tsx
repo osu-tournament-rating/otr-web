@@ -26,36 +26,66 @@ export default function TournamentProcessingStatusFormItem({
   return (
     <FormItem className="min-w-1/3">
       <FormLabel>Processing Status</FormLabel>
-      <Select onValueChange={onChange} defaultValue={value} disabled={true}>
+      <Select
+        onValueChange={onChange}
+        defaultValue={value}
+        disabled={true}
+      >
         <FormControl>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Processing Status" />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          <SelectItem value="0">
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.NeedsApproval
+            )}
+          >
             {processingStatusString(TournamentProcessingStatus.NeedsApproval)}
           </SelectItem>
-          <SelectItem value="1">
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.NeedsMatchData
+            )}
+          >
             {processingStatusString(TournamentProcessingStatus.NeedsMatchData)}
           </SelectItem>
-          <SelectItem value="2">
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.NeedsAutomationChecks
+            )}
+          >
             {processingStatusString(
               TournamentProcessingStatus.NeedsAutomationChecks
             )}
           </SelectItem>
-          <SelectItem value="3">
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.NeedsVerification
+            )}
+          >
             {processingStatusString(
               TournamentProcessingStatus.NeedsVerification
             )}
           </SelectItem>
-          <SelectItem value="4">
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.NeedsStatCalculation
+            )}
+          >
             {processingStatusString(
               TournamentProcessingStatus.NeedsStatCalculation
             )}
           </SelectItem>
-          <SelectItem value="5">
-            {processingStatusString(TournamentProcessingStatus.Done)}
+          <SelectItem
+            value={processingStatusString(
+              TournamentProcessingStatus.Done
+            )}
+          >
+            {processingStatusString(
+              TournamentProcessingStatus.Done
+            )}
           </SelectItem>
         </SelectContent>
       </Select>

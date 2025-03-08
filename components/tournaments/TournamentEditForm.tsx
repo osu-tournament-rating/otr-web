@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  OperationType,
   Ruleset,
   TournamentCompactDTO,
   TournamentProcessingStatus,
@@ -22,25 +23,30 @@ import { Input } from '@/components/ui/input';
 import RulesetFormItem from '../forms/RulesetFormItem';
 import TournamentProcessingStatusFormItem from '../forms/TournamentProcessingStatusFormItem';
 import VerificationStatusFormItem from '../forms/VerificationStatusFormItem';
+import {
+  RulesetEnumHelper,
+  TournamentProcessingStatusEnumHelper,
+  VerificationStatusEnumHelper,
+} from '@/lib/enums';
+import {
+  getRulesetFromText,
+  getTournamentProcessingStatusFromText,
+  getVerificationStatusFromText,
+} from '@/lib/utils/enum-utils';
+import { tournaments } from '@/lib/api';
+import { toast } from 'sonner';
+import { isUndefined } from 'util';
 
 const formSchema = z.object({
   name: z.string(),
   abbreviation: z.string().min(1),
-  ruleset: z.enum(Object.values(Ruleset) as [string, ...string[]]),
+  ruleset: z.string(),
   rankRange: z.number().min(1),
-  verificationStatus: z.enum(
-    Object.values(VerificationStatus) as [string, ...string[]]
-  ),
+  verificationStatus: z.string(),
   forumUrl: z.string(),
   lobbySize: z.number().min(1).max(8),
-  processingStatus: z.enum(
-    Object.values(TournamentProcessingStatus) as [string, ...string[]]
-  ),
+  processingStatus: z.string(),
 });
-
-function onSubmit(values: z.infer<typeof formSchema>) {
-  console.log(values);
-}
 
 export default function TournamentEditForm({
   tournament,
@@ -50,16 +56,106 @@ export default function TournamentEditForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: tournament.name,
       abbreviation: tournament.abbreviation,
-      ruleset: tournament.ruleset.toString(),
-      rankRange: tournament.rankRangeLowerBound,
-      verificationStatus: tournament.verificationStatus.toString(),
       forumUrl: tournament.forumUrl,
       lobbySize: tournament.lobbySize,
-      processingStatus: tournament.processingStatus.toString(),
+      name: tournament.name,
+      processingStatus: TournamentProcessingStatusEnumHelper.getMetadata(
+        tournament.processingStatus
+      ).text,
+      rankRange: tournament.rankRangeLowerBound,
+      ruleset: RulesetEnumHelper.getMetadata(tournament.ruleset).text,
+      verificationStatus: VerificationStatusEnumHelper.getMetadata(
+        tournament.verificationStatus
+      ).text,
     },
   });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const ruleset = getRulesetFromText(values.ruleset);
+    console.log(ruleset, typeof ruleset);
+    if (ruleset === undefined) {
+      throw new Error(`Invalid ruleset: ${values.ruleset}`);
+    }
+
+    const verificationStatus = getVerificationStatusFromText(
+      values.verificationStatus
+    );
+    if (verificationStatus === undefined) {
+      throw new Error(
+        `Invalid verification status: ${values.verificationStatus}`
+      );
+    }
+
+    const processingStatus = getTournamentProcessingStatusFromText(
+      values.processingStatus
+    );
+    if (processingStatus === undefined) {
+      throw new Error(`Invalid processing status: ${values.processingStatus}`);
+    }
+
+    const updatedTournament: TournamentCompactDTO = {
+      ...tournament,
+      name: values.name,
+      abbreviation: values.abbreviation,
+      ruleset: ruleset as Ruleset,
+      rankRangeLowerBound: values.rankRange,
+      verificationStatus: verificationStatus as VerificationStatus,
+      forumUrl: values.forumUrl,
+      lobbySize: values.lobbySize,
+      processingStatus: processingStatus as TournamentProcessingStatus,
+    };
+
+    const response = await tournaments.update({
+      id: updatedTournament.id,
+      body: [
+        {
+          operationType: OperationType.Replace,
+          path: '/name',
+          value: updatedTournament.name,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/abbreviation',
+          value: updatedTournament.abbreviation,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/ruleset',
+          value: updatedTournament.ruleset,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/rankRangeLowerBound',
+          value: updatedTournament.rankRangeLowerBound,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/verificationStatus',
+          value: updatedTournament.verificationStatus,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/forumUrl',
+          value: updatedTournament.forumUrl,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/lobbySize',
+          value: updatedTournament.lobbySize,
+        },
+        {
+          operationType: OperationType.Replace,
+          path: '/processingStatus',
+          value: updatedTournament.processingStatus,
+        },
+      ],
+    });
+
+    if (response.status == 200) {
+      toast('Tournament updated successfully');
+    }
+  }
 
   return (
     <Form {...form}>

@@ -24,25 +24,33 @@ export default function VerificationStatusFormItem({
     <FormItem className="min-w-1/3">
       <FormLabel>Verification Status</FormLabel>
       <Select onValueChange={onChange} defaultValue={value}>
-        <FormControl>r
+        <FormControl>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Verification Status" />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          <SelectItem value={VerificationStatus.None.toString()}>
+          <SelectItem value={verificationStatusString(VerificationStatus.None)}>
             {verificationStatusString(VerificationStatus.None)}
           </SelectItem>
-          <SelectItem value={VerificationStatus.PreRejected.toString()}>
+          <SelectItem
+            value={verificationStatusString(VerificationStatus.PreRejected)}
+          >
             {verificationStatusString(VerificationStatus.PreRejected)}
           </SelectItem>
-          <SelectItem value={VerificationStatus.PreVerified.toString()}>
+          <SelectItem
+            value={verificationStatusString(VerificationStatus.PreVerified)}
+          >
             {verificationStatusString(VerificationStatus.PreVerified)}
           </SelectItem>
-          <SelectItem value={VerificationStatus.Rejected.toString()}>
+          <SelectItem
+            value={verificationStatusString(VerificationStatus.Rejected)}
+          >
             {verificationStatusString(VerificationStatus.Rejected)}
           </SelectItem>
-          <SelectItem value={VerificationStatus.Verified.toString()}>
+          <SelectItem
+            value={verificationStatusString(VerificationStatus.Verified)}
+          >
             {verificationStatusString(VerificationStatus.Verified)}
           </SelectItem>
         </SelectContent>

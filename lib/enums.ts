@@ -325,27 +325,27 @@ export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
 
   metadata: {
     [Ruleset.Osu]: {
-      text: 'Standard',
+      text: 'osu!',
       description: '',
     },
     [Ruleset.Taiko]: {
-      text: 'Taiko',
+      text: 'osu!taiko',
       description: '',
     },
     [Ruleset.Catch]: {
-      text: 'Catch',
+      text: 'osu!catch',
       description: '',
     },
     [Ruleset.ManiaOther]: {
-      text: 'Mania',
+      text: 'osu!mania (other)',
       description: '',
     },
     [Ruleset.Mania4k]: {
-      text: 'Mania 4K',
+      text: 'osu!mania 4K',
       description: '',
     },
     [Ruleset.Mania7k]: {
-      text: 'Mania 7K',
+      text: 'osu!mania 7K',
       description: '',
     },
   },

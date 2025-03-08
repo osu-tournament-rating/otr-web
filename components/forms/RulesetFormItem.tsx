@@ -30,12 +30,24 @@ export default function RulesetFormItem({
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          <SelectItem value="0">{rulesetString(Ruleset.Osu)}</SelectItem>
-          <SelectItem value="1">{rulesetString(Ruleset.Taiko)}</SelectItem>
-          <SelectItem value="2">{rulesetString(Ruleset.Catch)}</SelectItem>
-          <SelectItem value="4">{rulesetString(Ruleset.Mania4k)}</SelectItem>
-          <SelectItem value="5">{rulesetString(Ruleset.Mania7k)}</SelectItem>
-          <SelectItem value="3">{rulesetString(Ruleset.ManiaOther)}</SelectItem>
+          <SelectItem value={rulesetString(Ruleset.Osu)}>
+            {rulesetString(Ruleset.Osu)}
+          </SelectItem>
+          <SelectItem value={rulesetString(Ruleset.Taiko)}>
+            {rulesetString(Ruleset.Taiko)}
+          </SelectItem>
+          <SelectItem value={rulesetString(Ruleset.Catch)}>
+            {rulesetString(Ruleset.Catch)}
+          </SelectItem>
+          <SelectItem value={rulesetString(Ruleset.Mania4k)}>
+            {rulesetString(Ruleset.Mania4k)}
+          </SelectItem>
+          <SelectItem value={rulesetString(Ruleset.Mania7k)}>
+            {rulesetString(Ruleset.Mania7k)}
+          </SelectItem>
+          <SelectItem value={rulesetString(Ruleset.ManiaOther)}>
+            {rulesetString(Ruleset.ManiaOther)}
+          </SelectItem>
         </SelectContent>
       </Select>
     </FormItem>
