@@ -70,15 +70,17 @@ export default function TournamentCard({
                     <EditIcon />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader className="sm:max-w-md">
-                    <DialogTitle>Edit Tournament</DialogTitle>
-                    <DialogDescription>
-                      Editing {tournament.name}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex items-center space-x-2">
-                    <TournamentEditForm tournament={tournament} />
+                <DialogContent className="fixed inset-0 bg-black/80 flex items-center justify-center p-6">
+                  <div className="bg-background w-[450px] p-6 rounded-lg">
+                    <DialogHeader className="sm:max-w-md">
+                      <DialogTitle>Edit Tournament</DialogTitle>
+                      <DialogDescription>
+                        Editing {tournament.name}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2">
+                      <TournamentEditForm tournament={tournament} />
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
