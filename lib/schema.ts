@@ -1,4 +1,7 @@
 import {
+  MatchProcessingStatus,
+  MatchRejectionReason,
+  MatchWarningFlags,
   Ruleset,
   TournamentProcessingStatus,
   TournamentRejectionReason,
@@ -61,4 +64,16 @@ export const tournamentEditFormSchema = z.object({
   processingStatus: numericEnumValueSchema(
     TournamentProcessingStatus
   ).optional(),
+});
+
+export const matchEditFormSchema = z.object({
+  name: z.string().min(1),
+  osuId: z.number().min(1),
+  ruleset: numericEnumValueSchema(Ruleset),
+  startTime: z.date(),
+  endTime: z.date().optional(),
+  verificationStatus: numericEnumValueSchema(VerificationStatus),
+  rejectionReason: bitwiseEnumValueSchema(MatchRejectionReason).optional(),
+  warningFlags: bitwiseEnumValueSchema(MatchWarningFlags).optional(),
+  processingStatus: numericEnumValueSchema(MatchProcessingStatus).optional(),
 });
