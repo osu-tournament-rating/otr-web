@@ -1,6 +1,5 @@
 import TournamentCard from '@/components/tournaments/TournamentCard';
 import { tournaments } from '@/lib/api';
-import { Metadata } from 'next';
 
 export default async function Page() {
   const tournamentData = await tournaments.list({
@@ -13,7 +12,7 @@ export default async function Page() {
     <>
       {tournamentData.result.map((t) => (
         <div className="flex-1 mt-2" key={t.id}>
-          <TournamentCard tournament={t} displayStatusText={false} />
+          <TournamentCard tournament={t} titleIsLink={true} displayStatusText={false} displayEditIcon={false} />
         </div>
       ))}
     </>

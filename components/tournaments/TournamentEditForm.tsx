@@ -1,11 +1,8 @@
 'use client';
 
 import {
-  OperationType,
-  Ruleset,
   TournamentCompactDTO,
   TournamentProcessingStatus,
-  VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -20,141 +17,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { tournamentEditFormSchema } from '@/lib/schema';
 import RulesetFormItem from '../forms/RulesetFormItem';
-import TournamentProcessingStatusFormItem from '../forms/TournamentProcessingStatusFormItem';
+import LobbySizeFormItem from '../forms/LobbySizeFormItem';
 import VerificationStatusFormItem from '../forms/VerificationStatusFormItem';
-import {
-  RulesetEnumHelper,
-  TournamentProcessingStatusEnumHelper,
-  VerificationStatusEnumHelper,
-} from '@/lib/enums';
-import {
-  getRulesetFromText,
-  getTournamentProcessingStatusFromText,
-  getVerificationStatusFromText,
-} from '@/lib/utils/enum-utils';
-import { tournaments } from '@/lib/api';
-import { toast } from 'sonner';
-import { isUndefined } from 'util';
-
-const formSchema = z.object({
-  name: z.string(),
-  abbreviation: z.string().min(1),
-  ruleset: z.string(),
-  rankRange: z.number().min(1),
-  verificationStatus: z.string(),
-  forumUrl: z.string(),
-  lobbySize: z.number().min(1).max(8),
-  processingStatus: z.string(),
-});
+import TournamentProcessingStatusFormItem from '../forms/TournamentProcessingStatusFormItem';
 
 export default function TournamentEditForm({
   tournament,
 }: {
   tournament: TournamentCompactDTO;
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      abbreviation: tournament.abbreviation,
-      forumUrl: tournament.forumUrl,
-      lobbySize: tournament.lobbySize,
-      name: tournament.name,
-      processingStatus: TournamentProcessingStatusEnumHelper.getMetadata(
-        tournament.processingStatus
-      ).text,
-      rankRange: tournament.rankRangeLowerBound,
-      ruleset: RulesetEnumHelper.getMetadata(tournament.ruleset).text,
-      verificationStatus: VerificationStatusEnumHelper.getMetadata(
-        tournament.verificationStatus
-      ).text,
-    },
+  const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
+    resolver: zodResolver(tournamentEditFormSchema),
+    defaultValues: tournament,
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const ruleset = getRulesetFromText(values.ruleset);
-    console.log(ruleset, typeof ruleset);
-    if (ruleset === undefined) {
-      throw new Error(`Invalid ruleset: ${values.ruleset}`);
-    }
-
-    const verificationStatus = getVerificationStatusFromText(
-      values.verificationStatus
-    );
-    if (verificationStatus === undefined) {
-      throw new Error(
-        `Invalid verification status: ${values.verificationStatus}`
-      );
-    }
-
-    const processingStatus = getTournamentProcessingStatusFromText(
-      values.processingStatus
-    );
-    if (processingStatus === undefined) {
-      throw new Error(`Invalid processing status: ${values.processingStatus}`);
-    }
-
-    const updatedTournament: TournamentCompactDTO = {
-      ...tournament,
-      name: values.name,
-      abbreviation: values.abbreviation,
-      ruleset: ruleset as Ruleset,
-      rankRangeLowerBound: values.rankRange,
-      verificationStatus: verificationStatus as VerificationStatus,
-      forumUrl: values.forumUrl,
-      lobbySize: values.lobbySize,
-      processingStatus: processingStatus as TournamentProcessingStatus,
-    };
-
-    const response = await tournaments.update({
-      id: updatedTournament.id,
-      body: [
-        {
-          operationType: OperationType.Replace,
-          path: '/name',
-          value: updatedTournament.name,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/abbreviation',
-          value: updatedTournament.abbreviation,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/ruleset',
-          value: updatedTournament.ruleset,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/rankRangeLowerBound',
-          value: updatedTournament.rankRangeLowerBound,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/verificationStatus',
-          value: updatedTournament.verificationStatus,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/forumUrl',
-          value: updatedTournament.forumUrl,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/lobbySize',
-          value: updatedTournament.lobbySize,
-        },
-        {
-          operationType: OperationType.Replace,
-          path: '/processingStatus',
-          value: updatedTournament.processingStatus,
-        },
-      ],
-    });
-
-    if (response.status == 200) {
-      toast('Tournament updated successfully');
-    }
+  async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
+    console.log(values);
   }
 
   return (
@@ -176,13 +56,25 @@ export default function TournamentEditForm({
             </FormItem>
           )}
         />
-
+        <FormField
+          control={form.control}
+          name="forumUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Forum URL</FormLabel>
+              <FormControl>
+                <Input placeholder={tournament.forumUrl} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex flex-row gap-5">
           <FormField
             control={form.control}
             name="ruleset"
-            render={({ field }) => (
-              <RulesetFormItem onChange={field.onChange} value={field.value} />
+            render={({ field: { value, onChange } }) => (
+              <RulesetFormItem onChange={onChange} value={value.toString()} />
             )}
           />
           <FormField
@@ -201,13 +93,33 @@ export default function TournamentEditForm({
           <FormField
             control={form.control}
             name="lobbySize"
+            render={({ field: { value, onChange } }) => (
+              <LobbySizeFormItem onChange={onChange} value={value.toString()} />
+            )}
+          />
+        </div>
+
+        <div className="flex flex-row gap-5">
+          <FormField
+            control={form.control}
+            name="verificationStatus"
+            render={({ field: { value, onChange } }) => (
+              <VerificationStatusFormItem
+                onChange={onChange}
+                value={value.toString()}
+              />
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="rankRangeLowerBound"
             render={({ field }) => (
-              <FormItem className="w-1/4">
-                <FormLabel>Lobby Size</FormLabel>
+              <FormItem className="w-1/3">
+                <FormLabel>Rank Restriction</FormLabel>
                 <FormControl>
                   <Input
-                    type={'number'}
-                    placeholder={tournament.lobbySize.toString()}
+                    type="number"
+                    placeholder={tournament.rankRangeLowerBound.toString()}
                     {...field}
                   />
                 </FormControl>
@@ -216,36 +128,17 @@ export default function TournamentEditForm({
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="forumUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Forum URL</FormLabel>
-              <FormControl>
-                <Input placeholder={tournament.forumUrl} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="verificationStatus"
-          render={({ field }) => (
-            <VerificationStatusFormItem
-              onChange={field.onChange}
-              value={field.value}
-            />
-          )}
-        />
+
         <FormField
           control={form.control}
           name="processingStatus"
-          render={({ field }) => (
+          render={({ field: { value, onChange } }) => (
             <TournamentProcessingStatusFormItem
-              onChange={field.onChange}
-              value={field.value}
+              onChange={onChange}
+              value={
+                value?.toString() ??
+                TournamentProcessingStatus.NeedsApproval.toString()
+              }
             />
           )}
         />
@@ -254,9 +147,6 @@ export default function TournamentEditForm({
             <Button
               type="reset"
               variant={'destructive'}
-              onClick={() =>
-                alert('Are you sure you want to delete this tournament?')
-              }
             >
               Delete
             </Button>

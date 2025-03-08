@@ -10,7 +10,7 @@ import SimpleTooltip from '../simple-tooltip';
 import { useSession } from 'next-auth/react';
 import { EditIcon } from 'lucide-react';
 import { Button } from '../ui/button';
-import { formatUTCDate } from '@/lib/utils/date-utils';
+import { formatUTCDate } from '@/lib/utils/date';
 import {
   Dialog,
   DialogDescription,
@@ -21,13 +21,18 @@ import {
 import TournamentEditForm from './TournamentEditForm';
 import { DialogContent } from '@radix-ui/react-dialog';
 import { RulesetEnumHelper, VerificationStatusEnumHelper } from '@/lib/enums';
+import Link from 'next/link';
 
 export default function TournamentCard({
   tournament,
+  titleIsLink = false,
   displayStatusText,
+  displayEditIcon,
 }: {
   tournament: TournamentCompactDTO;
+  titleIsLink?: boolean;
   displayStatusText: boolean;
+  displayEditIcon: boolean;
 }) {
   const startDate = new Date(tournament.startTime);
   const endDate = new Date(tournament.endTime);
@@ -41,7 +46,11 @@ export default function TournamentCard({
           <div className="flex gap-3">
             <div>
               <SimpleTooltip
-                content={VerificationStatusEnumHelper.getMetadata(tournament.verificationStatus).text}
+                content={
+                  VerificationStatusEnumHelper.getMetadata(
+                    tournament.verificationStatus
+                  ).text
+                }
               >
                 <VerificationBadge
                   verificationStatus={tournament.verificationStatus}
@@ -53,11 +62,17 @@ export default function TournamentCard({
               <p className="text-muted-foreground">{tournament.abbreviation}</p>
             </div>
             <div>
-              <p className="font-bold">{tournament.name}</p>
+              {titleIsLink ? (
+                <Link href={`/tournaments/${tournament.id}`}>
+                  <p className="font-bold">{tournament.name}</p>
+                </Link>
+              ) : (
+                <p className="font-bold">{tournament.name}</p>
+              )}
             </div>
           </div>
 
-          {session?.user?.scopes?.includes(Roles.Admin) && (
+          {session?.user?.scopes?.includes(Roles.Admin) && displayEditIcon && (
             <div className="flex">
               <Dialog>
                 <DialogTrigger asChild>
@@ -65,7 +80,7 @@ export default function TournamentCard({
                     <EditIcon />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="fixed inset-0 bg-black/80 flex items-center justify-center p-6">
+                <DialogContent className="fixed z-10 inset-0 bg-black/80 flex items-center justify-center p-6">
                   <div className="bg-background w-[450px] p-6 rounded-lg">
                     <DialogHeader className="sm:max-w-md">
                       <DialogTitle>Edit Tournament</DialogTitle>
@@ -85,8 +100,8 @@ export default function TournamentCard({
         <CardDescription>
           <div className="flex font-mono justify-between">
             <p>
-              {RulesetEnumHelper.getMetadata(tournament.ruleset).text} • {tournament.lobbySize}v
-              {tournament.lobbySize} •{' '}
+              {RulesetEnumHelper.getMetadata(tournament.ruleset).text} •{' '}
+              {tournament.lobbySize}v{tournament.lobbySize} •{' '}
               {commaNumber(tournament.rankRangeLowerBound)}+
             </p>
             <p className="text-xs">

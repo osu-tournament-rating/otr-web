@@ -1,4 +1,5 @@
-import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+'use client';
+
 import { FormControl, FormItem, FormLabel } from '../ui/form';
 import {
   Select,
@@ -7,9 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { VerificationStatusEnumHelper } from '@/lib/enums';
 
-export default function VerificationStatusFormItem({
+export default function LobbySizeFormItem({
   onChange,
   value,
 }: {
@@ -18,21 +18,19 @@ export default function VerificationStatusFormItem({
 }) {
   return (
     <FormItem className="min-w-1/3">
-      <FormLabel>Verification Status</FormLabel>
+      <FormLabel>Format</FormLabel>
       <Select onValueChange={onChange} defaultValue={value}>
         <FormControl>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Verification Status" />
+            <SelectValue placeholder="Format" />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          {Object.entries(VerificationStatusEnumHelper.metadata).map(
-            ([k, { text }]) => (
-              <SelectItem key={`verificationStatus-${k}`} value={k}>
-                {text}
-              </SelectItem>
-            )
-          )}
+          {[...Array(8)].map((_, i) => (
+            <SelectItem key={`lobbysize-${i + 1}`} value={(i + 1).toString()}>
+              {i + 1}v{i + 1}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </FormItem>

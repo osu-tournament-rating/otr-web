@@ -1,18 +1,18 @@
 import TournamentCard from '@/components/tournaments/TournamentCard';
-import { tournaments } from '@/lib/api';
 import type { Metadata } from 'next';
 import DataTable from './data-table';
 import { MatchRow, columns } from './columns';
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import { get } from '@/lib/actions/tournaments'
 
 type PageProps = { params: Promise<{ id: number }> };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  return {
-    title: (await params).id.toString(),
-  };
+  const tournament = await get({ id: (await params).id, verified: false });
+
+  return { title: tournament.name };
 }
 
 function formatTableRows(matches: MatchDTO[]): MatchRow[] {
@@ -26,16 +26,16 @@ function formatTableRows(matches: MatchDTO[]): MatchRow[] {
 }
 
 export default async function Page({ params }: PageProps) {
-  const id = (await params).id;
-  const { result: tournament } = await tournaments.get({
-    id: id,
-    verified: false,
-  });
+  const tournament = await get({ id: (await params).id, verified: false });
   const data = formatTableRows(tournament.matches ?? []);
 
   return (
     <>
-      <TournamentCard tournament={tournament} displayStatusText={true} />
+      <TournamentCard
+        tournament={tournament}
+        displayStatusText
+        displayEditIcon
+      />
       <DataTable columns={columns} data={data} />
     </>
   );
