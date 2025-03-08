@@ -18,14 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  SelectContent,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-} from '../ui/select';
-import { rulesetString } from '@/lib/utils/enum-utils';
+import RulesetFormItem from '../forms/RulesetFormItem';
 
 const formSchema = z.object({
   name: z.string(),
@@ -39,7 +32,7 @@ const formSchema = z.object({
   lobbySize: z.number().min(1).max(8),
 });
 
-function OnSubmit(values: z.infer<typeof formSchema>) {
+function onSubmit(values: z.infer<typeof formSchema>) {
   console.log(values);
 }
 
@@ -64,7 +57,7 @@ export default function TournamentEditForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(OnSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 w-full mt-5"
       >
         <FormField
@@ -80,52 +73,55 @@ export default function TournamentEditForm({
             </FormItem>
           )}
         />
+
+        <div className="flex flex-row gap-5">
+          <FormField
+            control={form.control}
+            name="ruleset"
+            render={({ field }) => <RulesetFormItem field={field} />}
+          />
+          <FormField
+            control={form.control}
+            name="abbreviation"
+            render={({ field }) => (
+              <FormItem className="w-1/4">
+                <FormLabel>Abbreviation</FormLabel>
+                <FormControl>
+                  <Input placeholder={tournament.abbreviation} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lobbySize"
+            render={({ field }) => (
+              <FormItem className="w-1/4">
+                <FormLabel>Lobby Size</FormLabel>
+                <FormControl>
+                  <Input
+                    type={'number'}
+                    placeholder={tournament.lobbySize.toString()}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="abbreviation"
+          name="forumUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Abbreviation</FormLabel>
+              <FormLabel>Forum URL</FormLabel>
               <FormControl>
-                <Input placeholder={tournament.abbreviation} {...field} />
+                <Input placeholder={tournament.forumUrl} {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="ruleset"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ruleset</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ruleset" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="osu">
-                    {rulesetString(Ruleset.Osu)}
-                  </SelectItem>
-                  <SelectItem value="taiko">
-                    {rulesetString(Ruleset.Taiko)}
-                  </SelectItem>
-                  <SelectItem value="catch">
-                    {rulesetString(Ruleset.Catch)}
-                  </SelectItem>
-                  <SelectItem value="mania4k">
-                    {rulesetString(Ruleset.Mania4k)}
-                  </SelectItem>
-                  <SelectItem value="mania7k">
-                    {rulesetString(Ruleset.Mania7k)}
-                  </SelectItem>
-                  <SelectItem value="maniaOther">
-                    {rulesetString(Ruleset.ManiaOther)}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </FormItem>
           )}
         />
