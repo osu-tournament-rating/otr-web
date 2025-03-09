@@ -12,6 +12,11 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const tournament = await get({ id: (await params).id, verified: false });
 
+  tournament.matches?.sort(
+    (a, b) =>
+      new Date(a?.startTime ?? 0).getUTCMilliseconds() -
+      new Date(b?.startTime ?? 0).getUTCMilliseconds()
+  );
   return { title: tournament.name };
 }
 
@@ -34,12 +39,14 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <TournamentCard
-        tournament={tournament}
-        displayStatusText
-        displayEditIcon
-      />
-      <DataTable columns={columns} data={data} />
+      <div className="flex flex-col gap-y-5 mt-5 mb-5">
+        <TournamentCard
+          tournament={tournament}
+          displayStatusText
+          displayEditIcon
+        />
+        <DataTable columns={columns} data={data} />
+      </div>
     </>
   );
 }
