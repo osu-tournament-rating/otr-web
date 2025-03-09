@@ -17,6 +17,7 @@ const configuration: IOtrApiWrapperConfiguration = {
         }
 
         const session = await auth();
+        console.log('axios: auth');
         config.headers.setAuthorization(`Bearer ${session?.accessToken}`);
 
         return config;

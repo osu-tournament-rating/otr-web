@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/theme-provider';
+import { auth } from '@/auth';
+import { cookies } from 'next/headers';
 import Nav from '@/components/nav/Nav';
 
 const geistSans = Geist({
@@ -23,18 +25,21 @@ export const metadata: Metadata = {
   description: 'The newest osu! tournament statistics platform',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  console.log('root layout: auth');
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider basePath={'/auth'}>
+          <SessionProvider basePath={'/auth'} session={session}>
             <Nav />
             <div className='flex justify-center w-full'>
               <div className='max-w-3xl w-full m-auto mt-0 mb-0'>

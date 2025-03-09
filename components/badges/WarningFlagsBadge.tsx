@@ -11,7 +11,7 @@ export default function WarningFlagsBadge({
   itemType,
   value,
 }: {
-  itemType: Pick<ApiItemType, 'match' | 'game'>;
+  itemType: Omit<ApiItemType, 'tournament' | 'score'>;
   value: number;
 }) {
   if (value === 0) {
