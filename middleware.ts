@@ -3,12 +3,13 @@ import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { NextResponse, NextRequest } from 'next/server';
 
 export default auth((request) => {
-  console.log('middleware: auth');
-  return NextResponse.next({ request });
+  if (!request.auth?.user?.scopes?.includes(Roles.Whitelist)) {
+    return NextResponse.redirect(
+      new URL('/unauthorized', request.nextUrl.origin)
+    );
+  }
 
-  // if (!req.auth?.user?.scopes?.includes(Roles.Whitelist)) {
-  //   return NextResponse.redirect(new URL('/unauthorized', req.nextUrl.origin));
-  // }
+  return NextResponse.next({ request });
 });
 
 // export default function middleware(req: NextRequest) {
