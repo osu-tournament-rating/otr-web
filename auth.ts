@@ -3,15 +3,16 @@ import NextAuth, { User } from 'next-auth';
 import { OAuthConfig } from 'next-auth/providers';
 import { JWT } from 'next-auth/jwt';
 
-/** Reasons why the session could not be authenticated */
-export type SessionErrorType = 'RefreshToken' | 'Expired';
+// region Module augments
 
 declare module 'next-auth' {
+  // Should not overwrite the existing type. This way they merge
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface User extends UserDTO {}
 
   interface Session {
     accessToken?: string;
-    error?: SessionErrorType;
+    error?: SessionError;
   }
 }
 
@@ -20,9 +21,24 @@ declare module 'next-auth/jwt' {
     access_token?: string;
     refresh_token?: string;
     user?: User;
-    error?: SessionErrorType;
+    error?: SessionError;
   }
 }
+
+// endregion
+
+// region Headers
+
+/** Custom headers used by the app and their potential values */
+export const OTR_HEADERS = {
+  'x-otr-session-error': ['refresh_token', 'expired', 'permission'],
+} as const;
+
+export type OtrHeaderKey = keyof typeof OTR_HEADERS;
+
+export type SessionError = (typeof OTR_HEADERS)['x-otr-session-error'][number];
+
+// endregion
 
 /**
  * Checks the expiration of a JWT (JSON Web Token)
@@ -51,7 +67,7 @@ const otrProvider: OAuthConfig<UserDTO> = {
   token: `${process.env.OTR_API_ROOT}/api/v1/oauth/authorize`,
   userinfo: {
     url: `${process.env.OTR_API_ROOT}/api/v1/me`,
-    async request({ tokens }: unknown) {
+    async request({ tokens }: { tokens: JWT }) {
       const res = await fetch(`${process.env.OTR_API_ROOT}/api/v1/me`, {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
@@ -69,7 +85,7 @@ const otrProvider: OAuthConfig<UserDTO> = {
   },
 };
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, auth } = NextAuth({
   basePath: '/auth',
   providers: [otrProvider],
   callbacks: {
@@ -86,7 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (!token.access_token || !token.refresh_token) {
-        throw new TypeError('Missing access_token or refresh_token');
+        return null;
       }
 
       // Access is not expired, session is valid
@@ -97,35 +113,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Access and refresh tokens expired, session cannot be refreshed
       if (isJwtExpired(token.refresh_token)) {
         return {
-          ...token,
-          error: 'Expired'
+          error: 'expired',
         };
       }
 
       // Try to refresh the access token
       try {
-        const res = await fetch(`${process.env.OTR_API_ROOT}/api/v1/oauth/refresh?refreshToken=${token.refresh_token}`, {
-          method: 'POST'
-        });
+        console.log('refreshing');
+        const res = await fetch(
+          `${process.env.OTR_API_ROOT}/api/v1/oauth/refresh?refreshToken=${token.refresh_token}`,
+          {
+            method: 'POST',
+          }
+        );
 
-        const tokensOrError = await res.json();
-        // console.log('refresh response', tokensOrError);
-        if (!res.ok) throw tokensOrError;
+        const refreshResponse = await res.json();
+        if (!('access_token' in refreshResponse)) {
+          return {
+            error: 'refresh_token',
+          };
+        }
 
-        const newTokens = tokensOrError as {
-          access_token: string;
-        };
-
-        console.log('new token')
         return {
           ...token,
-          access_token: newTokens.access_token
+          access_token: refreshResponse.access_token,
         };
       } catch (err) {
         console.error('Error refreshing access token', err);
         return {
-          ...token,
-          error: 'RefreshToken'
+          error: 'refresh_token',
         };
       }
     },
@@ -139,7 +155,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ...session,
         user,
         accessToken: token.access_token,
-        error: token.error
+        error: token.error,
       };
     },
   },

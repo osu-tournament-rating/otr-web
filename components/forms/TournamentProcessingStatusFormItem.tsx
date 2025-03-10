@@ -16,7 +16,6 @@ export default function TournamentProcessingStatusFormItem({
   onChange: (...event: any[]) => void;
   value: string;
 }) {
-  console.log(value);
   return (
     <FormItem className="min-w-1/3">
       <FormLabel>Processing Status</FormLabel>

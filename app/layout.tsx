@@ -4,8 +4,8 @@ import './globals.css';
 import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { auth } from '@/auth';
-import { cookies } from 'next/headers';
 import Nav from '@/components/nav/Nav';
+import React from 'react';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,18 +31,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  console.log('root layout: auth');
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider basePath={'/auth'} session={session}>
             <Nav />
-            <div className='flex justify-center w-full'>
-              <div className='max-w-3xl w-full m-auto mt-0 mb-0'>
+            <div className="flex justify-center w-full">
+              <div className="max-w-3xl w-full m-auto mt-0 mb-0">
                 {children}
               </div>
             </div>
