@@ -103,8 +103,6 @@ export default async function middleware(req: NextRequest) {
 
   // Session has error
   if (session?.error) {
-    console.log('session error', session.error);
-
     // Setup redirect
     res = NextResponse.redirect(new URL(`/unauthorized`, req.nextUrl.origin));
 

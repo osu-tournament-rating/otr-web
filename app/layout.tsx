@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { auth } from '@/auth';
 import Nav from '@/components/nav/Nav';
 import React from 'react';
+import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,10 +41,11 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider basePath={'/auth'} session={session}>
             <Nav />
-            <div className="flex justify-center w-full">
-              <div className="max-w-3xl w-full m-auto mt-0 mb-0">
+            <div className='flex justify-center w-full'>
+              <div className='max-w-3xl w-full m-auto mt-0 mb-0'>
                 {children}
               </div>
+              <Toaster />
             </div>
           </SessionProvider>
         </ThemeProvider>
