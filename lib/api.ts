@@ -23,7 +23,7 @@ const configuration: IOtrApiWrapperConfiguration = {
         return config;
       },
       (error) => Promise.reject(error)
-  );
+    );
   },
 };
 

@@ -1,4 +1,7 @@
-import { Operation, OperationType } from '@osu-tournament-rating/otr-api-client';
+import {
+  Operation,
+  OperationType,
+} from '@osu-tournament-rating/otr-api-client';
 
 /**
  * Generate JSON Patch Replace {@link Operation}s by comparing two objects

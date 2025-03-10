@@ -3,7 +3,6 @@
 import {
   ColumnDef,
   createColumnHelper,
-  useReactTable,
 } from '@tanstack/react-table';
 import {
   MatchWarningFlags,
@@ -23,11 +22,12 @@ export type MatchRow = {
 
 const columnHelper = createColumnHelper<MatchRow>();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const columns: ColumnDef<MatchRow, any>[] = [
   columnHelper.accessor('status', {
     header: 'Status',
     cell: ({ getValue }) => (
-      <div className="flex gap-1 -mr-3">
+      <div className="-mr-3 flex gap-1">
         <VerificationBadge
           verificationStatus={getValue().verificationStatus}
           text={false}

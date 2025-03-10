@@ -10,9 +10,9 @@ export default async function Page() {
   }
 
   return (
-    <div className="flex flex-col bg-accent p-10 m-5 rounded-4xl">
-      <p className="text-4xl font-mono">Unauthorized</p>
-      <p className="text-accent-foreground font-mono">
+    <div className="m-5 flex flex-col rounded-4xl bg-accent p-10">
+      <p className="font-mono text-4xl">Unauthorized</p>
+      <p className="font-mono text-accent-foreground">
         o!TR is currently under whitelist-only access.
         <br />
         Please sign in or come back later!

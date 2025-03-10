@@ -35,14 +35,14 @@ export default function TournamentEditForm({
   });
 
   async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
-    await new Promise(res => setTimeout(() => {}, 2000));
+    await new Promise((res) => setTimeout(() => {}, 2000));
   }
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 w-full mt-5"
+        className="mt-5 w-full space-y-4"
       >
         <FormField
           control={form.control}
@@ -155,14 +155,12 @@ export default function TournamentEditForm({
             </Button>
           </div>
           <div className="flex gap-3">
-            <Button 
-              type="submit" 
-              disabled={!form.formState.isDirty}
-            >
-              {form.formState.isSubmitting 
-                ? (<Loader2 className="animate-spin" />) 
-                : ("Save")
-              }
+            <Button type="submit" disabled={!form.formState.isDirty}>
+              {form.formState.isSubmitting ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                'Save'
+              )}
             </Button>
           </div>
         </div>

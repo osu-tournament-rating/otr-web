@@ -2,7 +2,7 @@
 
 import {
   TournamentsUpdateRequestParams,
-  TournamentsGetRequestParams
+  TournamentsGetRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { tournaments } from '@/lib/api';
 import { cache } from 'react';

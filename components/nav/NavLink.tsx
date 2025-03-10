@@ -18,7 +18,7 @@ export default function NavLink({
     <NavigationMenuLink
       href={href}
       className={cn(
-        'hover:text-primary transition-colors',
+        'transition-colors hover:text-primary',
         isActive && 'font-extrabold'
       )}
     >

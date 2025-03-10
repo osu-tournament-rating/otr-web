@@ -16,9 +16,7 @@ export default function SimpleTooltip({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          {children}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent>{content}</TooltipContent>
       </Tooltip>
     </TooltipProvider>

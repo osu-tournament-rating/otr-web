@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "npx prettier . --write --ignore-unknown"
   },
   "dependencies": {
     "@alduino/humanizer": "^1.1.0",
@@ -48,6 +49,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.1-canary.5",
     "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

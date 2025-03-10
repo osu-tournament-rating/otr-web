@@ -16,11 +16,11 @@ import Link from 'next/link';
 export default function Nav() {
   return (
     <NavigationMenu className="bg-secondary p-3">
-      <div className='w-full'>
+      <div className="w-full">
         <NavigationMenuList className="justify-between">
-          <div className="flex gap-3 mx-3 items-center">
+          <div className="mx-3 flex items-center gap-3">
             <NavigationMenuItem>
-              <Link href='/'>
+              <Link href="/">
                 <Image
                   src={'/logos/small.svg'}
                   alt="o!TR Logo"
@@ -39,7 +39,7 @@ export default function Nav() {
               <SearchDialog />
             </NavigationMenuItem>
           </div>
-          <div className="flex gap-3 mx-3 items-center">
+          <div className="mx-3 flex items-center gap-3">
             <NavigationMenuItem>
               <ModeToggle />
             </NavigationMenuItem>

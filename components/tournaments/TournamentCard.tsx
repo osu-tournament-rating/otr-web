@@ -80,8 +80,8 @@ export default function TournamentCard({
                     <EditIcon />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="fixed z-10 inset-0 bg-black/80 flex items-center justify-center p-6">
-                  <div className="bg-background w-[450px] p-6 rounded-lg">
+                <DialogContent className="fixed inset-0 z-10 flex items-center justify-center bg-black/80 p-6">
+                  <div className="w-[450px] rounded-lg bg-background p-6">
                     <DialogHeader className="sm:max-w-md">
                       <DialogTitle>Edit Tournament</DialogTitle>
                       <DialogDescription>
@@ -98,7 +98,7 @@ export default function TournamentCard({
           )}
         </div>
         <CardDescription>
-          <div className="flex font-mono justify-between">
+          <div className="flex justify-between font-mono">
             <p>
               {RulesetEnumHelper.getMetadata(tournament.ruleset).text} •{' '}
               {tournament.lobbySize}v{tournament.lobbySize} •{' '}

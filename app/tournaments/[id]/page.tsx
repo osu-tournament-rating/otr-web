@@ -39,7 +39,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-y-5 mt-5 mb-5">
+      <div className="mt-5 mb-5 flex flex-col gap-y-5">
         <TournamentCard
           tournament={tournament}
           displayStatusText

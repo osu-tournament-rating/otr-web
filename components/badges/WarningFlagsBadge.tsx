@@ -18,12 +18,13 @@ export default function WarningFlagsBadge({
     return null;
   }
 
-  const metadata = itemType === 'match'
-    ? MatchWarningFlagsEnumHelper.getMetadata(value)
-    : GameWarningFlagsEnumHelper.getMetadata(value);
+  const metadata =
+    itemType === 'match'
+      ? MatchWarningFlagsEnumHelper.getMetadata(value)
+      : GameWarningFlagsEnumHelper.getMetadata(value);
 
   let tooltipText = '';
-  metadata.map(({ text, description }, index) => {
+  metadata.map(({ text }) => {
     tooltipText += `• ${text}\n`;
   });
 
