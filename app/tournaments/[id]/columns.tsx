@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  ColumnDef,
-  createColumnHelper,
-} from '@tanstack/react-table';
+import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import {
   MatchWarningFlags,
   VerificationStatus,

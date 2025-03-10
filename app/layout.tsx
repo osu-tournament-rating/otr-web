@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { SessionProvider } from 'next-auth/react';
-import { ThemeProvider } from '@/components/theme-provider';
 import { auth } from '@/auth';
-import Nav from '@/components/nav/Nav';
-import React from 'react';
+import Header from '@/components/header/Header';
+import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import type { Metadata } from 'next';
+import { SessionProvider } from 'next-auth/react';
+import { Geist, Geist_Mono } from 'next/font/google';
+import React from 'react';
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,11 +40,11 @@ export default async function RootLayout({
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider basePath={'/auth'} session={session}>
-            <Nav />
-            <div className="flex w-full justify-center">
-              <div className="m-auto mt-0 mb-0 w-full max-w-3xl">
+            <Header />
+            <div className="flex h-full w-full justify-center">
+              <main className="m-auto mt-0 mb-0 w-full max-w-3xl">
                 {children}
-              </div>
+              </main>
               <Toaster />
             </div>
           </SessionProvider>

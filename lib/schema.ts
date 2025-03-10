@@ -5,7 +5,6 @@ import {
   Ruleset,
   TournamentProcessingStatus,
   TournamentRejectionReason,
-  TournamentSubmissionDTO,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
