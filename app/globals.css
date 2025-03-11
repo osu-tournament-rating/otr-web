@@ -45,6 +45,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@theme {
+  --color-warning: var(--color-yellow-400);
+
+  /* Verification status color alias */
+  --color-status-pending: var(--color-warning);
+  --color-status-rejected: var(--color-red-500);
+  --color-status-verified: var(--color-green-500);
+}
+
 :root {
   --background: hsl(0 0% 100%);
   --foreground: hsl(0, 0%, 5%);

@@ -1,12 +1,12 @@
 'use client';
 
-import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import VerificationBadge from '@/components/badges/VerificationBadge';
+import WarningFlagsBadge from '@/components/badges/WarningFlagsBadge';
 import {
   MatchWarningFlags,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import WarningFlagsBadge from '@/components/badges/WarningFlagsBadge';
+import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 
 export type MatchRow = {
   name: string;
@@ -25,10 +25,7 @@ export const columns: ColumnDef<MatchRow, any>[] = [
     header: 'Status',
     cell: ({ getValue }) => (
       <div className="-mr-3 flex gap-1">
-        <VerificationBadge
-          verificationStatus={getValue().verificationStatus}
-          text={false}
-        />
+        <VerificationBadge verificationStatus={getValue().verificationStatus} />
         <WarningFlagsBadge itemType={'match'} value={getValue().warningFlags} />
       </div>
     ),

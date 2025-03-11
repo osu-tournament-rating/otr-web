@@ -37,7 +37,7 @@ export default async function Page({ params }: PageProps) {
       <TournamentCard
         tournament={tournament}
         displayStatusText
-        displayEditIcon
+        allowAdminView
       />
       <DataTable columns={columns} data={data} />
     </div>

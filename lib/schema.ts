@@ -1,7 +1,4 @@
 import {
-  MatchProcessingStatus,
-  MatchRejectionReason,
-  MatchWarningFlags,
   Ruleset,
   TournamentProcessingStatus,
   TournamentRejectionReason,
@@ -24,22 +21,6 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce.number().refine((val) => Object.values(enumType).includes(val));
 
-/** Schema that will convert string input of 'true' or 'false' to a boolean */
-const booleanStringSchema = z
-  .string()
-  .toLowerCase()
-  .refine((val) => val === 'true' || val === 'false')
-  .transform((val) => val === 'true');
-
-/** Helper function to create an error map while exposing the original value for use */
-const makeErrorMap = (messages: {
-  [Code in z.ZodIssueCode]?: (value: unknown) => string;
-}): z.ZodErrorMap => {
-  return (issue, ctx) => {
-    return { message: messages[issue.code]?.(ctx.data) || ctx.defaultError };
-  };
-};
-
 export const tournamentEditFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),
@@ -59,20 +40,6 @@ export const tournamentEditFormSchema = z.object({
   lobbySize: z.coerce.number().min(1).max(8),
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
-  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
-  processingStatus: numericEnumValueSchema(
-    TournamentProcessingStatus
-  ).optional(),
-});
-
-export const matchEditFormSchema = z.object({
-  name: z.string().min(1),
-  osuId: z.number().min(1),
-  ruleset: numericEnumValueSchema(Ruleset),
-  startTime: z.date(),
-  endTime: z.date().optional(),
-  verificationStatus: numericEnumValueSchema(VerificationStatus),
-  rejectionReason: bitwiseEnumValueSchema(MatchRejectionReason).optional(),
-  warningFlags: bitwiseEnumValueSchema(MatchWarningFlags).optional(),
-  processingStatus: numericEnumValueSchema(MatchProcessingStatus).optional(),
+  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
 });

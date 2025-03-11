@@ -12,12 +12,7 @@ export default async function Page() {
     <>
       {tournamentData.result.map((t) => (
         <div className="mt-2 flex-1" key={t.id}>
-          <TournamentCard
-            tournament={t}
-            titleIsLink
-            displayStatusText={false}
-            displayEditIcon={false}
-          />
+          <TournamentCard tournament={t} titleIsLink />
         </div>
       ))}
     </>

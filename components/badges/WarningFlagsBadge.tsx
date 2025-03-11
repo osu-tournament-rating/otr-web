@@ -3,9 +3,9 @@ import {
   MatchWarningFlagsEnumHelper,
 } from '@/lib/enums';
 import { ApiItemType } from '@/lib/types';
-import { Badge } from '../ui/badge';
 import { TriangleAlertIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
+import { Badge } from '../ui/badge';
 
 export default function WarningFlagsBadge({
   itemType,
@@ -30,7 +30,7 @@ export default function WarningFlagsBadge({
 
   return (
     <SimpleTooltip content={tooltipText}>
-      <Badge className="text-yellow-400" variant={'outline'}>
+      <Badge className="text-warning" variant={'outline'}>
         <TriangleAlertIcon />
       </Badge>
     </SimpleTooltip>

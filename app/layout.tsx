@@ -39,7 +39,11 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider basePath={'/auth'} session={session}>
+          <SessionProvider
+            basePath={'/auth'}
+            session={session}
+            refetchOnWindowFocus={false}
+          >
             <Header />
             <main className="mx-auto w-full max-w-5xl px-5">{children}</main>
             <Toaster />

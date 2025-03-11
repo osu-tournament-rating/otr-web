@@ -1,5 +1,5 @@
+import { VerificationStatusEnumHelper } from '@/lib/enums';
 import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
-import { Badge } from '../ui/badge';
 import {
   CheckIcon,
   ChevronsUpIcon,
@@ -7,59 +7,64 @@ import {
   PauseIcon,
   XIcon,
 } from 'lucide-react';
+import React from 'react';
 import SimpleTooltip from '../simple-tooltip';
+import { Badge } from '../ui/badge';
+
+const variants = {
+  [VerificationStatus.None]: {
+    Icon: PauseIcon,
+    style: 'text-warning',
+  },
+  [VerificationStatus.PreRejected]: {
+    Icon: EllipsisIcon,
+    style: 'text-status-rejected',
+  },
+  [VerificationStatus.PreVerified]: {
+    Icon: ChevronsUpIcon,
+    style: 'text-status-verified',
+  },
+  [VerificationStatus.Rejected]: {
+    Icon: XIcon,
+    style: 'text-status-rejected',
+  },
+  [VerificationStatus.Verified]: {
+    Icon: CheckIcon,
+    style: 'text-status-verified',
+  },
+};
 
 export default function VerificationBadge({
   verificationStatus,
-  text = false,
+  displayText = false,
 }: {
   verificationStatus: VerificationStatus;
 
-  /** Include verification status as text */
-  text: boolean;
+  /** Include verification status as text instead of a tooltip */
+  displayText: boolean;
 }) {
-  switch (verificationStatus) {
-    case VerificationStatus.None:
-      return (
-        <SimpleTooltip content={'Pending'}>
-          <Badge variant={'outline'}>
-            <PauseIcon /> {text && 'Pending'}
-          </Badge>
-        </SimpleTooltip>
-      );
-    case VerificationStatus.PreRejected:
-      return (
-        <SimpleTooltip content={'Pre-Rejected'}>
-          <Badge className="text-red-500" variant={'outline'}>
-            <EllipsisIcon /> {text && 'Pre-Rejected'}
-          </Badge>
-        </SimpleTooltip>
-      );
-    case VerificationStatus.PreVerified:
-      return (
-        <SimpleTooltip content={'Pre-Verified'}>
-          <Badge className="text-green-500" variant={'outline'}>
-            <ChevronsUpIcon /> {text && 'Pre-Verified'}
-          </Badge>
-        </SimpleTooltip>
-      );
-    case VerificationStatus.Rejected:
-      return (
-        <SimpleTooltip content={'Rejected'}>
-          <Badge className="text-red-500" variant={'outline'}>
-            <XIcon /> {text && 'Rejected'}
-          </Badge>
-        </SimpleTooltip>
-      );
-    case VerificationStatus.Verified:
-      return (
-        <SimpleTooltip content={'Verified'}>
-          <Badge className="text-green-500" variant={'outline'}>
-            <CheckIcon /> {text && 'Verified'}
-          </Badge>
-        </SimpleTooltip>
-      );
-    default:
-      return null;
-  }
+  const { text } = VerificationStatusEnumHelper.getMetadata(verificationStatus);
+  const { Icon, style } = variants[verificationStatus];
+
+  return (
+    <Outer tooltip={displayText ? undefined : text}>
+      <Badge className={style} variant={'outline'}>
+        <Icon /> {displayText && text}
+      </Badge>
+    </Outer>
+  );
+}
+
+function Outer({
+  tooltip,
+  children,
+}: {
+  tooltip?: string;
+  children: React.ReactElement;
+}) {
+  return tooltip ? (
+    <SimpleTooltip content={tooltip}>{children}</SimpleTooltip>
+  ) : (
+    children
+  );
 }

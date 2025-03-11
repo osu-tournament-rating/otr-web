@@ -1,43 +1,31 @@
-'use client';
-
-import {
-  Roles,
-  TournamentCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { Card, CardDescription, CardHeader } from '../ui/card';
-import VerificationBadge from '../badges/VerificationBadge';
-import SimpleTooltip from '../simple-tooltip';
-import { useSession } from 'next-auth/react';
-import { EditIcon } from 'lucide-react';
-import { Button } from '../ui/button';
+import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
-import {
-  Dialog,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import TournamentEditForm from './TournamentEditForm';
-import { DialogContent } from '@radix-ui/react-dialog';
-import { RulesetEnumHelper, VerificationStatusEnumHelper } from '@/lib/enums';
+import { formatRankRange } from '@/lib/utils/number';
+import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
+import VerificationBadge from '../badges/VerificationBadge';
+import { Card, CardDescription, CardHeader } from '../ui/card';
+import TournamentAdminView from './TournamentAdminView';
 
 export default function TournamentCard({
   tournament,
   titleIsLink = false,
-  displayStatusText,
-  displayEditIcon,
+  displayStatusText = false,
+  allowAdminView = false,
 }: {
   tournament: TournamentCompactDTO;
+
+  /** If the title links to the tournament's page */
   titleIsLink?: boolean;
-  displayStatusText: boolean;
-  displayEditIcon: boolean;
+
+  /** If the verification status icon includes text */
+  displayStatusText?: boolean;
+
+  /** If the button to open the admin view is present */
+  allowAdminView?: boolean;
 }) {
   const startDate = new Date(tournament.startTime);
   const endDate = new Date(tournament.endTime);
-  const { data: session } = useSession();
-  const commaNumber = require('comma-number');
 
   return (
     <Card>
@@ -45,18 +33,10 @@ export default function TournamentCard({
         <div className="flex justify-between">
           <div className="flex gap-3">
             <div>
-              <SimpleTooltip
-                content={
-                  VerificationStatusEnumHelper.getMetadata(
-                    tournament.verificationStatus
-                  ).text
-                }
-              >
-                <VerificationBadge
-                  verificationStatus={tournament.verificationStatus}
-                  text={displayStatusText}
-                />
-              </SimpleTooltip>
+              <VerificationBadge
+                verificationStatus={tournament.verificationStatus}
+                displayText={displayStatusText}
+              />
             </div>
             <div>
               <p className="text-muted-foreground">{tournament.abbreviation}</p>
@@ -71,38 +51,14 @@ export default function TournamentCard({
               )}
             </div>
           </div>
-
-          {session?.user?.scopes?.includes(Roles.Admin) && displayEditIcon && (
-            <div className="flex">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="h-5 w-5" variant={'ghost'}>
-                    <EditIcon />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="fixed inset-0 z-10 flex items-center justify-center bg-black/80 p-6">
-                  <div className="w-[450px] rounded-lg bg-background p-6">
-                    <DialogHeader className="sm:max-w-md">
-                      <DialogTitle>Edit Tournament</DialogTitle>
-                      <DialogDescription>
-                        Editing {tournament.name}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex items-center space-x-2">
-                      <TournamentEditForm tournament={tournament} />
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
+          {allowAdminView && <TournamentAdminView tournament={tournament} />}
         </div>
         <CardDescription>
-          <div className="flex justify-between font-mono">
+          <div className="flex items-baseline justify-between font-mono">
             <p>
               {RulesetEnumHelper.getMetadata(tournament.ruleset).text} •{' '}
               {tournament.lobbySize}v{tournament.lobbySize} •{' '}
-              {commaNumber(tournament.rankRangeLowerBound)}+
+              {formatRankRange(tournament.rankRangeLowerBound)}
             </p>
             <p className="text-xs">
               {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
