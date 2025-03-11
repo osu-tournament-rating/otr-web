@@ -14,6 +14,7 @@ export function createPatchOperations<T extends object>(
     .filter(
       (k) =>
         typeof orig[k as keyof T] !== 'object' &&
+        patched[k as keyof T] !== undefined &&
         orig[k as keyof T] !== patched[k as keyof T]
     )
     .map<Operation>((k) => ({

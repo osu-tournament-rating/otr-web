@@ -10,8 +10,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { update } from '@/lib/actions/tournaments';
 import { tournamentEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { createPatchOperations } from '@/lib/utils/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Roles,
@@ -20,6 +22,7 @@ import {
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
@@ -59,7 +62,14 @@ export default function TournamentAdminView({
   }
 
   async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
-    console.log(values);
+    const patches = createPatchOperations(tournament, values);
+    const patchedTournament = await update({
+      id: tournament.id,
+      body: patches,
+    });
+    // TODO: error handling / toasting
+    form.reset(patchedTournament);
+    toast('patched');
   }
 
   return (
