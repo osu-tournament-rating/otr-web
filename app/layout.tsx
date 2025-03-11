@@ -41,12 +41,8 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider basePath={'/auth'} session={session}>
             <Header />
-            <div className="flex h-full w-full justify-center">
-              <main className="m-auto mt-0 mb-0 w-full max-w-3xl">
-                {children}
-              </main>
-              <Toaster />
-            </div>
+            <main className="mx-auto w-full max-w-5xl px-5">{children}</main>
+            <Toaster />
           </SessionProvider>
         </ThemeProvider>
       </body>
