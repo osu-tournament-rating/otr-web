@@ -3,6 +3,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
+import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
 import { Card, CardDescription, CardHeader } from '../ui/card';
 import TournamentAdminView from './TournamentAdminView';
@@ -51,7 +52,12 @@ export default function TournamentCard({
               )}
             </div>
           </div>
-          {allowAdminView && <TournamentAdminView tournament={tournament} />}
+          {allowAdminView && (
+            <div>
+              <AdminNoteView name={tournament.name} notes={[]} />
+              <TournamentAdminView tournament={tournament} />
+            </div>
+          )}
         </div>
         <CardDescription>
           <div className="flex items-baseline justify-between font-mono">

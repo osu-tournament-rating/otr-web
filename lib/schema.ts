@@ -43,3 +43,7 @@ export const tournamentEditFormSchema = z.object({
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
 });
+
+export const adminNoteFormSchema = z.object({
+  note: z.string().min(1),
+});
