@@ -11,7 +11,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { Loader2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -22,6 +24,12 @@ export default function AdminNoteForm() {
       note: '',
     },
   });
+
+  const { data: session } = useSession();
+
+  if (!session?.user?.scopes?.includes(Roles.Admin)) {
+    return null;
+  }
 
   function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
     console.log(data);

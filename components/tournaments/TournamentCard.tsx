@@ -1,7 +1,7 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
@@ -14,7 +14,7 @@ export default function TournamentCard({
   displayStatusText = false,
   allowAdminView = false,
 }: {
-  tournament: TournamentCompactDTO;
+  tournament: TournamentDTO;
 
   /** If the title links to the tournament's page */
   titleIsLink?: boolean;
@@ -54,7 +54,10 @@ export default function TournamentCard({
           </div>
           {allowAdminView && (
             <div>
-              <AdminNoteView name={tournament.name} notes={[]} />
+              <AdminNoteView
+                title={tournament.name}
+                notes={tournament.adminNotes ?? []}
+              />
               <TournamentAdminView tournament={tournament} />
             </div>
           )}
