@@ -15,8 +15,9 @@ export async function generateMetadata({
   return { title: tournament.name };
 }
 
-function formatTableRows(matches: MatchDTO[]): MatchRow[] {
+function generateTableData(matches: MatchDTO[]): MatchRow[] {
   return matches.map((match) => ({
+    id: match.id,
     name: match.name,
     status: {
       verificationStatus: match.verificationStatus,
@@ -30,7 +31,7 @@ function formatTableRows(matches: MatchDTO[]): MatchRow[] {
 
 export default async function Page({ params }: PageProps) {
   const tournament = await get({ id: (await params).id, verified: false });
-  const data = formatTableRows(tournament.matches ?? []);
+  const tableData = generateTableData(tournament.matches ?? []);
 
   return (
     <div className="mt-5 mb-5 flex flex-col gap-y-5">
@@ -39,7 +40,8 @@ export default async function Page({ params }: PageProps) {
         displayStatusText
         allowAdminView
       />
-      <DataTable columns={columns} data={data} />
+      {/* @ts-expect-error Column def type doesnt work :/ */}
+      <DataTable columns={columns} data={tableData} />
     </div>
   );
 }

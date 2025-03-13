@@ -6,9 +6,11 @@ import {
   MatchWarningFlags,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
+import Link from 'next/link';
 
 export type MatchRow = {
+  id: number;
   name: string;
   status: {
     verificationStatus: VerificationStatus;
@@ -19,8 +21,7 @@ export type MatchRow = {
 
 const columnHelper = createColumnHelper<MatchRow>();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const columns: ColumnDef<MatchRow, any>[] = [
+export const columns = [
   columnHelper.accessor('status', {
     header: 'Status',
     cell: ({ getValue }) => (
@@ -32,6 +33,9 @@ export const columns: ColumnDef<MatchRow, any>[] = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
+    cell: ({ getValue, row }) => (
+      <Link href={`/matches/${row.original.id}`}>{getValue()}</Link>
+    ),
   }),
   columnHelper.accessor('startDate', {
     header: 'Start Date',

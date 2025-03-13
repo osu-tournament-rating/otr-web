@@ -41,7 +41,7 @@ export default function VerificationBadge({
   verificationStatus: VerificationStatus;
 
   /** Include verification status as text instead of a tooltip */
-  displayText: boolean;
+  displayText?: boolean;
 }) {
   const { text } = VerificationStatusEnumHelper.getMetadata(verificationStatus);
   const { Icon, style } = variants[verificationStatus];

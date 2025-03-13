@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import {
   IOtrApiWrapperConfiguration,
+  MatchesWrapper,
   MeWrapper,
   OAuthWrapper,
   SearchWrapper,
@@ -49,3 +50,4 @@ export const oAuth = new OAuthWrapper(configuration);
 export const me = new MeWrapper(configuration);
 export const tournaments = new TournamentsWrapper(configuration);
 export const search = new SearchWrapper(configuration);
+export const matches = new MatchesWrapper(configuration);
