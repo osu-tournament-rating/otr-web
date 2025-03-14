@@ -19,7 +19,7 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="score-card relative flex overflow-clip rounded-xl border border-secondary-foreground/15"
+      className="score-card relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans"
       style={{ gridRow: row }}
     >
       {/* Player propic bg */}

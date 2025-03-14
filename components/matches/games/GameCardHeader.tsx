@@ -8,7 +8,7 @@ import GameAdminView from './GameAdminView';
 
 export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
-    <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
+    <div className="relative flex h-32 flex-col overflow-hidden rounded-xl font-sans">
       {/* Beatmap bg dim */}
       <div className="absolute inset-0 z-2 h-full w-full bg-black/50" />
       {/* Beatmap bg */}
@@ -51,7 +51,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
               Set by {game.beatmap.beatmapset?.creator?.username} • Map by{' '}
               {game.beatmap.creators.map((c) => c.username).join(',')}
             </span>
-            <span className="overflow-clip text-4xl font-bold text-nowrap">
+            <span className="overflow-clip text-xl font-bold text-nowrap">
               {game.beatmap.beatmapset?.title} [{game.beatmap.diffName}]
             </span>
           </div>
