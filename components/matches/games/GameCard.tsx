@@ -19,7 +19,7 @@ export default function GameCard({
     nBlue = 0;
 
   return (
-    <div className="flex flex-col space-y-2 rounded-xl bg-secondary p-2">
+    <div className="flex flex-col space-y-2 rounded-xl bg-secondary p-3">
       <GameCardHeader game={game} />
       {/* Scores */}
       <div className="grid auto-rows-[5rem] grid-cols-2 gap-2">
