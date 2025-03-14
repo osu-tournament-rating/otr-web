@@ -1,9 +1,9 @@
 import TournamentCard from '@/components/tournaments/TournamentCard';
-import type { Metadata } from 'next';
-import DataTable from './data-table';
-import { MatchRow, columns } from './columns';
-import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import { get } from '@/lib/actions/tournaments';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import type { Metadata } from 'next';
+import { MatchRow, columns } from './columns';
+import DataTable from './data-table';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -12,16 +12,12 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const tournament = await get({ id: (await params).id, verified: false });
 
-  tournament.matches?.sort(
-    (a, b) =>
-      new Date(a?.startTime ?? 0).getUTCMilliseconds() -
-      new Date(b?.startTime ?? 0).getUTCMilliseconds()
-  );
   return { title: tournament.name };
 }
 
-function formatTableRows(matches: MatchDTO[]): MatchRow[] {
+function generateTableData(matches: MatchDTO[]): MatchRow[] {
   return matches.map((match) => ({
+    id: match.id,
     name: match.name,
     status: {
       verificationStatus: match.verificationStatus,
@@ -35,18 +31,17 @@ function formatTableRows(matches: MatchDTO[]): MatchRow[] {
 
 export default async function Page({ params }: PageProps) {
   const tournament = await get({ id: (await params).id, verified: false });
-  const data = formatTableRows(tournament.matches ?? []);
+  const tableData = generateTableData(tournament.matches ?? []);
 
   return (
-    <>
-      <div className="flex flex-col gap-y-5 mt-5 mb-5">
-        <TournamentCard
-          tournament={tournament}
-          displayStatusText
-          displayEditIcon
-        />
-        <DataTable columns={columns} data={data} />
-      </div>
-    </>
+    <div className="mt-5 mb-5 flex flex-col gap-y-5">
+      <TournamentCard
+        tournament={tournament}
+        displayStatusText
+        allowAdminView
+      />
+      {/* @ts-expect-error Column def type doesnt work :/ */}
+      <DataTable columns={columns} data={tableData} />
+    </div>
   );
 }

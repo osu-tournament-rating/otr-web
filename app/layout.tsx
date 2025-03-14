@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { SessionProvider } from 'next-auth/react';
-import { ThemeProvider } from '@/components/theme-provider';
 import { auth } from '@/auth';
-import { cookies } from 'next/headers';
-import Nav from '@/components/nav/Nav';
+import Header from '@/components/header/Header';
+import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import type { Metadata } from 'next';
+import { SessionProvider } from 'next-auth/react';
+import { Geist, Geist_Mono } from 'next/font/google';
+import React from 'react';
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,22 +32,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  console.log('root layout: auth');
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider basePath={'/auth'} session={session}>
-            <Nav />
-            <div className="flex justify-center w-full">
-              <div className="max-w-3xl w-full m-auto mt-0 mb-0">
-                {children}
-              </div>
-              <Toaster />
-            </div>
+          <SessionProvider
+            basePath={'/auth'}
+            session={session}
+            refetchOnWindowFocus={false}
+          >
+            <Header />
+            <main className="mx-auto w-full max-w-5xl px-5">{children}</main>
+            <Toaster />
           </SessionProvider>
         </ThemeProvider>
       </body>

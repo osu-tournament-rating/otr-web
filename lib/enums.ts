@@ -50,7 +50,7 @@ interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
  */
 export interface IEnumHelper<
   T extends number,
-  M extends EnumMetadata = EnumMetadata
+  M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
   /**
    * Gets the metadata describing a given enum value
@@ -69,7 +69,7 @@ export interface IEnumHelper<
  */
 const defaultEnumHelper = <
   T extends number,
-  M extends EnumMetadata = EnumMetadata
+  M extends EnumMetadata = EnumMetadata,
 >(): IEnumHelper<T, M> => ({
   metadata: {} as EnumMetadataCollection<T, M>,
 
@@ -85,7 +85,7 @@ const defaultEnumHelper = <
  */
 export interface IBitwiseEnumHelper<
   T extends number,
-  M extends EnumMetadata = EnumMetadata
+  M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
   /**
    * Gets a list of metadata describing each flag in a given bitwise enum value
@@ -135,7 +135,7 @@ export function getEnumFlags<T extends object>(
  */
 const defaultBitwiseEnumHelper = <
   T extends number,
-  M extends EnumMetadata = EnumMetadata
+  M extends EnumMetadata = EnumMetadata,
 >(
   enumObject: object
 ): IBitwiseEnumHelper<T, M> => ({

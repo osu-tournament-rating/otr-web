@@ -45,6 +45,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@theme {
+  --color-warning: var(--color-yellow-400);
+
+  /* Verification status color alias */
+  --color-status-pending: var(--color-warning);
+  --color-status-rejected: var(--color-red-500);
+  --color-status-verified: var(--color-green-500);
+}
+
 :root {
   --background: hsl(0 0% 100%);
   --foreground: hsl(0, 0%, 5%);
@@ -71,6 +80,11 @@
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
+
+  --score-performance-label: hsl(51 60% 55%);
+  --team-no-team: #333;
+  --team-red: hsl(348 72% 52%);
+  --team-blue: hsl(228 72% 52%);
 }
 
 .dark {
@@ -106,5 +120,84 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .score-card {
+    --team-color: var(--team-no-team);
+    --score-text-color: color-mix(
+      in oklab,
+      var(--foreground) 60%,
+      var(--team-color) 40%
+    );
+
+    @apply col-span-2 flex-row;
+
+    * {
+      @apply z-10;
+    }
+
+    .player-propic {
+      @apply [mask-image:linear-gradient(90deg,rgba(0,0,0,.4)_0%,rgba(0,0,0,.25)_45%,transparent)];
+    }
+
+    .flex-row-team-orient {
+      @apply flex-row;
+    }
+
+    .flex-col-team-orient {
+      @apply flex-col;
+    }
+
+    .performance-group {
+      @apply first:ml-auto;
+
+      .performance-item {
+        @apply flex flex-col items-start justify-center;
+
+        .label {
+          @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
+        }
+
+        .value {
+          @apply text-base tracking-tighter;
+
+          color: color-mix(
+            in oklab,
+            var(--foreground) 90%,
+            var(--team-color) 10%
+          );
+        }
+      }
+    }
+
+    &[data-team='Blue'] {
+      --team-color: var(--team-blue);
+
+      @apply col-[2] flex-row-reverse;
+
+      .player-propic {
+        @apply right-0 [mask-image:linear-gradient(270deg,rgba(0,0,0,.4)_0%,rgba(0,0,0,.25)_45%,transparent)];
+      }
+
+      .flex-row-team-orient {
+        @apply flex-row-reverse;
+      }
+
+      .flex-col-team-orient {
+        @apply flex-col-reverse;
+      }
+
+      .performance-group {
+        @apply first:mr-auto first:ml-0;
+      }
+    }
+
+    &[data-team='Red'] {
+      --team-color: var(--team-red);
+
+      @apply col-[1];
+    }
   }
 }

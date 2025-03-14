@@ -3,9 +3,9 @@ import {
   MatchWarningFlagsEnumHelper,
 } from '@/lib/enums';
 import { ApiItemType } from '@/lib/types';
-import { Badge } from '../ui/badge';
 import { TriangleAlertIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
+import { Badge } from '../ui/badge';
 
 export default function WarningFlagsBadge({
   itemType,
@@ -18,18 +18,19 @@ export default function WarningFlagsBadge({
     return null;
   }
 
-  const metadata = itemType === 'match'
-    ? MatchWarningFlagsEnumHelper.getMetadata(value)
-    : GameWarningFlagsEnumHelper.getMetadata(value);
+  const metadata =
+    itemType === 'match'
+      ? MatchWarningFlagsEnumHelper.getMetadata(value)
+      : GameWarningFlagsEnumHelper.getMetadata(value);
 
   let tooltipText = '';
-  metadata.map(({ text, description }, index) => {
+  metadata.map(({ text }) => {
     tooltipText += `• ${text}\n`;
   });
 
   return (
     <SimpleTooltip content={tooltipText}>
-      <Badge className="text-yellow-400" variant={'outline'}>
+      <Badge className="text-warning" variant={'outline'}>
         <TriangleAlertIcon />
       </Badge>
     </SimpleTooltip>

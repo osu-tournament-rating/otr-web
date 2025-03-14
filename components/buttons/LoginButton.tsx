@@ -8,19 +8,15 @@ export default function LoginButton() {
 
   if (session) {
     return (
-      <>
-        <Button className="cursor-pointer" onClick={() => signOut()}>
-          Logout
-        </Button>
-      </>
+      <Button className="cursor-pointer" onClick={() => signOut()}>
+        Logout
+      </Button>
     );
   }
 
   return (
-    <>
-      <Button className="cursor-pointer" onClick={() => signIn('otr')}>
-        Login
-      </Button>
-    </>
+    <Button className="cursor-pointer" onClick={() => signIn('otr')}>
+      Login
+    </Button>
   );
 }

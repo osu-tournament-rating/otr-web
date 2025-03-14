@@ -1,12 +1,13 @@
 'use client';
 
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { SearchIcon } from 'lucide-react';
-import { Input } from '../ui/input';
-import { DialogTitle } from '@radix-ui/react-dialog';
-import { useState, useEffect } from 'react';
-import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
 import { search } from '@/lib/actions/search';
+import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { Search, SearchIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 export default function SearchDialog() {
   const [searchText, setSearchText] = useState('');
@@ -51,10 +52,13 @@ export default function SearchDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger className="flex cursor-pointer">
-        <SearchIcon width={20} />
+      <DialogTrigger asChild className="flex cursor-pointer">
+        <Button className="cursor-pointer" variant="ghost" size="icon">
+          <Search />
+        </Button>
       </DialogTrigger>
-      <DialogTitle /> {/* Required for screen reader support */}
+      {/* Required for screen reader support */}
+      <DialogTitle hidden />
       <DialogContent>
         <div className="flex flex-row gap-3">
           <SearchIcon className="mt-1" />

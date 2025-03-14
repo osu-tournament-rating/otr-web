@@ -1,4 +1,7 @@
-import { Operation, OperationType } from '@osu-tournament-rating/otr-api-client';
+import {
+  Operation,
+  OperationType,
+} from '@osu-tournament-rating/otr-api-client';
 
 /**
  * Generate JSON Patch Replace {@link Operation}s by comparing two objects
@@ -11,6 +14,7 @@ export function createPatchOperations<T extends object>(
     .filter(
       (k) =>
         typeof orig[k as keyof T] !== 'object' &&
+        patched[k as keyof T] !== undefined &&
         orig[k as keyof T] !== patched[k as keyof T]
     )
     .map<Operation>((k) => ({
