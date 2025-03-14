@@ -5,7 +5,7 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import Image from 'next/image';
-import ModIconset from '../icons/ModIconset';
+import ModIconset from '../../icons/ModIconset';
 
 export default function ScoreCard({
   row,

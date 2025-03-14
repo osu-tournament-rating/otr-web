@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import {
+  GamesWrapper,
   IOtrApiWrapperConfiguration,
   MatchesWrapper,
   MeWrapper,
@@ -51,3 +52,4 @@ export const me = new MeWrapper(configuration);
 export const tournaments = new TournamentsWrapper(configuration);
 export const search = new SearchWrapper(configuration);
 export const matches = new MatchesWrapper(configuration);
+export const games = new GamesWrapper(configuration);

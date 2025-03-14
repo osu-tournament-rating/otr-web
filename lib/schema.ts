@@ -1,5 +1,11 @@
 import {
+  GameProcessingStatus,
+  GameRejectionReason,
+  GameWarningFlags,
+  Mods,
   Ruleset,
+  ScoringType,
+  TeamType,
   TournamentProcessingStatus,
   TournamentRejectionReason,
   VerificationStatus,
@@ -42,6 +48,17 @@ export const tournamentEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
+});
+
+export const gameEditFormSchema = z.object({
+  scoringType: numericEnumValueSchema(ScoringType),
+  teamType: numericEnumValueSchema(TeamType),
+  mods: bitwiseEnumValueSchema(Mods),
+  ruleset: numericEnumValueSchema(Ruleset),
+  verificationStatus: numericEnumValueSchema(VerificationStatus),
+  warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
+  rejectionReason: bitwiseEnumValueSchema(GameRejectionReason),
+  processingStatus: numericEnumValueSchema(GameProcessingStatus),
 });
 
 export const adminNoteFormSchema = z.object({

@@ -1,13 +1,12 @@
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
 import { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
-import RulesetIcon from '../icons/RulesetIcon';
-import ModIconset from '../icons/ModIconset';
+import RulesetIcon from '../../icons/RulesetIcon';
+import ModIconset from '../../icons/ModIconset';
+import FormattedDate from '../../dates/FormattedDate';
+import GameAdminView from './GameAdminView';
 
 export default function GameCardHeader({ game }: { game: GameDTO }) {
-  const startDate = new Date(game.startTime).toLocaleDateString();
-  const endDate = new Date(game.endTime ?? new Date()).toLocaleDateString();
-
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg dim */}
@@ -33,8 +32,16 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
             </span>
             <span>{TeamTypeEnumHelper.getMetadata(game.teamType).text}</span>
           </div>
-          <div>
-            <span>{`${startDate} - ${endDate}`}</span>
+          <div className="flex items-center gap-4">
+            <span className="flex gap-1">
+              <FormattedDate date={new Date(game.startTime)} format="short" />
+              -
+              <FormattedDate
+                date={new Date(game.endTime ?? new Date())}
+                format="short"
+              />
+            </span>
+            <GameAdminView game={game} />
           </div>
         </div>
         {/* Bottom row */}

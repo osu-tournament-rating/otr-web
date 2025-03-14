@@ -1,4 +1,4 @@
-import GameCard from '@/components/matches/GameCard';
+import GameCard from '@/components/matches/games/GameCard';
 import { get } from '@/lib/actions/matches';
 import { Metadata } from 'next';
 
