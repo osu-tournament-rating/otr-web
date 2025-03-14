@@ -15,7 +15,7 @@ const configuration: IOtrApiWrapperConfiguration = {
     // Add authorization header
     instance.interceptors.request.use(
       async (config) => {
-        if (!('requiresAuth' in config) || !config.requiresAuth) {
+        if (!config.requiresAuthorization) {
           return config;
         }
 

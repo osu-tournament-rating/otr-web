@@ -13,7 +13,29 @@ const nextConfig: NextConfig = {
     turbo: {
       rules: {
         '*.svg': {
-          loaders: ['@svgr/webpack'],
+          loaders: [
+            {
+              loader: '@svgr/webpack',
+              options: {
+                svgoConfig: {
+                  plugins: [
+                    {
+                      name: 'preset-default',
+                      params: {
+                        overrides: {
+                          removeViewBox: false,
+                        },
+                      },
+                    },
+                    {
+                      name: 'removeAttrs',
+                      params: { attrs: '(fill|stroke)' },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
           as: '*.js',
         },
       },
