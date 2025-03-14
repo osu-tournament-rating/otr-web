@@ -67,9 +67,8 @@ export default function TournamentAdminView({
       id: tournament.id,
       body: patches,
     });
-    // TODO: error handling / toasting
     form.reset(patchedTournament);
-    toast('patched');
+    toast.success('Saved successfully');
   }
 
   return (

@@ -46,7 +46,7 @@ export default async function RootLayout({
           >
             <Header />
             <main className="mx-auto w-full max-w-5xl px-5">{children}</main>
-            <Toaster />
+            <Toaster richColors />
           </SessionProvider>
         </ThemeProvider>
       </body>
