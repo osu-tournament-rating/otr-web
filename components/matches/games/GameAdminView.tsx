@@ -80,13 +80,17 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
   }
 
   async function onSubmit(values: z.infer<typeof gameEditFormSchema>) {
-    const patchedGame = await update({
-      id: game.id,
-      body: createPatchOperations(game, values),
-    });
+    try {
+      const patchedGame = await update({
+        id: game.id,
+        body: createPatchOperations(game, values),
+      });
 
-    toast.success('Saved successfully');
-    form.reset(patchedGame);
+      toast.success('Saved successfully');
+      form.reset(patchedGame);
+    } catch (error) {
+      toast.error(`Failed to save: ${error}`);
+    }
   }
 
   return (

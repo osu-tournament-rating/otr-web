@@ -63,12 +63,17 @@ export default function TournamentAdminView({
 
   async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
     const patches = createPatchOperations(tournament, values);
-    const patchedTournament = await update({
-      id: tournament.id,
-      body: patches,
-    });
-    form.reset(patchedTournament);
-    toast.success('Saved successfully');
+
+    try {
+      const patchedTournament = await update({
+        id: tournament.id,
+        body: patches,
+      });
+      form.reset(patchedTournament);
+      toast.success('Saved successfully');
+    } catch (error) {
+      toast.error(`Failed to save: ${error}`);
+    }
   }
 
   return (
