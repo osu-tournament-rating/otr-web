@@ -20,7 +20,7 @@ export default function NewScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 **:z-10"
+      className="team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
     >
       {/* Player propic bg */}
       <div className="player-propic absolute top-1/2 z-[1] aspect-square w-3/5 transform-[translateY(-50%)_scale(1)]">
