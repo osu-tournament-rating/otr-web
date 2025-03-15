@@ -124,30 +124,35 @@
 }
 
 @layer components {
-  .score-card {
+  .team-container {
     --team-color: var(--team-no-team);
+    --team-flex-col-dir: column;
+    --team-flex-row-dir: row;
+
     --score-text-color: color-mix(
       in oklab,
       var(--foreground) 60%,
       var(--team-color) 40%
     );
+    --player-propic-mask-dir: 90deg;
 
-    @apply col-span-2 flex-row;
+    @apply order-1 w-full;
 
-    * {
-      @apply z-10;
+    .team-flex-row {
+      flex-direction: var(--team-flex-row-dir);
+    }
+
+    .team-flex-col {
+      flex-direction: var(--team-flex-col-dir);
     }
 
     .player-propic {
-      @apply [mask-image:linear-gradient(90deg,rgba(0,0,0,.4)_0%,rgba(0,0,0,.25)_45%,transparent)];
-    }
-
-    .flex-row-team-orient {
-      @apply flex-row;
-    }
-
-    .flex-col-team-orient {
-      @apply flex-col;
+      mask-image: linear-gradient(
+        var(--player-propic-mask-dir),
+        rgba(0, 0, 0, 0.4) 0,
+        rgba(0, 0, 0, 0.25) 45%,
+        transparent
+      );
     }
 
     .performance-group {
@@ -172,32 +177,38 @@
       }
     }
 
-    &[data-team='Blue'] {
-      --team-color: var(--team-blue);
-
-      @apply col-[2] flex-row-reverse;
-
-      .player-propic {
-        @apply right-0 [mask-image:linear-gradient(270deg,rgba(0,0,0,.4)_0%,rgba(0,0,0,.25)_45%,transparent)];
-      }
-
-      .flex-row-team-orient {
-        @apply flex-row-reverse;
-      }
-
-      .flex-col-team-orient {
-        @apply flex-col-reverse;
-      }
-
-      .performance-group {
-        @apply first:mr-auto first:ml-0;
-      }
+    &:not([data-team='NoTeam']) {
+      @apply md:w-1/2;
     }
 
     &[data-team='Red'] {
       --team-color: var(--team-red);
 
-      @apply col-[1];
+      @apply order-2;
+
+      /* --var(--breakpoint-md) */
+      @media (width >= 48rem) {
+        @apply pr-0.5;
+      }
+    }
+
+    &[data-team='Blue'] {
+      --team-color: var(--team-blue);
+
+      @apply order-3;
+
+      /* --var(--breakpoint-md) */
+      @media (width >= 48rem) {
+        --team-flex-col-dir: column-reverse;
+        --team-flex-row-dir: row-reverse;
+        --player-propic-mask-dir: 270deg;
+
+        @apply flex-row-reverse pl-0.5;
+
+        .player-propic {
+          @apply right-0;
+        }
+      }
     }
   }
 }

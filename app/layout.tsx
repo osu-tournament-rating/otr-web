@@ -45,7 +45,9 @@ export default async function RootLayout({
             refetchOnWindowFocus={false}
           >
             <Header />
-            <main className="mx-auto w-full max-w-5xl px-5">{children}</main>
+            <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
+              {children}
+            </main>
             <Toaster />
           </SessionProvider>
         </ThemeProvider>
