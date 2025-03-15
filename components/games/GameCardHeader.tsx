@@ -1,9 +1,9 @@
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
 import { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
-import RulesetIcon from '../../icons/RulesetIcon';
-import ModIconset from '../../icons/ModIconset';
-import FormattedDate from '../../dates/FormattedDate';
+import RulesetIcon from '../icons/RulesetIcon';
+import ModIconset from '../icons/ModIconset';
+import FormattedDate from '../dates/FormattedDate';
 import GameAdminView from './GameAdminView';
 
 export default function GameCardHeader({ game }: { game: GameDTO }) {

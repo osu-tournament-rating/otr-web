@@ -1,4 +1,4 @@
-import GameCard from '@/components/matches/games/GameCard';
+import GameCard from '@/components/games/GameCard';
 import MatchCard from '@/components/matches/MatchCard';
 import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { get } from '@/lib/actions/matches';
