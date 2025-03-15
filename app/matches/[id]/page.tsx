@@ -26,16 +26,22 @@ export default async function Page({ params }: PageProps) {
           <TabsTrigger value="else">Something Else</TabsTrigger>
         </TabsList>
         <TabsContent value="games">
-          <div className="space-y-4 bg-accent px-26">
-            {(match.games ?? []).map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                players={(match.players ?? []).filter((player) =>
-                  game.scores.map((s) => s.playerId).includes(player.id)
-                )}
-              />
-            ))}
+          <div className="space-y-4 bg-accent px-4 md:px-12 xl:px-24">
+            {(match.games ?? [])
+              .sort(
+                (a, b) =>
+                  new Date(a.startTime).getTime() -
+                  new Date(b.startTime).getTime()
+              )
+              .map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  players={(match.players ?? []).filter((player) =>
+                    game.scores.map((s) => s.playerId).includes(player.id)
+                  )}
+                />
+              ))}
           </div>
         </TabsContent>
         <TabsContent value="other">

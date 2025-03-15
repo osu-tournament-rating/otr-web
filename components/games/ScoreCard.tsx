@@ -6,21 +6,21 @@ import {
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
+import { cn } from '@/lib/utils';
 
-export default function ScoreCard({
-  row,
+export default function NewScoreCard({
   score,
   player,
+  won = false,
 }: {
-  row: number;
   score: GameScoreDTO;
   player?: PlayerCompactDTO;
+  won?: boolean;
 }) {
   return (
     <div
       data-team={Team[score.team]}
-      className="score-card relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans"
-      style={{ gridRow: row }}
+      className="team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
     >
       {/* Player propic bg */}
       <div className="player-propic absolute top-1/2 z-[1] aspect-square w-3/5 transform-[translateY(-50%)_scale(1)]">
@@ -38,9 +38,9 @@ export default function ScoreCard({
       {/* Content */}
       <div className="flex size-full flex-col px-2">
         {/* Top row */}
-        <div className="flex-row-team-orient flex flex-1 items-center justify-between">
+        <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
-          <div className="flex-row-team-orient flex h-full w-fit items-center justify-start gap-2">
+          <div className="team-flex-row flex h-full w-fit items-center justify-start gap-2">
             <span className="relative aspect-[70/50] h-1/2">
               <Image
                 src={`https://osu.ppy.sh/images/flags/${player?.country}.png`}
@@ -51,8 +51,13 @@ export default function ScoreCard({
             <span className="font-bold">{player?.username}</span>
           </div>
           {/* Grade / Mods / Score */}
-          <div className="flex-row-team-orient flex h-full items-center justify-center gap-2">
-            <span className="text-lg text-(--score-text-color)">
+          <div className="team-flex-row flex h-full items-center justify-center gap-2">
+            <span
+              className={cn(
+                'text-lg text-(--score-text-color)',
+                won && 'font-bold'
+              )}
+            >
               {score.score.toLocaleString()}
             </span>
             <div className="flex h-full max-w-20 flex-row items-center justify-end">
@@ -62,9 +67,9 @@ export default function ScoreCard({
           </div>
         </div>
         {/* Bottom row */}
-        <div className="flex-row-team-orient flex flex-1 items-center justify-between gap-6">
+        <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="performance-group flex-row-team-orient flex items-center justify-end gap-4">
+          <div className="performance-group team-flex-row flex items-center justify-end gap-4">
             <div className="performance-item">
               <span className="label">{300}</span>
               <span className="value">{score.count300}x</span>
@@ -83,7 +88,7 @@ export default function ScoreCard({
             </div>
           </div>
           {/* Combo / Acc */}
-          <div className="performance-group flex-row-team-orient flex items-center justify-end gap-4">
+          <div className="performance-group team-flex-row flex items-center justify-end gap-4">
             <div className="performance-item">
               <span className="label">Accuracy</span>
               <span className="value">{score.accuracy.toFixed(2)}%</span>
