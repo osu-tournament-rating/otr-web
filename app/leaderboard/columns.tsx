@@ -37,7 +37,7 @@ export const columns = [
           width={28}
           height={28}
         />
-        <Link href={`/players/${getValue()}`}>
+        <Link href={`/players/${row.original.player.id}`}>
           <p className="font-sans">{row.original.player.username}</p>
         </Link>
       </div>
