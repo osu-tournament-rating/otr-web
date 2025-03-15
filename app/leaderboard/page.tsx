@@ -23,11 +23,12 @@ async function getData(
   });
 }
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function Page(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const parsedFilters = leaderboardFilterSchema.safeParse(searchParams);
   const filters = parsedFilters.success ? parsedFilters.data : {};
   const page =
