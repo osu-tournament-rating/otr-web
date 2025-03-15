@@ -8,10 +8,12 @@ import {
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from '@/components/ui/pagination';
 import { leaderboardFilterSchema } from '@/lib/schema';
 import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
+import Link from 'next/link';
 
 async function getData(
   params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
@@ -21,7 +23,7 @@ async function getData(
     ruleset: Ruleset.Osu,
     pageSize: 25,
     page: params.page,
-    ...params
+    ...params,
   });
 }
 
@@ -76,6 +78,45 @@ export default async function Page(props: {
     return newParams.toString();
   };
 
+  const renderPageNumbers = () => {
+    const pages = [];
+    const startPage = Math.max(1, page - 2);
+    const endPage = Math.min(totalPages, page + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PaginationItem key={i}>
+          <Link
+            href={`?${createQueryString({ page: i })}`}
+            className={`px-4 ${i === page ? 'font-bold' : ''}`}
+          >
+            {i}
+          </Link>
+        </PaginationItem>
+      );
+    }
+
+    if (endPage < totalPages) {
+      pages.push(
+        <>
+          <PaginationItem key="ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+          <PaginationItem key={100}>
+            <Link
+              href={`?${createQueryString({ page: 100 })}`}
+              className="px-4"
+            >
+              100
+            </Link>
+          </PaginationItem>
+        </>
+      );
+    }
+
+    return pages;
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-4 flex justify-end">
@@ -95,13 +136,10 @@ export default async function Page(props: {
                 page > 1 ? `?${createQueryString({ page: page - 1 })}` : '#'
               }
               aria-disabled={page <= 1}
+              className={page <= 1 ? 'cursor-not-allowed opacity-50' : ''}
             />
           </PaginationItem>
-          <PaginationItem>
-            <span className="px-4">
-              Page {page} of {totalPages}
-            </span>
-          </PaginationItem>
+          {renderPageNumbers()}
           <PaginationItem>
             <PaginationNext
               href={
@@ -110,6 +148,9 @@ export default async function Page(props: {
                   : '#'
               }
               aria-disabled={page >= totalPages}
+              className={
+                page >= totalPages ? 'cursor-not-allowed opacity-50' : ''
+              }
             />
           </PaginationItem>
         </PaginationContent>

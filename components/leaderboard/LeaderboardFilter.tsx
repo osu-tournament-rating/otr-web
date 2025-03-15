@@ -50,23 +50,23 @@ export default function LeaderboardFilter() {
     mode: 'all',
   });
 
-const handleSubmit = form.handleSubmit((values) => {
-  const queryParams = new URLSearchParams();
-  
-  Object.entries(values).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      if (Array.isArray(value)) {
-        // Delete existing params first to avoid duplicates
-        queryParams.delete(key);
-        value.forEach((v) => queryParams.append(key, v));
-      } else {
-        queryParams.set(key, value.toString());
+  const handleSubmit = form.handleSubmit((values) => {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          // Delete existing params first to avoid duplicates
+          queryParams.delete(key);
+          value.forEach((v) => queryParams.append(key, v));
+        } else {
+          queryParams.set(key, value.toString());
+        }
       }
-    }
+    });
+
+    router.push(`/leaderboard?${queryParams.toString()}`);
   });
-  
-  router.push(`/leaderboard?${queryParams.toString()}`);
-});
 
   const handleClearFilters = () => {
     form.reset();
@@ -105,15 +105,19 @@ const handleSubmit = form.handleSubmit((values) => {
                         max={100}
                         step={1}
                         value={[
-                          scaleInverseExponentially(minRank || 1, 1, 10000),
-                          scaleInverseExponentially(maxRank || 10000, 1, 10000),
+                          scaleInverseExponentially(minRank || 1, 1, 100000),
+                          scaleInverseExponentially(
+                            maxRank || 10000,
+                            1,
+                            100000
+                          ),
                         ]}
                         onValueChange={(vals) => {
                           onMinRankChange(
-                            scaleExponentially(vals[0], 1, 10000)
+                            scaleExponentially(vals[0], 1, 100000)
                           );
                           onMaxRankChange(
-                            scaleExponentially(vals[1], 1, 10000)
+                            scaleExponentially(vals[1], 1, 100000)
                           );
                         }}
                         minStepsBetweenThumbs={1}
@@ -127,17 +131,17 @@ const handleSubmit = form.handleSubmit((values) => {
                             onMinRankChange(Number(e.target.value))
                           }
                           min={1}
-                          max={maxRank || 10000}
+                          max={maxRank || 100000}
                           className="w-20 p-1 text-center"
                         />
                         <Input
                           type="number"
-                          value={maxRank || 10000}
+                          value={maxRank || 100000}
                           onChange={(e) =>
                             onMaxRankChange(Number(e.target.value))
                           }
                           min={minRank || 1}
-                          max={10000}
+                          max={100000}
                           className="w-20 p-1 text-center"
                         />
                       </div>
