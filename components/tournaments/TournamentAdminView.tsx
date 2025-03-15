@@ -72,7 +72,7 @@ export default function TournamentAdminView({
       form.reset(patchedTournament);
       toast.success('Saved successfully');
     } catch (error) {
-      toast.error(`Failed to save: ${error}`);
+      toast.error('Failed to save due to server issue');
     }
   }
 

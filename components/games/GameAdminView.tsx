@@ -29,8 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../ui/dialog';
-import { Select, SelectTrigger, SelectValue } from '../../ui/select';
+} from '@/components/ui/dialog'
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select'
 import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
 import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
@@ -89,7 +89,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
       toast.success('Saved successfully');
       form.reset(patchedGame);
     } catch (error) {
-      toast.error(`Failed to save: ${error}`);
+      toast.error('Failed to save due to server issue');
     }
   }
 

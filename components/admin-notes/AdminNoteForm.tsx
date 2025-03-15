@@ -54,7 +54,16 @@ export default function AdminNoteForm() {
             </FormItem>
           )}
         />
-        <div className="space-x-2">
+        <div className="space-x-2 flex justify-between">
+          {/* Reset changes */}
+          <Button
+            type="reset"
+            variant={'secondary'}
+            onClick={() => form.reset()}
+            disabled={!form.formState.isDirty || form.formState.isSubmitting}
+          >
+            Discard
+          </Button>
           {/* Save changes */}
           <Button
             type="submit"
@@ -68,15 +77,6 @@ export default function AdminNoteForm() {
             ) : (
               'Submit'
             )}
-          </Button>
-          {/* Reset changes */}
-          <Button
-            type="reset"
-            variant={'secondary'}
-            onClick={() => form.reset()}
-            disabled={!form.formState.isDirty || form.formState.isSubmitting}
-          >
-            Discard
           </Button>
         </div>
       </form>
