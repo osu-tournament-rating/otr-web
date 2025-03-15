@@ -19,7 +19,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <div className="mt-2">
-      <MatchCard match={match} />
+      <MatchCard match={match} displayStatusText allowAdminView />
       <Tabs defaultValue="games" className="rounded-2xl bg-accent">
         <TabsList>
           <TabsTrigger value="games">Games</TabsTrigger>

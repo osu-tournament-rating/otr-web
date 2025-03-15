@@ -47,7 +47,15 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus)
+});
+
+export const matchEditFormSchema = z.object({
+  name: z.string().min(1),
+  verificationStatus: numericEnumValueSchema(VerificationStatus),
+  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
+  warningFlags: bitwiseEnumValueSchema(GameWarningFlags)
 });
 
 export const gameEditFormSchema = z.object({

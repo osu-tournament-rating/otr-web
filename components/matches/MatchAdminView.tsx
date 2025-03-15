@@ -1,27 +1,26 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form';
-import { gameEditFormSchema } from '@/lib/schema';
+  getEnumFlags,
+  MatchProcessingStatusEnumHelper,
+  MatchWarningFlagsEnumHelper,
+  ModsEnumHelper,
+} from '@/lib/enums';
+import { matchEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  GameDTO,
-  GameWarningFlags,
-  Mods,
+  MatchCompactDTO,
+  MatchWarningFlags,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
+import { MultipleSelect, Option } from '@/components/select/multiple-select';
+import { useSession } from 'next-auth/react';
+import { update } from '@/lib/actions/matches';
+import { createPatchOperations } from '@/lib/utils/form';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -29,48 +28,40 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select'
-import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
-import SimpleSelectContent from '@/components/select/SimpleSelectContent';
+} from '@/components/ui/dialog';
+import { Button } from '../ui/button';
+import { EditIcon, Loader2 } from 'lucide-react';
 import {
-  GameProcessingStatusEnumHelper,
-  GameWarningFlagsEnumHelper,
-  getEnumFlags,
-  ModsEnumHelper,
-  RulesetEnumHelper,
-  ScoringTypeEnumHelper,
-  TeamTypeEnumHelper,
-} from '@/lib/enums';
-import { MultipleSelect, Option } from '@/components/select/multiple-select';
-import { update } from '@/lib/actions/games';
-import { createPatchOperations } from '@/lib/utils/form';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Select, SelectTrigger, SelectValue } from '../ui/select';
+import SimpleSelectContent from '../select/SimpleSelectContent';
+import { Input } from '../ui/input';
+import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
     fieldState.isDirty &&
       !fieldState.invalid &&
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
-);
-
-const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([, { text }]) => !!text)
-  .map(([value, { text }]) => ({
-    label: text,
-    value,
-  })) satisfies Option[];
+  );
 
 const warningFlagOptions = Object.entries(
-  GameWarningFlagsEnumHelper.metadata
+  MatchWarningFlagsEnumHelper.metadata
 ).map(([value, { text }]) => ({
   label: text,
   value,
 })) satisfies Option[];
 
-export default function GameAdminView({ game }: { game: GameDTO }) {
-  const form = useForm<z.infer<typeof gameEditFormSchema>>({
-    resolver: zodResolver(gameEditFormSchema),
-    defaultValues: game,
+export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
+  const form = useForm<z.infer<typeof matchEditFormSchema>>({
+    resolver: zodResolver(matchEditFormSchema),
+    defaultValues: match,
     mode: 'all',
   });
 
@@ -79,16 +70,17 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
     return null;
   }
 
-  async function onSubmit(values: z.infer<typeof gameEditFormSchema>) {
+  async function onSubmit(values: z.infer<typeof matchEditFormSchema>) {
     try {
-      const patchedGame = await update({
-        id: game.id,
-        body: createPatchOperations(game, values),
+      const patchedMatch = await update({
+        id: match.id,
+        body: createPatchOperations(match, values),
       });
 
+      form.reset(patchedMatch);
       toast.success('Saved successfully');
-      form.reset(patchedGame);
     } catch (error) {
+      console.log(error);
       toast.error('Failed to save due to server issue');
     }
   }
@@ -102,111 +94,35 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Game</DialogTitle>
-          <DialogDescription>Editing Game {game.id}</DialogDescription>
+          <DialogTitle>Edit Match</DialogTitle>
+          <DialogDescription>
+            Editing <strong>{match.name}</strong>
+          </DialogDescription>
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="ruleset"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Ruleset</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={RulesetEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="scoringType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={ScoringTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="teamType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={TeamTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="mods"
-              render={({ field: { value, onChange }, fieldState }) => {
-                const flags = getEnumFlags(value, Mods);
-
-                return (
-                  <FormItem>
-                    <FormLabel>Mods</FormLabel>
-                    <MultipleSelect
+              name="name"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-3">
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input
                       className={inputChangedStyle(fieldState)}
-                      selected={flags.map(String)}
-                      options={modOptions}
-                      onChange={(values) => {
-                        let flag = 0;
-                        values.forEach((v) => {
-                          flag |= Number(v);
-                        });
-
-                        onChange(flag);
-                      }}
+                      {...field}
                     />
-                  </FormItem>
-                );
-              }}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-
             <FormField
               control={form.control}
               name="warningFlags"
               render={({ field: { value, onChange }, fieldState }) => {
-                const flags = getEnumFlags(value, GameWarningFlags);
+                const flags = getEnumFlags(value, MatchWarningFlags);
 
                 return (
                   <FormItem>
@@ -273,7 +189,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                         </SelectTrigger>
                       </FormControl>
                       <SimpleSelectContent
-                        enumHelper={GameProcessingStatusEnumHelper}
+                        enumHelper={MatchProcessingStatusEnumHelper}
                       />
                     </Select>
                   </FormItem>

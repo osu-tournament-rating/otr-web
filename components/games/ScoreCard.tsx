@@ -52,6 +52,10 @@ export default function NewScoreCard({
           </div>
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
+            <div className="flex h-full max-w-20 flex-row items-center justify-end">
+              <ModIconset className="max-h-6" mods={score.mods} />
+            </div>
+            <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
             <span
               className={cn(
                 'text-lg text-(--score-text-color)',
@@ -60,16 +64,12 @@ export default function NewScoreCard({
             >
               {score.score.toLocaleString()}
             </span>
-            <div className="flex h-full max-w-20 flex-row items-center justify-end">
-              <ModIconset className="max-h-6" mods={score.mods} />
-            </div>
-            <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
           </div>
         </div>
         {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="performance-group team-flex-row flex items-center justify-end gap-4">
+          <div className="performance-group team-flex-row flex items-center justify-start gap-4">
             <div className="performance-item">
               <span className="label">{300}</span>
               <span className="value">{score.count300}x</span>
@@ -87,15 +87,15 @@ export default function NewScoreCard({
               <span className="value">{score.countMiss}x</span>
             </div>
           </div>
-          {/* Combo / Acc */}
+          {/* Acc / Combo */}
           <div className="performance-group team-flex-row flex items-center justify-end gap-4">
-            <div className="performance-item">
-              <span className="label">Accuracy</span>
-              <span className="value">{score.accuracy.toFixed(2)}%</span>
-            </div>
             <div className="performance-item">
               <span className="label">Combo</span>
               <span className="value">{score.maxCombo}x</span>
+            </div>
+            <div className="performance-item">
+              <span className="label">Accuracy</span>
+              <span className="value">{score.accuracy.toFixed(2)}%</span>
             </div>
           </div>
         </div>

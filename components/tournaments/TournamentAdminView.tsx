@@ -62,12 +62,10 @@ export default function TournamentAdminView({
   }
 
   async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
-    const patches = createPatchOperations(tournament, values);
-
     try {
       const patchedTournament = await update({
         id: tournament.id,
-        body: patches,
+        body: createPatchOperations(tournament, values),
       });
       form.reset(patchedTournament);
       toast.success('Saved successfully');
