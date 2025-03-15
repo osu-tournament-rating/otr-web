@@ -16,25 +16,41 @@ import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 async function getData(
   params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
 ) {
+  console.log(params);
   return await leaderboards.get({
     ruleset: Ruleset.Osu,
     pageSize: 25,
-    page: params.page || 1,
+    page: params.page,
+    ...params
   });
 }
 
-export default async function Page(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function Page(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
-  const parsedFilters = leaderboardFilterSchema.safeParse(searchParams);
+
+  // Preprocess searchParams to convert numeric strings to numbers
+  const processedSearchParams = Object.fromEntries(
+    Object.entries(searchParams).map(([key, value]) => {
+      if (typeof value === 'string' && !isNaN(Number(value))) {
+        return [key, Number(value)];
+      }
+      return [key, value];
+    })
+  );
+
+  const parsedFilters = leaderboardFilterSchema.safeParse(
+    processedSearchParams
+  );
   const filters = parsedFilters.success ? parsedFilters.data : {};
   const page =
     typeof searchParams.page === 'string'
       ? parseInt(searchParams.page) || 1
       : 1;
+
+  console.log(filters);
+
   const data = await getData({ ...filters, page });
 
   const totalPages = 100;
