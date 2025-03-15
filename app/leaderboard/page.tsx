@@ -83,6 +83,21 @@ export default async function Page(props: {
     const startPage = Math.max(1, page - 2);
     const endPage = Math.min(totalPages, page + 2);
 
+    if (startPage > 1) {
+      pages.push(
+        <PaginationItem key={1}>
+          <Link href={`?${createQueryString({ page: 1 })}`} className="px-4">
+            1
+          </Link>
+        </PaginationItem>
+      );
+      pages.push(
+        <PaginationItem key="firstEllipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <PaginationItem key={i}>
@@ -98,19 +113,16 @@ export default async function Page(props: {
 
     if (endPage < totalPages) {
       pages.push(
-        <>
-          <PaginationItem key="ellipsis">
-            <PaginationEllipsis />
-          </PaginationItem>
-          <PaginationItem key={100}>
-            <Link
-              href={`?${createQueryString({ page: 100 })}`}
-              className="px-4"
-            >
-              100
-            </Link>
-          </PaginationItem>
-        </>
+        <PaginationItem key="secondEllipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+      pages.push(
+        <PaginationItem key={100}>
+          <Link href={`?${createQueryString({ page: 100 })}`} className="px-4">
+            100
+          </Link>
+        </PaginationItem>
       );
     }
 
