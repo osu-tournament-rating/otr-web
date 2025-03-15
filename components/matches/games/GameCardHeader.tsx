@@ -10,7 +10,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl font-sans">
       {/* Beatmap bg dim */}
-      <div className="absolute inset-0 z-2 h-full w-full bg-black/50" />
+      <div className="bg:black absolute inset-0 z-2 h-full w-full bg-black/20 dark:bg-black/40" />
       {/* Beatmap bg */}
       <Image
         className="absolute z-1 rounded-xl object-cover"
@@ -19,7 +19,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         fill
       />
       {/* Game / beatmap info */}
-      <div className="z-2 flex h-full w-full flex-col p-2">
+      <div className="z-2 flex h-full w-full flex-col p-2 text-slate-50 dark:text-slate-300">
         {/* Top row */}
         <div className="flex h-8 w-full items-center justify-between">
           <div className="flex h-full flex-row items-center gap-4 whitespace-nowrap">
