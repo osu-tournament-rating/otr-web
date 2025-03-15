@@ -6,23 +6,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import MatchAdminView from './MatchAdminView';
 
-export default function MatchCard({
-  match,
-  titleIsLink = false,
-  displayStatusText = false,
-  allowAdminView = false,
-}: {
-  match: MatchDTO;
-
-  /** If the title links to the tournament's page */
-  titleIsLink?: boolean;
-
-  /** If the verification status icon includes text */
-  displayStatusText?: boolean;
-
-  /** If the button to open the admin view is present */
-  allowAdminView?: boolean;
-}) {
+export default function MatchCard({ match }: { match: MatchDTO }) {
   return (
     <Card>
       <CardHeader>
@@ -31,28 +15,19 @@ export default function MatchCard({
             <div>
               <VerificationBadge
                 verificationStatus={match.verificationStatus}
-                displayText={displayStatusText}
+                displayText
               />
             </div>
             <div>
-              {titleIsLink ? (
-                <Link href={`/matches/${match.id}`}>
-                  <p className="font-bold">{match.name}</p>
-                </Link>
-              ) : (
+              <Link href={`/matches/${match.id}`}>
                 <p className="font-bold">{match.name}</p>
-              )}
+              </Link>
             </div>
           </div>
-          {allowAdminView && (
-            <div>
-              <AdminNoteView
-                title={match.name}
-                notes={match.adminNotes ?? []}
-              />
-              <MatchAdminView match={match} />
-            </div>
-          )}
+          <div>
+            <AdminNoteView title={match.name} notes={match.adminNotes ?? []} />
+            <MatchAdminView match={match} />
+          </div>
         </div>
         <CardDescription>
           <div className="flex items-baseline justify-between font-mono">
