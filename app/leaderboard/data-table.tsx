@@ -21,7 +21,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
 }
 
-export default function TournamentDataTable<TData, TValue>({
+export function LeaderboardDataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
