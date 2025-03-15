@@ -47,7 +47,7 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus)
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
 });
 
 export const matchEditFormSchema = z.object({
@@ -55,7 +55,7 @@ export const matchEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
-  warningFlags: bitwiseEnumValueSchema(GameWarningFlags)
+  warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
 });
 
 export const gameEditFormSchema = z.object({
@@ -71,4 +71,30 @@ export const gameEditFormSchema = z.object({
 
 export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
+});
+
+export const leaderboardFilterSchema = z.object({
+  minRank: z.number().min(1).optional(),
+  maxRank: z.number().min(1).optional(),
+  minRating: z.number().min(100).max(3500).optional(),
+  maxRating: z.number().min(100).max(3500).optional(),
+  minMatches: z.number().min(1).optional(),
+  maxMatches: z.number().min(1).optional(),
+  minWinrate: z.number().min(0).max(1).optional(),
+  maxWinrate: z.number().min(0).max(1).optional(),
+  tiers: z
+    .array(
+      z.enum([
+        'bronze',
+        'silver',
+        'gold',
+        'platinum',
+        'emerald',
+        'diamond',
+        'master',
+        'grandmaster',
+        'eliteGrandmaster',
+      ])
+    )
+    .optional(),
 });
