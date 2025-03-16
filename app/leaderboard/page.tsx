@@ -22,16 +22,16 @@ async function getData(
   return await leaderboards.get({
     ruleset: Ruleset.Osu,
     pageSize: 25,
-    page: params.page,
-    bronze: params.tiers?.includes('bronze') || undefined,
-    silver: params.tiers?.includes('silver') || undefined,
-    gold: params.tiers?.includes('gold') || undefined,
-    platinum: params.tiers?.includes('platinum') || undefined,
-    emerald: params.tiers?.includes('emerald') || undefined,
-    diamond: params.tiers?.includes('diamond') || undefined,
-    master: params.tiers?.includes('master') || undefined,
-    grandmaster: params.tiers?.includes('grandmaster') || undefined,
-    eliteGrandmaster: params.tiers?.includes('eliteGrandmaster') || undefined,
+    bronze: params.tiers?.includes('bronze'),
+    silver: params.tiers?.includes('silver'),
+    gold: params.tiers?.includes('gold'),
+    platinum: params.tiers?.includes('platinum'),
+    emerald: params.tiers?.includes('emerald'),
+    diamond: params.tiers?.includes('diamond'),
+    master: params.tiers?.includes('master'),
+    grandmaster: params.tiers?.includes('grandmaster'),
+    eliteGrandmaster: params.tiers?.includes('eliteGrandmaster'),
+    ...params,
   });
 }
 
@@ -43,6 +43,7 @@ export default async function Page(props: {
   // Preprocess searchParams to convert numeric strings to numbers
   const processedSearchParams = Object.fromEntries(
     Object.entries(searchParams).map(([key, value]) => {
+      console.log([key, value])
       if (typeof value === 'string' && !isNaN(Number(value))) {
         return [key, Number(value)];
       }

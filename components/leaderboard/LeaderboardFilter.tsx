@@ -54,6 +54,7 @@ export default function LeaderboardFilter() {
     const queryParams = new URLSearchParams();
 
     Object.entries(values).forEach(([key, value]) => {
+      console.log([key, value]);
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
           // Delete existing params first to avoid duplicates
@@ -87,14 +88,14 @@ export default function LeaderboardFilter() {
             {/* Rank Range Slider */}
             <FormField
               control={form.control}
-              name="minRank"
+              name="minOsuRank"
               render={({
                 field: { value: minRank, onChange: onMinRankChange },
                 fieldState,
               }) => (
                 <FormField
                   control={form.control}
-                  name="maxRank"
+                  name="maxOsuRank"
                   render={({
                     field: { value: maxRank, onChange: onMaxRankChange },
                   }) => (
@@ -107,7 +108,7 @@ export default function LeaderboardFilter() {
                         value={[
                           scaleInverseExponentially(minRank || 1, 1, 100000),
                           scaleInverseExponentially(
-                            maxRank || 10000,
+                            maxRank || 100000,
                             1,
                             100000
                           ),
@@ -266,27 +267,27 @@ export default function LeaderboardFilter() {
             {/* Winrate Range Slider */}
             <FormField
               control={form.control}
-              name="minWinrate"
+              name="minWinRate"
               render={({
-                field: { value: minWinrate, onChange: onMinWinrateChange },
+                field: { value: minWinRate, onChange: onMinWinRateChange },
                 fieldState,
               }) => (
                 <FormField
                   control={form.control}
-                  name="maxWinrate"
+                  name="maxWinRate"
                   render={({
-                    field: { value: maxWinrate, onChange: onMaxWinrateChange },
+                    field: { value: maxWinRate, onChange: onMaxWinRateChange },
                   }) => (
                     <FormItem>
-                      <FormLabel>Winrate</FormLabel>
+                      <FormLabel>Win rate</FormLabel>
                       <Slider
                         min={0}
                         max={1}
                         step={0.01}
-                        value={[minWinrate || 0, maxWinrate || 1]}
+                        value={[minWinRate || 0, maxWinRate || 1]}
                         onValueChange={(vals) => {
-                          onMinWinrateChange(vals[0]);
-                          onMaxWinrateChange(vals[1]);
+                          onMinWinRateChange(vals[0]);
+                          onMaxWinRateChange(vals[1]);
                         }}
                         minStepsBetweenThumbs={1}
                         className={inputChangedStyle(fieldState)}
@@ -294,22 +295,22 @@ export default function LeaderboardFilter() {
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
-                          value={minWinrate || 0}
+                          value={minWinRate || 0}
                           onChange={(e) =>
-                            onMinWinrateChange(Number(e.target.value))
+                            onMinWinRateChange(Number(e.target.value))
                           }
                           min={0}
-                          max={maxWinrate || 1}
+                          max={maxWinRate || 1}
                           step={0.01}
                           className="w-20 p-1 text-center"
                         />
                         <Input
                           type="number"
-                          value={maxWinrate || 1}
+                          value={maxWinRate || 1}
                           onChange={(e) =>
-                            onMaxWinrateChange(Number(e.target.value))
+                            onMaxWinRateChange(Number(e.target.value))
                           }
-                          min={minWinrate || 0}
+                          min={minWinRate || 0}
                           max={1}
                           step={0.01}
                           className="w-20 p-1 text-center"
