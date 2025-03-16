@@ -23,7 +23,15 @@ async function getData(
     ruleset: Ruleset.Osu,
     pageSize: 25,
     page: params.page,
-    ...params,
+    bronze: params.tiers?.includes('bronze') || undefined,
+    silver: params.tiers?.includes('silver') || undefined,
+    gold: params.tiers?.includes('gold') || undefined,
+    platinum: params.tiers?.includes('platinum') || undefined,
+    emerald: params.tiers?.includes('emerald') || undefined,
+    diamond: params.tiers?.includes('diamond') || undefined,
+    master: params.tiers?.includes('master') || undefined,
+    grandmaster: params.tiers?.includes('grandmaster') || undefined,
+    eliteGrandmaster: params.tiers?.includes('eliteGrandmaster') || undefined,
   });
 }
 
@@ -51,10 +59,7 @@ export default async function Page(props: {
       ? parseInt(searchParams.page) || 1
       : 1;
 
-  console.log(filters);
-
   const data = await getData({ ...filters, page });
-
   const totalPages = 100;
 
   // Helper to create query string with existing params
