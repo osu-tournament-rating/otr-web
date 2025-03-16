@@ -40,11 +40,19 @@ export default async function Page(props: {
 }) {
   const searchParams = await props.searchParams;
 
-  // Preprocess searchParams to convert numeric strings to numbers
+  // Preprocess searchParams to convert numeric strings to numbers and ensure tiers is an array
   const processedSearchParams = Object.fromEntries(
     Object.entries(searchParams).map(([key, value]) => {
-      console.log([key, value])
-      if (typeof value === 'string' && !isNaN(Number(value))) {
+      if (key === 'tiers') {
+        // Ensure tiers is always an array
+        if (Array.isArray(value)) {
+          return [key, value];
+        } else if (typeof value === 'string') {
+          return [key, [value]];
+        } else {
+          return [key, []];
+        }
+      } else if (typeof value === 'string' && !isNaN(Number(value))) {
         return [key, Number(value)];
       }
       return [key, value];
