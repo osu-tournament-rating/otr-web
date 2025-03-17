@@ -14,12 +14,14 @@ import { leaderboardFilterSchema } from '@/lib/schema';
 import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
+import { auth } from '@/auth';
 
 async function getData(
   params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
 ) {
+  const session = await auth();
   return await leaderboards.get({
-    ruleset: Ruleset.Osu,
+    ruleset: session?.user?.settings?.ruleset ?? Ruleset.Osu,
     pageSize: 25,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
@@ -68,7 +70,10 @@ export default async function Page(props: {
       : 1;
 
   const data = await getData({ ...filters, page });
-  const totalPages = 100;
+
+  // TODO: .pages exists on result, API client is not updating LeaderboardDTO
+  // TODO: correctly at the moment.
+  const totalPages = data.result.pages;
 
   // Helper to create query string with existing params
   const createQueryString = (params: Record<string, string | number>) => {
@@ -131,9 +136,12 @@ export default async function Page(props: {
         </PaginationItem>
       );
       pages.push(
-        <PaginationItem key={100}>
-          <Link href={`?${createQueryString({ page: 100 })}`} className="px-4">
-            100
+        <PaginationItem key={totalPages}>
+          <Link
+            href={`?${createQueryString({ page: totalPages })}`}
+            className="px-4"
+          >
+            {totalPages}
           </Link>
         </PaginationItem>
       );
