@@ -1,8 +1,7 @@
 'use client';
 
 import { TournamentListFilter } from '@/lib/types';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 /** Properties exposed by the {@link TournamentListFilterContext} */
@@ -72,7 +71,7 @@ export default function TournamentListFilterProvider({
         ? pathName + '?' + builtSearchParams.toString()
         : pathName;
 
-    router.push(route, undefined, { scroll: false });
+    router.push(route, { scroll: false });
   }, [pathName, router, filter, defaultFilter, queryParams]);
 
   // Reducer function for updating filter values
