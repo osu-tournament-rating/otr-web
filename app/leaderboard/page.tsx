@@ -18,7 +18,6 @@ import Link from 'next/link';
 async function getData(
   params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
 ) {
-  console.log(params);
   return await leaderboards.get({
     ruleset: Ruleset.Osu,
     pageSize: 25,

@@ -74,14 +74,14 @@ export const adminNoteFormSchema = z.object({
 });
 
 export const leaderboardFilterSchema = z.object({
-  minRank: z.number().min(1).optional(),
-  maxRank: z.number().min(1).optional(),
+  minOsuRank: z.number().min(1).optional(),
+  maxOsuRank: z.number().min(1).optional(),
   minRating: z.number().min(100).max(3500).optional(),
   maxRating: z.number().min(100).max(3500).optional(),
   minMatches: z.number().min(1).optional(),
   maxMatches: z.number().min(1).optional(),
-  minWinrate: z.number().min(0).max(1).optional(),
-  maxWinrate: z.number().min(0).max(1).optional(),
+  minWinRate: z.number().min(0).max(1).optional(),
+  maxWinRate: z.number().min(0).max(1).optional(),
   tiers: z
     .array(
       z.enum([
