@@ -6,10 +6,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 /** Properties exposed by the {@link TournamentListFilterContext} */
 type TournamentListFilterContextProps = {
-  /** Current values in the filter */
+  /** Current values of the filter */
   readonly filter: TournamentListFilter;
 
-  /** Sets a value of the {@link filter} */
+  /** Sets the entire {@link filter} */
+  setFilter(prev: TournamentListFilter): void;
+
+  /** Sets a single value of the {@link filter} */
   setFilterValue<K extends keyof TournamentListFilter>(
     item: K,
     value: TournamentListFilter[K]
@@ -47,9 +50,13 @@ export default function TournamentListFilterProvider({
   useEffect(() => {
     const builtSearchParams = new URLSearchParams(
       Object.entries(filter)
-        // Filter any filter properties that are default
+        // Filter for:
+        // - Current filter properties that differ from the default
+        // - Non-empty strings
         .filter(
-          ([k, v]) => defaultFilter[k as keyof TournamentListFilter] !== v
+          ([k, v]) =>
+            defaultFilter[k as keyof TournamentListFilter] !== v ||
+            (typeof v === 'string' && v !== '')
         )
         // Format dates to strings
         .map(([k, v]) => {
@@ -87,9 +94,11 @@ export default function TournamentListFilterProvider({
   const props: TournamentListFilterContextProps = {
     filter,
 
+    setFilter,
+
     setFilterValue,
 
-    clearFilter: () => setFilter({}),
+    clearFilter: () => setFilter(defaultFilter),
   };
 
   return (

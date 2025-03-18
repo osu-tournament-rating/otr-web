@@ -61,7 +61,7 @@ export const tournamentEditFormSchema = z.object({
 export const tournamentListFilterSchema = z.object({
   verified: z.union([z.boolean(), booleanStringSchema]).optional(),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
-  searchQuery: z.string().optional(),
+  searchQuery: z.string().catch(''),
   dateMin: z.coerce.date().optional(),
   dateMax: z.coerce.date().optional(),
   verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
