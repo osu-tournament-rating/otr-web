@@ -1,4 +1,3 @@
-import TournamentCard from '@/components/tournaments/TournamentCard';
 import { tournaments } from '@/lib/api';
 import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
@@ -11,6 +10,7 @@ import { tournamentListFilterSchema } from '@/lib/schema';
 import TournamentListFilterProvider from '@/components/tournaments/list/TournamentListFilterContext';
 import TournamentListFilter from '@/components/tournaments/list/TournamentListFilter';
 import TournamentListSortControl from '@/components/tournaments/list/TournamentListSortControl';
+import TournamentList from '@/components/tournaments/list/TournamentList';
 
 export const metadata: Metadata = {
   title: 'Tournaments',
@@ -39,7 +39,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
     : defaultFilter;
 
   // Request initial data
-  const tournamentData = await tournaments.list({
+  const { result: tournamentData } = await tournaments.list({
     ...filter,
     ...pagination,
   });
@@ -54,13 +54,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
         <div>
           <TournamentListFilter />
           <TournamentListSortControl />
-          <div>
-            {tournamentData.result.map((t) => (
-              <div className="mt-2 flex-1" key={t.id}>
-                <TournamentCard tournament={t} titleIsLink />
-              </div>
-            ))}
-          </div>
+          <TournamentList tournaments={tournamentData} />
         </div>
       </TournamentListFilterProvider>
     </div>
