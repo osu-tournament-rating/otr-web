@@ -1,54 +1,55 @@
 'use client';
 
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { search } from '@/lib/actions/search';
-import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
+// import { search } from '@/lib/actions/search';
+// import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { Search, SearchIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+// import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export default function SearchDialog() {
-  const [searchText, setSearchText] = useState('');
-  const [isFetching, setIsFetching] = useState(false);
-  const [data, setData] = useState<SearchResponseCollectionDTO>();
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  // TODO: Implement correctly
+  // const [searchText, setSearchText] = useState('');
+  // const [isFetching, setIsFetching] = useState(false);
+  // const [data, setData] = useState<SearchResponseCollectionDTO>();
+  // const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
+  //   null
+  // );
 
-  const fetchData = async () => {
-    // Dummy function to simulate API call
-    setIsFetching(true);
+  // const fetchData = async () => {
+  //   // Dummy function to simulate API call
+  //   setIsFetching(true);
 
-    try {
-      const result = await search(searchText);
+  //   try {
+  //     const result = await search(searchText);
 
-      setData(result);
-    } catch {
-      console.error('Error during search');
-    } finally {
-      setIsFetching(false);
-    }
-  };
+  //     setData(result);
+  //   } catch {
+  //     console.error('Error during search');
+  //   } finally {
+  //     setIsFetching(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
+  // useEffect(() => {
+  //   if (typingTimeout) {
+  //     clearTimeout(typingTimeout);
+  //   }
 
-    if (searchText) {
-      const timeout = setTimeout(() => {
-        fetchData();
-      }, 800);
-      setTypingTimeout(timeout);
-    }
-    return () => {
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-    };
-  }, [searchText]);
+  //   if (searchText) {
+  //     const timeout = setTimeout(() => {
+  //       fetchData();
+  //     }, 800);
+  //     setTypingTimeout(timeout);
+  //   }
+  //   return () => {
+  //     if (typingTimeout) {
+  //       clearTimeout(typingTimeout);
+  //     }
+  //   };
+  // }, [searchText]);
 
   return (
     <Dialog>
@@ -66,8 +67,8 @@ export default function SearchDialog() {
             className="mr-4"
             placeholder="Search"
             autoFocus
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            // value={searchText}
+            // onChange={(e) => setSearchText(e.target.value)}
           />
         </div>
       </DialogContent>

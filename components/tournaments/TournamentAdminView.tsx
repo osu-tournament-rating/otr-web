@@ -69,7 +69,8 @@ export default function TournamentAdminView({
       });
       form.reset(patchedTournament);
       toast.success('Saved successfully');
-    } catch (error) {
+    } catch {
+      // TODO: Actual err handling
       toast.error('Failed to save due to server issue');
     }
   }
