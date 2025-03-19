@@ -2,7 +2,14 @@
 
 import { TournamentListFilter } from '@/lib/types';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 /** Properties exposed by the {@link TournamentListFilterContext} */
 type TournamentListFilterContextProps = {
@@ -10,7 +17,7 @@ type TournamentListFilterContextProps = {
   readonly filter: TournamentListFilter;
 
   /** Sets the entire {@link filter} */
-  setFilter(prev: TournamentListFilter): void;
+  setFilter: Dispatch<SetStateAction<TournamentListFilter>>;
 
   /** Sets a single value of the {@link filter} */
   setFilterValue<K extends keyof TournamentListFilter>(

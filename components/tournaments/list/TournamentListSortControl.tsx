@@ -27,6 +27,7 @@ const toggleItems: { value: TournamentQuerySortType; text: string }[] = [
 export default function TournamentListSortControl() {
   const {
     filter: { sort, descending },
+    setFilter,
     setFilterValue,
   } = useTournamentListFilter();
 
@@ -37,7 +38,13 @@ export default function TournamentListSortControl() {
       className="flex gap-2"
       type="single"
       value={sort?.toString()}
-      onValueChange={(val) => setFilterValue('sort', Number(val))}
+      onValueChange={(val) => {
+        setFilter((prev) => ({
+          ...prev,
+          sort: Number(val),
+          descending: true,
+        }));
+      }}
     >
       {toggleItems.map(({ value, text }) => (
         <ToggleGroupItem
