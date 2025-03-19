@@ -55,6 +55,7 @@ export default function TournamentListFilterProvider({
 
   // Main feature of the context, handles changes in the filter by pushing query params to the route
   useEffect(() => {
+    console.log('context effect');
     const builtSearchParams = new URLSearchParams(
       Object.entries(filter)
         // Filter for:
@@ -85,6 +86,7 @@ export default function TournamentListFilterProvider({
         ? pathName + '?' + builtSearchParams.toString()
         : pathName;
 
+    console.log('pushing to router');
     router.push(route, { scroll: false });
   }, [pathName, router, filter, defaultFilter, queryParams]);
 

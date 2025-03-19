@@ -88,7 +88,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
 
       toast.success('Saved successfully');
       form.reset(patchedGame);
-    } catch (error) {
+    } catch {
+      // TODO: better than this
       toast.error('Failed to save due to server issue');
     }
   }

@@ -3,7 +3,6 @@ import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
 import {
   PageSearchParams,
-  PaginationParams,
   TournamentListFilter as TournamentListFilterType,
 } from '@/lib/types';
 import { tournamentListFilterSchema } from '@/lib/schema';
@@ -24,11 +23,8 @@ const defaultFilter: TournamentListFilterType = {
   verified: false,
 };
 
-// Controls pagination (Mainly page size - how many tournaments are requested at once)
-const pagination: PaginationParams = {
-  pageSize: 40,
-  page: 1,
-};
+// Controls how many tournaments are requested at once
+const pageSize = 30;
 
 export default async function Page({ searchParams }: PageSearchParams) {
   // Parse query params
@@ -39,9 +35,11 @@ export default async function Page({ searchParams }: PageSearchParams) {
     : defaultFilter;
 
   // Request initial data
+  console.log('requesting initial data');
   const { result: tournamentData } = await tournaments.list({
     ...filter,
-    ...pagination,
+    page: 1,
+    pageSize,
   });
 
   return (
@@ -54,7 +52,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
         <div>
           <TournamentListFilter />
           <TournamentListSortControl />
-          <TournamentList tournaments={tournamentData} />
+          <TournamentList initialData={tournamentData} pageSize={pageSize} />
         </div>
       </TournamentListFilterProvider>
     </div>
