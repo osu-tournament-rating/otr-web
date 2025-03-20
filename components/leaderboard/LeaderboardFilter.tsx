@@ -40,7 +40,7 @@ export default function LeaderboardFilter() {
   const router = useRouter();
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
-    mode: 'submit',
+    mode: 'onSubmit',
   });
 
   const handleSubmit = form.handleSubmit((values) => {
