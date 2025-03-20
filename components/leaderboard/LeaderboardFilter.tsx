@@ -333,7 +333,7 @@ export default function LeaderboardFilter() {
                     className={inputChangedStyle(fieldState)}
                     selected={value || []}
                     options={tierOptions}
-                    onChange={(values) => onChange(values)}
+                    onChange={onChange}
                   />
                 </FormItem>
               )}
