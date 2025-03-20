@@ -1,6 +1,7 @@
 'use client';
 
 import TierIcon from '@/components/icons/TierIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
@@ -13,9 +14,7 @@ export const columns = [
     header: 'Rank',
     cell: ({ getValue, row }) => (
       <div className="flex flex-row justify-between">
-        <div className="flex">
-          <p className="font-sans">#{getValue()}</p>
-        </div>
+        <p className="font-sans">#{getValue()}</p>
         <div className="flex">
           <Image
             src={`https://assets.ppy.sh/old-flags/${row.original.player.country}.png`}
@@ -56,7 +55,13 @@ export const columns = [
   }),
   columnHelper.accessor('rating', {
     header: 'Rating',
-    cell: ({ getValue }) => <p className="font-sans">{~~getValue()}</p>,
+    cell: ({ getValue }) => (
+      <div className="flex">
+        <SimpleTooltip content={`${getValue().toFixed(2)} TR`}>
+          <p className="font-sans">{getValue().toFixed(0)}</p>
+        </SimpleTooltip>
+      </div>
+    ),
   }),
   columnHelper.accessor('tournamentsPlayed', {
     header: 'Tournaments',

@@ -14,13 +14,6 @@ import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
 
-const inputChangedStyle = (fieldState: ControllerFieldState) =>
-  cn(
-    fieldState.isDirty &&
-      !fieldState.invalid &&
-      'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
-  );
-
 const tierOptions: Option[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -47,7 +40,7 @@ export default function LeaderboardFilter() {
   const router = useRouter();
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
-    mode: 'all',
+    mode: 'submit',
   });
 
   const handleSubmit = form.handleSubmit((values) => {
@@ -122,7 +115,6 @@ export default function LeaderboardFilter() {
                           );
                         }}
                         minStepsBetweenThumbs={1}
-                        className={inputChangedStyle(fieldState)}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
@@ -178,7 +170,6 @@ export default function LeaderboardFilter() {
                           onMaxRatingChange(vals[1]);
                         }}
                         minStepsBetweenThumbs={1}
-                        className={inputChangedStyle(fieldState)}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
@@ -234,7 +225,6 @@ export default function LeaderboardFilter() {
                           onMaxMatchesChange(vals[1]);
                         }}
                         minStepsBetweenThumbs={1}
-                        className={inputChangedStyle(fieldState)}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
@@ -290,7 +280,6 @@ export default function LeaderboardFilter() {
                           onMaxWinRateChange(vals[1]);
                         }}
                         minStepsBetweenThumbs={1}
-                        className={inputChangedStyle(fieldState)}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
@@ -330,7 +319,6 @@ export default function LeaderboardFilter() {
                 <FormItem>
                   <FormLabel>Tiers</FormLabel>
                   <MultipleSelect
-                    className={inputChangedStyle(fieldState)}
                     selected={value || []}
                     options={tierOptions}
                     onChange={onChange}
