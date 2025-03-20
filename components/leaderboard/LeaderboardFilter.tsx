@@ -1,9 +1,8 @@
 'use client';
 
 import { leaderboardFilterSchema } from '@/lib/schema';
-import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ControllerFieldState, useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { Form, FormField, FormItem, FormLabel } from '../ui/form';
