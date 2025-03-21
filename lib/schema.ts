@@ -11,6 +11,7 @@ import {
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
+import { leaderboardTierFilterValues } from './utils/leaderboard';
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
@@ -82,19 +83,5 @@ export const leaderboardFilterSchema = z.object({
   maxMatches: z.number().min(1).optional(),
   minWinRate: z.number().min(0).max(1).optional(),
   maxWinRate: z.number().min(0).max(1).optional(),
-  tiers: z
-    .array(
-      z.enum([
-        'bronze',
-        'silver',
-        'gold',
-        'platinum',
-        'emerald',
-        'diamond',
-        'master',
-        'grandmaster',
-        'eliteGrandmaster',
-      ])
-    )
-    .optional(),
+  tiers: z.array(z.enum(leaderboardTierFilterValues)).optional(),
 });

@@ -1,23 +1,14 @@
 import Image from 'next/image';
 import SimpleTooltip from '../simple-tooltip';
-
 export default function TierIcon({
   tier,
-  width,
-  height,
-}: {
+  ...rest
+}: Omit<React.ComponentProps<typeof Image>, 'src' | 'alt'> & {
   tier: string;
-  width: number;
-  height: number;
 }) {
   return (
     <SimpleTooltip content={tier}>
-      <Image
-        src={`/icons/tiers/${tier}.svg`}
-        alt={tier}
-        width={width}
-        height={height}
-      />
+      <Image src={`/icons/tiers/${tier}.svg`} alt={tier} {...rest} />
     </SimpleTooltip>
   );
 }
