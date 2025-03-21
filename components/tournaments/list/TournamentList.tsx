@@ -12,6 +12,7 @@ import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
 import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-client';
 import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const pageSize = 30;
 
@@ -66,7 +67,6 @@ export default function TournamentList({
     getKey(filter),
     fetcher(session?.accessToken),
     {
-      fallbackData: [],
       revalidateOnFocus: false,
       revalidateFirstPage: false,
     }
@@ -74,6 +74,7 @@ export default function TournamentList({
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const tournamentData = data ? data.flat() : [];
+  const firstPageHasData = data?.at(0)?.length === pageSize;
   const expectNextPage = data?.at(-1)?.length === pageSize;
 
   const virtualizer = useWindowVirtualizer({
@@ -113,8 +114,25 @@ export default function TournamentList({
     virtualizedItems,
   ]);
 
+  // Errors
   if (!session || error) {
-    return null;
+    return <h1>Something is wrong :D</h1>;
+  }
+
+  // Initial load
+  if (!data) {
+    return (
+      <div className="flex flex-col space-y-2">
+        {[...Array(pageSize / 5)].map((_, idx) => (
+          <ListItemSkeleton key={idx} />
+        ))}
+      </div>
+    );
+  }
+
+  // No results
+  if (!firstPageHasData) {
+    return <div>This query returned no results</div>;
   }
 
   return (
@@ -139,13 +157,14 @@ export default function TournamentList({
 
             return (
               <div
+                className="relative w-full"
                 key={item.key}
                 data-index={item.index}
                 ref={virtualizer.measureElement}
               >
                 {isPlaceholder ? (
                   expectNextPage ? (
-                    <LoadingPlaceholder />
+                    <ListItemSkeleton />
                   ) : (
                     <NoMoreResultsPlaceholder />
                   )
@@ -164,12 +183,8 @@ export default function TournamentList({
   );
 }
 
-function LoadingPlaceholder() {
-  return (
-    <div>
-      <p>Loading...</p>
-    </div>
-  );
+function ListItemSkeleton() {
+  return <Skeleton className="h-24 w-full rounded-xl" />;
 }
 
 function NoMoreResultsPlaceholder() {
