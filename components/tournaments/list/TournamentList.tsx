@@ -1,68 +1,83 @@
 'use client';
 
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  TournamentCompactDTO,
+  TournamentsWrapper,
+} from '@osu-tournament-rating/otr-api-client';
+import { Fetcher } from 'swr';
+import { useSession } from 'next-auth/react';
+import { useEffect, useRef } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTournamentListFilter } from './TournamentListFilterContext';
-import { getList } from '@/lib/actions/tournaments';
+import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
+import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-client';
+import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
 
+const pageSize = 30;
+
+const tournaments = (token: string) =>
+  new TournamentsWrapper({
+    baseUrl: '',
+    clientConfiguration: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+const fetcher = (
+  token?: string
+): Fetcher<TournamentCompactDTO[], TournamentsListRequestParams> => {
+  if (!token) {
+    return () => [];
+  }
+  return (params) =>
+    tournaments(token)
+      .list(params)
+      .then((res) => res.result);
+};
+
+const getKey = (
+  filter: TournamentListFilter
+): SWRInfiniteKeyLoader<
+  TournamentCompactDTO[],
+  TournamentsListRequestParams | null
+> => {
+  return (index, previous) => {
+    if (previous && !previous.length) {
+      return null;
+    }
+
+    return {
+      ...filter,
+      page: index + 1,
+      pageSize,
+    };
+  };
+};
+
 export default function TournamentList({
-  initialData = [],
-  pageSize = 30,
+  filter,
 }: {
-  initialData: TournamentCompactDTO[];
-  pageSize: number;
+  filter: TournamentListFilter;
 }) {
-  // region Infinite scrolling state
-
-  const { filter } = useTournamentListFilter();
-  const [tournaments, setTournaments] = useState(initialData);
-
-  const [page, setPage] = useState(2);
-  const [isFetching, setIsFetching] = useState(false);
-  const [canFetchNextPage, setCanFetchNextPage] = useState(
-    initialData.length === pageSize
+  const { data: session } = useSession();
+  const { data, error, setSize, isValidating, isLoading } = useSWRInfinite(
+    getKey(filter),
+    fetcher(session?.accessToken),
+    {
+      fallbackData: [],
+      revalidateOnFocus: false,
+      revalidateFirstPage: false,
+    }
   );
 
-  const fetchNextPage = useCallback(async () => {
-    // Check if we can request
-    if (isFetching || !canFetchNextPage) {
-      return;
-    }
-
-    console.log('fetching');
-    setIsFetching(true);
-    try {
-      // Make the request
-      const nextPage = await getList({
-        ...filter,
-        page,
-        pageSize,
-      });
-
-      // Update pagination props
-      setCanFetchNextPage(nextPage.length === pageSize);
-      setPage((prev) => prev + 1);
-
-      // Update results
-      setTournaments((prev) => [...prev, ...nextPage]);
-    } catch (e) {
-      console.log(e);
-      // TODO: toast
-      // If there is an error, freeze infinite scrolling until refresh
-      setCanFetchNextPage(false);
-    } finally {
-      setIsFetching(false);
-    }
-  }, [canFetchNextPage, filter, isFetching, page, pageSize]);
-
-  // endregion
-
   const listRef = useRef<HTMLDivElement | null>(null);
+  const tournamentData = data ? data.flat() : [];
+  const expectNextPage = data?.at(-1)?.length === pageSize;
 
   const virtualizer = useWindowVirtualizer({
-    count: canFetchNextPage ? tournaments.length + 1 : tournaments.length,
+    count: tournamentData.length + 1,
     estimateSize: () => 100,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
@@ -80,21 +95,27 @@ export default function TournamentList({
 
     if (
       // Last virtual item is the end of the available data
-      lastItem.index >= tournaments.length - 1 &&
+      lastItem.index >= tournamentData.length &&
       // Next page is available
-      canFetchNextPage &&
+      expectNextPage &&
       // Not currently requesting
-      !isFetching
+      !isLoading &&
+      !isValidating
     ) {
-      fetchNextPage();
+      setSize((size) => size + 1);
     }
   }, [
+    expectNextPage,
+    isLoading,
+    isValidating,
+    setSize,
+    tournamentData.length,
     virtualizedItems,
-    tournaments.length,
-    canFetchNextPage,
-    isFetching,
-    fetchNextPage,
   ]);
+
+  if (!session || error) {
+    return null;
+  }
 
   return (
     <div ref={listRef}>
@@ -114,7 +135,7 @@ export default function TournamentList({
           }}
         >
           {virtualizedItems.map((item) => {
-            const isPlaceholder = item.index > tournaments.length - 1;
+            const isPlaceholder = item.index >= tournamentData.length;
 
             return (
               <div
@@ -123,14 +144,14 @@ export default function TournamentList({
                 ref={virtualizer.measureElement}
               >
                 {isPlaceholder ? (
-                  canFetchNextPage ? (
+                  expectNextPage ? (
                     <LoadingPlaceholder />
                   ) : (
                     <NoMoreResultsPlaceholder />
                   )
                 ) : (
                   <TournamentCard
-                    tournament={tournaments[item.index]}
+                    tournament={tournamentData[item.index]}
                     titleIsLink
                   />
                 )}

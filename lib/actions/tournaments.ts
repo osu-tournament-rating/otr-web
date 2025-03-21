@@ -42,7 +42,7 @@ const getCached = cache(async (id: number, verified?: boolean) => {
   return result;
 });
 
-export async function getList(params: TournamentsListRequestParams) {
+export async function getTournamentsList(params: TournamentsListRequestParams) {
   const { result } = await tournaments.list(params);
   return result;
 }

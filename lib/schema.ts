@@ -12,6 +12,7 @@ import {
   TournamentQuerySortType,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
+import { TournamentListFilter } from './types';
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
@@ -55,11 +56,17 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus)
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
 });
 
+export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
+  verified: false,
+  sort: TournamentQuerySortType.EndTime,
+  descending: true,
+};
+
 export const tournamentListFilterSchema = z.object({
-  verified: z.union([z.boolean(), booleanStringSchema]).optional(),
+  verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
   searchQuery: z.string().catch(''),
   dateMin: z.coerce.date().optional(),
@@ -72,8 +79,10 @@ export const tournamentListFilterSchema = z.object({
   submittedBy: z.coerce.number().optional(),
   verifiedBy: z.coerce.number().optional(),
   lobbySize: z.coerce.number().min(1).max(8).optional(),
-  sort: numericEnumValueSchema(TournamentQuerySortType).optional(),
-  descending: z.union([z.boolean(), booleanStringSchema]).optional(),
+  sort: numericEnumValueSchema(TournamentQuerySortType).catch(
+    TournamentQuerySortType.EndTime
+  ),
+  descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });
 
 export const matchEditFormSchema = z.object({
@@ -81,7 +90,7 @@ export const matchEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
-  warningFlags: bitwiseEnumValueSchema(GameWarningFlags)
+  warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
 });
 
 export const gameEditFormSchema = z.object({

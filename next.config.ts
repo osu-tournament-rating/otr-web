@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/dist/shared/lib/constants';
 
 const nextConfig: NextConfig = {
   images: {
@@ -43,4 +44,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const configure = (phase: string) => {
+  if (phase === PHASE_DEVELOPMENT_SERVER) {
+    // During development, proxy API requests
+    nextConfig.rewrites = async () => [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.OTR_API_ROOT}/api/:path*`,
+      },
+    ];
+  }
+
+  return nextConfig;
+};
+
+export default configure;
