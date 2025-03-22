@@ -75,20 +75,23 @@ export const adminNoteFormSchema = z.object({
 });
 
 export const leaderboardFilterSchema = z.object({
-  page: z.number().min(1).optional(),
-  minOsuRank: z.number().min(1).optional(),
-  maxOsuRank: z.number().min(1).optional(),
-  minRating: z.number().min(100).max(3500).optional(),
-  maxRating: z.number().min(100).max(3500).optional(),
-  minMatches: z.number().min(1).optional(),
-  maxMatches: z.number().min(1).optional(),
-  minWinRate: z.number().min(0).max(1).optional(),
-  maxWinRate: z.number().min(0).max(1).optional(),
-  tiers: z.preprocess((val) => {
-    if (typeof val === 'string') {
-      return [val as string];
-    }
+  page: z.coerce.number().min(1).optional(),
+  minOsuRank: z.coerce.number().min(1).optional(),
+  maxOsuRank: z.coerce.number().min(1).optional(),
+  minRating: z.coerce.number().min(100).max(3500).optional(),
+  maxRating: z.coerce.number().min(100).max(3500).optional(),
+  minMatches: z.coerce.number().min(1).optional(),
+  maxMatches: z.coerce.number().min(1).optional(),
+  minWinRate: z.coerce.number().min(0).max(1).optional(),
+  maxWinRate: z.coerce.number().min(0).max(1).optional(),
+  tiers: z.preprocess(
+    (val) => {
+      if (typeof val === 'string') {
+        return [val as string];
+      }
 
-    return val;
-  }, z.array(z.enum(leaderboardTierFilterValues)).optional())
+      return val;
+    },
+    z.array(z.enum(leaderboardTierFilterValues)).optional()
+  ),
 });
