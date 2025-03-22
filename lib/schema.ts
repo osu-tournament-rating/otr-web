@@ -82,8 +82,8 @@ export const leaderboardFilterSchema = z.object({
   maxRating: z.coerce.number().int().min(100).max(3500).optional(),
   minMatches: z.coerce.number().int().min(1).optional(),
   maxMatches: z.coerce.number().int().min(1).optional(),
-  minWinRate: z.coerce.number().min(0).max(1).optional(),
-  maxWinRate: z.coerce.number().min(0).max(1).optional(),
+  minWinRate: z.coerce.number().min(0).max(100).optional(),
+  maxWinRate: z.coerce.number().min(0).max(100).optional(),
   tiers: z.preprocess(
     (val) => {
       if (typeof val === 'string') {

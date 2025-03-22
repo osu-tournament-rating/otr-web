@@ -34,7 +34,7 @@ const defaultFilterValues: z.infer<typeof leaderboardFilterSchema> = {
   minMatches: 1,
   maxMatches: 1000,
   minWinRate: 0,
-  maxWinRate: 1,
+  maxWinRate: 100,
   tiers: [],
 };
 
@@ -289,11 +289,11 @@ export default function LeaderboardFilter({
                   name="maxWinRate"
                   render={({ field: maxWinRateField }) => (
                     <FormItem>
-                      <FormLabel>Win rate</FormLabel>
+                      <FormLabel>Win rate %</FormLabel>
                       <Slider
-                        min={0}
-                        max={1}
-                        step={0.01}
+                        min={defaultFilterValues.minWinRate}
+                        max={defaultFilterValues.maxWinRate}
+                        step={0.1}
                         value={[
                           minWinRateField.value ??
                             defaultFilterValues.minWinRate!,
@@ -310,12 +310,11 @@ export default function LeaderboardFilter({
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
-                          step={0.01}
                           value={
                             minWinRateField.value ??
                             defaultFilterValues.minWinRate
                           }
-                          min={0}
+                          min={defaultFilterValues.minWinRate}
                           max={maxWinRateField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -325,13 +324,12 @@ export default function LeaderboardFilter({
                         />
                         <Input
                           type="number"
-                          step={0.01}
                           value={
                             maxWinRateField.value ??
                             defaultFilterValues.maxWinRate
                           }
                           min={minWinRateField.value}
-                          max={1}
+                          max={defaultFilterValues.maxWinRate}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxWinRateField.onChange(parseFloat(e.target.value))

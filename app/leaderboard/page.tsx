@@ -44,7 +44,11 @@ export default async function Page(props: {
   const filter = leaderboardFilterSchema.parse(searchParams);
   const page = filter.page ?? 1;
 
-  const data = await getData({ ...filter });
+  const data = await getData({
+    ...filter,
+    minWinRate: (filter.minWinRate ?? 0) / 100,
+    maxWinRate: (filter.maxWinRate ?? 100) / 100,
+  });
 
   // TODO: .pages exists on result, API client is not updating LeaderboardDTO
   // TODO: correctly at the moment.
