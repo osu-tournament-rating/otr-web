@@ -133,6 +133,7 @@ export default async function Page(props: {
       </div>
       {data && (
         <LeaderboardDataTable
+          // @ts-expect-error
           columns={columns}
           data={data.result.leaderboard}
         />
