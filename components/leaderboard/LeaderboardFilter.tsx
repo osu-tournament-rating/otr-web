@@ -32,7 +32,7 @@ const defaultFilterValues: z.infer<typeof leaderboardFilterSchema> = {
   minRating: 100,
   maxRating: 3500,
   minMatches: 1,
-  maxMatches: 1000,
+  maxMatches: 500,
   minWinRate: 0,
   maxWinRate: 100,
   tiers: [],
@@ -101,22 +101,30 @@ export default function LeaderboardFilter({
                           scaleInverseExponentially(
                             minRankField.value ??
                               defaultFilterValues.minOsuRank!,
-                            1,
-                            100000
+                            defaultFilterValues.minOsuRank!,
+                            defaultFilterValues.maxOsuRank!
                           ),
                           scaleInverseExponentially(
                             maxRankField.value ??
                               defaultFilterValues.maxOsuRank!,
-                            1,
-                            100000
+                            defaultFilterValues.minOsuRank!,
+                            defaultFilterValues.maxOsuRank!
                           ),
                         ]}
                         onValueChange={(vals) => {
                           minRankField.onChange(
-                            scaleExponentially(vals[0], 1, 100000)
+                            scaleExponentially(
+                              vals[0],
+                              defaultFilterValues.minOsuRank!,
+                              defaultFilterValues.maxOsuRank!
+                            )
                           );
                           maxRankField.onChange(
-                            scaleExponentially(vals[1], 1, 100000)
+                            scaleExponentially(
+                              vals[1],
+                              defaultFilterValues.minOsuRank!,
+                              defaultFilterValues.maxOsuRank!
+                            )
                           );
                         }}
                         onPointerUp={form.handleSubmit(onSubmit)}
@@ -128,7 +136,7 @@ export default function LeaderboardFilter({
                           value={
                             minRankField.value ?? defaultFilterValues.minOsuRank
                           }
-                          min={1}
+                          min={defaultFilterValues.minOsuRank!}
                           max={maxRankField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -142,7 +150,7 @@ export default function LeaderboardFilter({
                             maxRankField.value ?? defaultFilterValues.maxOsuRank
                           }
                           min={minRankField.value}
-                          max={100000}
+                          max={defaultFilterValues.maxOsuRank!}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxRankField.onChange(Number(e.target.value))
@@ -167,8 +175,8 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Rating</FormLabel>
                       <Slider
-                        min={100}
-                        max={3500}
+                        min={defaultFilterValues.minRating!}
+                        max={defaultFilterValues.maxRating!}
                         step={10}
                         value={[
                           minRatingField.value ??
@@ -190,7 +198,7 @@ export default function LeaderboardFilter({
                             minRatingField.value ??
                             defaultFilterValues.minRating
                           }
-                          min={100}
+                          min={defaultFilterValues.minRating!}
                           max={maxRatingField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -205,7 +213,7 @@ export default function LeaderboardFilter({
                             defaultFilterValues.maxRating
                           }
                           min={minRatingField.value}
-                          max={3500}
+                          max={defaultFilterValues.maxRating!}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxRatingField.onChange(Number(e.target.value))
@@ -229,8 +237,8 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Matches</FormLabel>
                       <Slider
-                        min={1}
-                        max={1000}
+                        min={defaultFilterValues.minMatches!}
+                        max={defaultFilterValues.maxMatches!}
                         step={1}
                         value={[
                           minMatchesField.value ??
@@ -252,7 +260,7 @@ export default function LeaderboardFilter({
                             minMatchesField.value ??
                             defaultFilterValues.minMatches
                           }
-                          min={1}
+                          min={defaultFilterValues.minMatches}
                           max={maxMatchesField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -267,7 +275,7 @@ export default function LeaderboardFilter({
                             defaultFilterValues.maxMatches
                           }
                           min={minMatchesField.value}
-                          max={1000}
+                          max={defaultFilterValues.maxMatches}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxMatchesField.onChange(Number(e.target.value))
