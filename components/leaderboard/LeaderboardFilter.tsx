@@ -38,10 +38,6 @@ const defaultFilterValues: z.infer<typeof leaderboardFilterSchema> = {
   tiers: [],
 };
 
-function getDefaultValue(field: keyof typeof defaultFilterValues) {
-  return defaultFilterValues[field];
-}
-
 const scaleExponentially = (value: number, min: number, max: number) => {
   return Math.round(min * Math.pow(max / min, value / 100));
 };
@@ -69,10 +65,6 @@ export default function LeaderboardFilter({
 
     Object.entries(values).forEach(([k, v]) => {
       if (v === undefined) return;
-
-      if (getDefaultValue(k as keyof typeof defaultFilterValues) == v) {
-        return;
-      }
 
       setFlattenedParams(searchParams, k, v);
     });
@@ -377,7 +369,7 @@ export default function LeaderboardFilter({
                 variant="outline"
                 onClick={() => {
                   form.reset(defaultFilterValues);
-                  form.handleSubmit(onSubmit)();
+                  router.push('/leaderboard');
                 }}
               >
                 <X className="h-4 w-4" />
