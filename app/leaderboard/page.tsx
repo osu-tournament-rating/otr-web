@@ -15,6 +15,7 @@ import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { auth } from '@/auth';
+import { setFlattenedParams } from '@/lib/utils/urlParams';
 
 async function getData(
   params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
@@ -53,9 +54,17 @@ export default async function Page(props: {
   const createQueryString = (params: Record<string, string | number>) => {
     const newParams = new URLSearchParams();
 
-    // Add/update new params
-    Object.entries(params).forEach(([key, value]) => {
-      newParams.set(key, value.toString());
+    Object.entries(params).forEach(([k, v]) => {
+      newParams.set(k, v.toString());
+    });
+
+    // Add existing params, omit the page parameter
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (v === undefined || k == 'page') {
+        return;
+      }
+
+      setFlattenedParams(newParams, k, v);
     });
 
     return newParams.toString();

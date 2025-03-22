@@ -13,6 +13,7 @@ import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
 import { leaderboardTierFilterValues } from '@/lib/utils/leaderboard';
+import { setFlattenedParams } from '@/lib/utils/urlParams';
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -73,9 +74,7 @@ export default function LeaderboardFilter({
         return;
       }
 
-      if (Array.isArray(v))
-        v.forEach((val) => searchParams.append(k, String(val)));
-      else searchParams.set(k, String(v));
+      setFlattenedParams(searchParams, k, v);
     });
 
     router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
