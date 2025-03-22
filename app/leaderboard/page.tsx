@@ -53,15 +53,6 @@ export default async function Page(props: {
   const createQueryString = (params: Record<string, string | number>) => {
     const newParams = new URLSearchParams();
 
-    // // Add existing search params
-    // Object.entries(searchParams).forEach(([key, value]) => {
-    //   if (Array.isArray(value)) {
-    //     value.forEach((v) => newParams.append(key, v));
-    //   } else if (value) {
-    //     newParams.set(key, value);
-    //   }
-    // });
-
     // Add/update new params
     Object.entries(params).forEach(([key, value]) => {
       newParams.set(key, value.toString());
