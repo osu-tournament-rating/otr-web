@@ -48,7 +48,10 @@ export default async function Page(props: {
     console.debug(parseResult.error.issues);
   }
 
-  const filters = parseResult.success ? parseResult.data : {};
+  const filters = parseResult.success
+    ? (parseResult.data as z.infer<typeof leaderboardFilterSchema>)
+    : ({} as z.infer<typeof leaderboardFilterSchema>);
+
   const page = filters.page ?? 1;
 
   const data = await getData({ ...filters });
@@ -135,7 +138,7 @@ export default async function Page(props: {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-4 flex justify-end">
-        <LeaderboardFilter />
+        <LeaderboardFilter currentFilter={filters} />
       </div>
       {data && (
         <LeaderboardDataTable

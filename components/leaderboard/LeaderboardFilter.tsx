@@ -36,7 +36,11 @@ const scaleInverseExponentially = (value: number, min: number, max: number) => {
   return (Math.log(value / min) / Math.log(max / min)) * 100;
 };
 
-export default function LeaderboardFilter() {
+export default function LeaderboardFilter({
+  currentFilter,
+}: {
+  currentFilter: z.infer<typeof leaderboardFilterSchema>;
+}) {
   const router = useRouter();
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
@@ -81,13 +85,14 @@ export default function LeaderboardFilter() {
             {/* Rank Range Slider */}
             <FormField
               control={form.control}
+              defaultValue={currentFilter.minOsuRank}
               name="minOsuRank"
               render={({
                 field: { value: minRank, onChange: onMinRankChange },
-                fieldState,
               }) => (
                 <FormField
                   control={form.control}
+                  defaultValue={currentFilter.maxOsuRank}
                   name="maxOsuRank"
                   render={({
                     field: { value: maxRank, onChange: onMaxRankChange },
@@ -147,13 +152,14 @@ export default function LeaderboardFilter() {
             {/* Rating Range Slider */}
             <FormField
               control={form.control}
+              defaultValue={currentFilter.minRating}
               name="minRating"
               render={({
                 field: { value: minRating, onChange: onMinRatingChange },
-                fieldState,
               }) => (
                 <FormField
                   control={form.control}
+                  defaultValue={currentFilter.maxRating}
                   name="maxRating"
                   render={({
                     field: { value: maxRating, onChange: onMaxRatingChange },
@@ -202,13 +208,14 @@ export default function LeaderboardFilter() {
             {/* Matches Range Slider */}
             <FormField
               control={form.control}
+              defaultValue={currentFilter.minMatches}
               name="minMatches"
               render={({
                 field: { value: minMatches, onChange: onMinMatchesChange },
-                fieldState,
               }) => (
                 <FormField
                   control={form.control}
+                  defaultValue={currentFilter.maxMatches}
                   name="maxMatches"
                   render={({
                     field: { value: maxMatches, onChange: onMaxMatchesChange },
@@ -257,13 +264,14 @@ export default function LeaderboardFilter() {
             {/* Winrate Range Slider */}
             <FormField
               control={form.control}
+              defaultValue={currentFilter.minWinRate}
               name="minWinRate"
               render={({
                 field: { value: minWinRate, onChange: onMinWinRateChange },
-                fieldState,
               }) => (
                 <FormField
                   control={form.control}
+                  defaultValue={currentFilter.maxWinRate}
                   name="maxWinRate"
                   render={({
                     field: { value: maxWinRate, onChange: onMaxWinRateChange },
@@ -314,8 +322,9 @@ export default function LeaderboardFilter() {
             {/* Tiers */}
             <FormField
               control={form.control}
+              defaultValue={currentFilter.tiers}
               name="tiers"
-              render={({ field: { value, onChange }, fieldState }) => (
+              render={({ field: { value, onChange } }) => (
                 <FormItem>
                   <FormLabel>Tiers</FormLabel>
                   <MultipleSelect
