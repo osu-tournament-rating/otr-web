@@ -133,7 +133,7 @@ export default async function Page(props: {
       </div>
       {data && (
         <LeaderboardDataTable
-          // @ts-expect-error
+          // @ts-expect-error: `columns` is safe to use here without strict type checking
           columns={columns}
           data={data.result.leaderboard}
         />
