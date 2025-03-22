@@ -15,15 +15,12 @@ import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { auth } from '@/auth';
-import { setFlattenedParams } from '@/lib/utils/urlParams';
+import { createUrlParamsFromSchema } from '@/lib/utils/leaderboard';
 
-async function getData(
-  params: z.infer<typeof leaderboardFilterSchema> & { page?: number }
-) {
+async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
   const session = await auth();
   return await leaderboards.get({
     ruleset: session?.user?.settings?.ruleset ?? Ruleset.Osu,
-    pageSize: 25,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
     gold: params.tiers?.includes('gold'),
@@ -53,23 +50,9 @@ export default async function Page(props: {
   const totalPages = data.result.pages;
 
   // Helper to create query string with existing params
-  const createQueryString = (params: Record<string, string | number>) => {
-    const newParams = new URLSearchParams();
-
-    Object.entries(params).forEach(([k, v]) => {
-      newParams.set(k, v.toString());
-    });
-
-    // Add existing params, omit the page parameter
-    Object.entries(searchParams).forEach(([k, v]) => {
-      if (v === undefined || k == 'page') {
-        return;
-      }
-
-      setFlattenedParams(newParams, k, v);
-    });
-
-    return newParams.toString();
+  const createQueryString = (page: number) => {
+    filter.page = page;
+    return `/leaderboard?${createUrlParamsFromSchema(filter).toString()}`;
   };
 
   const renderPageNumbers = () => {
@@ -80,7 +63,7 @@ export default async function Page(props: {
     if (startPage > 1) {
       pages.push(
         <PaginationItem key={1}>
-          <Link href={`?${createQueryString({ page: 1 })}`} className="px-4">
+          <Link href={createQueryString(1)} className="px-4">
             1
           </Link>
         </PaginationItem>
@@ -96,7 +79,7 @@ export default async function Page(props: {
       pages.push(
         <PaginationItem key={i}>
           <Link
-            href={`?${createQueryString({ page: i })}`}
+            href={createQueryString(i)}
             className={`px-4 ${i === page ? 'font-bold' : ''}`}
           >
             {i}
@@ -113,10 +96,7 @@ export default async function Page(props: {
       );
       pages.push(
         <PaginationItem key={totalPages}>
-          <Link
-            href={`?${createQueryString({ page: totalPages })}`}
-            className="px-4"
-          >
+          <Link href={createQueryString(totalPages)} className="px-4">
             {totalPages}
           </Link>
         </PaginationItem>
@@ -142,9 +122,7 @@ export default async function Page(props: {
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              href={
-                page > 1 ? `?${createQueryString({ page: page - 1 })}` : '#'
-              }
+              href={page > 1 ? createQueryString(page - 1) : '#'}
               aria-disabled={page <= 1}
               className={page <= 1 ? 'cursor-not-allowed opacity-50' : ''}
             />
@@ -152,11 +130,7 @@ export default async function Page(props: {
           {renderPageNumbers()}
           <PaginationItem>
             <PaginationNext
-              href={
-                page < totalPages
-                  ? `?${createQueryString({ page: page + 1 })}`
-                  : '#'
-              }
+              href={page < totalPages ? createQueryString(page + 1) : '#'}
               aria-disabled={page >= totalPages}
               className={
                 page >= totalPages ? 'cursor-not-allowed opacity-50' : ''
