@@ -50,8 +50,6 @@ export default async function Page(props: {
     maxWinRate: (filter.maxWinRate ?? 100) / 100,
   });
 
-  // TODO: .pages exists on result, API client is not updating LeaderboardDTO
-  // TODO: correctly at the moment.
   const totalPages = data.result.pages;
 
   // Helper to create query string with existing params
