@@ -40,21 +40,10 @@ export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
+  const filter = leaderboardFilterSchema.parse(searchParams);
+  const page = filter.page ?? 1;
 
-  // Preprocess searchParams to convert numeric strings to numbers and ensure tiers is an array
-  const parseResult = leaderboardFilterSchema.safeParse(searchParams);
-
-  if (!parseResult.success) {
-    console.debug(parseResult.error.issues);
-  }
-
-  const filters = parseResult.success
-    ? (parseResult.data as z.infer<typeof leaderboardFilterSchema>)
-    : ({} as z.infer<typeof leaderboardFilterSchema>);
-
-  const page = filters.page ?? 1;
-
-  const data = await getData({ ...filters });
+  const data = await getData({ ...filter });
 
   // TODO: .pages exists on result, API client is not updating LeaderboardDTO
   // TODO: correctly at the moment.
@@ -64,14 +53,14 @@ export default async function Page(props: {
   const createQueryString = (params: Record<string, string | number>) => {
     const newParams = new URLSearchParams();
 
-    // Add existing search params
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach((v) => newParams.append(key, v));
-      } else if (value) {
-        newParams.set(key, value);
-      }
-    });
+    // // Add existing search params
+    // Object.entries(searchParams).forEach(([key, value]) => {
+    //   if (Array.isArray(value)) {
+    //     value.forEach((v) => newParams.append(key, v));
+    //   } else if (value) {
+    //     newParams.set(key, value);
+    //   }
+    // });
 
     // Add/update new params
     Object.entries(params).forEach(([key, value]) => {
@@ -138,7 +127,7 @@ export default async function Page(props: {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-4 flex justify-end">
-        <LeaderboardFilter currentFilter={filters} />
+        <LeaderboardFilter filter={filter} />
       </div>
       {data && (
         <LeaderboardDataTable

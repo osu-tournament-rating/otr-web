@@ -4,7 +4,7 @@ import { leaderboardFilterSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Form, FormField, FormItem, FormLabel } from '../ui/form';
 import { MultipleSelect, Option } from '../select/multiple-select';
 import { Slider } from '../ui/slider';
@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
 import { leaderboardTierFilterValues } from '@/lib/utils/leaderboard';
 
-const tierOptions: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
+const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
   { label: 'Gold', value: 'gold' },
@@ -37,39 +37,39 @@ const scaleInverseExponentially = (value: number, min: number, max: number) => {
 };
 
 export default function LeaderboardFilter({
-  currentFilter,
+  filter,
 }: {
-  currentFilter: z.infer<typeof leaderboardFilterSchema>;
+  filter: z.infer<typeof leaderboardFilterSchema>;
 }) {
-  const router = useRouter();
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
+    values: filter,
     mode: 'onSubmit',
   });
 
-  const handleSubmit = form.handleSubmit((values) => {
-    const queryParams = new URLSearchParams();
+  const pathName = usePathname();
+  const router = useRouter();
 
-    Object.entries(values).forEach(([key, value]) => {
-      console.log([key, value]);
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          // Delete existing params first to avoid duplicates
-          queryParams.delete(key);
-          value.forEach((v) => queryParams.append(key, v));
-        } else {
-          queryParams.set(key, value.toString());
-        }
+  const handleSubmit = form.handleSubmit((values) => {
+    // Build search params
+    const searchParams = new URLSearchParams();
+
+    Object.entries(values).forEach(([k, v]) => {
+      if (v === undefined) {
+        return;
+      }
+
+      if (Array.isArray(v)) {
+        v.forEach((val) => searchParams.append(k, String(val)));
+      } else {
+        searchParams.set(k, String(v));
       }
     });
 
-    router.push(`/leaderboard?${queryParams.toString()}`);
-  });
+    const query = searchParams.size > 0 ? `?${searchParams}` : '';
 
-  const handleClearFilters = () => {
-    form.reset();
-    router.push('/leaderboard');
-  };
+    router.push(pathName + query);
+  });
 
   return (
     <Popover>
@@ -85,14 +85,12 @@ export default function LeaderboardFilter({
             {/* Rank Range Slider */}
             <FormField
               control={form.control}
-              defaultValue={currentFilter.minOsuRank}
               name="minOsuRank"
               render={({
                 field: { value: minRank, onChange: onMinRankChange },
               }) => (
                 <FormField
                   control={form.control}
-                  defaultValue={currentFilter.maxOsuRank}
                   name="maxOsuRank"
                   render={({
                     field: { value: maxRank, onChange: onMaxRankChange },
@@ -152,14 +150,12 @@ export default function LeaderboardFilter({
             {/* Rating Range Slider */}
             <FormField
               control={form.control}
-              defaultValue={currentFilter.minRating}
               name="minRating"
               render={({
                 field: { value: minRating, onChange: onMinRatingChange },
               }) => (
                 <FormField
                   control={form.control}
-                  defaultValue={currentFilter.maxRating}
                   name="maxRating"
                   render={({
                     field: { value: maxRating, onChange: onMaxRatingChange },
@@ -208,14 +204,12 @@ export default function LeaderboardFilter({
             {/* Matches Range Slider */}
             <FormField
               control={form.control}
-              defaultValue={currentFilter.minMatches}
               name="minMatches"
               render={({
                 field: { value: minMatches, onChange: onMinMatchesChange },
               }) => (
                 <FormField
                   control={form.control}
-                  defaultValue={currentFilter.maxMatches}
                   name="maxMatches"
                   render={({
                     field: { value: maxMatches, onChange: onMaxMatchesChange },
@@ -264,14 +258,12 @@ export default function LeaderboardFilter({
             {/* Winrate Range Slider */}
             <FormField
               control={form.control}
-              defaultValue={currentFilter.minWinRate}
               name="minWinRate"
               render={({
                 field: { value: minWinRate, onChange: onMinWinRateChange },
               }) => (
                 <FormField
                   control={form.control}
-                  defaultValue={currentFilter.maxWinRate}
                   name="maxWinRate"
                   render={({
                     field: { value: maxWinRate, onChange: onMaxWinRateChange },
@@ -322,14 +314,13 @@ export default function LeaderboardFilter({
             {/* Tiers */}
             <FormField
               control={form.control}
-              defaultValue={currentFilter.tiers}
               name="tiers"
               render={({ field: { value, onChange } }) => (
                 <FormItem>
                   <FormLabel>Tiers</FormLabel>
                   <MultipleSelect
                     selected={value || []}
-                    options={tierOptions}
+                    options={tierItems}
                     onChange={onChange}
                   />
                 </FormItem>
@@ -341,7 +332,7 @@ export default function LeaderboardFilter({
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleClearFilters}
+                onClick={() => form.reset()}
               >
                 <X className="h-4 w-4" />
                 Clear

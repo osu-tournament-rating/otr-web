@@ -75,13 +75,13 @@ export const adminNoteFormSchema = z.object({
 });
 
 export const leaderboardFilterSchema = z.object({
-  page: z.coerce.number().min(1).optional(),
-  minOsuRank: z.coerce.number().min(1).optional(),
-  maxOsuRank: z.coerce.number().min(1).optional(),
-  minRating: z.coerce.number().min(100).max(3500).optional(),
-  maxRating: z.coerce.number().min(100).max(3500).optional(),
-  minMatches: z.coerce.number().min(1).optional(),
-  maxMatches: z.coerce.number().min(1).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  minOsuRank: z.coerce.number().int().min(1).optional(),
+  maxOsuRank: z.coerce.number().int().min(1).optional(),
+  minRating: z.coerce.number().int().min(100).max(3500).optional(),
+  maxRating: z.coerce.number().int().min(100).max(3500).optional(),
+  minMatches: z.coerce.number().int().min(1).optional(),
+  maxMatches: z.coerce.number().int().min(1).optional(),
   minWinRate: z.coerce.number().min(0).max(1).optional(),
   maxWinRate: z.coerce.number().min(0).max(1).optional(),
   tiers: z.preprocess(
