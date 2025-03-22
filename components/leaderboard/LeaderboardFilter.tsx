@@ -4,7 +4,7 @@ import { leaderboardFilterSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Form, FormField, FormItem, FormLabel } from '../ui/form';
 import { MultipleSelect, Option } from '../select/multiple-select';
 import { Slider } from '../ui/slider';
@@ -12,8 +12,12 @@ import { Button } from '../ui/button';
 import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
-import { leaderboardTierFilterValues } from '@/lib/utils/leaderboard';
+import {
+  createUrlParamsFromSchema,
+  leaderboardTierFilterValues,
+} from '@/lib/utils/leaderboard';
 import { setFlattenedParams } from '@/lib/utils/urlParams';
+import { isNumberObject } from 'util/types';
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -59,17 +63,14 @@ export default function LeaderboardFilter({
 
   const pathName = usePathname();
   const router = useRouter();
+  const params = useSearchParams();
 
-  const onSubmit = (values: z.infer<typeof leaderboardFilterSchema>) => {
-    const searchParams = new URLSearchParams();
+  const onSubmit = (schema: z.infer<typeof leaderboardFilterSchema>) => {
+    const searchParams = createUrlParamsFromSchema(schema);
 
-    Object.entries(values).forEach(([k, v]) => {
-      if (v === undefined) return;
-
-      setFlattenedParams(searchParams, k, v);
-    });
-
-    router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
+    if (params.toString() != searchParams.toString()) {
+      router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
+    }
   };
 
   return (

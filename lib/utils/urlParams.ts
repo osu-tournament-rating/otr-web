@@ -4,14 +4,14 @@
  *
  * It is assumed that each type provided can be safely cast to a string.
  */
-export function setFlattenedParams(
+export function setFlattenedParams<T>(
   params: URLSearchParams,
   key: string,
-  data: any | any[]
+  data: T | T[]
 ) {
   if (Array.isArray(data))
     data.forEach((val) => params.append(key, String(val)));
   else {
-    params.set(key, data);
+    params.set(key, String(data));
   }
 }

@@ -1,3 +1,7 @@
+import { z } from 'zod';
+import { leaderboardFilterSchema } from '../schema';
+import { setFlattenedParams } from './urlParams';
+
 export const leaderboardTierFilterValues = [
   'bronze',
   'silver',
@@ -9,3 +13,17 @@ export const leaderboardTierFilterValues = [
   'grandmaster',
   'eliteGrandmaster',
 ] as const;
+
+export function createUrlParamsFromSchema(
+  schema: z.infer<typeof leaderboardFilterSchema>
+) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(schema).forEach(([k, v]) => {
+    if (v === undefined) return;
+
+    setFlattenedParams<string | number>(searchParams, k, v);
+  });
+
+  return searchParams;
+}
