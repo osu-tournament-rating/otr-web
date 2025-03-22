@@ -13,6 +13,7 @@ import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
 import { leaderboardTierFilterValues } from '@/lib/utils/leaderboard';
+import { useEffect } from 'react';
 
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
@@ -25,6 +26,19 @@ const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Grandmaster', value: 'grandmaster' },
   { label: 'Elite Grandmaster', value: 'eliteGrandmaster' },
 ];
+
+const defaultFilterValues: z.infer<typeof leaderboardFilterSchema> =
+  leaderboardFilterSchema.parse({
+    minOsuRank: 1,
+    maxOsuRank: 100000,
+    minRating: 100,
+    maxRating: 3500,
+    minMatches: 1,
+    maxMatches: 1000,
+    minWinRate: 0,
+    maxWinRate: 1,
+    tiers: [],
+  });
 
 // Exponential scaling function
 const scaleExponentially = (value: number, min: number, max: number) => {
@@ -44,32 +58,41 @@ export default function LeaderboardFilter({
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
     values: filter,
-    mode: 'onSubmit',
+    defaultValues: defaultFilterValues,
+    mode: 'onBlur',
   });
+
+  const { watch, handleSubmit } = form;
 
   const pathName = usePathname();
   const router = useRouter();
 
-  const handleSubmit = form.handleSubmit((values) => {
-    // Build search params
-    const searchParams = new URLSearchParams();
+  useEffect(() => {
+    const { unsubscribe } = watch(() =>
+      handleSubmit((values) => {
+        // Build search params
+        const searchParams = new URLSearchParams();
 
-    Object.entries(values).forEach(([k, v]) => {
-      if (v === undefined) {
-        return;
-      }
+        Object.entries(values).forEach(([k, v]) => {
+          if (v === undefined) {
+            return;
+          }
 
-      if (Array.isArray(v)) {
-        v.forEach((val) => searchParams.append(k, String(val)));
-      } else {
-        searchParams.set(k, String(v));
-      }
-    });
+          if (Array.isArray(v)) {
+            v.forEach((val) => searchParams.append(k, String(val)));
+          } else {
+            searchParams.set(k, String(v));
+          }
+        });
 
-    const query = searchParams.size > 0 ? `?${searchParams}` : '';
+        const query = searchParams.size > 0 ? `?${searchParams}` : '';
 
-    router.push(pathName + query);
-  });
+        router.push(pathName + query);
+      })()
+    );
+
+    return () => unsubscribe();
+  }, [watch, handleSubmit, filter, router, pathName]);
 
   return (
     <Popover>
