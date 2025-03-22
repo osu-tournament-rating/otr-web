@@ -84,7 +84,6 @@ export const leaderboardFilterSchema = z.object({
   maxMatches: z.number().min(1).optional(),
   minWinRate: z.number().min(0).max(1).optional(),
   maxWinRate: z.number().min(0).max(1).optional(),
-  // tiers: z.array(z.enum(leaderboardTierFilterValues)).optional()
   tiers: z.preprocess((val) => {
     if (typeof val === 'string') {
       return [val as string];
