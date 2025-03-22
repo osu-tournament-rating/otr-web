@@ -42,34 +42,16 @@ export default async function Page(props: {
   const searchParams = await props.searchParams;
 
   // Preprocess searchParams to convert numeric strings to numbers and ensure tiers is an array
-  const processedSearchParams = Object.fromEntries(
-    Object.entries(searchParams).map(([key, value]) => {
-      if (key === 'tiers') {
-        // Ensure tiers is always an array
-        if (Array.isArray(value)) {
-          return [key, value];
-        } else if (typeof value === 'string') {
-          return [key, [value]];
-        } else {
-          return [key, []];
-        }
-      } else if (typeof value === 'string' && !isNaN(Number(value))) {
-        return [key, Number(value)];
-      }
-      return [key, value];
-    })
-  );
+  const parseResult = leaderboardFilterSchema.safeParse(searchParams);
 
-  const parsedFilters = leaderboardFilterSchema.safeParse(
-    processedSearchParams
-  );
-  const filters = parsedFilters.success ? parsedFilters.data : {};
-  const page =
-    typeof searchParams.page === 'string'
-      ? parseInt(searchParams.page) || 1
-      : 1;
+  if (!parseResult.success) {
+    console.debug(parseResult.error.issues);
+  }
 
-  const data = await getData({ ...filters, page });
+  const filters = parseResult.success ? parseResult.data : {};
+  const page = filters.page ?? 1;
+
+  const data = await getData({ ...filters });
 
   // TODO: .pages exists on result, API client is not updating LeaderboardDTO
   // TODO: correctly at the moment.
