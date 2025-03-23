@@ -16,8 +16,6 @@ import {
   createUrlParamsFromSchema,
   leaderboardTierFilterValues,
 } from '@/lib/utils/leaderboard';
-import { setFlattenedParams } from '@/lib/utils/urlParams';
-import { isNumberObject } from 'util/types';
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -30,7 +28,7 @@ const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Elite Grandmaster', value: 'eliteGrandmaster' },
 ];
 
-const defaultFilterValues: z.infer<typeof leaderboardFilterSchema> = {
+export const defaultLeaderboardFilterValues: z.infer<typeof leaderboardFilterSchema> = {
   minOsuRank: 1,
   maxOsuRank: 100000,
   minRating: 100,
@@ -58,7 +56,7 @@ export default function LeaderboardFilter({
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
     values: filter,
-    defaultValues: defaultFilterValues,
+    defaultValues: defaultLeaderboardFilterValues,
   });
 
   const pathName = usePathname();
@@ -101,30 +99,30 @@ export default function LeaderboardFilter({
                         value={[
                           scaleInverseExponentially(
                             minRankField.value ??
-                              defaultFilterValues.minOsuRank!,
-                            defaultFilterValues.minOsuRank!,
-                            defaultFilterValues.maxOsuRank!
+                              defaultLeaderboardFilterValues.minOsuRank!,
+                            defaultLeaderboardFilterValues.minOsuRank!,
+                            defaultLeaderboardFilterValues.maxOsuRank!
                           ),
                           scaleInverseExponentially(
                             maxRankField.value ??
-                              defaultFilterValues.maxOsuRank!,
-                            defaultFilterValues.minOsuRank!,
-                            defaultFilterValues.maxOsuRank!
+                              defaultLeaderboardFilterValues.maxOsuRank!,
+                            defaultLeaderboardFilterValues.minOsuRank!,
+                            defaultLeaderboardFilterValues.maxOsuRank!
                           ),
                         ]}
                         onValueChange={(vals) => {
                           minRankField.onChange(
                             scaleExponentially(
                               vals[0],
-                              defaultFilterValues.minOsuRank!,
-                              defaultFilterValues.maxOsuRank!
+                              defaultLeaderboardFilterValues.minOsuRank!,
+                              defaultLeaderboardFilterValues.maxOsuRank!
                             )
                           );
                           maxRankField.onChange(
                             scaleExponentially(
                               vals[1],
-                              defaultFilterValues.minOsuRank!,
-                              defaultFilterValues.maxOsuRank!
+                              defaultLeaderboardFilterValues.minOsuRank!,
+                              defaultLeaderboardFilterValues.maxOsuRank!
                             )
                           );
                         }}
@@ -135,9 +133,9 @@ export default function LeaderboardFilter({
                         <Input
                           type="number"
                           value={
-                            minRankField.value ?? defaultFilterValues.minOsuRank
+                            minRankField.value ?? defaultLeaderboardFilterValues.minOsuRank
                           }
-                          min={defaultFilterValues.minOsuRank!}
+                          min={defaultLeaderboardFilterValues.minOsuRank!}
                           max={maxRankField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -148,10 +146,10 @@ export default function LeaderboardFilter({
                         <Input
                           type="number"
                           value={
-                            maxRankField.value ?? defaultFilterValues.maxOsuRank
+                            maxRankField.value ?? defaultLeaderboardFilterValues.maxOsuRank
                           }
                           min={minRankField.value}
-                          max={defaultFilterValues.maxOsuRank!}
+                          max={defaultLeaderboardFilterValues.maxOsuRank!}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxRankField.onChange(Number(e.target.value))
@@ -176,14 +174,14 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Rating</FormLabel>
                       <Slider
-                        min={defaultFilterValues.minRating!}
-                        max={defaultFilterValues.maxRating!}
+                        min={defaultLeaderboardFilterValues.minRating!}
+                        max={defaultLeaderboardFilterValues.maxRating!}
                         step={10}
                         value={[
                           minRatingField.value ??
-                            defaultFilterValues.minRating!,
+                            defaultLeaderboardFilterValues.minRating!,
                           maxRatingField.value ??
-                            defaultFilterValues.maxRating!,
+                            defaultLeaderboardFilterValues.maxRating!,
                         ]}
                         onValueChange={(vals) => {
                           minRatingField.onChange(vals[0]);
@@ -197,9 +195,9 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             minRatingField.value ??
-                            defaultFilterValues.minRating
+                            defaultLeaderboardFilterValues.minRating
                           }
-                          min={defaultFilterValues.minRating!}
+                          min={defaultLeaderboardFilterValues.minRating!}
                           max={maxRatingField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -211,10 +209,10 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             maxRatingField.value ??
-                            defaultFilterValues.maxRating
+                            defaultLeaderboardFilterValues.maxRating
                           }
                           min={minRatingField.value}
-                          max={defaultFilterValues.maxRating!}
+                          max={defaultLeaderboardFilterValues.maxRating!}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxRatingField.onChange(Number(e.target.value))
@@ -238,14 +236,14 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Matches</FormLabel>
                       <Slider
-                        min={defaultFilterValues.minMatches!}
-                        max={defaultFilterValues.maxMatches!}
+                        min={defaultLeaderboardFilterValues.minMatches!}
+                        max={defaultLeaderboardFilterValues.maxMatches!}
                         step={1}
                         value={[
                           minMatchesField.value ??
-                            defaultFilterValues.minMatches!,
+                            defaultLeaderboardFilterValues.minMatches!,
                           maxMatchesField.value ??
-                            defaultFilterValues.maxMatches!,
+                            defaultLeaderboardFilterValues.maxMatches!,
                         ]}
                         onValueChange={(vals) => {
                           minMatchesField.onChange(vals[0]);
@@ -259,9 +257,9 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             minMatchesField.value ??
-                            defaultFilterValues.minMatches
+                            defaultLeaderboardFilterValues.minMatches
                           }
-                          min={defaultFilterValues.minMatches}
+                          min={defaultLeaderboardFilterValues.minMatches}
                           max={maxMatchesField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -273,10 +271,10 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             maxMatchesField.value ??
-                            defaultFilterValues.maxMatches
+                            defaultLeaderboardFilterValues.maxMatches
                           }
                           min={minMatchesField.value}
-                          max={defaultFilterValues.maxMatches}
+                          max={defaultLeaderboardFilterValues.maxMatches}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxMatchesField.onChange(Number(e.target.value))
@@ -300,14 +298,14 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Win rate %</FormLabel>
                       <Slider
-                        min={defaultFilterValues.minWinRate}
-                        max={defaultFilterValues.maxWinRate}
+                        min={defaultLeaderboardFilterValues.minWinRate}
+                        max={defaultLeaderboardFilterValues.maxWinRate}
                         step={0.1}
                         value={[
                           minWinRateField.value ??
-                            defaultFilterValues.minWinRate!,
+                            defaultLeaderboardFilterValues.minWinRate!,
                           maxWinRateField.value ??
-                            defaultFilterValues.maxWinRate!,
+                            defaultLeaderboardFilterValues.maxWinRate!,
                         ]}
                         onValueChange={(vals) => {
                           minWinRateField.onChange(vals[0]);
@@ -321,9 +319,9 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             minWinRateField.value ??
-                            defaultFilterValues.minWinRate
+                            defaultLeaderboardFilterValues.minWinRate
                           }
-                          min={defaultFilterValues.minWinRate}
+                          min={defaultLeaderboardFilterValues.minWinRate}
                           max={maxWinRateField.value}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
@@ -335,10 +333,10 @@ export default function LeaderboardFilter({
                           type="number"
                           value={
                             maxWinRateField.value ??
-                            defaultFilterValues.maxWinRate
+                            defaultLeaderboardFilterValues.maxWinRate
                           }
                           min={minWinRateField.value}
-                          max={defaultFilterValues.maxWinRate}
+                          max={defaultLeaderboardFilterValues.maxWinRate}
                           className="w-20 p-1 text-center"
                           onChange={(e) =>
                             maxWinRateField.onChange(parseFloat(e.target.value))
@@ -375,7 +373,7 @@ export default function LeaderboardFilter({
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  form.reset(defaultFilterValues);
+                  form.reset(defaultLeaderboardFilterValues);
                   router.push('/leaderboard');
                 }}
               >

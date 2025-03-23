@@ -20,7 +20,11 @@ export function createUrlParamsFromSchema(
   const searchParams = new URLSearchParams();
 
   Object.entries(schema).forEach(([k, v]) => {
-    if (v === undefined) return;
+    if (
+      v === undefined ||
+      leaderboardTierFilterValues[k as keyof typeof leaderboardTierFilterValues]
+    )
+      return;
 
     setFlattenedParams<string | number>(searchParams, k, v);
   });
