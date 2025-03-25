@@ -14,19 +14,34 @@ export const leaderboardTierFilterValues = [
   'eliteGrandmaster',
 ] as const;
 
-export function createUrlParamsFromSchema(
+export const defaultLeaderboardFilterValues: z.infer<
+  typeof leaderboardFilterSchema
+> = {
+  page: 1,
+  minOsuRank: 1,
+  maxOsuRank: 100000,
+  minRating: 100,
+  maxRating: 3500,
+  minMatches: 1,
+  maxMatches: 500,
+  minWinRate: 0,
+  maxWinRate: 100,
+  tiers: [],
+};
+
+export function createSearchParamsFromSchema(
   schema: z.infer<typeof leaderboardFilterSchema>
-) {
+): URLSearchParams {
   const searchParams = new URLSearchParams();
-
   Object.entries(schema).forEach(([k, v]) => {
-    if (
-      v === undefined ||
-      leaderboardTierFilterValues[k as keyof typeof leaderboardTierFilterValues]
-    )
-      return;
+    if (k in defaultLeaderboardFilterValues) {
+      const key = k as keyof typeof defaultLeaderboardFilterValues;
+      const defaultValue = defaultLeaderboardFilterValues[key];
 
-    setFlattenedParams<string | number>(searchParams, k, v);
+      if (v === undefined || v === defaultValue) return;
+
+      setFlattenedParams<string | number>(searchParams, k, v);
+    }
   });
 
   return searchParams;

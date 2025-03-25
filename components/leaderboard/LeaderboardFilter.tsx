@@ -13,7 +13,8 @@ import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
 import {
-  createUrlParamsFromSchema,
+  createSearchParamsFromSchema,
+  defaultLeaderboardFilterValues,
   leaderboardTierFilterValues,
 } from '@/lib/utils/leaderboard';
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
@@ -27,18 +28,6 @@ const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Grandmaster', value: 'grandmaster' },
   { label: 'Elite Grandmaster', value: 'eliteGrandmaster' },
 ];
-
-export const defaultLeaderboardFilterValues: z.infer<typeof leaderboardFilterSchema> = {
-  minOsuRank: 1,
-  maxOsuRank: 100000,
-  minRating: 100,
-  maxRating: 3500,
-  minMatches: 1,
-  maxMatches: 500,
-  minWinRate: 0,
-  maxWinRate: 100,
-  tiers: [],
-};
 
 const scaleExponentially = (value: number, min: number, max: number) => {
   return Math.round(min * Math.pow(max / min, value / 100));
@@ -59,16 +48,20 @@ export default function LeaderboardFilter({
     defaultValues: defaultLeaderboardFilterValues,
   });
 
-  const pathName = usePathname();
   const router = useRouter();
   const params = useSearchParams();
+  const pathName = usePathname();
 
   const onSubmit = (schema: z.infer<typeof leaderboardFilterSchema>) => {
-    const searchParams = createUrlParamsFromSchema(schema);
+    const searchParams = createSearchParamsFromSchema(schema);
 
-    if (params.toString() != searchParams.toString()) {
-      router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
+    if (searchParams.toString() === params.toString()) {
+      return;
     }
+
+    searchParams.set('page', '1');
+
+    router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
   };
 
   return (
@@ -133,7 +126,8 @@ export default function LeaderboardFilter({
                         <Input
                           type="number"
                           value={
-                            minRankField.value ?? defaultLeaderboardFilterValues.minOsuRank
+                            minRankField.value ??
+                            defaultLeaderboardFilterValues.minOsuRank
                           }
                           min={defaultLeaderboardFilterValues.minOsuRank!}
                           max={maxRankField.value}
@@ -146,7 +140,8 @@ export default function LeaderboardFilter({
                         <Input
                           type="number"
                           value={
-                            maxRankField.value ?? defaultLeaderboardFilterValues.maxOsuRank
+                            maxRankField.value ??
+                            defaultLeaderboardFilterValues.maxOsuRank
                           }
                           min={minRankField.value}
                           max={defaultLeaderboardFilterValues.maxOsuRank!}
