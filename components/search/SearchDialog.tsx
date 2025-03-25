@@ -8,14 +8,14 @@ import { Search, SearchIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import PlayerSearchResultSection, {
-  SearchResultData,
-} from './SearchResultSection';
+import SearchResults, { SearchResultData } from './SearchResults';
 
 export default function SearchDialog() {
   const [searchText, setSearchText] = useState('');
   const [isFetching, setIsFetching] = useState(false);
-  const [data, setData] = useState<SearchResponseCollectionDTO | null>(null);
+  const [data, setData] = useState<SearchResponseCollectionDTO | undefined>(
+    undefined
+  );
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function SearchDialog() {
       }, 800);
     } else {
       // If the user clears the text field, clear the data
-      setData(null);
+      setData(undefined);
     }
 
     return () => {
@@ -55,14 +55,22 @@ export default function SearchDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild className="flex cursor-pointer">
-        <Button className="cursor-pointer" variant="ghost" size="icon">
+      <DialogTrigger asChild className="cursor-pointer">
+        <Button
+          className="cursor-pointer"
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setData(undefined);
+            setSearchText('');
+          }}
+        >
           <Search />
         </Button>
       </DialogTrigger>
       <DialogTitle hidden />
-      <DialogContent className="fixed h-[80vh] max-h-[80vh] font-sans [&>button]:hidden">
-        <div className="sticky top-0 z-10 flex flex-row gap-3 bg-background">
+      <DialogContent className="max-h-[80%] overflow-auto font-sans [&>button]:hidden">
+        <div className="top-0 z-10 flex flex-row gap-3 bg-background">
           <Input
             className="mr-4"
             placeholder="Search"
@@ -70,12 +78,10 @@ export default function SearchDialog() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <SearchIcon className="mt-1" />
+          <SearchIcon className="m-auto" />
         </div>
-        <div className="flex-col gap-5 overflow-y-scroll">
-          <PlayerSearchResultSection
-            data={data?.players}
-          />
+        <div className="flex-col gap-5">
+          <SearchResults input={searchText} data={data} />
           {/* <SearchResultSection name="Tournaments" />
           <SearchResultSection name="Matches" /> */}
         </div>
