@@ -54,7 +54,7 @@ export default function AdminNoteForm() {
             </FormItem>
           )}
         />
-        <div className="space-x-2 flex justify-between">
+        <div className="flex justify-between space-x-2">
           {/* Reset changes */}
           <Button
             type="reset"
