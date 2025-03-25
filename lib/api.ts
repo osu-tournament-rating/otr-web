@@ -2,6 +2,7 @@ import { auth } from '@/auth';
 import {
   GamesWrapper,
   IOtrApiWrapperConfiguration,
+  LeaderboardsWrapper,
   MatchesWrapper,
   MeWrapper,
   OAuthWrapper,
@@ -47,9 +48,10 @@ const configuration: IOtrApiWrapperConfiguration = {
   },
 };
 
+export const games = new GamesWrapper(configuration);
+export const leaderboards = new LeaderboardsWrapper(configuration);
+export const matches = new MatchesWrapper(configuration);
 export const oAuth = new OAuthWrapper(configuration);
 export const me = new MeWrapper(configuration);
-export const tournaments = new TournamentsWrapper(configuration);
 export const search = new SearchWrapper(configuration);
-export const matches = new MatchesWrapper(configuration);
-export const games = new GamesWrapper(configuration);
+export const tournaments = new TournamentsWrapper(configuration);
