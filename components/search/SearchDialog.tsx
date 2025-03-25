@@ -69,10 +69,10 @@ export default function SearchDialog() {
         </Button>
       </DialogTrigger>
       <DialogTitle hidden />
-      <DialogContent className="max-h-[80%] overflow-auto font-sans [&>button]:hidden">
+      <DialogContent className="max-h-[80%] min-w-[50%] overflow-auto font-sans [&>button]:hidden">
         <div className="top-0 z-10 flex flex-row gap-3 bg-background">
           <Input
-            className="mr-4"
+            className="m-auto"
             placeholder="Search"
             autoFocus
             value={searchText}
@@ -80,11 +80,7 @@ export default function SearchDialog() {
           />
           <SearchIcon className="m-auto" />
         </div>
-        <div className="flex-col gap-5">
-          <SearchResults input={searchText} data={data} />
-          {/* <SearchResultSection name="Tournaments" />
-          <SearchResultSection name="Matches" /> */}
-        </div>
+        <SearchResults input={searchText} data={data} />
       </DialogContent>
     </Dialog>
   );

@@ -27,12 +27,14 @@ export default function PlayerSearchResult({
           </p>
         </Link>
       </div>
-      <div className="flex flex-row gap-5 text-accent-foreground">
+      <div className="flex flex-row gap-3 text-accent-foreground">
+        {data.rating && (
+          <p className="m-auto w-[70px] text-right">
+            {Number(data.rating).toFixed(0)} TR
+          </p>
+        )}
         {data.ratingTier && (
           <TierIcon tier={data.ratingTier} width={32} height={32} />
-        )}
-        {data.rating && (
-          <p className="m-auto w-[70px]">{Number(data.rating).toFixed(0)} TR</p>
         )}
       </div>
     </div>
