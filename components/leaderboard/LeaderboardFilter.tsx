@@ -81,9 +81,9 @@ export default function LeaderboardFilter({
         <Form {...form}>
           <form className="space-y-4">
             <FormField
-            control={form.control}
-            name="ruleset"
-            render={({ field }) => (
+              control={form.control}
+              name="ruleset"
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <ToggleGroup
@@ -96,31 +96,36 @@ export default function LeaderboardFilter({
                       className="flex gap-2"
                       type="single"
                     >
-                      {Object.entries(RulesetEnumHelper.metadata).map(([ruleset]) => (
-                        <ToggleGroupItem
-                          key={`sort-${ruleset}`}
-                          className="flex flex-auto"
-                          value={ruleset}
-                          aria-label={Ruleset[Number(ruleset)]}
-                          onClick={(e) => {
-                            if (field.value === Number(ruleset)) {
-                              e.preventDefault();
-                            }
-                          }}
-                        >
-                          <RulesetIcon 
-                            ruleset={Number(ruleset)} 
-                            className={field.value === Number(ruleset) ? 'fill-primary' : 'fill-foreground'}
-                          />
-                        </ToggleGroupItem>
-                      ))}
+                      {Object.entries(RulesetEnumHelper.metadata).map(
+                        ([ruleset]) => (
+                          <ToggleGroupItem
+                            key={`sort-${ruleset}`}
+                            className="flex flex-auto"
+                            value={ruleset}
+                            aria-label={Ruleset[Number(ruleset)]}
+                            onClick={(e) => {
+                              if (field.value === Number(ruleset)) {
+                                e.preventDefault();
+                              }
+                            }}
+                          >
+                            <RulesetIcon
+                              ruleset={Number(ruleset)}
+                              className={
+                                field.value === Number(ruleset)
+                                  ? 'fill-primary'
+                                  : 'fill-foreground'
+                              }
+                            />
+                          </ToggleGroupItem>
+                        )
+                      )}
                     </ToggleGroup>
                   </FormControl>
                 </FormItem>
-              )
-            }
-          />
-          
+              )}
+            />
+
             <FormField
               control={form.control}
               name="minOsuRank"

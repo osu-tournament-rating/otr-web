@@ -29,8 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select'
+} from '@/components/ui/dialog';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
 import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
@@ -51,7 +51,7 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
     fieldState.isDirty &&
       !fieldState.invalid &&
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
-);
+  );
 
 const modOptions = Object.entries(ModsEnumHelper.metadata)
   .filter(([, { text }]) => !!text)
