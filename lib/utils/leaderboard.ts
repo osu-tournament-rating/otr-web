@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { leaderboardFilterSchema } from '../schema';
 import { setFlattenedParams } from './urlParams';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 
 export const leaderboardTierFilterValues = [
   'bronze',
@@ -18,12 +19,13 @@ export const defaultLeaderboardFilterValues: z.infer<
   typeof leaderboardFilterSchema
 > = {
   page: 1,
+  ruleset: Ruleset.Osu,
   minOsuRank: 1,
-  maxOsuRank: 100000,
+  maxOsuRank: 1000000,
   minRating: 100,
   maxRating: 3500,
   minMatches: 1,
-  maxMatches: 500,
+  maxMatches: 1000,
   minWinRate: 0,
   maxWinRate: 100,
   tiers: [],

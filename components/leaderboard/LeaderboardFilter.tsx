@@ -5,18 +5,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Form, FormField, FormItem, FormLabel } from '../ui/form';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '../ui/form';
 import { MultipleSelect, Option } from '../select/multiple-select';
 import { Slider } from '../ui/slider';
 import { Button } from '../ui/button';
 import { Filter, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Input } from '../ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { RulesetEnumHelper } from '@/lib/enums';
 import {
   createSearchParamsFromSchema,
   defaultLeaderboardFilterValues,
   leaderboardTierFilterValues,
 } from '@/lib/utils/leaderboard';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -72,9 +77,50 @@ export default function LeaderboardFilter({
           Filters
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="end">
+      <PopoverContent className="z-1 w-80 p-4" align="end">
         <Form {...form}>
           <form className="space-y-4">
+            <FormField
+            control={form.control}
+            name="ruleset"
+            render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ToggleGroup
+                      {...field}
+                      value={String(field.value)}
+                      onValueChange={(val) => {
+                        field.onChange(Number(val));
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      className="flex gap-2"
+                      type="single"
+                    >
+                      {Object.entries(RulesetEnumHelper.metadata).map(([ruleset]) => (
+                        <ToggleGroupItem
+                          key={`sort-${ruleset}`}
+                          className="flex flex-auto"
+                          value={ruleset}
+                          aria-label={Ruleset[Number(ruleset)]}
+                          onClick={(e) => {
+                            if (field.value === Number(ruleset)) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
+                          <RulesetIcon 
+                            ruleset={Number(ruleset)} 
+                            className={field.value === Number(ruleset) ? 'fill-primary' : 'fill-foreground'}
+                          />
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </FormControl>
+                </FormItem>
+              )
+            }
+          />
+          
             <FormField
               control={form.control}
               name="minOsuRank"
@@ -84,8 +130,9 @@ export default function LeaderboardFilter({
                   name="maxOsuRank"
                   render={({ field: maxRankField }) => (
                     <FormItem>
-                      <FormLabel>Rank</FormLabel>
+                      <FormLabel>osu! Rank</FormLabel>
                       <Slider
+                        // All exponentially scaling sliders have a range of 0 - 100
                         min={0}
                         max={100}
                         step={1}
@@ -171,7 +218,7 @@ export default function LeaderboardFilter({
                       <Slider
                         min={defaultLeaderboardFilterValues.minRating!}
                         max={defaultLeaderboardFilterValues.maxRating!}
-                        step={10}
+                        step={20}
                         value={[
                           minRatingField.value ??
                             defaultLeaderboardFilterValues.minRating!,
@@ -231,18 +278,39 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Matches</FormLabel>
                       <Slider
-                        min={defaultLeaderboardFilterValues.minMatches!}
-                        max={defaultLeaderboardFilterValues.maxMatches!}
+                        // All exponentially scaling sliders have a range of 0 - 100
+                        min={0}
+                        max={100}
                         step={1}
                         value={[
-                          minMatchesField.value ??
+                          scaleInverseExponentially(
+                            minMatchesField.value ??
+                              defaultLeaderboardFilterValues.minMatches!,
                             defaultLeaderboardFilterValues.minMatches!,
-                          maxMatchesField.value ??
-                            defaultLeaderboardFilterValues.maxMatches!,
+                            defaultLeaderboardFilterValues.maxMatches!
+                          ),
+                          scaleInverseExponentially(
+                            maxMatchesField.value ??
+                              defaultLeaderboardFilterValues.maxMatches!,
+                            defaultLeaderboardFilterValues.minMatches!,
+                            defaultLeaderboardFilterValues.maxMatches!
+                          ),
                         ]}
                         onValueChange={(vals) => {
-                          minMatchesField.onChange(vals[0]);
-                          maxMatchesField.onChange(vals[1]);
+                          minMatchesField.onChange(
+                            scaleExponentially(
+                              vals[0],
+                              defaultLeaderboardFilterValues.minMatches!,
+                              defaultLeaderboardFilterValues.maxMatches!
+                            )
+                          );
+                          maxMatchesField.onChange(
+                            scaleExponentially(
+                              vals[1],
+                              defaultLeaderboardFilterValues.minMatches!,
+                              defaultLeaderboardFilterValues.maxMatches!
+                            )
+                          );
                         }}
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}

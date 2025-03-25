@@ -76,6 +76,7 @@ export const adminNoteFormSchema = z.object({
 
 export const leaderboardFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
+  ruleset: numericEnumValueSchema(Ruleset).optional(),
   minOsuRank: z.coerce.number().int().min(1).optional(),
   maxOsuRank: z.coerce.number().int().min(1).optional(),
   minRating: z.coerce.number().int().min(100).max(3500).optional(),
