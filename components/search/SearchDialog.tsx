@@ -8,7 +8,7 @@ import { Search, SearchIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import SearchResults, { SearchResultData } from './SearchResults';
+import SearchResults from './SearchResults';
 
 export default function SearchDialog() {
   const [searchText, setSearchText] = useState('');
