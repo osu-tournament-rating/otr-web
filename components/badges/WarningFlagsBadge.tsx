@@ -4,7 +4,7 @@ import {
 } from '@/lib/enums';
 import { ApiItemType } from '@/lib/types';
 import { TriangleAlertIcon } from 'lucide-react';
-import SimpleTooltip from '../simple-tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Badge } from '../ui/badge';
 
 export default function WarningFlagsBadge({
@@ -23,16 +23,20 @@ export default function WarningFlagsBadge({
       ? MatchWarningFlagsEnumHelper.getMetadata(value)
       : GameWarningFlagsEnumHelper.getMetadata(value);
 
-  let tooltipText = '';
-  metadata.map(({ text }) => {
-    tooltipText += `• ${text}\n`;
-  });
-
   return (
-    <SimpleTooltip content={tooltipText}>
-      <Badge className="text-warning" variant={'outline'}>
-        <TriangleAlertIcon />
-      </Badge>
-    </SimpleTooltip>
+    <Tooltip>
+      <TooltipContent>
+        <ul>
+          {metadata.map(({ text }, index) => (
+              <li key={index}>• {text}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+      <TooltipTrigger>
+        <Badge className="text-warning" variant={'outline'}>
+          <TriangleAlertIcon />
+        </Badge>
+      </TooltipTrigger>
+    </Tooltip>
   );
 }
