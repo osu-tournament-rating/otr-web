@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { search } from '@/lib/actions/search';
 import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
 import { DialogTitle } from '@radix-ui/react-dialog';
-import { Search, SearchIcon } from 'lucide-react';
+import { LoaderCircle, Search, SearchIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -78,7 +78,11 @@ export default function SearchDialog() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <SearchIcon className="m-auto" />
+          {isFetching ? (
+            <LoaderCircle className="m-auto animate-spin" />
+          ) : (
+            <SearchIcon className="m-auto" />
+          )}
         </div>
         <SearchResults input={searchText} data={data} />
       </DialogContent>
