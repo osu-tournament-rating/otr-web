@@ -64,9 +64,9 @@
   --primary: hsl(221, 100%, 61%);
   --primary-foreground: hsl(210 40% 98%);
   --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --secondary-foreground: hsl(0, 0%, 31%);
   --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --muted-foreground: hsl(0, 0%, 57%);
   --accent: hsl(210, 23%, 95%);
   --accent-foreground: hsl(222.2 47.4% 11.2%);
   --destructive: hsl(0 84.2% 60.2%);
@@ -97,9 +97,9 @@
   --primary: hsl(217, 100%, 70%);
   --primary-foreground: hsl(222.2 47.4% 11.2%);
   --secondary: hsl(0, 0%, 12%);
-  --secondary-foreground: hsl(210 40% 98%);
+  --secondary-foreground: hsl(0, 0%, 71%);
   --muted: hsl(0, 0%, 28%);
-  --muted-foreground: hsl(0, 0%, 72%);
+  --muted-foreground: hsl(0, 0%, 51%);
   --accent: hsl(0, 0%, 16%);
   --accent-foreground: hsl(0, 0%, 70%);
   --destructive: hsl(0 62.8% 30.6%);
@@ -120,6 +120,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number'] {
+    -webkit-appearance: none;
+    margin: 0;
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
   }
 }
 
