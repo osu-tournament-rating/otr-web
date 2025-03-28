@@ -26,9 +26,9 @@ export default function WarningFlagsBadge({
   return (
     <Tooltip>
       <TooltipContent>
-        <ul>
+        <ul className="list-disc pl-3">
           {metadata.map(({ text }, index) => (
-              <li key={index}>• {text}</li>
+              <li key={index}>{text}</li>
           ))}
         </ul>
       </TooltipContent>
