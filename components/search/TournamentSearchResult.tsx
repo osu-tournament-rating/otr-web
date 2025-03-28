@@ -16,9 +16,7 @@ export default function TournamentSearchResult({
     <div className="flex flex-row rounded-xl bg-accent p-2">
       <div className="mx-0.5 flex flex-1 gap-2">
         <Link href={`/tournaments/${data.id}`}>
-          <p className="text-lg">
-            {highlightMatch(data.name ?? 'Unknown tournament', input)}
-          </p>
+          <p className="text-lg">{highlightMatch(data.name, input)}</p>
         </Link>
       </div>
       <div className="mx-0.5 flex flex-row gap-5 font-sans text-accent-foreground">

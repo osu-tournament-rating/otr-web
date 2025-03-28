@@ -10,14 +10,12 @@ export default function TournamentSearchResult({
   data: MatchSearchResultDTO;
 }) {
   return (
-    <div className="flex flex-row rounded-xl bg-accent p-2">
-      <div className="mx-0.5 flex flex-1 gap-2">
-        <Link href={`/matches/${data.id}`}>
-          <p className="text-lg">
-            {highlightMatch(data.name ?? 'Unknown match', input)}
-          </p>
-        </Link>
-      </div>
+    <div className="mx-0.5 flex flex-1 flex-row gap-2 rounded-xl bg-accent p-2">
+      <Link href={`/matches/${data.id}`}>
+        <p className="text-lg">
+          {highlightMatch(data.name ?? 'Unknown match', input)}
+        </p>
+      </Link>
     </div>
   );
 }
