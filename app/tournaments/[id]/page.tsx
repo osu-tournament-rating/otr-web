@@ -3,7 +3,7 @@ import { get } from '@/lib/actions/tournaments';
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import type { Metadata } from 'next';
 import { MatchRow, columns } from './columns';
-import DataTable from './data-table';
+import TournamentDataTable from './data-table';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -41,7 +41,7 @@ export default async function Page({ params }: PageProps) {
         allowAdminView
       />
       {/* @ts-expect-error Column def type doesnt work :/ */}
-      <DataTable columns={columns} data={tableData} />
+      <TournamentDataTable columns={columns} data={tableData} />
     </div>
   );
 }

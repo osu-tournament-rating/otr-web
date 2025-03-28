@@ -21,9 +21,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export type Option = {
+export type Option<TValue extends string = string> = {
   label: string;
-  value: string;
+  value: TValue;
   disabled?: boolean;
 };
 
