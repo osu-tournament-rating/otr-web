@@ -10,8 +10,10 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
   TournamentQuerySortType,
+  MatchWarningFlags,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
+import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
@@ -56,7 +58,7 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),,
 });
 
 export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
@@ -90,7 +92,7 @@ export const matchEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
-  warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
+  warningFlags: bitwiseEnumValueSchema(MatchWarningFlags),
 });
 
 export const gameEditFormSchema = z.object({
@@ -106,4 +108,27 @@ export const gameEditFormSchema = z.object({
 
 export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
+});
+
+export const leaderboardFilterSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  ruleset: numericEnumValueSchema(Ruleset).optional(),
+  minOsuRank: z.coerce.number().int().min(1).optional(),
+  maxOsuRank: z.coerce.number().int().min(1).optional(),
+  minRating: z.coerce.number().int().min(100).max(3500).optional(),
+  maxRating: z.coerce.number().int().min(100).max(3500).optional(),
+  minMatches: z.coerce.number().int().min(1).optional(),
+  maxMatches: z.coerce.number().int().min(1).optional(),
+  minWinRate: z.coerce.number().min(0).max(100).optional(),
+  maxWinRate: z.coerce.number().min(0).max(100).optional(),
+  tiers: z.preprocess(
+    (val) => {
+      if (typeof val === 'string') {
+        return [val as string];
+      }
+
+      return val;
+    },
+    z.array(z.enum(leaderboardTierFilterValues)).optional()
+  ),
 });
