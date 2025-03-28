@@ -71,6 +71,9 @@ export default async function Page(props: {
           </Link>
         </PaginationItem>
       );
+    }
+
+    if (startPage > 2) {
       pages.push(
         <PaginationItem key="firstEllipsis">
           <PaginationEllipsis />
@@ -91,12 +94,15 @@ export default async function Page(props: {
       );
     }
 
-    if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
       pages.push(
         <PaginationItem key="secondEllipsis">
           <PaginationEllipsis />
         </PaginationItem>
       );
+    }
+
+    if (endPage < totalPages) {
       pages.push(
         <PaginationItem key={totalPages}>
           <Link href={createUri(totalPages)} className="px-4">
