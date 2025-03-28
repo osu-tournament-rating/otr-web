@@ -26,11 +26,14 @@ export default function WarningFlagsBadge({
   return (
     <Tooltip>
       <TooltipContent>
-        <ul className="list-disc pl-3">
-          {metadata.map(({ text }, index) => (
-              <li key={index}>{text}</li>
-          ))}
-        </ul>
+        <div>
+          <strong>Warnings:</strong>
+          <ul className="list-disc pl-3.5 mt-1">
+            {metadata.map(({ text }, index) => (
+                <li key={index}>{text}</li>
+            ))}
+          </ul>
+        </div>
       </TooltipContent>
       <TooltipTrigger>
         <Badge className="text-warning" variant={'outline'}>
