@@ -21,6 +21,7 @@ import {
 } from '@/lib/utils/leaderboard';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import { cn } from '@/lib/utils';
 
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
@@ -64,8 +65,7 @@ export default function LeaderboardFilter({
       return;
     }
 
-    searchParams.set('page', '1');
-
+    searchParams.delete('page');
     router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
   };
 
@@ -79,7 +79,8 @@ export default function LeaderboardFilter({
       </PopoverTrigger>
       <PopoverContent className="z-1 w-80 p-4" align="end">
         <Form {...form}>
-          <form className="space-y-4">
+          <form className="items-center space-y-4">
+            {/* Ruleset select */}
             <FormField
               control={form.control}
               name="ruleset"
@@ -87,20 +88,23 @@ export default function LeaderboardFilter({
                 <FormItem>
                   <FormControl>
                     <ToggleGroup
+                      className="w-full gap-2"
                       {...field}
                       value={String(field.value)}
                       onValueChange={(val) => {
                         field.onChange(Number(val));
                         form.handleSubmit(onSubmit)();
                       }}
-                      className="flex gap-2"
                       type="single"
                     >
-                      {Object.entries(RulesetEnumHelper.metadata).map(
-                        ([ruleset]) => (
+                      {Object.entries(RulesetEnumHelper.metadata)
+                        .filter(
+                          ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
+                        )
+                        .map(([ruleset]) => (
                           <ToggleGroupItem
                             key={`sort-${ruleset}`}
-                            className="flex flex-auto"
+                            className="px-0"
                             value={ruleset}
                             aria-label={Ruleset[Number(ruleset)]}
                             onClick={(e) => {
@@ -111,21 +115,22 @@ export default function LeaderboardFilter({
                           >
                             <RulesetIcon
                               ruleset={Number(ruleset)}
-                              className={
+                              className={cn(
+                                'size-5',
                                 field.value === Number(ruleset)
                                   ? 'fill-primary'
                                   : 'fill-foreground'
-                              }
+                              )}
                             />
                           </ToggleGroupItem>
-                        )
-                      )}
+                        ))}
                     </ToggleGroup>
                   </FormControl>
                 </FormItem>
               )}
             />
 
+            {/* osu! rank slider */}
             <FormField
               control={form.control}
               name="minOsuRank"
@@ -210,6 +215,7 @@ export default function LeaderboardFilter({
               )}
             />
 
+            {/* Rating slider */}
             <FormField
               control={form.control}
               name="minRating"
@@ -272,6 +278,8 @@ export default function LeaderboardFilter({
                 />
               )}
             />
+
+            {/* Match count slider */}
             <FormField
               control={form.control}
               name="minMatches"
@@ -355,6 +363,8 @@ export default function LeaderboardFilter({
                 />
               )}
             />
+
+            {/* Win rate slider */}
             <FormField
               control={form.control}
               name="minWinRate"
@@ -418,6 +428,7 @@ export default function LeaderboardFilter({
               )}
             />
 
+            {/* Tier select */}
             <FormField
               control={form.control}
               name="tiers"
@@ -436,6 +447,7 @@ export default function LeaderboardFilter({
               )}
             />
 
+            {/* Clear filters button */}
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
