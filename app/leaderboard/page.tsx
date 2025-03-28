@@ -66,7 +66,7 @@ export default async function Page(props: {
     if (startPage > 1) {
       pages.push(
         <PaginationItem key={1}>
-          <Link href="" className="px-4">
+          <Link href={createUri(1)} className="px-4">
             1
           </Link>
         </PaginationItem>
