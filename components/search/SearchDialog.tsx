@@ -48,7 +48,7 @@ export default function SearchDialog() {
 
   return (
     <SearchDialogContext.Provider value={contextValue}>
-      <Dialog open={dialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild className="cursor-pointer">
           <Button
             variant="ghost"
