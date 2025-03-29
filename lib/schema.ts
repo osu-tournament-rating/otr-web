@@ -58,7 +58,7 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),,
+  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
 });
 
 export const defaultTournamentListFilter: Partial<TournamentListFilter> = {

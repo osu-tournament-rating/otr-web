@@ -25,7 +25,7 @@ import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
-    value: TournamentQuerySortType.Created,
+    value: TournamentQuerySortType.SubmissionDate,
     text: 'Submission Date',
   },
   {
