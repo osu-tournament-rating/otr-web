@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { PlayerSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
 import TierIcon from '../icons/TierIcon';
 import { highlightMatch } from '@/lib/utils/search';
+import { useContext } from 'react';
+import { SearchDialogContext } from './SearchDialog';
 
 export default function PlayerSearchResult({
   input,
@@ -11,6 +13,8 @@ export default function PlayerSearchResult({
   input: string;
   data: PlayerSearchResultDTO;
 }) {
+  const { setDialogOpen } = useContext(SearchDialogContext);
+
   return (
     <div className="flex flex-row rounded-xl bg-accent p-2">
       <div className="flex flex-1 gap-2">
@@ -21,7 +25,7 @@ export default function PlayerSearchResult({
           src={`https://s.ppy.sh/a/${data.osuId}`}
           alt={`${data.osuId} profile picture`}
         />
-        <Link href={`/players/${data.id}`}>
+        <Link href={`/players/${data.id}`} onClick={() => setDialogOpen(false)}>
           <p className="text-lg">
             {highlightMatch(data.username ?? 'Unknown user', input)}
           </p>

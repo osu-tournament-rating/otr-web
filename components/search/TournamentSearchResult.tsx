@@ -4,6 +4,8 @@ import { highlightMatch } from '@/lib/utils/search';
 import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { RulesetEnumHelper } from '@/lib/enums';
+import { useContext } from 'react';
+import { SearchDialogContext } from './SearchDialog';
 
 export default function TournamentSearchResult({
   input,
@@ -12,10 +14,15 @@ export default function TournamentSearchResult({
   input: string;
   data: TournamentSearchResultDTO;
 }) {
+  const { setDialogOpen } = useContext(SearchDialogContext);
+
   return (
     <div className="flex flex-row rounded-xl bg-accent p-2">
       <div className="mx-0.5 flex flex-1 gap-2">
-        <Link href={`/tournaments/${data.id}`}>
+        <Link
+          href={`/tournaments/${data.id}`}
+          onClick={() => setDialogOpen(false)}
+        >
           <p className="text-lg">{highlightMatch(data.name, input)}</p>
         </Link>
       </div>
