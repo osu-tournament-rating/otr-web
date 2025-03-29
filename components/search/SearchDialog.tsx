@@ -65,7 +65,7 @@ export default function SearchDialog() {
         <DialogContent className="max-h-[80%] min-w-[50%] overflow-auto font-sans [&>button]:hidden">
           <div className="top-0 z-10 flex flex-row gap-3 bg-background">
             <Input
-              className="m-auto"
+              className="m-auto focus-visible:ring-0 border-0 rounded-xl bg-accent"
               placeholder="Search"
               autoFocus
               value={query}
