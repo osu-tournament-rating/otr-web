@@ -13,7 +13,7 @@ export const columns = [
   columnHelper.accessor('globalRank', {
     header: 'Rank',
     cell: ({ getValue, row }) => (
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-row items-center justify-between">
         <p className="font-sans">#{getValue()}</p>
         <div className="flex">
           <Image
@@ -33,7 +33,7 @@ export const columns = [
   columnHelper.accessor('player.osuId', {
     header: 'Player',
     cell: ({ getValue, row }) => (
-      <div className="flex flex-row gap-2 font-sans">
+      <div className="flex flex-row items-center gap-2 font-sans">
         <Image
           src={`https://a.ppy.sh/${getValue()}`}
           alt="avatar"
