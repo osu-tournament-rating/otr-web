@@ -35,7 +35,7 @@ const navItems = [
   href: string;
 }[];
 
-export default function NewNav() {
+export default function Header() {
   const pathname = usePathname();
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -62,8 +62,9 @@ export default function NewNav() {
                   <Link href={href} legacyBehavior passHref>
                     <NavigationMenuLink
                       className={cn(
-                        'transition-colors hover:text-primary',
-                        pathname.startsWith(href) && 'font-extrabold'
+                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                        pathname.startsWith(href) &&
+                          'font-extrabold text-primary focus:text-primary'
                       )}
                     >
                       {title}
@@ -109,10 +110,6 @@ export default function NewNav() {
                 orientation={'vertical'}
                 viewport={false}
               >
-                <div className="flex flex-col gap-y-4 px-2">
-                  <LoginButton />
-                  <Separator className="bg-muted" />
-                </div>
                 <NavigationMenuList className="flex-col">
                   {navItems.map(({ title, href }) => (
                     <NavigationMenuItem className="w-full" key={title}>
@@ -120,8 +117,9 @@ export default function NewNav() {
                         <NavigationMenuLink
                           className={cn(
                             navigationMenuTriggerStyle(),
-                            'w-full items-end bg-secondary transition-colors hover:text-primary',
-                            pathname.startsWith(href) && 'font-extrabold'
+                            'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                            pathname.startsWith(href) &&
+                              'font-extrabold text-primary focus:text-primary'
                           )}
                         >
                           {title}
@@ -130,6 +128,10 @@ export default function NewNav() {
                     </NavigationMenuItem>
                   ))}
                 </NavigationMenuList>
+                <div className="flex flex-col gap-y-4 px-2">
+                  <LoginButton />
+                  <Separator className="bg-muted" />
+                </div>
               </NavigationMenu>
             </SheetContent>
           </Sheet>
