@@ -1,0 +1,17 @@
+'use client';
+
+import { AdminNoteDTO } from '@osu-tournament-rating/otr-api-client';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import AdminNoteCard from './AdminNoteCard';
+
+export default function AdminNotesList({ notes }: { notes: AdminNoteDTO[] }) {
+  return (
+    <ScrollArea className="max-h-48 space-y-4 px-2 not-odd:max-h-84">
+      <div className="flex flex-col space-y-4">
+        {notes.map((note) => (
+          <AdminNoteCard key={note.id} note={note} />
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}

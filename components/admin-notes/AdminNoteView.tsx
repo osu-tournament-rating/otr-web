@@ -13,9 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import { ScrollArea } from '../ui/scroll-area';
-import AdminNoteCard from './AdminNoteCard';
 import AdminNoteForm, { AdminNoteFormProps } from './AdminNoteForm';
+import AdminNotesList from './AdminNoteList';
 
 export default function AdminNoteView({
   title,
@@ -68,15 +67,7 @@ export default function AdminNoteView({
           </DialogDescription>
         </DialogHeader>
         <AdminNoteForm {...props} />
-        {!!notes.length && (
-          <ScrollArea className="max-h-48 space-y-4 px-2 not-odd:max-h-84">
-            <div className="flex flex-col space-y-4">
-              {notes.map((note) => (
-                <AdminNoteCard key={note.id} note={note} />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+        <AdminNotesList notes={notes} />
       </DialogContent>
     </Dialog>
   );

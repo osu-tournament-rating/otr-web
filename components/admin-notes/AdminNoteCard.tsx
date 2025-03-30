@@ -4,7 +4,6 @@ import { AdminNoteDTO, Roles } from '@osu-tournament-rating/otr-api-client';
 import { PencilLineIcon, Trash } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { iconButtonStyle } from '../buttons/IconButton';
-// import { Separator } from '../ui/separator';
 
 export default function AdminNoteCard({ note }: { note: AdminNoteDTO }) {
   const { data: session } = useSession();

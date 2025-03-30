@@ -59,6 +59,7 @@ import {
 import { create } from '@/lib/actions/admin-notes';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
+import AdminNotesList from '../admin-notes/AdminNoteList';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -538,6 +539,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
             placeholder="Enter your reason for modifying this score..."
             className="min-h-24 resize-none"
           />
+          <AdminNotesList notes={score.adminNotes} />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
