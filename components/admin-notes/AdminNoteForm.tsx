@@ -9,12 +9,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { create } from '@/lib/actions/admin-notes';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
+import {
+  AdminNoteRouteTarget,
+  Roles,
+} from '@osu-tournament-rating/otr-api-client';
 import { Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 export default function AdminNoteForm() {
@@ -31,13 +36,27 @@ export default function AdminNoteForm() {
     return null;
   }
 
-  function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
-    console.log(data);
+  async function onSubmit(
+    target: AdminNoteRouteTarget,
+    entityId: number,
+    data: z.infer<typeof adminNoteFormSchema>
+  ) {
+    try {
+      await create({
+        entityId: entityId,
+        entity: target,
+        body: data.note,
+      });
+
+      toast.success(`Created admin note for ${target} ${entityId}`);
+    } catch {
+      toast.error(`Failed to create admin note for ${target} ${entityId}`);
+    }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+      <form onSubmit={form.handleSubmit(onSubmit())} className="space-y-2">
         <FormField
           control={form.control}
           name="note"

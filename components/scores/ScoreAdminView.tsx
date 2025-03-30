@@ -17,6 +17,7 @@ import {
   Roles,
   GameScoreDTO,
   Mods,
+  AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -56,6 +57,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { create } from '@/lib/actions/admin-notes';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -98,9 +100,15 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
         body: createPatchOperations(score, values),
       });
 
+      await create({
+        entityId: score.id,
+        entity: AdminNoteRouteTarget.GameScore,
+        body: adminNote,
+      });
+
       form.reset(patchedScore);
-      setAdminNote('');
       saveToast();
+      // admin note toasts handled in AdminNoteForm.tsx
     } catch (error) {
       errorSaveToast();
       console.error('Failed to save patched score', error, values);
@@ -123,11 +131,13 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       'countGeki',
       'countKatu',
       'mods',
-    ];
+    ] as const;
+
+    type ScoreField = (typeof scoreFields)[number];
+
     const isScoreModified = scoreFields.some(
-      (field) =>
-        JSON.stringify(values[field as keyof typeof values]) !==
-        JSON.stringify(score[field as keyof typeof score])
+      (field: ScoreField) =>
+        JSON.stringify(values[field]) !== JSON.stringify(score[field])
     );
 
     if (isScoreModified) {
@@ -510,8 +520,8 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Admin Note Required</AlertDialogTitle>
             <AlertDialogDescription>
-              You are modifying score values. Please provide a note explaining
-              the reason for these changes.
+              You are modifying sensitive values. Please provide a note
+              explaining the reason for these changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
