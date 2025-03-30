@@ -74,7 +74,7 @@ export default function TournamentList({
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const tournamentData = data ? data.flat() : [];
-  const firstPageHasData = data?.at(0)?.length === pageSize;
+  const firstPageHasData = data?.at(0)?.length ?? 0 > 0;
   const expectNextPage = data?.at(-1)?.length === pageSize;
 
   const virtualizer = useWindowVirtualizer({
