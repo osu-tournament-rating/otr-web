@@ -37,6 +37,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -68,9 +69,10 @@ export default function TournamentAdminView({
         body: createPatchOperations(tournament, values),
       });
       form.reset(patchedTournament);
-      toast.success('Saved successfully');
+      saveToast();
     } catch (error) {
-      toast.error('Failed to save due to server issue');
+      errorSaveToast();
+      console.error('Failed to save patched tournament', error, values);
     }
   }
 

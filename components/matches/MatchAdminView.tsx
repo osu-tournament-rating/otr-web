@@ -4,7 +4,6 @@ import {
   getEnumFlags,
   MatchProcessingStatusEnumHelper,
   MatchWarningFlagsEnumHelper,
-  ModsEnumHelper,
 } from '@/lib/enums';
 import { matchEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -43,6 +42,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import SimpleSelectContent from '../select/SimpleSelectContent';
 import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -78,10 +78,10 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
       });
 
       form.reset(patchedMatch);
-      toast.success('Saved successfully');
+      saveToast();
     } catch (error) {
-      console.log(error);
-      toast.error('Failed to save due to server issue');
+      errorSaveToast();
+      console.error('Failed to save patched match', error, values);
     }
   }
 

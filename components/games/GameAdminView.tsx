@@ -45,6 +45,7 @@ import {
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
 import { createPatchOperations } from '@/lib/utils/form';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -86,10 +87,11 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
         body: createPatchOperations(game, values),
       });
 
-      toast.success('Saved successfully');
       form.reset(patchedGame);
+      saveToast();
     } catch (error) {
-      toast.error('Failed to save due to server issue');
+      errorSaveToast();
+      console.error('Failed to save patched game', error, values);
     }
   }
 
