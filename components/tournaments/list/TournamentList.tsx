@@ -122,7 +122,7 @@ export default function TournamentList({
   // Initial load
   if (!data) {
     return (
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-1">
         {[...Array(pageSize / 5)].map((_, idx) => (
           <ListItemSkeleton key={idx} />
         ))}
@@ -144,7 +144,7 @@ export default function TournamentList({
         }}
       >
         <div
-          className="absolute top-0 left-0 w-full space-y-2"
+          className="absolute top-0 left-0 w-full space-y-1 p-4"
           style={{
             transform: `translateY(${
               (virtualizedItems[0]?.start ?? 0) -
@@ -187,28 +187,32 @@ function ListItemSkeleton() {
   return <Skeleton className="h-24 w-full rounded-xl" />;
 }
 
-function NoMoreResultsPlaceholder() {
+function PlaceholderBase({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex justify-center py-4">
-      <p className="flex flex-col items-center">
-        <span className="text-lg text-primary">No more results!</span>
-        <span className="text-sm text-muted">
-          Try a less restrictive filter to see more
-        </span>
-      </p>
+      <p className="flex flex-col items-center">{children}</p>
     </div>
+  );
+}
+
+function NoMoreResultsPlaceholder() {
+  return (
+    <PlaceholderBase>
+      <span className="text-lg text-primary">No more results!</span>
+      <span className="text-sm text-muted">
+        Try a less restrictive filter to see more
+      </span>
+    </PlaceholderBase>
   );
 }
 
 function NoResultsPlaceholder() {
   return (
-    <div className="flex justify-center py-4">
-      <p className="flex flex-col items-center">
-        <span className="text-2xl text-primary">Nothing found...</span>
-        <span className="text-muted">
-          Try a less restrictive filter for better results!
-        </span>
-      </p>
-    </div>
+    <PlaceholderBase>
+      <strong className="text-2xl text-primary">Nothing found...</strong>
+      <span className="text-muted">
+        Try a less restrictive filter for better results!
+      </span>
+    </PlaceholderBase>
   );
 }

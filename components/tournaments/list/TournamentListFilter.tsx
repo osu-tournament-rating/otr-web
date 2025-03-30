@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -15,13 +14,14 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
 import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -95,26 +95,31 @@ export default function TournamentListFilter({
   return (
     <Form {...form}>
       <form>
-        <div className="flex flex-col gap-2">
-          {/* Search bar */}
-          <div className="flex flex-row gap-2">
-            <FormField
-              control={form.control}
-              name="searchQuery"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Filters */}
-            <Button asChild variant={'outline'} size={'icon'} className="p-2">
-              <Filter />
-            </Button>
+        <div className="flex flex-col">
+          {/* Input based filters */}
+          <div className="flex flex-col p-4">
+            {/* Search bar */}
+            <div className="relative w-full">
+              <FormField
+                control={form.control}
+                name="searchQuery"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="type to search"
+                        type="search"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Search className="absolute inset-y-1/6 right-2" />
+            </div>
           </div>
+
           {/* Sort type and direction */}
           <FormField
             control={form.control}
@@ -122,7 +127,10 @@ export default function TournamentListFilter({
             render={({ field }) => {
               const descending = form.watch('descending');
               return (
-                <FormItem>
+                <FormItem className="flex flex-row items-baseline bg-[color-mix(in_hsl,var(--primary)_20%,var(--background))] px-2 py-1">
+                  <span className="text-xs text-secondary-foreground">
+                    Sort by
+                  </span>
                   <FormControl>
                     <ToggleGroup
                       {...field}
@@ -134,7 +142,7 @@ export default function TournamentListFilter({
                       {sortToggleItems.map(({ value, text }) => (
                         <ToggleGroupItem
                           key={`sort-${value}`}
-                          className="flex flex-auto"
+                          className="flex flex-auto cursor-pointer rounded-xl"
                           value={value.toString()}
                           aria-label={TournamentQuerySortType[value]}
                           onClick={(e) => {
@@ -145,8 +153,21 @@ export default function TournamentListFilter({
                           }}
                         >
                           {text}
-                          {field.value === value &&
-                            (descending ? <ChevronDown /> : <ChevronUp />)}
+                          {descending ? (
+                            <ChevronDown
+                              className={cn(
+                                'opacity-0',
+                                field.value === value && 'opacity-100'
+                              )}
+                            />
+                          ) : (
+                            <ChevronUp
+                              className={cn(
+                                'opacity-0',
+                                field.value === value && 'opacity-100'
+                              )}
+                            />
+                          )}
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
