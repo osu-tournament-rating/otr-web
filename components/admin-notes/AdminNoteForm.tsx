@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { create } from '@/lib/actions/admin-notes';
+import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -42,6 +43,7 @@ export default function AdminNoteForm({
   });
 
   const { data: session } = useSession();
+  const entityMetadata = AdminNoteRouteTargetEnumHelper.getMetadata(entity);
 
   if (!session?.user?.scopes?.includes(Roles.Admin)) {
     return null;
@@ -55,10 +57,14 @@ export default function AdminNoteForm({
         body: data.note,
       });
 
-      toast.success(`Created admin note for ${entity} ${entityId}`);
+      toast.success(
+        `Created admin note for ${entityMetadata.text} ${entityId}`
+      );
       onSubmitSuccess?.();
     } catch {
-      toast.error(`Failed to create admin note for ${entity} ${entityId}`);
+      toast.error(
+        `Failed to create admin note for ${entityMetadata.text} ${entityId}`
+      );
     }
   }
 

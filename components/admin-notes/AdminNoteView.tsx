@@ -15,6 +15,7 @@ import {
 } from '../ui/dialog';
 import AdminNoteForm, { AdminNoteFormProps } from './AdminNoteForm';
 import AdminNotesList from './AdminNoteList';
+import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
 export default function AdminNoteView({
   notes,
   props,
@@ -30,6 +31,10 @@ export default function AdminNoteView({
   if (!session?.user?.scopes?.includes(Roles.Admin) && !notify) {
     return null;
   }
+
+  const entityMetadata = AdminNoteRouteTargetEnumHelper.getMetadata(
+    props.entity
+  );
 
   const handleClick = () => {
     if (showNotification) {
@@ -60,10 +65,7 @@ export default function AdminNoteView({
         <DialogHeader>
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
-            Viewing admin notes for {props.entity}{' '}
-            <span className="font-bold">
-              {props.entityName ?? props.entityId}
-            </span>
+            Viewing admin notes for <span className='font-semibold'>{entityMetadata.text} {props.entityId}</span>
           </DialogDescription>
         </DialogHeader>
         <AdminNoteForm {...props} />
