@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import SimpleTooltip from '../simple-tooltip';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 const variants = {
   [VerificationStatus.None]: {
@@ -48,7 +49,7 @@ export default function VerificationBadge({
 
   return (
     <Outer tooltip={displayText ? undefined : text}>
-      <Badge className={style} variant={'outline'}>
+      <Badge className={style} variant={'secondary'}>
         <Icon /> {displayText && text}
       </Badge>
     </Outer>

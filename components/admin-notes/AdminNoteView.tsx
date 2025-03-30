@@ -15,13 +15,18 @@ import {
 } from '../ui/dialog';
 import AdminNoteForm, { AdminNoteFormProps } from './AdminNoteForm';
 import AdminNotesList from './AdminNoteList';
+import SimpleTooltip from '../simple-tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 
 export default function AdminNoteView({
-  title,
   notes,
   props,
 }: {
-  title: string;
   notes: AdminNoteDTO[];
   props: AdminNoteFormProps;
 }) {
@@ -63,11 +68,14 @@ export default function AdminNoteView({
         <DialogHeader>
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
-            Viewing admin notes for <span className="font-bold">{title}</span>
+            Viewing admin notes for {props.entity}{' '}
+            <span className="font-bold">
+              {props.entityName ?? props.entityId}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <AdminNoteForm {...props} />
-        <AdminNotesList notes={notes} />
+        <AdminNotesList {...props} notes={notes} />
       </DialogContent>
     </Dialog>
   );

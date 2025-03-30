@@ -1,7 +1,10 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  AdminNoteRouteTarget,
+  TournamentDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
@@ -55,8 +58,12 @@ export default function TournamentCard({
           {allowAdminView && (
             <div>
               <AdminNoteView
-                title={tournament.name}
                 notes={tournament.adminNotes ?? []}
+                props={{
+                  entity: AdminNoteRouteTarget.Tournament,
+                  entityId: tournament.id,
+                  entityName: tournament.name,
+                }}
               />
               <TournamentAdminView tournament={tournament} />
             </div>

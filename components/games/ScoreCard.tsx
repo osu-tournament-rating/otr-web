@@ -1,4 +1,5 @@
 import {
+  AdminNoteRouteTarget,
   GameScoreDTO,
   PlayerCompactDTO,
   Team,
@@ -8,6 +9,7 @@ import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
 import ScoreAdminView from '../scores/ScoreAdminView';
+import AdminNoteView from '../admin-notes/AdminNoteView';
 
 export default function ScoreCard({
   score,
@@ -36,9 +38,16 @@ export default function ScoreCard({
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
 
       {/* Team color on the side of the card */}
-      <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-5">
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
+      <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-7">
+        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
           <ScoreAdminView score={score} />
+          <AdminNoteView
+            notes={score.adminNotes}
+            props={{
+              entity: AdminNoteRouteTarget.GameScore,
+              entityId: score.id,
+            }}
+          />
         </div>
       </div>
 

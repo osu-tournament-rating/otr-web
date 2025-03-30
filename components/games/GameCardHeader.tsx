@@ -1,10 +1,14 @@
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
-import { GameDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  AdminNoteRouteTarget,
+  GameDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import RulesetIcon from '../icons/RulesetIcon';
 import ModIconset from '../icons/ModIconset';
 import FormattedDate from '../dates/FormattedDate';
 import GameAdminView from './GameAdminView';
+import AdminNoteView from '../admin-notes/AdminNoteView';
 
 export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
@@ -32,7 +36,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
             </span>
             <span>{TeamTypeEnumHelper.getMetadata(game.teamType).text}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <span className="flex gap-1">
               <FormattedDate date={new Date(game.startTime)} format="short" />
               -
@@ -41,6 +45,13 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
                 format="short"
               />
             </span>
+            <AdminNoteView
+              notes={game.adminNotes}
+              props={{
+                entity: AdminNoteRouteTarget.Game,
+                entityId: game.id,
+              }}
+            />
             <GameAdminView game={game} />
           </div>
         </div>

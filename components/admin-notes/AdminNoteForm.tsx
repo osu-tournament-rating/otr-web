@@ -25,6 +25,7 @@ import { z } from 'zod';
 export interface AdminNoteFormProps {
   entityId: number;
   entity: AdminNoteRouteTarget;
+  entityName?: string;
   onSubmitSuccess?: () => void;
 }
 
