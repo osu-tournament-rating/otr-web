@@ -132,7 +132,7 @@ export default function TournamentList({
 
   // No results
   if (!firstPageHasData) {
-    return <div>This query returned no results</div>;
+    return <NoResultsPlaceholder />;
   }
 
   return (
@@ -189,8 +189,26 @@ function ListItemSkeleton() {
 
 function NoMoreResultsPlaceholder() {
   return (
-    <div>
-      <p>No more results!</p>
+    <div className="flex justify-center py-4">
+      <p className="flex flex-col items-center">
+        <span className="text-lg text-primary">No more results!</span>
+        <span className="text-sm text-muted">
+          Try a less restrictive filter to see more
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function NoResultsPlaceholder() {
+  return (
+    <div className="flex justify-center py-4">
+      <p className="flex flex-col items-center">
+        <span className="text-2xl text-primary">Nothing found...</span>
+        <span className="text-muted">
+          Try a less restrictive filter for better results!
+        </span>
+      </p>
     </div>
   );
 }
