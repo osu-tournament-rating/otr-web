@@ -7,6 +7,7 @@ import { ScoreGradeEnumHelper } from '@/lib/enums';
 import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
+import ScoreAdminView from '../scores/ScoreAdminView';
 
 export default function ScoreCard({
   score,
@@ -20,7 +21,7 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
+      className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
     >
       {/* Player propic bg */}
       <div className="player-propic absolute top-1/2 z-[1] aspect-square w-3/5 transform-[translateY(-50%)_scale(1)]">
@@ -31,9 +32,15 @@ export default function ScoreCard({
         />
       </div>
 
-      {/* Team color overlay */}
+      {/* Background team color overlay */}
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
-      <div className="h-full w-1.5 bg-[var(--team-color)]/70" />
+
+      {/* Team color on the side of the card */}
+      <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-5">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
+          <ScoreAdminView score={score} />
+        </div>
+      </div>
 
       {/* Content */}
       <div className="flex size-full flex-col px-2">

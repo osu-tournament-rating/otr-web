@@ -136,7 +136,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                       <Input
                         className={inputChangedStyle(fieldState)}
                         type="number"
-                        step="0.01"
+                        step="any"
                         min={0}
                         max={100}
                         {...field}

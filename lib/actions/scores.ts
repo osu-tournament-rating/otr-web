@@ -1,3 +1,5 @@
+'use server';
+
 import { GameScoresUpdateRequestParams } from '@osu-tournament-rating/otr-api-client';
 import { scores } from '../api';
 
