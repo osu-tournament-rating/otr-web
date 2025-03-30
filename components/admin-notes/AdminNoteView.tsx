@@ -15,14 +15,16 @@ import {
 } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import AdminNoteCard from './AdminNoteCard';
-import AdminNoteForm from './AdminNoteForm';
+import AdminNoteForm, { AdminNoteFormProps } from './AdminNoteForm';
 
 export default function AdminNoteView({
   title,
   notes,
+  props,
 }: {
   title: string;
   notes: AdminNoteDTO[];
+  props: AdminNoteFormProps;
 }) {
   const [showNotification, setShowNotification] = useState(true);
   const { data: session } = useSession();
@@ -65,7 +67,7 @@ export default function AdminNoteView({
             Viewing admin notes for <span className="font-bold">{title}</span>
           </DialogDescription>
         </DialogHeader>
-        <AdminNoteForm />
+        <AdminNoteForm {...props} />
         {!!notes.length && (
           <ScrollArea className="max-h-48 space-y-4 px-2 not-odd:max-h-84">
             <div className="flex flex-col space-y-4">

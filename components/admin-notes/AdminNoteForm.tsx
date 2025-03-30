@@ -22,7 +22,17 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-export default function AdminNoteForm() {
+export interface AdminNoteFormProps {
+  entityId: number;
+  entity: AdminNoteRouteTarget;
+  onSubmitSuccess?: () => void;
+}
+
+export default function AdminNoteForm({
+  entityId,
+  entity,
+  onSubmitSuccess, // Optional callback upon successful submission
+}: AdminNoteFormProps) {
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
     defaultValues: {
@@ -36,27 +46,24 @@ export default function AdminNoteForm() {
     return null;
   }
 
-  async function onSubmit(
-    target: AdminNoteRouteTarget,
-    entityId: number,
-    data: z.infer<typeof adminNoteFormSchema>
-  ) {
+  async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
     try {
       await create({
         entityId: entityId,
-        entity: target,
+        entity: entity,
         body: data.note,
       });
 
-      toast.success(`Created admin note for ${target} ${entityId}`);
+      toast.success(`Created admin note for ${entity} ${entityId}`);
+      onSubmitSuccess?.();
     } catch {
-      toast.error(`Failed to create admin note for ${target} ${entityId}`);
+      toast.error(`Failed to create admin note for ${entity} ${entityId}`);
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit())} className="space-y-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
         <FormField
           control={form.control}
           name="note"

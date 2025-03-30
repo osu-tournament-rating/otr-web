@@ -43,7 +43,7 @@ import {
 } from '@/lib/enums';
 import { update } from '@/lib/actions/scores';
 import { createPatchOperations } from '@/lib/utils/form';
-import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useState } from 'react';
 import {
@@ -56,8 +56,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { create } from '@/lib/actions/admin-notes';
+import { Textarea } from '../ui/textarea';
+import { toast } from 'sonner';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -95,20 +96,27 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     values: z.infer<typeof scoreEditFormSchema>
   ) {
     try {
+      console.log(createPatchOperations(score, values));
       const patchedScore = await update({
         id: score.id,
         body: createPatchOperations(score, values),
       });
 
-      await create({
-        entityId: score.id,
-        entity: AdminNoteRouteTarget.GameScore,
-        body: adminNote,
-      });
+      toast.success('Saved score updates');
 
+      if (adminNote !== '') {
+        await create({
+          entityId: score.id,
+          entity: AdminNoteRouteTarget.GameScore,
+          body: adminNote,
+        });
+
+        toast.success(`Saved admin note for score ${score.id}`);
+      }
+
+      // Reset forms
       form.reset(patchedScore);
-      saveToast();
-      // admin note toasts handled in AdminNoteForm.tsx
+      setAdminNote('');
     } catch (error) {
       errorSaveToast();
       console.error('Failed to save patched score', error, values);
