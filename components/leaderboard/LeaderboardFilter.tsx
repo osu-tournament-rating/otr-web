@@ -52,6 +52,9 @@ export default function LeaderboardFilter({
     resolver: zodResolver(leaderboardFilterSchema),
     values: filter,
     defaultValues: defaultLeaderboardFilterValues,
+    resetOptions: {
+      keepDirtyValues: true
+    }
   });
 
   const router = useRouter();
