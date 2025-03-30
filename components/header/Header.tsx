@@ -110,6 +110,10 @@ export default function Header() {
                 orientation={'vertical'}
                 viewport={false}
               >
+                <div className="flex flex-col gap-y-4 px-2">
+                  <LoginButton />
+                  <Separator className="bg-muted" />
+                </div>
                 <NavigationMenuList className="flex-col">
                   {navItems.map(({ title, href }) => (
                     <NavigationMenuItem className="w-full" key={title}>
@@ -128,10 +132,6 @@ export default function Header() {
                     </NavigationMenuItem>
                   ))}
                 </NavigationMenuList>
-                <div className="flex flex-col gap-y-4 px-2">
-                  <LoginButton />
-                  <Separator className="bg-muted" />
-                </div>
               </NavigationMenu>
             </SheetContent>
           </Sheet>
