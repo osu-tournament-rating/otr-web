@@ -8,7 +8,7 @@ import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
 
-export default function NewScoreCard({
+export default function ScoreCard({
   score,
   player,
   won = false,
@@ -33,7 +33,7 @@ export default function NewScoreCard({
 
       {/* Team color overlay */}
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
-      <div className="h-full w-1.5 bg-[var(--team-color)]/70"></div>
+      <div className="h-full w-1.5 bg-[var(--team-color)]/70" />
 
       {/* Content */}
       <div className="flex size-full flex-col px-2">
