@@ -60,7 +60,6 @@ import { create } from '@/lib/actions/admin-notes';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import AdminNotesList from '../admin-notes/AdminNoteList';
-import SimpleTooltip from '../simple-tooltip';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -163,7 +162,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       <Dialog>
         <DialogTrigger asChild>
           <Button className="h-5 w-5" variant={'ghost'}>
-              <EditIcon />
+            <EditIcon />
           </Button>
         </DialogTrigger>
         <DialogContent>

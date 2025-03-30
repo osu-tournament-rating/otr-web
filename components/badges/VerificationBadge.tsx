@@ -10,7 +10,6 @@ import {
 import React from 'react';
 import SimpleTooltip from '../simple-tooltip';
 import { Badge } from '../ui/badge';
-import { cn } from '@/lib/utils';
 
 const variants = {
   [VerificationStatus.None]: {

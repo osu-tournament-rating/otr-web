@@ -15,14 +15,6 @@ import {
 } from '../ui/dialog';
 import AdminNoteForm, { AdminNoteFormProps } from './AdminNoteForm';
 import AdminNotesList from './AdminNoteList';
-import SimpleTooltip from '../simple-tooltip';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
-
 export default function AdminNoteView({
   notes,
   props,
