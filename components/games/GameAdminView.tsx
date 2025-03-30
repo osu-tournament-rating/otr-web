@@ -20,7 +20,6 @@ import {
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 import {
   Dialog,

@@ -19,7 +19,6 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useSession } from 'next-auth/react';
 import { update } from '@/lib/actions/matches';
 import { createPatchOperations } from '@/lib/utils/form';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
