@@ -40,7 +40,9 @@ export default function AdminNoteCard({
   entity: AdminNoteRouteTarget;
 }) {
   const { data: session } = useSession();
-  const showButtons = session?.user?.scopes?.includes(Roles.Admin);
+  const showButtons =
+    session?.user?.scopes?.includes(Roles.Admin) &&
+    note.adminUser.id === Number(session?.user?.id ?? -1);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editedNote, setEditedNote] = useState(note.note);
@@ -111,8 +113,7 @@ export default function AdminNoteCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Note</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this note? This action cannot be
-              undone.
+              Are you sure you want to delete this note?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
