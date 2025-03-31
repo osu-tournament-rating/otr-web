@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import LoginButton from '../buttons/LoginButton';
+import ProfileCard from '../profile/ProfileCard';
 import SearchDialog from '../search/SearchDialog';
 import { Button } from '../ui/button';
 import { DialogTitle } from '../ui/dialog';
@@ -79,7 +79,7 @@ export default function NewNav() {
           <div className="hidden items-center gap-2 md:flex">
             <SearchDialog />
             <ModeToggle />
-            <LoginButton />
+            <ProfileCard />
           </div>
 
           {/* Mobile hamburger menu */}
@@ -110,7 +110,7 @@ export default function NewNav() {
                 viewport={false}
               >
                 <div className="flex flex-col gap-y-4 px-2">
-                  <LoginButton />
+                  <ProfileCard />
                   <Separator className="bg-muted" />
                 </div>
                 <NavigationMenuList className="flex-col">
