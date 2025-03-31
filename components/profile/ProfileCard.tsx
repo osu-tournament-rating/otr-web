@@ -10,11 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Settings } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginButton from '../buttons/LoginButton';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import ProfileRoleBadge from './ProfileRoleBadge';
 
 interface ProfileCardProps {
   isMobile?: boolean;
@@ -22,19 +23,38 @@ interface ProfileCardProps {
 
 export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   const { data: session } = useSession();
+
+  // State declarations
+  const [open, setOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
-  
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Handle window resize to close dropdown when switching to mobile view
+  const handleResize = useCallback(() => {
+    if (window.innerWidth < 768) {
+      // 768px is the md breakpoint in Tailwind
+      setOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
+
+  // Handle avatar loading
   useEffect(() => {
     if (session?.user?.player?.osuId) {
       const url = `https://a.ppy.sh/${session.user.player.osuId}`;
       setAvatarUrl(url);
-      
+
       // Preload the image
       const img = new Image();
       img.src = url;
     }
   }, [session?.user?.player?.osuId]);
 
+  // Early return if no session
   if (!session) {
     return <LoginButton />;
   }
@@ -45,51 +65,63 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   if (isMobile) {
     return (
       <div className="w-full">
-        <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={user?.name || 'User avatar'} />
-            <AvatarFallback>
-              <User className="h-3 w-3" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{user?.player.username}</span>
-            <span className="text-xs text-muted-foreground">{user?.scopes}</span>
+        <div
+          className="mb-4 flex cursor-pointer items-center justify-between"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={avatarUrl} alt={user?.name || 'User avatar'} />
+              <AvatarFallback>
+                <User className="h-3 w-3" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">
+                {user?.player.username}
+              </span>
+              {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
+            </div>
           </div>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          />
         </div>
-        
-        <div className="space-y-1">
-          <Link 
-            href={`/players/${user?.player.id}`}
-            className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-          >
-            <User className="h-4 w-4" />
-            <span>My Profile</span>
-          </Link>
-          
-          <Link 
-            href="/settings"
-            className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-          >
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-          
-          <button
-            onClick={() => signOut()}
-            className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Log out</span>
-          </button>
-        </div>
+
+        {isExpanded && (
+          <div className="space-y-1 pl-11">
+            <Link
+              href={`/players/${user?.player.id}`}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            >
+              <User className="h-4 w-4" />
+              <span>My Profile</span>
+            </Link>
+
+            <Link
+              href="/settings"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+
+            <button
+              onClick={() => signOut()}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   // Desktop version
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <motion.div
           whileHover={{ scale: 1.03 }}
@@ -104,12 +136,20 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
           </Avatar>
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align="end"
+        className="mt-1 w-56"
+        sideOffset={0}
+        alignOffset={0}
+        forceMount
+      >
         <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-center text-sm leading-none text-muted-foreground">
-              Welcome back, <span className="font-bold">{user?.player.username}</span>!
+          <div className="flex flex-col items-center space-y-2">
+            <p className="text-sm leading-none">
+              Welcome back,{' '}
+              <span className="font-bold">{user?.player.username}</span>!
             </p>
+            {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
