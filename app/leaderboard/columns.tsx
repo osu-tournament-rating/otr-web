@@ -13,7 +13,7 @@ export const columns = [
   columnHelper.accessor('globalRank', {
     header: 'Rank',
     cell: ({ getValue, row }) => (
-      <div className="flex min-w-[90px] flex-row items-center justify-between">
+      <div className="flex min-w-[100px] flex-row items-center justify-between">
         <p className="font-sans">#{getValue()}</p>
         <div className="flex items-center">
           <Image
