@@ -45,8 +45,8 @@ export default function ProfileCard() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-center text-sm leading-none font-medium">
-              {user?.player.username}
+            <p className="text-center text-sm leading-none text-muted-foreground">
+              Welcome back, <span className="font-bold">{user?.player.username}</span>!
             </p>
           </div>
         </DropdownMenuLabel>
