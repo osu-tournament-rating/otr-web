@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { create } from '@/lib/actions/admin-notes';
+import { createNote } from '@/lib/actions/admin-notes';
 import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,17 +23,37 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+/**
+ * Represents the form properties for creating or editing an admin note
+ * @interface AdminNoteFormProps
+ */
 export interface AdminNoteFormProps {
+  /**
+   * The unique identifier of the entity the note is associated with
+   * @property {number} entityId
+   */
   entityId: number;
+  /**
+   * The type of entity the note is targeting
+   * @property {AdminNoteRouteTarget} entity
+   */
   entity: AdminNoteRouteTarget;
+  /**
+   * Optional display name for the entity. Uses the entityId if not provided.
+   * @property {string} [entityName]
+   */
   entityName?: string;
+  /**
+   * Optional callback function to execute after successful form submission
+   * @property {() => void} [onSubmitSuccess]
+   */
   onSubmitSuccess?: () => void;
 }
 
 export default function AdminNoteForm({
   entityId,
   entity,
-  onSubmitSuccess, // Optional callback upon successful submission
+  onSubmitSuccess,
 }: AdminNoteFormProps) {
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
@@ -51,7 +71,7 @@ export default function AdminNoteForm({
 
   async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
     try {
-      await create({
+      await createNote({
         entityId: entityId,
         entity: entity,
         body: data.note,

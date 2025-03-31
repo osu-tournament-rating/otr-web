@@ -6,6 +6,6 @@ export function saveToast() {
 
 export function errorSaveToast() {
   const message =
-    'Failed to save due to an unexpected issue. Please check the console and report to the dev team!';
+    'Failed to save due to an unexpected issue. Please check the console logs and report any findings to the dev team!';
   toast.error(message);
 }
