@@ -113,10 +113,7 @@ export default function Header() {
                 <DialogTitle hidden />
 
                 <div className="flex flex-col space-y-6">
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold mb-4">Account</h2>
-                    <ProfileCard isMobile={true} />
-                  </div>
+                  <ProfileCard isMobile={true} />
 
                   <Separator className="bg-muted" />
 
