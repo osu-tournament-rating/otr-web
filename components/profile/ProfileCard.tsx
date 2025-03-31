@@ -14,7 +14,7 @@ import { ChevronDown, LogOut, User, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginButton from '../buttons/LoginButton';
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import ProfileRoleBadge from './ProfileRoleBadge';
 import Image from 'next/image';
 
@@ -23,6 +23,27 @@ interface ProfileCardProps {
 }
 
 export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
+  // Custom hook for responsive design
+  const useMediaQuery = (query: string) => {
+    const [matches, setMatches] = useState(false);
+    
+    useEffect(() => {
+      // Return early if window is not defined (SSR)
+      if (typeof window === 'undefined') return;
+      
+      const media = window.matchMedia(query);
+      if (media.matches !== matches) setMatches(media.matches);
+      
+      const listener = () => setMatches(media.matches);
+      media.addEventListener('change', listener);
+      return () => media.removeEventListener('change', listener);
+    }, [matches, query]);
+    
+    return matches;
+  };
+  
+  const isMobileView = useMediaQuery('(max-width: 767px)');
+  const actualMobile = isMobile || isMobileView;
   const { data: session } = useSession();
 
   // State declarations
@@ -50,12 +71,23 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
     if (session?.user?.player?.osuId) {
       const url = `https://a.ppy.sh/${session.user.player.osuId}`;
       setAvatarUrl(url);
-
-      // Preload the image
-      const img = document.createElement('img');
-      img.src = url;
+      // Next.js Image component handles optimization, no need for manual preloading
     }
   }, [session?.user?.player?.osuId]);
+
+  // Memoize the avatar component to prevent unnecessary re-renders
+  const userAvatar = useMemo(() => {
+    if (!session?.user) return null;
+    
+    return (
+      <Avatar className="h-9 w-9 transition-all hover:border-primary/80">
+        <AvatarImage src={avatarUrl} alt={session.user?.name || 'User avatar'} />
+        <AvatarFallback>
+          <User className="h-4 w-4" />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }, [avatarUrl, session?.user]);
 
   // Early return if no session
   if (!session) {
@@ -65,7 +97,7 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   const user = session.user;
 
   // Mobile version
-  if (isMobile) {
+  if (actualMobile) {
     return (
       <div className="w-full">
         <div className="relative mb-2 overflow-hidden rounded-md">
@@ -82,6 +114,16 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
           <div
             className="relative z-10 flex cursor-pointer items-center justify-between p-2"
             onClick={() => setIsExpanded(!isExpanded)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsExpanded(!isExpanded);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isExpanded}
+            aria-label="Toggle profile menu"
           >
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
@@ -145,13 +187,10 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           className="cursor-pointer"
+          role="button"
+          aria-label="Open profile menu"
         >
-          <Avatar className="h-9 w-9 transition-all hover:border-primary/80">
-            <AvatarImage src={avatarUrl} alt={user?.name || 'User avatar'} />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
+          {userAvatar}
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent

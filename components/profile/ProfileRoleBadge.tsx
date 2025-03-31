@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import SimpleTooltip from '@/components/simple-tooltip';
+import { useMemo } from 'react';
 
 type UserScope = 'submit' | 'verifier' | 'admin' | 'whitelist';
 
@@ -11,52 +12,37 @@ interface ProfileRoleBadgeProps {
 }
 
 export default function ProfileRoleBadge({ scopes, className }: ProfileRoleBadgeProps) {
-  // Convert string to array if needed
+  // Convert string to array if needed with proper type safety
   const scopeArray = typeof scopes === 'string' 
-    ? scopes.split(' ').filter(Boolean) as UserScope[]
-    : scopes as UserScope[];
+    ? (scopes.split(' ').filter(Boolean) as UserScope[])
+    : (scopes as UserScope[]);
 
-  if (!scopeArray.length) return null;
+  // Memoize role determination to prevent unnecessary recalculations
+  const roleToDisplay = useMemo(() => {
+    if (!scopeArray.length) return null;
+    
+    // TODO: Add support for other badges (verifier, whitelist, submit) in the future
+    
+    // Only display admin badge
+    if (scopeArray.includes('admin')) {
+      return {
+        label: 'Admin',
+        tooltip: 'Administrator',
+        variant: 'destructive' as const
+      };
+    }
+    
+    return null;
+  }, [scopeArray]);
 
-  // Prioritize admin badge if present
-  if (scopeArray.includes('admin')) {
-    return (
-      <SimpleTooltip content="Administrator">
-        <Badge 
-          variant="destructive" 
-          className={`text-xs px-1.5 py-0 h-5 ${className}`}
-        >
-          Admin
-        </Badge>
-      </SimpleTooltip>
-    );
-  }
+  if (!roleToDisplay) return null;
 
-  // Show other roles
-  const rolesToShow = scopeArray.filter(scope => 
-    ['submit', 'verifier', 'whitelist'].includes(scope)
-  );
-
-  if (!rolesToShow.length) return null;
-
-  // Display the first role with highest priority
-  const roleMap: Record<UserScope, { label: string, tooltip: string }> = {
-    'verifier': { label: 'Verifier', tooltip: 'Tournament Verifier' },
-    'whitelist': { label: 'Whitelist', tooltip: 'Whitelisted User' },
-    'submit': { label: 'Submitter', tooltip: 'Can Submit Tournaments' },
-    'admin': { label: 'Admin', tooltip: 'Administrator' }, // Fallback, won't actually be used
-  };
-
-  // Priority order: verifier > whitelist > submit
-  const priorityOrder: UserScope[] = ['verifier', 'whitelist', 'submit'];
-  const highestPriorityRole = priorityOrder.find(role => scopeArray.includes(role)) || 'submit';
-  
-  const { label, tooltip } = roleMap[highestPriorityRole];
+  const { label, tooltip, variant } = roleToDisplay;
 
   return (
     <SimpleTooltip content={tooltip}>
       <Badge 
-        variant="outline" 
+        variant={variant}
         className={`text-xs px-1.5 py-0 h-5 ${className}`}
       >
         {label}
