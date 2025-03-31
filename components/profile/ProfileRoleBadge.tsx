@@ -43,7 +43,7 @@ export default function ProfileRoleBadge({ scopes, className }: ProfileRoleBadge
   const roleMap: Record<UserScope, { label: string, tooltip: string }> = {
     'verifier': { label: 'Verifier', tooltip: 'Tournament Verifier' },
     'whitelist': { label: 'Whitelist', tooltip: 'Whitelisted User' },
-    'submit': { label: 'Submit', tooltip: 'Can Submit Tournaments' },
+    'submit': { label: 'Submitter', tooltip: 'Can Submit Tournaments' },
     'admin': { label: 'Admin', tooltip: 'Administrator' }, // Fallback, won't actually be used
   };
 

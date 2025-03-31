@@ -16,6 +16,7 @@ import LoginButton from '../buttons/LoginButton';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 import ProfileRoleBadge from './ProfileRoleBadge';
+import Image from 'next/image';
 
 interface ProfileCardProps {
   isMobile?: boolean;
@@ -28,6 +29,8 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   const [open, setOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const backgroundImageSrc = '/decorations/decoration-2.svg';
 
   // Handle window resize to close dropdown when switching to mobile view
   const handleResize = useCallback(() => {
@@ -49,7 +52,7 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
       setAvatarUrl(url);
 
       // Preload the image
-      const img = new Image();
+      const img = document.createElement('img');
       img.src = url;
     }
   }, [session?.user?.player?.osuId]);
@@ -65,27 +68,42 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   if (isMobile) {
     return (
       <div className="w-full">
-        <div
-          className="mb-4 flex cursor-pointer items-center justify-between"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={avatarUrl} alt={user?.name || 'User avatar'} />
-              <AvatarFallback>
-                <User className="h-3 w-3" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {user?.player.username}
-              </span>
-              {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
-            </div>
+        <div className="relative mb-2 overflow-hidden rounded-md">
+          <div className="absolute inset-0 z-0 opacity-20">
+            <div className="absolute inset-0 backdrop-blur-md" />
+            <Image
+              src={backgroundImageSrc}
+              alt="background image"
+              width={300}
+              height={200}
+              className="h-full w-full object-cover"
+            />
           </div>
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          />
+          <div
+            className="relative z-10 flex cursor-pointer items-center justify-between p-2"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                  src={avatarUrl}
+                  alt={user?.name || 'User avatar'}
+                />
+                <AvatarFallback>
+                  <User className="h-3 w-3" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  {user?.player.username}
+                </span>
+                {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
+              </div>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            />
+          </div>
         </div>
 
         {isExpanded && (
@@ -143,13 +161,24 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
         alignOffset={0}
         forceMount
       >
-        <DropdownMenuLabel>
-          <div className="flex flex-col items-center space-y-2">
-            <p className="text-sm leading-none">
-              Welcome back,{' '}
-              <span className="font-bold">{user?.player.username}</span>!
-            </p>
-            {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
+        <DropdownMenuLabel className="relative overflow-hidden">
+          <div className="absolute inset-0 z-0 opacity-20">
+            <div className="absolute inset-0 backdrop-blur-md" />
+            <Image
+              src={backgroundImageSrc}
+              alt="background image"
+              width={300}
+              height={200}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="relative z-10 flex flex-col items-center py-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm leading-none">
+                <span className="font-bold">{user?.player.username}</span>
+              </p>
+              {user?.scopes && <ProfileRoleBadge scopes={user.scopes} />}
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
