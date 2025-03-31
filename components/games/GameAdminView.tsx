@@ -299,8 +299,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               <Button
                 type="submit"
                 disabled={
-                  !form.formState.isDirty ||
-                  (form.formState.isDirty && !form.formState.isValid)
+                  !form.formState.isValid || !form.formState.isDirty
                 }
               >
                 {form.formState.isSubmitting ? (

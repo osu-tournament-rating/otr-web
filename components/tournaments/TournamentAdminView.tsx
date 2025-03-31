@@ -275,8 +275,7 @@ export default function TournamentAdminView({
               <Button
                 type="submit"
                 disabled={
-                  !form.formState.isDirty ||
-                  (form.formState.isDirty && !form.formState.isValid)
+                  !form.formState.isValid || !form.formState.isDirty
                 }
               >
                 {form.formState.isSubmitting ? (
