@@ -507,10 +507,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={
-                    !form.formState.isDirty ||
-                    (form.formState.isDirty && !form.formState.isValid)
-                  }
+                  disabled={!form.formState.isValid || !form.formState.isDirty}
                 >
                   {form.formState.isSubmitting ? (
                     <Loader2 className="animate-spin" />
