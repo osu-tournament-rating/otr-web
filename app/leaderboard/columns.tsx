@@ -33,7 +33,7 @@ export const columns = [
   columnHelper.accessor('player.osuId', {
     header: 'Player',
     cell: ({ getValue, row }) => (
-      <div className="flex flex-row items-center gap-2 font-sans min-w-[120px]">
+      <div className="flex flex-row items-center gap-2 font-sans min-w-[140px]">
         <Image
           src={`https://a.ppy.sh/${getValue()}`}
           alt="avatar"
@@ -42,7 +42,7 @@ export const columns = [
           height={28}
         />
         <Link href={`/players/${row.original.player.id}`}>
-          <p className="font-sans truncate max-w-[100px] sm:max-w-full">
+          <p className="font-sans truncate max-w-[120px] sm:max-w-full">
             {row.original.player.username}
           </p>
         </Link>
