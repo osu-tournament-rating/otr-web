@@ -1,51 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import TierCard from './TierCard';
-
-// Tier data for the ladder with simplified names
-// Could eventually be fetched from backend
-const tierData = [
-  {
-    tier: 'Elite Grandmaster',
-    baseRating: 2500,
-    displayName: 'Elite GM',
-  },
-  {
-    tier: 'Grandmaster I',
-    baseRating: 1900,
-    displayName: 'Grandmaster',
-  },
-  {
-    tier: 'Master I',
-    baseRating: 1500,
-    displayName: 'Master',
-  },
-  {
-    tier: 'Diamond I',
-    baseRating: 1200,
-    displayName: 'Diamond',
-  },
-  {
-    tier: 'Platinum I',
-    baseRating: 700,
-    displayName: 'Platinum',
-  },
-  {
-    tier: 'Gold I',
-    baseRating: 500,
-    displayName: 'Gold',
-  },
-  {
-    tier: 'Silver I',
-    baseRating: 300,
-    displayName: 'Silver',
-  },
-  {
-    tier: 'Bronze I',
-    baseRating: 100,
-    displayName: 'Bronze',
-  },
-];
+import { tierData } from '@/lib/tierData';
 
 interface RatingLadderProps {
   className?: string;
@@ -70,7 +26,7 @@ export default function RatingLadder({
       {tierData.map((item) => (
         <TierCard
           key={item.tier}
-          tier={item.tier as keyof typeof import('./TierCard').tierColors}
+          tier={item.tier}
           displayName={item.displayName}
           rating={item.baseRating}
           iconSize={iconSize}

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, Flag, BookOpen } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
+import FeatureCard from '@/components/FeatureCard';
 
 export default async function Page() {
   return (
@@ -15,9 +16,10 @@ export default async function Page() {
             <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
               <Image
                 src="/decorations/decoration-2.svg"
-                alt=""
+                alt="Decorative background pattern"
                 fill
                 style={{ objectFit: 'cover' }}
+                aria-hidden="true"
               />
             </div>
             <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
@@ -104,28 +106,13 @@ export default async function Page() {
           {/* Feature sections */}
           <div className="space-y-6">
             {/* Rank restricted tournaments */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-1.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    Rank restricted tournaments
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    oTR combined with BWS opens the door to an all-new level of
-                    fair competition in tournaments targeting specific skill
-                    brackets
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <FeatureCard
+              title="Rank restricted tournaments"
+              description="oTR combined with BWS opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
+              imageUrl="/decorations/decoration-1.svg"
+              imagePosition="left"
+              contentPosition="right"
+            />
 
             {/* Verified tournaments */}
             <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">

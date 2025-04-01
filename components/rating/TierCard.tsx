@@ -1,69 +1,10 @@
 import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
 import { cn } from '@/lib/utils';
-
-// Tier colors for glows and accents - with light/dark mode support
-export const tierColors = {
-  'Elite Grandmaster': {
-    gradient: {
-      dark: 'from-blue-500/40 to-blue-700/50',
-      light: 'from-blue-500/30 to-blue-700/40',
-    },
-    text: 'text-primary',
-  },
-  'Grandmaster I': {
-    gradient: {
-      dark: 'from-red-500/40 to-red-700/50',
-      light: 'from-red-500/30 to-red-700/40',
-    },
-    text: 'text-red-500',
-  },
-  'Master I': {
-    gradient: {
-      dark: 'from-purple-400/40 to-purple-600/30',
-      light: 'from-purple-400/30 to-purple-600/20',
-    },
-    text: 'text-purple-600 dark:text-purple-500',
-  },
-  'Diamond I': {
-    gradient: {
-      dark: 'from-purple-400/40 to-purple-700/20',
-      light: 'from-purple-400/30 to-purple-700/10',
-    },
-    text: 'text-purple-600 dark:text-purple-400',
-  },
-  'Platinum I': {
-    gradient: {
-      dark: 'from-cyan-500/30 to-cyan-700/10',
-      light: 'from-cyan-600/20 to-cyan-800/10',
-    },
-    text: 'text-cyan-600 dark:text-cyan-300',
-  },
-  'Gold I': {
-    gradient: {
-      dark: 'from-yellow-500/30 to-yellow-700/10',
-      light: 'from-yellow-600/20 to-yellow-800/10',
-    },
-    text: 'text-yellow-600 dark:text-yellow-400',
-  },
-  'Silver I': {
-    gradient: {
-      dark: '',
-      light: '',
-    },
-    text: 'text-slate-500 dark:text-slate-300',
-  },
-  'Bronze I': {
-    gradient: {
-      dark: '',
-      light: '',
-    },
-    text: 'text-amber-700 dark:text-amber-600',
-  },
-};
+import { TierName, getTierColor } from '@/lib/tierData';
 
 export interface TierCardProps {
-  tier: keyof typeof tierColors;
+  tier: TierName;
   displayName: string;
   rating: number;
   iconSize: number;
@@ -78,6 +19,7 @@ export default function TierCard({
   iconSize,
   className,
 }: TierCardProps) {
+  const tierColor = getTierColor(tier);
   return (
     <div
       className={cn(
@@ -92,8 +34,8 @@ export default function TierCard({
       <div
         className={cn(
           'absolute inset-0 -z-10 rounded-lg bg-gradient-to-br opacity-40 blur-md',
-          tierColors[tier].gradient.light,
-          'dark:' + tierColors[tier].gradient.dark
+          tierColor.gradient.light || '',
+          'dark:' + (tierColor.gradient.dark || '')
         )}
       />
 
@@ -102,8 +44,8 @@ export default function TierCard({
         <div
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
-            tierColors[tier].gradient.light,
-            'dark:' + tierColors[tier].gradient.dark
+            tierColor.gradient.light || '',
+            'dark:' + (tierColor.gradient.dark || '')
           )}
         />
         <span className="relative z-10">
@@ -114,7 +56,7 @@ export default function TierCard({
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="font-semibold">{displayName}</span>
-        <span className={cn('text-sm font-semibold', tierColors[tier].text)}>
+        <span className={cn('text-sm font-semibold', tierColor.text || '')}>
           {rating}+
         </span>
       </div>
