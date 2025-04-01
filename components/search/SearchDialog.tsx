@@ -53,29 +53,34 @@ export default function SearchDialog() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Open search dialog"
             onClick={() => {
               setDialogOpen(true);
               setQuery('');
             }} // Clear existing search on open
           >
-            <Search />
+            <Search className="size-4" />
           </Button>
         </DialogTrigger>
         <DialogTitle hidden />
         <DialogContent className="max-h-[80%] min-w-[50%] overflow-auto font-sans [&>button]:hidden">
-          <div className="top-0 z-10 flex flex-row gap-3 bg-background">
-            <Input
-              className="m-auto focus-visible:ring-0 border-0 rounded-xl bg-accent"
-              placeholder="Search"
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {isLoading ? (
-              <LoaderCircle className="m-auto animate-spin" />
-            ) : (
-              <Search className="m-auto" />
-            )}
+          <div className="top-0 z-10 bg-background">
+            <div className="relative">
+              <Input
+                className="m-auto focus-visible:ring-0 border-0 rounded-xl bg-accent pl-3 pr-10"
+                placeholder="Search"
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {isLoading ? (
+                  <LoaderCircle className="size-5 animate-spin" />
+                ) : (
+                  <Search className="size-5" />
+                )}
+              </div>
+            </div>
           </div>
           <SearchResults input={value} data={data} />
         </DialogContent>
