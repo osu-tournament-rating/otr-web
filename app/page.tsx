@@ -47,6 +47,22 @@ export default async function Page() {
 
           {/* Link cards */}
           <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <Link href="/leaderboard" className="block">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 text-primary">
+                    <Trophy size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">View Rankings</h3>
+                    <p className="mt-1 text-muted-foreground">
+                      Find out where you stack up against your friends...and
+                      foes
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
             <Link href="/tournaments" className="block">
               <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
@@ -59,23 +75,6 @@ export default async function Page() {
                     </h3>
                     <p className="mt-1 text-muted-foreground">
                       View the latest and greatest or go back in time
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/leaderboard" className="block">
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 text-primary">
-                    <Trophy size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">View Rankings</h3>
-                    <p className="mt-1 text-muted-foreground">
-                      Find out where you stack up against your friends...and
-                      foes
                     </p>
                   </div>
                 </div>
