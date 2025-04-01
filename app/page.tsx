@@ -6,12 +6,20 @@ import RatingLadder from '@/components/rating/RatingLadder';
 
 export default async function Page() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen font-sans bg-black text-white">
       {/* Main content */}
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col gap-8">
           {/* Hero section */}
           <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+            <div className="absolute -top-16 right-0 h-[225px] w-[475px]">
+              <Image
+                src="/decorations/decoration-2.svg"
+                alt=""
+                fill
+                style={{ objectFit: 'cover' }}
+              />
+            </div>
             <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
               <div className="z-10 flex max-w-md flex-col gap-2">
                 <h1 className="text-3xl font-bold">Tournament rating</h1>
@@ -23,8 +31,11 @@ export default async function Page() {
             </div>
           </Card>
 
-          {/* Rating Ladder - Full width */}
-          <RatingLadder className="w-full" iconSize={36} />
+          {/* Rating Ladder - Full width with responsive sizing */}
+          <RatingLadder 
+            className="w-full" 
+            iconSize={36} 
+          />
 
           {/* CTA section - elegant cards */}
           <div className="grid grid-cols-1 gap-6 py-4 md:grid-cols-3">
