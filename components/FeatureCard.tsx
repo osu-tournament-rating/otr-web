@@ -33,7 +33,7 @@ export default function FeatureCard({
     >
       <div
         className={cn(
-          'absolute top-0 h-[260px] w-[350px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100',
+          'absolute top-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100',
           imagePosition === 'left' ? 'left-0' : 'right-0'
         )}
         style={imageTransform ? { transform: imageTransform } : {}}

@@ -111,6 +111,7 @@ export default async function Page() {
               imageUrl="/decorations/decoration-1.svg"
               imagePosition="left"
               contentPosition="right"
+              className="h-44 md:h-64"
             />
 
             {/* Verified tournaments */}
