@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, Flag, BookOpen } from 'lucide-react';
-import TierIcon from '@/components/icons/TierIcon';
+import RatingLadder from '@/components/rating/RatingLadder';
 
 export default async function Page() {
   return (
@@ -11,43 +11,20 @@ export default async function Page() {
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col gap-8">
           {/* Hero section */}
-          <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
-            <div className="flex h-full flex-col items-center justify-between md:flex-row">
-              <div className="z-10 mr-auto flex max-w-md flex-col gap-2">
+          <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+            <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
+              <div className="z-10 flex max-w-md flex-col gap-2">
                 <h1 className="text-3xl font-bold">Tournament rating</h1>
                 <p className="text-xl text-gray-400">
                   A rating system that aims to predict your performance in
                   tournaments relative to others
                 </p>
               </div>
-              <div className="z-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Elite Grandmaster" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Grandmaster I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Master I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Diamond I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Platinum I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Gold I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Silver I" width={64} height={64} />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center">
-                  <TierIcon tier="Bronze I" width={64} height={64} />
-                </div>
-              </div>
             </div>
           </Card>
+
+          {/* Rating Ladder - Full width */}
+          <RatingLadder className="w-full" iconSize={36} />
 
           {/* CTA section - elegant cards */}
           <div className="grid grid-cols-1 gap-6 py-4 md:grid-cols-3">

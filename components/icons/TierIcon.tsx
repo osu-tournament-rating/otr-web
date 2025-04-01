@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import SimpleTooltip from '../simple-tooltip';
 
-const validTiers = [
+export const validTiers = [
   'Bronze III',
   'Bronze II',
   'Bronze I',
