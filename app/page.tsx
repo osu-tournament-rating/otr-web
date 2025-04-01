@@ -11,7 +11,7 @@ export default async function Page() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-2">
           {/* Hero section */}
-          <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8 mb-4">
+          <Card className="relative mb-4 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
             <div className="absolute -top-16 right-0 h-[225px] w-[475px]">
               <Image
                 src="/decorations/decoration-2.svg"
@@ -32,7 +32,7 @@ export default async function Page() {
           </Card>
 
           {/* Rating Ladder */}
-          <Card className="border-none bg-neutral-900 p-6 md:p-8 mb-4">
+          <Card className="mb-4 border-none bg-neutral-900 p-6 md:p-8">
             <div className="mb-4 flex flex-col gap-2">
               <h2 className="text-3xl font-bold">Rise to the Top</h2>
               <p className="text-gray-400">
@@ -44,7 +44,7 @@ export default async function Page() {
           </Card>
 
           {/* Link cards */}
-          <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-3">
+          <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
             <Link href="/tournaments" className="block">
               <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
                 <div className="flex items-start gap-4">
@@ -145,17 +145,20 @@ export default async function Page() {
             </Card>
 
             {/* Stats on stats */}
-            <Card className="relative border-none bg-neutral-900 p-6 md:p-8">
-              <div className="flex flex-col-reverse md:flex-row md:items-center">
-                <div className="relative mr-auto h-48 w-full md:w-1/2">
-                  <Image
-                    src="/decorations/decoration-3.svg"
-                    alt=""
-                    fill
-                    style={{ objectFit: 'contain', objectPosition: 'left' }}
-                  />
-                </div>
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-1/2">
+            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+              <div className="absolute top-0 -left-50 h-[260px] w-[600px]">
+                <Image
+                  src="/decorations/decoration-2.svg"
+                  alt=""
+                  fill
+                  style={{
+                    objectFit: 'cover',
+                    transform: 'rotate(180deg)',
+                  }}
+                />
+              </div>
+              <div className="flex h-full flex-col items-center justify-end md:flex-row">
+                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
                   <h2 className="text-3xl font-bold">Stats on stats</h2>
                   <p className="text-gray-400">
                     Powerful tools for players and teams. Compare performance,
