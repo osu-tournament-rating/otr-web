@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, Flag, BookOpen } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
+import { cn } from '@/lib/utils';
 
 export default async function Page() {
   return (
@@ -12,7 +13,7 @@ export default async function Page() {
         <div className="flex flex-col gap-2">
           {/* Hero section */}
           <Card className="relative mb-4 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-            <div className="absolute -top-16 right-0 h-[225px] w-[475px]">
+            <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-70 transition-opacity duration-300 xl:opacity-100">
               <Image
                 src="/decorations/decoration-2.svg"
                 alt=""
@@ -22,8 +23,10 @@ export default async function Page() {
             </div>
             <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
               <div className="z-10 flex max-w-md flex-col gap-2">
-                <h1 className="text-3xl font-bold">Tournament rating</h1>
-                <p className="text-xl text-gray-400">
+                <h1 className="text-shadow-sm text-3xl font-bold">
+                  Tournament rating
+                </h1>
+                <p className="text-shadow-xs text-xl text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                   A rating system that aims to predict your performance in
                   tournaments relative to others
                 </p>
@@ -34,7 +37,7 @@ export default async function Page() {
           {/* Rating Ladder */}
           <Card className="mb-4 border-none bg-neutral-900 p-6 md:p-8">
             <div className="mb-4 flex flex-col gap-2">
-              <h2 className="text-3xl font-bold">Rise to the Top</h2>
+              <h2 className="text-3xl font-bold">Rise to the top</h2>
               <p className="text-gray-400">
                 Join your friends on the ladder as soon as you play in a
                 verified tournament!
@@ -100,8 +103,8 @@ export default async function Page() {
           {/* Feature sections */}
           <div className="space-y-6">
             {/* Rank restricted tournaments */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px]">
+            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-70 transition-opacity duration-300 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
                   alt=""
@@ -109,12 +112,12 @@ export default async function Page() {
                   style={{ objectFit: 'cover' }}
                 />
               </div>
-              <div className="flex h-full flex-col items-center justify-end md:flex-row">
+              <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-3xl font-bold">
+                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
                     Rank restricted tournaments
                   </h2>
-                  <p className="text-gray-400">
+                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     oTR combined with BWS opens the door to an all-new level of
                     fair competition in tournaments targeting specific skill
                     brackets
@@ -124,8 +127,8 @@ export default async function Page() {
             </Card>
 
             {/* Verified tournaments */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-              <div className="absolute top-0 right-0 h-[260px] w-[600px]">
+            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+              <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-70 transition-opacity duration-300 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
                   alt=""
@@ -133,10 +136,12 @@ export default async function Page() {
                   style={{ objectFit: 'cover' }}
                 />
               </div>
-              <div className="flex h-full flex-col items-center justify-start md:flex-row">
+              <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 mr-auto flex flex-col gap-2 md:w-1/2">
-                  <h2 className="text-3xl font-bold">Verified tournaments</h2>
-                  <p className="text-gray-400">
+                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                    Verified tournaments
+                  </h2>
+                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Only human-verified tournament matches are included in our
                     rating algorithm
                   </p>
@@ -145,8 +150,8 @@ export default async function Page() {
             </Card>
 
             {/* Stats on stats */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-              <div className="absolute top-0 -left-50 h-[260px] w-[600px]">
+            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+              <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-70 transition-opacity duration-300 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
                   alt=""
@@ -157,10 +162,12 @@ export default async function Page() {
                   }}
                 />
               </div>
-              <div className="flex h-full flex-col items-center justify-end md:flex-row">
+              <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-3xl font-bold">Stats on stats</h2>
-                  <p className="text-gray-400">
+                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                    Stats on stats
+                  </h2>
+                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Powerful tools for players and teams. Compare performance,
                     track progress, and analyze your tournament history with
                     ease.
@@ -170,9 +177,9 @@ export default async function Page() {
             </Card>
 
             {/* All modes supported */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
               <div
-                className="absolute top-0 right-0 h-[225px] w-[618px]"
+                className="absolute top-0 right-0 h-[225px] w-[618px] opacity-70 transition-opacity duration-300 xl:opacity-100"
                 style={{
                   transform: 'scaleX(-1) scale(0.85)',
                   transformOrigin: 'right top',
@@ -189,57 +196,59 @@ export default async function Page() {
                   }}
                 />
               </div>
-              <div className="flex h-full flex-col items-center justify-between md:flex-row">
+              <div className="flex h-full flex-col items-center justify-center md:flex-row md:justify-between">
                 <div className="z-10 mr-auto flex flex-col gap-2 md:w-2/5">
-                  <h2 className="text-3xl font-bold">All modes supported</h2>
-                  <p className="text-gray-400">
+                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                    All modes supported
+                  </h2>
+                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Yes, mania 4K and 7K are entirely separate rulesets!
                   </p>
                 </div>
-                <div className="z-10 flex flex-wrap gap-4 rounded-2xl bg-slate-400 p-4">
-                  <div className="flex h-12 w-12 items-center justify-center">
+                <div className="z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-slate-400 p-2 md:gap-4 md:p-4">
+                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/osu.svg"
                       alt="osu!"
-                      width={48}
-                      height={48}
-                      className="fill-slate-300"
+                      width={32}
+                      height={32}
+                      className="fill-slate-300 md:h-12 md:w-12"
                     />
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/taiko.svg"
                       alt="osu!taiko"
-                      width={48}
-                      height={48}
-                      className="fill-slate-300"
+                      width={32}
+                      height={32}
+                      className="fill-slate-300 md:h-12 md:w-12"
                     />
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/catch.svg"
                       alt="osu!catch"
-                      width={48}
-                      height={48}
-                      className="fill-slate-300"
+                      width={32}
+                      height={32}
+                      className="fill-slate-300 md:h-12 md:w-12"
                     />
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/mania4k.svg"
                       alt="osu!mania 4K"
-                      width={48}
-                      height={48}
-                      className="fill-slate-300"
+                      width={32}
+                      height={32}
+                      className="fill-slate-300 md:h-12 md:w-12"
                     />
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/mania7k.svg"
                       alt="osu!mania 7K"
-                      width={48}
-                      height={48}
-                      className="fill-slate-300"
+                      width={32}
+                      height={32}
+                      className="fill-slate-300 md:h-12 md:w-12"
                     />
                   </div>
                 </div>
@@ -247,8 +256,8 @@ export default async function Page() {
             </Card>
 
             {/* 100% Open source */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px]">
+            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-70 transition-opacity duration-300 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
                   alt=""
@@ -256,10 +265,12 @@ export default async function Page() {
                   style={{ objectFit: 'cover' }}
                 />
               </div>
-              <div className="flex h-full flex-col items-center justify-end md:flex-row">
+              <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-3xl font-bold">100% Open source</h2>
-                  <p className="text-gray-400">
+                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                    100% Open source
+                  </h2>
+                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     We are committed to remaining open source and transparent
                     with our algorithm
                   </p>

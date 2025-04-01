@@ -132,6 +132,24 @@
   }
 }
 
+@layer utilities {
+  .text-shadow-xs {
+    text-shadow: 0 1px 2px color-mix(in srgb, var(--background) 0%, black 30%);
+  }
+  
+  .text-shadow-sm {
+    text-shadow: 0 2px 4px color-mix(in srgb, var(--background) 0%, black 40%);
+  }
+  
+  .text-shadow-md {
+    text-shadow: 0 4px 8px color-mix(in srgb, var(--background) 0%, black 50%);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 8px 16px color-mix(in srgb, var(--background) 0%, black 60%);
+  }
+}
+
 @layer components {
   .team-container {
     --team-color: var(--team-no-team);
