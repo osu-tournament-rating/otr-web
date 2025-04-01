@@ -19,56 +19,56 @@ export const tierColors = {
       dark: 'from-blue-500/40 to-blue-700/50',
       light: 'from-blue-500/30 to-blue-700/40',
     },
-    text: 'text-primary',
+    textClass: 'text-elite-grandmaster',
   },
   'Grandmaster I': {
     gradient: {
       dark: 'from-red-500/40 to-red-700/50',
       light: 'from-red-500/30 to-red-700/40',
     },
-    text: 'text-red-500',
+    textClass: 'text-grandmaster',
   },
   'Master I': {
     gradient: {
       dark: 'from-purple-400/40 to-purple-600/30',
       light: 'from-purple-400/30 to-purple-600/20',
     },
-    text: 'text-purple-600 dark:text-purple-500',
+    textClass: 'text-master',
   },
   'Diamond I': {
     gradient: {
       dark: 'from-purple-400/40 to-purple-700/20',
       light: 'from-purple-400/30 to-purple-700/10',
     },
-    text: 'text-purple-600 dark:text-purple-400',
+    textClass: 'text-diamond',
   },
   'Platinum I': {
     gradient: {
       dark: 'from-cyan-500/30 to-cyan-700/10',
       light: 'from-cyan-600/20 to-cyan-800/10',
     },
-    text: 'text-cyan-600 dark:text-cyan-300',
+    textClass: 'text-platinum',
   },
   'Gold I': {
     gradient: {
       dark: 'from-yellow-500/30 to-yellow-700/10',
       light: 'from-yellow-600/20 to-yellow-800/10',
     },
-    text: 'text-yellow-600 dark:text-yellow-400',
+    textClass: 'text-gold',
   },
   'Silver I': {
     gradient: {
       dark: '',
       light: '',
     },
-    text: 'text-slate-500 dark:text-slate-300',
+    textClass: 'text-silver',
   },
   'Bronze I': {
     gradient: {
       dark: '',
       light: '',
     },
-    text: 'text-amber-700 dark:text-amber-600',
+    textClass: 'text-bronze',
   },
 };
 
