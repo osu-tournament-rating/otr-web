@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, Flag, BookOpen } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
-import { cn } from '@/lib/utils';
 
 export default async function Page() {
   return (
@@ -13,7 +12,7 @@ export default async function Page() {
         <div className="flex flex-col gap-2">
           {/* Hero section */}
           <Card className="relative mb-4 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
-            <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-70 transition-opacity duration-300 xl:opacity-100">
+            <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
               <Image
                 src="/decorations/decoration-2.svg"
                 alt=""
@@ -23,12 +22,12 @@ export default async function Page() {
             </div>
             <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
               <div className="z-10 flex max-w-md flex-col gap-2">
-                <h1 className="text-shadow-sm text-3xl font-bold">
-                  Tournament rating
+                <h1 className="text-shadow-sm text-2xl font-bold">
+                  osu! Tournament Rating
                 </h1>
-                <p className="text-shadow-xs text-xl text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                  A rating system that aims to predict your performance in
-                  tournaments relative to others
+                <p className="text-shadow-xs text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  A platform that ranks and predicts the performance of all osu!
+                  tournament players
                 </p>
               </div>
             </div>
@@ -83,7 +82,11 @@ export default async function Page() {
               </div>
             </Link>
 
-            <Link href="/docs" className="block">
+            <Link
+              href="https://docs.otr.stagec.xyz"
+              className="block"
+              target="_blank"
+            >
               <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-blue-500">
@@ -104,7 +107,7 @@ export default async function Page() {
           <div className="space-y-6">
             {/* Rank restricted tournaments */}
             <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-70 transition-opacity duration-300 xl:opacity-100">
+              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
                   alt=""
@@ -128,7 +131,7 @@ export default async function Page() {
 
             {/* Verified tournaments */}
             <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-70 transition-opacity duration-300 xl:opacity-100">
+              <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
                   alt=""
@@ -151,7 +154,7 @@ export default async function Page() {
 
             {/* Stats on stats */}
             <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-70 transition-opacity duration-300 xl:opacity-100">
+              <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
                   alt=""
@@ -179,7 +182,7 @@ export default async function Page() {
             {/* All modes supported */}
             <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
               <div
-                className="absolute top-0 right-0 h-[225px] w-[618px] opacity-70 transition-opacity duration-300 xl:opacity-100"
+                className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
                 style={{
                   transform: 'scaleX(-1) scale(0.85)',
                   transformOrigin: 'right top',
@@ -257,7 +260,7 @@ export default async function Page() {
 
             {/* 100% Open source */}
             <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-70 transition-opacity duration-300 xl:opacity-100">
+              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
                   alt=""
