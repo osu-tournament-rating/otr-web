@@ -59,7 +59,9 @@ export default function RatingLadder({
   return (
     <div
       className={cn(
-        'grid grid-cols-2 gap-2 rounded-2xl border border-white/5 bg-black/40 p-4 backdrop-blur-sm',
+        'grid grid-cols-2 gap-2 rounded-2xl p-4 backdrop-blur-sm',
+        'border border-white/5',
+        'bg-gray-300 dark:bg-card',
         'sm:grid-cols-4 xl:grid-cols-8',
         className
       )}

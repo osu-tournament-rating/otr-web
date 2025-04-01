@@ -22,10 +22,8 @@ export default async function Page() {
             </div>
             <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
               <div className="z-10 flex max-w-md flex-col gap-2">
-                <h1 className="text-shadow-sm text-2xl font-bold">
-                  osu! Tournament Rating
-                </h1>
-                <p className="text-shadow-xs text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                <h1 className="text-2xl font-bold">osu! Tournament Rating</h1>
+                <p className="text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                   A platform that ranks and predicts the performance of all osu!
                   tournament players
                 </p>
@@ -48,7 +46,7 @@ export default async function Page() {
           {/* Link cards */}
           <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
             <Link href="/tournaments" className="block">
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-primary">
                     <Flag size={24} />
@@ -66,7 +64,7 @@ export default async function Page() {
             </Link>
 
             <Link href="/leaderboard" className="block">
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-primary">
                     <Trophy size={24} />
@@ -87,7 +85,7 @@ export default async function Page() {
               className="block"
               target="_blank"
             >
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-primary">
                     <BookOpen size={24} />
@@ -117,10 +115,10 @@ export default async function Page() {
               </div>
               <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                  <h2 className="text-2xl font-bold md:text-3xl">
                     Rank restricted tournaments
                   </h2>
-                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     oTR combined with BWS opens the door to an all-new level of
                     fair competition in tournaments targeting specific skill
                     brackets
@@ -141,10 +139,10 @@ export default async function Page() {
               </div>
               <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 mr-auto flex flex-col gap-2 md:w-1/2">
-                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                  <h2 className="text-2xl font-bold md:text-3xl">
                     Verified tournaments
                   </h2>
-                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Only human-verified tournament matches are included in our
                     rating algorithm
                   </p>
@@ -167,10 +165,10 @@ export default async function Page() {
               </div>
               <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                  <h2 className="text-2xl font-bold md:text-3xl">
                     Stats on stats
                   </h2>
-                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Powerful tools for players and teams. Compare performance,
                     track progress, and analyze your tournament history with
                     ease.
@@ -201,10 +199,10 @@ export default async function Page() {
               </div>
               <div className="flex h-full flex-col items-center justify-center md:flex-row md:justify-between">
                 <div className="z-10 mr-auto flex flex-col gap-2 md:w-2/5">
-                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                  <h2 className="text-2xl font-bold md:text-3xl">
                     All modes supported
                   </h2>
-                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     Yes, mania 4K and 7K are entirely separate rulesets!
                   </p>
                 </div>
@@ -270,10 +268,10 @@ export default async function Page() {
               </div>
               <div className="flex h-full flex-col items-center justify-center md:flex-row">
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-shadow-sm text-2xl font-bold md:text-3xl">
+                  <h2 className="text-2xl font-bold md:text-3xl">
                     100% Open source
                   </h2>
-                  <p className="text-shadow-xs text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
+                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
                     We are committed to remaining open source and transparent
                     with our algorithm
                   </p>

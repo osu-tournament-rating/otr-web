@@ -1,8 +1,14 @@
 @import 'tailwindcss';
 
-@plugin "tailwindcss-animate";
+@layer base {
+  @tailwindcss/animate;
+}
 
-@custom-variant dark (&:is(.dark *));
+@layer utilities {
+  .dark {
+    color-scheme: dark;
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -59,29 +65,29 @@
 }
 
 :root {
-  --background: hsl(0 0% 98%);
+  --background: hsl(210, 10%, 95%);
   --foreground: hsl(0, 0%, 7%);
-  --card: hsl(0 0% 100%);
+  --card: hsl(210, 10%, 98%);
   --card-foreground: hsl(0, 0%, 7%);
-  --card-alt: hsl(210, 20%, 98%);
+  --card-alt: hsl(210, 15%, 94%);
   --card-alt-foreground: hsl(0, 0%, 7%);
-  --card-alt-border: hsl(214.3, 31.8%, 91.4%);
-  --card-alt-hover: hsl(214.3, 31.8%, 88%);
-  --popover: hsl(0 0% 100%);
+  --card-alt-border: hsl(214.3, 20%, 85%);
+  --card-alt-hover: hsl(214.3, 20%, 80%);
+  --popover: hsl(210, 10%, 98%);
   --popover-foreground: hsl(0, 0%, 7%);
-  --primary: hsl(221, 90%, 61%);
+  --primary: hsl(221, 80%, 55%);
   --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(0, 0%, 31%);
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(0, 0%, 45%);
-  --accent: hsl(210, 23%, 95%);
-  --accent-foreground: hsl(222.2 47.4% 11.2%);
-  --destructive: hsl(0 84.2% 60.2%);
+  --secondary: hsl(210, 20%, 92%);
+  --secondary-foreground: hsl(0, 0%, 25%);
+  --muted: hsl(210, 20%, 92%);
+  --muted-foreground: hsl(0, 0%, 40%);
+  --accent: hsl(210, 15%, 90%);
+  --accent-foreground: hsl(222.2, 40%, 15%);
+  --destructive: hsl(0, 80%, 55%);
   --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(221.2 83.2% 53.3%);
+  --border: hsl(214.3, 20%, 85%);
+  --input: hsl(214.3, 20%, 85%);
+  --ring: hsl(221.2, 70%, 50%);
   --radius: 0.3rem;
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
@@ -225,8 +231,8 @@
 
       @apply order-2;
 
-      /* --var(--breakpoint-md) */
-      @media (width >= 48rem) {
+      /* md breakpoint */
+      @media (min-width: 48rem) {
         @apply pr-0.5;
       }
     }
@@ -236,8 +242,8 @@
 
       @apply order-3;
 
-      /* --var(--breakpoint-md) */
-      @media (width >= 48rem) {
+      /* md breakpoint */
+      @media (min-width: 48rem) {
         --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
         --player-propic-mask-dir: 270deg;
