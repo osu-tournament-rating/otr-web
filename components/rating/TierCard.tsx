@@ -1,7 +1,7 @@
 import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
 import { cn } from '@/lib/utils';
-import { TierName, getTierColor } from '@/lib/tierData';
+import { TierName, getTierColor } from '@/lib/utils/tierData';
 
 export interface TierCardProps {
   tier: TierName;
@@ -20,6 +20,7 @@ export default function TierCard({
   className,
 }: TierCardProps) {
   const tierColor = getTierColor(tier);
+  const subTier = tier === 'Elite Grandmaster' ? undefined : 1;
   return (
     <div
       className={cn(
@@ -49,17 +50,19 @@ export default function TierCard({
           )}
         />
         <span className="relative z-10">
-          <TierIcon tier={tier} width={iconSize} height={iconSize} />
+          <TierIcon
+            tier={tier}
+            subTier={subTier}
+            width={iconSize}
+            height={iconSize}
+          />
         </span>
       </div>
 
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="font-semibold">{displayName}</span>
-        <p className={cn(
-          'text-sm font-semibold',
-          tierColor.textClass
-        )}>
+        <p className={cn('text-sm font-semibold', tierColor.textClass)}>
           {rating}+
         </p>
       </div>

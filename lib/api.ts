@@ -6,6 +6,7 @@ import {
   MatchesWrapper,
   MeWrapper,
   OAuthWrapper,
+  PlayersWrapper,
   SearchWrapper,
   TournamentsWrapper,
 } from '@osu-tournament-rating/otr-api-client';
@@ -53,5 +54,6 @@ export const leaderboards = new LeaderboardsWrapper(configuration);
 export const matches = new MatchesWrapper(configuration);
 export const oAuth = new OAuthWrapper(configuration);
 export const me = new MeWrapper(configuration);
+export const players = new PlayersWrapper(configuration);
 export const search = new SearchWrapper(configuration);
 export const tournaments = new TournamentsWrapper(configuration);

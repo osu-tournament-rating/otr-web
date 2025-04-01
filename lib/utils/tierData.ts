@@ -2,6 +2,23 @@ import { validTiers } from '@/components/icons/TierIcon';
 
 export type TierName = (typeof validTiers)[number];
 
+export function getTierRomanNumerals(
+  tier: TierName,
+  subTier: number | undefined
+) {
+  if (typeof subTier !== 'number') return '';
+  switch (subTier) {
+    case 1:
+      return 'I';
+    case 2:
+      return 'II';
+    case 3:
+      return 'III';
+    default:
+      return '';
+  }
+}
+
 // Helper function to safely access tier colors
 export function getTierColor(tier: string) {
   if (tier in tierColors) {
@@ -9,7 +26,7 @@ export function getTierColor(tier: string) {
   }
 
   // Return a default tier color if the tier doesn't exist in tierColors
-  return tierColors['Silver I'];
+  return tierColors['Silver'];
 }
 
 // Tier colors for glows and accents
@@ -21,49 +38,49 @@ export const tierColors = {
     },
     textClass: 'text-elite-grandmaster',
   },
-  'Grandmaster I': {
+  Grandmaster: {
     gradient: {
       dark: 'from-red-500/40 to-red-700/50',
       light: 'from-red-500/30 to-red-700/40',
     },
     textClass: 'text-grandmaster',
   },
-  'Master I': {
+  Master: {
     gradient: {
       dark: 'from-purple-400/40 to-purple-600/30',
       light: 'from-purple-400/30 to-purple-600/20',
     },
     textClass: 'text-master',
   },
-  'Diamond I': {
+  Diamond: {
     gradient: {
       dark: 'from-purple-400/40 to-purple-700/20',
       light: 'from-purple-400/30 to-purple-700/10',
     },
     textClass: 'text-diamond',
   },
-  'Platinum I': {
+  Platinum: {
     gradient: {
       dark: 'from-cyan-500/30 to-cyan-700/10',
       light: 'from-cyan-600/20 to-cyan-800/10',
     },
     textClass: 'text-platinum',
   },
-  'Gold I': {
+  Gold: {
     gradient: {
       dark: 'from-yellow-500/30 to-yellow-700/10',
       light: 'from-yellow-600/20 to-yellow-800/10',
     },
     textClass: 'text-gold',
   },
-  'Silver I': {
+  Silver: {
     gradient: {
       dark: '',
       light: '',
     },
     textClass: 'text-silver',
   },
-  'Bronze I': {
+  Bronze: {
     gradient: {
       dark: '',
       light: '',
@@ -80,37 +97,37 @@ export const tierData = [
     displayName: 'Elite GM',
   },
   {
-    tier: 'Grandmaster I' as TierName,
+    tier: 'Grandmaster' as TierName,
     baseRating: 1900,
     displayName: 'Grandmaster',
   },
   {
-    tier: 'Master I' as TierName,
+    tier: 'Master' as TierName,
     baseRating: 1500,
     displayName: 'Master',
   },
   {
-    tier: 'Diamond I' as TierName,
+    tier: 'Diamond' as TierName,
     baseRating: 1200,
     displayName: 'Diamond',
   },
   {
-    tier: 'Platinum I' as TierName,
+    tier: 'Platinum' as TierName,
     baseRating: 700,
     displayName: 'Platinum',
   },
   {
-    tier: 'Gold I' as TierName,
+    tier: 'Gold' as TierName,
     baseRating: 500,
     displayName: 'Gold',
   },
   {
-    tier: 'Silver I' as TierName,
+    tier: 'Silver' as TierName,
     baseRating: 300,
     displayName: 'Silver',
   },
   {
-    tier: 'Bronze I' as TierName,
+    tier: 'Bronze' as TierName,
     baseRating: 100,
     displayName: 'Bronze',
   },

@@ -51,9 +51,9 @@ export const columns = [
   }),
   columnHelper.accessor('currentTier', {
     header: 'Tier',
-    cell: ({ getValue }) => (
+    cell: ({ getValue, row }) => (
       <div className="flex justify-center">
-        <TierIcon tier={getValue() ?? ''} width={24} height={24} />
+        <TierIcon tier={row.original.currentTier ?? ''} subTier={row.original.rankProgress?.currentSubTier} width={24} height={24} />
       </div>
     ),
   }),

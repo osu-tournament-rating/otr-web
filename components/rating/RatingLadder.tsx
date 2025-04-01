@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import TierCard from './TierCard';
-import { tierData } from '@/lib/tierData';
+import { tierData } from '@/lib/utils/tierData';
 
 interface RatingLadderProps {
   className?: string;
