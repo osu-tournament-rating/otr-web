@@ -6,10 +6,10 @@ import RatingLadder from '@/components/rating/RatingLadder';
 
 export default async function Page() {
   return (
-    <div className="min-h-screen font-sans bg-black text-white">
+    <div className="min-h-screen bg-black font-sans text-white">
       {/* Main content */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex flex-col gap-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col gap-2">
           {/* Hero section */}
           <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
             <div className="absolute -top-16 right-0 h-[225px] w-[475px]">
@@ -31,13 +31,19 @@ export default async function Page() {
             </div>
           </Card>
 
-          {/* Rating Ladder - Full width with responsive sizing */}
-          <RatingLadder 
-            className="w-full" 
-            iconSize={36} 
-          />
+          {/* Rating Ladder */}
+          <Card className="border-none bg-neutral-900 md:p-8">
+            <div className="mb-4 flex flex-col gap-2">
+              <h2 className="text-3xl font-bold">Rise to the Top</h2>
+              <p className="text-gray-400">
+                Join your friends on the ladder as soon as you play in a
+                verified tournament!
+              </p>
+            </div>
+            <RatingLadder className="w-full" iconSize={40} />
+          </Card>
 
-          {/* CTA section - elegant cards */}
+          {/* Link cards */}
           <div className="grid grid-cols-1 gap-6 py-4 md:grid-cols-3">
             <Link href="/tournaments" className="block">
               <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
@@ -50,7 +56,7 @@ export default async function Page() {
                       Browse Tournaments
                     </h3>
                     <p className="mt-1 text-gray-400">
-                      Submit and track your tournament reports
+                      View the latest and greatest or go back in time
                     </p>
                   </div>
                 </div>
@@ -66,7 +72,8 @@ export default async function Page() {
                   <div>
                     <h3 className="text-xl font-semibold">View Rankings</h3>
                     <p className="mt-1 text-gray-400">
-                      Check player rankings and stats
+                      Find out where you stack up against your friends...and
+                      foes
                     </p>
                   </div>
                 </div>
@@ -82,7 +89,7 @@ export default async function Page() {
                   <div>
                     <h3 className="text-xl font-semibold">Read the docs</h3>
                     <p className="mt-1 text-gray-400">
-                      Learn how the rating system works
+                      Learn how our rating system works
                     </p>
                   </div>
                 </div>
@@ -118,7 +125,7 @@ export default async function Page() {
 
             {/* Verified tournaments */}
             <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
-              <div className="absolute top-0 right-0 h-[225px] w-[475px]">
+              <div className="absolute top-0 right-0 h-[260px] w-[600px]">
                 <Image
                   src="/decorations/decoration-2.svg"
                   alt=""
@@ -138,16 +145,16 @@ export default async function Page() {
             </Card>
 
             {/* Stats on stats */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
-              <div className="absolute top-0 left-0 h-[225px] w-[330px]">
-                <Image
-                  src="/decorations/decoration-3.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'contain' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-end md:flex-row">
+            <Card className="relative border-none bg-neutral-900 p-8">
+              <div className="flex flex-col-reverse md:flex-row md:items-center">
+                <div className="relative mr-auto h-48 w-full md:w-1/2">
+                  <Image
+                    src="/decorations/decoration-3.svg"
+                    alt=""
+                    fill
+                    style={{ objectFit: 'contain', objectPosition: 'left' }}
+                  />
+                </div>
                 <div className="z-10 ml-auto flex flex-col gap-2 md:w-1/2">
                   <h2 className="text-3xl font-bold">Stats on stats</h2>
                   <p className="text-gray-400">
@@ -183,13 +190,55 @@ export default async function Page() {
                 <div className="z-10 mr-auto flex flex-col gap-2 md:w-2/5">
                   <h2 className="text-3xl font-bold">All modes supported</h2>
                   <p className="text-gray-400">
-                    osu! doesn&apos;t just mean standard!
+                    Yes, mania 4K and 7K are entirely separate rulesets!
                   </p>
                 </div>
-                <div className="z-10 flex gap-4">
-                  <div className="h-12 w-12 rounded-full border border-gray-700"></div>
-                  <div className="h-12 w-12 rounded-full border border-gray-700"></div>
-                  <div className="h-12 w-12 rounded-full border border-gray-700"></div>
+                <div className="z-10 flex flex-wrap gap-4 rounded-2xl bg-slate-400 p-4">
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <Image
+                      src="/icons/rulesets/osu.svg"
+                      alt="osu!"
+                      width={48}
+                      height={48}
+                      className="fill-slate-300"
+                    />
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <Image
+                      src="/icons/rulesets/taiko.svg"
+                      alt="osu!taiko"
+                      width={48}
+                      height={48}
+                      className="fill-slate-300"
+                    />
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <Image
+                      src="/icons/rulesets/catch.svg"
+                      alt="osu!catch"
+                      width={48}
+                      height={48}
+                      className="fill-slate-300"
+                    />
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <Image
+                      src="/icons/rulesets/mania4k.svg"
+                      alt="osu!mania 4K"
+                      width={48}
+                      height={48}
+                      className="fill-slate-300"
+                    />
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <Image
+                      src="/icons/rulesets/mania7k.svg"
+                      alt="osu!mania 7K"
+                      width={48}
+                      height={48}
+                      className="fill-slate-300"
+                    />
+                  </div>
                 </div>
               </div>
             </Card>

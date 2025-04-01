@@ -57,7 +57,7 @@ export default function TierCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-2 rounded-lg p-3 transition-all',
+        'relative flex flex-col items-center gap-2 rounded-2xl p-3 transition-all',
         'bg-gradient-to-b from-black/60 to-black/80 hover:from-black/70 hover:to-black/90',
         'border border-white/5 hover:border-white/10',
         'shadow-lg hover:shadow-xl',
