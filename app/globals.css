@@ -43,6 +43,10 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-card-alt: var(--card-alt);
+  --color-card-alt-foreground: var(--card-alt-foreground);
+  --color-card-alt-border: var(--card-alt-border);
+  --color-card-alt-hover: var(--card-alt-hover);
 }
 
 @theme {
@@ -55,18 +59,22 @@
 }
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0, 0%, 5%);
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(0, 0%, 7%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0, 0%, 5%);
+  --card-foreground: hsl(0, 0%, 7%);
+  --card-alt: hsl(210, 20%, 98%);
+  --card-alt-foreground: hsl(0, 0%, 7%);
+  --card-alt-border: hsl(214.3, 31.8%, 91.4%);
+  --card-alt-hover: hsl(214.3, 31.8%, 88%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0, 0%, 5%);
-  --primary: hsl(221, 100%, 61%);
+  --popover-foreground: hsl(0, 0%, 7%);
+  --primary: hsl(221, 90%, 61%);
   --primary-foreground: hsl(210 40% 98%);
   --secondary: hsl(210 40% 96.1%);
   --secondary-foreground: hsl(0, 0%, 31%);
   --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(0, 0%, 57%);
+  --muted-foreground: hsl(0, 0%, 45%);
   --accent: hsl(210, 23%, 95%);
   --accent-foreground: hsl(222.2 47.4% 11.2%);
   --destructive: hsl(0 84.2% 60.2%);
@@ -88,18 +96,22 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 5%);
+  --background: hsl(0, 0%, 7%);
   --foreground: hsl(210 40% 98%);
-  --card: hsl(0, 0%, 5%);
+  --card: hsl(0, 0%, 7%);
   --card-foreground: hsl(210 40% 98%);
-  --popover: hsl(0, 0%, 5%);
+  --card-alt: hsl(0, 0%, 12%);
+  --card-alt-foreground: hsl(210 40% 98%);
+  --card-alt-border: hsl(217.2 32.6% 17.5%);
+  --card-alt-hover: hsl(217.2 32.6% 21%);
+  --popover: hsl(0, 0%, 7%);
   --popover-foreground: hsl(210 40% 98%);
   --primary: hsl(217, 100%, 70%);
   --primary-foreground: hsl(222.2 47.4% 11.2%);
   --secondary: hsl(0, 0%, 12%);
   --secondary-foreground: hsl(0, 0%, 71%);
-  --muted: hsl(0, 0%, 28%);
-  --muted-foreground: hsl(0, 0%, 51%);
+  --muted: hsl(0, 0%, 20%);
+  --muted-foreground: hsl(0, 0%, 60%);
   --accent: hsl(0, 0%, 16%);
   --accent-foreground: hsl(0, 0%, 70%);
   --destructive: hsl(0, 100%, 58%);

@@ -6,12 +6,12 @@ import RatingLadder from '@/components/rating/RatingLadder';
 
 export default async function Page() {
   return (
-    <div className="min-h-screen bg-black font-sans text-white">
+    <div className="min-h-screen bg-background font-sans text-foreground">
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-2">
           {/* Hero section */}
-          <Card className="relative mb-4 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+          <Card className="relative mb-4 overflow-hidden border-none bg-card-alt p-6 md:p-8">
             <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
               <Image
                 src="/decorations/decoration-2.svg"
@@ -34,10 +34,10 @@ export default async function Page() {
           </Card>
 
           {/* Rating Ladder */}
-          <Card className="mb-4 border-none bg-neutral-900 p-6 md:p-8">
+          <Card className="mb-4 border-none bg-card-alt p-6 md:p-8">
             <div className="mb-4 flex flex-col gap-2">
               <h2 className="text-3xl font-bold">Rise to the top</h2>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 Join your friends on the ladder as soon as you play in a
                 verified tournament!
               </p>
@@ -48,16 +48,16 @@ export default async function Page() {
           {/* Link cards */}
           <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
             <Link href="/tournaments" className="block">
-              <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 text-blue-500">
+                  <div className="mt-1 text-primary">
                     <Flag size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">
                       Browse Tournaments
                     </h3>
-                    <p className="mt-1 text-gray-400">
+                    <p className="mt-1 text-muted-foreground">
                       View the latest and greatest or go back in time
                     </p>
                   </div>
@@ -66,14 +66,14 @@ export default async function Page() {
             </Link>
 
             <Link href="/leaderboard" className="block">
-              <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 text-blue-500">
+                  <div className="mt-1 text-primary">
                     <Trophy size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">View Rankings</h3>
-                    <p className="mt-1 text-gray-400">
+                    <p className="mt-1 text-muted-foreground">
                       Find out where you stack up against your friends...and
                       foes
                     </p>
@@ -87,14 +87,14 @@ export default async function Page() {
               className="block"
               target="_blank"
             >
-              <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
+              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 text-blue-500">
+                  <div className="mt-1 text-primary">
                     <BookOpen size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">Read the docs</h3>
-                    <p className="mt-1 text-gray-400">
+                    <p className="mt-1 text-muted-foreground">
                       Learn how our rating system works
                     </p>
                   </div>
@@ -106,7 +106,7 @@ export default async function Page() {
           {/* Feature sections */}
           <div className="space-y-6">
             {/* Rank restricted tournaments */}
-            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
               <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
@@ -130,7 +130,7 @@ export default async function Page() {
             </Card>
 
             {/* Verified tournaments */}
-            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
               <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
@@ -153,7 +153,7 @@ export default async function Page() {
             </Card>
 
             {/* Stats on stats */}
-            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
               <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-2.svg"
@@ -180,7 +180,7 @@ export default async function Page() {
             </Card>
 
             {/* All modes supported */}
-            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
               <div
                 className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
                 style={{
@@ -208,14 +208,14 @@ export default async function Page() {
                     Yes, mania 4K and 7K are entirely separate rulesets!
                   </p>
                 </div>
-                <div className="z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-slate-400 p-2 md:gap-4 md:p-4">
+                <div className="z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-muted p-2 md:gap-4 md:p-4">
                   <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
                     <Image
                       src="/icons/rulesets/osu.svg"
                       alt="osu!"
                       width={32}
                       height={32}
-                      className="fill-slate-300 md:h-12 md:w-12"
+                      className="fill-muted-foreground md:h-12 md:w-12"
                     />
                   </div>
                   <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
@@ -224,7 +224,7 @@ export default async function Page() {
                       alt="osu!taiko"
                       width={32}
                       height={32}
-                      className="fill-slate-300 md:h-12 md:w-12"
+                      className="fill-muted-foreground md:h-12 md:w-12"
                     />
                   </div>
                   <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
@@ -233,7 +233,7 @@ export default async function Page() {
                       alt="osu!catch"
                       width={32}
                       height={32}
-                      className="fill-slate-300 md:h-12 md:w-12"
+                      className="fill-muted-foreground md:h-12 md:w-12"
                     />
                   </div>
                   <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
@@ -242,7 +242,7 @@ export default async function Page() {
                       alt="osu!mania 4K"
                       width={32}
                       height={32}
-                      className="fill-slate-300 md:h-12 md:w-12"
+                      className="fill-muted-foreground md:h-12 md:w-12"
                     />
                   </div>
                   <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
@@ -251,7 +251,7 @@ export default async function Page() {
                       alt="osu!mania 7K"
                       width={32}
                       height={32}
-                      className="fill-slate-300 md:h-12 md:w-12"
+                      className="fill-muted-foreground md:h-12 md:w-12"
                     />
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export default async function Page() {
             </Card>
 
             {/* 100% Open source */}
-            <Card className="relative h-44 overflow-hidden border-none bg-neutral-900 p-4 md:h-64 md:p-6 lg:p-8">
+            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
               <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
                 <Image
                   src="/decorations/decoration-1.svg"
