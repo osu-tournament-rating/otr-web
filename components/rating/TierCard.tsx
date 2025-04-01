@@ -88,7 +88,7 @@ export default function TierCard({
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="font-semibold text-white">{displayName}</span>
-        <span className={cn('text-sm font-medium', tierColors[tier].text)}>
+        <span className={cn('text-sm font-semibold', tierColors[tier].text)}>
           {rating}+
         </span>
       </div>
