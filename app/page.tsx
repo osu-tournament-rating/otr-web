@@ -11,7 +11,7 @@ export default async function Page() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-2">
           {/* Hero section */}
-          <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
+          <Card className="relative overflow-hidden border-none bg-neutral-900 p-6 md:p-8 mb-4">
             <div className="absolute -top-16 right-0 h-[225px] w-[475px]">
               <Image
                 src="/decorations/decoration-2.svg"
@@ -32,7 +32,7 @@ export default async function Page() {
           </Card>
 
           {/* Rating Ladder */}
-          <Card className="border-none bg-neutral-900 md:p-8">
+          <Card className="border-none bg-neutral-900 p-6 md:p-8 mb-4">
             <div className="mb-4 flex flex-col gap-2">
               <h2 className="text-3xl font-bold">Rise to the Top</h2>
               <p className="text-gray-400">
@@ -44,7 +44,7 @@ export default async function Page() {
           </Card>
 
           {/* Link cards */}
-          <div className="grid grid-cols-1 gap-6 py-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-3">
             <Link href="/tournaments" className="block">
               <div className="h-full rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-colors hover:border-neutral-700">
                 <div className="flex items-start gap-4">
@@ -98,9 +98,9 @@ export default async function Page() {
           </div>
 
           {/* Feature sections */}
-          <div className="space-y-10">
+          <div className="space-y-6">
             {/* Rank restricted tournaments */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
+            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
               <div className="absolute top-0 left-0 h-[282px] w-[314px]">
                 <Image
                   src="/decorations/decoration-1.svg"
@@ -124,7 +124,7 @@ export default async function Page() {
             </Card>
 
             {/* Verified tournaments */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
+            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
               <div className="absolute top-0 right-0 h-[260px] w-[600px]">
                 <Image
                   src="/decorations/decoration-2.svg"
@@ -145,7 +145,7 @@ export default async function Page() {
             </Card>
 
             {/* Stats on stats */}
-            <Card className="relative border-none bg-neutral-900 p-8">
+            <Card className="relative border-none bg-neutral-900 p-6 md:p-8">
               <div className="flex flex-col-reverse md:flex-row md:items-center">
                 <div className="relative mr-auto h-48 w-full md:w-1/2">
                   <Image
@@ -167,7 +167,7 @@ export default async function Page() {
             </Card>
 
             {/* All modes supported */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
+            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
               <div
                 className="absolute top-0 right-0 h-[225px] w-[618px]"
                 style={{
@@ -244,7 +244,7 @@ export default async function Page() {
             </Card>
 
             {/* 100% Open source */}
-            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-8">
+            <Card className="relative h-64 overflow-hidden border-none bg-neutral-900 p-6 md:p-8">
               <div className="absolute top-0 left-0 h-[282px] w-[314px]">
                 <Image
                   src="/decorations/decoration-1.svg"

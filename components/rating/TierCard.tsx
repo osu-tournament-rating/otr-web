@@ -80,7 +80,9 @@ export default function TierCard({
             tierColors[tier].gradient
           )}
         />
-        <TierIcon tier={tier} width={iconSize} height={iconSize} />
+        <span className="relative z-10">
+          <TierIcon tier={tier} width={iconSize} height={iconSize} />
+        </span>
       </div>
 
       {/* Text content */}
