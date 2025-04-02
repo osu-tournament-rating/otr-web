@@ -136,17 +136,19 @@ export default async function Page() {
               contentClassName="md:w-2/3"
             />
 
+            {/* New updates every Tuesday */}
+            <FeatureCard
+              title="New updates every Tuesday"
+              description="Ratings are recalculated every Tuesday at 23:59 UTC"
+              imageUrl="/decorations/decoration-1.svg"
+              imagePosition="right"
+              imageFit="contain"
+              imageClassName="rotate-180"
+              className="h-44 md:h-64"
+            />
+
             {/* All modes supported */}
             <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-2.svg"
-                  alt="Decorative background pattern"
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  aria-hidden="true"
-                />
-              </div>
               <div
                 className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
                 style={{
