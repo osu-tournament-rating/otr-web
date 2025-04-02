@@ -112,7 +112,7 @@ export default async function Page() {
               description="oTR combined with BWS opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
               imageUrl="/decorations/decoration-1.svg"
               imagePosition="left"
-              contentPosition="right"
+              imageFit="contain"
               className="h-44 md:h-64"
             />
 

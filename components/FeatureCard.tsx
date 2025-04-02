@@ -3,16 +3,31 @@ import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
+type ImagePosition = 'left' | 'right';
+type ObjectFit = 'cover' | 'contain';
+
 interface FeatureCardProps {
+  /** Main card title */
   title: string;
+  /** Subtext content */
   description: string;
+  /** URL path for background image */
   imageUrl: string;
-  imagePosition?: 'left' | 'right';
+  /** Position of the background image */
+  imagePosition?: ImagePosition;
+  /** Tailwind classes for image dimensions */
   imageSize?: string;
+  /** Alt text for background image */
   imageAlt?: string;
+  /** CSS object-fit property for image */
+  imageFit?: ObjectFit;
+  /** Additional classes for image container */
   imageClassName?: string;
+  /** Additional classes for content container */
   contentClassName?: string;
+  /** Additional classes for root element */
   className?: string;
+  /** Optional child elements */
   children?: ReactNode;
 }
 
@@ -22,7 +37,8 @@ export default function FeatureCard({
   imageUrl,
   imagePosition = 'left',
   imageSize = 'h-[282px] w-[314px]',
-  imageAlt = 'Decorative background',
+  imageAlt = 'Decorative background pattern',
+  imageFit = 'cover',
   imageClassName,
   contentClassName,
   className,
@@ -42,12 +58,16 @@ export default function FeatureCard({
           imagePosition === 'left' ? 'left-0' : 'right-0',
           imageClassName
         )}
+        aria-hidden="true"
       >
-        <Image 
-          src={imageUrl} 
-          alt={imageAlt} 
-          fill 
-          style={{ objectFit: 'cover' }} 
+        <Image
+          src={imageUrl}
+          alt={imageAlt}
+          fill
+          className={cn({
+            'object-cover': imageFit === 'cover',
+            'object-contain': imageFit === 'contain',
+          })}
         />
       </div>
       <div className="flex h-full flex-col items-center justify-center md:flex-row">
