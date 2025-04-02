@@ -117,54 +117,24 @@ export default async function Page() {
             />
 
             {/* Verified tournaments */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-2.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 mr-auto flex flex-col gap-2 md:w-1/2">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    Verified tournaments
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Only human-verified tournament matches are included in our
-                    rating algorithm
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <FeatureCard
+              title="Verified tournaments"
+              description="Only human-verified tournament matches are included in our rating algorithm"
+              imageUrl="/decorations/decoration-2.svg"
+              imagePosition="right"
+              imageSize="h-[260px] w-[600px]"
+              imageClassName="top-0 right-0"
+            />
 
             {/* Stats on stats */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-2.svg"
-                  alt=""
-                  fill
-                  style={{
-                    objectFit: 'cover',
-                    transform: 'rotate(180deg)',
-                  }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    Stats on stats
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Powerful tools for players and teams. Compare performance,
-                    track progress, and analyze your tournament history with
-                    ease.
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <FeatureCard
+              title="Stats on stats"
+              description="Powerful tools for players and teams. Compare performance, track progress, and analyze your tournament history with ease."
+              imageUrl="/decorations/decoration-2.svg"
+              imageClassName="-left-50 top-0 rotate-180"
+              imageSize="h-[260px] w-[600px]"
+              contentClassName="md:w-2/3"
+            />
 
             {/* All modes supported */}
             <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
@@ -206,46 +176,48 @@ export default async function Page() {
                 </div>
                 <div className="z-10 mt-4 flex flex-wrap gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
                   <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon ruleset={Ruleset.Osu} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
+                    <RulesetIcon
+                      ruleset={Ruleset.Osu}
+                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                    />
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon ruleset={Ruleset.Taiko} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
+                    <RulesetIcon
+                      ruleset={Ruleset.Taiko}
+                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                    />
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon ruleset={Ruleset.Catch} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
+                    <RulesetIcon
+                      ruleset={Ruleset.Catch}
+                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                    />
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon ruleset={Ruleset.Mania4k} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
+                    <RulesetIcon
+                      ruleset={Ruleset.Mania4k}
+                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                    />
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon ruleset={Ruleset.Mania7k} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
+                    <RulesetIcon
+                      ruleset={Ruleset.Mania7k}
+                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                    />
                   </div>
                 </div>
               </div>
             </Card>
 
             {/* 100% Open source */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-1.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    100% Open source
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    We are committed to remaining open source and transparent
-                    with our algorithm
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <FeatureCard
+              title="100% Open source"
+              description="We are committed to remaining open source and transparent with our algorithm"
+              imageUrl="/decorations/decoration-1.svg"
+              imageSize="h-[282px] w-[314px]"
+              imageClassName="top-0 left-0"
+              contentClassName="md:w-2/3"
+            />
           </div>
 
           {/* CTA section removed from here and moved to top */}
