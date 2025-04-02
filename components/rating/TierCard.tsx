@@ -40,7 +40,7 @@ export default function TierCard({
       />
 
       {/* Icon container with enhanced glow */}
-      <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
+      <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
         <div
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
@@ -55,9 +55,9 @@ export default function TierCard({
 
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
-        <span className="font-semibold">{displayName}</span>
+        <span className="text-sm font-semibold">{displayName}</span>
         <p className={cn(
-          'text-sm font-semibold',
+          'text-xs font-semibold',
           tierColor.textClass
         )}>
           {rating}+

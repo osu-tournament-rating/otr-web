@@ -42,6 +42,13 @@ export const tierColors = {
     },
     textClass: 'text-diamond',
   },
+  'Emerald I': {
+    gradient: {
+      dark: 'from-green-500/40 to-green-700/50',
+      light: 'from-green-500/30 to-green-700/40',
+    },
+    textClass: 'text-emerald',
+  },
   'Platinum I': {
     gradient: {
       dark: 'from-cyan-500/30 to-cyan-700/10',
@@ -93,6 +100,11 @@ export const tierData = [
     tier: 'Diamond I' as TierName,
     baseRating: 1200,
     displayName: 'Diamond',
+  },
+  {
+    tier: 'Emerald I' as TierName,
+    baseRating: 900,
+    displayName: 'Emerald',
   },
   {
     tier: 'Platinum I' as TierName,

@@ -105,6 +105,7 @@
   --text-grandmaster: hsl(0, 80%, 55%);
   --text-master: hsl(266, 81%, 61%);
   --text-diamond: hsl(280, 65%, 60%);
+  --text-emerald: hsl(144, 65%, 50%);
   --text-platinum: hsl(197, 54%, 46%);
   --text-gold: hsl(43, 69%, 57%);
   --text-silver: hsl(0, 0%, 40%);
@@ -146,6 +147,7 @@
   --text-grandmaster: hsl(0, 100%, 58%);
   --text-master: hsl(266, 81%, 61%);
   --text-diamond: hsl(280, 65%, 70%);
+  --text-emerald: hsl(144, 70%, 60%);
   --text-platinum: hsl(187, 59%, 58%);
   --text-gold: hsl(43, 74%, 76%);
   --text-silver: hsl(0, 0%, 60%);
@@ -192,6 +194,7 @@
   .text-grandmaster { color: var(--text-grandmaster) }
   .text-master { color: var(--text-master) }
   .text-diamond { color: var(--text-diamond) }
+  .text-emerald { color: var(--text-emerald) }
   .text-platinum { color: var(--text-platinum) }
   .text-gold { color: var(--text-gold) }
   .text-silver { color: var(--text-silver) }

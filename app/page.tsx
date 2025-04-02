@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Trophy, Flag, BookOpen } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
 import FeatureCard from '@/components/FeatureCard';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 
 export default async function Page() {
   return (
@@ -166,6 +168,15 @@ export default async function Page() {
 
             {/* All modes supported */}
             <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
+              <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
+                <Image
+                  src="/decorations/decoration-2.svg"
+                  alt="Decorative background pattern"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  aria-hidden="true"
+                />
+              </div>
               <div
                 className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
                 style={{
@@ -193,51 +204,21 @@ export default async function Page() {
                     Yes, mania 4K and 7K are entirely separate rulesets!
                   </p>
                 </div>
-                <div className="z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-muted p-2 md:gap-4 md:p-4">
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/osu.svg"
-                      alt="osu!"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
+                <div className="z-10 mt-4 flex flex-wrap gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <RulesetIcon ruleset={Ruleset.Osu} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
                   </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/taiko.svg"
-                      alt="osu!taiko"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <RulesetIcon ruleset={Ruleset.Taiko} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
                   </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/catch.svg"
-                      alt="osu!catch"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <RulesetIcon ruleset={Ruleset.Catch} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
                   </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/mania4k.svg"
-                      alt="osu!mania 4K"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <RulesetIcon ruleset={Ruleset.Mania4k} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
                   </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/mania7k.svg"
-                      alt="osu!mania 7K"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
+                  <div className="flex h-12 w-12 items-center justify-center">
+                    <RulesetIcon ruleset={Ruleset.Mania7k} className="fill-primary h-8 w-8 md:h-10 md:w-10" />
                   </div>
                 </div>
               </div>
