@@ -1,7 +1,25 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HelpCircle } from 'lucide-react';
+import SimpleTooltip from '../simple-tooltip';
 import { z } from 'zod';
+
+function validateLinks(links: string[], type: 'match' | 'beatmap'): string[] {
+  const errors: string[] = [];
+  const urlPattern = type === 'match' 
+    ? /^(https:\/\/osu\.ppy\.sh\/mp\/\d+|^\d+$)/
+    : /^(https:\/\/osu\.ppy\.sh\/b\/\d+|^\d+$)/;
+
+  links.forEach((link, index) => {
+    if (!urlPattern.test(link)) {
+      errors.push(`Line ${index + 1}: "${link}" is not a valid ${type} link/ID`);
+    }
+  });
+
+  return errors;
+}
 import {
   Form,
   FormControl,
@@ -14,7 +32,6 @@ import { Input } from '@/components/ui/input';
 import { submitTournament } from '@/lib/actions/tournaments';
 import { tournamentSubmissionSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -44,21 +61,33 @@ export default function TournamentSubmissionForm() {
   const [beatmapInput, setBeatmapInput] = useState('');
 
   const handleMatchInput = (text: string) => {
+    const links = text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    
+    const errors = validateLinks(links, 'match');
+    form.setValue('matchLinks', links, { shouldValidate: true });
     setMatchInput(text);
-    form.setValue('matchLinks', 
-      text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-    );
+    if (errors.length > 0) {
+      form.setError('matchLinks', { message: errors.join('\n') });
+    } else {
+      form.clearErrors('matchLinks');
+    }
   };
 
   const handleBeatmapInput = (text: string) => {
+    const links = text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    
+    const errors = validateLinks(links, 'beatmap');
+    form.setValue('beatmapLinks', links, { shouldValidate: true });
     setBeatmapInput(text);
-    form.setValue('beatmapLinks', 
-      text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-    );
+    if (errors.length > 0) {
+      form.setError('beatmapLinks', { message: errors.join('\n') });
+    } else {
+      form.clearErrors('beatmapLinks');
+    }
   };
 
   async function onSubmit(values: z.infer<typeof tournamentSubmissionSchema>) {
@@ -73,19 +102,28 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 p-6">
-      <h1 className="text-2xl font-bold">Submit New Tournament</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="mx-auto max-w-6xl p-6 font-sans">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Submit New Tournament</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex gap-4">
             <FormField
               control={form.control}
               name="abbreviation"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Abbreviation</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Abbreviation</FormLabel>
+                    <SimpleTooltip content="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </SimpleTooltip>
+                  </div>
                   <FormControl>
-                    <Input placeholder="OTC" {...field} />
+                    <Input placeholder="OWC2024" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,9 +134,14 @@ export default function TournamentSubmissionForm() {
               name="name"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Full Name</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Name</FormLabel>
+                    <SimpleTooltip content="Full tournament name (e.g. osu! World Cup 2024)">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </SimpleTooltip>
+                  </div>
                   <FormControl>
-                    <Input placeholder="osu! Tournament Championship" {...field} />
+                    <Input placeholder="osu! World Cup 2024" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,7 +154,12 @@ export default function TournamentSubmissionForm() {
             name="forumUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Forum Post URL</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel>Forum Post URL</FormLabel>
+                  <SimpleTooltip content="Official forum post URL for the tournament">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </SimpleTooltip>
+                </div>
                 <FormControl>
                   <Input
                     placeholder="https://osu.ppy.sh/community/forums/topics/..."
@@ -128,14 +176,19 @@ export default function TournamentSubmissionForm() {
               control={form.control}
               name="ruleset"
               render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Ruleset</FormLabel>
+                <FormItem className="min-w-[300px]">
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Ruleset</FormLabel>
+                    <SimpleTooltip content="Game mode the tournament is played in">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </SimpleTooltip>
+                  </div>
                   <FormControl>
                     <Select
                       onValueChange={(val) => field.onChange(Number(val))}
                       value={field.value.toString()}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
                       <RulesetSelectContent />
@@ -149,14 +202,19 @@ export default function TournamentSubmissionForm() {
               control={form.control}
               name="lobbySize"
               render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Lobby Size</FormLabel>
+                <FormItem className="min-w-[300px]">
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Lobby Size</FormLabel>
+                    <SimpleTooltip content="Number of players per team in each match">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </SimpleTooltip>
+                  </div>
                   <FormControl>
                     <Select
                       onValueChange={(val) => field.onChange(Number(val))}
                       value={field.value.toString()}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                       <LobbySizeSelectContent />
@@ -171,7 +229,12 @@ export default function TournamentSubmissionForm() {
               name="rankRangeLowerBound"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Minimum Rank</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Rank Restriction</FormLabel>
+                    <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </SimpleTooltip>
+                  </div>
                   <FormControl>
                     <Input
                       type="number"
@@ -186,125 +249,99 @@ export default function TournamentSubmissionForm() {
             />
           </div>
 
-          <div className="space-y-4">
-            {/* Match Links Section */}
-            <div className="space-y-2">
+          <Card className="w-full">
+            <CardContent className="space-y-4 pt-6">
+              {/* Match Links Section */}
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Match Links</h3>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setMatchInput('');
-                      form.setValue('matchLinks', []);
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMatchInput('');
+                    form.setValue('matchLinks', []);
+                  }}
+                >
+                  Clear All
+                </Button>
               </div>
               <FormField
                 control={form.control}
                 name="matchLinks"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormControl>
                       <textarea
                         value={matchInput}
                         onChange={(e) => handleMatchInput(e.target.value)}
-                        placeholder={`Paste match links/IDs (one per line):\nhttps://osu.ppy.sh/mp/...\n123456789\n...`}
-                        className="flex h-32 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder={`Paste match links/IDs (one per line):\nhttps://osu.ppy.sh/mp/123456789\nosu! World Cup 2023 Grand Finals\n...`}
+                        className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
-                    <FormMessage />
+                    {form.formState.errors.matchLinks?.message && (
+                      <div className="text-sm text-destructive space-y-1">
+                        {form.formState.errors.matchLinks.message.split('\n').map((error, i) => (
+                          <div key={i}>{error}</div>
+                        ))}
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />
-              <div className="space-y-2">
-                {form.watch('matchLinks').map((link, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-md border p-2">
-                    <span className="text-sm">{link}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const updated = form.getValues('matchLinks').filter((_, i) => i !== index);
-                        form.setValue('matchLinks', updated);
-                        setMatchInput(updated.join('\n'));
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Beatmap Links Section */}
-            <div className="space-y-2">
+          <Card className="w-full">
+            <CardContent className="space-y-4 pt-6">
+              {/* Beatmap Links Section */}
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Beatmap Links</h3>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setBeatmapInput('');
-                      form.setValue('beatmapLinks', []);
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBeatmapInput('');
+                    form.setValue('beatmapLinks', []);
+                  }}
+                >
+                  Clear All
+                </Button>
               </div>
               <FormField
                 control={form.control}
                 name="beatmapLinks"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormControl>
                       <textarea
                         value={beatmapInput}
                         onChange={(e) => handleBeatmapInput(e.target.value)}
-                        placeholder={`Paste beatmap links/IDs (one per line):\nhttps://osu.ppy.sh/b/...\n123456\n...`}
-                        className="flex h-32 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder={`Paste beatmap links/IDs (one per line):\nhttps://osu.ppy.sh/b/1234567\nosu! World Cup 2023 Finals Tiebreaker\n...`}
+                        className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
-                    <FormMessage />
+                    {form.formState.errors.beatmapLinks?.message && (
+                      <div className="text-sm text-destructive space-y-1">
+                        {form.formState.errors.beatmapLinks.message.split('\n').map((error, i) => (
+                          <div key={i}>{error}</div>
+                        ))}
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />
-              <div className="space-y-2">
-                {form.watch('beatmapLinks').map((link, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-md border p-2">
-                    <span className="text-sm">{link}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const updated = form.getValues('beatmapLinks').filter((_, i) => i !== index);
-                        form.setValue('beatmapLinks', updated);
-                        setBeatmapInput(updated.join('\n'));
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <Button type="submit" className="w-full">
-            Submit Tournament
-          </Button>
-        </form>
-      </Form>
+              <Button type="submit" className="w-full">
+                Submit Tournament
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
