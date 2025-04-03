@@ -90,14 +90,28 @@ export const tournamentSubmissionFormSchema = z.object({
         const str = String(val).trim();
         // Extract numeric ID from URL or return numeric input
         const match = str.match(
-          /^(?:([1-9]\d*)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/([1-9]\d*))$/
+          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
         );
         return match ? match[1] || match[2] : str;
       },
       z.coerce
         .number()
         .int()
-        .positive({ message: "Must be a valid match ID" })
+        .positive()
+        .catch(NaN)
+        .superRefine((val, ctx) => {
+          if (isNaN(val)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid format - must be numeric ID or osu! match URL",
+            });
+          } else if (val <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Must be a positive number",
+            });
+          }
+        })
     )
   ).min(1, "At least one match link is required"),
   beatmapLinks: z.array(
@@ -106,16 +120,33 @@ export const tournamentSubmissionFormSchema = z.object({
         const str = String(val).trim();
         // Extract numeric ID from URL or numeric input
         const match = str.match(
-          /^(?:([1-9]\d*)|https:\/\/osu\.ppy\.sh\/b\/([1-9]\d*)|https:\/\/osu\.ppy\.sh\/beatmapsets\/[1-9]\d*#(?:osu|fruits|mania|taiko)\/([1-9]\d*))$/
+          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
         );
         return match ? match[1] || match[2] || match[3] : str;
       },
       z.coerce
         .number()
         .int()
-        .positive({ message: "Must be a valid beatmap ID" })
-        .max(20_000_000, {
-          message: "Value is too large - did you input a match ID by mistake?"
+        .positive()
+        .max(20_000_000)
+        .catch(NaN)
+        .superRefine((val, ctx) => {
+          if (isNaN(val)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid format - must be numeric ID or valid osu! beatmap URL",
+            });
+          } else if (val <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Beatmap ID must be positive",
+            });
+          } else if (val > 20_000_000) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid beatmap ID - are you sure this isn't a match ID?",
+            });
+          }
         })
     )
   ).min(1, "At least one beatmap link is required")

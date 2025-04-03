@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HelpCircle } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
-import { z } from 'zod';
 import type { z as zType } from 'zod';
+import { cn } from '@/lib/utils';
 
 import {
   Form,
@@ -80,6 +80,40 @@ export default function TournamentSubmissionForm() {
     setMatchInput('');
     setBeatmapInput('');
   };
+
+  // Numbered textarea component for better line tracking
+  function NumberedTextarea({
+    value,
+    onChange,
+    placeholder,
+    className,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    className?: string;
+  }) {
+    const lines = value.split('\n');
+    
+    return (
+      <div className="flex h-48 w-full overflow-hidden rounded-md border border-input bg-background font-mono text-sm">
+        <div className="flex h-full flex-col overflow-y-auto bg-muted/50 px-3 py-2 text-right text-muted-foreground">
+          {lines.map((_, i) => (
+            <div key={i} className="h-[21px]">{i + 1}</div>
+          ))}
+        </div>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={cn(
+            'h-full w-full flex-1 resize-none overflow-y-auto bg-transparent px-3 py-2 focus-visible:outline-none',
+            className
+          )}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl p-6 font-sans">
@@ -258,11 +292,10 @@ export default function TournamentSubmissionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <textarea
+                      <NumberedTextarea
                         value={matchInput}
-                        onChange={(e) => handleMatchInput(e.target.value)}
+                        onChange={handleMatchInput}
                         placeholder={`Paste match links/IDs (one per line):\nhttps://osu.ppy.sh/mp/123456789\n...`}
-                        className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
                     <FormMessage className="text-destructive" />
@@ -302,11 +335,10 @@ export default function TournamentSubmissionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <textarea
+                      <NumberedTextarea
                         value={beatmapInput}
-                        onChange={(e) => handleBeatmapInput(e.target.value)}
+                        onChange={handleBeatmapInput}
                         placeholder={`Paste beatmap links/IDs (one per line):\nhttps://osu.ppy.sh/b/1234567\n...`}
-                        className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
                     <FormMessage className="text-destructive" />
