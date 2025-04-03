@@ -82,7 +82,7 @@ export const tournamentSubmissionSchema = z.object({
     'URL must be from osu.ppy.sh forums or the osu! wiki\'s tournaments section'
   ),
   ruleset: numericEnumValueSchema(Ruleset),
-  minRank: z.number().min(1).int(),
+  rankRangeLowerBound: z.number().min(1).int(),
   lobbySize: z.number().min(1).max(8).int(),
   matchLinks: z.array(
     z.union([
