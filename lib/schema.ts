@@ -95,7 +95,9 @@ export const tournamentSubmissionSchema = z.object({
   ),
   beatmapLinks: z.array(
     z.union([
-      z.number().int().positive(),
+      z.number().int().positive().max(20_000_000, {
+          message: "Value is too large, did you input a match id by mistake?"
+      }), // Max 5MM for sanity checking. Helps ensure user didn't paste a match id on accident.
       z.string().regex(
         /^https:\/\/osu\.ppy\.sh\/(b\/\d+|beatmapsets\/\d+#(osu|mania|fruits|taiko)\/\d+)$/,
         { 

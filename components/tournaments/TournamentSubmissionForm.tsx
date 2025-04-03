@@ -250,7 +250,7 @@ export default function TournamentSubmissionForm() {
           </div>
 
           <Card className="w-full">
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4">
               {/* Match Links Section */}
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Match Links</h3>
@@ -263,7 +263,7 @@ export default function TournamentSubmissionForm() {
                     form.setValue('matchLinks', []);
                   }}
                 >
-                  Clear All
+                  Clear
                 </Button>
               </div>
               <FormField
@@ -275,7 +275,7 @@ export default function TournamentSubmissionForm() {
                       <textarea
                         value={matchInput}
                         onChange={(e) => handleMatchInput(e.target.value)}
-                        placeholder={`Paste match links/IDs (one per line):\nhttps://osu.ppy.sh/mp/123456789\nosu! World Cup 2023 Grand Finals\n...`}
+                        placeholder={`Paste match links/IDs (one per line):\nhttps://osu.ppy.sh/mp/123456789\n...`}
                         className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
@@ -293,7 +293,7 @@ export default function TournamentSubmissionForm() {
           </Card>
 
           <Card className="w-full">
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4">
               {/* Beatmap Links Section */}
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Beatmap Links</h3>
@@ -306,7 +306,7 @@ export default function TournamentSubmissionForm() {
                     form.setValue('beatmapLinks', []);
                   }}
                 >
-                  Clear All
+                  Clear
                 </Button>
               </div>
               <FormField
@@ -318,7 +318,7 @@ export default function TournamentSubmissionForm() {
                       <textarea
                         value={beatmapInput}
                         onChange={(e) => handleBeatmapInput(e.target.value)}
-                        placeholder={`Paste beatmap links/IDs (one per line):\nhttps://osu.ppy.sh/b/1234567\nosu! World Cup 2023 Finals Tiebreaker\n...`}
+                        placeholder={`Paste beatmap links/IDs (one per line):\nhttps://osu.ppy.sh/b/1234567\n...`}
                         className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
