@@ -62,7 +62,7 @@ export default function Header() {
                   <Link href={href} legacyBehavior passHref>
                     <NavigationMenuLink
                       className={cn(
-                        'rounded-md px-3 py-2 transition-colors hover:bg-muted hover:text-primary focus:bg-muted focus:outline-none',
+                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                         pathname.startsWith(href) &&
                           'font-semibold text-primary focus:text-primary'
                       )}
