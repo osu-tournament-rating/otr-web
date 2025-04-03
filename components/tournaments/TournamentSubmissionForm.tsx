@@ -5,21 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HelpCircle } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import { z } from 'zod';
+import type { z as zType } from 'zod';
 
-function validateLinks(links: string[], type: 'match' | 'beatmap'): string[] {
-  const errors: string[] = [];
-  const urlPattern = type === 'match' 
-    ? /^(https:\/\/osu\.ppy\.sh\/mp\/\d+|^\d+$)/
-    : /^(https:\/\/osu\.ppy\.sh\/b\/\d+|^\d+$)/;
-
-  links.forEach((link, index) => {
-    if (!urlPattern.test(link)) {
-      errors.push(`Line ${index + 1}: "${link}" is not a valid ${type} link/ID`);
-    }
-  });
-
-  return errors;
-}
 import {
   Form,
   FormControl,
@@ -30,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { submitTournament } from '@/lib/actions/tournaments';
-import { tournamentSubmissionSchema } from '@/lib/schema';
+import { tournamentSubmissionFormSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -39,11 +26,11 @@ import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 
-type TournamentSubmissionFormValues = z.infer<typeof tournamentSubmissionSchema>;
+type TournamentSubmissionFormValues = zType.infer<typeof tournamentSubmissionFormSchema>;
 
 export default function TournamentSubmissionForm() {
   const form = useForm<TournamentSubmissionFormValues>({
-    resolver: zodResolver(tournamentSubmissionSchema),
+    resolver: zodResolver(tournamentSubmissionFormSchema),
     defaultValues: {
       name: '',
       abbreviation: '',
@@ -54,52 +41,45 @@ export default function TournamentSubmissionForm() {
       matchLinks: [],
       beatmapLinks: []
     },
-    mode: 'onBlur'
+    mode: 'onChange'
   });
 
   const [matchInput, setMatchInput] = useState('');
   const [beatmapInput, setBeatmapInput] = useState('');
 
-  const handleMatchInput = (text: string) => {
-    const links = text.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
-    const errors = validateLinks(links, 'match');
-    form.setValue('matchLinks', links, { shouldValidate: true });
-    setMatchInput(text);
-    if (errors.length > 0) {
-      form.setError('matchLinks', { message: errors.join('\n') });
-    } else {
-      form.clearErrors('matchLinks');
-    }
-  };
+  // Unified input handler for both match and beatmap links
+  const createInputHandler = (setInput: React.Dispatch<React.SetStateAction<string>>, fieldName: 'matchLinks' | 'beatmapLinks') => 
+    (text: string) => {
+      const processedLines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
 
-  const handleBeatmapInput = (text: string) => {
-    const links = text.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
-    const errors = validateLinks(links, 'beatmap');
-    form.setValue('beatmapLinks', links, { shouldValidate: true });
-    setBeatmapInput(text);
-    if (errors.length > 0) {
-      form.setError('beatmapLinks', { message: errors.join('\n') });
-    } else {
-      form.clearErrors('beatmapLinks');
-    }
-  };
+      setInput(text);
+      form.setValue(fieldName, processedLines, { shouldValidate: true });
+    };
 
-  async function onSubmit(values: z.infer<typeof tournamentSubmissionSchema>) {
+  const handleMatchInput = createInputHandler(setMatchInput, 'matchLinks');
+  const handleBeatmapInput = createInputHandler(setBeatmapInput, 'beatmapLinks');
+
+  async function onSubmit(values: TournamentSubmissionFormValues) {
     try {
       await submitTournament(values);
       form.reset();
+      setMatchInput('');
+      setBeatmapInput('');
       toast.success('Tournament submitted successfully!');
     } catch (error) {
-      toast.error('Submission failed. Check the console logs and report to the developers if needed.');
-      console.error('Failed to submit tournament!', values, error);
+      toast.error('Submission failed. Please check your inputs and try again.');
+      console.error('Submission error:', error);
     }
   }
+
+  // Clear all form inputs
+  const clearInputs = () => {
+    form.reset();
+    setMatchInput('');
+    setBeatmapInput('');
+  };
 
   return (
     <div className="mx-auto max-w-6xl p-6 font-sans">
@@ -156,7 +136,7 @@ export default function TournamentSubmissionForm() {
               <FormItem>
                 <div className="flex items-center gap-2">
                   <FormLabel>Forum Post URL</FormLabel>
-                  <SimpleTooltip content="Official forum post URL for the tournament">
+                  <SimpleTooltip content="Forum post URL or wiki page for the tournament">
                     <HelpCircle className="h-4 w-4 text-muted-foreground" />
                   </SimpleTooltip>
                 </div>
@@ -164,6 +144,12 @@ export default function TournamentSubmissionForm() {
                   <Input
                     placeholder="https://osu.ppy.sh/community/forums/topics/..."
                     {...field}
+                    onChange={(e) => {
+                      // Strip query parameters before setting value
+                      const url = e.target.value;
+                      const baseUrl = url.split('?')[0];
+                      field.onChange(baseUrl);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -251,16 +237,16 @@ export default function TournamentSubmissionForm() {
 
           <Card className="w-full">
             <CardContent className="space-y-4">
-              {/* Match Links Section */}
+              {/* Matches Section */}
               <div className="flex items-center justify-between">
-                <h3 className="font-medium">Match Links</h3>
+                <h3 className="font-medium">Matches</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     setMatchInput('');
-                    form.setValue('matchLinks', []);
+                    form.setValue('matchLinks', [], { shouldValidate: true });
                   }}
                 >
                   Clear
@@ -269,7 +255,7 @@ export default function TournamentSubmissionForm() {
               <FormField
                 control={form.control}
                 name="matchLinks"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormControl>
                       <textarea
@@ -279,11 +265,10 @@ export default function TournamentSubmissionForm() {
                         className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
-                    {form.formState.errors.matchLinks?.message && (
+                    <FormMessage className="text-destructive" />
+                    {form.formState.errors.matchLinks && form.formState.errors.matchLinks.type === 'invalid_type' && (
                       <div className="text-sm text-destructive space-y-1">
-                        {form.formState.errors.matchLinks.message.split('\n').map((error, i) => (
-                          <div key={i}>{error}</div>
-                        ))}
+                        <div>Contains invalid match links</div>
                       </div>
                     )}
                   </FormItem>
@@ -294,16 +279,16 @@ export default function TournamentSubmissionForm() {
 
           <Card className="w-full">
             <CardContent className="space-y-4">
-              {/* Beatmap Links Section */}
+              {/* Beatmaps Section */}
               <div className="flex items-center justify-between">
-                <h3 className="font-medium">Beatmap Links</h3>
+                <h3 className="font-medium">Beatmaps</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     setBeatmapInput('');
-                    form.setValue('beatmapLinks', []);
+                    form.setValue('beatmapLinks', [], { shouldValidate: true });
                   }}
                 >
                   Clear
@@ -312,7 +297,7 @@ export default function TournamentSubmissionForm() {
               <FormField
                 control={form.control}
                 name="beatmapLinks"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormControl>
                       <textarea
@@ -322,11 +307,10 @@ export default function TournamentSubmissionForm() {
                         className="flex h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
                     </FormControl>
-                    {form.formState.errors.beatmapLinks?.message && (
+                    <FormMessage className="text-destructive" />
+                    {form.formState.errors.beatmapLinks && form.formState.errors.beatmapLinks.type === 'invalid_type' && (
                       <div className="text-sm text-destructive space-y-1">
-                        {form.formState.errors.beatmapLinks.message.split('\n').map((error, i) => (
-                          <div key={i}>{error}</div>
-                        ))}
+                        <div>Contains invalid beatmap links</div>
                       </div>
                     )}
                   </FormItem>

@@ -74,38 +74,51 @@ export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
 });
 
-export const tournamentSubmissionSchema = z.object({
+export const tournamentSubmissionFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),
   forumUrl: z.string().min(1).regex(
-    /^(https:\/\/osu\.ppy\.sh\/community\/forums\/topics\/\d+(\?=\d+)?|https:\/\/osu\.ppy\.sh\/wiki\/en\/Tournaments\/.+)$/,
+    /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/,
     'URL must be from osu.ppy.sh forums or the osu! wiki\'s tournaments section'
   ),
   ruleset: numericEnumValueSchema(Ruleset),
   rankRangeLowerBound: z.number().min(1).int(),
   lobbySize: z.number().min(1).max(8).int(),
   matchLinks: z.array(
-    z.union([
-      z.number().int().positive(),
-      z.string().regex(
-        /^https:\/\/osu\.ppy\.sh\/(mp|community\/matches)\/\d+$/,
-        { message: 'Match link must be a valid osu! multiplayer link or match ID' }
-      )
-    ])
-  ),
+    z.preprocess(
+      (val) => {
+        const str = String(val).trim();
+        // Extract numeric ID from URL or return numeric input
+        const match = str.match(
+          /^(?:([1-9]\d*)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/([1-9]\d*))$/
+        );
+        return match ? match[1] || match[2] : str;
+      },
+      z.coerce
+        .number()
+        .int()
+        .positive({ message: "Must be a valid match ID" })
+    )
+  ).min(1, "At least one match link is required"),
   beatmapLinks: z.array(
-    z.union([
-      z.number().int().positive().max(20_000_000, {
-          message: "Value is too large, did you input a match id by mistake?"
-      }), // Max 5MM for sanity checking. Helps ensure user didn't paste a match id on accident.
-      z.string().regex(
-        /^https:\/\/osu\.ppy\.sh\/(b\/\d+|beatmapsets\/\d+#(osu|mania|fruits|taiko)\/\d+)$/,
-        { 
-          message: 'Must be a valid beatmap URL (either /b/<id> or /beatmapsets/<setid>#<ruleset>/<bid>)'
-        }
-      )
-    ])
-  )
+    z.preprocess(
+      (val) => {
+        const str = String(val).trim();
+        // Extract numeric ID from URL or numeric input
+        const match = str.match(
+          /^(?:([1-9]\d*)|https:\/\/osu\.ppy\.sh\/b\/([1-9]\d*)|https:\/\/osu\.ppy\.sh\/beatmapsets\/[1-9]\d*#(?:osu|fruits|mania|taiko)\/([1-9]\d*))$/
+        );
+        return match ? match[1] || match[2] || match[3] : str;
+      },
+      z.coerce
+        .number()
+        .int()
+        .positive({ message: "Must be a valid beatmap ID" })
+        .max(20_000_000, {
+          message: "Value is too large - did you input a match ID by mistake?"
+        })
+    )
+  ).min(1, "At least one beatmap link is required")
 })
 
 export const leaderboardFilterSchema = z.object({

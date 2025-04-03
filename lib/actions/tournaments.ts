@@ -1,7 +1,7 @@
 'use server';
 
 import { tournaments } from '@/lib/api';
-import { tournamentSubmissionSchema } from '@/lib/schema';
+import { tournamentSubmissionFormSchema } from '@/lib/schema';
 import {
   TournamentsGetRequestParams,
   TournamentsUpdateRequestParams,
@@ -53,7 +53,7 @@ export async function update(params: TournamentsUpdateRequestParams) {
  * @param values Tournament submission data
  */
 export async function submitTournament(
-  values: z.infer<typeof tournamentSubmissionSchema>
+  values: z.infer<typeof tournamentSubmissionFormSchema>
 ) {
   // Destructure to remove unwanted fields
   const { matchLinks, beatmapLinks, ...rest } = values;
