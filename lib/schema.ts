@@ -74,6 +74,38 @@ export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
 });
 
+export const tournamentSubmissionSchema = z.object({
+  name: z.string().min(1),
+  abbreviation: z.string().min(1),
+  forumUrl: z.string().min(1).regex(
+    /^(https:\/\/osu\.ppy\.sh\/community\/forums\/topics\/\d+(\?=\d+)?|https:\/\/osu\.ppy\.sh\/wiki\/en\/Tournaments\/.+)$/,
+    'URL must be from osu.ppy.sh forums or the osu! wiki\'s tournaments section'
+  ),
+  ruleset: numericEnumValueSchema(Ruleset),
+  minRank: z.number().min(1).int(),
+  lobbySize: z.number().min(1).max(8).int(),
+  matchLinks: z.array(
+    z.union([
+      z.number().int().positive(),
+      z.string().regex(
+        /^https:\/\/osu\.ppy\.sh\/(mp|community\/matches)\/\d+$/,
+        { message: 'Match link must be a valid osu! multiplayer link or match ID' }
+      )
+    ])
+  ),
+  beatmapLinks: z.array(
+    z.union([
+      z.number().int().positive(),
+      z.string().regex(
+        /^https:\/\/osu\.ppy\.sh\/(b\/\d+|beatmapsets\/\d+#(osu|mania|fruits|taiko)\/\d+)$/,
+        { 
+          message: 'Must be a valid beatmap URL (either /b/<id> or /beatmapsets/<setid>#<ruleset>/<bid>)'
+        }
+      )
+    ])
+  )
+})
+
 export const leaderboardFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
