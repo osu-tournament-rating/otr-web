@@ -266,11 +266,13 @@ export default function TournamentSubmissionForm() {
                       />
                     </FormControl>
                     <FormMessage className="text-destructive" />
-                    {form.formState.errors.matchLinks && form.formState.errors.matchLinks.type === 'invalid_type' && (
-                      <div className="text-sm text-destructive space-y-1">
-                        <div>Contains invalid match links</div>
-                      </div>
-                    )}
+                    {form.formState.errors.matchLinks?.map?.((error, index) => (
+                      error && (
+                        <div key={index} className="text-sm text-destructive">
+                          Line {index + 1}: {error.message}
+                        </div>
+                      )
+                    ))}
                   </FormItem>
                 )}
               />
@@ -308,11 +310,13 @@ export default function TournamentSubmissionForm() {
                       />
                     </FormControl>
                     <FormMessage className="text-destructive" />
-                    {form.formState.errors.beatmapLinks && form.formState.errors.beatmapLinks.type === 'invalid_type' && (
-                      <div className="text-sm text-destructive space-y-1">
-                        <div>Contains invalid beatmap links</div>
-                      </div>
-                    )}
+                    {form.formState.errors.beatmapLinks?.map?.((error, index) => (
+                      error && (
+                        <div key={index} className="text-sm text-destructive">
+                          Line {index + 1}: {error.message}
+                        </div>
+                      )
+                    ))}
                   </FormItem>
                 )}
               />
