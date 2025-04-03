@@ -86,7 +86,7 @@ export default async function Page(props: {
         <PaginationItem key={i}>
           <Link
             href={createUri(i)}
-            className={`px-4 ${i === page ? 'font-bold' : ''}`}
+            className={`px-2 sm:px-4 ${i === page ? 'font-bold' : ''}`}
           >
             {i}
           </Link>
@@ -127,7 +127,7 @@ export default async function Page(props: {
           data={data.result.leaderboard}
         />
       )}
-      <Pagination className="mt-2">
+      <Pagination className="mt-4">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
