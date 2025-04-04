@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle, Trophy, Settings, Link, Map } from 'lucide-react';
+import { HelpCircle, Trophy, Database, Link, Map } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -86,7 +86,8 @@ export default function TournamentSubmissionForm() {
         </p>
       </div>
       
-      <Card className="shadow-lg border-primary/10 bg-card/50 backdrop-blur-sm">
+      <Card className="shadow-xl border-primary/10 bg-card/50 backdrop-blur-sm rounded-xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-background/0 pointer-events-none" />
         <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -173,13 +174,7 @@ export default function TournamentSubmissionForm() {
                 />
               </div>
 
-              <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
-                  <Settings className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-primary">Tournament Settings</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                   <FormField
                     control={form.control}
                     name="ruleset"
@@ -263,8 +258,8 @@ export default function TournamentSubmissionForm() {
 
               <div className="space-y-6 pt-2">
                 <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
-                  <Link className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-primary">Match Resources</h3>
+                  <Database className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-medium text-primary">Tournament Data</h3>
                 </div>
                 
                 {/* Match links */}
@@ -286,20 +281,13 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary"
+                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary backdrop-blur-sm"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
-                  <Map className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-primary">Beatmap Resources</h3>
-                </div>
                 
                 {/* Beatmap links */}
                 <FormField
@@ -320,7 +308,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary"
+                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary backdrop-blur-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -332,7 +320,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button 
                   type="submit" 
-                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-lg font-medium" 
+                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5" 
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
