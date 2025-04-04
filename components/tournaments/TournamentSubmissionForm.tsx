@@ -318,7 +318,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
