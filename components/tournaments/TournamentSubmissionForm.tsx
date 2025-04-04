@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle, TrophyIcon } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { HelpCircle } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -77,22 +77,12 @@ export default function TournamentSubmissionForm() {
 
   return (
     <div className="mx-auto max-w-6xl p-6 font-sans">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex flex-row items-center text-2xl font-bold gap-2">
-            <div className='flex'>
-              <TrophyIcon />
-            </div>
-            <div className='flex'>
-              New Tournament
-            </div>
-          </CardTitle>
-        </CardHeader>
+      <Card className="shadow-lg border-primary/10">
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
-                <h3 className="text-lg font-medium">Tournament Information</h3>
+                <h3 className="text-lg font-medium text-primary border-b pb-2">Tournament Information</h3>
                 <div className="flex gap-4">
                   <FormField
                     control={form.control}
@@ -180,7 +170,7 @@ export default function TournamentSubmissionForm() {
                             onValueChange={(val) => field.onChange(Number(val))}
                             value={field.value.toString()}
                           >
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full bg-background border-input">
                               <SelectValue placeholder="Select ruleset" />
                             </SelectTrigger>
                             <RulesetSelectContent />
@@ -300,7 +290,11 @@ export default function TournamentSubmissionForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                className="w-full mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" 
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Submitting..." : "Submit Tournament"}
               </Button>
             </form>
