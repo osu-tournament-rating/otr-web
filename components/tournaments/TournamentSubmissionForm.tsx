@@ -84,6 +84,15 @@ export default function TournamentSubmissionForm() {
         <p className="text-muted-foreground">
           Use this form to submit a new tournament for verification and tracking.
         </p>
+        <a 
+          href="https://docs.otr.stagec.xyz/tournament-approval.html#acceptance-criteria" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+        >
+          <HelpCircle className="mr-1 h-4 w-4" />
+          Read our tournament acceptance criteria
+        </a>
       </div>
 
       <Card className="shadow-md border-primary/10 bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden">
