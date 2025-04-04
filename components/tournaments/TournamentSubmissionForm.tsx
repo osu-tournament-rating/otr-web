@@ -95,14 +95,14 @@ export default function TournamentSubmissionForm() {
         </a>
       </div>
 
-      <Card className="shadow-xl border border-border rounded-2xl overflow-hidden bg-card">
+      <Card className="shadow-xl border border-border rounded-2xl overflow-hidden bg-background">
         <CardContent className="pt-8 px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-3 mb-4 border-b-2 border-primary/30">
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border bg-muted/50 p-3 rounded-md">
                   <Trophy className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold text-primary">Tournament Information</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Tournament Information</h3>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -112,7 +112,7 @@ export default function TournamentSubmissionForm() {
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <div className="flex items-center gap-2">
-                          <FormLabel className="text-foreground/90 font-medium">Abbreviation</FormLabel>
+                          <FormLabel className="text-foreground font-medium">Abbreviation</FormLabel>
                           <SimpleTooltip content="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
                             <HelpCircle className="h-4 w-4 text-primary/70" />
                           </SimpleTooltip>
@@ -121,7 +121,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="OWC2024"
                             {...field}
-                            className="bg-background border border-input focus-visible:border-primary shadow-sm"
+                            className="bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -134,7 +134,7 @@ export default function TournamentSubmissionForm() {
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <div className="flex items-center gap-2">
-                          <FormLabel className="text-foreground/90 font-medium">Name</FormLabel>
+                          <FormLabel className="text-foreground font-medium">Name</FormLabel>
                           <SimpleTooltip content="Full tournament name (e.g. osu! World Cup 2024)">
                             <HelpCircle className="h-4 w-4 text-primary/70" />
                           </SimpleTooltip>
@@ -143,7 +143,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="osu! World Cup 2024"
                             {...field}
-                            className="bg-background border border-input focus-visible:border-primary shadow-sm"
+                            className="bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -158,7 +158,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Forum Post URL</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Forum Post URL</FormLabel>
                         <SimpleTooltip content="Forum post URL or wiki page for the tournament">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -167,7 +167,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           placeholder="https://osu.ppy.sh/community/forums/topics/..."
                           {...field}
-                          className="bg-background border border-input focus-visible:border-primary shadow-sm"
+                          className="bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                           onChange={(e) => {
                             // Strip query parameters before setting value
                             const url = e.target.value;
@@ -189,7 +189,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Ruleset</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Ruleset</FormLabel>
                         <SimpleTooltip content="Game mode the tournament is played in">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -199,7 +199,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background border border-input shadow-sm">
+                          <SelectTrigger className="w-full bg-card border-2 border-input focus:border-primary focus:ring-1 focus:ring-primary shadow-sm">
                             <SelectValue placeholder="Select ruleset" />
                           </SelectTrigger>
                           <RulesetSelectContent />
@@ -215,7 +215,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Lobby Size</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Lobby Size</FormLabel>
                         <SimpleTooltip content="Number of players per team in each match">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -225,7 +225,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background border border-input shadow-sm">
+                          <SelectTrigger className="w-full bg-card border-2 border-input focus:border-primary focus:ring-1 focus:ring-primary shadow-sm">
                             <SelectValue placeholder="Select size" />
                           </SelectTrigger>
                           <LobbySizeSelectContent />
@@ -241,7 +241,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Rank Restriction</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Rank Restriction</FormLabel>
                         <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -250,7 +250,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           type="number"
                           min={1}
-                          className="bg-background border border-input focus-visible:border-primary shadow-sm"
+                          className="bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                           {...field}
                           onChange={(e) =>
                             field.onChange(e.target.valueAsNumber)
@@ -264,9 +264,9 @@ export default function TournamentSubmissionForm() {
               </div>
 
               <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-3 pb-3 mb-4 border-b-2 border-primary/30">
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border bg-muted/50 p-3 rounded-md">
                   <Database className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold text-primary">Tournament Data</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Tournament Data</h3>
                 </div>
 
                 {/* Match links */}
@@ -276,7 +276,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Match Links</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Match Links</FormLabel>
                         <SimpleTooltip content="osu! match IDs or URLs (one per line)">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -288,7 +288,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background border border-input focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -303,7 +303,7 @@ export default function TournamentSubmissionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
-                        <FormLabel className="text-foreground/90 font-medium">Beatmap Links</FormLabel>
+                        <FormLabel className="text-foreground font-medium">Beatmap Links</FormLabel>
                         <SimpleTooltip content="osu! beatmap IDs or URLs (one per line)">
                           <HelpCircle className="h-4 w-4 text-primary/70" />
                         </SimpleTooltip>
@@ -315,7 +315,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background border border-input focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-card border-2 border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -327,7 +327,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 rounded-md"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
