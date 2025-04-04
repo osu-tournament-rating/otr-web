@@ -199,7 +199,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background/50 border-primary/20">
+                          <SelectTrigger className="w-full bg-background/80 border-2 border-primary/30 shadow-sm">
                             <SelectValue placeholder="Select ruleset" />
                           </SelectTrigger>
                           <RulesetSelectContent />
