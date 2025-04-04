@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle, Trophy, Database, Link, Map } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { HelpCircle, Trophy, Database, ExternalLink } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -90,7 +90,7 @@ export default function TournamentSubmissionForm() {
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
         >
-          <HelpCircle className="mr-1 h-4 w-4" />
+          <ExternalLink className="mr-1 h-4 w-4" />
           Read our tournament acceptance criteria
         </a>
       </div>
