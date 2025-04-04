@@ -95,7 +95,7 @@ export default function TournamentSubmissionForm() {
         </a>
       </div>
 
-      <Card className="shadow-lg border-2 border-primary/20 bg-card/95 rounded-2xl overflow-hidden">
+      <Card className="shadow-xl border-2 border-primary/30 bg-card rounded-2xl overflow-hidden">
         <CardContent className="pt-8 px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -121,7 +121,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="OWC2024"
                             {...field}
-                            className="bg-background/50 border-primary/20 focus-visible:border-primary"
+                            className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -143,7 +143,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="osu! World Cup 2024"
                             {...field}
-                            className="bg-background/50 border-primary/20 focus-visible:border-primary"
+                            className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -250,7 +250,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           type="number"
                           min={1}
-                          className="bg-background/50 border-primary/20 focus-visible:border-primary"
+                          className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           {...field}
                           onChange={(e) =>
                             field.onChange(e.target.valueAsNumber)
@@ -315,7 +315,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary backdrop-blur-sm"
+                          className="min-h-32 bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
