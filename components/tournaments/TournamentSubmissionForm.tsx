@@ -76,27 +76,29 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 font-sans">
+    <div className="w-full font-sans">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2 text-primary flex items-center justify-center gap-2">
-          <Trophy className="h-8 w-8" /> Submit Tournament
+        <h1 className="text-4xl font-bold mb-3 text-primary flex items-center justify-center gap-2">
+          <Trophy className="h-9 w-9" /> Submit Tournament
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-lg">
           Use this form to submit a new tournament for verification and tracking.
         </p>
         <a 
           href="https://docs.otr.stagec.xyz/tournament-approval.html#acceptance-criteria" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+          className="mt-3 inline-flex items-center text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
         >
           <ExternalLink className="mr-1 h-4 w-4" />
           Read our tournament acceptance criteria
         </a>
       </div>
 
-      <Card className="shadow-xl border-2 border-primary/30 bg-card rounded-2xl overflow-hidden">
-        <CardContent className="pt-8 px-8">
+      <Card className="shadow-xl border-2 border-primary/30 rounded-2xl overflow-hidden backdrop-blur-md bg-background/60 dark:bg-background/40">
+        <CardContent className="pt-8 px-8 relative">
+          {/* Inner frosted glass effect */}
+          <div className="absolute inset-0 -z-10 bg-background/40 backdrop-blur-sm"></div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
@@ -121,7 +123,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="OWC2024"
                             {...field}
-                            className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                            className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -143,7 +145,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="osu! World Cup 2024"
                             {...field}
-                            className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                            className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -167,7 +169,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           placeholder="https://osu.ppy.sh/community/forums/topics/..."
                           {...field}
-                          className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           onChange={(e) => {
                             // Strip query parameters before setting value
                             const url = e.target.value;
@@ -199,7 +201,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background/80 border-2 border-primary/30 shadow-sm">
+                          <SelectTrigger className="w-full bg-background/70 backdrop-blur-sm border-2 border-primary/30 shadow-sm">
                             <SelectValue placeholder="Select ruleset" />
                           </SelectTrigger>
                           <RulesetSelectContent />
@@ -225,7 +227,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background/80 border-2 border-primary/30 shadow-sm">
+                          <SelectTrigger className="w-full bg-background/70 backdrop-blur-sm border-2 border-primary/30 shadow-sm">
                             <SelectValue placeholder="Select size" />
                           </SelectTrigger>
                           <LobbySizeSelectContent />
@@ -250,7 +252,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           type="number"
                           min={1}
-                          className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           {...field}
                           onChange={(e) =>
                             field.onChange(e.target.valueAsNumber)
@@ -288,7 +290,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -315,7 +317,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -327,7 +329,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 backdrop-blur-sm"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
