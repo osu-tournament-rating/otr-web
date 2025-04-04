@@ -1,13 +1,12 @@
 'use server';
 
 import { tournaments } from '@/lib/api';
-import { tournamentSubmissionFormSchema } from '@/lib/schema';
 import {
+  TournamentsCreateRequestParams,
   TournamentsGetRequestParams,
   TournamentsUpdateRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
-import { z } from 'zod';
 
 /**
  * The react cache() function determines if a return value can be re-used
@@ -48,44 +47,7 @@ export async function update(params: TournamentsUpdateRequestParams) {
   return result;
 }
 
-/**
- * Submit a new tournament
- * @param values Tournament submission data
- */
-export async function submitTournament(
-  values: z.infer<typeof tournamentSubmissionFormSchema>
-) {
-  // Destructure to remove unwanted fields
-  const { matchLinks, beatmapLinks, ...rest } = values;
-  
-  // Create processed values with only needed fields
-  const processedValues = {
-    ...rest,
-    ids: matchLinks.map(link =>
-      typeof link === 'string' ? extractMatchIdFromUrl(link) : link
-    ).filter((matchId): matchId is number => matchId !== null),
-    beatmapIds: beatmapLinks.map(link =>
-      typeof link === 'string' ? extractBeatmapIdFromUrl(link) : link  
-    ).filter((beatmapId): beatmapId is number => beatmapId !== null)
-  };
-
-  const { result } = await tournaments.create({
-    body: processedValues
-  });
-
+export async function submit(params: TournamentsCreateRequestParams) {
+  const { result } = await tournaments.create(params);
   return result;
 }
-
-// URL parsing utilities
-const extractMatchIdFromUrl = (url: string) => {
-  const match = url.match(/\/(\d+)$/);
-  return match ? Number(match[1]) : null;
-};
-
-const extractBeatmapIdFromUrl = (url: string) => {
-  const beatmapIdMatch = url.match(/\/b\/(\d+)$/);
-  if (beatmapIdMatch) return Number(beatmapIdMatch[1]);
-  
-  const beatmapSetMatch = url.match(/\/beatmapsets\/\d+#\w+\/(\d+)$/);
-  return beatmapSetMatch ? Number(beatmapSetMatch[1]) : null;
-};

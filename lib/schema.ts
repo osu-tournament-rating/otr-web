@@ -77,80 +77,86 @@ export const adminNoteFormSchema = z.object({
 export const tournamentSubmissionFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),
-  forumUrl: z.string().min(1).regex(
-    /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/,
-    'URL must be from osu.ppy.sh forums or the osu! wiki\'s tournaments section'
-  ),
+  forumUrl: z
+    .string()
+    .min(1)
+    .regex(
+      /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/,
+      "URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
+    ),
   ruleset: numericEnumValueSchema(Ruleset),
   rankRangeLowerBound: z.number().min(1).int(),
   lobbySize: z.number().min(1).max(8).int(),
-  matchLinks: z.array(
-    z.preprocess(
-      (val) => {
-        const str = String(val).trim();
-        // Extract numeric ID from URL or return numeric input
-        const match = str.match(
-          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
-        );
-        return match ? match[1] || match[2] : str;
-      },
-      z.coerce
-        .number()
-        .int()
-        .positive()
-        .catch(NaN)
-        .superRefine((val, ctx) => {
-          if (isNaN(val)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Invalid format - must be numeric ID or osu! match URL",
-            });
-          } else if (val <= 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Must be a positive number",
-            });
+  matchLinks: z.preprocess(
+    (val) => {
+      if (
+        !val ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'string' && val.trim() === '')
+      ) {
+        return [];
+      }
+
+      if (Array.isArray(val)) {
+        return val.map((item) => {
+          if (!item || (typeof item === 'string' && item.trim() === '')) {
+            return 0;
           }
-        })
-    )
-  ).min(1, "At least one match link is required"),
-  beatmapLinks: z.array(
-    z.preprocess(
-      (val) => {
-        const str = String(val).trim();
-        // Extract numeric ID from URL or numeric input
-        const match = str.match(
-          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
-        );
-        return match ? match[1] || match[2] || match[3] : str;
-      },
-      z.coerce
-        .number()
-        .int()
-        .positive()
-        .max(20_000_000)
-        .catch(NaN)
-        .superRefine((val, ctx) => {
-          if (isNaN(val)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Invalid format - must be numeric ID or valid osu! beatmap URL",
-            });
-          } else if (val <= 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Beatmap ID must be positive",
-            });
-          } else if (val > 20_000_000) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Invalid beatmap ID - are you sure this isn't a match ID?",
-            });
+
+          const str = String(item).trim();
+          const match = str.match(
+            /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
+          );
+          return match ? Number(match[1] || match[2]) : 0;
+        });
+      }
+      return [];
+    },
+    z
+      .array(z.number().int().positive())
+      .min(1, 'At least one valid match link is required')
+      .refine(
+        (val) => val.every((id) => id > 0),
+        'All match links must be valid osu! match IDs or URLs'
+      )
+  ),
+  beatmapLinks: z.preprocess(
+    (val) => {
+      if (
+        !val ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'string' && val.trim() === '')
+      ) {
+        return [];
+      }
+
+      if (Array.isArray(val)) {
+        return val.map((item) => {
+          if (!item || (typeof item === 'string' && item.trim() === '')) {
+            return 0;
           }
-        })
-    )
-  ).min(1, "At least one beatmap link is required")
-})
+
+          const str = String(item).trim();
+          const match = str.match(
+            /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
+          );
+          const numericId = match
+            ? Number(match[1] || match[2] || match[3])
+            : 0;
+          return numericId > 20_000_000 ? 0 : numericId;
+        });
+      }
+      return [];
+    },
+    z
+      .array(z.number().int().positive().max(20_000_000))
+      .min(1, 'At least one valid beatmap link is required')
+      .refine(
+        (val) => val.every((id) => id > 0),
+        'All beatmap links must be valid osu! beatmap IDs or URLs'
+      )
+  ),
+});
 
 export const leaderboardFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
