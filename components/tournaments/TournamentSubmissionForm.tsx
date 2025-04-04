@@ -85,7 +85,7 @@ export default function TournamentSubmissionForm() {
           Use this form to submit a new tournament for verification and tracking.
         </p>
       </div>
-      
+
       <Card className="shadow-xl border-primary/10 bg-card/50 backdrop-blur-sm rounded-xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-background/0 pointer-events-none" />
         <CardContent className="pt-6">
@@ -96,7 +96,7 @@ export default function TournamentSubmissionForm() {
                   <Trophy className="h-5 w-5 text-primary" />
                   <h3 className="text-lg font-medium text-primary">Tournament Information</h3>
                 </div>
-                
+
                 <div className="flex flex-col md:flex-row gap-4">
                   <FormField
                     control={form.control}
@@ -110,10 +110,10 @@ export default function TournamentSubmissionForm() {
                           </SimpleTooltip>
                         </div>
                         <FormControl>
-                          <Input 
-                            placeholder="OWC2024" 
-                            {...field} 
-                            className="bg-background/50 border-primary/20 focus-visible:border-primary" 
+                          <Input
+                            placeholder="OWC2024"
+                            {...field}
+                            className="bg-background/50 border-primary/20 focus-visible:border-primary"
                           />
                         </FormControl>
                         <FormMessage />
@@ -132,10 +132,10 @@ export default function TournamentSubmissionForm() {
                           </SimpleTooltip>
                         </div>
                         <FormControl>
-                          <Input 
-                            placeholder="osu! World Cup 2024" 
-                            {...field} 
-                            className="bg-background/50 border-primary/20 focus-visible:border-primary" 
+                          <Input
+                            placeholder="osu! World Cup 2024"
+                            {...field}
+                            className="bg-background/50 border-primary/20 focus-visible:border-primary"
                           />
                         </FormControl>
                         <FormMessage />
@@ -174,86 +174,85 @@ export default function TournamentSubmissionForm() {
                 />
               </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                  <FormField
-                    control={form.control}
-                    name="ruleset"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="text-foreground/90 font-medium">Ruleset</FormLabel>
-                          <SimpleTooltip content="Game mode the tournament is played in">
-                            <HelpCircle className="h-4 w-4 text-primary/70" />
-                          </SimpleTooltip>
-                        </div>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => field.onChange(Number(val))}
-                            value={field.value.toString()}
-                          >
-                            <SelectTrigger className="w-full bg-background/50 border-primary/20">
-                              <SelectValue placeholder="Select ruleset" />
-                            </SelectTrigger>
-                            <RulesetSelectContent />
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lobbySize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="text-foreground/90 font-medium">Lobby Size</FormLabel>
-                          <SimpleTooltip content="Number of players per team in each match">
-                            <HelpCircle className="h-4 w-4 text-primary/70" />
-                          </SimpleTooltip>
-                        </div>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => field.onChange(Number(val))}
-                            value={field.value.toString()}
-                          >
-                            <SelectTrigger className="w-full bg-background/50 border-primary/20">
-                              <SelectValue placeholder="Select size" />
-                            </SelectTrigger>
-                            <LobbySizeSelectContent />
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="rankRangeLowerBound"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="text-foreground/90 font-medium">Rank Restriction</FormLabel>
-                          <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
-                            <HelpCircle className="h-4 w-4 text-primary/70" />
-                          </SimpleTooltip>
-                        </div>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            className="bg-background/50 border-primary/20 focus-visible:border-primary"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.valueAsNumber)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <FormField
+                  control={form.control}
+                  name="ruleset"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel className="text-foreground/90 font-medium">Ruleset</FormLabel>
+                        <SimpleTooltip content="Game mode the tournament is played in">
+                          <HelpCircle className="h-4 w-4 text-primary/70" />
+                        </SimpleTooltip>
+                      </div>
+                      <FormControl>
+                        <Select
+                          onValueChange={(val) => field.onChange(Number(val))}
+                          value={field.value.toString()}
+                        >
+                          <SelectTrigger className="w-full bg-background/50 border-primary/20">
+                            <SelectValue placeholder="Select ruleset" />
+                          </SelectTrigger>
+                          <RulesetSelectContent />
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lobbySize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel className="text-foreground/90 font-medium">Lobby Size</FormLabel>
+                        <SimpleTooltip content="Number of players per team in each match">
+                          <HelpCircle className="h-4 w-4 text-primary/70" />
+                        </SimpleTooltip>
+                      </div>
+                      <FormControl>
+                        <Select
+                          onValueChange={(val) => field.onChange(Number(val))}
+                          value={field.value.toString()}
+                        >
+                          <SelectTrigger className="w-full bg-background/50 border-primary/20">
+                            <SelectValue placeholder="Select size" />
+                          </SelectTrigger>
+                          <LobbySizeSelectContent />
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rankRangeLowerBound"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel className="text-foreground/90 font-medium">Rank Restriction</FormLabel>
+                        <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
+                          <HelpCircle className="h-4 w-4 text-primary/70" />
+                        </SimpleTooltip>
+                      </div>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          className="bg-background/50 border-primary/20 focus-visible:border-primary"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(e.target.valueAsNumber)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="space-y-6 pt-2">
@@ -261,7 +260,7 @@ export default function TournamentSubmissionForm() {
                   <Database className="h-5 w-5 text-primary" />
                   <h3 className="text-lg font-medium text-primary">Tournament Data</h3>
                 </div>
-                
+
                 {/* Match links */}
                 <FormField
                   control={form.control}
@@ -288,7 +287,7 @@ export default function TournamentSubmissionForm() {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Beatmap links */}
                 <FormField
                   control={form.control}
@@ -316,11 +315,11 @@ export default function TournamentSubmissionForm() {
                   )}
                 />
               </div>
-              
+
               <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5" 
+                <Button
+                  type="submit"
+                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
