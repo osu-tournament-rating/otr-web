@@ -86,8 +86,7 @@ export default function TournamentSubmissionForm() {
         </p>
       </div>
 
-      <Card className="shadow-xl border-primary/10 bg-card/50 backdrop-blur-sm rounded-xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-background/0 pointer-events-none" />
+      <Card className="shadow-md border-primary/10 bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden">
         <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
