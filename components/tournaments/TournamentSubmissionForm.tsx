@@ -100,7 +100,7 @@ export default function TournamentSubmissionForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border bg-muted/50 p-3 rounded-md">
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border p-3 rounded-md">
                   <Trophy className="h-6 w-6 text-primary" />
                   <h3 className="text-xl font-semibold text-foreground">Tournament Information</h3>
                 </div>
@@ -264,7 +264,7 @@ export default function TournamentSubmissionForm() {
               </div>
 
               <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border bg-muted/50 p-3 rounded-md">
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-border p-3 rounded-md">
                   <Database className="h-6 w-6 text-primary" />
                   <h3 className="text-xl font-semibold text-foreground">Tournament Data</h3>
                 </div>
