@@ -95,14 +95,14 @@ export default function TournamentSubmissionForm() {
         </a>
       </div>
 
-      <Card className="shadow-md border-primary/10 bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden">
-        <CardContent className="pt-6">
+      <Card className="shadow-lg border-2 border-primary/20 bg-card/95 rounded-2xl overflow-hidden">
+        <CardContent className="pt-8 px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
-                <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-primary">Tournament Information</h3>
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b-2 border-primary/30">
+                  <Trophy className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-semibold text-primary">Tournament Information</h3>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -167,7 +167,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           placeholder="https://osu.ppy.sh/community/forums/topics/..."
                           {...field}
-                          className="bg-background/50 border-primary/20 focus-visible:border-primary"
+                          className="bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                           onChange={(e) => {
                             // Strip query parameters before setting value
                             const url = e.target.value;
@@ -264,9 +264,9 @@ export default function TournamentSubmissionForm() {
               </div>
 
               <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
-                  <Database className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-primary">Tournament Data</h3>
+                <div className="flex items-center gap-3 pb-3 mb-4 border-b-2 border-primary/30">
+                  <Database className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-semibold text-primary">Tournament Data</h3>
                 </div>
 
                 {/* Match links */}
@@ -288,7 +288,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/50 border-primary/20 focus-visible:border-primary backdrop-blur-sm"
+                          className="min-h-32 bg-background/80 border-2 border-primary/30 focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -327,7 +327,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full py-6 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
