@@ -95,10 +95,8 @@ export default function TournamentSubmissionForm() {
         </a>
       </div>
 
-      <Card className="shadow-xl border-2 border-primary/30 rounded-2xl overflow-hidden backdrop-blur-md bg-background/60 dark:bg-background/40">
-        <CardContent className="pt-8 px-8 relative">
-          {/* Inner frosted glass effect */}
-          <div className="absolute inset-0 -z-10 bg-background/40 backdrop-blur-sm"></div>
+      <Card className="shadow-xl border border-border rounded-2xl overflow-hidden bg-card">
+        <CardContent className="pt-8 px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
@@ -123,7 +121,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="OWC2024"
                             {...field}
-                            className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                            className="bg-background border border-input focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -145,7 +143,7 @@ export default function TournamentSubmissionForm() {
                           <Input
                             placeholder="osu! World Cup 2024"
                             {...field}
-                            className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                            className="bg-background border border-input focus-visible:border-primary shadow-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -169,7 +167,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           placeholder="https://osu.ppy.sh/community/forums/topics/..."
                           {...field}
-                          className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="bg-background border border-input focus-visible:border-primary shadow-sm"
                           onChange={(e) => {
                             // Strip query parameters before setting value
                             const url = e.target.value;
@@ -201,7 +199,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background/70 backdrop-blur-sm border-2 border-primary/30 shadow-sm">
+                          <SelectTrigger className="w-full bg-background border border-input shadow-sm">
                             <SelectValue placeholder="Select ruleset" />
                           </SelectTrigger>
                           <RulesetSelectContent />
@@ -227,7 +225,7 @@ export default function TournamentSubmissionForm() {
                           onValueChange={(val) => field.onChange(Number(val))}
                           value={field.value.toString()}
                         >
-                          <SelectTrigger className="w-full bg-background/70 backdrop-blur-sm border-2 border-primary/30 shadow-sm">
+                          <SelectTrigger className="w-full bg-background border border-input shadow-sm">
                             <SelectValue placeholder="Select size" />
                           </SelectTrigger>
                           <LobbySizeSelectContent />
@@ -252,7 +250,7 @@ export default function TournamentSubmissionForm() {
                         <Input
                           type="number"
                           min={1}
-                          className="bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="bg-background border border-input focus-visible:border-primary shadow-sm"
                           {...field}
                           onChange={(e) =>
                             field.onChange(e.target.valueAsNumber)
@@ -290,7 +288,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-background border border-input focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -317,7 +315,7 @@ export default function TournamentSubmissionForm() {
                           onChange={(e) =>
                             field.onChange(e.target.value.split('\n'))
                           }
-                          className="min-h-32 bg-background/70 backdrop-blur-sm border-2 border-primary/30 focus-visible:border-primary shadow-sm"
+                          className="min-h-32 bg-background border border-input focus-visible:border-primary shadow-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -329,7 +327,7 @@ export default function TournamentSubmissionForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 backdrop-blur-sm"
+                  className="w-full py-6 mt-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit Tournament"}
