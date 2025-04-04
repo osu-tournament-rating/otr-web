@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HelpCircle } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import type { z as zType } from 'zod';
+import { useState } from 'react';
 
 import {
   Form,
@@ -46,7 +47,10 @@ export default function TournamentSubmissionForm() {
     mode: 'onChange',
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   async function onSubmit(values: TournamentSubmissionFormValues) {
+    setIsSubmitting(true);
     try {
       await submit({
         body: {
@@ -66,6 +70,8 @@ export default function TournamentSubmissionForm() {
           ? error.message
           : 'Submission failed. Please check your inputs and try again.'
       );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -79,8 +85,10 @@ export default function TournamentSubmissionForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium">Tournament Information</h3>
+                <div className="flex gap-4">
                 <FormField
                   control={form.control}
                   name="abbreviation"
@@ -117,37 +125,40 @@ export default function TournamentSubmissionForm() {
                     </FormItem>
                   )}
                 />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="forumUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Forum Post URL</FormLabel>
+                        <SimpleTooltip content="Forum post URL or wiki page for the tournament">
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        </SimpleTooltip>
+                      </div>
+                      <FormControl>
+                        <Input
+                          placeholder="https://osu.ppy.sh/community/forums/topics/..."
+                          {...field}
+                          onChange={(e) => {
+                            // Strip query parameters before setting value
+                            const url = e.target.value;
+                            const baseUrl = url.split('?')[0];
+                            field.onChange(baseUrl);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <FormField
-                control={form.control}
-                name="forumUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormLabel>Forum Post URL</FormLabel>
-                      <SimpleTooltip content="Forum post URL or wiki page for the tournament">
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </SimpleTooltip>
-                    </div>
-                    <FormControl>
-                      <Input
-                        placeholder="https://osu.ppy.sh/community/forums/topics/..."
-                        {...field}
-                        onChange={(e) => {
-                          // Strip query parameters before setting value
-                          const url = e.target.value;
-                          const baseUrl = url.split('?')[0];
-                          field.onChange(baseUrl);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex gap-4">
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium">Tournament Settings</h3>
+                <div className="flex gap-4">
                 <FormField
                   control={form.control}
                   name="ruleset"
@@ -225,10 +236,13 @@ export default function TournamentSubmissionForm() {
                     </FormItem>
                   )}
                 />
+                </div>
               </div>
 
-              {/* Match links */}
-              <FormField
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium">Match Resources</h3>
+                {/* Match links */}
+                <FormField
                 control={form.control}
                 name="matchLinks"
                 render={({ field }) => (
@@ -280,8 +294,8 @@ export default function TournamentSubmissionForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Submit Tournament
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit Tournament"}
               </Button>
             </form>
           </Form>
