@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, TrophyIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -79,8 +79,13 @@ export default function TournamentSubmissionForm() {
     <div className="mx-auto max-w-6xl p-6 font-sans">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Submit New Tournament
+          <CardTitle className="flex flex-row items-center text-2xl font-bold gap-2">
+            <div className='flex'>
+              <TrophyIcon />
+            </div>
+            <div className='flex'>
+              New Tournament
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,42 +94,42 @@ export default function TournamentSubmissionForm() {
               <div className="space-y-6">
                 <h3 className="text-lg font-medium">Tournament Information</h3>
                 <div className="flex gap-4">
-                <FormField
-                  control={form.control}
-                  name="abbreviation"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Abbreviation</FormLabel>
-                        <SimpleTooltip content="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </SimpleTooltip>
-                      </div>
-                      <FormControl>
-                        <Input placeholder="OWC2024" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Name</FormLabel>
-                        <SimpleTooltip content="Full tournament name (e.g. osu! World Cup 2024)">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </SimpleTooltip>
-                      </div>
-                      <FormControl>
-                        <Input placeholder="osu! World Cup 2024" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="abbreviation"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Abbreviation</FormLabel>
+                          <SimpleTooltip content="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </SimpleTooltip>
+                        </div>
+                        <FormControl>
+                          <Input placeholder="OWC2024" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Name</FormLabel>
+                          <SimpleTooltip content="Full tournament name (e.g. osu! World Cup 2024)">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </SimpleTooltip>
+                        </div>
+                        <FormControl>
+                          <Input placeholder="osu! World Cup 2024" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <FormField
@@ -159,83 +164,83 @@ export default function TournamentSubmissionForm() {
               <div className="space-y-6">
                 <h3 className="text-lg font-medium">Tournament Settings</h3>
                 <div className="flex gap-4">
-                <FormField
-                  control={form.control}
-                  name="ruleset"
-                  render={({ field }) => (
-                    <FormItem className="min-w-[300px]">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Ruleset</FormLabel>
-                        <SimpleTooltip content="Game mode the tournament is played in">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </SimpleTooltip>
-                      </div>
-                      <FormControl>
-                        <Select
-                          onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value.toString()}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select ruleset" />
-                          </SelectTrigger>
-                          <RulesetSelectContent />
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lobbySize"
-                  render={({ field }) => (
-                    <FormItem className="min-w-[300px]">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Lobby Size</FormLabel>
-                        <SimpleTooltip content="Number of players per team in each match">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </SimpleTooltip>
-                      </div>
-                      <FormControl>
-                        <Select
-                          onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value.toString()}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
-                          <LobbySizeSelectContent />
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="rankRangeLowerBound"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Rank Restriction</FormLabel>
-                        <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </SimpleTooltip>
-                      </div>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(e.target.valueAsNumber)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="ruleset"
+                    render={({ field }) => (
+                      <FormItem className="min-w-[300px]">
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Ruleset</FormLabel>
+                          <SimpleTooltip content="Game mode the tournament is played in">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </SimpleTooltip>
+                        </div>
+                        <FormControl>
+                          <Select
+                            onValueChange={(val) => field.onChange(Number(val))}
+                            value={field.value.toString()}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select ruleset" />
+                            </SelectTrigger>
+                            <RulesetSelectContent />
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lobbySize"
+                    render={({ field }) => (
+                      <FormItem className="min-w-[300px]">
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Lobby Size</FormLabel>
+                          <SimpleTooltip content="Number of players per team in each match">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </SimpleTooltip>
+                        </div>
+                        <FormControl>
+                          <Select
+                            onValueChange={(val) => field.onChange(Number(val))}
+                            value={field.value.toString()}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                            <LobbySizeSelectContent />
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="rankRangeLowerBound"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Rank Restriction</FormLabel>
+                          <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </SimpleTooltip>
+                        </div>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(e.target.valueAsNumber)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -243,30 +248,31 @@ export default function TournamentSubmissionForm() {
                 <h3 className="text-lg font-medium">Match Resources</h3>
                 {/* Match links */}
                 <FormField
-                control={form.control}
-                name="matchLinks"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormLabel>Match Links</FormLabel>
-                      <SimpleTooltip content="osu! match IDs or URLs (one per line)">
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </SimpleTooltip>
-                    </div>
-                    <FormControl>
-                      <Textarea
-                        placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
-                        value={field.value?.join('\n') || ''}
-                        onChange={(e) =>
-                          field.onChange(e.target.value.split('\n'))
-                        }
-                        className="min-h-40"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  control={form.control}
+                  name="matchLinks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Match Links</FormLabel>
+                        <SimpleTooltip content="osu! match IDs or URLs (one per line)">
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        </SimpleTooltip>
+                      </div>
+                      <FormControl>
+                        <Textarea
+                          placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
+                          value={field.value?.join('\n') || ''}
+                          onChange={(e) =>
+                            field.onChange(e.target.value.split('\n'))
+                          }
+                          className="min-h-40"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Beatmap links */}
               <FormField
