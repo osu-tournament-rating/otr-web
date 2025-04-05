@@ -88,9 +88,11 @@ export default function SearchDialog() {
               </div>
             </div>
           </div>
-          <div className="overflow-y-auto p-4 pt-0 md:p-8">
-            <SearchResults input={debouncedQuery} data={data} />
-          </div>
+          {debouncedQuery.trim() !== '' && (
+            <div className="overflow-y-auto p-4 pt-0 md:p-8">
+              <SearchResults input={debouncedQuery} data={data} />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </SearchDialogContext.Provider>
