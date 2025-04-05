@@ -88,23 +88,43 @@ export default function PlayerRatingStatsCard({
               {toPercentage(rating.tierProgress?.majorTierFillPercentage || 0)}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <TierIcon
-              tier={(rating.tierProgress.currentTier as TierName) || ''}
-              subTier={3}
-              width={20}
-              height={20}
-            />
+          <div className="relative">
             <Progress
               value={(rating.tierProgress?.majorTierFillPercentage || 0) * 100}
-              className="h-2 flex-1 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
+              className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
             />
-            <TierIcon
-              tier={(rating.tierProgress.nextMajorTier as TierName) || ''}
-              subTier={1}
-              width={20}
-              height={20}
-            />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+              <TierIcon
+                tier={(rating.tierProgress.currentTier as TierName) || ''}
+                subTier={3}
+                width={20}
+                height={20}
+              />
+            </div>
+            <div className="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <TierIcon
+                tier={(rating.tierProgress.currentTier as TierName) || ''}
+                subTier={2}
+                width={20}
+                height={20}
+              />
+            </div>
+            <div className="absolute left-2/3 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <TierIcon
+                tier={(rating.tierProgress.currentTier as TierName) || ''}
+                subTier={1}
+                width={20}
+                height={20}
+              />
+            </div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <TierIcon
+                tier={(rating.tierProgress.nextMajorTier as TierName) || ''}
+                subTier={1}
+                width={20}
+                height={20}
+              />
+            </div>
           </div>
         </div>
       </div>
