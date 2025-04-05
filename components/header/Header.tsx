@@ -69,7 +69,17 @@ export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [openMobileDropdowns, setOpenMobileDropdowns] = useState<
     Record<string, boolean>
-  >({});
+  >(() => {
+    const initialOpen: Record<string, boolean> = {};
+    navItems.forEach((item) => {
+      if (item.dropdown) {
+        initialOpen[item.title] = item.dropdown.some(
+          (dropdownItem) => pathname === dropdownItem.href
+        );
+      }
+    });
+    return initialOpen;
+  });
 
   const toggleMobileDropdown = useCallback((title: string) => {
     setOpenMobileDropdowns((prev) => ({
