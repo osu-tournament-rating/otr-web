@@ -1,12 +1,9 @@
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import TierIcon from '@/components/icons/TierIcon';
 import { Sword, Trophy, Crosshair, BarChart4, Globe, Flag } from 'lucide-react';
-import { TierName } from '@/lib/utils/tierData';
-
-const romanNumerals = ['I', 'II', 'III'];
+import { getTierString, TierName } from '@/lib/utils/tierData';
 
 export default function PlayerRatingStatsCard({
   rating,
@@ -14,7 +11,8 @@ export default function PlayerRatingStatsCard({
   rating: PlayerRatingStatsDTO;
 }) {
   const toPercentage = (value: number) => {
-    const formattedValue = value < 1 ? (value * 100).toFixed(2) : value.toFixed(2);
+    const formattedValue =
+      value < 1 ? (value * 100).toFixed(2) : value.toFixed(2);
     return `${formattedValue}%`;
   };
   const toLocaleString = (value: number) => value.toLocaleString();
@@ -27,27 +25,28 @@ export default function PlayerRatingStatsCard({
           <TierIcon
             tier={(rating.tierProgress.currentTier as TierName) || ''}
             subTier={rating.tierProgress?.currentSubTier}
+            includeSubtierInTooltip
             width={48}
             height={48}
           />
           <div className="flex-1">
             <div className="mb-2 flex justify-between">
               <span className="font-medium">
-                {rating.tierProgress.currentTier}
                 {rating.tierProgress?.currentSubTier &&
-                  ` ${romanNumerals[rating.tierProgress.currentSubTier - 1]}`}
+                  ` ${getTierString(rating.tierProgress.currentTier as TierName, rating.tierProgress.currentSubTier)}`}
               </span>
               <span className="text-muted-foreground">
-                {rating.tierProgress?.currentSubTier &&
-                  (rating.tierProgress.currentSubTier === 1
-                    ? `Next: ${rating.tierProgress?.nextMajorTier} III`
-                    : `Next: ${rating.tierProgress.currentTier} ${romanNumerals[rating.tierProgress.currentSubTier - 2]}`)}
+                {getTierString(
+                  rating.tierProgress.currentTier as TierName,
+                  rating.tierProgress.nextSubTier
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <TierIcon
                 tier={(rating.tierProgress.currentTier as TierName) || ''}
                 subTier={rating.tierProgress?.currentSubTier}
+                includeSubtierInTooltip
                 width={24}
                 height={24}
               />
@@ -56,18 +55,9 @@ export default function PlayerRatingStatsCard({
                 className="h-3 flex-1 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-emerald-500"
               />
               <TierIcon
-                tier={
-                  rating.tierProgress?.currentSubTier === 1
-                    ? (rating.tierProgress.nextMajorTier as TierName) || ''
-                    : (rating.tierProgress.currentTier as TierName) || ''
-                }
-                subTier={
-                  rating.tierProgress?.currentSubTier === 1
-                    ? 3
-                    : rating.tierProgress?.currentSubTier
-                    ? rating.tierProgress.currentSubTier - 1
-                    : undefined
-                }
+                tier={rating.tierProgress.nextMajorTier as TierName}
+                subTier={rating.tierProgress.nextSubTier}
+                includeSubtierInTooltip
                 width={24}
                 height={24}
               />
@@ -145,12 +135,6 @@ export default function PlayerRatingStatsCard({
           </div>
         </div>
       </div>
-
-      {rating.isProvisional && (
-        <Badge variant="outline" className="w-full py-2 text-sm">
-          Provisional Rating
-        </Badge>
-      )}
     </Card>
   );
 }
