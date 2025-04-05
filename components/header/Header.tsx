@@ -104,7 +104,7 @@ export default function Header() {
                         className={cn(
                           'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                           pathname.startsWith(item.href) &&
-                            'font-extrabold text-primary focus:text-primary'
+                            'font-extrabold text-primary focus:bg-secondary focus:text-primary'
                         )}
                       >
                         {item.title}
