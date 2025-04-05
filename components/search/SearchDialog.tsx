@@ -68,8 +68,8 @@ export default function SearchDialog() {
           </Button>
         </DialogTrigger>
         <DialogTitle className="sr-only">Search</DialogTitle>
-        <DialogContent className="max-h-[80vh] min-w-[50%] overflow-auto p-4 font-sans [&>button]:hidden">
-          <div className="sticky top-0 z-50 bg-background pb-4 shadow-sm">
+        <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-0 font-sans [&>button]:hidden">
+          <div className="sticky top-0 z-50 bg-background p-4 pb-4 shadow-sm">
             <div className="relative">
               <Input
                 className="m-auto rounded-xl border-0 bg-accent pl-3 pr-10 focus-visible:ring-0"
@@ -88,7 +88,9 @@ export default function SearchDialog() {
               </div>
             </div>
           </div>
-          <SearchResults input={debouncedQuery} data={data} />
+          <div className="overflow-y-auto p-4 pt-0">
+            <SearchResults input={debouncedQuery} data={data} />
+          </div>
         </DialogContent>
       </Dialog>
     </SearchDialogContext.Provider>
