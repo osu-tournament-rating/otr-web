@@ -77,10 +77,11 @@ export default function TournamentSubmissionForm() {
   return (
     <div className="w-full font-sans">
       <div className="mb-8 text-center">
-        <h1 className="mb-3 flex items-center justify-center gap-2 text-4xl font-bold text-primary">
-          <Trophy className="h-9 w-9" /> Tournament Submission
+        <h1 className="mb-3 flex items-center justify-center gap-2  font-bold text-primary text-xl md:text-3xl">
+          <Trophy className="h-9 w-9" />
+          Tournament Submission
         </h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-md text-muted-foreground">
           Use this form to submit a new tournament for verification and
           tracking.
         </p>
@@ -207,7 +208,7 @@ export default function TournamentSubmissionForm() {
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value?.toString() || ""}
+                          value={field.value?.toString() || ''}
                         >
                           <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                             <SelectValue placeholder="Select ruleset" />
@@ -235,7 +236,7 @@ export default function TournamentSubmissionForm() {
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value?.toString() || ""}
+                          value={field.value?.toString() || ''}
                         >
                           <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                             <SelectValue placeholder="Select size" />
@@ -267,9 +268,12 @@ export default function TournamentSubmissionForm() {
                           placeholder="Enter rank restriction"
                           className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                           {...field}
-                          value={field.value || ""}
+                          value={field.value || ''}
                           onChange={(e) => {
-                            const value = e.target.value === "" ? undefined : e.target.valueAsNumber;
+                            const value =
+                              e.target.value === ''
+                                ? undefined
+                                : e.target.valueAsNumber;
                             field.onChange(value);
                           }}
                         />

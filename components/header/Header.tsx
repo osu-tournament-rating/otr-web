@@ -93,16 +93,7 @@ export default function Header() {
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
                         <div className="py-1">
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              'flex flex-row items-center gap-2 px-2 py-1.5 text-sm font-medium',
-                              pathname === item.href &&
-                                'font-medium text-primary'
-                            )}
-                          >
-                            View All {item.title}
-                          </Link>
+                         
                           {item.dropdown.map((dropdownItem) => (
                             <NavigationMenuLink
                               key={dropdownItem.title}
