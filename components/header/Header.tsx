@@ -40,6 +40,10 @@ type NavItem = {
   }[];
 };
 
+type MobileDropdownState = {
+  [key: string]: boolean;
+};
+
 const navItems: NavItem[] = [
   {
     title: 'Leaderboard',
@@ -63,23 +67,92 @@ const navItems: NavItem[] = [
   },
 ];
 
+const MobileNavItem = ({
+  item,
+  pathname,
+  isOpen,
+  onToggle,
+}: {
+  item: NavItem;
+  pathname: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) => {
+  if (!item.dropdown) {
+    return (
+      <NavigationMenuLink
+        asChild
+        className={cn(
+          'w-full bg-secondary text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
+          pathname.startsWith(item.href) &&
+            'font-extrabold text-primary focus:text-primary'
+        )}
+      >
+        <Link href={item.href}>{item.title}</Link>
+      </NavigationMenuLink>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={onToggle}
+        className={cn(
+          'flex w-full justify-between bg-secondary px-2 py-2 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary',
+          pathname.startsWith(item.href) &&
+            'font-extrabold text-primary focus:text-primary'
+        )}
+      >
+        <span>{item.title}</span>
+        {isOpen ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="flex flex-col">
+          {item.dropdown.map((dropdownItem) => (
+            <NavigationMenuLink
+              key={dropdownItem.title}
+              asChild
+              className={cn(
+                'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:text-foreground',
+                pathname === dropdownItem.href &&
+                  'font-medium text-primary focus:text-primary'
+              )}
+            >
+              <Link href={dropdownItem.href}>
+                <div className="flex w-full items-center justify-start gap-2 text-left">
+                  <dropdownItem.icon className="h-4 w-4" />
+                  <span>{dropdownItem.title}</span>
+                </div>
+              </Link>
+            </NavigationMenuLink>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
+
 export default function Header() {
   const pathname = usePathname();
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [openMobileDropdowns, setOpenMobileDropdowns] = useState<
-    Record<string, boolean>
-  >(() => {
-    const initialOpen: Record<string, boolean> = {};
-    navItems.forEach((item) => {
-      if (item.dropdown) {
-        initialOpen[item.title] = item.dropdown.some(
-          (dropdownItem) => pathname === dropdownItem.href
-        );
-      }
+  const [openMobileDropdowns, setOpenMobileDropdowns] =
+    useState<MobileDropdownState>(() => {
+      const initialOpen: MobileDropdownState = {};
+      navItems.forEach((item) => {
+        if (item.dropdown) {
+          initialOpen[item.title] = item.dropdown.some(
+            (dropdownItem) => pathname === dropdownItem.href
+          );
+        }
+      });
+      return initialOpen;
     });
-    return initialOpen;
-  });
 
   const toggleMobileDropdown = useCallback((title: string) => {
     setOpenMobileDropdowns((prev) => ({
@@ -199,61 +272,12 @@ export default function Header() {
                 <NavigationMenuList className="flex-col">
                   {navItems.map((item) => (
                     <NavigationMenuItem className="w-full" key={item.title}>
-                      {item.dropdown ? (
-                        <>
-                          {/* Dropdown trigger for mobile */}
-                          <button
-                            onClick={() => toggleMobileDropdown(item.title)}
-                            className={cn(
-                              'flex w-full justify-between bg-secondary px-2 py-2 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary',
-                              pathname.startsWith(item.href) &&
-                                'font-extrabold text-primary focus:text-primary'
-                            )}
-                          >
-                            <span>{item.title}</span>
-                            {openMobileDropdowns[item.title] ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </button>
-
-                          {/* Dropdown items for mobile - only show when open */}
-                          {openMobileDropdowns[item.title] && (
-                            <div className="flex flex-col">
-                              {item.dropdown.map((dropdownItem) => (
-                                <NavigationMenuLink
-                                  key={dropdownItem.title}
-                                  asChild
-                                  className={cn(
-                                    'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:text-foreground',
-                                    pathname === dropdownItem.href &&
-                                      'font-medium text-primary focus:text-primary'
-                                  )}
-                                >
-                                  <Link href={dropdownItem.href}>
-                                    <div className="flex w-full items-center justify-start gap-2 text-left">
-                                      <dropdownItem.icon className="h-4 w-4" />
-                                      <span>{dropdownItem.title}</span>
-                                    </div>
-                                  </Link>
-                                </NavigationMenuLink>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <NavigationMenuLink
-                          asChild
-                          className={cn(
-                            'w-full bg-secondary text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
-                            pathname.startsWith(item.href) &&
-                              'font-extrabold text-primary focus:text-primary'
-                          )}
-                        >
-                          <Link href={item.href}>{item.title}</Link>
-                        </NavigationMenuLink>
-                      )}
+                      <MobileNavItem
+                        item={item}
+                        pathname={pathname}
+                        isOpen={!!openMobileDropdowns[item.title]}
+                        onToggle={() => toggleMobileDropdown(item.title)}
+                      />
                     </NavigationMenuItem>
                   ))}
                 </NavigationMenuList>

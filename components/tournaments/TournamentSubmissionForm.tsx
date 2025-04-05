@@ -30,6 +30,45 @@ type TournamentSubmissionFormValues = zType.infer<
   typeof tournamentSubmissionFormSchema
 >;
 
+// Custom error type for better error handling
+type SubmissionError = {
+  message: string;
+  code?: string;
+  field?: string;
+};
+
+// Form section component for better organization
+type FormSectionProps = {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+};
+
+const FormSection = ({ icon, title, children }: FormSectionProps) => (
+  <div className="space-y-6">
+    <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
+      {icon}
+      <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
+
+// Field label with tooltip component for consistency
+type LabelWithTooltipProps = {
+  label: string;
+  tooltip: string;
+};
+
+const LabelWithTooltip = ({ label, tooltip }: LabelWithTooltipProps) => (
+  <div className="flex items-center gap-2">
+    <FormLabel className="font-medium text-foreground">{label}</FormLabel>
+    <SimpleTooltip content={tooltip}>
+      <HelpCircle className="h-4 w-4 text-primary/70" />
+    </SimpleTooltip>
+  </div>
+);
+
 export default function TournamentSubmissionForm() {
   const form = useForm<TournamentSubmissionFormValues>({
     resolver: zodResolver(tournamentSubmissionFormSchema),
@@ -64,11 +103,10 @@ export default function TournamentSubmissionForm() {
       toast.success('Tournament submitted successfully!');
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Submission failed. Please check your inputs and try again.'
-      );
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Submission failed. Please check your inputs and try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +115,7 @@ export default function TournamentSubmissionForm() {
   return (
     <div className="w-full font-sans">
       <div className="mb-8 text-center">
-        <h1 className="mb-3 flex items-center justify-center gap-2  font-bold text-primary text-xl md:text-3xl">
+        <h1 className="mb-3 flex items-center justify-center gap-2 font-bold text-primary text-xl md:text-3xl">
           <Trophy className="h-9 w-9" />
           Tournament Submission
         </h1>
@@ -100,28 +138,20 @@ export default function TournamentSubmissionForm() {
         <CardContent className="px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="space-y-6">
-                <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
-                  <Trophy className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold text-foreground">
-                    Information
-                  </h3>
-                </div>
-
+              <FormSection 
+                icon={<Trophy className="h-6 w-6 text-primary" />} 
+                title="Information"
+              >
                 <div className="flex flex-col gap-4 md:flex-row">
                   <FormField
                     control={form.control}
                     name="abbreviation"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="font-medium text-foreground">
-                            Abbreviation
-                          </FormLabel>
-                          <SimpleTooltip content="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
-                            <HelpCircle className="h-4 w-4 text-primary/70" />
-                          </SimpleTooltip>
-                        </div>
+                        <LabelWithTooltip 
+                          label="Abbreviation" 
+                          tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)" 
+                        />
                         <FormControl>
                           <Input
                             placeholder="OWC2024"
@@ -138,14 +168,10 @@ export default function TournamentSubmissionForm() {
                     name="name"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="font-medium text-foreground">
-                            Name
-                          </FormLabel>
-                          <SimpleTooltip content="Full tournament name (e.g. osu! World Cup 2024)">
-                            <HelpCircle className="h-4 w-4 text-primary/70" />
-                          </SimpleTooltip>
-                        </div>
+                        <LabelWithTooltip 
+                          label="Name" 
+                          tooltip="Full tournament name (e.g. osu! World Cup 2024)" 
+                        />
                         <FormControl>
                           <Input
                             placeholder="osu! World Cup 2024"
@@ -164,14 +190,10 @@ export default function TournamentSubmissionForm() {
                   name="forumUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Forum Post URL
-                        </FormLabel>
-                        <SimpleTooltip content="Forum post URL or wiki page for the tournament">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Forum Post URL" 
+                        tooltip="Forum post URL or wiki page for the tournament" 
+                      />
                       <FormControl>
                         <Input
                           placeholder="https://osu.ppy.sh/community/forums/topics/..."
@@ -189,7 +211,7 @@ export default function TournamentSubmissionForm() {
                     </FormItem>
                   )}
                 />
-              </div>
+              </FormSection>
 
               <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
@@ -197,14 +219,10 @@ export default function TournamentSubmissionForm() {
                   name="ruleset"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Ruleset
-                        </FormLabel>
-                        <SimpleTooltip content="Game mode the tournament is played in">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Ruleset" 
+                        tooltip="Game mode the tournament is played in" 
+                      />
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
@@ -225,14 +243,10 @@ export default function TournamentSubmissionForm() {
                   name="lobbySize"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Lobby Size
-                        </FormLabel>
-                        <SimpleTooltip content="Number of players per team in each match">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Lobby Size" 
+                        tooltip="Number of players per team in each match" 
+                      />
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
@@ -253,14 +267,10 @@ export default function TournamentSubmissionForm() {
                   name="rankRangeLowerBound"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Rank Restriction
-                        </FormLabel>
-                        <SimpleTooltip content="The 'best' global rank allowed to participate. Use 1 for open rank.">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Rank Restriction" 
+                        tooltip="The 'best' global rank allowed to participate. Use 1 for open rank." 
+                      />
                       <FormControl>
                         <Input
                           type="number"
@@ -284,28 +294,20 @@ export default function TournamentSubmissionForm() {
                 />
               </div>
 
-              <div className="space-y-6 pt-2">
-                <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
-                  <Database className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold text-foreground">
-                    Data
-                  </h3>
-                </div>
-
+              <FormSection 
+                icon={<Database className="h-6 w-6 text-primary" />} 
+                title="Data"
+              >
                 {/* Match links */}
                 <FormField
                   control={form.control}
                   name="matchLinks"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Match Links
-                        </FormLabel>
-                        <SimpleTooltip content="osu! match IDs or URLs (one per line)">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Match Links" 
+                        tooltip="osu! match IDs or URLs (one per line)" 
+                      />
                       <FormControl>
                         <Textarea
                           placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
@@ -327,14 +329,10 @@ export default function TournamentSubmissionForm() {
                   name="beatmapLinks"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="font-medium text-foreground">
-                          Beatmap Links
-                        </FormLabel>
-                        <SimpleTooltip content="osu! beatmap IDs or URLs (one per line)">
-                          <HelpCircle className="h-4 w-4 text-primary/70" />
-                        </SimpleTooltip>
-                      </div>
+                      <LabelWithTooltip 
+                        label="Beatmap Links" 
+                        tooltip="osu! beatmap IDs or URLs (one per line)" 
+                      />
                       <FormControl>
                         <Textarea
                           placeholder={`https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456`}
@@ -349,7 +347,7 @@ export default function TournamentSubmissionForm() {
                     </FormItem>
                   )}
                 />
-              </div>
+              </FormSection>
 
               <Button
                 type="submit"
