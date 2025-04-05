@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, Database, ExternalLink } from 'lucide-react';
+import { Trophy, Database, ExternalLink, LoaderCircle } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -29,13 +29,6 @@ type TournamentSubmissionFormValues = zType.infer<
   typeof tournamentSubmissionFormSchema
 >;
 
-// Custom error type for better error handling
-type SubmissionError = {
-  message: string;
-  code?: string;
-  field?: string;
-};
-
 // Form section component for better organization
 type FormSectionProps = {
   icon: React.ReactNode;
@@ -52,7 +45,6 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
     {children}
   </div>
 );
-
 
 export default function TournamentSubmissionForm() {
   const form = useForm<TournamentSubmissionFormValues>({
@@ -84,29 +76,14 @@ export default function TournamentSubmissionForm() {
           ),
         },
       });
+
       form.reset();
       toast.success('Tournament submitted successfully!');
     } catch (error: unknown) {
-      console.error('Submission error:', error);
-      let errorMessage = 'Submission failed. Please check your inputs and try again.';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null && 'message' in error) {
-        // Handle SubmissionError-like objects
-        const submissionError = error as SubmissionError;
-        errorMessage = submissionError.message;
-        
-        // Optionally highlight problematic fields
-        if (submissionError.field) {
-          form.setError(submissionError.field as any, {
-            type: 'manual',
-            message: submissionError.message
-          });
-        }
-      }
-      
-      toast.error(errorMessage);
+      toast.error(
+        'An error occurred during the submission. Verify whether the tournament exists already. ' +
+          error
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +92,7 @@ export default function TournamentSubmissionForm() {
   return (
     <div className="w-full font-sans">
       <div className="mb-8 text-center">
-        <h1 className="mb-3 flex items-center justify-center gap-2 font-bold text-primary text-xl md:text-3xl">
+        <h1 className="mb-3 flex items-center justify-center gap-2 text-xl font-bold text-primary md:text-3xl">
           <Trophy className="h-9 w-9" />
           Tournament Submission
         </h1>
@@ -138,8 +115,8 @@ export default function TournamentSubmissionForm() {
         <CardContent className="px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormSection 
-                icon={<Trophy className="h-6 w-6 text-primary" />} 
+              <FormSection
+                icon={<Trophy className="h-6 w-6 text-primary" />}
                 title="Information"
               >
                 <div className="flex flex-col gap-4 md:flex-row">
@@ -148,9 +125,9 @@ export default function TournamentSubmissionForm() {
                     name="abbreviation"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <LabelWithTooltip 
-                          label="Abbreviation" 
-                          tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)" 
+                        <LabelWithTooltip
+                          label="Abbreviation"
+                          tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)"
                         />
                         <FormControl>
                           <Input
@@ -168,9 +145,9 @@ export default function TournamentSubmissionForm() {
                     name="name"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <LabelWithTooltip 
-                          label="Name" 
-                          tooltip="Full tournament name (e.g. osu! World Cup 2024)" 
+                        <LabelWithTooltip
+                          label="Name"
+                          tooltip="Full tournament name (e.g. osu! World Cup 2024)"
                         />
                         <FormControl>
                           <Input
@@ -190,9 +167,9 @@ export default function TournamentSubmissionForm() {
                   name="forumUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Forum Post URL" 
-                        tooltip="Forum post URL or wiki page for the tournament" 
+                      <LabelWithTooltip
+                        label="Forum Post URL"
+                        tooltip="Forum post URL or wiki page for the tournament"
                       />
                       <FormControl>
                         <Input
@@ -219,9 +196,9 @@ export default function TournamentSubmissionForm() {
                   name="ruleset"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Ruleset" 
-                        tooltip="Game mode the tournament is played in" 
+                      <LabelWithTooltip
+                        label="Ruleset"
+                        tooltip="Game mode the tournament is played in"
                       />
                       <FormControl>
                         <Select
@@ -243,9 +220,9 @@ export default function TournamentSubmissionForm() {
                   name="lobbySize"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Lobby Size" 
-                        tooltip="Number of players per team in each match" 
+                      <LabelWithTooltip
+                        label="Lobby Size"
+                        tooltip="Number of players per team in each match"
                       />
                       <FormControl>
                         <Select
@@ -267,9 +244,9 @@ export default function TournamentSubmissionForm() {
                   name="rankRangeLowerBound"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Rank Restriction" 
-                        tooltip="The 'best' global rank allowed to participate. Use 1 for open rank." 
+                      <LabelWithTooltip
+                        label="Rank Restriction"
+                        tooltip="The 'best' global rank allowed to participate. Use 1 for open rank."
                       />
                       <FormControl>
                         <Input
@@ -294,8 +271,8 @@ export default function TournamentSubmissionForm() {
                 />
               </div>
 
-              <FormSection 
-                icon={<Database className="h-6 w-6 text-primary" />} 
+              <FormSection
+                icon={<Database className="h-6 w-6 text-primary" />}
                 title="Data"
               >
                 {/* Match links */}
@@ -304,9 +281,9 @@ export default function TournamentSubmissionForm() {
                   name="matchLinks"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Match Links" 
-                        tooltip="osu! match IDs or URLs (one per line)" 
+                      <LabelWithTooltip
+                        label="Match Links"
+                        tooltip="osu! match IDs or URLs (one per line)"
                       />
                       <FormControl>
                         <Textarea
@@ -329,9 +306,9 @@ export default function TournamentSubmissionForm() {
                   name="beatmapLinks"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithTooltip 
-                        label="Beatmap Links" 
-                        tooltip="osu! beatmap IDs or URLs (one per line)" 
+                      <LabelWithTooltip
+                        label="Beatmap Links"
+                        tooltip="osu! beatmap IDs or URLs (one per line)"
                       />
                       <FormControl>
                         <Textarea
@@ -354,7 +331,11 @@ export default function TournamentSubmissionForm() {
                 className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Tournament'}
+                {isSubmitting ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : (
+                  'Submit Tournament'
+                )}
               </Button>
             </form>
           </Form>
