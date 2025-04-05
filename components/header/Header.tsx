@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { LucideIcon, Menu, Upload, X } from 'lucide-react';
+import { LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -33,6 +33,11 @@ const navItems = [
     href: '/tournaments',
     dropdown: [
       {
+        title: 'Browse',
+        href: '/tournaments',
+        icon: Trophy,
+      },
+      {
         title: 'Submit',
         href: '/tournaments/submit',
         icon: Upload,
@@ -42,13 +47,11 @@ const navItems = [
 ] as const satisfies {
   title: string;
   href: string;
-  dropdown?: [
-    {
-      title: string;
-      href: string;
-      icon: LucideIcon;
-    },
-  ];
+  dropdown?: {
+    title: string;
+    href: string;
+    icon: LucideIcon;
+  }[];
 }[];
 
 export default function Header() {
@@ -80,7 +83,7 @@ export default function Header() {
                       <Link href={href} legacyBehavior passHref>
                         <NavigationMenuTrigger
                           className={cn(
-                            'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                            'bg-secondary hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                             pathname.startsWith(href) &&
                               'font-extrabold text-primary focus:text-primary'
                           )}
@@ -91,16 +94,21 @@ export default function Header() {
                       <NavigationMenuContent>
                         <div className="py-1">
                           {dropdown.map((item) => (
-                            <Link key={item.title} href={item.href} legacyBehavior passHref>
+                            <Link
+                              key={item.title}
+                              href={item.href}
+                              legacyBehavior
+                              passHref
+                            >
                               <NavigationMenuLink
                                 className={cn(
-                                  'flex items-center gap-2 px-4 py-2 text-sm',
+                                  'flex flex-row items-center gap-2 text-sm',
                                   pathname === item.href &&
                                     'font-medium text-primary'
                                 )}
                               >
                                 <item.icon className="h-4 w-4" />
-                                <span>{item.title}</span>
+                                <p>{item.title}</p>
                               </NavigationMenuLink>
                             </Link>
                           ))}
@@ -182,14 +190,19 @@ export default function Header() {
                               {title}
                             </NavigationMenuLink>
                           </Link>
-                          
+
                           {/* Dropdown items for mobile */}
                           {dropdown.map((item) => (
-                            <Link key={item.title} href={item.href} legacyBehavior passHref>
+                            <Link
+                              key={item.title}
+                              href={item.href}
+                              legacyBehavior
+                              passHref
+                            >
                               <NavigationMenuLink
                                 className={cn(
                                   navigationMenuTriggerStyle(),
-                                  'flex w-full items-center gap-2 bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary pl-8',
+                                  'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
                                   pathname === item.href &&
                                     'font-medium text-primary'
                                 )}
