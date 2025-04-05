@@ -26,22 +26,22 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   // Custom hook for responsive design
   const useMediaQuery = (query: string) => {
     const [matches, setMatches] = useState(false);
-    
+
     useEffect(() => {
       // Return early if window is not defined (SSR)
       if (typeof window === 'undefined') return;
-      
+
       const media = window.matchMedia(query);
       if (media.matches !== matches) setMatches(media.matches);
-      
+
       const listener = () => setMatches(media.matches);
       media.addEventListener('change', listener);
       return () => media.removeEventListener('change', listener);
     }, [matches, query]);
-    
+
     return matches;
   };
-  
+
   const isMobileView = useMediaQuery('(max-width: 767px)');
   const actualMobile = isMobile || isMobileView;
   const { data: session } = useSession();
@@ -78,10 +78,13 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
   // Memoize the avatar component to prevent unnecessary re-renders
   const userAvatar = useMemo(() => {
     if (!session?.user) return null;
-    
+
     return (
       <Avatar className="h-9 w-9 transition-all hover:border-primary/80">
-        <AvatarImage src={avatarUrl} alt={session.user?.name || 'User avatar'} />
+        <AvatarImage
+          src={avatarUrl}
+          alt={session.user?.name || 'User avatar'}
+        />
         <AvatarFallback>
           <User className="h-4 w-4" />
         </AvatarFallback>
@@ -168,7 +171,7 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
 
             <button
               onClick={() => signOut()}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+              className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" />
               <span>Log out</span>
