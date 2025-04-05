@@ -82,53 +82,59 @@ export default function Header() {
                 <NavigationMenuItem key={item.title}>
                   {item.dropdown ? (
                     <>
-                      <Link href={item.href} legacyBehavior passHref>
-                        <NavigationMenuTrigger
-                          className={cn(
-                            'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                            pathname.startsWith(item.href) &&
-                              'font-extrabold text-primary focus:text-primary'
-                          )}
-                        >
-                          {item.title}
-                        </NavigationMenuTrigger>
-                      </Link>
-                      <NavigationMenuContent>
-                        <div className="py-1">
-                          {item.dropdown.map((dropdownItem) => (
-                            <Link
-                              key={dropdownItem.title}
-                              href={dropdownItem.href}
-                              legacyBehavior
-                              passHref
-                            >
-                              <NavigationMenuLink
-                                className={cn(
-                                  'flex flex-row items-center gap-2 text-sm',
-                                  pathname === dropdownItem.href &&
-                                    'font-medium text-primary'
-                                )}
-                              >
-                                <dropdownItem.icon className="h-4 w-4" />
-                                <p>{dropdownItem.title}</p>
-                              </NavigationMenuLink>
-                            </Link>
-                          ))}
-                        </div>
-                      </NavigationMenuContent>
-                    </>
-                  ) : (
-                    <Link href={item.href} legacyBehavior passHref>
-                      <NavigationMenuLink
+                      <NavigationMenuTrigger
                         className={cn(
-                          'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                          'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                           pathname.startsWith(item.href) &&
                             'font-extrabold text-primary focus:text-primary'
                         )}
                       >
                         {item.title}
-                      </NavigationMenuLink>
-                    </Link>
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="py-1">
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              'flex flex-row items-center gap-2 px-2 py-1.5 text-sm font-medium',
+                              pathname === item.href &&
+                                'font-medium text-primary'
+                            )}
+                          >
+                            View All {item.title}
+                          </Link>
+                          {item.dropdown.map((dropdownItem) => (
+                            <NavigationMenuLink
+                              key={dropdownItem.title}
+                              asChild
+                              className={cn(
+                                'flex flex-row items-center gap-2 text-sm',
+                                pathname === dropdownItem.href &&
+                                  'font-medium text-primary'
+                              )}
+                            >
+                              <Link href={dropdownItem.href}>
+                                <div className="flex items-center gap-2">
+                                  <dropdownItem.icon className="h-4 w-4" />
+                                  <p>{dropdownItem.title}</p>
+                                </div>
+                              </Link>
+                            </NavigationMenuLink>
+                          ))}
+                        </div>
+                      </NavigationMenuContent>
+                    </>
+                  ) : (
+                    <NavigationMenuLink
+                      asChild
+                      className={cn(
+                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                        pathname.startsWith(item.href) &&
+                          'font-extrabold text-primary focus:text-primary'
+                      )}
+                    >
+                      <Link href={item.href}>{item.title}</Link>
+                    </NavigationMenuLink>
                   )}
                 </NavigationMenuItem>
               ))}
@@ -180,44 +186,8 @@ export default function Header() {
                       {item.dropdown ? (
                         <>
                           {/* Main link for mobile */}
-                          <Link href={item.href} legacyBehavior passHref>
-                            <NavigationMenuLink
-                              className={cn(
-                                navigationMenuTriggerStyle(),
-                                'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
-                                pathname.startsWith(item.href) &&
-                                  'font-extrabold text-primary focus:text-primary'
-                              )}
-                            >
-                              {item.title}
-                            </NavigationMenuLink>
-                          </Link>
-
-                          {/* Dropdown items for mobile */}
-                          {item.dropdown.map((dropdownItem) => (
-                            <Link
-                              key={dropdownItem.title}
-                              href={dropdownItem.href}
-                              legacyBehavior
-                              passHref
-                            >
-                              <NavigationMenuLink
-                                className={cn(
-                                  navigationMenuTriggerStyle(),
-                                  'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
-                                  pathname === dropdownItem.href &&
-                                    'font-medium text-primary'
-                                )}
-                              >
-                                <dropdownItem.icon className="h-4 w-4" />
-                                {dropdownItem.title}
-                              </NavigationMenuLink>
-                            </Link>
-                          ))}
-                        </>
-                      ) : (
-                        <Link href={item.href} legacyBehavior passHref>
                           <NavigationMenuLink
+                            asChild
                             className={cn(
                               navigationMenuTriggerStyle(),
                               'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
@@ -225,9 +195,42 @@ export default function Header() {
                                 'font-extrabold text-primary focus:text-primary'
                             )}
                           >
-                            {item.title}
+                            <Link href={item.href}>{item.title}</Link>
                           </NavigationMenuLink>
-                        </Link>
+
+                          {/* Dropdown items for mobile */}
+                          {item.dropdown.map((dropdownItem) => (
+                            <NavigationMenuLink
+                              key={dropdownItem.title}
+                              asChild
+                              className={cn(
+                                navigationMenuTriggerStyle(),
+                                'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
+                                pathname === dropdownItem.href &&
+                                  'font-medium text-primary'
+                              )}
+                            >
+                              <Link href={dropdownItem.href}>
+                                <div className="flex items-center gap-2">
+                                  <dropdownItem.icon className="h-4 w-4" />
+                                  {dropdownItem.title}
+                                </div>
+                              </Link>
+                            </NavigationMenuLink>
+                          ))}
+                        </>
+                      ) : (
+                        <NavigationMenuLink
+                          asChild
+                          className={cn(
+                            navigationMenuTriggerStyle(),
+                            'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                            pathname.startsWith(item.href) &&
+                              'font-extrabold text-primary focus:text-primary'
+                          )}
+                        >
+                          <Link href={item.href}>{item.title}</Link>
+                        </NavigationMenuLink>
                       )}
                     </NavigationMenuItem>
                   ))}
