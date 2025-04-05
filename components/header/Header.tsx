@@ -23,7 +23,17 @@ import {
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
 
-const navItems = [
+type NavItem = {
+  title: string;
+  href: string;
+  dropdown?: {
+    title: string;
+    href: string;
+    icon: LucideIcon;
+  }[];
+};
+
+const navItems: NavItem[] = [
   {
     title: 'Leaderboard',
     href: '/leaderboard',
@@ -44,15 +54,7 @@ const navItems = [
       },
     ],
   },
-] as const satisfies {
-  title: string;
-  href: string;
-  dropdown?: {
-    title: string;
-    href: string;
-    icon: LucideIcon;
-  }[];
-}[];
+];
 
 export default function Header() {
   const pathname = usePathname();
@@ -76,39 +78,39 @@ export default function Header() {
           {/* Main nav */}
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList>
-              {navItems.map(({ title, href, dropdown }) => (
-                <NavigationMenuItem key={title}>
-                  {dropdown ? (
+              {navItems.map((item) => (
+                <NavigationMenuItem key={item.title}>
+                  {item.dropdown ? (
                     <>
-                      <Link href={href} legacyBehavior passHref>
+                      <Link href={item.href} legacyBehavior passHref>
                         <NavigationMenuTrigger
                           className={cn(
                             'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                            pathname.startsWith(href) &&
+                            pathname.startsWith(item.href) &&
                               'font-extrabold text-primary focus:text-primary'
                           )}
                         >
-                          {title}
+                          {item.title}
                         </NavigationMenuTrigger>
                       </Link>
                       <NavigationMenuContent>
                         <div className="py-1">
-                          {dropdown.map((item) => (
+                          {item.dropdown.map((dropdownItem) => (
                             <Link
-                              key={item.title}
-                              href={item.href}
+                              key={dropdownItem.title}
+                              href={dropdownItem.href}
                               legacyBehavior
                               passHref
                             >
                               <NavigationMenuLink
                                 className={cn(
                                   'flex flex-row items-center gap-2 text-sm',
-                                  pathname === item.href &&
+                                  pathname === dropdownItem.href &&
                                     'font-medium text-primary'
                                 )}
                               >
-                                <item.icon className="h-4 w-4" />
-                                <p>{item.title}</p>
+                                <dropdownItem.icon className="h-4 w-4" />
+                                <p>{dropdownItem.title}</p>
                               </NavigationMenuLink>
                             </Link>
                           ))}
@@ -116,15 +118,15 @@ export default function Header() {
                       </NavigationMenuContent>
                     </>
                   ) : (
-                    <Link href={href} legacyBehavior passHref>
+                    <Link href={item.href} legacyBehavior passHref>
                       <NavigationMenuLink
                         className={cn(
                           'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                          pathname.startsWith(href) &&
+                          pathname.startsWith(item.href) &&
                             'font-extrabold text-primary focus:text-primary'
                         )}
                       >
-                        {title}
+                        {item.title}
                       </NavigationMenuLink>
                     </Link>
                   )}
@@ -173,29 +175,29 @@ export default function Header() {
                   <Separator className="bg-muted" />
                 </div>
                 <NavigationMenuList className="flex-col">
-                  {navItems.map(({ title, href, dropdown }) => (
-                    <NavigationMenuItem className="w-full" key={title}>
-                      {dropdown ? (
+                  {navItems.map((item) => (
+                    <NavigationMenuItem className="w-full" key={item.title}>
+                      {item.dropdown ? (
                         <>
                           {/* Main link for mobile */}
-                          <Link href={href} legacyBehavior passHref>
+                          <Link href={item.href} legacyBehavior passHref>
                             <NavigationMenuLink
                               className={cn(
                                 navigationMenuTriggerStyle(),
                                 'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
-                                pathname.startsWith(href) &&
+                                pathname.startsWith(item.href) &&
                                   'font-extrabold text-primary focus:text-primary'
                               )}
                             >
-                              {title}
+                              {item.title}
                             </NavigationMenuLink>
                           </Link>
 
                           {/* Dropdown items for mobile */}
-                          {dropdown.map((item) => (
+                          {item.dropdown.map((dropdownItem) => (
                             <Link
-                              key={item.title}
-                              href={item.href}
+                              key={dropdownItem.title}
+                              href={dropdownItem.href}
                               legacyBehavior
                               passHref
                             >
@@ -203,27 +205,27 @@ export default function Header() {
                                 className={cn(
                                   navigationMenuTriggerStyle(),
                                   'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
-                                  pathname === item.href &&
+                                  pathname === dropdownItem.href &&
                                     'font-medium text-primary'
                                 )}
                               >
-                                <item.icon className="h-4 w-4" />
-                                {item.title}
+                                <dropdownItem.icon className="h-4 w-4" />
+                                {dropdownItem.title}
                               </NavigationMenuLink>
                             </Link>
                           ))}
                         </>
                       ) : (
-                        <Link href={href} legacyBehavior passHref>
+                        <Link href={item.href} legacyBehavior passHref>
                           <NavigationMenuLink
                             className={cn(
                               navigationMenuTriggerStyle(),
                               'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
-                              pathname.startsWith(href) &&
+                              pathname.startsWith(item.href) &&
                                 'font-extrabold text-primary focus:text-primary'
                             )}
                           >
-                            {title}
+                            {item.title}
                           </NavigationMenuLink>
                         </Link>
                       )}
