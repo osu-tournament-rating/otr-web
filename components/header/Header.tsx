@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useCallback } from 'react';
-import LoginButton from '../buttons/LoginButton';
+import ProfileCard from '../profile/ProfileCard';
 import SearchDialog from '../search/SearchDialog';
 import { Button } from '../ui/button';
 import { DialogTitle } from '../ui/dialog';
@@ -70,7 +70,6 @@ export default function Header() {
   const [openMobileDropdowns, setOpenMobileDropdowns] = useState<
     Record<string, boolean>
   >(() => {
-    // If the current page is a child of a parent dropdown menu, expand it by default.
     const initialOpen: Record<string, boolean> = {};
     navItems.forEach((item) => {
       if (item.dropdown) {
@@ -90,16 +89,17 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-b-muted bg-secondary px-4">
-      <div className="flex h-16 w-full items-center justify-between">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 w-full border-b border-b-muted bg-secondary px-4 shadow-sm">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between">
+        <div className="flex items-center gap-4">
           {/* Logo */}
-          <Link href="/">
+          <Link href="/" className="flex items-center">
             <Image
               src={'/logos/small.svg'}
               alt="o!TR Logo"
               width={36}
               height={36}
+              className="transition-transform hover:scale-105"
             />
           </Link>
 
@@ -161,10 +161,12 @@ export default function Header() {
         </div>
 
         <div>
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-3 md:flex">
             <SearchDialog />
             <ModeToggle />
-            <LoginButton />
+            <div className="pl-1">
+              <ProfileCard />
+            </div>
           </div>
 
           {/* Mobile hamburger menu */}
@@ -191,7 +193,7 @@ export default function Header() {
               <DialogTitle hidden />
               <NavigationMenu className="contents" orientation={'vertical'}>
                 <div className="flex flex-col gap-y-4 px-2">
-                  <LoginButton />
+                  <ProfileCard isMobile={true} />
                   <Separator className="bg-muted" />
                 </div>
                 <NavigationMenuList className="flex-col">
@@ -224,7 +226,6 @@ export default function Header() {
                                   key={dropdownItem.title}
                                   asChild
                                   className={cn(
-                                    // Change the pl to change indentation of dropdown menu elements
                                     'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:text-foreground',
                                     pathname === dropdownItem.href &&
                                       'font-medium text-primary focus:text-primary'
