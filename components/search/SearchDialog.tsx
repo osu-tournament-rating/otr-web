@@ -69,17 +69,17 @@ export default function SearchDialog() {
         </DialogTrigger>
         <DialogTitle className="sr-only">Search</DialogTitle>
         <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-0 font-sans [&>button]:hidden">
-          <div className="sticky top-0 z-50 bg-background p-4 pb-4 shadow-sm">
+          <div className="sticky top-0 z-50 bg-background p-4 shadow-sm">
             <div className="relative">
               <Input
-                className="m-auto rounded-xl border-0 bg-accent pl-3 pr-10 focus-visible:ring-0"
+                className="m-auto rounded-xl border-0 bg-accent pr-10 pl-3 focus-visible:ring-0"
                 placeholder="Search players, tournaments, matches..."
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 aria-label="Search query"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
                 {isLoading ? (
                   <LoaderCircle className="size-5 animate-spin" />
                 ) : (
@@ -88,7 +88,7 @@ export default function SearchDialog() {
               </div>
             </div>
           </div>
-          <div className="overflow-y-auto p-4 pt-0">
+          <div className="overflow-y-auto p-4 pt-0 md:p-8">
             <SearchResults input={debouncedQuery} data={data} />
           </div>
         </DialogContent>
