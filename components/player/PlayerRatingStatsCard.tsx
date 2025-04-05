@@ -39,8 +39,14 @@ export default function PlayerRatingStatsCard({
               </span>
               {rating.tierProgress.nextSubTier !== null && (
                 <span className="text-muted-foreground">
-                  {rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier
-                    ? getTierString(rating.tierProgress.nextMajorTier as TierName, 3)
+                  {(rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier) || 
+                   (rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1)
+                    ? getTierString(
+                        (rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1)
+                          ? 'Elite Grandmaster' as TierName
+                          : rating.tierProgress.nextMajorTier as TierName,
+                        rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1 ? undefined : 3
+                      )
                     : getTierString(
                         rating.tierProgress.currentTier as TierName,
                         rating.tierProgress.nextSubTier
@@ -63,11 +69,18 @@ export default function PlayerRatingStatsCard({
               {rating.tierProgress.nextSubTier !== null && (
                 <TierIcon
                   tier={
-                    rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier
-                      ? (rating.tierProgress.nextMajorTier as TierName)
+                    (rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier) ||
+                    (rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1)
+                      ? ((rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1)
+                          ? 'Elite Grandmaster' as TierName
+                          : rating.tierProgress.nextMajorTier as TierName)
                       : (rating.tierProgress.currentTier as TierName)
                   }
-                  subTier={rating.tierProgress.nextSubTier}
+                  subTier={
+                    (rating.tierProgress.currentTier === 'Grandmaster' && rating.tierProgress.currentSubTier === 1)
+                      ? undefined
+                      : rating.tierProgress.nextSubTier
+                  }
                   includeSubtierInTooltip
                   width={24}
                   height={24}
