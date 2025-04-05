@@ -22,33 +22,33 @@ export default function PlayerRatingStatsCard({
       <div className="space-y-4">
         <div className="flex items-center gap-4">
           <TierIcon
-            tier={(rating.currentTier as TierName) || ''}
-            subTier={rating.rankProgress?.currentSubTier}
+            tier={(rating.tierProgress.currentTier as TierName) || ''}
+            subTier={rating.tierProgress?.currentSubTier}
             width={48}
             height={48}
           />
           <div className="flex-1">
             <div className="mb-2 flex justify-between">
               <span className="font-medium">
-                {rating.currentTier}
-                {rating.rankProgress?.currentSubTier &&
-                  ` ${romanNumerals[rating.rankProgress.currentSubTier - 1]}`}
+                {rating.tierProgress.currentTier}
+                {rating.tierProgress?.currentSubTier &&
+                  ` ${romanNumerals[rating.tierProgress.currentSubTier - 1]}`}
               </span>
               <span className="text-muted-foreground">
-                {rating.rankProgress?.currentSubTier &&
-                  (rating.rankProgress.currentSubTier === 1
-                    ? `Next: ${rating.rankProgress?.nextMajorTier} III`
-                    : `Next: ${rating.currentTier} ${romanNumerals[rating.rankProgress.currentSubTier - 2]}`)}
+                {rating.tierProgress?.currentSubTier &&
+                  (rating.tierProgress.currentSubTier === 1
+                    ? `Next: ${rating.tierProgress?.nextMajorTier} III`
+                    : `Next: ${rating.tierProgress.currentTier} ${romanNumerals[rating.tierProgress.currentSubTier - 2]}`)}
               </span>
             </div>
             <Progress
-              value={(rating.rankProgress?.subTierFillPercentage || 0) * 100}
+              value={(rating.tierProgress?.subTierFillPercentage || 0) * 100}
               className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-emerald-500"
             />
             <div className="mt-2 flex justify-between text-sm text-muted-foreground">
               <span>Sub-tier progress</span>
               <span>
-                {toPercentage(rating.rankProgress?.subTierFillPercentage || 0)}
+                {toPercentage(rating.tierProgress?.subTierFillPercentage || 0)}
               </span>
             </div>
           </div>
@@ -58,11 +58,11 @@ export default function PlayerRatingStatsCard({
           <div className="flex justify-between">
             <span className="text-sm">Major Tier Progress</span>
             <span className="text-sm text-muted-foreground">
-              {toPercentage(rating.rankProgress?.majorTierFillPercentage || 0)}
+              {toPercentage(rating.tierProgress?.majorTierFillPercentage || 0)}
             </span>
           </div>
           <Progress
-            value={(rating.rankProgress?.majorTierFillPercentage || 0) * 100}
+            value={(rating.tierProgress?.majorTierFillPercentage || 0) * 100}
             className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
           />
         </div>
