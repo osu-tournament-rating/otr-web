@@ -44,10 +44,34 @@ export default function PlayerRatingStatsCard({
                     : `Next: ${rating.tierProgress.currentTier} ${romanNumerals[rating.tierProgress.currentSubTier - 2]}`)}
               </span>
             </div>
-            <Progress
-              value={(rating.tierProgress?.subTierFillPercentage || 0) * 100}
-              className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-emerald-500"
-            />
+            <div className="flex items-center gap-2">
+              <TierIcon
+                tier={(rating.tierProgress.currentTier as TierName) || ''}
+                subTier={rating.tierProgress?.currentSubTier}
+                width={24}
+                height={24}
+              />
+              <Progress
+                value={(rating.tierProgress?.subTierFillPercentage || 0) * 100}
+                className="h-3 flex-1 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-emerald-500"
+              />
+              <TierIcon
+                tier={
+                  rating.tierProgress?.currentSubTier === 1
+                    ? (rating.tierProgress.nextMajorTier as TierName) || ''
+                    : (rating.tierProgress.currentTier as TierName) || ''
+                }
+                subTier={
+                  rating.tierProgress?.currentSubTier === 1
+                    ? 3
+                    : rating.tierProgress?.currentSubTier
+                    ? rating.tierProgress.currentSubTier - 1
+                    : undefined
+                }
+                width={24}
+                height={24}
+              />
+            </div>
             <div className="mt-2 flex justify-between text-sm text-muted-foreground">
               <span>Sub-tier progress</span>
               <span>
@@ -64,10 +88,22 @@ export default function PlayerRatingStatsCard({
               {toPercentage(rating.tierProgress?.majorTierFillPercentage || 0)}
             </span>
           </div>
-          <Progress
-            value={(rating.tierProgress?.majorTierFillPercentage || 0) * 100}
-            className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
-          />
+          <div className="flex items-center gap-2">
+            <TierIcon
+              tier={(rating.tierProgress.currentTier as TierName) || ''}
+              width={20}
+              height={20}
+            />
+            <Progress
+              value={(rating.tierProgress?.majorTierFillPercentage || 0) * 100}
+              className="h-2 flex-1 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
+            />
+            <TierIcon
+              tier={(rating.tierProgress.nextMajorTier as TierName) || ''}
+              width={20}
+              height={20}
+            />
+          </div>
         </div>
       </div>
 
