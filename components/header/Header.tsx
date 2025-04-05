@@ -114,7 +114,7 @@ export default function Header() {
                               'font-extrabold text-primary focus:bg-secondary focus:text-primary'
                           )}
                         >
-                          {item.title}v
+                          {item.title}
                         </NavigationMenuTrigger>
                       </Link>
                       <NavigationMenuContent>
