@@ -193,8 +193,7 @@ export default function Header() {
                           <button
                             onClick={() => toggleMobileDropdown(item.title)}
                             className={cn(
-                              navigationMenuTriggerStyle(),
-                              'flex w-full justify-between bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                              'flex w-full justify-between bg-secondary px-4 py-2 text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
                               pathname.startsWith(item.href) &&
                                 'font-extrabold text-primary focus:text-primary'
                             )}
@@ -215,8 +214,7 @@ export default function Header() {
                                   key={dropdownItem.title}
                                   asChild
                                   className={cn(
-                                    navigationMenuTriggerStyle(),
-                                    'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
+                                    'flex w-full items-center gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
                                     pathname === dropdownItem.href &&
                                       'font-medium text-primary'
                                   )}
@@ -236,8 +234,7 @@ export default function Header() {
                         <NavigationMenuLink
                           asChild
                           className={cn(
-                            navigationMenuTriggerStyle(),
-                            'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                            'w-full bg-secondary text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
                             pathname.startsWith(item.href) &&
                               'font-extrabold text-primary focus:text-primary'
                           )}
