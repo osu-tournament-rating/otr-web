@@ -12,7 +12,10 @@ interface TournamentSearchResultProps {
   data: TournamentSearchResultDTO;
 }
 
-export default function TournamentSearchResult({ input, data }: TournamentSearchResultProps) {
+export default function TournamentSearchResult({
+  input,
+  data,
+}: TournamentSearchResultProps) {
   const { setDialogOpen } = useContext(SearchDialogContext);
 
   return (
@@ -22,7 +25,9 @@ export default function TournamentSearchResult({ input, data }: TournamentSearch
           href={`/tournaments/${data.id}`}
           onClick={() => setDialogOpen(false)}
         >
-          <p className="text-lg font-medium">{highlightMatch(data.name, input)}</p>
+          <p className="text-lg font-medium">
+            {highlightMatch(data.name, input)}
+          </p>
         </Link>
       </div>
       <div className="flex items-center gap-5 text-accent-foreground">
@@ -36,7 +41,7 @@ export default function TournamentSearchResult({ input, data }: TournamentSearch
             ruleset={data.ruleset}
             width={24}
             height={24}
-            className="fill-primary flex-shrink-0"
+            className="flex-shrink-0 fill-primary"
           />
         </SimpleTooltip>
       </div>

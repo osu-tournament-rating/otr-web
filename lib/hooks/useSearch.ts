@@ -9,7 +9,7 @@ export function useSearch(query: string) {
       if (!searchQuery || searchQuery.trim() === '') {
         return undefined;
       }
-      
+
       try {
         return await search(searchQuery);
       } catch (error) {

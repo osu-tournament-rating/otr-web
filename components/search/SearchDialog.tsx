@@ -89,7 +89,7 @@ export default function SearchDialog() {
             </div>
           </div>
           {debouncedQuery.trim() !== '' && (
-            <div className="overflow-y-auto p-4 pt-0 md:p-8">
+            <div className="overflow-y-auto p-4 pt-0 md:p-6">
               <SearchResults input={debouncedQuery} data={data} />
             </div>
           )}

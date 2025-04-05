@@ -12,7 +12,10 @@ interface PlayerSearchResultProps {
   data: PlayerSearchResultDTO;
 }
 
-export default function PlayerSearchResult({ input, data }: PlayerSearchResultProps) {
+export default function PlayerSearchResult({
+  input,
+  data,
+}: PlayerSearchResultProps) {
   const { setDialogOpen } = useContext(SearchDialogContext);
 
   return (
@@ -26,10 +29,7 @@ export default function PlayerSearchResult({ input, data }: PlayerSearchResultPr
           alt={`${data.username || 'Unknown user'}'s profile picture`}
           priority={false}
         />
-        <Link 
-          href={`/players/${data.id}`} 
-          onClick={() => setDialogOpen(false)}
-        >
+        <Link href={`/players/${data.id}`} onClick={() => setDialogOpen(false)}>
           <p className="text-lg font-medium">
             {highlightMatch(data.username ?? 'Unknown user', input)}
           </p>
@@ -42,11 +42,11 @@ export default function PlayerSearchResult({ input, data }: PlayerSearchResultPr
           </p>
         )}
         {data.ratingTier && (
-          <TierIcon 
-            tier={data.ratingTier} 
-            width={32} 
-            height={32} 
-            className={cn("flex-shrink-0")}
+          <TierIcon
+            tier={data.ratingTier}
+            width={32}
+            height={32}
+            className={cn('flex-shrink-0')}
           />
         )}
       </div>

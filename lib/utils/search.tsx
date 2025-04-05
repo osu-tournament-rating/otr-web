@@ -1,17 +1,23 @@
 import React from 'react';
 
-export const highlightMatch = (text: string, match: string): React.ReactNode => {
+export const highlightMatch = (
+  text: string,
+  match: string
+): React.ReactNode => {
   if (!match) return text;
-  
+
   try {
-    const regex = new RegExp(`(${match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(
+      `(${match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+      'gi'
+    );
     const parts = text.split(regex);
-    
+
     return (
       <>
         {parts.map((part, i) =>
           part.toLowerCase() === match.toLowerCase() ? (
-            <span key={i} className="text-primary font-semibold">
+            <span key={i} className="font-semibold text-primary">
               {part}
             </span>
           ) : (
