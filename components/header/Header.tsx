@@ -83,7 +83,7 @@ export default function Header() {
                       <Link href={href} legacyBehavior passHref>
                         <NavigationMenuTrigger
                           className={cn(
-                            'bg-secondary hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                            'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                             pathname.startsWith(href) &&
                               'font-extrabold text-primary focus:text-primary'
                           )}
