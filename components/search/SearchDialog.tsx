@@ -35,45 +35,51 @@ export default function SearchDialog() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const contextValue = { query, setQuery, dialogOpen, setDialogOpen };
 
-  const [value, { flush }] = useDebounce(query, 500);
+  const [debouncedQuery, { flush }] = useDebounce(query, 500);
 
   useEffect(() => {
     if (query === '') {
-      setQuery('');
       flush();
     }
   }, [query, flush]);
 
-  const { data, isLoading } = useSearch(value);
+  const { data, isLoading } = useSearch(debouncedQuery);
+
+  const handleOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      // Reset state when dialog closes
+      setQuery('');
+    }
+  };
 
   return (
     <SearchDialogContext.Provider value={contextValue}>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild className="cursor-pointer">
+      <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Open search dialog"
-            onClick={() => {
-              setDialogOpen(true);
-              setQuery('');
-            }} // Clear existing search on open
+            aria-label="Search"
+            onClick={() => setDialogOpen(true)}
+            className="cursor-pointer"
           >
             <Search className="size-4" />
           </Button>
         </DialogTrigger>
-        <DialogTitle hidden />
-        <DialogContent className="max-h-[80%] min-w-[50%] overflow-auto font-sans [&>button]:hidden">
-          <div className="top-0 z-10 bg-background">
+        <DialogTitle className="sr-only">Search</DialogTitle>
+        <DialogContent className="max-h-[80vh] min-w-[50%] overflow-auto p-4 font-sans [&>button]:hidden">
+          <div className="sticky top-0 z-10 bg-background pb-4">
             <div className="relative">
               <Input
-                className="m-auto focus-visible:ring-0 border-0 rounded-xl bg-accent pl-3 pr-10"
-                placeholder="Search"
+                className="m-auto rounded-xl border-0 bg-accent pl-3 pr-10 focus-visible:ring-0"
+                placeholder="Search players, tournaments, matches..."
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search query"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 {isLoading ? (
                   <LoaderCircle className="size-5 animate-spin" />
                 ) : (
@@ -82,7 +88,7 @@ export default function SearchDialog() {
               </div>
             </div>
           </div>
-          <SearchResults input={value} data={data} />
+          <SearchResults input={debouncedQuery} data={data} />
         </DialogContent>
       </Dialog>
     </SearchDialogContext.Provider>

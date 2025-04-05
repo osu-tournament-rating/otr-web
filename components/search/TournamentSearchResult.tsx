@@ -7,27 +7,27 @@ import { RulesetEnumHelper } from '@/lib/enums';
 import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 
-export default function TournamentSearchResult({
-  input,
-  data,
-}: {
+interface TournamentSearchResultProps {
   input: string;
   data: TournamentSearchResultDTO;
-}) {
+}
+
+export default function TournamentSearchResult({ input, data }: TournamentSearchResultProps) {
   const { setDialogOpen } = useContext(SearchDialogContext);
 
   return (
-    <div className="flex flex-row rounded-xl bg-accent p-2">
-      <div className="mx-0.5 flex flex-1 gap-2">
+    <div className="flex items-center justify-between rounded-xl bg-accent p-3">
+      <div className="flex flex-1 items-center gap-2">
         <Link
           href={`/tournaments/${data.id}`}
           onClick={() => setDialogOpen(false)}
+          className="hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
-          <p className="text-lg">{highlightMatch(data.name, input)}</p>
+          <p className="text-lg font-medium">{highlightMatch(data.name, input)}</p>
         </Link>
       </div>
-      <div className="mx-0.5 flex flex-row gap-5 font-sans text-accent-foreground">
-        <p>
+      <div className="flex items-center gap-5 text-accent-foreground">
+        <p className="font-medium">
           {data.lobbySize}v{data.lobbySize}
         </p>
         <SimpleTooltip
@@ -37,7 +37,7 @@ export default function TournamentSearchResult({
             ruleset={data.ruleset}
             width={24}
             height={24}
-            className="fill-primary"
+            className="fill-primary flex-shrink-0"
           />
         </SimpleTooltip>
       </div>
