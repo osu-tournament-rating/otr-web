@@ -13,9 +13,11 @@ import { DialogTitle } from '../ui/dialog';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
   NavigationMenu,
+  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '../ui/navigation-menu';
 import { Separator } from '../ui/separator';
@@ -71,21 +73,53 @@ export default function Header() {
           {/* Main nav */}
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList>
-              {navItems.map(({ title, href }) => (
+              {navItems.map(({ title, href, dropdown }) => (
                 <NavigationMenuItem key={title}>
-                  <Link href={href} legacyBehavior passHref>
-                  // Update to support dropdowns if present in navItems. Dropdown menu should look identical to the navigation element.
-                  // when clicked, it should take the user to the base href present in the properties for the item. AI!
-                    <NavigationMenuLink
-                      className={cn(
-                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                        pathname.startsWith(href) &&
-                          'font-extrabold text-primary focus:text-primary'
-                      )}
-                    >
-                      {title}
-                    </NavigationMenuLink>
-                  </Link>
+                  {dropdown ? (
+                    <>
+                      <Link href={href} legacyBehavior passHref>
+                        <NavigationMenuTrigger
+                          className={cn(
+                            'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                            pathname.startsWith(href) &&
+                              'font-extrabold text-primary focus:text-primary'
+                          )}
+                        >
+                          {title}
+                        </NavigationMenuTrigger>
+                      </Link>
+                      <NavigationMenuContent>
+                        <div className="py-1">
+                          {dropdown.map((item) => (
+                            <Link key={item.title} href={item.href} legacyBehavior passHref>
+                              <NavigationMenuLink
+                                className={cn(
+                                  'flex items-center gap-2 px-4 py-2 text-sm',
+                                  pathname === item.href &&
+                                    'font-medium text-primary'
+                                )}
+                              >
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </NavigationMenuLink>
+                            </Link>
+                          ))}
+                        </div>
+                      </NavigationMenuContent>
+                    </>
+                  ) : (
+                    <Link href={href} legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={cn(
+                          'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                          pathname.startsWith(href) &&
+                            'font-extrabold text-primary focus:text-primary'
+                        )}
+                      >
+                        {title}
+                      </NavigationMenuLink>
+                    </Link>
+                  )}
                 </NavigationMenuItem>
               ))}
             </NavigationMenuList>
@@ -131,20 +165,55 @@ export default function Header() {
                   <Separator className="bg-muted" />
                 </div>
                 <NavigationMenuList className="flex-col">
-                  {navItems.map(({ title, href }) => (
+                  {navItems.map(({ title, href, dropdown }) => (
                     <NavigationMenuItem className="w-full" key={title}>
-                      <Link href={href} legacyBehavior passHref>
-                        <NavigationMenuLink
-                          className={cn(
-                            navigationMenuTriggerStyle(),
-                            'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
-                            pathname.startsWith(href) &&
-                              'font-extrabold text-primary focus:text-primary'
-                          )}
-                        >
-                          {title}
-                        </NavigationMenuLink>
-                      </Link>
+                      {dropdown ? (
+                        <>
+                          {/* Main link for mobile */}
+                          <Link href={href} legacyBehavior passHref>
+                            <NavigationMenuLink
+                              className={cn(
+                                navigationMenuTriggerStyle(),
+                                'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                                pathname.startsWith(href) &&
+                                  'font-extrabold text-primary focus:text-primary'
+                              )}
+                            >
+                              {title}
+                            </NavigationMenuLink>
+                          </Link>
+                          
+                          {/* Dropdown items for mobile */}
+                          {dropdown.map((item) => (
+                            <Link key={item.title} href={item.href} legacyBehavior passHref>
+                              <NavigationMenuLink
+                                className={cn(
+                                  navigationMenuTriggerStyle(),
+                                  'flex w-full items-center gap-2 bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary pl-8',
+                                  pathname === item.href &&
+                                    'font-medium text-primary'
+                                )}
+                              >
+                                <item.icon className="h-4 w-4" />
+                                {item.title}
+                              </NavigationMenuLink>
+                            </Link>
+                          ))}
+                        </>
+                      ) : (
+                        <Link href={href} legacyBehavior passHref>
+                          <NavigationMenuLink
+                            className={cn(
+                              navigationMenuTriggerStyle(),
+                              'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                              pathname.startsWith(href) &&
+                                'font-extrabold text-primary focus:text-primary'
+                            )}
+                          >
+                            {title}
+                          </NavigationMenuLink>
+                        </Link>
+                      )}
                     </NavigationMenuItem>
                   ))}
                 </NavigationMenuList>
