@@ -19,14 +19,19 @@ export default function WarningFlagsBadge({
     return null;
   }
 
-  const metadata =
+  let metadata =
     itemType === 'match'
       ? MatchWarningFlagsEnumHelper.getMetadata(value)
       : GameWarningFlagsEnumHelper.getMetadata(value);
 
-  if (metadata.includes(undefined)) {
+  // Filter out any undefined values
+  metadata = metadata.filter(
+    (m): m is NonNullable<typeof m> => m !== undefined
+  );
+
+  if (metadata.length === 0) {
     metadata.push({
-      text: `[BUG]: Received unexpected warning flag value. Metadata is undefined for flag ${value} on type ${itemType}`,
+      text: `[BUG]: Received unexpected warning flag value. No valid metadata found for flag ${value} on type ${itemType}`,
       description: '',
     });
   }
