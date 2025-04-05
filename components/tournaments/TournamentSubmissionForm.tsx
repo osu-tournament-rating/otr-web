@@ -37,9 +37,9 @@ export default function TournamentSubmissionForm() {
       name: '',
       abbreviation: '',
       forumUrl: '',
-      ruleset: 0,
-      rankRangeLowerBound: 1,
-      lobbySize: 1,
+      ruleset: undefined,
+      rankRangeLowerBound: undefined,
+      lobbySize: undefined,
       matchLinks: [],
       beatmapLinks: [],
     },
@@ -207,7 +207,7 @@ export default function TournamentSubmissionForm() {
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value.toString()}
+                          value={field.value?.toString() || ""}
                         >
                           <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                             <SelectValue placeholder="Select ruleset" />
@@ -235,7 +235,7 @@ export default function TournamentSubmissionForm() {
                       <FormControl>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value.toString()}
+                          value={field.value?.toString() || ""}
                         >
                           <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                             <SelectValue placeholder="Select size" />
@@ -264,11 +264,14 @@ export default function TournamentSubmissionForm() {
                         <Input
                           type="number"
                           min={1}
+                          placeholder="Enter rank restriction"
                           className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(e.target.valueAsNumber)
-                          }
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? undefined : e.target.valueAsNumber;
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
