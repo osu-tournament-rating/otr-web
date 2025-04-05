@@ -1,11 +1,11 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import LoginButton from '../buttons/LoginButton';
 import SearchDialog from '../search/SearchDialog';
 import { Button } from '../ui/button';
@@ -60,6 +60,14 @@ export default function Header() {
   const pathname = usePathname();
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [openMobileDropdowns, setOpenMobileDropdowns] = useState<Record<string, boolean>>({});
+
+  const toggleMobileDropdown = useCallback((title: string) => {
+    setOpenMobileDropdowns(prev => ({
+      ...prev,
+      [title]: !prev[title]
+    }));
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-b-muted bg-secondary px-4">
@@ -176,39 +184,48 @@ export default function Header() {
                     <NavigationMenuItem className="w-full" key={item.title}>
                       {item.dropdown ? (
                         <>
-                          {/* Main link for mobile */}
-                          <NavigationMenuLink
-                            asChild
+                          {/* Dropdown trigger for mobile */}
+                          <button
+                            onClick={() => toggleMobileDropdown(item.title)}
                             className={cn(
                               navigationMenuTriggerStyle(),
-                              'w-full bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
+                              'flex w-full justify-between bg-secondary text-lg transition-colors hover:bg-transparent hover:text-primary',
                               pathname.startsWith(item.href) &&
                                 'font-extrabold text-primary focus:text-primary'
                             )}
                           >
-                            <Link href={item.href}>{item.title}</Link>
-                          </NavigationMenuLink>
+                            <span>{item.title}</span>
+                            {openMobileDropdowns[item.title] ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
 
-                          {/* Dropdown items for mobile */}
-                          {item.dropdown.map((dropdownItem) => (
-                            <NavigationMenuLink
-                              key={dropdownItem.title}
-                              asChild
-                              className={cn(
-                                navigationMenuTriggerStyle(),
-                                'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
-                                pathname === dropdownItem.href &&
-                                  'font-medium text-primary'
-                              )}
-                            >
-                              <Link href={dropdownItem.href}>
-                                <div className="flex items-center gap-2">
-                                  <dropdownItem.icon className="h-4 w-4" />
-                                  {dropdownItem.title}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          ))}
+                          {/* Dropdown items for mobile - only show when open */}
+                          {openMobileDropdowns[item.title] && (
+                            <div className="flex flex-col">
+                              {item.dropdown.map((dropdownItem) => (
+                                <NavigationMenuLink
+                                  key={dropdownItem.title}
+                                  asChild
+                                  className={cn(
+                                    navigationMenuTriggerStyle(),
+                                    'flex w-full items-center gap-2 bg-secondary pl-8 text-lg transition-colors hover:bg-transparent hover:text-primary',
+                                    pathname === dropdownItem.href &&
+                                      'font-medium text-primary'
+                                  )}
+                                >
+                                  <Link href={dropdownItem.href}>
+                                    <div className="flex items-center gap-2">
+                                      <dropdownItem.icon className="h-4 w-4" />
+                                      {dropdownItem.title}
+                                    </div>
+                                  </Link>
+                                </NavigationMenuLink>
+                              ))}
+                            </div>
+                          )}
                         </>
                       ) : (
                         <NavigationMenuLink
