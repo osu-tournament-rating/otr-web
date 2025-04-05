@@ -186,7 +186,7 @@ export default function ProfileCard({ isMobile = false }: ProfileCardProps) {
         <motion.div
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          className="cursor-pointer"
+          className="cursor-pointer focus:outline-none"
           role="button"
           aria-label="Open profile menu"
         >
