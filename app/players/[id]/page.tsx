@@ -59,9 +59,6 @@ export default async function PlayerPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto p-4">
-      {/* Placeholder for player header (e.g., Avatar, Username) */}
-      <h1 className="mb-4 text-2xl font-bold">Player Profile: {params.id}</h1>
-
       {/* Render the PlayerRatingCard with the fetched rating data */}
       <PlayerRatingStatsCard rating={playerData.rating} />
 

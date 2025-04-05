@@ -37,6 +37,11 @@ export default function TierIcon({
     includeSubtierInTooltip ? subTier : undefined
   );
 
+  // Here purely for convenience
+  if (tier === 'Elite Grandmaster') {
+    subTier = undefined;
+  }
+
   return (
     <SimpleTooltip content={tooltipContent}>
       <Image
