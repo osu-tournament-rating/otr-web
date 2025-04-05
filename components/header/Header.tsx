@@ -214,15 +214,15 @@ export default function Header() {
                                   key={dropdownItem.title}
                                   asChild
                                   className={cn(
-                                    'flex w-full items-center justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary hover:cursor-pointer focus:bg-secondary focus:text-foreground',
+                                    'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary hover:cursor-pointer focus:bg-secondary focus:text-foreground',
                                     pathname === dropdownItem.href &&
                                       'font-medium text-primary focus:text-primary'
                                   )}
                                 >
                                   <Link href={dropdownItem.href}>
-                                    <div className="flex items-center justify-start gap-2">
+                                    <div className="flex w-full items-center justify-start gap-2 text-left">
                                       <dropdownItem.icon className="h-4 w-4" />
-                                      {dropdownItem.title}
+                                      <span>{dropdownItem.title}</span>
                                     </div>
                                   </Link>
                                 </NavigationMenuLink>
