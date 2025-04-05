@@ -32,15 +32,21 @@ export default function PlayerRatingStatsCard({
           <div className="flex-1">
             <div className="mb-2 flex justify-between">
               <span className="font-medium">
-                {rating.tierProgress?.currentSubTier &&
-                  ` ${getTierString(rating.tierProgress.currentTier as TierName, rating.tierProgress.currentSubTier)}`}
-              </span>
-              <span className="text-muted-foreground">
                 {getTierString(
                   rating.tierProgress.currentTier as TierName,
-                  rating.tierProgress.nextSubTier
+                  rating.tierProgress.currentSubTier
                 )}
               </span>
+              {rating.tierProgress.nextSubTier !== null && (
+                <span className="text-muted-foreground">
+                  {rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier
+                    ? getTierString(rating.tierProgress.nextMajorTier as TierName, 3)
+                    : getTierString(
+                        rating.tierProgress.currentTier as TierName,
+                        rating.tierProgress.nextSubTier
+                      )}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <TierIcon
@@ -54,13 +60,19 @@ export default function PlayerRatingStatsCard({
                 value={(rating.tierProgress?.subTierFillPercentage || 0) * 100}
                 className="h-3 flex-1 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-emerald-500"
               />
-              <TierIcon
-                tier={rating.tierProgress.nextMajorTier as TierName}
-                subTier={rating.tierProgress.nextSubTier}
-                includeSubtierInTooltip
-                width={24}
-                height={24}
-              />
+              {rating.tierProgress.nextSubTier !== null && (
+                <TierIcon
+                  tier={
+                    rating.tierProgress.nextSubTier === 3 && rating.tierProgress.nextMajorTier
+                      ? (rating.tierProgress.nextMajorTier as TierName)
+                      : (rating.tierProgress.currentTier as TierName)
+                  }
+                  subTier={rating.tierProgress.nextSubTier}
+                  includeSubtierInTooltip
+                  width={24}
+                  height={24}
+                />
+              )}
             </div>
             <div className="mt-2 flex justify-between text-sm text-muted-foreground">
               <span>Sub-tier progress</span>
