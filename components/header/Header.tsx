@@ -70,6 +70,7 @@ export default function Header() {
   const [openMobileDropdowns, setOpenMobileDropdowns] = useState<
     Record<string, boolean>
   >(() => {
+    // If the current page is a child of a parent dropdown menu, expand it by default.
     const initialOpen: Record<string, boolean> = {};
     navItems.forEach((item) => {
       if (item.dropdown) {
