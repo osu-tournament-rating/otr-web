@@ -118,7 +118,7 @@ export default function Header() {
                               className={cn(
                                 'flex flex-row items-center gap-2 text-sm',
                                 pathname === dropdownItem.href &&
-                                  'font-medium text-primary'
+                                  'font-medium text-primary focus:text-primary'
                               )}
                             >
                               <Link href={dropdownItem.href}>
@@ -214,9 +214,9 @@ export default function Header() {
                                   key={dropdownItem.title}
                                   asChild
                                   className={cn(
-                                    'flex w-full items-center gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary',
+                                    'flex w-full items-center gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:text-foreground',
                                     pathname === dropdownItem.href &&
-                                      'font-medium text-primary'
+                                      'font-medium text-primary focus:text-primary'
                                   )}
                                 >
                                   <Link href={dropdownItem.href}>
