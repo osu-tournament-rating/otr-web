@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Menu, X } from 'lucide-react';
+import { LucideIcon, Menu, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,10 +29,24 @@ const navItems = [
   {
     title: 'Tournaments',
     href: '/tournaments',
+    dropdown: [
+      {
+        title: 'Submit',
+        href: '/tournaments/submit',
+        icon: Upload,
+      },
+    ],
   },
 ] as const satisfies {
   title: string;
   href: string;
+  dropdown?: [
+    {
+      title: string;
+      href: string;
+      icon: LucideIcon;
+    },
+  ];
 }[];
 
 export default function Header() {
@@ -60,6 +74,8 @@ export default function Header() {
               {navItems.map(({ title, href }) => (
                 <NavigationMenuItem key={title}>
                   <Link href={href} legacyBehavior passHref>
+                  // Update to support dropdowns if present in navItems. Dropdown menu should look identical to the navigation element.
+                  // when clicked, it should take the user to the base href present in the properties for the item. AI!
                     <NavigationMenuLink
                       className={cn(
                         'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
