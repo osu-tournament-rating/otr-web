@@ -80,53 +80,6 @@ export default function PlayerRatingStatsCard({
             </div>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm">Major Tier Progress</span>
-            <span className="text-sm text-muted-foreground">
-              {toPercentage(rating.tierProgress?.majorTierFillPercentage || 0)}
-            </span>
-          </div>
-          <div className="relative">
-            <Progress
-              value={(rating.tierProgress?.majorTierFillPercentage || 0) * 100}
-              className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500"
-            />
-            <div className="absolute left-0 top-1/2 -translate-y-1/2">
-              <TierIcon
-                tier={(rating.tierProgress.currentTier as TierName) || ''}
-                subTier={3}
-                width={20}
-                height={20}
-              />
-            </div>
-            <div className="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <TierIcon
-                tier={(rating.tierProgress.currentTier as TierName) || ''}
-                subTier={2}
-                width={20}
-                height={20}
-              />
-            </div>
-            <div className="absolute left-2/3 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <TierIcon
-                tier={(rating.tierProgress.currentTier as TierName) || ''}
-                subTier={1}
-                width={20}
-                height={20}
-              />
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-              <TierIcon
-                tier={(rating.tierProgress.nextMajorTier as TierName) || ''}
-                subTier={1}
-                width={20}
-                height={20}
-              />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Stats Grid */}

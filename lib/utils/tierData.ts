@@ -2,8 +2,7 @@ import { validTiers } from '@/components/icons/TierIcon';
 
 export type TierName = (typeof validTiers)[number];
 
-export function getTierRomanNumerals(
-  tier: TierName,
+export function getSubtierRomanNumerals(
   subTier: number | undefined
 ) {
   if (typeof subTier !== 'number') return '';
