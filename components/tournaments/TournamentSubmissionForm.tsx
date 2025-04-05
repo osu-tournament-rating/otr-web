@@ -79,10 +79,9 @@ export default function TournamentSubmissionForm() {
 
       form.reset();
       toast.success('Tournament submitted successfully!');
-    } catch (error: unknown) {
+    } catch {
       toast.error(
-        'An error occurred during the submission. Verify whether the tournament exists already. ' +
-          error
+        'An error occurred during the submission. Verify whether the tournament exists already.'
       );
     } finally {
       setIsSubmitting(false);

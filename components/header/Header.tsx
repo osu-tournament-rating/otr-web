@@ -60,7 +60,6 @@ const navItems: NavItem[] = [
   },
 ];
 
-
 export default function Header() {
   const pathname = usePathname();
 
@@ -107,15 +106,17 @@ export default function Header() {
                 <NavigationMenuItem key={item.title}>
                   {item.dropdown ? (
                     <>
-                      <NavigationMenuTrigger
-                        className={cn(
-                          'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                          pathname.startsWith(item.href) &&
-                            'font-extrabold text-primary focus:bg-secondary focus:text-primary'
-                        )}
-                      >
-                        {item.title}
-                      </NavigationMenuTrigger>
+                      <Link href={item.href}>
+                        <NavigationMenuTrigger
+                          className={cn(
+                            'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+                            pathname.startsWith(item.href) &&
+                              'font-extrabold text-primary focus:bg-secondary focus:text-primary'
+                          )}
+                        >
+                          {item.title}v
+                        </NavigationMenuTrigger>
+                      </Link>
                       <NavigationMenuContent>
                         <div className="py-1">
                           {item.dropdown.map((dropdownItem) => (
