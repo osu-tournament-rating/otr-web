@@ -91,6 +91,7 @@ export default function PlayerRatingStatsCard({
           <div className="flex items-center gap-2">
             <TierIcon
               tier={(rating.tierProgress.currentTier as TierName) || ''}
+              subTier={3}
               width={20}
               height={20}
             />
@@ -100,6 +101,7 @@ export default function PlayerRatingStatsCard({
             />
             <TierIcon
               tier={(rating.tierProgress.nextMajorTier as TierName) || ''}
+              subTier={1}
               width={20}
               height={20}
             />
