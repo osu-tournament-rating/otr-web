@@ -26,7 +26,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from '../ui/navigation-menu';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
@@ -193,7 +192,7 @@ export default function Header() {
                           <button
                             onClick={() => toggleMobileDropdown(item.title)}
                             className={cn(
-                              'flex w-full justify-between bg-secondary px-4 py-2 text-lg transition-colors hover:bg-secondary hover:text-primary hover:cursor-pointer focus:bg-secondary',
+                              'flex w-full justify-between bg-secondary px-2 py-2 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary',
                               pathname.startsWith(item.href) &&
                                 'font-extrabold text-primary focus:text-primary'
                             )}
@@ -214,7 +213,8 @@ export default function Header() {
                                   key={dropdownItem.title}
                                   asChild
                                   className={cn(
-                                    'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:bg-secondary hover:text-primary hover:cursor-pointer focus:bg-secondary focus:text-foreground',
+                                    // Change the pl to change indentation of dropdown menu elements
+                                    'flex w-full items-start justify-start gap-2 bg-secondary px-4 py-2 pl-8 text-lg transition-colors hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:text-foreground',
                                     pathname === dropdownItem.href &&
                                       'font-medium text-primary focus:text-primary'
                                   )}
