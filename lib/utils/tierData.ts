@@ -2,20 +2,25 @@ import { validTiers } from '@/components/icons/TierIcon';
 
 export type TierName = (typeof validTiers)[number];
 
-export function getSubtierRomanNumerals(
-  subTier: number | undefined
-) {
-  if (typeof subTier !== 'number') return '';
-  switch (subTier) {
-    case 1:
-      return 'I';
-    case 2:
-      return 'II';
-    case 3:
-      return 'III';
-    default:
-      return '';
+export function getTierString(tier: TierName, subTier: number | undefined) {
+  const romanNumeral = (() => {
+    switch (subTier) {
+      case 1:
+        return 'I';
+      case 2:
+        return 'II';
+      case 3:
+        return 'III';
+      default:
+        return '';
+    }
+  })();
+
+  if (romanNumeral === '') {
+    return tier.toString();
   }
+
+  return `${tier} ${romanNumeral}`;
 }
 
 // Helper function to safely access tier colors

@@ -2,6 +2,7 @@
 
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
+import { TierName } from '@/lib/utils/tierData';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
@@ -49,11 +50,17 @@ export const columns = [
       </div>
     ),
   }),
-  columnHelper.accessor('currentTier', {
+  columnHelper.accessor('tierProgress.currentTier', {
     header: 'Tier',
-    cell: ({ getValue, row }) => (
+    cell: ({ row }) => (
       <div className="flex justify-center">
-        <TierIcon tier={row.original.currentTier ?? ''} subTier={row.original.rankProgress?.currentSubTier} width={24} height={24} />
+        <TierIcon
+          tier={row.original.tierProgress.currentTier as TierName}
+          subTier={row.original.tierProgress.currentSubTier}
+          includeSubtierInTooltip
+          width={24}
+          height={24}
+        />
       </div>
     ),
   }),

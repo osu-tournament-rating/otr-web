@@ -20,7 +20,6 @@ export default function TierCard({
   className,
 }: TierCardProps) {
   const tierColor = getTierColor(tier);
-  const subTier = tier === 'Elite Grandmaster' ? undefined : 1;
   return (
     <div
       className={cn(
@@ -52,7 +51,8 @@ export default function TierCard({
         <span className="relative z-10">
           <TierIcon
             tier={tier}
-            subTier={subTier}
+            subTier={tier === 'Elite Grandmaster' ? undefined : 1}
+            includeSubtierInTooltip={false}
             width={iconSize}
             height={iconSize}
           />

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import SimpleTooltip from '../simple-tooltip';
+import { getTierString } from '@/lib/utils/tierData';
 
 export const validTiers = [
   'Bronze',
@@ -18,10 +19,12 @@ type TierName = (typeof validTiers)[number];
 export default function TierIcon({
   tier,
   subTier,
+  includeSubtierInTooltip,
   ...rest
 }: Omit<React.ComponentProps<typeof Image>, 'src' | 'alt'> & {
   tier: TierName;
   subTier: number | undefined;
+  includeSubtierInTooltip: boolean;
 }) {
   // We still use validTiers at runtime to ensure the tier is valid
   // This prevents the ESLint error about validTiers only being used as a type
@@ -29,10 +32,13 @@ export default function TierIcon({
     console.warn(`Invalid tier: ${tier}`);
   }
 
-  console.log(tier, subTier)
+  const tooltipContent = getTierString(
+    tier,
+    includeSubtierInTooltip ? subTier : undefined
+  );
 
   return (
-    <SimpleTooltip content={tier}>
+    <SimpleTooltip content={tooltipContent}>
       <Image
         src={`/icons/tiers/${tier}${subTier ?? ''}.svg`}
         alt={tier + subTier?.toString()}
