@@ -96,7 +96,7 @@ export default function TournamentSubmissionForm() {
       </div>
 
       <Card className="overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
-        <CardContent className="px-8 pt-8">
+        <CardContent className="px-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
@@ -344,15 +344,13 @@ export default function TournamentSubmissionForm() {
                 />
               </div>
 
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  className="mt-8 w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Tournament'}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Tournament'}
+              </Button>
             </form>
           </Form>
         </CardContent>
