@@ -1,7 +1,15 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight, LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  LucideIcon,
+  Menu,
+  Trophy,
+  Upload,
+  X,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -60,12 +68,14 @@ export default function Header() {
   const pathname = usePathname();
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [openMobileDropdowns, setOpenMobileDropdowns] = useState<Record<string, boolean>>({});
+  const [openMobileDropdowns, setOpenMobileDropdowns] = useState<
+    Record<string, boolean>
+  >({});
 
   const toggleMobileDropdown = useCallback((title: string) => {
-    setOpenMobileDropdowns(prev => ({
+    setOpenMobileDropdowns((prev) => ({
       ...prev,
-      [title]: !prev[title]
+      [title]: !prev[title],
     }));
   }, []);
 
@@ -101,7 +111,6 @@ export default function Header() {
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
                         <div className="py-1">
-                         
                           {item.dropdown.map((dropdownItem) => (
                             <NavigationMenuLink
                               key={dropdownItem.title}
@@ -170,11 +179,7 @@ export default function Header() {
             >
               {/* Required for screen reader */}
               <DialogTitle hidden />
-              <NavigationMenu
-                className="contents"
-                orientation={'vertical'}
-                viewport={false}
-              >
+              <NavigationMenu className="contents" orientation={'vertical'}>
                 <div className="flex flex-col gap-y-4 px-2">
                   <LoginButton />
                   <Separator className="bg-muted" />
