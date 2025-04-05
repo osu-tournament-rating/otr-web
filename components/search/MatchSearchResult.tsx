@@ -17,7 +17,6 @@ export default function MatchSearchResult({ input, data }: MatchSearchResultProp
       <Link 
         href={`/matches/${data.id}`} 
         onClick={() => setDialogOpen(false)}
-        className="hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
         <p className="text-lg font-medium">
           {highlightMatch(data.name ?? 'Unknown match', input)}

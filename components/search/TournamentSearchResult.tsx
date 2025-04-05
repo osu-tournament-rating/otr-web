@@ -21,7 +21,6 @@ export default function TournamentSearchResult({ input, data }: TournamentSearch
         <Link
           href={`/tournaments/${data.id}`}
           onClick={() => setDialogOpen(false)}
-          className="hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <p className="text-lg font-medium">{highlightMatch(data.name, input)}</p>
         </Link>

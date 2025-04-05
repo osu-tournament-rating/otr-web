@@ -29,7 +29,6 @@ export default function PlayerSearchResult({ input, data }: PlayerSearchResultPr
         <Link 
           href={`/players/${data.id}`} 
           onClick={() => setDialogOpen(false)}
-          className="hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <p className="text-lg font-medium">
             {highlightMatch(data.username ?? 'Unknown user', input)}
