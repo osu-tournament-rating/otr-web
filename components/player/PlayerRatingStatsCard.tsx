@@ -13,7 +13,10 @@ export default function PlayerRatingStatsCard({
 }: {
   rating: PlayerRatingStatsDTO;
 }) {
-  const toPercentage = (value: number) => `${Math.round(value * 100)}%`;
+  const toPercentage = (value: number) => {
+    const formattedValue = value < 1 ? (value * 100).toFixed(2) : value.toFixed(2);
+    return `${formattedValue}%`;
+  };
   const toLocaleString = (value: number) => value.toLocaleString();
 
   return (
