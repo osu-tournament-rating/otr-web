@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { HelpCircle, Trophy, Database, ExternalLink } from 'lucide-react';
-import SimpleTooltip from '../simple-tooltip';
+import { Trophy, Database, ExternalLink } from 'lucide-react';
+import LabelWithTooltip from '../ui/LabelWithTooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
 
@@ -54,20 +54,6 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
   </div>
 );
 
-// Field label with tooltip component for consistency
-type LabelWithTooltipProps = {
-  label: string;
-  tooltip: string;
-};
-
-const LabelWithTooltip = ({ label, tooltip }: LabelWithTooltipProps) => (
-  <div className="flex items-center gap-2">
-    <FormLabel className="font-medium text-foreground">{label}</FormLabel>
-    <SimpleTooltip content={tooltip}>
-      <HelpCircle className="h-4 w-4 text-primary/70" />
-    </SimpleTooltip>
-  </div>
-);
 
 export default function TournamentSubmissionForm() {
   const form = useForm<TournamentSubmissionFormValues>({
