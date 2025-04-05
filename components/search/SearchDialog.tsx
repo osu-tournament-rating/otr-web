@@ -69,7 +69,7 @@ export default function SearchDialog() {
         </DialogTrigger>
         <DialogTitle className="sr-only">Search</DialogTitle>
         <DialogContent className="max-h-[80vh] min-w-[50%] overflow-auto p-4 font-sans [&>button]:hidden">
-          <div className="sticky top-0 z-10 bg-background pb-4">
+          <div className="sticky top-0 z-50 bg-background pb-4 shadow-sm">
             <div className="relative">
               <Input
                 className="m-auto rounded-xl border-0 bg-accent pl-3 pr-10 focus-visible:ring-0"
