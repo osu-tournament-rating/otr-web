@@ -86,11 +86,26 @@ export default function TournamentSubmissionForm() {
       });
       form.reset();
       toast.success('Tournament submitted successfully!');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Submission error:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Submission failed. Please check your inputs and try again.';
+      let errorMessage = 'Submission failed. Please check your inputs and try again.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        // Handle SubmissionError-like objects
+        const submissionError = error as SubmissionError;
+        errorMessage = submissionError.message;
+        
+        // Optionally highlight problematic fields
+        if (submissionError.field) {
+          form.setError(submissionError.field as any, {
+            type: 'manual',
+            message: submissionError.message
+          });
+        }
+      }
+      
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
