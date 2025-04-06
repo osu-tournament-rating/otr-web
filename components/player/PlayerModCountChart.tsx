@@ -6,7 +6,6 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from '../ui/chart';
 import {
   Card,
@@ -16,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
+import { PieChart, Pie, Cell, Label } from 'recharts';
 import * as React from 'react';
 
 export default function PlayerModCountChart({

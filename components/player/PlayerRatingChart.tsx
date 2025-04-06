@@ -11,7 +11,6 @@ import {
   TrendingUp,
   TrendingDown,
   Award,
-  Percent,
 } from 'lucide-react';
 import PlayerRatingChartOptions, {
   PlayerRatingChartFilterValues,
@@ -46,6 +45,8 @@ import { Card } from '../ui/card';
 import { useTheme } from 'next-themes';
 import TRText from '../rating/TRText';
 import TierIcon from '../icons/TierIcon';
+import { Props } from 'recharts/types/shape/Dot';
+import { ActiveShape } from 'recharts/types/util/types';
 
 const ADJUSTMENT_TYPE_NAMES: Record<RatingAdjustmentType, string> = {
   [RatingAdjustmentType.Initial]: 'Initial Rating',
@@ -78,11 +79,11 @@ export default function PlayerRatingChart({
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
   const [filterValues, setFilterValues] =
     useState<PlayerRatingChartFilterValues>({
-      showColoredDots: true,
+      showColoredDots: false, // We don't use this anymore but keep it for type compatibility
       showDecay: true,
     });
 
-  const { showColoredDots, showDecay } = filterValues;
+  const { showDecay } = filterValues;
   const { theme } = useTheme();
 
   const chartData = useMemo<ChartDataPoint[]>(() => {
@@ -265,85 +266,17 @@ export default function PlayerRatingChart({
       formattedAxisDate: format(point.date, 'MMM d'),
     }));
 
-    // Custom dot component to show different colors based on adjustment type
-    const CustomDot = (props: {
-      cx?: number;
-      cy?: number;
-      payload?: ChartDataPoint;
-      index?: number;
-    }) => {
-      const { cx, cy, payload } = props;
+    // We're not using custom dots anymore as we're showing a smooth line
 
-      if (!cx || !cy || !payload) return null;
-
-      if (!showColoredDots) {
-        return (
-          <Dot
-            cx={cx}
-            cy={cy}
-            r={4}
-            fill={
-              activeTab === 'rating'
-                ? chartColors.rating
-                : chartColors.volatility
-            }
-            stroke={theme === 'dark' ? '#1f2937' : '#ffffff'}
-            strokeWidth={2}
-          />
-        );
-      }
-
-      let fillColor;
-      switch (payload.adjustmentType) {
-        case RatingAdjustmentType.Decay:
-          fillColor = '#6b7280'; // gray-500
-          break;
-        case RatingAdjustmentType.Match:
-          fillColor = (payload?.ratingDelta ?? 0 > 0) ? '#22c55e' : '#ef4444'; // green-500 : red-500
-          break;
-        default:
-          fillColor = '#3b82f6'; // blue-500
-      }
-
-      // For match adjustments, make the dot clickable
-      if (
-        payload.adjustmentType === RatingAdjustmentType.Match &&
-        payload.matchId
-      ) {
-        return (
-          <Link href={`/matches/${payload.matchId}`}>
-            <Dot
-              cx={cx}
-              cy={cy}
-              r={4}
-              fill={fillColor}
-              stroke={theme === 'dark' ? '#1f2937' : '#ffffff'}
-              strokeWidth={2}
-              style={{ cursor: 'pointer' }}
-            />
-          </Link>
-        );
-      }
-
-      return (
-        <Dot
-          cx={cx}
-          cy={cy}
-          r={4}
-          fill={fillColor}
-          stroke={theme === 'dark' ? '#1f2937' : '#ffffff'}
-          strokeWidth={2}
-        />
-      );
-    };
-
-    // Custom tooltip component
+    // Custom tooltip component with proper typing
     const CustomTooltip = ({
       active,
       payload,
+      label,
     }: {
       active?: boolean;
       payload?: Array<{ payload: ChartDataPoint }>;
+      label?: string;
     }) => {
       if (!active || !payload || !payload.length) return null;
 
@@ -434,7 +367,7 @@ export default function PlayerRatingChart({
               />
             )}
             <Line
-              type="monotone"
+              type="natural"
               dataKey={activeTab}
               stroke={
                 activeTab === 'rating'
@@ -442,14 +375,59 @@ export default function PlayerRatingChart({
                   : chartColors.volatility
               }
               strokeWidth={2}
-              dot={<CustomDot />}
-              activeDot={
-                {
-                  r: 6,
-                  stroke: theme === 'dark' ? '#1f2937' : '#ffffff',
-                  strokeWidth: 2,
-                } as const
-              }
+              dot={false}
+              activeDot={(props: any) => {
+                if (props === undefined) {
+                  return (
+                    <circle
+                      cx={0}
+                      cy={0}
+                      r={0}
+                      fill="transparent"
+                      opacity={0}
+                    />
+                  );
+                }
+
+                // Define proper types for the activeDot props
+                const { cx, cy, payload } = props;
+
+                // For non-match adjustments, render an invisible dot (opacity 0)
+                // This ensures we always return a ReactElement and not null
+                if (
+                  payload.adjustmentType !== RatingAdjustmentType.Match ||
+                  !payload.matchId
+                ) {
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={0}
+                      fill="transparent"
+                      opacity={0}
+                    />
+                  );
+                }
+
+                // For match adjustments, show a clickable dot
+                return (
+                  <Link href={`/matches/${payload.matchId}`}>
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={6}
+                      fill={
+                        activeTab === 'rating'
+                          ? chartColors.rating
+                          : chartColors.volatility
+                      }
+                      stroke={theme === 'dark' ? '#1f2937' : '#ffffff'}
+                      strokeWidth={2}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </Link>
+                );
+              }}
               connectNulls
             />
           </LineChart>
@@ -582,28 +560,7 @@ export default function PlayerRatingChart({
         </Tabs>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-4 font-sans text-sm">
-          {showColoredDots && (
-            <>
-              <div className="flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1">
-                <span className="inline-block h-3 w-3 rounded-full bg-green-500"></span>
-                <span>Gain</span>
-              </div>
-              <div className="flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1">
-                <span className="inline-block h-3 w-3 rounded-full bg-red-500"></span>
-                <span>Loss</span>
-              </div>
-              {showDecay && (
-                <div className="flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-gray-500"></span>
-                  <span>Decay</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+      {/* Legend removed since we no longer have colored dots */}
     </Card>
   );
 }

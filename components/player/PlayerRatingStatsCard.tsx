@@ -8,7 +8,6 @@ import {
   Flag,
   User,
   Swords,
-  Crown,
   PercentCircle,
   BarChart4,
   ExternalLink,
@@ -17,6 +16,7 @@ import { getTierString, TierName } from '@/lib/utils/tierData';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import TRText from '../rating/TRText';
 import Link from 'next/link';
+import { StatCard } from './StatCard';
 
 export default function PlayerRatingStatsCard({
   rating,
@@ -34,76 +34,105 @@ export default function PlayerRatingStatsCard({
   return (
     <Card className="p-6 font-sans">
       {/* Player Info and Stats Section */}
+      {/* Player Card - Takes up half the width */}
+      <div className="flex flex-wrap justify-between gap-3 rounded-lg bg-muted/50 p-4">
+        <div className='flex min-w-[250px] flex-1 items-center gap-3 rounded-lg'>
+          <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
+            <AvatarImage
+              src={`https://a.ppy.sh/${rating.player.osuId}`}
+              alt={rating.player.username}
+            />
+            <AvatarFallback>
+              <User className="h-9 w-9" />
+            </AvatarFallback>
+          </Avatar>
+          <p className="text-4xl font-medium">{rating.player.username}</p>
+          <Link
+            href={`https://osu.ppy.sh/u/${rating.player.osuId}`}
+            target="_blank"
+            aria-label="View profile on osu! website"
+          >
+            <ExternalLink className="h-6 w-6 text-muted-foreground/50" />
+          </Link>
+        </div>
+        {/* Ruleset selector (placeholder) */}
+        <div className='flex items-center text-accent-foreground/30 p-4 font-medium rounded-4xl h-7 bg-muted'>
+          <p>osu!mania 4K</p>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-4">
-          {/* Player Card - Takes up half the width */}
-          <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-            <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
-              <AvatarImage
-                src={`https://a.ppy.sh/${rating.player.osuId}`}
-                alt={rating.player.username}
-              />
-              <AvatarFallback>
-                <User className="h-9 w-9" />
-              </AvatarFallback>
-            </Avatar>
-            <p className="text-xl font-bold">{rating.player.username}</p>
-            <Link
-              href={`https://osu.ppy.sh/u/${rating.player.osuId}`}
-              target="_blank"
-              aria-label="View profile on osu! website"
-            >
-              <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
-            </Link>
-          </div>
+        {/* Stats Cards - Takes up the other half */}
+        <div className="flex min-w-[250px] flex-1 flex-wrap gap-2">
+          {/* Tier Card */}
+          <StatCard
+            bordered
+            label="Tier"
+            value={
+              <p className="text-nowrap">
+                {getTierString(
+                  rating.tierProgress.currentTier as TierName,
+                  rating.tierProgress.currentSubTier
+                )}
+              </p>
+            }
+            icon={
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                <TierIcon
+                  tier={(rating.tierProgress.currentTier as TierName) || ''}
+                  subTier={rating.tierProgress?.currentSubTier}
+                  includeSubtierInTooltip
+                  width={32}
+                  height={32}
+                />
+              </div>
+            }
+            className="px-3 gap-2"
+          />
 
-          {/* Stats Cards - Takes up the other half */}
-          <div className="flex min-w-[250px] flex-1 flex-wrap gap-2">
-            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
-              {/* Global Rank Card */}
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <Globe className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Global</p>
-                  <p className="text-md font-semibold">
-                    #{toLocaleString(rating.globalRank)}
-                  </p>
-                </div>
+          {/* Rating Card */}
+          <StatCard
+            bordered
+            label="Rating"
+            value={
+              <div className="flex items-end">
+                <p>{rating.rating.toFixed()}</p>
+                <TRText />
               </div>
+            }
+            icon={<BarChart4 className="h-5 w-5 text-primary" />}
+          />
 
-              {/* Country Rank Card */}
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                <Flag className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Country</p>
-                  <p className="text-md font-semibold">
-                    #{toLocaleString(rating.countryRank)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-                <Crown className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Win Rate</p>
-                  <p className="text-md font-semibold">
-                    {rating.winRate ? toPercentage(rating.winRate) : 'N/A'}
-                  </p>
-                </div>
-              </div>
+          {/* Global Rank Card */}
+          <StatCard
+            label="Global"
+            value={`#${toLocaleString(rating.globalRank)}`}
+            icon={<Globe className="h-5 w-5 text-primary" />}
+            className="p-3 gap-2"
+          />
 
-              <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-                <PercentCircle className="h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Percentile</p>
-                  <p className="text-md font-semibold">
-                    {rating.percentile
-                      ? toPercentage(rating.percentile)
-                      : 'N/A'}
-                  </p>
-                </div>
-              </div>
+          {/* Country Rank Card */}
+          <StatCard
+            label="Country"
+            value={`#${toLocaleString(rating.countryRank)}`}
+            icon={<Flag className="h-5 w-5 text-primary" />}
+            className="p-3 gap-2"
+          />
+          {/* <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+            <Crown className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Win Rate</p>
+              <p className="text-md font-semibold">
+                {rating.winRate ? toPercentage(rating.winRate) : 'N/A'}
+              </p>
             </div>
-          </div>
+          </div> */}
+
+          <StatCard
+            label="Percentile"
+            value={rating.percentile ? toPercentage(rating.percentile) : 'N/A'}
+            icon={<PercentCircle className="h-6 w-6 text-primary" />}
+          />
         </div>
 
         {/* Tier Progress Card - Only show if there's a next tier */}
@@ -165,72 +194,41 @@ export default function PlayerRatingStatsCard({
             </div>
 
             <div className="mt-4 flex flex-wrap gap-4">
-              {/* Rating Card */}
-              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
-                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
-                  <BarChart4 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Rating</p>
-                  <div className="flex items-end">
-                    <p className="text-lg font-semibold">
-                      {rating.rating.toFixed()}
-                    </p>
-                    <TRText />
-                  </div>
-                </div>
-              </div>
 
-              {/* Tier Card */}
-              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
-                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
-                  <TierIcon
-                    tier={(rating.tierProgress.currentTier as TierName) || ''}
-                    subTier={rating.tierProgress?.currentSubTier}
-                    includeSubtierInTooltip
-                    width={32}
-                    height={32}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tier</p>
-                  <p className="text-lg font-semibold">
-                    {getTierString(
-                      rating.tierProgress.currentTier as TierName,
-                      rating.tierProgress.currentSubTier
-                    )}
-                  </p>
-                </div>
-              </div>
 
               {/* Next Sub-tier Card */}
-              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
-                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
-                  <TierIcon
-                    tier={rating.tierProgress.nextTier as TierName}
-                    subTier={rating.tierProgress.nextSubTier}
-                    includeSubtierInTooltip
-                    width={32}
-                    height={32}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Next Tier</p>
-                  <p className="text-lg font-semibold">
-                    +{rating.tierProgress.ratingForNextTier.toFixed()}{' '}
-                    <TRText />
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    for{' '}
-                    <span className="font-bold">
-                      {getTierString(
-                        rating.tierProgress.nextTier as TierName,
-                        rating.tierProgress.nextSubTier
-                      )}
-                    </span>
-                  </p>
-                </div>
-              </div>
+              <StatCard
+                bordered
+                label="Next Tier"
+                value={
+                  <>
+                    <p className="flex items-end">
+                      +{rating.tierProgress.ratingForNextTier.toFixed()}{' '}
+                      <TRText />
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      for{' '}
+                      <span className="font-bold">
+                        {getTierString(
+                          rating.tierProgress.nextTier as TierName,
+                          rating.tierProgress.nextSubTier
+                        )}
+                      </span>
+                    </p>
+                  </>
+                }
+                icon={
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                    <TierIcon
+                      tier={rating.tierProgress.nextTier as TierName}
+                      subTier={rating.tierProgress.nextSubTier}
+                      includeSubtierInTooltip
+                      width={32}
+                      height={32}
+                    />
+                  </div>
+                }
+              />
             </div>
           </div>
         )}
@@ -238,23 +236,17 @@ export default function PlayerRatingStatsCard({
 
       {/* Stats Section */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-          <Trophy className="text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">Tournaments</p>
-            <p className="text-xl font-semibold">
-              {rating.tournamentsPlayed || 0}
-            </p>
-          </div>
-        </div>
+        <StatCard
+          label="Tournaments"
+          value={rating.tournamentsPlayed || 0}
+          icon={<Trophy className="h-6 w-6 text-primary" />}
+        />
 
-        <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-          <Swords className="h-6 w-6 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">Matches</p>
-            <p className="text-xl font-semibold">{rating.matchesPlayed || 0}</p>
-          </div>
-        </div>
+        <StatCard
+          label="Matches"
+          value={rating.matchesPlayed || 0}
+          icon={<Swords className="h-6 w-6 text-primary" />}
+        />
       </div>
     </Card>
   );
