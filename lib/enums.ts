@@ -578,7 +578,10 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
   ...defaultBitwiseEnumHelper(Mods),
 
   metadata: {
-    [Mods.None]: noneEnumMetadata,
+    [Mods.None]: {
+      text: 'NM',
+      description: 'No mod',
+    },
     [Mods.NoFail]: {
       text: 'NF',
       description: 'No fail',

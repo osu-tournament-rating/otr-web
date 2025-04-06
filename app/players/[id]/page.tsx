@@ -1,3 +1,4 @@
+import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import { getStats } from '@/lib/actions/players';
@@ -69,8 +70,10 @@ export default async function PlayerPage({ params, searchParams }: PageProps) {
         }
       />
 
-      {/* Add other sections/components for the player page as needed */}
-      {/* e.g., Match History, Tournament History, etc. */}
+      {/* Display mod statistics if available */}
+      {playerData.modStats && playerData.modStats.length > 0 && (
+        <PlayerModStatsChart modStats={playerData.modStats} />
+      )}
     </div>
   );
 }
