@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   defaultTournamentListFilter,
@@ -17,11 +11,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
-import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
+import {
+  Ruleset,
+  TournamentQuerySortType,
+} from '@osu-tournament-rating/otr-api-client';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { RulesetEnumHelper } from '@/lib/enums';
+import {
+  SelectionGroup,
+  SelectionGroupItem,
+} from '@/components/ui/selection-group';
+
+const rulesetSelectItems: {};
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -112,12 +117,80 @@ export default function TournamentListFilter({
                         type="search"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
               <Search className="absolute inset-y-1/6 right-2" />
             </div>
+            <FormField
+              control={form.control}
+              name="ruleset"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <SelectionGroup
+                      {...field}
+                      value={String(field.value)}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                    >
+                      {Object.entries(RulesetEnumHelper.metadata)
+                        .filter(
+                          ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
+                        )
+                        .map(([ruleset, { text }]) => (
+                          <SelectionGroupItem
+                            key={`sort-${ruleset}`}
+                            className="justify-items-center gap-1"
+                            value={ruleset}
+                            aria-label={Ruleset[Number(ruleset)]}
+                          >
+                            <RulesetIcon
+                              ruleset={Number(ruleset)}
+                              className="size-6 fill-foreground"
+                            />
+                            <span className="hidden md:block">{text}</span>
+                          </SelectionGroupItem>
+                        ))}
+                    </SelectionGroup>
+                    {/* <ToggleGroup
+                      className="w-full gap-2"
+                      {...field}
+                      value={String(field.value)}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      type="single"
+                    >
+                      {Object.entries(RulesetEnumHelper.metadata)
+                        .filter(
+                          ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
+                        )
+                        .map(([ruleset]) => (
+                          <ToggleGroupItem
+                            key={`sort-${ruleset}`}
+                            className="px-0"
+                            value={ruleset}
+                            aria-label={Ruleset[Number(ruleset)]}
+                            onClick={(e) => {
+                              if (field.value === Number(ruleset)) {
+                                e.preventDefault();
+                              }
+                            }}
+                          >
+                            <RulesetIcon
+                              ruleset={Number(ruleset)}
+                              className={cn(
+                                'size-5',
+                                field.value === Number(ruleset)
+                                  ? 'fill-primary'
+                                  : 'fill-foreground'
+                              )}
+                            />
+                          </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup> */}
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Sort type and direction */}
