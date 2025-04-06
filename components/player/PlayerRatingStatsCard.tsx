@@ -24,6 +24,7 @@ export default function PlayerRatingStatsCard({
   rating: PlayerRatingStatsDTO;
 }) {
   const toPercentage = (value: number) => {
+    if (value === undefined || value === null) return 'N/A';
     const formattedValue =
       value < 1 ? (value * 100).toFixed(2) : value.toFixed(2);
     return `${formattedValue}%`;
@@ -35,8 +36,8 @@ export default function PlayerRatingStatsCard({
       {/* Player Info and Stats Section */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-4">
-          {/* Player Card */}
-          <div className="flex min-w-[250px] flex-1/2 items-center gap-3 rounded-lg bg-muted/50 p-4">
+          {/* Player Card - Takes up half the width */}
+          <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
             <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
               <AvatarImage
                 src={`https://a.ppy.sh/${rating.player.osuId}`}
@@ -50,78 +51,56 @@ export default function PlayerRatingStatsCard({
             <Link
               href={`https://osu.ppy.sh/u/${rating.player.osuId}`}
               target="_blank"
+              aria-label="View profile on osu! website"
             >
               <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
             </Link>
           </div>
-          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
-            <BarChart4 className="h-6 w-6 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Rating</p>
-              <div className="flex items-end">
-                <p className="text-xl font-semibold">
-                  {rating.rating.toFixed()}
-                </p>
-                <TRText />
-              </div>
-            </div>
-          </div>
-          {/* Current tier card - Full width */}
-          <div
-            className={`flex items-center gap-2 rounded-lg p-3 ${
-              !rating.tierProgress.nextMajorTier
-                ? 'bg-gradient-to-r from-accent/20 via-accent/30 to-accent/20'
-                : 'bg-muted/50'
-            }`}
-          >
-            {!rating.tierProgress.nextMajorTier && (
-              <TierIcon
-                className="absolute animate-[ping_10s_cubic-bezier(0,1,0,1)_infinite]"
-                tier={(rating.tierProgress.currentTier as TierName) || ''}
-                subTier={rating.tierProgress?.currentSubTier}
-                includeSubtierInTooltip
-                width={28}
-                height={28}
-              />
-            )}
-            <TierIcon
-              tier={(rating.tierProgress.currentTier as TierName) || ''}
-              subTier={rating.tierProgress?.currentSubTier}
-              includeSubtierInTooltip
-              width={28}
-              height={28}
-            />
-            <div>
-              <p className="text-xs text-muted-foreground">Tier</p>
-              <p className="text-sm font-semibold">
-                {getTierString(
-                  rating.tierProgress.currentTier as TierName,
-                  rating.tierProgress.currentSubTier
-                )}
-                {!rating.tierProgress.nextMajorTier}
-              </p>
-            </div>
-          </div>
 
-          {/* Rank Cards */}
+          {/* Stats Cards - Takes up the other half */}
           <div className="flex min-w-[250px] flex-1 flex-wrap gap-2">
-            <div className="flex min-w-[120px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-3">
-              <Globe className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Global</p>
-                <p className="text-sm font-semibold">
-                  #{toLocaleString(rating.globalRank)}
-                </p>
+            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+              {/* Global Rank Card */}
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <Globe className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Global</p>
+                  <p className="text-md font-semibold">
+                    #{toLocaleString(rating.globalRank)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex min-w-[120px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-3">
-              <Flag className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Country</p>
-                <p className="text-sm font-semibold">
-                  #{toLocaleString(rating.countryRank)}
-                </p>
+              {/* Country Rank Card */}
+              <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+                <Flag className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Country</p>
+                  <p className="text-md font-semibold">
+                    #{toLocaleString(rating.countryRank)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+                <Crown className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Win Rate</p>
+                  <p className="text-md font-semibold">
+                    {rating.winRate ? toPercentage(rating.winRate) : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+                <PercentCircle className="h-6 w-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Percentile</p>
+                  <p className="text-md font-semibold">
+                    {rating.percentile
+                      ? toPercentage(rating.percentile)
+                      : 'N/A'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -163,7 +142,7 @@ export default function PlayerRatingStatsCard({
               />
             </div>
             <div className="flex w-full px-8">
-              <div className="flex flex-1/3 justify-end">
+              <div className="flex flex-1 justify-end">
                 <TierIcon
                   tier={rating.tierProgress.currentTier as TierName}
                   subTier={2}
@@ -172,9 +151,9 @@ export default function PlayerRatingStatsCard({
                   height={24}
                 />
               </div>
-              <div className="flex flex-1/3 justify-end">
+              <div className="flex flex-1 justify-end">
                 <TierIcon
-                  tier={rating.tierProgress.nextTier as TierName}
+                  tier={rating.tierProgress.currentTier as TierName}
                   subTier={1}
                   includeSubtierInTooltip
                   width={24}
@@ -182,12 +161,50 @@ export default function PlayerRatingStatsCard({
                 />
               </div>
               {/* Do not remove */}
-              <div className="flex-1/3" />
+              <div className="flex-1" />
             </div>
 
             <div className="mt-4 flex flex-wrap gap-4">
+              {/* Rating Card */}
+              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
+                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                  <BarChart4 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Rating</p>
+                  <div className="flex items-end">
+                    <p className="text-lg font-semibold">
+                      {rating.rating.toFixed()}
+                    </p>
+                    <TRText />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tier Card */}
+              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
+                <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                  <TierIcon
+                    tier={(rating.tierProgress.currentTier as TierName) || ''}
+                    subTier={rating.tierProgress?.currentSubTier}
+                    includeSubtierInTooltip
+                    width={32}
+                    height={32}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tier</p>
+                  <p className="text-lg font-semibold">
+                    {getTierString(
+                      rating.tierProgress.currentTier as TierName,
+                      rating.tierProgress.currentSubTier
+                    )}
+                  </p>
+                </div>
+              </div>
+
               {/* Next Sub-tier Card */}
-              <div className="flex min-w-[200px] flex-1 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
+              <div className="flex flex-1 shrink-0 items-center gap-3 rounded-lg border border-muted bg-muted/30 p-4">
                 <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
                   <TierIcon
                     tier={rating.tierProgress.nextTier as TierName}
@@ -220,7 +237,7 @@ export default function PlayerRatingStatsCard({
       </div>
 
       {/* Stats Section */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-3">
         <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
           <Trophy className="text-primary" />
           <div>
@@ -236,26 +253,6 @@ export default function PlayerRatingStatsCard({
           <div>
             <p className="text-sm text-muted-foreground">Matches</p>
             <p className="text-xl font-semibold">{rating.matchesPlayed || 0}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-          <Crown className="h-6 w-6 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">Win Rate</p>
-            <p className="text-xl font-semibold">
-              {rating.winRate ? toPercentage(rating.winRate) : 'N/A'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-          <PercentCircle className="h-6 w-6 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">Percentile</p>
-            <p className="text-xl font-semibold">
-              {rating.percentile ? toPercentage(rating.percentile) : 'N/A'}
-            </p>
           </div>
         </div>
       </div>

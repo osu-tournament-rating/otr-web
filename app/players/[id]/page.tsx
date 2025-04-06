@@ -1,3 +1,4 @@
+import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import { getStats } from '@/lib/actions/players';
 import {
@@ -58,9 +59,15 @@ export default async function PlayerPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="mx-auto flex flex-col gap-2 p-4">
       {/* Render the PlayerRatingCard with the fetched rating data */}
       <PlayerRatingStatsCard rating={playerData.rating} />
+      <PlayerRatingChart
+        adjustments={playerData.rating.adjustments}
+        highestRating={
+          playerData.matchStats?.highestRating ?? playerData.rating.rating
+        }
+      />
 
       {/* Add other sections/components for the player page as needed */}
       {/* e.g., Match History, Tournament History, etc. */}
