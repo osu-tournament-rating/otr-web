@@ -44,9 +44,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '../ui/card';
 import { useTheme } from 'next-themes';
 import TRText from '../rating/TRText';
-import TierIcon from '../icons/TierIcon';
-import { Props } from 'recharts/types/shape/Dot';
-import { ActiveShape } from 'recharts/types/util/types';
 
 const ADJUSTMENT_TYPE_NAMES: Record<RatingAdjustmentType, string> = {
   [RatingAdjustmentType.Initial]: 'Initial Rating',
@@ -189,7 +186,7 @@ export default function PlayerRatingChart({
                 <th className="p-2 text-right">
                   {activeTab === 'rating' ? 'Rating' : 'Volatility'}
                 </th>
-                <th className="p-2 text-right">Change </th>
+                <th className="p-2 text-right">Change</th>
                 <th className="p-2 text-left">Match</th>
               </tr>
             </thead>
@@ -272,11 +269,9 @@ export default function PlayerRatingChart({
     const CustomTooltip = ({
       active,
       payload,
-      label,
     }: {
       active?: boolean;
       payload?: Array<{ payload: ChartDataPoint }>;
-      label?: string;
     }) => {
       if (!active || !payload || !payload.length) return null;
 
@@ -310,6 +305,7 @@ export default function PlayerRatingChart({
               >
                 {data.ratingDelta > 0 ? '+' : ''}
                 {data.ratingDelta.toFixed(2)}
+                <TRText />
               </span>
             </p>
           )}
@@ -335,8 +331,7 @@ export default function PlayerRatingChart({
               stroke={chartColors.text}
               tick={{ fill: chartColors.text }}
               tickLine={{ stroke: chartColors.grid }}
-              interval="preserveStartEnd"
-              minTickGap={30}
+              minTickGap={50}
               fontFamily="sans-serif"
             />
             <YAxis
@@ -456,7 +451,7 @@ export default function PlayerRatingChart({
           <div>
             <div className="text-sm text-muted-foreground">Peak Rating</div>
             <div className="text-xl font-semibold">
-              {highestRating.toFixed(0)} <TRText />
+              {highestRating.toFixed(0)} <TRText className="-ml-1" />
             </div>
           </div>
         </div>

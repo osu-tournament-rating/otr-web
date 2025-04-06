@@ -31,50 +31,52 @@ export default function PlayerRatingStatsCard({
   };
   const toLocaleString = (value: number) => value.toLocaleString();
 
+  console.log(rating);
+
   return (
     <Card className="p-6 font-sans">
       {/* Player Info and Stats Section */}
       {/* Player Card - Takes up half the width */}
       <div className="flex flex-wrap justify-between gap-3 rounded-lg bg-muted/50 p-4">
-        <div className='flex min-w-[250px] flex-1 items-center gap-3 rounded-lg'>
+        <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
           <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
             <AvatarImage
               src={`https://a.ppy.sh/${rating.player.osuId}`}
               alt={rating.player.username}
             />
             <AvatarFallback>
-              <User className="h-9 w-9" />
+              <User className="h-16 w-16" />
             </AvatarFallback>
           </Avatar>
-          <p className="text-4xl font-medium">{rating.player.username}</p>
+          <p className="text-3xl font-medium">{rating.player.username}</p>
           <Link
             href={`https://osu.ppy.sh/u/${rating.player.osuId}`}
             target="_blank"
             aria-label="View profile on osu! website"
           >
-            <ExternalLink className="h-6 w-6 text-muted-foreground/50" />
+            <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
           </Link>
         </div>
         {/* Ruleset selector (placeholder) */}
-        <div className='flex items-center text-accent-foreground/30 p-4 font-medium rounded-4xl h-7 bg-muted'>
+        <div className="flex h-7 items-center rounded-4xl bg-muted p-4 font-medium text-accent-foreground/30">
           <p>osu!mania 4K</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-4">
-        {/* Stats Cards - Takes up the other half */}
-        <div className="flex min-w-[250px] flex-1 flex-wrap gap-2">
+        {/* Stats Cards */}
+        <div className="flex min-w-[250px] flex-wrap gap-2">
           {/* Tier Card */}
           <StatCard
             bordered
             label="Tier"
             value={
-              <p className="text-nowrap">
+              <span className="text-nowrap">
                 {getTierString(
                   rating.tierProgress.currentTier as TierName,
                   rating.tierProgress.currentSubTier
                 )}
-              </p>
+              </span>
             }
             icon={
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
@@ -87,7 +89,7 @@ export default function PlayerRatingStatsCard({
                 />
               </div>
             }
-            className="px-3 gap-2"
+            className="gap-2 px-3"
           />
 
           {/* Rating Card */}
@@ -95,10 +97,9 @@ export default function PlayerRatingStatsCard({
             bordered
             label="Rating"
             value={
-              <div className="flex items-end">
-                <p>{rating.rating.toFixed()}</p>
-                <TRText />
-              </div>
+              <span>
+                {rating.rating.toFixed()} <TRText />
+              </span>
             }
             icon={<BarChart4 className="h-5 w-5 text-primary" />}
           />
@@ -108,7 +109,7 @@ export default function PlayerRatingStatsCard({
             label="Global"
             value={`#${toLocaleString(rating.globalRank)}`}
             icon={<Globe className="h-5 w-5 text-primary" />}
-            className="p-3 gap-2"
+            className="gap-2 p-3"
           />
 
           {/* Country Rank Card */}
@@ -116,18 +117,10 @@ export default function PlayerRatingStatsCard({
             label="Country"
             value={`#${toLocaleString(rating.countryRank)}`}
             icon={<Flag className="h-5 w-5 text-primary" />}
-            className="p-3 gap-2"
+            className="gap-2 p-3"
           />
-          {/* <div className="flex flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
-            <Crown className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Win Rate</p>
-              <p className="text-md font-semibold">
-                {rating.winRate ? toPercentage(rating.winRate) : 'N/A'}
-              </p>
-            </div>
-          </div> */}
 
+          {/* Percentile Card */}
           <StatCard
             label="Percentile"
             value={rating.percentile ? toPercentage(rating.percentile) : 'N/A'}
@@ -137,98 +130,90 @@ export default function PlayerRatingStatsCard({
 
         {/* Tier Progress Card - Only show if there's a next tier */}
         {rating.tierProgress.nextMajorTier && (
-          <div className="rounded-lg bg-muted/50 p-4">
-            <div className="mb-2 flex justify-end">
-              <span className="text-muted-foreground/50">
-                Next:{' '}
+          <div className="rounded-lg bg-muted/50 p-5">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xl font-semibold">Tier Progress</span>
+              <span className="text-sm text-muted-foreground">
+                <span className="font-semibold text-primary">
+                  {rating.tierProgress.ratingForNextMajorTier.toFixed()}{' '}
+                </span>
+                <TRText className="-ml-1 text-xs" /> until{' '}
                 {getTierString(
                   rating.tierProgress.nextMajorTier as TierName,
                   3
                 )}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <TierIcon
-                tier={(rating.tierProgress.currentTier as TierName) || ''}
-                subTier={3}
-                includeSubtierInTooltip
-                width={24}
-                height={24}
-              />
 
-              <Progress
-                value={
-                  (rating.tierProgress?.majorTierFillPercentage || 0) * 100
-                }
-                className="h-3 flex-1 bg-primary/10"
-              />
-              <TierIcon
-                tier={rating.tierProgress.nextMajorTier as TierName}
-                subTier={3}
-                includeSubtierInTooltip
-                width={24}
-                height={24}
-              />
-            </div>
-            <div className="flex w-full px-8">
-              <div className="flex flex-1 justify-end">
+            <div className="flex">
+              <div className="flex h-16 w-16 items-end justify-center">
                 <TierIcon
-                  tier={rating.tierProgress.currentTier as TierName}
-                  subTier={2}
+                  tier={(rating.tierProgress.currentTier as TierName) || ''}
+                  subTier={3}
                   includeSubtierInTooltip
-                  width={24}
-                  height={24}
+                  width={32}
+                  height={32}
                 />
               </div>
-              <div className="flex flex-1 justify-end">
-                <TierIcon
-                  tier={rating.tierProgress.currentTier as TierName}
-                  subTier={1}
-                  includeSubtierInTooltip
-                  width={24}
-                  height={24}
-                />
-              </div>
-              {/* Do not remove */}
-              <div className="flex-1" />
-            </div>
 
-            <div className="mt-4 flex flex-wrap gap-4">
-
-
-              {/* Next Sub-tier Card */}
-              <StatCard
-                bordered
-                label="Next Tier"
-                value={
-                  <>
-                    <p className="flex items-end">
-                      +{rating.tierProgress.ratingForNextTier.toFixed()}{' '}
-                      <TRText />
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      for{' '}
-                      <span className="font-bold">
-                        {getTierString(
-                          rating.tierProgress.nextTier as TierName,
-                          rating.tierProgress.nextSubTier
-                        )}
-                      </span>
-                    </p>
-                  </>
-                }
-                icon={
-                  <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
-                    <TierIcon
-                      tier={rating.tierProgress.nextTier as TierName}
-                      subTier={rating.tierProgress.nextSubTier}
-                      includeSubtierInTooltip
-                      width={32}
-                      height={32}
-                    />
+              {/* Tier progress bars */}
+              <div className="flex flex-1 items-center gap-2">
+                <div className="flex flex-1 flex-col">
+                  <div className="mb-2 text-center font-medium text-muted-foreground">
+                    III
                   </div>
-                }
-              />
+                  <Progress
+                    value={Math.min(
+                      (rating.tierProgress?.majorTierFillPercentage || 0) * 300,
+                      100
+                    )}
+                    className="h-1 w-full bg-primary/10"
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-col">
+                  <div className="mb-2 text-center font-medium text-muted-foreground">
+                    II
+                  </div>
+                  <Progress
+                    value={Math.max(
+                      0,
+                      Math.min(
+                        (rating.tierProgress?.majorTierFillPercentage || 0) *
+                          300 -
+                          100,
+                        100
+                      )
+                    )}
+                    className="h-1 w-full bg-primary/10"
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-col">
+                  <div className="mb-2 text-center font-medium text-muted-foreground">
+                    I
+                  </div>
+                  <Progress
+                    value={Math.max(
+                      0,
+                      (rating.tierProgress?.majorTierFillPercentage || 0) *
+                        300 -
+                        200
+                    )}
+                    className="h-1 w-full bg-primary/10"
+                  />
+                </div>
+              </div>
+
+              <div className="flex h-16 w-16 items-end justify-center">
+                <TierIcon
+                  tier={rating.tierProgress.nextMajorTier as TierName}
+                  subTier={3}
+                  includeSubtierInTooltip
+                  width={32}
+                  height={32}
+                />
+              </div>
             </div>
           </div>
         )}

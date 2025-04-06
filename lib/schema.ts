@@ -75,7 +75,6 @@ export const adminNoteFormSchema = z.object({
 });
 
 export const playerRatingChartFilterSchema = z.object({
-  showColoredDots: z.boolean().default(true),
   showDecay: z.boolean().default(true),
 });
 

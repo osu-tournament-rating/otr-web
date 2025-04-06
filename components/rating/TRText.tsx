@@ -1,6 +1,13 @@
-export default function TRText() {
+import { cn } from '@/lib/utils';
+
+export default function TRText({ className }: { className?: string }) {
   return (
-    <span className="ml-1 align-bottom text-sm font-bold text-muted-foreground/60 italic">
+    <span
+      className={cn(
+        'align-bottom text-sm font-bold text-muted-foreground/60 italic',
+        className
+      )}
+    >
       TR
     </span>
   );

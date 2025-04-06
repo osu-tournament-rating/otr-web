@@ -21,7 +21,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'flex flex-1 shrink-0 items-center gap-3 rounded-lg p-4',
+        'flex flex-1 shrink-0 items-center gap-2 rounded-lg p-4',
         bordered ? 'border border-muted bg-muted/30' : 'bg-muted/50',
         className
       )}

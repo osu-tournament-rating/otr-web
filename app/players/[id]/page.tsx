@@ -8,10 +8,9 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { toast } from 'sonner';
 
-// Define the expected props for the page, including URL parameters
 type PageProps = {
-  params: { id: string }; // Player ID from the URL
-  searchParams: { [key: string]: string | string[] | undefined }; // Search params, if any
+  params: { id: string }; // Player search key from path
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 async function getPlayerData(
@@ -26,7 +25,6 @@ async function getPlayerData(
     ? new Date(searchParams.dateMax as string)
     : undefined;
 
-  // Parse ruleset from URL params, ensure it's a valid number
   const ruleset = searchParams.ruleset
     ? (Number(searchParams.ruleset) as Ruleset)
     : undefined;

@@ -27,7 +27,6 @@ export default function PlayerRatingChartOptions({
     resolver: zodResolver(playerRatingChartFilterSchema),
     values: filter,
     defaultValues: {
-      showColoredDots: true,
       showDecay: true,
     },
   });
@@ -48,24 +47,6 @@ export default function PlayerRatingChartOptions({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <h4 className="font-medium">Chart Display Options</h4>
-
-            <FormField
-              control={form.control}
-              name="showColoredDots"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-y-0 space-x-3 rounded-md border p-3">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="cursor-pointer font-normal">
-                    Show Colored Dots
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
