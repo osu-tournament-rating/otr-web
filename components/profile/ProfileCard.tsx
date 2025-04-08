@@ -113,7 +113,7 @@ export default function ProfileCard() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-1 w-56">
         {/* Player card */}
-        <DropdownMenuLabel className="relative cursor-pointer overflow-hidden">
+        <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
             <div className="absolute inset-0 backdrop-blur-md" />
             <Image
