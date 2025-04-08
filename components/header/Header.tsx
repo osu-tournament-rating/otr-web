@@ -19,6 +19,7 @@ import {
 } from '../ui/navigation-menu';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
+import ClientOnly from '../client-only';
 
 const navItems = [
   {
@@ -62,7 +63,7 @@ export default function Header() {
                   <Link href={href} legacyBehavior passHref>
                     <NavigationMenuLink
                       className={cn(
-                        'rounded-md px-3 py-2 transition-colors hover:bg-muted hover:text-primary focus:bg-muted focus:outline-none',
+                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
                         pathname.startsWith(href) &&
                           'font-semibold text-primary focus:text-primary'
                       )}
@@ -80,9 +81,9 @@ export default function Header() {
           <div className="hidden items-center gap-3 md:flex">
             <SearchDialog />
             <ModeToggle />
-            <div className="pl-1">
+            <ClientOnly>
               <ProfileCard />
-            </div>
+            </ClientOnly>
           </div>
 
           {/* Mobile menu */}
@@ -113,10 +114,10 @@ export default function Header() {
                 <DialogTitle hidden />
 
                 <div className="flex flex-col space-y-6">
-                  <ProfileCard isMobile={true} />
-
+                  <ClientOnly>
+                    <ProfileCard />
+                  </ClientOnly>
                   <Separator className="bg-muted" />
-
                   <nav className="flex flex-col space-y-1">
                     {navItems.map(({ title, href }) => (
                       <SheetClose asChild key={title}>

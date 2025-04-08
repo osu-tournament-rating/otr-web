@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @layer base {
-  @tailwindcss/animate;
+  @tailwindcss /animate;
 }
 
 @layer utilities {
@@ -99,7 +99,7 @@
   --team-no-team: #333;
   --team-red: hsl(348 72% 52%);
   --team-blue: hsl(228 72% 52%);
-  
+
   /* Tier text colors */
   --text-elite-grandmaster: hsl(221, 80%, 55%);
   --text-grandmaster: hsl(0, 80%, 55%);
@@ -115,7 +115,7 @@
 .dark {
   --background: hsl(0, 0%, 7%);
   --foreground: hsl(210 40% 98%);
-  --card: hsl(0, 0%, 7%);
+  --card: hsl(0, 0%, 8%);
   --card-foreground: hsl(210 40% 98%);
   --card-alt: hsl(0, 0%, 12%);
   --card-alt-foreground: hsl(210 40% 98%);
@@ -141,7 +141,7 @@
   --chart-3: hsl(30 80% 55%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
-  
+
   /* Dark mode tier text colors */
   --text-elite-grandmaster: hsl(217, 100%, 70%);
   --text-grandmaster: hsl(0, 100%, 58%);
@@ -176,29 +176,47 @@
   .text-shadow-xs {
     text-shadow: 0 1px 2px color-mix(in srgb, var(--background) 0%, black 30%);
   }
-  
+
   .text-shadow-sm {
     text-shadow: 0 2px 4px color-mix(in srgb, var(--background) 0%, black 40%);
   }
-  
+
   .text-shadow-md {
     text-shadow: 0 4px 8px color-mix(in srgb, var(--background) 0%, black 50%);
   }
-  
+
   .text-shadow-lg {
     text-shadow: 0 8px 16px color-mix(in srgb, var(--background) 0%, black 60%);
   }
-  
+
   /* Tier text color classes */
-  .text-elite-grandmaster { color: var(--text-elite-grandmaster) }
-  .text-grandmaster { color: var(--text-grandmaster) }
-  .text-master { color: var(--text-master) }
-  .text-diamond { color: var(--text-diamond) }
-  .text-emerald { color: var(--text-emerald) }
-  .text-platinum { color: var(--text-platinum) }
-  .text-gold { color: var(--text-gold) }
-  .text-silver { color: var(--text-silver) }
-  .text-bronze { color: var(--text-bronze) }
+  .text-elite-grandmaster {
+    color: var(--text-elite-grandmaster);
+  }
+  .text-grandmaster {
+    color: var(--text-grandmaster);
+  }
+  .text-master {
+    color: var(--text-master);
+  }
+  .text-diamond {
+    color: var(--text-diamond);
+  }
+  .text-emerald {
+    color: var(--text-emerald);
+  }
+  .text-platinum {
+    color: var(--text-platinum);
+  }
+  .text-gold {
+    color: var(--text-gold);
+  }
+  .text-silver {
+    color: var(--text-silver);
+  }
+  .text-bronze {
+    color: var(--text-bronze);
+  }
 }
 
 @layer components {
