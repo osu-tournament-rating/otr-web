@@ -6,6 +6,7 @@ import { highlightMatch } from '@/lib/utils/search';
 import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 import { cn } from '@/lib/utils';
+import { Globe } from 'lucide-react';
 
 export default function PlayerSearchResult({
   data,
@@ -32,18 +33,26 @@ export default function PlayerSearchResult({
         </Link>
       </div>
       <div className="flex items-center gap-3 text-accent-foreground">
-        {data.rating && (
-          <p className="w-[70px] text-right font-medium">
-            {Number(data.rating).toFixed(0)} TR
-          </p>
+        {data.rating && data.ratingTier && (
+          <div className="flex flex-row items-center gap-1">
+            <TierIcon
+              tier={data.ratingTier}
+              width={24}
+              height={24}
+              className={cn('flex-shrink-0')}
+            />
+            <span className="w-[70px] text-right font-medium">
+              {data.rating.toFixed(0)} TR
+            </span>
+          </div>
         )}
-        {data.ratingTier && (
-          <TierIcon
-            tier={data.ratingTier}
-            width={32}
-            height={32}
-            className={cn('flex-shrink-0')}
-          />
+        {!!data.globalRank && (
+          <div className="flex flex-row items-center gap-1">
+            <Globe className="text-primary" />
+            <span className="font-medium">
+              #{data.globalRank.toLocaleString()}
+            </span>
+          </div>
         )}
       </div>
     </div>
