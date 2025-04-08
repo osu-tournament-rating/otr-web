@@ -80,9 +80,7 @@ export default function Header() {
           <div className="hidden items-center gap-3 md:flex">
             <SearchDialog />
             <ModeToggle />
-            <div className="pl-1">
-              <ProfileCard />
-            </div>
+            <ProfileCard />
           </div>
 
           {/* Mobile menu */}
