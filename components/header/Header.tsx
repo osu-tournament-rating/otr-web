@@ -19,6 +19,7 @@ import {
 } from '../ui/navigation-menu';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
+import ClientOnly from '../client-only';
 
 const navItems = [
   {
@@ -33,7 +34,7 @@ const navItems = [
   title: string;
   href: string;
 }[];
- 
+
 export default function Header() {
   const pathname = usePathname();
 
@@ -80,7 +81,9 @@ export default function Header() {
           <div className="hidden items-center gap-3 md:flex">
             <SearchDialog />
             <ModeToggle />
-            <ProfileCard />
+            <ClientOnly>
+              <ProfileCard />
+            </ClientOnly>
           </div>
 
           {/* Mobile menu */}
@@ -111,7 +114,9 @@ export default function Header() {
                 <DialogTitle hidden />
 
                 <div className="flex flex-col space-y-6">
-                  <ProfileCard />
+                  <ClientOnly>
+                    <ProfileCard />
+                  </ClientOnly>
                   <Separator className="bg-muted" />
                   <nav className="flex flex-col space-y-1">
                     {navItems.map(({ title, href }) => (
