@@ -7,16 +7,12 @@ import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 import { cn } from '@/lib/utils';
 
-interface PlayerSearchResultProps {
-  input: string;
-  data: PlayerSearchResultDTO;
-}
-
 export default function PlayerSearchResult({
-  input,
   data,
-}: PlayerSearchResultProps) {
-  const { setDialogOpen } = useContext(SearchDialogContext);
+}: {
+  data: PlayerSearchResultDTO;
+}) {
+  const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
     <div className="flex items-center rounded-xl bg-accent p-3">
@@ -29,9 +25,9 @@ export default function PlayerSearchResult({
           alt={`${data.username || 'Unknown user'}'s profile picture`}
           priority={false}
         />
-        <Link href={`/players/${data.id}`} onClick={() => setDialogOpen(false)}>
+        <Link href={`/players/${data.id}`} onClick={closeDialog}>
           <p className="text-lg font-medium">
-            {highlightMatch(data.username ?? 'Unknown user', input)}
+            {highlightMatch(data.username ?? 'Unknown user', query)}
           </p>
         </Link>
       </div>

@@ -30,6 +30,7 @@ export function useSearch(query: string) {
       return result;
     },
     {
+      keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateIfStale: false,
       dedupingInterval: 3000,

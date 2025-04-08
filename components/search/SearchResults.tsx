@@ -1,86 +1,86 @@
 import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
+import { ScrollArea } from '../ui/scroll-area';
+import { Swords, User, Trophy } from 'lucide-react';
 import PlayerSearchResult from './PlayerSearchResult';
 import TournamentSearchResult from './TournamentSearchResult';
 import MatchSearchResult from './MatchSearchResult';
 
-interface SearchResultsProps {
-  input: string;
+export default function SearchResults({
+  data,
+}: {
   data: SearchResponseCollectionDTO | undefined;
-}
-
-export default function SearchResults({ input, data }: SearchResultsProps) {
+}) {
   if (!data) {
     return null;
   }
 
   return (
-    <div className="space-y-6 rounded-xl">
-      <SearchResultSection title="Players" emptyMessage="No player results.">
-        {data.players.length > 0
-          ? Object.entries(data.players)
-              .sort((a, b) => (b[1].rating ?? 0) - (a[1].rating ?? 0))
-              .slice(0, 5)
-              .map(([key, entry]) => (
-                <PlayerSearchResult
-                  key={`player-search-result-${key}`}
-                  input={input}
-                  data={entry}
-                />
-              ))
-          : null}
-      </SearchResultSection>
+    <ScrollArea type="always" className="flex flex-1 overflow-y-auto pb-2">
+      <div className="flex flex-1 flex-col gap-6 px-4">
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
+            <User />
+            <h2 className="text-xl font-bold">Players</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {data.matches.length ? (
+              Object.entries(data.players)
+                .sort((a, b) => (b[1].rating ?? 0) - (a[1].rating ?? 0))
+                .slice(0, 5)
+                .map(([key, entry]) => (
+                  <PlayerSearchResult
+                    key={`player-search-result-${key}`}
+                    data={entry}
+                  />
+                ))
+            ) : (
+              <p className="text-muted-foreground">No player results...</p>
+            )}
+          </div>
+        </section>
 
-      <SearchResultSection
-        title="Tournaments"
-        emptyMessage="No tournament results."
-      >
-        {data.tournaments.length > 0
-          ? Object.entries(data.tournaments)
-              .slice(0, 5)
-              .map(([key, entry]) => (
-                <TournamentSearchResult
-                  key={`tournament-search-result-${key}`}
-                  input={input}
-                  data={entry}
-                />
-              ))
-          : null}
-      </SearchResultSection>
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
+            <Trophy />
+            <h2 className="text-xl font-bold">Tournaments</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {data.matches.length ? (
+              Object.entries(data.tournaments)
+                .slice(0, 5)
+                .map(([key, entry]) => (
+                  <TournamentSearchResult
+                    key={`tournament-search-result-${key}`}
+                    data={entry}
+                  />
+                ))
+            ) : (
+              <p className="text-muted-foreground">No tournament results...</p>
+            )}
+          </div>
+        </section>
 
-      <SearchResultSection title="Matches" emptyMessage="No match results.">
-        {data.matches.length > 0
-          ? Object.entries(data.matches)
-              .slice(0, 5)
-              .map(([key, entry]) => (
-                <MatchSearchResult
-                  key={`match-search-result-${key}`}
-                  input={input}
-                  data={entry}
-                />
-              ))
-          : null}
-      </SearchResultSection>
-    </div>
-  );
-}
-
-interface SearchResultSectionProps {
-  title: string;
-  emptyMessage: string;
-  children: React.ReactNode;
-}
-
-function SearchResultSection({
-  title,
-  emptyMessage,
-  children,
-}: SearchResultSectionProps) {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold">{title}</h2>
-      <div className="flex flex-col gap-2">
-        {children || <p className="text-muted-foreground">{emptyMessage}</p>}
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
+            <Swords />
+            <h2 className="text-xl font-bold">Matches</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {data.matches.length ? (
+              Object.entries(data.matches)
+                .slice(0, 5)
+                .map(([key, entry]) => (
+                  <MatchSearchResult
+                    key={`match-search-result-${key}`}
+                    data={entry}
+                  />
+                ))
+            ) : (
+              <p className="text-muted-foreground">No match results...</p>
+            )}
+          </div>
+        </section>
       </div>
-    </section>
+    </ScrollArea>
   );
 }

@@ -7,26 +7,22 @@ import { RulesetEnumHelper } from '@/lib/enums';
 import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 
-interface TournamentSearchResultProps {
-  input: string;
-  data: TournamentSearchResultDTO;
-}
-
 export default function TournamentSearchResult({
-  input,
   data,
-}: TournamentSearchResultProps) {
-  const { setDialogOpen } = useContext(SearchDialogContext);
+}: {
+  data: TournamentSearchResultDTO;
+}) {
+  const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
     <div className="flex items-center justify-between rounded-xl bg-accent p-3">
       <div className="flex flex-1 items-center gap-2">
         <Link
           href={`/tournaments/${data.id}`}
-          onClick={() => setDialogOpen(false)}
+          onClick={closeDialog}
         >
           <p className="text-lg font-medium">
-            {highlightMatch(data.name, input)}
+            {highlightMatch(data.name, query)}
           </p>
         </Link>
       </div>
