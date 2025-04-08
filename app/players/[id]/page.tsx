@@ -1,16 +1,19 @@
+import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
+import { Card } from '@/components/ui/card';
 import { getStats } from '@/lib/actions/players';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
+import { notFound } from 'next/navigation';
 import { toast } from 'sonner';
 
 type PageProps = {
-  params: { id: string }; // Player search key from path
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>; // Player search key from path
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 async function getPlayerData(
@@ -48,29 +51,57 @@ async function getPlayerData(
   }
 }
 
-export default async function PlayerPage({ params, searchParams }: PageProps) {
+export default async function PlayerPage(props: PageProps) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const playerData = await getPlayerData(params.id, searchParams);
 
   // Handle case where player data might not be found
-  if (!playerData || !playerData.rating) {
-    // You might want to redirect to a 404 page or show a message
-    return <div>Player not found.</div>;
+  if (!playerData) {
+    return notFound();
   }
+
+  // Get the current ruleset from search params or default to Osu
+  const currentRuleset = searchParams.ruleset
+    ? (Number(searchParams.ruleset) as Ruleset)
+    : Ruleset.Osu;
 
   return (
     <div className="mx-auto flex flex-col gap-2 p-4">
-      {/* Render the PlayerRatingCard with the fetched rating data */}
-      <PlayerRatingStatsCard rating={playerData.rating} />
-      <PlayerRatingChart
-        adjustments={playerData.rating.adjustments}
-        highestRating={
-          playerData.matchStats?.highestRating ?? playerData.rating.rating
-        }
-      />
+      {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
+      {playerData.rating ? (
+        <>
+          <PlayerRatingStatsCard
+            rating={playerData.rating}
+            currentRuleset={currentRuleset}
+          />
+          <PlayerRatingChart
+            adjustments={playerData.rating.adjustments}
+            highestRating={
+              playerData.matchStats?.highestRating ??
+              playerData.rating.adjustments.sort(
+                (a, b) => b.ratingAfter - a.ratingAfter
+              )[0].ratingAfter
+            }
+          />
 
-      {/* Display mod statistics if available */}
-      {playerData.modStats && playerData.modStats.length > 0 && (
-        <PlayerModStatsChart modStats={playerData.modStats} />
+          {/* Display mod statistics if available */}
+          {playerData.modStats && playerData.modStats.length > 0 && (
+            <PlayerModStatsChart modStats={playerData.modStats} />
+          )}
+        </>
+      ) : (
+        <Card className="p-6 font-sans">
+          <PlayerCard player={playerData.playerInfo} />
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg bg-muted/50 p-6 text-center">
+              <h2 className="text-xl font-semibold">No Data Available</h2>
+              <p className="text-muted-foreground">
+                This player has no rating data for the selected ruleset.
+              </p>
+            </div>
+          </div>
+        </Card>
       )}
     </div>
   );

@@ -75,8 +75,6 @@ export default function PlayerModStatsChart({
       averageScore,
     }));
 
-  console.log(chartData);
-
   const chartConfig = {
     averageScore: {
       label: 'Score',

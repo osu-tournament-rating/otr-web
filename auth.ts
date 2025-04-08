@@ -119,7 +119,6 @@ export const { handlers, auth } = NextAuth({
 
       // Try to refresh the access token
       try {
-        console.log('refreshing');
         const res = await fetch(
           `${process.env.OTR_API_ROOT}/api/v1/oauth/refresh?refreshToken=${token.refresh_token}`,
           {

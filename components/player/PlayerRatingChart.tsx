@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Info,
   LineChart as LineChartIcon,
@@ -40,6 +41,13 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '../ui/card';
 import { useTheme } from 'next-themes';
@@ -71,17 +79,55 @@ export default function PlayerRatingChart({
   adjustments,
   highestRating,
 }: PlayerRatingChartProps) {
-  const [timeRange, setTimeRange] = useState<string>('all');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [timeRange, setTimeRange] = useState<string>(
+    searchParams.get('dateMin') && searchParams.get('dateMax')
+      ? 'custom'
+      : 'all'
+  );
   const [activeTab, setActiveTab] = useState<'rating' | 'volatility'>('rating');
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
   const [filterValues, setFilterValues] =
     useState<PlayerRatingChartFilterValues>({
-      showColoredDots: false, // We don't use this anymore but keep it for type compatibility
       showDecay: true,
     });
 
+  // Date range state
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(
+    searchParams.get('dateMin')
+      ? new Date(searchParams.get('dateMin')!)
+      : undefined
+  );
+  const [dateTo, setDateTo] = useState<Date | undefined>(
+    searchParams.get('dateMax')
+      ? new Date(searchParams.get('dateMax')!)
+      : undefined
+  );
+
   const { showDecay } = filterValues;
   const { theme } = useTheme();
+
+  // Update URL when date range changes and trigger a refetch
+  const updateDateRange = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (dateFrom) {
+      params.set('dateMin', dateFrom.toISOString().split('T')[0]);
+    } else {
+      params.delete('dateMin');
+    }
+
+    if (dateTo) {
+      params.set('dateMax', dateTo.toISOString().split('T')[0]);
+    } else {
+      params.delete('dateMax');
+    }
+
+    // Use { scroll: false } to prevent page jumping
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   const chartData = useMemo<ChartDataPoint[]>(() => {
     return adjustments.map((adj) => ({
@@ -96,39 +142,17 @@ export default function PlayerRatingChart({
     }));
   }, [adjustments]);
 
+  // Filter out decay if not showing - this is the only client-side filtering we'll keep
   const filteredData = useMemo(() => {
-    let filtered = chartData;
-
-    // Filter by time range
-    if (timeRange !== 'all') {
-      const now = new Date();
-      const cutoffDate = new Date();
-
-      switch (timeRange) {
-        case '3m':
-          cutoffDate.setMonth(now.getMonth() - 3);
-          break;
-        case '6m':
-          cutoffDate.setMonth(now.getMonth() - 6);
-          break;
-        case '1y':
-          cutoffDate.setFullYear(now.getFullYear() - 1);
-          break;
-      }
-
-      filtered = filtered.filter((point) => point.date >= cutoffDate);
-    }
-
-    // Filter out decay if not showing
     if (!showDecay) {
-      filtered = filtered.filter(
+      return chartData.filter(
         (point) => point.adjustmentType !== RatingAdjustmentType.Decay
       );
     }
+    return chartData;
+  }, [chartData, showDecay]);
 
-    return filtered;
-  }, [chartData, timeRange, showDecay]);
-
+  // Compute daily data for volatility chart
   const dailyData = useMemo(() => {
     const dailyMap = new Map<string, ChartDataPoint>();
 
@@ -445,8 +469,8 @@ export default function PlayerRatingChart({
     const losses = matchAdjustments.filter((d) => d.ratingDelta < 0).length;
 
     return (
-      <div className="mt-4 flex flex-wrap gap-4 font-sans">
-        <div className="flex min-w-[140px] flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+      <div className="flex flex-wrap gap-3 font-sans">
+        <div className="flex min-w-[140px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-4">
           <Award className="h-6 w-6 text-primary" />
           <div>
             <div className="text-sm text-muted-foreground">Peak Rating</div>
@@ -455,7 +479,7 @@ export default function PlayerRatingChart({
             </div>
           </div>
         </div>
-        <div className="flex min-w-[140px] flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+        <div className="flex min-w-[140px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-4">
           {totalChange >= 0 ? (
             <TrendingUp className="h-6 w-6 text-primary" />
           ) : (
@@ -472,7 +496,7 @@ export default function PlayerRatingChart({
             </div>
           </div>
         </div>
-        <div className="flex min-w-[140px] flex-1 items-center gap-3 rounded-lg bg-muted/50 p-4">
+        <div className="flex min-w-[140px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-4">
           <BarChart4 className="h-6 w-6 text-primary" />
           <div>
             <div className="text-sm text-muted-foreground">Win/Loss</div>
@@ -509,34 +533,260 @@ export default function PlayerRatingChart({
             </TabsList>
           </Tabs>
 
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full font-sans sm:w-[160px]">
-              <Calendar className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Time Range" />
-            </SelectTrigger>
-            <SelectContent className="font-sans">
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="1y">Last Year</SelectItem>
-              <SelectItem value="6m">Last 6 Months</SelectItem>
-              <SelectItem value="3m">Last 3 Months</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            {/* Date Range Picker */}
+            <div className="flex gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 font-sans">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, 'PP') : 'From Date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <div className="flex items-center justify-between border-b p-3">
+                    <select
+                      className="mr-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      value={
+                        dateFrom ? dateFrom.getMonth() : new Date().getMonth()
+                      }
+                      onChange={(e) => {
+                        const newDate = new Date(dateFrom || new Date());
+                        newDate.setMonth(parseInt(e.target.value));
+                        setDateFrom(newDate);
+                      }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {new Date(0, i).toLocaleString('default', {
+                            month: 'long',
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      value={
+                        dateFrom
+                          ? dateFrom.getFullYear()
+                          : new Date().getFullYear()
+                      }
+                      onChange={(e) => {
+                        const newDate = new Date(dateFrom || new Date());
+                        newDate.setFullYear(parseInt(e.target.value));
+                        setDateFrom(newDate);
+                      }}
+                    >
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <option
+                          key={i}
+                          value={new Date().getFullYear() - 9 + i}
+                        >
+                          {new Date().getFullYear() - 9 + i}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={(date) => {
+                      setDateFrom(date);
+                      if (date && dateTo && date > dateTo) {
+                        setDateTo(date);
+                      }
+                    }}
+                    initialFocus
+                    month={dateFrom || undefined}
+                  />
+                  <div className="flex justify-end gap-2 border-t p-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDateFrom(undefined);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setTimeRange('custom');
+                        updateDateRange();
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
-          <PlayerRatingChartOptions
-            filter={filterValues}
-            onFilterChange={setFilterValues}
-          />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 font-sans">
+                    {dateTo ? format(dateTo, 'PP') : 'To Date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <div className="flex items-center justify-between border-b p-3">
+                    <select
+                      className="mr-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      value={dateTo ? dateTo.getMonth() : new Date().getMonth()}
+                      onChange={(e) => {
+                        const newDate = new Date(dateTo || new Date());
+                        newDate.setMonth(parseInt(e.target.value));
+                        setDateTo(newDate);
+                      }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {new Date(0, i).toLocaleString('default', {
+                            month: 'long',
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      value={
+                        dateTo ? dateTo.getFullYear() : new Date().getFullYear()
+                      }
+                      onChange={(e) => {
+                        const newDate = new Date(dateTo || new Date());
+                        newDate.setFullYear(parseInt(e.target.value));
+                        setDateTo(newDate);
+                      }}
+                    >
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <option
+                          key={i}
+                          value={new Date().getFullYear() - 9 + i}
+                        >
+                          {new Date().getFullYear() - 9 + i}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={(date) => {
+                      setDateTo(date);
+                      if (date && dateFrom && date < dateFrom) {
+                        setDateFrom(date);
+                      }
+                    }}
+                    initialFocus
+                    disabled={(date) => (dateFrom ? date < dateFrom : false)}
+                    month={dateTo || undefined}
+                  />
+                  <div className="flex justify-end gap-2 border-t p-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDateTo(undefined);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setTimeRange('custom');
+                        updateDateRange();
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <Select
+              value={timeRange}
+              onValueChange={(value) => {
+                setTimeRange(value);
+
+                // Set date range based on selected time range
+                const now = new Date();
+                const params = new URLSearchParams(searchParams.toString());
+
+                if (value === '1y') {
+                  const oneYearAgo = new Date();
+                  oneYearAgo.setFullYear(now.getFullYear() - 1);
+                  setDateFrom(oneYearAgo);
+                  setDateTo(now);
+
+                  params.set('dateMin', oneYearAgo.toISOString().split('T')[0]);
+                  params.set('dateMax', now.toISOString().split('T')[0]);
+                  router.push(`?${params.toString()}`, { scroll: false });
+                } else if (value === '6m') {
+                  const sixMonthsAgo = new Date();
+                  sixMonthsAgo.setMonth(now.getMonth() - 6);
+                  setDateFrom(sixMonthsAgo);
+                  setDateTo(now);
+
+                  params.set(
+                    'dateMin',
+                    sixMonthsAgo.toISOString().split('T')[0]
+                  );
+                  params.set('dateMax', now.toISOString().split('T')[0]);
+                  router.push(`?${params.toString()}`, { scroll: false });
+                } else if (value === '3m') {
+                  const threeMonthsAgo = new Date();
+                  threeMonthsAgo.setMonth(now.getMonth() - 3);
+                  setDateFrom(threeMonthsAgo);
+                  setDateTo(now);
+
+                  params.set(
+                    'dateMin',
+                    threeMonthsAgo.toISOString().split('T')[0]
+                  );
+                  params.set('dateMax', now.toISOString().split('T')[0]);
+                  router.push(`?${params.toString()}`, { scroll: false });
+                } else if (value === 'all') {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+
+                  params.delete('dateMin');
+                  params.delete('dateMax');
+                  router.push(`?${params.toString()}`, { scroll: false });
+                }
+              }}
+            >
+              <SelectTrigger className="w-full font-sans sm:w-[160px]">
+                <Calendar className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Time Range" />
+              </SelectTrigger>
+              <SelectContent className="font-sans">
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="1y">Last Year</SelectItem>
+                <SelectItem value="6m">Last 6 Months</SelectItem>
+                <SelectItem value="3m">Last 3 Months</SelectItem>
+                {dateFrom && dateTo && timeRange === 'custom' && (
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+
+            <PlayerRatingChartOptions
+              filter={filterValues}
+              onFilterChange={setFilterValues}
+            />
+          </div>
         </div>
       </div>
 
       {renderSummaryStats(filteredData)}
 
-      <div className="mt-4">
         <Tabs
           defaultValue="chart"
           onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
         >
-          <TabsList className="mb-4 font-sans">
+          <TabsList className="font-sans">
             <TabsTrigger value="chart">Chart</TabsTrigger>
             <TabsTrigger value="table">Table</TabsTrigger>
           </TabsList>
@@ -553,9 +803,6 @@ export default function PlayerRatingChart({
             {renderDataTable(filteredData)}
           </TabsContent>
         </Tabs>
-      </div>
-
-      {/* Legend removed since we no longer have colored dots */}
     </Card>
   );
 }

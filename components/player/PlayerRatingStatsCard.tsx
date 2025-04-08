@@ -1,4 +1,7 @@
-import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  PlayerRatingStatsDTO,
+  Ruleset,
+} from '@osu-tournament-rating/otr-api-client';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import TierIcon from '@/components/icons/TierIcon';
@@ -13,15 +16,15 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { getTierString, TierName } from '@/lib/utils/tierData';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import TRText from '../rating/TRText';
-import Link from 'next/link';
 import { StatCard } from './StatCard';
+import PlayerCard from './PlayerCard';
 
 export default function PlayerRatingStatsCard({
   rating,
 }: {
   rating: PlayerRatingStatsDTO;
+  currentRuleset: Ruleset;
 }) {
   const toPercentage = (value: number) => {
     if (value === undefined || value === null) return 'N/A';
@@ -31,38 +34,9 @@ export default function PlayerRatingStatsCard({
   };
   const toLocaleString = (value: number) => value.toLocaleString();
 
-  console.log(rating);
-
   return (
     <Card className="p-6 font-sans">
-      {/* Player Info and Stats Section */}
-      {/* Player Card - Takes up half the width */}
-      <div className="flex flex-wrap justify-between gap-3 rounded-lg bg-muted/50 p-4">
-        <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
-          <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
-            <AvatarImage
-              src={`https://a.ppy.sh/${rating.player.osuId}`}
-              alt={rating.player.username}
-            />
-            <AvatarFallback>
-              <User className="h-16 w-16" />
-            </AvatarFallback>
-          </Avatar>
-          <p className="text-3xl font-medium">{rating.player.username}</p>
-          <Link
-            href={`https://osu.ppy.sh/u/${rating.player.osuId}`}
-            target="_blank"
-            aria-label="View profile on osu! website"
-          >
-            <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
-          </Link>
-        </div>
-        {/* Ruleset selector (placeholder) */}
-        <div className="flex h-7 items-center rounded-4xl bg-muted p-4 font-medium text-accent-foreground/30">
-          <p>osu!mania 4K</p>
-        </div>
-      </div>
-
+      <PlayerCard player={rating.player} />
       <div className="flex flex-col gap-4">
         {/* Stats Cards */}
         <div className="flex min-w-[250px] flex-wrap gap-2">
@@ -97,7 +71,7 @@ export default function PlayerRatingStatsCard({
             bordered
             label="Rating"
             value={
-              <span>
+              <span className='text-nowrap'>
                 {rating.rating.toFixed()} <TRText />
               </span>
             }
@@ -130,7 +104,7 @@ export default function PlayerRatingStatsCard({
 
         {/* Tier Progress Card - Only show if there's a next tier */}
         {rating.tierProgress.nextMajorTier && (
-          <div className="rounded-lg bg-muted/50 p-5">
+          <div className="rounded-lg bg-muted/50 p-4">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xl font-semibold">Tier Progress</span>
               <span className="text-sm text-muted-foreground">
