@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import Header from '@/components/header/Header';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
