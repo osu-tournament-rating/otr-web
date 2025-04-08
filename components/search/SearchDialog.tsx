@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import SearchResults from './SearchResults';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { useDebounce } from '@uidotdev/usehooks';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export interface SearchDialogContextType {
   query: string;
@@ -40,8 +41,13 @@ export default function SearchDialog() {
     });
   };
 
+  useHotkeys('CTRL+K', (e) => {
+    e.preventDefault();
+    setIsDialogOpen(prev => !prev);
+  });
+
   return (
-      <Dialog open={isDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button
             variant="ghost"
