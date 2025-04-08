@@ -39,13 +39,15 @@ export default function Footer() {
   }, {});
 
   return (
-    <footer className="bg-card">
+    <footer className="bg-card font-sans">
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="flex justify-center">
           <div className="grid grid-cols-2 gap-x-16 gap-y-8 md:grid-cols-4">
             {Object.entries(groupedItems).map(([parent, items]) => (
               <div key={parent} className="space-y-2">
-                <h3 className="text-lg font-semibold text-primary">{parent}</h3>
+                <span className="text-lg font-semibold text-primary">
+                  {parent}
+                </span>
                 <ul className="space-y-1">
                   {items.map((item) => (
                     <li key={item.title}>
@@ -64,7 +66,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-4 border-t border-border pt-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 osu! Tournament Rating</p>
+          <span>&copy; 2025 osu! Tournament Rating</span>
         </div>
       </div>
     </footer>
