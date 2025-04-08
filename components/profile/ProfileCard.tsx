@@ -34,22 +34,11 @@ export default function ProfileCard() {
     return <LoginButton />;
   }
 
-  if (!isMobile) {
+  if (isMobile) {
     return (
-      <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
-        <DropdownMenuTrigger asChild>
-          {/* Profile picture */}
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="cursor-pointer focus:outline-none"
-          >
-            <UserAvatar session={session} />
-          </motion.div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="mt-1 w-56">
-          {/* Player card */}
-          <DropdownMenuLabel className="relative cursor-pointer overflow-hidden">
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
             <div className="absolute inset-0 z-0 opacity-20">
               <div className="absolute inset-0 backdrop-blur-md" />
               <Image
@@ -60,52 +49,71 @@ export default function ProfileCard() {
                 className="size-full object-cover"
               />
             </div>
-            <div className="relative z-10 flex flex-col items-center py-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm leading-none">
-                  <span className="font-bold">
-                    {session.user?.player.username ?? 'Username'}
+            <div className="relative z-10 flex items-center justify-between p-2">
+              <div className="flex items-center gap-3">
+                <UserAvatar session={session} />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {session.user?.player.username}
                   </span>
-                </p>
-                {session.user?.scopes && (
-                  <ProfileRoleBadge scopes={session.user?.scopes} />
-                )}
+                  {session.user?.scopes && (
+                    <ProfileRoleBadge scopes={session.user?.scopes} />
+                  )}
+                </div>
               </div>
+              <ChevronDown
+                className={cn(
+                  'size-4 transition-transform',
+                  isOpen && 'rotate-180'
+                )}
+              />
             </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {/* Player page link */}
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href={`/players/${session.user?.player.id}`}>
-              <User className="mr-2 size-4" />
-              <span>My Profile</span>
-            </Link>
-          </DropdownMenuItem>
-          {/* Settings */}
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/settings">
-              <Settings className="mr-2 size-4" />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {/* Log out */}
-          <DropdownMenuItem
-            onClick={() => signOut()}
-            className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Link
+            href={`/players/${session.user?.player.id}`}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
           >
-            <LogOut className="mr-2 size-4" />
+            <User className="size-4" />
+            <span>My Profile</span>
+          </Link>
+
+          <Link
+            href="/settings"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+          >
+            <Settings className="size-4" />
+            <span>Settings</span>
+          </Link>
+
+          <button
+            onClick={() => signOut()}
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="size-4" />
             <span>Log out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </button>
+        </CollapsibleContent>
+      </Collapsible>
     );
   }
 
   return (
-    <Collapsible>
-      <CollapsibleTrigger asChild>
-        <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
+    <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
+      <DropdownMenuTrigger asChild>
+        {/* Profile picture */}
+        <motion.div
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="cursor-pointer focus:outline-none"
+        >
+          <UserAvatar session={session} />
+        </motion.div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="mt-1 w-56">
+        {/* Player card */}
+        <DropdownMenuLabel className="relative cursor-pointer overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
             <div className="absolute inset-0 backdrop-blur-md" />
             <Image
@@ -116,53 +124,45 @@ export default function ProfileCard() {
               className="size-full object-cover"
             />
           </div>
-          <div className="relative z-10 flex items-center justify-between p-2">
-            <div className="flex items-center gap-3">
-              <UserAvatar session={session} />
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {session.user?.player.username}
+          <div className="relative z-10 flex flex-col items-center py-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm leading-none">
+                <span className="font-bold">
+                  {session.user?.player.username ?? 'Username'}
                 </span>
-                {session.user?.scopes && (
-                  <ProfileRoleBadge scopes={session.user?.scopes} />
-                )}
-              </div>
-            </div>
-            <ChevronDown
-              className={cn(
-                'size-4 transition-transform',
-                isOpen && 'rotate-180'
+              </p>
+              {session.user?.scopes && (
+                <ProfileRoleBadge scopes={session.user?.scopes} />
               )}
-            />
+            </div>
           </div>
-        </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <Link
-          href={`/players/${session.user?.player.id}`}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-        >
-          <User className="size-4" />
-          <span>My Profile</span>
-        </Link>
-
-        <Link
-          href="/settings"
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-        >
-          <Settings className="size-4" />
-          <span>Settings</span>
-        </Link>
-
-        <button
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {/* Player page link */}
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href={`/players/${session.user?.player.id}`}>
+            <User className="mr-2 size-4" />
+            <span>My Profile</span>
+          </Link>
+        </DropdownMenuItem>
+        {/* Settings */}
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/settings">
+            <Settings className="mr-2 size-4" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {/* Log out */}
+        <DropdownMenuItem
           onClick={() => signOut()}
-          className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
         >
-          <LogOut className="size-4" />
+          <LogOut className="mr-2 size-4" />
           <span>Log out</span>
-        </button>
-      </CollapsibleContent>
-    </Collapsible>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
