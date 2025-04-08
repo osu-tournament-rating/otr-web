@@ -1,21 +1,33 @@
+'use client';
+
 import useSWR from 'swr';
-import { search } from '../actions/search';
-import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
+import { useSession } from 'next-auth/react';
+import { SearchWrapper } from '@osu-tournament-rating/otr-api-client';
+
+const search = (token: string) =>
+  new SearchWrapper({
+    // The proxy will forward the request to the API instead of web
+    baseUrl: '',
+    clientConfiguration: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
 export function useSearch(query: string) {
-  return useSWR<SearchResponseCollectionDTO | undefined>(
-    query ? ['search', query] : null,
-    async ([, searchQuery]: [string, string]) => {
-      if (!searchQuery || searchQuery.trim() === '') {
+  const { data: session } = useSession();
+
+  return useSWR(
+    // ['search', query] is a key, shared globally
+    ['search', query],
+    async ([, searchQuery]) => {
+      if (!searchQuery || searchQuery.trim() === '' || !session?.accessToken) {
         return undefined;
       }
 
-      try {
-        return await search(searchQuery);
-      } catch (error) {
-        console.error('Search failed:', error);
-        throw error;
-      }
+      const { result } = await search(session.accessToken).search({ searchKey: searchQuery });
+      return result;
     },
     {
       revalidateOnFocus: false,
