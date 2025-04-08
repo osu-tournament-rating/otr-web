@@ -33,7 +33,7 @@ const navItems = [
   title: string;
   href: string;
 }[];
-
+ 
 export default function Header() {
   const pathname = usePathname();
 
@@ -111,10 +111,8 @@ export default function Header() {
                 <DialogTitle hidden />
 
                 <div className="flex flex-col space-y-6">
-                  <ProfileCard isMobile={true} />
-
+                  <ProfileCard />
                   <Separator className="bg-muted" />
-
                   <nav className="flex flex-col space-y-1">
                     {navItems.map(({ title, href }) => (
                       <SheetClose asChild key={title}>
