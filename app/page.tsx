@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, BookOpen, Medal } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
-import FeatureCard from '@/components/FeatureCard';
+import {
+  FeatureCard,
+  FeatureCardDescription,
+  FeatureCardTitle,
+} from '@/components/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 
@@ -14,26 +18,20 @@ export default async function Page() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-2">
           {/* Hero section */}
-          <Card className="relative mb-4 overflow-hidden border-none bg-card-alt p-6 md:p-8">
-            <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-              <Image
-                src="/decorations/decoration-2.svg"
-                alt="Decorative background pattern"
-                fill
-                style={{ objectFit: 'cover' }}
-                aria-hidden="true"
-              />
-            </div>
-            <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
-              <div className="z-10 flex max-w-md flex-col gap-2">
-                <h1 className="text-2xl font-bold">osu! Tournament Rating</h1>
-                <p className="text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                  A community-driven platform that ranks and predicts the
-                  performance of all osu! tournament players
-                </p>
-              </div>
-            </div>
-          </Card>
+          <FeatureCard
+            decoration={2}
+            imagePosition="right"
+            imageSize="h-[225px] w-[475px]"
+            className="mb-4 items-center lg:py-10"
+            contentClassName="px-2 max-w-md"
+            imageClassName="-top-16"
+          >
+            <FeatureCardTitle>osu! Tournament Rating</FeatureCardTitle>
+            <FeatureCardDescription>
+              A community-driven platform that ranks and predicts the
+              performance of all osu! tournament players
+            </FeatureCardDescription>
+          </FeatureCard>
 
           {/* Rating Ladder */}
           <Card className="mb-4 border-none bg-card-alt p-6 md:p-8">
@@ -58,7 +56,7 @@ export default async function Page() {
                   <div>
                     <h3 className="text-xl font-semibold">View Rankings</h3>
                     <p className="mt-1 text-muted-foreground">
-                      Find out where you stack up against your friends...and
+                      Find out where you stack up against your friends... and
                       foes
                     </p>
                   </div>
@@ -106,46 +104,59 @@ export default async function Page() {
 
           {/* Feature sections */}
           <div className="space-y-6">
-            {/* Rank restricted tournaments */}
+            {/* Rating restricted tournaments */}
             <FeatureCard
-              title="Rating restricted tournaments"
-              description="o!TR opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
               decoration={1}
-              imagePosition="left"
               imageFit="contain"
-              className="h-44 md:h-64"
-            />
+              contentClassName="md:w-5/9 xl:w-2/3"
+            >
+              <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
+              <FeatureCardDescription>
+                o!TR opens the door to an all-new level of fair competition in
+                tournaments targeting specific skill brackets
+              </FeatureCardDescription>
+            </FeatureCard>
 
             {/* Verified tournaments */}
             <FeatureCard
-              title="Verified tournaments"
-              description="Only human-verified tournament matches are included in our rating algorithm"
-              decoration={2}
+              decoration={3}
               imagePosition="right"
-              imageSize="h-[260px] w-[600px]"
-              imageClassName="top-0 right-0"
-            />
+              imageSize="h-[260px] w-[380px]"
+              imageClassName="rotate-180"
+              contentClassName="md:w-1/2"
+            >
+              <FeatureCardTitle>Verified tournaments</FeatureCardTitle>
+              <FeatureCardDescription>
+                Only human-verified tournament matches are included in our
+                rating algorithm
+              </FeatureCardDescription>
+            </FeatureCard>
 
             {/* Stats on stats */}
             <FeatureCard
-              title="Stats on stats"
-              description="Powerful tools for players and teams. Compare performance, track progress, and analyze your tournament history with ease."
               decoration={2}
               imageClassName="-left-50 top-0 rotate-180"
               imageSize="h-[260px] w-[600px]"
               contentClassName="md:w-2/3"
-            />
+            >
+              <FeatureCardTitle>Stats on stats</FeatureCardTitle>
+              <FeatureCardDescription>
+                Powerful tools for players and teams. Compare performance, track
+                progress, and analyze your tournament history with ease
+              </FeatureCardDescription>
+            </FeatureCard>
 
             {/* New updates every Tuesday */}
             <FeatureCard
-              title="New updates every Tuesday"
-              description="Ratings are recalculated every Tuesday at 23:59 UTC"
               decoration={1}
               imagePosition="right"
-              imageFit="contain"
               imageClassName="rotate-180"
-              className="h-44 md:h-64"
-            />
+            >
+              <FeatureCardTitle>New updates every Tuesday</FeatureCardTitle>
+              <FeatureCardDescription>
+                Ratings are recalculated every Tuesday at 23:59 UTC
+              </FeatureCardDescription>
+            </FeatureCard>
 
             {/* All modes supported */}
             <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
@@ -212,17 +223,13 @@ export default async function Page() {
             </Card>
 
             {/* Open source, open data */}
-            <FeatureCard
-              title="Open source, open data"
-              description="Built from the ground up with transparency in mind"
-              decoration={1}
-              imageSize="h-[282px] w-[314px]"
-              imageClassName="top-0 left-0"
-              contentClassName="md:w-2/3"
-            />
+            <FeatureCard decoration={1} contentClassName="md:w-2/3">
+              <FeatureCardTitle>Open source, open data</FeatureCardTitle>
+              <FeatureCardDescription>
+                Built from the ground up with transparency in mind
+              </FeatureCardDescription>
+            </FeatureCard>
           </div>
-
-          {/* CTA section removed from here and moved to top */}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
@@ -8,16 +8,10 @@ type ObjectFit = 'cover' | 'contain';
 type DecorationVariant = 1 | 2 | 3 | 4;
 
 const getDecorationSrc = (decoration: DecorationVariant) => {
-  return `/decorations/decoration-${decoration}.svg`
-}
+  return `/decorations/decoration-${decoration}.svg`;
+};
 
 interface FeatureCardProps {
-  /** Main card title */
-  title: string;
-
-  /** Subtext content */
-  description: string;
-
   /** Decoration identifier */
   decoration: DecorationVariant;
 
@@ -38,14 +32,12 @@ interface FeatureCardProps {
 
   /** Additional classes for root element */
   className?: string;
-  
+
   /** Optional child elements */
   children?: ReactNode;
 }
 
-export default function FeatureCard({
-  title,
-  description,
+function FeatureCard({
   decoration,
   imagePosition = 'left',
   imageSize = 'h-[282px] w-[314px]',
@@ -54,13 +46,15 @@ export default function FeatureCard({
   contentClassName,
   className,
   children,
-}: FeatureCardProps) {
+  ...rest
+}: FeatureCardProps & React.ComponentProps<typeof Card>) {
   return (
     <Card
       className={cn(
-        'relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8',
+        'relative overflow-hidden border-none bg-card-alt p-4 md:p-6 lg:py-16',
         className
       )}
+      {...rest}
     >
       <div
         className={cn(
@@ -81,21 +75,44 @@ export default function FeatureCard({
           })}
         />
       </div>
-      <div className="flex h-full flex-col items-center justify-center md:flex-row">
-        <div
-          className={cn(
-            'z-10 flex flex-col gap-2',
-            imagePosition === 'left' ? 'ml-auto md:w-2/3' : 'mr-auto md:w-1/2',
-            contentClassName
-          )}
-        >
-          <h2 className="text-2xl font-bold md:text-3xl">{title}</h2>
-          <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-            {description}
-          </p>
-          {children}
-        </div>
+      <div
+        className={cn(
+          'z-10 flex h-full flex-col items-start justify-center gap-2 md:w-3/5',
+          imagePosition === 'left' ? 'md:ml-auto' : 'md:mr-auto',
+          contentClassName
+        )}
+      >
+        {children}
       </div>
     </Card>
   );
 }
+
+function FeatureCardTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof CardTitle>) {
+  return (
+    <CardTitle
+      className={cn('text-2xl font-bold md:text-3xl', className)}
+      {...props}
+    />
+  );
+}
+
+function FeatureCardDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof CardDescription>) {
+  return (
+    <CardDescription
+      className={cn(
+        'text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export { FeatureCard, FeatureCardTitle, FeatureCardDescription };
