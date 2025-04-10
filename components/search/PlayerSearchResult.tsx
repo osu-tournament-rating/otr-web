@@ -7,6 +7,7 @@ import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 import { cn } from '@/lib/utils';
 import { Globe } from 'lucide-react';
+import { TierName } from '@/lib/tierData';
 
 export default function PlayerSearchResult({
   data,
@@ -36,7 +37,7 @@ export default function PlayerSearchResult({
         {data.rating && data.ratingTier && (
           <div className="flex flex-row items-center gap-1">
             <TierIcon
-              tier={data.ratingTier}
+              tier={data.ratingTier as TierName}
               width={24}
               height={24}
               className={cn('flex-shrink-0')}
