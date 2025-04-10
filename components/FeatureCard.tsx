@@ -69,7 +69,7 @@ function FeatureCard({
           src={getDecorationSrc(decoration)}
           alt={'Decorative background pattern'}
           fill
-          className={cn({
+          className={cn('blur-sm md:blur-none', {
             'object-cover': imageFit === 'cover',
             'object-contain': imageFit === 'contain',
           })}
