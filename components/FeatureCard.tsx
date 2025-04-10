@@ -5,28 +5,40 @@ import { cn } from '@/lib/utils';
 
 type ImagePosition = 'left' | 'right';
 type ObjectFit = 'cover' | 'contain';
+type DecorationVariant = 1 | 2 | 3 | 4;
+
+const getDecorationSrc = (decoration: DecorationVariant) => {
+  return `/decorations/decoration-${decoration}.svg`
+}
 
 interface FeatureCardProps {
   /** Main card title */
   title: string;
+
   /** Subtext content */
   description: string;
-  /** URL path for background image */
-  imageUrl: string;
+
+  /** Decoration identifier */
+  decoration: DecorationVariant;
+
   /** Position of the background image */
   imagePosition?: ImagePosition;
+
   /** Tailwind classes for image dimensions */
   imageSize?: string;
-  /** Alt text for background image */
-  imageAlt?: string;
+
   /** CSS object-fit property for image */
   imageFit?: ObjectFit;
+
   /** Additional classes for image container */
   imageClassName?: string;
+
   /** Additional classes for content container */
   contentClassName?: string;
+
   /** Additional classes for root element */
   className?: string;
+  
   /** Optional child elements */
   children?: ReactNode;
 }
@@ -34,10 +46,9 @@ interface FeatureCardProps {
 export default function FeatureCard({
   title,
   description,
-  imageUrl,
+  decoration,
   imagePosition = 'left',
   imageSize = 'h-[282px] w-[314px]',
-  imageAlt = 'Decorative background pattern',
   imageFit = 'cover',
   imageClassName,
   contentClassName,
@@ -61,8 +72,8 @@ export default function FeatureCard({
         aria-hidden="true"
       >
         <Image
-          src={imageUrl}
-          alt={imageAlt}
+          src={getDecorationSrc(decoration)}
+          alt={'Decorative background pattern'}
           fill
           className={cn({
             'object-cover': imageFit === 'cover',

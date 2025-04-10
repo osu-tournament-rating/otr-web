@@ -28,8 +28,8 @@ export default async function Page() {
               <div className="z-10 flex max-w-md flex-col gap-2">
                 <h1 className="text-2xl font-bold">osu! Tournament Rating</h1>
                 <p className="text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                  A platform that ranks and predicts the performance of all osu!
-                  tournament players
+                  A community-driven platform that ranks and predicts the
+                  performance of all osu! tournament players
                 </p>
               </div>
             </div>
@@ -108,9 +108,9 @@ export default async function Page() {
           <div className="space-y-6">
             {/* Rank restricted tournaments */}
             <FeatureCard
-              title="Rank restricted tournaments"
-              description="oTR combined with BWS opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
-              imageUrl="/decorations/decoration-1.svg"
+              title="Rating restricted tournaments"
+              description="o!TR opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
+              decoration={1}
               imagePosition="left"
               imageFit="contain"
               className="h-44 md:h-64"
@@ -120,7 +120,7 @@ export default async function Page() {
             <FeatureCard
               title="Verified tournaments"
               description="Only human-verified tournament matches are included in our rating algorithm"
-              imageUrl="/decorations/decoration-2.svg"
+              decoration={2}
               imagePosition="right"
               imageSize="h-[260px] w-[600px]"
               imageClassName="top-0 right-0"
@@ -130,7 +130,7 @@ export default async function Page() {
             <FeatureCard
               title="Stats on stats"
               description="Powerful tools for players and teams. Compare performance, track progress, and analyze your tournament history with ease."
-              imageUrl="/decorations/decoration-2.svg"
+              decoration={2}
               imageClassName="-left-50 top-0 rotate-180"
               imageSize="h-[260px] w-[600px]"
               contentClassName="md:w-2/3"
@@ -140,7 +140,7 @@ export default async function Page() {
             <FeatureCard
               title="New updates every Tuesday"
               description="Ratings are recalculated every Tuesday at 23:59 UTC"
-              imageUrl="/decorations/decoration-1.svg"
+              decoration={1}
               imagePosition="right"
               imageFit="contain"
               imageClassName="rotate-180"
@@ -211,11 +211,11 @@ export default async function Page() {
               </div>
             </Card>
 
-            {/* 100% Open source */}
+            {/* Open source, open data */}
             <FeatureCard
-              title="100% Open source"
-              description="We are committed to remaining open source and transparent with our algorithm"
-              imageUrl="/decorations/decoration-1.svg"
+              title="Open source, open data"
+              description="Built from the ground up with transparency in mind"
+              decoration={1}
               imageSize="h-[282px] w-[314px]"
               imageClassName="top-0 left-0"
               contentClassName="md:w-2/3"
