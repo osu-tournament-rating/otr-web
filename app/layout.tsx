@@ -1,12 +1,13 @@
 import { auth } from '@/auth';
 import Header from '@/components/header/Header';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import React from 'react';
 import './globals.css';
+import Footer from '@/components/footer/Footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -48,6 +49,7 @@ export default async function RootLayout({
             <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
               {children}
             </main>
+            <Footer />
             <Toaster richColors />
           </SessionProvider>
         </ThemeProvider>

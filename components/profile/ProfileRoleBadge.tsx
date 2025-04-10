@@ -1,52 +1,62 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { useMemo } from 'react';
-
-type UserScope = 'submit' | 'verifier' | 'admin' | 'whitelist';
+import { VariantProps } from 'class-variance-authority';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 
 interface ProfileRoleBadgeProps {
-  scopes: string | string[];
+  scopes: string[];
   className?: string;
 }
 
-export default function ProfileRoleBadge({ scopes, className }: ProfileRoleBadgeProps) {
-  // Convert string to array if needed with proper type safety
-  const scopeArray = typeof scopes === 'string' 
-    ? (scopes.split(' ').filter(Boolean) as UserScope[])
-    : (scopes as UserScope[]);
+type RoleBadge = {
+  label: string;
+  tooltip: string;
+} & VariantProps<typeof badgeVariants>;
 
+export default function ProfileRoleBadge({
+  scopes,
+  className,
+}: ProfileRoleBadgeProps) {
   // Memoize role determination to prevent unnecessary recalculations
-  const roleToDisplay = useMemo(() => {
-    if (!scopeArray.length) return null;
-    
-    // TODO: Add support for other badges (verifier, whitelist, submit) in the future
-    
-    // Only display admin badge
-    if (scopeArray.includes('admin')) {
-      return {
-        label: 'Admin',
-        tooltip: 'Administrator',
-        variant: 'destructive' as const
-      };
+  const roleBadges = useMemo(() => {
+    const badges: RoleBadge[] = [];
+
+    for (const role of scopes) {
+      switch (role) {
+        case Roles.Admin:
+          badges.push({
+            label: 'Admin',
+            tooltip: 'Administrator',
+            variant: 'destructive',
+          });
+          break;
+        default:
+          break;
+      }
     }
-    
+
+    return badges;
+  }, [scopes]);
+
+  if (!roleBadges.length) {
     return null;
-  }, [scopeArray]);
-
-  if (!roleToDisplay) return null;
-
-  const { label, tooltip, variant } = roleToDisplay;
+  }
 
   return (
-    <SimpleTooltip content={tooltip}>
-      <Badge 
-        variant={variant}
-        className={`text-xs px-1.5 py-0 h-5 ${className}`}
-      >
-        {label}
-      </Badge>
-    </SimpleTooltip>
+    <div>
+      {roleBadges.map(({ label, tooltip, variant }) => (
+        <SimpleTooltip key={label} content={tooltip}>
+          <Badge
+            variant={variant}
+            className={`h-5 px-1.5 py-0 text-xs ${className}`}
+          >
+            {label}
+          </Badge>
+        </SimpleTooltip>
+      ))}
+    </div>
   );
 }
