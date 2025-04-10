@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Trophy, BookOpen, Medal } from 'lucide-react';
@@ -10,6 +9,7 @@ import {
 } from '@/components/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { RulesetEnumHelper } from '@/lib/enums';
 
 export default async function Page() {
   return (
@@ -159,68 +159,32 @@ export default async function Page() {
             </FeatureCard>
 
             {/* All modes supported */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div
-                className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
-                style={{
-                  transform: 'scaleX(-1) scale(0.85)',
-                  transformOrigin: 'right top',
-                }}
-              >
-                <Image
-                  src="/decorations/decoration-4.svg"
-                  alt=""
-                  fill
-                  style={{
-                    objectFit: 'contain',
-                    right: '0',
-                    left: 'auto',
-                  }}
-                />
+            <FeatureCard
+              decoration={4}
+              imagePosition="right"
+              imageSize="h-[250px] w-[618px]"
+              imageClassName="scale-x-[-1]"
+              contentClassName="sm:flex-row w-full md:w-full md:items-center"
+            >
+              <div className="flex flex-1 flex-col gap-2">
+                <FeatureCardTitle>All modes supported</FeatureCardTitle>
+                <FeatureCardDescription>
+                  Yes, mania 4K and 7K are entirely separate rulesets!
+                </FeatureCardDescription>
               </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row md:justify-between">
-                <div className="z-10 mr-auto flex flex-col gap-2 md:w-2/5">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    All modes supported
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Yes, mania 4K and 7K are entirely separate rulesets!
-                  </p>
-                </div>
-                <div className="z-10 mt-4 flex flex-wrap gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
-                  <div className="flex h-12 w-12 items-center justify-center">
+
+              <div className="flex flex-wrap justify-center gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
+                {Object.keys(RulesetEnumHelper.metadata)
+                  .filter((r) => Number(r) !== Ruleset.ManiaOther)
+                  .map((r) => (
                     <RulesetIcon
-                      ruleset={Ruleset.Osu}
-                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
+                      key={r}
+                      ruleset={Number(r)}
+                      className="size-8 fill-primary md:size-12"
                     />
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon
-                      ruleset={Ruleset.Taiko}
-                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
-                    />
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon
-                      ruleset={Ruleset.Catch}
-                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
-                    />
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon
-                      ruleset={Ruleset.Mania4k}
-                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
-                    />
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center">
-                    <RulesetIcon
-                      ruleset={Ruleset.Mania7k}
-                      className="h-8 w-8 fill-primary md:h-10 md:w-10"
-                    />
-                  </div>
-                </div>
+                  ))}
               </div>
-            </Card>
+            </FeatureCard>
 
             {/* Open source, open data */}
             <FeatureCard decoration={1} contentClassName="md:w-2/3">
