@@ -1,15 +1,14 @@
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Trophy, BookOpen, Medal } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
 import {
   FeatureCard,
   FeatureCardDescription,
   FeatureCardTitle,
-} from '@/components/FeatureCard';
+} from '@/components/home/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { RulesetEnumHelper } from '@/lib/enums';
+import LinkCard from '@/components/home/LinkCard';
 
 export default async function Page() {
   return (
@@ -44,56 +43,27 @@ export default async function Page() {
 
       {/* Link cards */}
       <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Link href="/leaderboard" className="block">
-          <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 text-primary">
-                <Medal size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">View Rankings</h3>
-                <p className="mt-1 text-muted-foreground">
-                  Find out where you stack up against your friends... and foes
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
-        <Link href="/tournaments" className="block">
-          <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 text-primary">
-                <Trophy size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">Browse Tournaments</h3>
-                <p className="mt-1 text-muted-foreground">
-                  View the latest and greatest or go back in time
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
+        <LinkCard
+          title="View Rankings"
+          description="Find out where you stack up against your friends... and foes"
+          icon="medal"
+          href={'/leaderboard'}
+        />
 
-        <Link
+        <LinkCard
+          title="Browse Tournaments"
+          description="View the latest and greatest or go back in time"
+          icon="trophy"
+          href={'/tournaments'}
+        />
+
+        <LinkCard
+          title="Read the docs"
+          description="Learn the inner-workings of our rating algorithm"
+          icon="book"
           href="https://docs.otr.stagec.xyz"
-          className="block"
           target="_blank"
-        >
-          <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 text-primary">
-                <BookOpen size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">Read the docs</h3>
-                <p className="mt-1 text-muted-foreground">
-                  Learn how our rating system works
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
+        />
       </div>
 
       {/* Feature sections */}
@@ -163,7 +133,7 @@ export default async function Page() {
           <div className="flex flex-1 flex-col gap-2">
             <FeatureCardTitle>All modes supported</FeatureCardTitle>
             <FeatureCardDescription>
-              Yes, mania 4K and 7K are entirely separate rulesets!
+              Yes, mania 4K and 7K are entirely separate rulesets
             </FeatureCardDescription>
           </div>
 

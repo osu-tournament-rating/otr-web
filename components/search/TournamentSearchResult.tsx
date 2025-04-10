@@ -17,10 +17,7 @@ export default function TournamentSearchResult({
   return (
     <div className="flex items-center justify-between rounded-xl bg-accent p-3">
       <div className="flex flex-1 items-center gap-2">
-        <Link
-          href={`/tournaments/${data.id}`}
-          onClick={closeDialog}
-        >
+        <Link href={`/tournaments/${data.id}`} onClick={closeDialog}>
           <p className="text-lg font-medium">
             {highlightMatch(data.name, query)}
           </p>

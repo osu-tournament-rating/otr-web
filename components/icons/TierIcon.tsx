@@ -18,9 +18,7 @@ export default function TierIcon({
   );
 
   if (!tooltip) {
-    return (
-      <Icon />
-    );
+    return <Icon />;
   }
 
   return (
