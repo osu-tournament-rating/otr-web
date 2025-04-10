@@ -82,39 +82,9 @@ export const tierColors = {
 // Tier data for the ladder with simplified names
 export const tierData = [
   {
-    tier: 'Elite Grandmaster' as TierName,
-    baseRating: 2500,
-    displayName: 'Elite GM',
-  },
-  {
-    tier: 'Grandmaster I' as TierName,
-    baseRating: 1900,
-    displayName: 'Grandmaster',
-  },
-  {
-    tier: 'Master I' as TierName,
-    baseRating: 1500,
-    displayName: 'Master',
-  },
-  {
-    tier: 'Diamond I' as TierName,
-    baseRating: 1200,
-    displayName: 'Diamond',
-  },
-  {
-    tier: 'Emerald I' as TierName,
-    baseRating: 900,
-    displayName: 'Emerald',
-  },
-  {
-    tier: 'Platinum I' as TierName,
-    baseRating: 700,
-    displayName: 'Platinum',
-  },
-  {
-    tier: 'Gold I' as TierName,
-    baseRating: 500,
-    displayName: 'Gold',
+    tier: 'Bronze I' as TierName,
+    baseRating: 100,
+    displayName: 'Bronze',
   },
   {
     tier: 'Silver I' as TierName,
@@ -122,8 +92,38 @@ export const tierData = [
     displayName: 'Silver',
   },
   {
-    tier: 'Bronze I' as TierName,
-    baseRating: 100,
-    displayName: 'Bronze',
+    tier: 'Gold I' as TierName,
+    baseRating: 500,
+    displayName: 'Gold',
+  },
+  {
+    tier: 'Platinum I' as TierName,
+    baseRating: 700,
+    displayName: 'Platinum',
+  },
+  {
+    tier: 'Emerald I' as TierName,
+    baseRating: 900,
+    displayName: 'Emerald',
+  },
+  {
+    tier: 'Diamond I' as TierName,
+    baseRating: 1200,
+    displayName: 'Diamond',
+  },
+  {
+    tier: 'Master I' as TierName,
+    baseRating: 1500,
+    displayName: 'Master',
+  },
+  {
+    tier: 'Grandmaster I' as TierName,
+    baseRating: 1900,
+    displayName: 'Grandmaster',
+  },
+  {
+    tier: 'Elite Grandmaster' as TierName,
+    baseRating: 2500,
+    displayName: 'Elite GM',
   },
 ];
