@@ -4,10 +4,18 @@ import { cn } from '@/lib/utils';
 import { TierName, getTierColor } from '@/lib/tierData';
 
 export interface TierCardProps {
+  /** Desired tier */
   tier: TierName;
+
+  /** Visual text representation of the tier */
   displayName: string;
+
+  /** Tier rating */
   rating: number;
+
+  /** Icon size */
   iconSize: number;
+
   className?: string;
 }
 
@@ -49,17 +57,19 @@ export default function TierCard({
           )}
         />
         <span className="relative z-10">
-          <TierIcon tier={tier} width={iconSize} height={iconSize} />
+          <TierIcon
+            tier={tier}
+            width={iconSize}
+            height={iconSize}
+            tooltip={false}
+          />
         </span>
       </div>
 
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="text-sm font-semibold">{displayName}</span>
-        <p className={cn(
-          'text-xs font-semibold',
-          tierColor.textClass
-        )}>
+        <p className={cn('text-xs font-semibold', tierColor.textClass)}>
           {rating}+
         </p>
       </div>

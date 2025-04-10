@@ -1,19 +1,73 @@
-import { validTiers } from '@/components/icons/TierIcon';
+/**
+ * String representation of each tier and subtier. There are three subtiers per major tier,
+ * except for Elite Grandmaster.
+ */
+export const tierNames = [
+  'Bronze III',
+  'Bronze II',
+  'Bronze I',
+  'Silver III',
+  'Silver II',
+  'Silver I',
+  'Gold III',
+  'Gold II',
+  'Gold I',
+  'Emerald III',
+  'Emerald II',
+  'Emerald I',
+  'Platinum III',
+  'Platinum II',
+  'Platinum I',
+  'Diamond III',
+  'Diamond II',
+  'Diamond I',
+  'Master III',
+  'Master II',
+  'Master I',
+  'Grandmaster III',
+  'Grandmaster II',
+  'Grandmaster I',
+  'Elite Grandmaster',
+] as const;
 
-export type TierName = (typeof validTiers)[number];
+/**
+ * Typed representation of each possible tier name
+ */
+export type TierName = (typeof tierNames)[number];
 
-// Helper function to safely access tier colors
-export function getTierColor(tier: string) {
-  if (tier in tierColors) {
-    return tierColors[tier as keyof typeof tierColors];
+/**
+ * Helper function to safely access tier colors
+ * @param tierName Tier name
+ * @returns Tier color
+ */
+export function getTierColor(tierName: TierName): TierColor {
+  if (tierName in tierColors) {
+    return tierColors[tierName]!;
   }
 
   // Return a default tier color if the tier doesn't exist in tierColors
-  return tierColors['Silver I'];
+  return tierColors['Silver I']!;
 }
 
-// Tier colors for glows and accents
-export const tierColors = {
+/**
+ * Colors and gradients for a tier
+ */
+export type TierColor = {
+  /** Gradient coloring, displays as a glow around the tier icon. Format is from-color-000 to-color-000 */
+  gradient: {
+    /** Dark mode gradient */
+    dark: string;
+
+    /** Light mode gradient */
+    light: string;
+  };
+
+  /** Class name for the primary color of the icon */
+  textClass: string;
+};
+
+/** Tier colors for glows and accents */
+export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
   'Elite Grandmaster': {
     gradient: {
       dark: 'from-blue-500/40 to-blue-700/50',
@@ -79,50 +133,62 @@ export const tierColors = {
   },
 };
 
-// Tier data for the ladder with simplified names
-export const tierData = [
+/** Basic information about a tier */
+export type TierDataType = {
+  /** Tier name */
+  tier: TierName;
+
+  /** Minimum rating required to achieve the tier */
+  baseRating: number;
+
+  /** How the tier text is displayed visually */
+  displayName: string;
+}
+
+/** Tier data for the ladder with simplified names */
+export const tierData: TierDataType[] = [
   {
-    tier: 'Bronze I' as TierName,
+    tier: 'Bronze I',
     baseRating: 100,
     displayName: 'Bronze',
   },
   {
-    tier: 'Silver I' as TierName,
+    tier: 'Silver I',
     baseRating: 300,
     displayName: 'Silver',
   },
   {
-    tier: 'Gold I' as TierName,
+    tier: 'Gold I',
     baseRating: 500,
     displayName: 'Gold',
   },
   {
-    tier: 'Platinum I' as TierName,
+    tier: 'Platinum I',
     baseRating: 700,
     displayName: 'Platinum',
   },
   {
-    tier: 'Emerald I' as TierName,
+    tier: 'Emerald I',
     baseRating: 900,
     displayName: 'Emerald',
   },
   {
-    tier: 'Diamond I' as TierName,
+    tier: 'Diamond I',
     baseRating: 1200,
     displayName: 'Diamond',
   },
   {
-    tier: 'Master I' as TierName,
+    tier: 'Master I',
     baseRating: 1500,
     displayName: 'Master',
   },
   {
-    tier: 'Grandmaster I' as TierName,
+    tier: 'Grandmaster I',
     baseRating: 1900,
     displayName: 'Grandmaster',
   },
   {
-    tier: 'Elite Grandmaster' as TierName,
+    tier: 'Elite Grandmaster',
     baseRating: 2500,
     displayName: 'Elite GM',
   },

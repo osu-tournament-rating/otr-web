@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Trophy, Flag, BookOpen } from 'lucide-react';
+import { Trophy, BookOpen, Medal } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
 import FeatureCard from '@/components/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
@@ -41,10 +41,10 @@ export default async function Page() {
               <h2 className="text-3xl font-bold">Rise to the top</h2>
               <p className="text-muted-foreground">
                 Join your friends on the ladder as soon as you play in a
-                verified tournament!
+                verified tournament
               </p>
             </div>
-            <RatingLadder className="w-full" iconSize={40} />
+            <RatingLadder />
           </Card>
 
           {/* Link cards */}
@@ -53,7 +53,7 @@ export default async function Page() {
               <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-primary">
-                    <Trophy size={24} />
+                    <Medal size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">View Rankings</h3>
@@ -69,7 +69,7 @@ export default async function Page() {
               <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 text-primary">
-                    <Flag size={24} />
+                    <Trophy size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold">
