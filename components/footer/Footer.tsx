@@ -13,6 +13,11 @@ const navItems = [
     href: 'https://discord.gg/R53AwX2tJA',
   },
   {
+    parent: 'Contact',
+    title: 'Status',
+    href: 'https://status.otr.stagec.xyz/',
+  },
+  {
     parent: 'Contribute',
     title: 'GitHub',
     href: 'https://github.com/osu-tournament-rating',
