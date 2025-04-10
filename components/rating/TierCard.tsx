@@ -31,10 +31,7 @@ export default function TierCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-2 rounded-2xl p-3',
-        'bg-gray-800/60 dark:bg-card-alt/80',
-        'border border-white/5',
-        'shadow-lg',
+        'relative flex flex-col items-center gap-2 rounded-2xl p-3 bg-gray-800/60 dark:bg-card-alt/80 border border-white/5',
         className
       )}
     >
