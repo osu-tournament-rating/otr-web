@@ -174,7 +174,7 @@ export default async function Page() {
                 <RulesetIcon
                   key={r}
                   ruleset={Number(r)}
-                  className="size-8 fill-primary md:size-12"
+                  className="size-8 fill-primary stroke-black/25 md:size-12"
                 />
               ))}
           </div>
