@@ -13,7 +13,7 @@ import { RulesetEnumHelper } from '@/lib/enums';
 
 export default async function Page() {
   return (
-    <div className="container mx-auto flex min-h-screen flex-col gap-2 bg-background px-4 py-8 font-sans text-foreground">
+    <div className="container m-4 flex min-h-screen flex-col gap-2 bg-background py-4 font-sans text-foreground">
       {/* Hero section */}
       <FeatureCard
         decoration={2}
