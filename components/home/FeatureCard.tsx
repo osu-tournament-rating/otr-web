@@ -77,8 +77,8 @@ function FeatureCard({
       </div>
       <div
         className={cn(
-          'z-10 flex h-full flex-col items-start justify-center gap-2 md:w-3/5',
-          imagePosition === 'left' ? 'md:ml-auto' : 'md:mr-auto',
+          'z-10 flex h-full flex-col items-center text-center sm:items-start sm:text-start justify-center gap-2 md:w-3/5',
+          imagePosition === 'left' ? 'md:items-end md:text-end md:ml-auto' : 'md:mr-auto',
           contentClassName
         )}
       >

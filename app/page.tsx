@@ -72,7 +72,7 @@ export default async function Page() {
         <FeatureCard
           decoration={1}
           imageFit="contain"
-          contentClassName="md:w-5/9 xl:w-2/3"
+          contentClassName="md:w-5/9 xl:w-1/2"
         >
           <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
           <FeatureCardDescription>
@@ -101,7 +101,7 @@ export default async function Page() {
           decoration={2}
           imageClassName="-left-50 top-0 rotate-180"
           imageSize="h-[260px] w-[600px]"
-          contentClassName="md:w-2/3"
+          contentClassName="md:w-2/3 xl:w-1/2"
         >
           <FeatureCardTitle>Stats on stats</FeatureCardTitle>
           <FeatureCardDescription>
@@ -125,33 +125,37 @@ export default async function Page() {
         {/* All modes supported */}
         <FeatureCard
           decoration={4}
-          imagePosition="right"
-          imageSize="h-[250px] w-[618px]"
-          imageClassName="scale-x-[-1]"
-          contentClassName="sm:flex-row w-full md:w-full md:items-center"
+          imageSize="h-[300px] w-[618px]"
+          contentClassName="sm:max-md:flex-row items-center sm:items-center gap-4"
         >
-          <div className="flex flex-1 flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <FeatureCardTitle>All modes supported</FeatureCardTitle>
             <FeatureCardDescription>
               Yes, mania 4K and 7K are entirely separate rulesets
             </FeatureCardDescription>
           </div>
-
-          <div className="flex flex-wrap justify-center gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
+          <div className="flex justify-center gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
             {Object.keys(RulesetEnumHelper.metadata)
               .filter((r) => Number(r) !== Ruleset.ManiaOther)
               .map((r) => (
                 <RulesetIcon
                   key={r}
                   ruleset={Number(r)}
-                  className="size-8 fill-primary stroke-black/25 md:size-12"
+                  className="size-8 fill-primary stroke-black/25 md:size-10 lg:size-12"
                 />
               ))}
           </div>
         </FeatureCard>
 
         {/* Open source, open data */}
-        <FeatureCard decoration={1} contentClassName="md:w-2/3">
+        <FeatureCard
+          decoration={2}
+          imagePosition="right"
+          imageClassName="-top-25 -right-15"
+          imageFit='cover'
+          imageSize="h-[300px] w-[600px]"
+          contentClassName="md:w-2/3"
+        >
           <FeatureCardTitle>Open source, open data</FeatureCardTitle>
           <FeatureCardDescription>
             Built from the ground up with transparency in mind
