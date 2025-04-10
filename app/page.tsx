@@ -71,7 +71,6 @@ export default async function Page() {
         {/* Rating restricted tournaments */}
         <FeatureCard
           decoration={1}
-          imageFit="contain"
           contentClassName="md:w-5/9 xl:w-1/2"
         >
           <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
