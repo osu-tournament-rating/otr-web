@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Menu, X } from 'lucide-react';
+import { LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,10 +16,45 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
 } from '../ui/navigation-menu';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
 import ClientOnly from '../client-only';
+
+type NavItem = {
+  title: string;
+  href: string;
+  dropdown?: SubNavItem[];
+};
+
+type SubNavItem = {
+  icon: LucideIcon;
+} & Omit<NavItem, 'dropdown'>;
+
+const newNavItems: NavItem[] = [
+  {
+    title: 'Leaderboard',
+    href: '/leaderboard',
+  },
+  {
+    title: 'Tournaments',
+    href: '/tournaments',
+    dropdown: [
+      {
+        title: 'Browse',
+        href: '/tournaments',
+        icon: Trophy,
+      },
+      {
+        title: 'Submit',
+        href: '/tournaments/submit',
+        icon: Upload,
+      },
+    ],
+  },
+];
 
 const navItems = [
   {
@@ -58,20 +93,8 @@ export default function Header() {
           {/* Main nav */}
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList className="gap-1">
-              {navItems.map(({ title, href }) => (
-                <NavigationMenuItem key={title}>
-                  <Link href={href} legacyBehavior passHref>
-                    <NavigationMenuLink
-                      className={cn(
-                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                        pathname.startsWith(href) &&
-                          'font-semibold text-primary focus:text-primary'
-                      )}
-                    >
-                      {title}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+              {newNavItems.map((item) => (
+                <NavigationItem key={item.title} {...item} />
               ))}
             </NavigationMenuList>
           </NavigationMenu>
@@ -141,5 +164,85 @@ export default function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function WrapNavigationItem({
+  active,
+  dropdown,
+  children,
+}: {
+  dropdown: boolean;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  if (!dropdown) {
+    return children;
+  }
+
+  return (
+    <NavigationMenuTrigger
+      className={cn(
+        'bg-transparent hover:cursor-pointer hover:bg-transparent hover:text-primary focus:bg-secondary focus:outline-none data-[state=open]:bg-transparent data-[state=open]:hover:bg-transparent',
+        active &&
+          'font-extrabold text-primary focus:bg-secondary focus:text-primary'
+      )}
+    >
+      {children}
+    </NavigationMenuTrigger>
+  );
+}
+
+function NavigationItem({ title, href, dropdown }: NavItem) {
+  const isActive = usePathname().startsWith(href);
+  const hasDropdown = !!dropdown;
+
+  return (
+    <NavigationMenuItem key={title}>
+      <WrapNavigationItem active={isActive} dropdown={hasDropdown}>
+        <Link href={href} legacyBehavior passHref>
+          <NavigationMenuLink
+            className={cn(
+              'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
+              isActive && 'font-bold text-primary focus:text-primary',
+              hasDropdown && 'bg-transparent hover:bg-transparent'
+            )}
+          >
+            {title}
+          </NavigationMenuLink>
+        </Link>
+      </WrapNavigationItem>
+      {hasDropdown && <SubNavigation items={dropdown} />}
+    </NavigationMenuItem>
+  );
+}
+
+function SubNavigation({ items }: { items: SubNavItem[] }) {
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href;
+
+  return (
+    <NavigationMenuContent className="right-0 group-data-[viewport=false]/navigation-menu:bg-secondary group-data-[viewport=false]/navigation-menu:rounded-xl">
+      {items.map(({ title, href, icon: Icon }) => (
+        <Link
+          legacyBehavior
+          passHref
+          key={title}
+          href={href}
+        >
+          <NavigationMenuLink
+            className={cn(
+              'flex flex-row items-center gap-2 text-sm hover:text-foreground',
+              isActive(href) && 'font-semibold text-primary hover:text-primary focus:text-primary'
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <Icon className={isActive(href) ? 'text-primary' : ''} />
+              <p>{title}</p>
+            </div>
+          </NavigationMenuLink>
+        </Link>
+      ))}
+    </NavigationMenuContent>
   );
 }
