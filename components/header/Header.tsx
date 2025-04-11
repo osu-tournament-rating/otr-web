@@ -33,7 +33,7 @@ type SubNavItem = {
   icon: LucideIcon;
 } & Omit<NavItem, 'dropdown'>;
 
-const newNavItems: NavItem[] = [
+const navItems: NavItem[] = [
   {
     title: 'Leaderboard',
     href: '/leaderboard',
@@ -55,20 +55,6 @@ const newNavItems: NavItem[] = [
     ],
   },
 ];
-
-const navItems = [
-  {
-    title: 'Leaderboard',
-    href: '/leaderboard',
-  },
-  {
-    title: 'Tournaments',
-    href: '/tournaments',
-  },
-] as const satisfies {
-  title: string;
-  href: string;
-}[];
 
 export default function Header() {
   const pathname = usePathname();
@@ -93,7 +79,7 @@ export default function Header() {
           {/* Main nav */}
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList className="gap-1">
-              {newNavItems.map((item) => (
+              {navItems.map((item) => (
                 <NavigationItem key={item.title} {...item} />
               ))}
             </NavigationMenuList>
@@ -157,9 +143,12 @@ export default function Header() {
                       </SheetClose>
                     ))}
                     {/* here */}
-                    <NavigationMenu viewport={false} className="flex flex-col w-full">
+                    <NavigationMenu
+                      viewport={false}
+                      className="flex w-full flex-col"
+                    >
                       <NavigationMenuList className="gap-1">
-                        {newNavItems.map((item) => (
+                        {navItems.map((item) => (
                           <NavigationItem key={item.title} {...item} />
                         ))}
                       </NavigationMenuList>
@@ -191,7 +180,7 @@ function WrapNavigationItem({
   return (
     <NavigationMenuTrigger
       className={cn(
-        'bg-transparent hover:cursor-pointer hover:bg-transparent hover:text-primary focus:bg-secondary focus:outline-none data-[state=open]:bg-transparent data-[state=open]:hover:bg-transparent',
+        'bg-transparent hover:cursor-pointer hover:bg-transparent hover:text-primary focus:bg-secondary focus:outline-none data-[state=open]:bg-transparent data-[state=open]:hover:bg-transparent [&>svg]:text-accent-foreground',
         active &&
           'font-extrabold text-primary focus:bg-secondary focus:text-primary'
       )}
@@ -206,7 +195,7 @@ function NavigationItem({ title, href, dropdown }: NavItem) {
   const hasDropdown = !!dropdown;
 
   return (
-    <NavigationMenuItem key={title}>
+    <NavigationMenuItem>
       <WrapNavigationItem active={isActive} dropdown={hasDropdown}>
         <Link href={href} legacyBehavior passHref>
           <NavigationMenuLink
@@ -230,18 +219,16 @@ function SubNavigation({ items }: { items: SubNavItem[] }) {
   const isActive = (href: string) => pathname === href;
 
   return (
-    <NavigationMenuContent className="right-0 group-data-[viewport=false]/navigation-menu:bg-secondary group-data-[viewport=false]/navigation-menu:rounded-xl">
+    <NavigationMenuContent className="right-0 group-data-[viewport=false]/navigation-menu:rounded-xl group-data-[viewport=false]/navigation-menu:border-0 group-data-[viewport=false]/navigation-menu:bg-secondary">
+      {/* Seamlessly extend the nav border */}
+      <div className="pointer-events-none absolute bottom-0 left-0 h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent" />
       {items.map(({ title, href, icon: Icon }) => (
-        <Link
-          legacyBehavior
-          passHref
-          key={title}
-          href={href}
-        >
+        <Link legacyBehavior passHref key={title} href={href}>
           <NavigationMenuLink
             className={cn(
               'flex flex-row items-center gap-2 text-sm hover:text-foreground',
-              isActive(href) && 'font-semibold text-primary hover:text-primary focus:text-primary'
+              isActive(href) &&
+                'font-semibold text-primary hover:text-primary focus:text-primary'
             )}
           >
             <div className="flex items-center gap-2">
