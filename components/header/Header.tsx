@@ -156,6 +156,14 @@ export default function Header() {
                         </Link>
                       </SheetClose>
                     ))}
+                    {/* here */}
+                    <NavigationMenu viewport={false} className="flex flex-col w-full">
+                      <NavigationMenuList className="gap-1">
+                        {newNavItems.map((item) => (
+                          <NavigationItem key={item.title} {...item} />
+                        ))}
+                      </NavigationMenuList>
+                    </NavigationMenu>
                   </nav>
                 </div>
               </SheetContent>
