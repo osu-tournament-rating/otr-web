@@ -8,13 +8,8 @@ export const metadata: Metadata = {
 
 export default function TournamentSubmissionPage() {
   return (
-    <div className="relative container flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
-      {/* Background with subtle pattern */}
-      <div className="absolute inset-0 -z-10 bg-muted/30 dark:bg-muted/10"></div>
-
-      <div className="mx-auto w-full max-w-4xl">
-        <TournamentSubmissionForm />
-      </div>
+    <div className="relative container mx-auto flex w-full items-center justify-center bg-muted/30 px-6 py-12 md:px-12 xl:px-24 dark:bg-muted/10">
+      <TournamentSubmissionForm />
     </div>
   );
 }
