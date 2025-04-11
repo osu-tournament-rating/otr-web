@@ -1,14 +1,13 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown, LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
+import { ChevronDown, LucideIcon, Trophy, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import ProfileCard from '../profile/ProfileCard';
 import SearchDialog from '../search/SearchDialog';
-import { Button } from '../ui/button';
 import { DialogTitle } from '../ui/dialog';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
@@ -19,8 +18,9 @@ import {
 } from '../ui/navigation-menu';
 import { NavigationMenuTrigger } from '@radix-ui/react-navigation-menu';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
 import ClientOnly from '../client-only';
+import MobileNavTrigger from './MobileNavTrigger';
 
 type NavItem = {
   title: string;
@@ -94,19 +94,7 @@ export default function Header() {
 
           {/* Mobile menu */}
           <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
-            {!isMobileNavOpen ? (
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="size-5" />
-                </Button>
-              </SheetTrigger>
-            ) : (
-              <SheetClose asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
-                  <X className="size-5" />
-                </Button>
-              </SheetClose>
-            )}
+            <MobileNavTrigger isOpen={isMobileNavOpen} />
             <SheetContent
               overlay={false}
               closeButton={false}
