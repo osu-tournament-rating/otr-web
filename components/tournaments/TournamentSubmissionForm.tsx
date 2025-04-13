@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Trophy, Database, LoaderCircle } from 'lucide-react';
+import { Trophy, Database, LoaderCircle, LinkIcon } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -24,7 +24,16 @@ import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { submit } from '@/lib/actions/tournaments';
 import { isValidationProblemDetails } from '@/lib/api';
-import { TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  TournamentSubmissionDTO,
+  Roles,
+  TournamentRejectionReason,
+} from '@osu-tournament-rating/otr-api-client';
+import { useSession } from 'next-auth/react';
+import { Checkbox } from '../ui/checkbox';
+import { MultipleSelect } from '../select/multiple-select';
+import { TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import Link from 'next/link';
 
 type TournamentSubmissionFormValues = zType.infer<
   typeof tournamentSubmissionFormSchema
@@ -48,6 +57,9 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
 );
 
 export default function TournamentSubmissionForm() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.scopes?.includes(Roles.Admin);
+
   const form = useForm<TournamentSubmissionFormValues>({
     resolver: zodResolver(tournamentSubmissionFormSchema),
     defaultValues: {
@@ -57,16 +69,26 @@ export default function TournamentSubmissionForm() {
       ruleset: undefined,
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
+      rejectionReason: 0,
       ids: [],
       beatmapIds: [],
     },
     mode: 'onChange',
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rejectOnSubmit, setRejectOnSubmit] = useState(false);
 
   async function onSubmit(values: TournamentSubmissionFormValues) {
-    setIsSubmitting(true);
+    if (
+      rejectOnSubmit &&
+      values.rejectionReason === TournamentRejectionReason.None
+    ) {
+      form.setError('rejectionReason', {
+        message: 'Rejection reason must be selected when rejecting on submit',
+      });
+      return;
+    }
+
     try {
       const result = await submit({
         body: {
@@ -77,8 +99,6 @@ export default function TournamentSubmissionForm() {
           ),
         },
       });
-
-      console.log(result);
 
       if (isValidationProblemDetails<TournamentSubmissionDTO>(result)) {
         if (result.errors) {
@@ -92,11 +112,17 @@ export default function TournamentSubmissionForm() {
       }
 
       form.reset();
-      toast.success('Tournament submitted successfully!');
+      toast.success(
+        <div className='flex flex-col gap-2'>
+          <span>Tournament submitted successfully</span>
+          <Link className='flex flex-row gap-1 items-center' href={'/'}>
+            <LinkIcon className='size-4 text-primary' />
+            <span className='text-primary'>Check it out!</span>
+          </Link>
+        </div>
+      );
     } catch {
-      toast.error('An unknown error occurred during the submission');
-    } finally {
-      setIsSubmitting(false);
+      toast.error('An unknown error occurred during submission');
     }
   }
 
@@ -108,7 +134,7 @@ export default function TournamentSubmissionForm() {
             icon={<Trophy className="size-6 text-primary" />}
             title="Information"
           >
-            <div className="flex flex-col gap-4 md:flex-row">
+            <div className="flex flex-col items-start gap-4 md:flex-row">
               <FormField
                 control={form.control}
                 name="abbreviation"
@@ -179,7 +205,7 @@ export default function TournamentSubmissionForm() {
             />
           </FormSection>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 items-start gap-4 md:grid-cols-3">
             <FormField
               control={form.control}
               name="ruleset"
@@ -189,17 +215,17 @@ export default function TournamentSubmissionForm() {
                     label="Ruleset"
                     tooltip="Game mode the tournament is played in"
                   />
-                  <FormControl>
-                    <Select
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      value={field.value?.toString() || ''}
-                    >
+                  <Select
+                    onValueChange={(val) => field.onChange(Number(val))}
+                    value={field.value?.toString() || ''}
+                  >
+                    <FormControl>
                       <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
-                      <RulesetSelectContent />
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <RulesetSelectContent maniaOther={isAdmin} />
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -213,17 +239,17 @@ export default function TournamentSubmissionForm() {
                     label="Lobby Size"
                     tooltip="Number of players per team in each match"
                   />
-                  <FormControl>
-                    <Select
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      value={field.value?.toString() || ''}
-                    >
+                  <Select
+                    onValueChange={(val) => field.onChange(Number(val))}
+                    value={field.value?.toString() || ''}
+                  >
+                    <FormControl>
                       <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
-                      <LobbySizeSelectContent />
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <LobbySizeSelectContent />
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -259,6 +285,60 @@ export default function TournamentSubmissionForm() {
               )}
             />
           </div>
+
+          {isAdmin && (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox
+                  checked={rejectOnSubmit}
+                  onClick={() => setRejectOnSubmit((prev) => !prev)}
+                />
+                <label>Reject this tournament on submission</label>
+              </div>
+              {rejectOnSubmit && (
+                <FormField
+                  control={form.control}
+                  name="rejectionReason"
+                  render={({
+                    field: { onChange, value },
+                    fieldState: { invalid },
+                  }) => (
+                    <FormItem>
+                      <FormControl>
+                        <MultipleSelect
+                          placeholder="Select rejection reason"
+                          options={Object.entries(
+                            TournamentRejectionReasonEnumHelper.metadata
+                          )
+                            .filter(
+                              ([v]) =>
+                                Number(v) !== TournamentRejectionReason.None
+                            )
+                            .map(([v, { text }]) => ({
+                              value: v,
+                              label: text,
+                            }))}
+                          selected={TournamentRejectionReasonEnumHelper.getFlags(
+                            value
+                          ).map(String)}
+                          onChange={(values) => {
+                            let flag = 0;
+                            values.forEach((v) => {
+                              flag |= Number(v);
+                            });
+
+                            onChange(flag);
+                          }}
+                          invalid={invalid}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+          )}
 
           <FormSection
             icon={<Database className="h-6 w-6 text-primary" />}
@@ -318,9 +398,9 @@ export default function TournamentSubmissionForm() {
           <Button
             type="submit"
             className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
-            disabled={isSubmitting}
+            disabled={form.formState.isSubmitting}
           >
-            {isSubmitting ? (
+            {form.formState.isSubmitting ? (
               <LoaderCircle className="animate-spin" />
             ) : (
               'Submit Tournament'
