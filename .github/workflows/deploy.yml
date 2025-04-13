@@ -1,5 +1,4 @@
 name: Web deploy
-
 on:
   push:
     branches:
@@ -7,62 +6,28 @@ on:
     tags:
       - v*
   workflow_dispatch:
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Application
-        run: npm run build
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: build/
-
   publish:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-          path: build/
-
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Set Docker Tag
         id: set-tag
         run: |
           echo "TAG=${{ github.ref_name == 'master' && 'latest' || github.ref_type == 'tag' && github.ref_name || 'latest' }}" >> $GITHUB_OUTPUT
-
       - name: Build and Push Docker Image
+        # Build will fail if there are any eslint or compilation issues
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
-
   deploy:
     needs: publish
     runs-on: ubuntu-latest
@@ -75,17 +40,13 @@ jobs:
           - name: Production
             condition: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
             tag: ${{ github.ref_name }}
-
     environment: ${{ matrix.environment.name }}
     if: ${{ matrix.environment.condition }}
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Create .env files
         run: echo "${{ secrets.ENV }}" > .env
-
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
@@ -94,7 +55,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: '.env'
           target: '${{ secrets.SSH_TARGET_DIR }}/'
-
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
