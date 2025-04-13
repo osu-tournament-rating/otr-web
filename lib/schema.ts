@@ -26,7 +26,7 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
 
 /** Schema that ensures a numeric input is assignable to a given enumeration */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
-  z.coerce.number().refine((val) => Object.values(enumType).includes(val));
+  z.coerce.number({ invalid_type_error: 'Required' }).refine((val) => Object.values(enumType).includes(val));
 
 export const tournamentEditFormSchema = z.object({
   name: z.string().min(1),
@@ -72,6 +72,91 @@ export const gameEditFormSchema = z.object({
 
 export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
+});
+
+export const tournamentSubmissionFormSchema = z.object({
+  name: z.string().min(1),
+  abbreviation: z.string().min(1),
+  forumUrl: z
+    .string()
+    .min(1)
+    .regex(
+      /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/,
+      "URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
+    ),
+  ruleset: numericEnumValueSchema(Ruleset),
+  rankRangeLowerBound: z.number().min(1).int(),
+  lobbySize: z.number().min(1).max(8).int(),
+  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
+  ids: z.preprocess(
+    (val) => {
+      if (
+        !val ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'string' && val.trim() === '')
+      ) {
+        return [];
+      }
+
+      if (Array.isArray(val)) {
+        return val.map((item) => {
+          if (!item || (typeof item === 'string' && item.trim() === '')) {
+            return 0;
+          }
+
+          const str = String(item).trim();
+          const match = str.match(
+            /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
+          );
+          return match ? Number(match[1] || match[2]) : 0;
+        });
+      }
+      return [];
+    },
+    z
+      .array(z.number().int().positive())
+      .min(1, 'At least one valid match link is required')
+      .refine(
+        (val) => val.every((id) => id > 0),
+        'All match links must be valid osu! match IDs or URLs'
+      )
+  ),
+  beatmapIds: z.preprocess(
+    (val) => {
+      if (
+        !val ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'string' && val.trim() === '')
+      ) {
+        return [];
+      }
+
+      if (Array.isArray(val)) {
+        return val.map((item) => {
+          if (!item || (typeof item === 'string' && item.trim() === '')) {
+            return 0;
+          }
+
+          const str = String(item).trim();
+          const match = str.match(
+            /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
+          );
+          const numericId = match
+            ? Number(match[1] || match[2] || match[3])
+            : 0;
+          return numericId > 20_000_000 ? 0 : numericId;
+        });
+      }
+      return [];
+    },
+    z
+      .array(z.number().int().positive().max(20_000_000))
+      .min(1, 'At least one valid beatmap link is required')
+      .refine(
+        (val) => val.every((id) => id > 0),
+        'All beatmap links must be valid osu! beatmap IDs or URLs'
+      )
+  ),
 });
 
 export const leaderboardFilterSchema = z.object({

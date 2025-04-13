@@ -29,10 +29,10 @@ export default function SearchDialog() {
 
   const handleSetQuery = (input: string) => {
     setQuery(input.trim());
-  }
+  };
 
   const closeDialog = () => {
-    setIsDialogOpen(open => {
+    setIsDialogOpen((open) => {
       if (!open) {
         handleSetQuery('');
       }
@@ -43,49 +43,49 @@ export default function SearchDialog() {
 
   useHotkeys('CTRL+K', (e) => {
     e.preventDefault();
-    setIsDialogOpen(prev => !prev);
+    setIsDialogOpen((prev) => !prev);
   });
 
   return (
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Search"
-            onClick={() => setIsDialogOpen(true)}
-            className="cursor-pointer"
-          >
-            <Search className="size-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogTitle className="sr-only">Search</DialogTitle>
-        <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4 font-sans">
-          <div className="sticky top-0 z-50 bg-background shadow-sm">
-            <div className="relative">
-              <Input
-                className="m-auto rounded-xl border-0 bg-accent pr-10 pl-3 focus-visible:ring-0"
-                placeholder="Search players, tournaments, matches..."
-                autoFocus
-                value={query}
-                onChange={(e) => handleSetQuery(e.target.value)}
-                aria-label="Search query"
-              />
-              <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
-                {isLoading ? (
-                  <LoaderCircle className="size-5 animate-spin" />
-                ) : (
-                  <Search className="size-5" />
-                )}
-              </div>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Search"
+          onClick={() => setIsDialogOpen(true)}
+          className="cursor-pointer"
+        >
+          <Search className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogTitle className="sr-only">Search</DialogTitle>
+      <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4 font-sans">
+        <div className="sticky top-0 z-50 bg-background shadow-sm">
+          <div className="relative">
+            <Input
+              className="m-auto rounded-xl border-0 bg-accent pr-10 pl-3 focus-visible:ring-0"
+              placeholder="Search players, tournaments, matches..."
+              autoFocus
+              value={query}
+              onChange={(e) => handleSetQuery(e.target.value)}
+              aria-label="Search query"
+            />
+            <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
+              {isLoading ? (
+                <LoaderCircle className="size-5 animate-spin" />
+              ) : (
+                <Search className="size-5" />
+              )}
             </div>
           </div>
-          <SearchDialogContext.Provider value={{ closeDialog, query: debouncedQuery }}>
-            {debouncedQuery !== '' && (
-              <SearchResults data={data} />
-            )}
-          </SearchDialogContext.Provider>
-        </DialogContent>
-      </Dialog>
+        </div>
+        <SearchDialogContext.Provider
+          value={{ closeDialog, query: debouncedQuery }}
+        >
+          {debouncedQuery !== '' && <SearchResults data={data} />}
+        </SearchDialogContext.Provider>
+      </DialogContent>
+    </Dialog>
   );
 }
