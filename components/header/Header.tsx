@@ -21,6 +21,7 @@ import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
 import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
+import SupportButton from '../buttons/SupportButton';
 
 type NavItem = {
   title: string;
@@ -86,6 +87,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <SearchDialog />
           <ModeToggle />
+          <SupportButton />
           <div className="hidden md:block">
             <ClientOnly>
               <ProfileCard />
