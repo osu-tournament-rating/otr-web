@@ -1,10 +1,11 @@
 name: Web deploy
+
 on:
   push:
     branches:
-      - 'master'
+      - master
     tags:
-      - 'v*'
+      - v*
   workflow_dispatch:
 
 jobs:
@@ -13,12 +14,23 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-      - name: Install
-        run: npm ci --force
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: build/
 
   publish:
     needs: build
@@ -26,62 +38,54 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set Docker tag
+
+      - name: Set Docker Tag
         id: set-tag
         run: |
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "TAG=latest" >> $GITHUB_OUTPUT
-          fi
+          echo "TAG=${{ github.ref_name == 'master' && 'latest' || github.ref_type == 'tag' && github.ref_name || 'latest' }}" >> $GITHUB_OUTPUT
+
       - name: Build and Push Docker Image
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }} .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
-          # Also push as latest for consistency
-          if [[ "${{ steps.set-tag.outputs.TAG }}" != "latest" ]]; then
-            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
 
   deploy:
     needs: publish
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         environment:
           - name: Staging
+            condition: ${{ github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch' }}
             tag: latest
           - name: Production
+            condition: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
             tag: ${{ github.ref_name }}
-    runs-on: ubuntu-latest
+
     environment: ${{ matrix.environment.name }}
-    if: |
-      github.ref == 'refs/heads/master' && matrix.environment.name == 'Staging' ||
-      startsWith(github.ref, 'refs/tags/v') ||
-      github.event_name == 'workflow_dispatch'
+    if: ${{ matrix.environment.condition }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Process tag name for Production
-        id: process-tag
-        if: matrix.environment.name == 'Production'
-        run: echo "DOCKER_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Set Docker tag
-        id: set-tag
-        run: |
-          if [[ "${{ matrix.environment.name }}" == "Production" ]]; then
-            echo "DOCKER_TAG=${{ steps.process-tag.outputs.DOCKER_TAG || 'latest' }}" >> $GITHUB_OUTPUT
-          else
-            echo "DOCKER_TAG=latest" >> $GITHUB_OUTPUT
-          fi
+
       - name: Create .env files
-        run: |
-          echo "${{ secrets.ENV }}" > .env
+        run: echo "${{ secrets.ENV }}" > .env
+
       - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
@@ -90,6 +94,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: '.env'
           target: '${{ secrets.SSH_TARGET_DIR }}/'
+
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -97,7 +102,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.DOCKER_TAG }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
             docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true
-            docker run -d -p 3000:3000 --restart always --name ${{ secrets.DOCKER_IMAGE_NAME }} --env-file ${{ secrets.SSH_TARGET_DIR }}/.env ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.DOCKER_TAG }}
+            docker run -d -p 3000:3000 --restart always \
+              --name ${{ secrets.DOCKER_IMAGE_NAME }} \
+              --env-file ${{ secrets.SSH_TARGET_DIR }}/.env \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
