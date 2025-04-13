@@ -111,7 +111,7 @@ export default function ProfileCard() {
           <UserAvatar session={session} />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-1 w-56 rounded-xl">
+      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         {/* Player card */}
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
