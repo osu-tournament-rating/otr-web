@@ -1,0 +1,71 @@
+name: Web deploy
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set Docker Tag
+        id: set-tag
+        run: |
+          echo "TAG=${{ github.ref_name == 'master' && 'latest' || github.ref_type == 'tag' && github.ref_name || 'latest' }}" >> $GITHUB_OUTPUT
+      - name: Build and Push Docker Image
+        # Build will fail if there are any eslint or compilation issues
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - name: Staging
+            condition: ${{ github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch' }}
+            tag: latest
+          - name: Production
+            condition: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
+            tag: ${{ github.ref_name }}
+    environment: ${{ matrix.environment.name }}
+    if: ${{ matrix.environment.condition }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Create .env files
+        run: echo "${{ secrets.ENV }}" > .env
+      - name: Copy files to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: '.env'
+          target: '${{ secrets.SSH_TARGET_DIR }}/'
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
+            docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
+            docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true
+            docker run -d -p 3000:3000 --restart always \
+              --name ${{ secrets.DOCKER_IMAGE_NAME }} \
+              --env-file ${{ secrets.SSH_TARGET_DIR }}/.env \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
