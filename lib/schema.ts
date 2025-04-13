@@ -87,7 +87,7 @@ export const tournamentSubmissionFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   rankRangeLowerBound: z.number().min(1).int(),
   lobbySize: z.number().min(1).max(8).int(),
-  matchLinks: z.preprocess(
+  matches: z.preprocess(
     (val) => {
       if (
         !val ||
@@ -120,7 +120,7 @@ export const tournamentSubmissionFormSchema = z.object({
         'All match links must be valid osu! match IDs or URLs'
       )
   ),
-  beatmapLinks: z.preprocess(
+  beatmaps: z.preprocess(
     (val) => {
       if (
         !val ||

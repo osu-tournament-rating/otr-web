@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, Database, ExternalLink, LoaderCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Trophy, Database, LoaderCircle } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
@@ -56,8 +56,8 @@ export default function TournamentSubmissionForm() {
       ruleset: undefined,
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
-      matchLinks: [],
-      beatmapLinks: [],
+      matches: [],
+      beatmaps: [],
     },
     mode: 'onChange',
   });
@@ -70,9 +70,9 @@ export default function TournamentSubmissionForm() {
       await submit({
         body: {
           ...values,
-          ids: values.matchLinks.map((link) => parseInt(link.toString())),
-          beatmapIds: values.beatmapLinks.map((link) =>
-            parseInt(link.toString())
+          ids: values.matches.map((match) => parseInt(match.toString())),
+          beatmapIds: values.beatmaps.map((beatmap) =>
+            parseInt(beatmap.toString())
           ),
         },
       });
@@ -89,237 +89,233 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <div className="w-full font-sans">
-      <Card className="overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
-        <CardContent className="px-8">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormSection
-                icon={<Trophy className="h-6 w-6 text-primary" />}
-                title="Information"
-              >
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <FormField
-                    control={form.control}
-                    name="abbreviation"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <LabelWithTooltip
-                          label="Abbreviation"
-                          tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)"
-                        />
-                        <FormControl>
-                          <Input
-                            placeholder="OWC2024"
-                            {...field}
-                            className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <LabelWithTooltip
-                          label="Name"
-                          tooltip="Full tournament name (e.g. osu! World Cup 2024)"
-                        />
-                        <FormControl>
-                          <Input
-                            placeholder="osu! World Cup 2024"
-                            {...field}
-                            className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="forumUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Forum Post URL"
-                        tooltip="Forum post URL or wiki page for the tournament"
+    <Card className="overflow-hidden rounded-2xl border border-border bg-background px-8 shadow-xl">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormSection
+            icon={<Trophy className="size-6 text-primary" />}
+            title="Information"
+          >
+            <div className="flex flex-col gap-4 md:flex-row">
+              <FormField
+                control={form.control}
+                name="abbreviation"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <LabelWithTooltip
+                      label="Abbreviation"
+                      tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)"
+                    />
+                    <FormControl>
+                      <Input
+                        placeholder="OWC2024"
+                        {...field}
+                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                       />
-                      <FormControl>
-                        <Input
-                          placeholder="https://osu.ppy.sh/community/forums/topics/..."
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                          onChange={(e) => {
-                            // Strip query parameters before setting value
-                            const url = e.target.value;
-                            const baseUrl = url.split('?')[0];
-                            field.onChange(baseUrl);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </FormSection>
-
-              <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="ruleset"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Ruleset"
-                        tooltip="Game mode the tournament is played in"
-                      />
-                      <FormControl>
-                        <Select
-                          onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value?.toString() || ''}
-                        >
-                          <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
-                            <SelectValue placeholder="Select ruleset" />
-                          </SelectTrigger>
-                          <RulesetSelectContent />
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lobbySize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Lobby Size"
-                        tooltip="Number of players per team in each match"
-                      />
-                      <FormControl>
-                        <Select
-                          onValueChange={(val) => field.onChange(Number(val))}
-                          value={field.value?.toString() || ''}
-                        >
-                          <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
-                          <LobbySizeSelectContent />
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="rankRangeLowerBound"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Rank Restriction"
-                        tooltip="The 'best' global rank allowed to participate. Use 1 for open rank."
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder="Enter rank restriction"
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) => {
-                            const value =
-                              e.target.value === ''
-                                ? undefined
-                                : e.target.valueAsNumber;
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormSection
-                icon={<Database className="h-6 w-6 text-primary" />}
-                title="Data"
-              >
-                {/* Match links */}
-                <FormField
-                  control={form.control}
-                  name="matchLinks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Match Links"
-                        tooltip="osu! match IDs or URLs (one per line)"
-                      />
-                      <FormControl>
-                        <Textarea
-                          placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
-                          value={field.value?.join('\n') || ''}
-                          onChange={(e) =>
-                            field.onChange(e.target.value.split('\n'))
-                          }
-                          className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Beatmap links */}
-                <FormField
-                  control={form.control}
-                  name="beatmapLinks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Beatmap Links"
-                        tooltip="osu! beatmap IDs or URLs (one per line)"
-                      />
-                      <FormControl>
-                        <Textarea
-                          placeholder={`https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456`}
-                          value={field.value?.join('\n') || ''}
-                          onChange={(e) =>
-                            field.onChange(e.target.value.split('\n'))
-                          }
-                          className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </FormSection>
-
-              <Button
-                type="submit"
-                className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <LoaderCircle className="animate-spin" />
-                ) : (
-                  'Submit Tournament'
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+              />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <LabelWithTooltip
+                      label="Name"
+                      tooltip="Full tournament name (e.g. osu! World Cup 2024)"
+                    />
+                    <FormControl>
+                      <Input
+                        placeholder="osu! World Cup 2024"
+                        {...field}
+                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="forumUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Forum Post URL"
+                    tooltip="Forum post URL or wiki page for the tournament"
+                  />
+                  <FormControl>
+                    <Input
+                      placeholder="https://osu.ppy.sh/community/forums/topics/..."
+                      {...field}
+                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      onChange={(e) => {
+                        // Strip query parameters before setting value
+                        const url = e.target.value;
+                        const baseUrl = url.split('?')[0];
+                        field.onChange(baseUrl);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="ruleset"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Ruleset"
+                    tooltip="Game mode the tournament is played in"
+                  />
+                  <FormControl>
+                    <Select
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      value={field.value?.toString() || ''}
+                    >
+                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                        <SelectValue placeholder="Select ruleset" />
+                      </SelectTrigger>
+                      <RulesetSelectContent />
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lobbySize"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Lobby Size"
+                    tooltip="Number of players per team in each match"
+                  />
+                  <FormControl>
+                    <Select
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      value={field.value?.toString() || ''}
+                    >
+                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <LobbySizeSelectContent />
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rankRangeLowerBound"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Rank Restriction"
+                    tooltip="The 'best' global rank allowed to participate. Use 1 for open rank."
+                  />
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Enter rank restriction"
+                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      {...field}
+                      value={field.value || ''}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === ''
+                            ? undefined
+                            : e.target.valueAsNumber;
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormSection
+            icon={<Database className="h-6 w-6 text-primary" />}
+            title="Data"
+          >
+            {/* Matches */}
+            <FormField
+              control={form.control}
+              name="matches"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Matches"
+                    tooltip="osu! match IDs or URLs (one per line)"
+                  />
+                  <FormControl>
+                    <Textarea
+                      placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
+                      value={field.value?.join('\n') || ''}
+                      onChange={(e) =>
+                        field.onChange(e.target.value.split('\n'))
+                      }
+                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Beatmap links */}
+            <FormField
+              control={form.control}
+              name="beatmaps"
+              render={({ field }) => (
+                <FormItem>
+                  <LabelWithTooltip
+                    label="Beatmaps"
+                    tooltip="osu! beatmap IDs or URLs (one per line)"
+                  />
+                  <FormControl>
+                    <Textarea
+                      placeholder={`https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456`}
+                      value={field.value?.join('\n') || ''}
+                      onChange={(e) =>
+                        field.onChange(e.target.value.split('\n'))
+                      }
+                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          <Button
+            type="submit"
+            className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              'Submit Tournament'
+            )}
+          </Button>
+        </form>
+      </Form>
+    </Card>
   );
 }
