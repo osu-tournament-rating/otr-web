@@ -6,7 +6,6 @@ import { Trophy, Database, LoaderCircle } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
 import type { z as zType } from 'zod';
 import { useState } from 'react';
-
 import {
   Form,
   FormControl,
@@ -24,6 +23,8 @@ import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { submit } from '@/lib/actions/tournaments';
+import { isValidationProblemDetails } from '@/lib/api';
+import { TournamentSubmissionDTO } from '@osu-tournament-rating/otr-api-client';
 
 type TournamentSubmissionFormValues = zType.infer<
   typeof tournamentSubmissionFormSchema
@@ -56,8 +57,8 @@ export default function TournamentSubmissionForm() {
       ruleset: undefined,
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
-      matches: [],
-      beatmaps: [],
+      ids: [],
+      beatmapIds: [],
     },
     mode: 'onChange',
   });
@@ -67,22 +68,33 @@ export default function TournamentSubmissionForm() {
   async function onSubmit(values: TournamentSubmissionFormValues) {
     setIsSubmitting(true);
     try {
-      await submit({
+      const result = await submit({
         body: {
           ...values,
-          ids: values.matches.map((match) => parseInt(match.toString())),
-          beatmapIds: values.beatmaps.map((beatmap) =>
+          ids: values.ids.map((match) => parseInt(match.toString())),
+          beatmapIds: values.beatmapIds.map((beatmap) =>
             parseInt(beatmap.toString())
           ),
         },
       });
 
+      console.log(result);
+
+      if (isValidationProblemDetails<TournamentSubmissionDTO>(result)) {
+        if (result.errors) {
+          for (const [k, v] of Object.entries(result.errors)) {
+            form.setError(k as keyof TournamentSubmissionFormValues, {
+              message: v.join(', '),
+            });
+          }
+          return;
+        }
+      }
+
       form.reset();
       toast.success('Tournament submitted successfully!');
     } catch {
-      toast.error(
-        'An error occurred during the submission. Verify whether the tournament exists already.'
-      );
+      toast.error('An unknown error occurred during the submission');
     } finally {
       setIsSubmitting(false);
     }
@@ -255,7 +267,7 @@ export default function TournamentSubmissionForm() {
             {/* Matches */}
             <FormField
               control={form.control}
-              name="matches"
+              name="ids"
               render={({ field }) => (
                 <FormItem>
                   <LabelWithTooltip
@@ -280,7 +292,7 @@ export default function TournamentSubmissionForm() {
             {/* Beatmap links */}
             <FormField
               control={form.control}
-              name="beatmaps"
+              name="beatmapIds"
               render={({ field }) => (
                 <FormItem>
                   <LabelWithTooltip
