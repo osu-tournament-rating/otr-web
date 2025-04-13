@@ -90,26 +90,6 @@ export default function TournamentSubmissionForm() {
 
   return (
     <div className="w-full font-sans">
-      <div className="mb-8 text-center">
-        <h1 className="mb-3 flex items-center justify-center gap-2 text-xl font-bold text-primary md:text-3xl">
-          <Trophy className="h-9 w-9" />
-          Tournament Submission
-        </h1>
-        <p className="text-md text-muted-foreground">
-          Use this form to submit a new tournament for verification and
-          tracking.
-        </p>
-        <a
-          href="https://docs.otr.stagec.xyz/tournament-approval.html#acceptance-criteria"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
-        >
-          <ExternalLink className="mr-1 h-4 w-4" />
-          Read our acceptance criteria
-        </a>
-      </div>
-
       <Card className="overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
         <CardContent className="px-8">
           <Form {...form}>
