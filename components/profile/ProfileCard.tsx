@@ -36,7 +36,7 @@ export default function ProfileCard() {
 
   if (isMobile) {
     return (
-      <Collapsible>
+      <Collapsible open={isOpen} onOpenChange={toggleIsOpen}>
         <CollapsibleTrigger asChild>
           <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
             <div className="absolute inset-0 z-0 opacity-20">
@@ -63,7 +63,7 @@ export default function ProfileCard() {
               </div>
               <ChevronDown
                 className={cn(
-                  'size-4 transition-transform',
+                  'size-4 transition-transform duration-200',
                   isOpen && 'rotate-180'
                 )}
               />
@@ -111,7 +111,7 @@ export default function ProfileCard() {
           <UserAvatar session={session} />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-1 w-56">
+      <DropdownMenuContent className="mt-1 w-56 rounded-xl">
         {/* Player card */}
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
