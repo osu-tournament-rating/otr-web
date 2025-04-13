@@ -20,13 +20,13 @@ export default async function Page({ params }: PageProps) {
   return (
     <div className="mt-2">
       <MatchCard match={match} />
-      <Tabs defaultValue="games" className="rounded-2xl bg-accent">
+      <Tabs defaultValue="games" className="rounded-2xl bg-card">
         <TabsList>
           <TabsTrigger value="games">Games</TabsTrigger>
           <TabsTrigger value="else">Something Else</TabsTrigger>
         </TabsList>
         <TabsContent value="games">
-          <div className="space-y-4 bg-accent px-4 md:px-12 xl:px-24">
+          <div className="space-y-4 px-4 md:px-12 xl:px-24">
             {(match.games ?? [])
               .sort(
                 (a, b) =>

@@ -10,6 +10,8 @@ import {
   OAuthWrapper,
   SearchWrapper,
   TournamentsWrapper,
+  ProblemDetails,
+  HttpValidationProblemDetails,
 } from '@osu-tournament-rating/otr-api-client';
 import { notFound } from 'next/navigation';
 
@@ -49,6 +51,37 @@ const configuration: IOtrApiWrapperConfiguration = {
     );
   },
 };
+
+interface ValidationProblemDetails<T extends object>
+  extends HttpValidationProblemDetails {
+  errors?: { [key in keyof Partial<T>]: string[] };
+}
+
+/** Type guard for determining if an object is {@link ProblemDetails} */
+export function isProblemDetails(obj: unknown): obj is ProblemDetails {
+  return (
+    obj !== null &&
+    obj !== undefined &&
+    typeof obj === 'object' &&
+    'title' in obj &&
+    'status' in obj
+  );
+}
+
+/** Type guard for determining if an object is {@link HttpValidationProblemDetails} */
+export function isValidationProblemDetails<T extends object = object>(
+  obj: unknown
+): obj is ValidationProblemDetails<T> {
+  return (
+    isProblemDetails(obj) &&
+    'errors' in obj &&
+    typeof obj.errors === 'object' &&
+    Object.values(obj.errors).every(
+      (value) =>
+        Array.isArray(value) && value.every((v) => typeof v === 'string')
+    )
+  );
+}
 
 export const adminNotes = new AdminNotesWrapper(configuration);
 export const games = new GamesWrapper(configuration);
