@@ -37,7 +37,6 @@ export function normalizedScore(mods: Mods, score: number): number {
 export function getModColor(mods: Mods) {
   // Strip NF
   mods &= ~Mods.NoFail;
-  console.log(mods);
 
   switch (mods) {
     case Mods.None:

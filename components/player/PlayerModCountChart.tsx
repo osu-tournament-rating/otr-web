@@ -12,45 +12,18 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { PieChart, Pie, Cell, Label } from 'recharts';
+import { PieChart, Pie, Label } from 'recharts';
 import * as React from 'react';
+import { getModColor } from '@/lib/utils/mods';
 
 interface ProcessedEntry {
   label: string;
   count: number;
+  fill: string;
 }
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<PlayerModStatsDTO>;
-  totalGames: number;
-}
-
-const CustomTooltip: React.FC<CustomTooltipProps> = ({
-  active,
-  payload,
-  totalGames,
-}) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    const percentage = ((data.count / totalGames) * 100).toFixed(1);
-    const metadata = ModsEnumHelper.getMetadata(data.mods);
-
-    return (
-      <div className="rounded-md border bg-background p-2 shadow-md">
-        <p className="font-medium">{metadata.map((m) => m.text).join()}</p>
-        <p className="text-sm text-muted-foreground">
-          {data.count} games ({percentage}%)
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function PlayerModCountChart({
   modStats,
@@ -61,10 +34,12 @@ export default function PlayerModCountChart({
 }) {
   // Process mod stats data
   const processedData = React.useMemo(() => {
-    const data: ProcessedEntry[] = [];
+    // Create a map to aggregate counts by mod combination
+    const modMap = new Map<string, ProcessedEntry>();
 
-    modStats.forEach((value) => {
-      const metadata = ModsEnumHelper.getMetadata(value.mods);
+    // Process mod stats
+    modStats.forEach((stat) => {
+      const metadata = ModsEnumHelper.getMetadata(stat.mods);
       // Join mod texts and remove all "NF" occurrences
       let label = metadata
         .map((meta) => meta.text)
@@ -76,23 +51,27 @@ export default function PlayerModCountChart({
         label = 'NM';
       }
 
-      // Check if this label already exists in our accumulator
-      const existingEntryIndex = data.findIndex((item) => item.label === label);
+      const count = stat.count || 1;
 
-      if (existingEntryIndex !== -1) {
-        // Update existing entry by adding counts
-        data[existingEntryIndex].count += value.count || 1;
+      // If this mod combination already exists in our map, update it
+      if (modMap.has(label)) {
+        const existing = modMap.get(label)!;
+        modMap.set(label, {
+          ...existing,
+          count: existing.count + count,
+        });
       } else {
         // Add new entry
-        data.push({
+        modMap.set(label, {
           label,
-          count: value.count || 1,
+          count,
+          fill: getModColor(stat.mods),
         });
       }
     });
 
     // Filter for entries with count >= 10 and sort by count (descending)
-    return data
+    return Array.from(modMap.values())
       .filter((entry) => entry.count >= 10)
       .sort((a, b) => b.count - a.count);
   }, [modStats]);
@@ -102,16 +81,12 @@ export default function PlayerModCountChart({
     return processedData.reduce((sum, entry) => sum + entry.count, 0);
   }, [processedData]);
 
-  // Build chart config dynamically from the data
-  const chartConfig: ChartConfig = React.useMemo(() => {
-    return processedData.reduce((config, entry, index) => {
-      config[entry.label] = {
-        label: entry.label,
-        color: `var(--chart-${(index % 10) + 1})`,
-      };
-      return config;
-    }, {} as ChartConfig);
-  }, [processedData]);
+  const chartConfig: ChartConfig = {
+    count: {
+      label: 'Games',
+      color: 'hsl(var(--chart-1))',
+    },
+  };
 
   const renderCenterLabel = React.useCallback(
     ({ viewBox }: any) => {
@@ -165,29 +140,31 @@ export default function PlayerModCountChart({
               outerRadius="70%"
               paddingAngle={3}
               dataKey="count"
-              label={({ label, percent }) =>
-                `${label} (${(percent * 100).toFixed(1)}%)`
+              nameKey="label"
+              label={({ name, percent }) =>
+                `${name} (${(percent * 100).toFixed(1)}%)`
               }
-              labelLine={true}
             >
-              {processedData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={`var(--chart-${(index % 10) + 1})`}
-                  name={entry.label}
-                />
-              ))}
               <Label content={renderCenterLabel} />
             </Pie>
             <ChartTooltip
-              content={<ChartTooltipContent className="font-sans" />}
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  className="font-sans"
+                  labelFormatter={(value, payload) => {
+                    if (payload && payload.length > 0 && payload[0].payload) {
+                      console.log(payload);
+                      return payload[0].payload.label;
+                    }
+                    return value;
+                  }}
+                />
+              }
             />
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex flex-col items-center gap-2 text-sm leading-none text-muted-foreground">
-        <p>Showing mods played in ten or more games</p>
-      </CardFooter>
     </Card>
   );
 }

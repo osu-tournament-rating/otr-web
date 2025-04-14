@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BarChart, XAxis, YAxis, Bar, Cell } from 'recharts';
+import { BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { ModsEnumHelper } from '@/lib/enums';
 import { getModColor, normalizedScore } from '@/lib/utils/mods';
@@ -15,7 +15,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '../ui/card';
@@ -109,8 +108,7 @@ export default function PlayerModStatsChart({
       <CardHeader className="items-center">
         <CardTitle>Mod Performance</CardTitle>
         <CardDescription>
-          Average score across all games, normalized to{' '}
-          {Number(1_000_000).toLocaleString()}
+          Average normalized score (min. 10 games)
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
@@ -132,20 +130,11 @@ export default function PlayerModStatsChart({
               tick={{ fontSize: 12 }}
               interval={0}
             />
-            <ChartTooltip
-              content={<ChartTooltipContent />}
-            />
-            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={30}>
-              {chartData.map((entry, index) => (
-                <Cell key={`bar-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
+            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={30} />
           </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex flex-col items-center gap-2 text-sm leading-none text-muted-foreground">
-        <p>Showing mods played in ten or more games</p>
-      </CardFooter>
     </Card>
   );
 }
