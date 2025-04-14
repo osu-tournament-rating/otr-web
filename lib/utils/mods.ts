@@ -33,3 +33,32 @@ export function normalizedScore(mods: Mods, score: number): number {
 
   return Math.round(score / multiplier);
 }
+
+export function getModColor(mods: Mods) {
+  switch (mods) {
+    case Mods.HardRock:
+      return 'var(--mod-hard-rock)';
+    case Mods.Hidden:
+      return 'var(--mod-hidden)';
+    case Mods.Flashlight:
+      return 'var(--mod-flashlight)';
+    case Mods.Easy:
+      return 'var(--mod-easy)';
+    case Mods.DoubleTime:
+      return 'var(--mod-double-time)';
+    case Mods.HalfTime:
+      return 'var(--mod-half-time)';
+    case Mods.Nightcore:
+      return 'var(--mod-nightcore)';
+    case Mods.Hidden | Mods.HardRock:
+      return 'var(--mod-hidden-hr)';
+    case Mods.Hidden | Mods.Easy:
+      return 'var(--mod-hidden-easy)';
+    case Mods.Easy | Mods.DoubleTime:
+      return 'var(--mod-easy-double-time)';
+    case Mods.Hidden | Mods.Flashlight:
+      return 'var(--mod-hidden-flashlight)';
+    default:
+      return 'var(--chart-1)';
+  }
+}

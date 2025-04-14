@@ -117,10 +117,13 @@
   --mod-freemod: hsl(35, 82%, 74%);
   --mod-flashlight: hsl(236, 36%, 39%);
   --mod-easy: hsl(114, 86%, 69%);
+  --mod-half-time: hsl(152, 86%, 69%);
   --mod-double-time: hsl(251, 86%, 70%);
-  --mod-hd-hr: hsla(337, 100%, 60%, 0.918);
-  --mod-hd-easy: hsla(41, 100%, 64%, 0.945);
+  --mod-nightcore: hsl(271, 86%, 70%);
+  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
+  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
   --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
+  --mod-hidden-flashlight: hsl(197, 36%, 39%);
 }
 
 .dark {
@@ -170,10 +173,13 @@
   --mod-freemod: hsl(35, 82%, 74%);
   --mod-flashlight: hsl(236, 36%, 39%);
   --mod-easy: hsl(114, 86%, 69%);
+  --mod-half-time: hsl(152, 86%, 69%);
   --mod-double-time: hsl(251, 86%, 70%);
-  --mod-hd-hr: hsla(337, 100%, 60%, 0.918);
-  --mod-hd-easy: hsla(41, 100%, 64%, 0.945);
+  --mod-nightcore: hsl(271, 86%, 70%);
+  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
+  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
   --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
+  --mod-hidden-flashlight: hsl(197, 36%, 39%);
 }
 
 @layer base {
