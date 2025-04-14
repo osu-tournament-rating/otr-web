@@ -213,8 +213,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
               <Button
                 type="submit"
                 disabled={
-                  !form.formState.isDirty ||
-                  (form.formState.isDirty && !form.formState.isValid)
+                  !form.formState.isValid || !form.formState.isDirty
                 }
               >
                 {form.formState.isSubmitting ? (
