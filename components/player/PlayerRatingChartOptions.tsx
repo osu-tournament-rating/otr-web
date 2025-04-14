@@ -14,7 +14,7 @@ export type PlayerRatingChartFilterValues = z.infer<
   typeof playerRatingChartFilterSchema
 >;
 
-interface PlayerRatingChartFilterProps {
+interface PlayerRatingChartOptionsProps {
   filter: PlayerRatingChartFilterValues;
   onFilterChange: (values: PlayerRatingChartFilterValues) => void;
 }
@@ -22,7 +22,7 @@ interface PlayerRatingChartFilterProps {
 export default function PlayerRatingChartOptions({
   filter,
   onFilterChange,
-}: PlayerRatingChartFilterProps) {
+}: PlayerRatingChartOptionsProps) {
   const form = useForm<PlayerRatingChartFilterValues>({
     resolver: zodResolver(playerRatingChartFilterSchema),
     values: filter,
@@ -31,8 +31,16 @@ export default function PlayerRatingChartOptions({
     },
   });
 
-  const onSubmit = (values: PlayerRatingChartFilterValues) => {
+  const handleSubmit = (values: PlayerRatingChartFilterValues) => {
     onFilterChange(values);
+  };
+
+  const handleReset = () => {
+    const defaultValues = {
+      showDecay: true,
+    };
+    form.reset(defaultValues);
+    onFilterChange(defaultValues);
   };
 
   return (
@@ -45,7 +53,10 @@ export default function PlayerRatingChartOptions({
       </PopoverTrigger>
       <PopoverContent className="z-1 w-64 p-4 font-sans" align="end">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <h4 className="font-medium">Chart Display Options</h4>
 
             <FormField
@@ -70,13 +81,7 @@ export default function PlayerRatingChartOptions({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  form.reset({
-                    showColoredDots: true,
-                    showDecay: true,
-                  });
-                  form.handleSubmit(onSubmit)();
-                }}
+                onClick={handleReset}
                 className="flex items-center gap-1"
               >
                 <X className="h-4 w-4" />

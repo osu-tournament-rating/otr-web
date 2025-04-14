@@ -6,6 +6,7 @@ import {
   MatchRejectionReason,
   MatchWarningFlags,
   Mods,
+  RatingAdjustmentType,
   Ruleset,
   ScoreGrade,
   ScoreProcessingStatus,
@@ -214,6 +215,27 @@ export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
     },
   },
 };
+
+export const RatingAdjustmentTypeEnumhelper: IEnumHelper<RatingAdjustmentType> =
+  {
+    ...defaultEnumHelper(),
+
+    metadata: {
+      [RatingAdjustmentType.Initial]: {
+        text: 'Initial',
+        description: 'The initial rating assigned by the processor',
+      },
+      [RatingAdjustmentType.Decay]: {
+        text: 'Decay',
+        description: 'Rating adjustment created as a result of decay',
+      },
+      [RatingAdjustmentType.Match]: {
+        text: 'Match',
+        description:
+          'Adjustment in rating based on performance in a tournament match',
+      },
+    },
+  };
 
 export const TournamentProcessingStatusEnumHelper: IEnumHelper<TournamentProcessingStatus> =
   {

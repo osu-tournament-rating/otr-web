@@ -27,12 +27,7 @@ export function StatCard({
       )}
     >
       {icon && (
-        <div
-          className={cn(
-            'flex items-center justify-center',
-            iconClassName
-          )}
-        >
+        <div className={cn('flex items-center justify-center', iconClassName)}>
           {icon}
         </div>
       )}

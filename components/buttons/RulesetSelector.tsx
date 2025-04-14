@@ -4,6 +4,7 @@ import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { RulesetButton } from './RulesetButton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { RulesetEnumHelper } from '@/lib/enums';
 
 export default function PlayerRulesetSelector() {
   const router = useRouter();
@@ -27,31 +28,25 @@ export default function PlayerRulesetSelector() {
 
   return (
     <div className="flex items-center gap-1 rounded-full bg-muted/50 fill-primary p-1">
-      <RulesetButton
-        ruleset={Ruleset.Osu}
-        isSelected={selectedRuleset === Ruleset.Osu}
-        onClick={() => handleRulesetChange(Ruleset.Osu)}
-      />
-      <RulesetButton
-        ruleset={Ruleset.Taiko}
-        isSelected={selectedRuleset === Ruleset.Taiko}
-        onClick={() => handleRulesetChange(Ruleset.Taiko)}
-      />
-      <RulesetButton
-        ruleset={Ruleset.Catch}
-        isSelected={selectedRuleset === Ruleset.Catch}
-        onClick={() => handleRulesetChange(Ruleset.Catch)}
-      />
-      <RulesetButton
-        ruleset={Ruleset.Mania4k}
-        isSelected={selectedRuleset === Ruleset.Mania4k}
-        onClick={() => handleRulesetChange(Ruleset.Mania4k)}
-      />
-      <RulesetButton
-        ruleset={Ruleset.Mania7k}
-        isSelected={selectedRuleset === Ruleset.Mania7k}
-        onClick={() => handleRulesetChange(Ruleset.Mania7k)}
-      />
+      {[
+        ...Object.entries(RulesetEnumHelper.metadata)
+          .keys()
+          .map((k) => {
+            const ruleset = k as Ruleset;
+            if (ruleset === Ruleset.ManiaOther) {
+              return;
+            }
+
+            return (
+              <RulesetButton
+                key={`ruleset-${k}`}
+                ruleset={ruleset}
+                isSelected={selectedRuleset === ruleset}
+                onClick={() => handleRulesetChange(ruleset)}
+              />
+            );
+          }),
+      ]}
     </div>
   );
 }

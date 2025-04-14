@@ -1,11 +1,11 @@
-import { PlayerDTO } from '@osu-tournament-rating/otr-api-client';
+import { PlayerCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
 import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
 
-export default function PlayerCard({ player }: { player: PlayerDTO }) {
+export default function PlayerCard({ player }: { player: PlayerCompactDTO }) {
   return (
     <Card className="flex flex-row flex-wrap justify-between bg-muted/50 p-4">
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
@@ -18,7 +18,7 @@ export default function PlayerCard({ player }: { player: PlayerDTO }) {
             <User className="h-16 w-16" />
           </AvatarFallback>
         </Avatar>
-        <p className="text-3xl font-medium">{player.username}</p>
+        <span className="text-3xl font-medium">{player.username}</span>
         <Link
           href={`https://osu.ppy.sh/u/${player.osuId}`}
           target="_blank"
@@ -27,9 +27,7 @@ export default function PlayerCard({ player }: { player: PlayerDTO }) {
           <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
         </Link>
       </div>
-      <div className="flex items-center">
-        <PlayerRulesetSelector />
-      </div>
+      <PlayerRulesetSelector />
     </Card>
   );
 }

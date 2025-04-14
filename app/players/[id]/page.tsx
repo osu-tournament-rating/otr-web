@@ -1,4 +1,5 @@
 import PlayerCard from '@/components/player/PlayerCard';
+import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
@@ -66,6 +67,9 @@ export default async function PlayerPage(props: PageProps) {
     ? (Number(searchParams.ruleset) as Ruleset)
     : Ruleset.Osu;
 
+  const modSum =
+    playerData.modStats?.reduce((sum, current) => sum + current.count, 0) ?? 0;
+
   return (
     <div className="mx-auto flex flex-col gap-2 p-4">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
@@ -84,13 +88,22 @@ export default async function PlayerPage(props: PageProps) {
               )[0].ratingAfter
             }
           />
-
           {/* Display mod statistics if available */}
-          {playerData.modStats && playerData.modStats.length > 0 && (
-            <PlayerModStatsChart modStats={playerData.modStats} />
+          {playerData.modStats && modSum >= 10 && (
+            <div className="flex flex-col justify-between gap-2 md:flex-row">
+              <PlayerModStatsChart
+                className="flex-1 md:w-80 md:flex-none lg:flex-1"
+                modStats={playerData.modStats}
+              />
+              <PlayerModCountChart
+                className="flex-1"
+                modStats={playerData.modStats}
+              />
+            </div>
           )}
         </>
       ) : (
+        // No ruleset data
         <Card className="p-6 font-sans">
           <PlayerCard player={playerData.playerInfo} />
           <div className="flex flex-col gap-4">
