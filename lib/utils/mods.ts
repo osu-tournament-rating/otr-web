@@ -35,7 +35,13 @@ export function normalizedScore(mods: Mods, score: number): number {
 }
 
 export function getModColor(mods: Mods) {
+  // Strip NF
+  mods &= ~Mods.NoFail;
+  console.log(mods);
+
   switch (mods) {
+    case Mods.None:
+      return 'var(--chart-1)';
     case Mods.HardRock:
       return 'var(--mod-hard-rock)';
     case Mods.Hidden:
@@ -51,7 +57,7 @@ export function getModColor(mods: Mods) {
     case Mods.Nightcore:
       return 'var(--mod-nightcore)';
     case Mods.Hidden | Mods.HardRock:
-      return 'var(--mod-hidden-hr)';
+      return 'var(--mod-hidden-hard-rock)';
     case Mods.Hidden | Mods.Easy:
       return 'var(--mod-hidden-easy)';
     case Mods.Easy | Mods.DoubleTime:
@@ -59,6 +65,6 @@ export function getModColor(mods: Mods) {
     case Mods.Hidden | Mods.Flashlight:
       return 'var(--mod-hidden-flashlight)';
     default:
-      return 'var(--chart-1)';
+      return 'var(--chart-2)';
   }
 }

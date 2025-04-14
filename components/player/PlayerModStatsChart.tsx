@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Cell } from 'recharts';
-import { Mods, PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
+import { BarChart, XAxis, YAxis, Bar, Cell } from 'recharts';
+import { PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { ModsEnumHelper } from '@/lib/enums';
-import { normalizedScore } from '@/lib/utils/mods';
+import { getModColor, normalizedScore } from '@/lib/utils/mods';
 import {
   ChartConfig,
   ChartContainer,
@@ -24,7 +24,7 @@ interface ChartDataEntry {
   label: string;
   averageScore: number;
   count: number;
-  color: string;
+  fill: string;
 }
 
 export default function PlayerModStatsChart({
@@ -34,29 +34,6 @@ export default function PlayerModStatsChart({
   className?: string;
   modStats: PlayerModStatsDTO[];
 }) {
-  const modColors = {
-    [Mods.HardRock]: 'var(--mod-hard-rock)',
-    [Mods.Hidden]: 'var(--mod-hidden)',
-    [Mods.DoubleTime]: 'var(--mod-double-time)',
-    [Mods.Nightcore]: 'var(--mod-nightcore)',
-    [Mods.Flashlight]: 'var(--mod-flashlight)',
-    [Mods.Easy]: 'var(--mod-easy)',
-    [Mods.Hidden | Mods.HardRock]: 'var(--mod-hd-hr)',
-    [Mods.Hidden | Mods.Easy]: 'var(--mod-hd-easy)',
-    [Mods.Easy | Mods.DoubleTime]: 'var(--mod-easy-double-time)',
-  };
-
-  function getModColor(mods: Mods) {
-    const removeNoFail = mods & ~Mods.NoFail;
-    for (const [mod, color] of Object.entries(modColors)) {
-      if (removeNoFail === Number(mod)) {
-        return color;
-      }
-    }
-
-    return 'var(--chart-1)';
-  }
-
   const chartConfig: ChartConfig = {
     averageScore: {
       label: 'Score',
@@ -103,7 +80,7 @@ export default function PlayerModStatsChart({
           label,
           averageScore: Math.round(weightedSum / totalCount),
           count: totalCount,
-          color: getModColor(stat.mods),
+          fill: getModColor(stat.mods),
         });
       } else {
         // Add new entry
@@ -111,7 +88,7 @@ export default function PlayerModStatsChart({
           label,
           averageScore: normalizedAverageScore,
           count,
-          color: getModColor(stat.mods),
+          fill: getModColor(stat.mods),
         });
       }
     });
@@ -119,13 +96,13 @@ export default function PlayerModStatsChart({
     // Filter for entries with count >= 10 and sort by average score (highest first)
     return Array.from(modMap.values())
       .filter((entry) => entry.count >= 10)
-      .map(({ label, averageScore, color }) => ({
+      .map(({ label, averageScore, fill }) => ({
         label,
         averageScore,
-        color,
+        fill,
       }))
       .sort((a, b) => b.averageScore - a.averageScore);
-  }, [modStats, getModColor]);
+  }, [modStats]);
 
   return (
     <Card className={className}>
@@ -155,10 +132,12 @@ export default function PlayerModStatsChart({
               tick={{ fontSize: 12 }}
               interval={0}
             />
-            <ChartTooltip content={<ChartTooltipContent color='var(--primary)' />} />
+            <ChartTooltip
+              content={<ChartTooltipContent />}
+            />
             <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={30}>
               {chartData.map((entry, index) => (
-                <Cell key={`bar-${index}`} fill={entry.color} />
+                <Cell key={`bar-${index}`} fill={entry.fill} />
               ))}
             </Bar>
           </BarChart>
