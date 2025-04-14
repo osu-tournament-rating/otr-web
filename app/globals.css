@@ -86,14 +86,15 @@
   --ring: hsl(221 83% 61%);
   --radius: 0.5rem;
   --chart-1: hsl(221 83% 61%);
-  --chart-2: hsl(173 58% 39%);
-  --chart-3: hsl(271, 66%, 58%);
-  --chart-4: hsl(43 74% 66%);
-  --chart-5: hsl(27 87% 67%);
-  --chart-6: hsl(2, 87%, 67%);
-  --chart-7: hsl(320, 87%, 67%);
-  --chart-8: hsl(133, 87%, 67%);
-  --chart-9: hsl(61, 87%, 67%);
+  --chart-1: hsl(221, 83%, 61%);
+  --chart-2: hsl(173, 83%, 61%);
+  --chart-3: hsl(271, 83%, 61%);
+  --chart-4: hsl(43, 83%, 61%);
+  --chart-5: hsl(27, 83%, 61%);
+  --chart-6: hsl(2, 83%, 61%);
+  --chart-7: hsl(320, 83%, 61%);
+  --chart-8: hsl(133, 83%, 61%);
+  --chart-9: hsl(61, 83%, 61%);
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: hsl(0 0% 20%);
@@ -111,12 +112,12 @@
   --text-bronze: hsl(27, 63%, 48%);
 
   /* Mod colors */
-  --mod-hard-rock: hsl(0, 74%, 57%);
-  --mod-hidden: hsla(56, 70%, 59%, 0.89);
-  --mod-double-time: hsl(261, 70%, 59%);
-  --mod-nightcore: hsl(276, 70%, 59%);
-  --mod-flashlight: hsl(239, 55%, 49%);
-  --mod-easy: hsla(118, 100%, 67%, 0.801);
+  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
+  --mod-hidden: hsl(49, 86%, 70%);
+  --mod-freemod: hsl(35, 82%, 74%);
+  --mod-flashlight: hsl(236, 36%, 39%);
+  --mod-easy: hsl(114, 86%, 69%);
+  --mod-double-time: hsl(251, 86%, 70%);
   --mod-hd-hr: hsla(337, 100%, 60%, 0.918);
   --mod-hd-easy: hsla(41, 100%, 64%, 0.945);
   --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
@@ -143,14 +144,15 @@
   --input: hsl(220 13% 16%);
   --ring: hsl(221 83% 61%);
   --chart-1: hsl(221 83% 61%);
-  --chart-2: hsl(173 58% 39%);
-  --chart-3: hsl(271, 66%, 58%);
-  --chart-4: hsl(43 74% 66%);
-  --chart-5: hsl(27 87% 67%);
-  --chart-6: hsl(2, 87%, 67%);
-  --chart-7: hsl(320, 87%, 67%);
-  --chart-8: hsl(133, 87%, 67%);
-  --chart-9: hsl(61, 87%, 67%);
+  --chart-1: hsl(221, 83%, 61%);
+  --chart-2: hsl(173, 83%, 61%);
+  --chart-3: hsl(271, 83%, 61%);
+  --chart-4: hsl(43, 83%, 61%);
+  --chart-5: hsl(27, 83%, 61%);
+  --chart-6: hsl(2, 83%, 61%);
+  --chart-7: hsl(320, 83%, 61%);
+  --chart-8: hsl(133, 83%, 61%);
+  --chart-9: hsl(61, 83%, 61%);
 
   /* Dark mode tier text colors */
   --text-elite-grandmaster: hsl(217, 100%, 70%);
@@ -163,12 +165,12 @@
   --text-bronze: hsl(27, 71%, 58%);
 
   /* Mod colors */
-  --mod-hard-rock: hsl(0, 74%, 57%);
-  --mod-hidden: hsla(56, 70%, 59%, 0.89);
-  --mod-double-time: hsl(261, 70%, 59%);
-  --mod-nightcore: hsl(276, 70%, 59%);
-  --mod-flashlight: hsl(239, 55%, 49%);
-  --mod-easy: hsla(118, 100%, 67%, 0.801);
+  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
+  --mod-hidden: hsl(49, 86%, 70%);
+  --mod-freemod: hsl(35, 82%, 74%);
+  --mod-flashlight: hsl(236, 36%, 39%);
+  --mod-easy: hsl(114, 86%, 69%);
+  --mod-double-time: hsl(251, 86%, 70%);
   --mod-hd-hr: hsla(337, 100%, 60%, 0.918);
   --mod-hd-easy: hsla(41, 100%, 64%, 0.945);
   --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
