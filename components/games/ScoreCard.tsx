@@ -10,6 +10,7 @@ import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import AdminNoteView from '../admin-notes/AdminNoteView';
+import Link from 'next/link';
 
 export default function ScoreCard({
   score,
@@ -55,7 +56,9 @@ export default function ScoreCard({
                 fill
               />
             </span>
-            <span className="font-bold">{player?.username}</span>
+            <Link href={`/players/${player?.id}`}>
+              <span className="font-bold">{player?.username}</span>
+            </Link>
           </div>
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
