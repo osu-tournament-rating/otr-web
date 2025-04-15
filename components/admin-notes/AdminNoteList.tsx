@@ -5,7 +5,7 @@ import {
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import AdminNoteCard from './AdminNoteCard';
+import AdminNoteListItem from './AdminNoteListItem';
 
 export default function AdminNotesList({
   entity,
@@ -18,7 +18,7 @@ export default function AdminNotesList({
     <ScrollArea className="max-h-48 space-y-4 px-2 not-odd:max-h-84">
       <div className="flex flex-col space-y-4">
         {notes.map((note) => (
-          <AdminNoteCard entity={entity} key={note.id} note={note} />
+          <AdminNoteListItem entity={entity} key={note.id} note={note} />
         ))}
       </div>
     </ScrollArea>
