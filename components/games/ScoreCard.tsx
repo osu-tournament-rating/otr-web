@@ -59,9 +59,17 @@ export default function ScoreCard({
           </div>
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
-            <div className="team-flex-row flex h-full max-w-20 items-center justify-end">
-              <ModIconset className="max-h-6" mods={score.mods} />
-            </div>
+            <ModIconset
+              className="team-flex-row flex h-full max-w-20 items-center justify-end"
+              iconClassName={cn(
+                'max-h-6',
+                // Clear left margin
+                'md:group-data-[team="Blue"]:not-first:ml-0 md:group-data-[team="Blue"]:peer-hover:not-first:ml-0 md:group-data-[team="Blue"]:hover:not-first:ml-0',
+                // Add right margin
+                'md:group-data-[team="Blue"]:not-first:-mr-4 md:group-data-[team="Blue"]:peer-hover:not-first:-mr-2 md:group-data-[team="Blue"]:hover:not-first:-mr-2'
+              )}
+              mods={score.mods}
+            />
             <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
             <span
               className={cn(

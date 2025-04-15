@@ -68,13 +68,12 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
               {game.beatmap.beatmapset?.title} [{game.beatmap.diffName}]
             </span>
           </div>
-          <div className="flex min-w-1/8 flex-row items-end justify-end">
-            <ModIconset
-              mods={game.mods}
-              freemod={game.isFreeMod}
-              className="max-h-8 sm:max-h-12"
-            />
-          </div>
+          <ModIconset
+            mods={game.mods}
+            freemod={game.isFreeMod}
+            className="flex min-w-1/8 flex-row items-end justify-end"
+            iconClassName="max-h-8 sm:max-h-12"
+          />
         </div>
       </div>
     </div>
