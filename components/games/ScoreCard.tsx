@@ -25,15 +25,6 @@ export default function ScoreCard({
       data-team={Team[score.team]}
       className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
     >
-      {/* Player propic bg */}
-      <div className="player-propic absolute top-1/2 z-[1] aspect-square w-3/5 transform-[translateY(-50%)_scale(1)]">
-        <Image
-          src={`https://s.ppy.sh/a/${player?.osuId}`}
-          alt={`${player?.username} profile picture`}
-          fill
-        />
-      </div>
-
       {/* Background team color overlay */}
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
 
@@ -52,7 +43,7 @@ export default function ScoreCard({
       </div>
 
       {/* Content */}
-      <div className="flex size-full flex-col px-2">
+      <div className="flex size-full flex-col gap-2 px-2">
         {/* Top row */}
         <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
@@ -68,7 +59,7 @@ export default function ScoreCard({
           </div>
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
-            <div className="flex h-full max-w-20 flex-row items-center justify-end">
+            <div className="team-flex-row flex h-full max-w-20 items-center justify-end">
               <ModIconset className="max-h-6" mods={score.mods} />
             </div>
             <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>

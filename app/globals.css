@@ -214,7 +214,6 @@
       var(--foreground) 60%,
       var(--team-color) 40%
     );
-    --player-propic-mask-dir: 90deg;
 
     @apply order-1 w-full;
 
@@ -224,15 +223,6 @@
 
     .team-flex-col {
       flex-direction: var(--team-flex-col-dir);
-    }
-
-    .player-propic {
-      mask-image: linear-gradient(
-        var(--player-propic-mask-dir),
-        rgba(0, 0, 0, 0.4) 0,
-        rgba(0, 0, 0, 0.25) 45%,
-        transparent
-      );
     }
 
     .performance-group {
@@ -270,6 +260,10 @@
       @media (width >= 48rem) {
         @apply pr-0.5;
       }
+
+      .performance-group {
+        @apply first:ml-0;
+      }
     }
 
     &[data-team='Blue'] {
@@ -281,13 +275,8 @@
       @media (width >= 48rem) {
         --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
-        --player-propic-mask-dir: 270deg;
 
         @apply flex-row-reverse pl-0.5;
-
-        .player-propic {
-          @apply right-0;
-        }
       }
     }
   }
