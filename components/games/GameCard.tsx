@@ -66,7 +66,7 @@ export default function GameCard({
   return (
     <div className="flex flex-col space-y-2 rounded-xl bg-secondary p-3">
       <GameCardHeader game={game} />
-      <div className="flex flex-row flex-wrap">
+      <div className="flex flex-row flex-wrap gap-1 md:gap-0">
         {/* Team containers */}
         {Object.entries(scoreMap).map(([team, scores]) => (
           <div
