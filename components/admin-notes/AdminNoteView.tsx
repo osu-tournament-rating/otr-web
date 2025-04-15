@@ -61,11 +61,14 @@ export default function AdminNoteView({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="font-sans">
         <DialogHeader>
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
-            Viewing admin notes for <span className='font-semibold'>{entityMetadata.text} {props.entityId}</span>
+            Viewing admin notes for{' '}
+            <span className="font-semibold">
+              {entityMetadata.text} {props.entityId}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <AdminNoteForm {...props} />

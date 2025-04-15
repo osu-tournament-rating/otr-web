@@ -32,7 +32,6 @@ export default function ScoreCard({
       {/* Team color on the side of the card */}
       <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-7">
         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
-          <ScoreAdminView score={score} />
           <AdminNoteView
             notes={score.adminNotes}
             props={{
@@ -40,6 +39,7 @@ export default function ScoreCard({
               entityId: score.id,
             }}
           />
+          <ScoreAdminView score={score} />
         </div>
       </div>
 
