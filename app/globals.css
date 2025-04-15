@@ -225,25 +225,21 @@
       flex-direction: var(--team-flex-col-dir);
     }
 
-    .performance-group {
-      @apply first:ml-auto;
+    .performance-item {
+      @apply flex flex-col items-start justify-center;
 
-      .performance-item {
-        @apply flex flex-col items-start justify-center;
+      .label {
+        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
+      }
 
-        .label {
-          @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
-        }
+      .value {
+        @apply text-base tracking-tighter;
 
-        .value {
-          @apply text-base tracking-tighter;
-
-          color: color-mix(
-            in oklab,
-            var(--foreground) 90%,
-            var(--team-color) 10%
-          );
-        }
+        color: color-mix(
+          in oklab,
+          var(--foreground) 90%,
+          var(--team-color) 10%
+        );
       }
     }
 
@@ -259,10 +255,6 @@
       /* --var(--breakpoint-md) */
       @media (width >= 48rem) {
         @apply pr-0.5;
-      }
-
-      .performance-group {
-        @apply first:ml-0;
       }
     }
 
