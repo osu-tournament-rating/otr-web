@@ -14,7 +14,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl font-sans">
       {/* Beatmap bg dim */}
-      <div className="bg:black absolute inset-0 z-2 h-full w-full bg-black/20 dark:bg-black/40" />
+      <div className="bg:black absolute inset-0 z-2 h-full w-full bg-black/20 dark:bg-black/50" />
       {/* Beatmap bg */}
       <Image
         className="absolute z-1 rounded-xl object-cover"
@@ -60,9 +60,15 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         {/* Bottom row */}
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
           <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
-            <span className="truncate text-xs sm:text-sm">
-              Set by {game.beatmap.beatmapset?.creator?.username} • Map by{' '}
-              {game.beatmap.creators.map((c) => c.username).join(',')}
+            <span className="flex gap-1 truncate text-xs sm:text-sm">
+              <span>Set by</span>
+              <span className="font-semibold">
+                {game.beatmap.beatmapset?.creator?.username}
+              </span>
+              <span>• Map by</span>
+              <span className="font-semibold">
+                {game.beatmap.creators.map((c) => c.username).join(',')}
+              </span>
             </span>
             <span className="truncate text-sm font-bold sm:text-xl">
               {game.beatmap.beatmapset?.title} [{game.beatmap.diffName}]
