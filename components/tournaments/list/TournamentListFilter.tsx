@@ -21,12 +21,7 @@ import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enums';
-import {
-  SelectionGroup,
-  SelectionGroupItem,
-} from '@/components/ui/selection-group';
-
-const rulesetSelectItems: {};
+import { useIntersectionObserver } from '@uidotdev/usehooks';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -90,19 +85,22 @@ export default function TournamentListFilter({
         const query =
           searchParams.size > 0 ? '?' + searchParams.toString() : '';
 
-        router.push(pathName + query);
+        router.push(pathName + query, { scroll: false });
       })()
     );
 
     return () => unsubscribe();
   }, [watch, handleSubmit, filter, router, pathName]);
 
+  const [ref, entry] = useIntersectionObserver();
+
   return (
     <Form {...form}>
       <form>
-        <div className="flex flex-col">
+        {/* Hero */}
+        <div ref={ref} className="flex flex-col">
           {/* Input based filters */}
-          <div className="flex flex-col p-4">
+          <div className="flex flex-col gap-2 p-4">
             {/* Search bar */}
             <div className="relative w-full">
               <FormField
@@ -122,71 +120,43 @@ export default function TournamentListFilter({
               />
               <Search className="absolute inset-y-1/6 right-2" />
             </div>
+            {/* Ruleset */}
             <FormField
               control={form.control}
               name="ruleset"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <SelectionGroup
-                      {...field}
-                      value={String(field.value)}
-                      onValueChange={(val) => field.onChange(Number(val))}
-                    >
-                      {Object.entries(RulesetEnumHelper.metadata)
-                        .filter(
-                          ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
-                        )
-                        .map(([ruleset, { text }]) => (
-                          <SelectionGroupItem
-                            key={`sort-${ruleset}`}
-                            className="justify-items-center gap-1"
-                            value={ruleset}
-                            aria-label={Ruleset[Number(ruleset)]}
-                          >
-                            <RulesetIcon
-                              ruleset={Number(ruleset)}
-                              className="size-6 fill-foreground"
-                            />
-                            <span className="hidden md:block">{text}</span>
-                          </SelectionGroupItem>
-                        ))}
-                    </SelectionGroup>
-                    {/* <ToggleGroup
+                    <ToggleGroup
                       className="w-full gap-2"
                       {...field}
                       value={String(field.value)}
-                      onValueChange={(val) => field.onChange(Number(val))}
+                      onValueChange={(val) => {
+                        field.onChange(val === '' ? undefined : Number(val));
+                        console.log(val);
+                      }}
                       type="single"
                     >
                       {Object.entries(RulesetEnumHelper.metadata)
                         .filter(
                           ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
                         )
-                        .map(([ruleset]) => (
+                        .map(([ruleset, { text }]) => (
                           <ToggleGroupItem
-                            key={`sort-${ruleset}`}
-                            className="px-0"
+                            key={`sort-ruleset-${ruleset}`}
+                            className="flex w-fit flex-auto text-foreground first:rounded-l-none last:rounded-r-none data-[state=on]:text-primary"
                             value={ruleset}
-                            aria-label={Ruleset[Number(ruleset)]}
-                            onClick={(e) => {
-                              if (field.value === Number(ruleset)) {
-                                e.preventDefault();
-                              }
-                            }}
+                            aria-checked={field.value === Number(ruleset)}
                           >
                             <RulesetIcon
                               ruleset={Number(ruleset)}
-                              className={cn(
-                                'size-5',
-                                field.value === Number(ruleset)
-                                  ? 'fill-primary'
-                                  : 'fill-foreground'
-                              )}
+                              className="size-5"
+                              fill="currentColor"
                             />
+                            <span>{text}</span>
                           </ToggleGroupItem>
                         ))}
-                    </ToggleGroup> */}
+                    </ToggleGroup>
                   </FormControl>
                 </FormItem>
               )}
@@ -249,6 +219,21 @@ export default function TournamentListFilter({
               );
             }}
           />
+        </div>
+
+        {/* Sticky, appears when hero section is not visible */}
+        <div
+          className={cn(
+            'fixed top-0 right-0 left-0 z-40 mx-auto hidden w-full px-5 transition-all duration-300 md:max-w-4xl xl:max-w-6xl',
+            // Hidden until intersection observer is available
+            entry && 'flex',
+            // Animate slide-in from behind navbar
+            entry?.isIntersecting
+              ? 'top-0 -translate-y-0 opacity-0'
+              : 'top-[65px] translate-y-0 opacity-100'
+          )}
+        >
+          <div className="h-12 w-full border border-t-0 bg-purple-400"></div>
         </div>
       </form>
     </Form>

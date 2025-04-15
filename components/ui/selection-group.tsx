@@ -6,20 +6,20 @@ import { cn } from '@/lib/utils';
 type SelectionGroupProps = {
   defaultValue?: string;
   value?: string;
-  onValueChange?: (value: string) => void;
+  onValueChange?: (value?: string) => void;
   className?: string;
   children: React.ReactNode;
 };
 
 type SelectionGroupItemProps = {
-  value: string;
+  value?: string;
   className?: string;
   children: React.ReactNode;
 };
 
 const SelectionGroupContext = React.createContext<{
   value: string | undefined;
-  onValueChange: (value: string) => void;
+  onValueChange: (value?: string) => void;
 }>({
   value: undefined,
   onValueChange: () => {},
@@ -38,7 +38,7 @@ const SelectionGroup = React.forwardRef<HTMLDivElement, SelectionGroupProps>(
     const currentValue = value !== undefined ? value : selectedValue;
 
     const handleValueChange = React.useCallback(
-      (value: string) => {
+      (value?: string) => {
         if (onValueChange) {
           onValueChange(value);
         } else {
@@ -47,24 +47,6 @@ const SelectionGroup = React.forwardRef<HTMLDivElement, SelectionGroupProps>(
       },
       [onValueChange]
     );
-
-    // If no value is selected and we have children, select the first item
-    React.useEffect(() => {
-      if (currentValue === undefined && React.Children.count(children) > 0) {
-        // Find the first toggle item's value
-        React.Children.forEach(children, (child) => {
-          if (
-            React.isValidElement(child) &&
-            typeof child.props === 'object' &&
-            child.props !== null &&
-            'value' in child.props &&
-            currentValue === undefined
-          ) {
-            handleValueChange(child.props.value as string);
-          }
-        });
-      }
-    }, [children, currentValue, handleValueChange]);
 
     return (
       <SelectionGroupContext.Provider

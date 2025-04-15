@@ -13,8 +13,8 @@ export default async function Page({ searchParams }: PageSearchParams) {
   const filter = tournamentListFilterSchema.parse(await searchParams);
 
   return (
-    <div className="my-4 rounded-lg bg-[color-mix(in_hsl,var(--background)_85%,var(--primary))]">
-      <div className="flex flex-row items-center gap-2 rounded-t-lg border-b border-b-secondary-foreground bg-[color-mix(in_hsl,var(--primary)_35%,var(--background))] p-4">
+    <div className="my-4 rounded-lg bg-card-alt">
+      <div className="flex flex-row items-center gap-2 rounded-t-lg border-b border-b-accent-foreground bg-[color-mix(in_hsl,var(--primary)_35%,var(--background))] p-4">
         <Trophy />
         <h1 className="text-xl font-bold">Tournaments</h1>
       </div>
