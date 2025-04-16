@@ -8,7 +8,7 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Trophy } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
 import {
@@ -233,7 +233,31 @@ export default function TournamentListFilter({
               : 'top-[65px] translate-y-0 opacity-100'
           )}
         >
-          <div className="h-12 w-full border border-t-0 bg-purple-400"></div>
+          <div className="flex w-full flex-col gap-2 border border-t-0 border-muted bg-secondary p-2">
+            <div className="flex flex-row items-center gap-1 text-sm font-semibold text-primary">
+              <Trophy className="size-4" />
+              Tournaments
+            </div>
+            <div className="relative w-full">
+              <FormField
+                control={form.control}
+                name="searchQuery"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="type to search"
+                        type="search"
+                        className="h-7 text-sm"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Search className="absolute inset-y-1/6 right-2 size-4" />
+            </div>
+          </div>
         </div>
       </form>
     </Form>
