@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronUp, Search, Trophy } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Ruleset,
   TournamentQuerySortType,
@@ -21,7 +21,7 @@ import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enums';
-import { useIntersectionObserver } from '@uidotdev/usehooks';
+import { useDebounce, useIntersectionObserver } from '@uidotdev/usehooks';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -47,9 +47,16 @@ export default function TournamentListFilter({
 }: {
   filter: z.infer<typeof tournamentListFilterSchema>;
 }) {
+  const [searchQuery, setSearchQuery] = useState(filter.searchQuery);
+  const debouncedQuery = useDebounce(searchQuery, 500);
+
+  const handleSetQuery = (input: string) => {
+    setSearchQuery(input.trim());
+  };
+
   const form = useForm<z.infer<typeof tournamentListFilterSchema>>({
     resolver: zodResolver(tournamentListFilterSchema),
-    values: filter,
+    values: { ...filter, searchQuery: debouncedQuery },
     mode: 'all',
   });
 
@@ -111,6 +118,8 @@ export default function TournamentListFilter({
                     <FormControl>
                       <Input
                         {...field}
+                        value={searchQuery}
+                        onChange={(e) => handleSetQuery(e.target.value)}
                         placeholder="type to search"
                         type="search"
                       />
