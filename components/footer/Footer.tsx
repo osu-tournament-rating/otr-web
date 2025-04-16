@@ -15,7 +15,12 @@ const navItems = [
   {
     parent: 'Contact',
     title: 'Status',
-    href: 'https://status.otr.stagec.xyz/',
+    href: 'https://status.stagec.xyz/',
+  },
+  {
+    parent: 'Contribute',
+    title: 'Donate',
+    href: 'https://buymeacoffee.com/stagecodes',
   },
   {
     parent: 'Contribute',
