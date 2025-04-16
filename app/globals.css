@@ -110,6 +110,8 @@
   --text-gold: hsl(43, 69%, 57%);
   --text-silver: hsl(0, 0%, 40%);
   --text-bronze: hsl(27, 63%, 48%);
+
+  --header-height-px: calc(var(--spacing) * 16);
 }
 
 .dark {

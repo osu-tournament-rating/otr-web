@@ -60,72 +60,70 @@ export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-b-muted bg-secondary px-4 shadow-sm">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src={'/logos/small.svg'}
-              alt="o!TR Logo"
-              width={36}
-              height={36}
-              className="transition-transform hover:scale-105"
-            />
-          </Link>
+    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-secondary px-4 shadow-sm">
+      <div className="flex items-center gap-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src={'/logos/small.svg'}
+            alt="o!TR Logo"
+            width={36}
+            height={36}
+            className="transition-transform hover:scale-105"
+          />
+        </Link>
 
-          {/* Main nav */}
-          <NavigationMenu viewport={false} className="hidden md:flex">
-            <NavigationMenuList className="gap-1">
-              {navItems.map((item) => (
-                <NavigationItem key={item.title} {...item} />
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+        {/* Main nav */}
+        <NavigationMenu viewport={false} className="hidden md:flex">
+          <NavigationMenuList className="gap-1">
+            {navItems.map((item) => (
+              <NavigationItem key={item.title} {...item} />
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <SearchDialog />
+        <ModeToggle />
+        <SupportButton />
+        <div className="hidden md:block">
+          <ClientOnly>
+            <ProfileCard />
+          </ClientOnly>
         </div>
 
-        <div className="flex items-center gap-2">
-          <SearchDialog />
-          <ModeToggle />
-          <SupportButton />
-          <div className="hidden md:block">
-            <ClientOnly>
-              <ProfileCard />
-            </ClientOnly>
-          </div>
+        {/* Mobile menu */}
+        <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
+          <MobileNavTrigger isOpen={isMobileNavOpen} />
+          <SheetContent
+            overlay={false}
+            closeButton={false}
+            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-secondary p-6 sm:max-w-xs md:hidden"
+          >
+            {/* Required for screen reader */}
+            <DialogTitle hidden />
 
-          {/* Mobile menu */}
-          <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
-            <MobileNavTrigger isOpen={isMobileNavOpen} />
-            <SheetContent
-              overlay={false}
-              closeButton={false}
-              className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-secondary p-6 sm:max-w-xs md:hidden"
-            >
-              {/* Required for screen reader */}
-              <DialogTitle hidden />
-
-              <div className="flex flex-col space-y-6">
-                <ClientOnly>
-                  <ProfileCard />
-                </ClientOnly>
-                <Separator className="bg-muted" />
-                <nav className="flex flex-col space-y-1">
-                  <NavigationMenu
-                    viewport={false}
-                    className="contents justify-start"
-                  >
-                    <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
-                      {navItems.map((item) => (
-                        <NavigationItem isMobile key={item.title} {...item} />
-                      ))}
-                    </NavigationMenuList>
-                  </NavigationMenu>
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+            <div className="flex flex-col space-y-6">
+              <ClientOnly>
+                <ProfileCard />
+              </ClientOnly>
+              <Separator className="bg-muted" />
+              <nav className="flex flex-col space-y-1">
+                <NavigationMenu
+                  viewport={false}
+                  className="contents justify-start"
+                >
+                  <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
+                    {navItems.map((item) => (
+                      <NavigationItem isMobile key={item.title} {...item} />
+                    ))}
+                  </NavigationMenuList>
+                </NavigationMenu>
+              </nav>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );

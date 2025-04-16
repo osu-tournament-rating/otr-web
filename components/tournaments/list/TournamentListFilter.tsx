@@ -239,7 +239,7 @@ export default function TournamentListFilter({
             // Animate slide-in from behind navbar
             entry?.isIntersecting
               ? 'top-0 -translate-y-0 opacity-0'
-              : 'top-[65px] translate-y-0 opacity-100'
+              : 'top-(--header-height-px) translate-y-0 opacity-100'
           )}
         >
           <div className="flex w-full flex-col gap-2 border border-t-0 border-muted bg-secondary p-2">
