@@ -43,6 +43,7 @@ export interface AdminNoteFormProps {
 export default function AdminNoteForm({
   entityId,
   entity,
+  entityName,
 }: AdminNoteFormProps) {
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
@@ -53,6 +54,7 @@ export default function AdminNoteForm({
 
   const { data: session } = useSession();
   const entityMetadata = AdminNoteRouteTargetEnumHelper.getMetadata(entity);
+  const entityDisplayName = entityName ?? `${entityMetadata.text} ${entityId}`;
 
   if (!session?.user?.scopes?.includes(Roles.Admin)) {
     return null;
@@ -66,13 +68,9 @@ export default function AdminNoteForm({
         body: data.note,
       });
 
-      toast.success(
-        `Created admin note for ${entityMetadata.text} ${entityId}`
-      );
+      toast.success(`Created admin note for ${entityDisplayName}`);
     } catch {
-      toast.error(
-        `Failed to create admin note for ${entityMetadata.text} ${entityId}`
-      );
+      toast.error(`Failed to create admin note for ${entityDisplayName}`);
     }
   }
 
