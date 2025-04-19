@@ -93,11 +93,8 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     return null;
   }
 
-  async function handleSubmitWithNote(
-    values: z.infer<typeof scoreEditFormSchema>
-  ) {
+  async function submitScorePatch(values: z.infer<typeof scoreEditFormSchema>) {
     try {
-      console.log(createPatchOperations(score, values));
       const patchedScore = await update({
         id: score.id,
         body: createPatchOperations(score, values),
@@ -126,7 +123,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     }
   }
 
-  async function onSubmit(values: z.infer<typeof scoreEditFormSchema>) {
+  async function handleSubmit(values: z.infer<typeof scoreEditFormSchema>) {
     // Check if any score-related fields were modified (excluding verification/processing status)
     const scoreFields = [
       'score',
@@ -152,7 +149,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       setPendingSubmit(values);
       setShowNotePrompt(true);
     } else {
-      await handleSubmitWithNote(values);
+      await submitScorePatch(values);
     }
   }
 
@@ -170,7 +167,10 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
             <DialogDescription>Editing Score {score.id}</DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <div className="flex gap-5">
                 <FormField
                   control={form.control}
@@ -276,6 +276,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                           step="any"
                           min={0}
                           max={100}
+                          disabled // Calculated server-side from judgements
                           {...field}
                         />
                       </FormControl>
@@ -542,9 +543,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() =>
-                pendingSubmit && handleSubmitWithNote(pendingSubmit)
-              }
+              onClick={() => pendingSubmit && submitScorePatch(pendingSubmit)}
               disabled={!adminNote.trim()}
             >
               Confirm Changes
