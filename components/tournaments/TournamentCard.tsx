@@ -59,11 +59,9 @@ export default function TournamentCard({
             <div>
               <AdminNoteView
                 notes={tournament.adminNotes ?? []}
-                props={{
-                  entity: AdminNoteRouteTarget.Tournament,
-                  entityId: tournament.id,
-                  entityName: tournament.name,
-                }}
+                entity={AdminNoteRouteTarget.Tournament}
+                entityId={tournament.id}
+                entityDisplayName={tournament.name}
               />
               <TournamentAdminView tournament={tournament} />
             </div>

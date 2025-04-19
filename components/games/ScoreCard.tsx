@@ -34,10 +34,8 @@ export default function ScoreCard({
         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
           <AdminNoteView
             notes={score.adminNotes}
-            props={{
-              entity: AdminNoteRouteTarget.GameScore,
-              entityId: score.id,
-            }}
+            entity={AdminNoteRouteTarget.GameScore}
+            entityId={score.id}
           />
           <ScoreAdminView score={score} />
         </div>

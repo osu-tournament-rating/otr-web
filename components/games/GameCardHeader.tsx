@@ -49,10 +49,8 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
             </span>
             <AdminNoteView
               notes={game.adminNotes}
-              props={{
-                entity: AdminNoteRouteTarget.Game,
-                entityId: game.id,
-              }}
+              entity={AdminNoteRouteTarget.Game}
+              entityId={game.id}
             />
             <GameAdminView game={game} />
           </div>

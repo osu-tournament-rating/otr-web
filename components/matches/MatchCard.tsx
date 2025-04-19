@@ -17,7 +17,7 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
   const displayGames = hasGames ? games.slice(0, 15) : [];
 
   return (
-    <Card className="mx-4 border-0 bg-secondary px-0.5 lg:px-0 py-2">
+    <Card className="mx-4 border-0 bg-secondary px-0.5 py-2 lg:px-0">
       <div className="relative mx-2 flex h-32 flex-col overflow-hidden rounded-xl font-sans">
         {/* Background collage */}
         <div className="absolute inset-0 z-1 flex overflow-hidden blur-xs">
@@ -78,12 +78,10 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
                 {formatUTCDate(new Date(match.startTime ?? ''))}
               </span>
               <AdminNoteView
-                props={{
-                  entity: AdminNoteRouteTarget.Match,
-                  entityId: match.id,
-                  entityName: match.name,
-                }}
                 notes={match.adminNotes ?? []}
+                entity={AdminNoteRouteTarget.Match}
+                entityId={match.id}
+                entityDisplayName={match.name}
               />
               <MatchAdminView match={match} />
             </div>
