@@ -118,7 +118,7 @@ export default function AdminNoteView({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="font-sans">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>

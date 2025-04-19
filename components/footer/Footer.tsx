@@ -44,7 +44,7 @@ export default function Footer() {
   }, {});
 
   return (
-    <footer className="bg-card font-sans">
+    <footer className="bg-card">
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="flex justify-center">
           <div className="grid grid-cols-2 gap-x-16 gap-y-8 md:grid-cols-4">

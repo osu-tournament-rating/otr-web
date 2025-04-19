@@ -24,7 +24,7 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
+      className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 **:z-10"
     >
       {/* Background team color overlay */}
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />

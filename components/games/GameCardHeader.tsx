@@ -12,7 +12,7 @@ import AdminNoteView from '../admin-notes/AdminNoteView';
 
 export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
-    <div className="relative flex h-32 flex-col overflow-hidden rounded-xl font-sans">
+    <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg dim */}
       <div className="bg:black absolute inset-0 z-2 h-full w-full bg-black/20 dark:bg-black/50" />
       {/* Beatmap bg */}

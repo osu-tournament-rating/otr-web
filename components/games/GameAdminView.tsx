@@ -88,9 +88,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
 
       form.reset(patchedGame);
       saveToast();
-    } catch (error) {
+    } catch {
       errorSaveToast();
-      console.error('Failed to save patched game', error, values);
     }
   }
 
@@ -298,9 +297,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isValid || !form.formState.isDirty
-                }
+                disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

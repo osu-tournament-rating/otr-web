@@ -69,9 +69,8 @@ export default function TournamentAdminView({
       });
       form.reset(patchedTournament);
       saveToast();
-    } catch (error) {
+    } catch {
       errorSaveToast();
-      console.error('Failed to save patched tournament', error, values);
     }
   }
 

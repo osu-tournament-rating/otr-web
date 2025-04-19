@@ -1,7 +1,6 @@
 import GameCard from '@/components/games/GameCard';
 import MatchCard from '@/components/matches/MatchCard';
 import { Card } from '@/components/ui/card';
-// import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { get } from '@/lib/actions/matches';
 import { Metadata } from 'next';
 
@@ -42,17 +41,4 @@ export default async function Page({ params }: PageProps) {
       </div>
     </Card>
   );
-
-  {
-    /* <Tabs defaultValue="games" className="rounded-2xl bg-card">
-        <TabsList>
-          <TabsTrigger value="games">Games</TabsTrigger>
-          <TabsTrigger value="else">Something Else</TabsTrigger>
-        </TabsList>
-        <TabsContent value="games"></TabsContent>
-        <TabsContent value="other">
-          <h1>SOMETHING ELSE</h1>
-        </TabsContent>
-      </Tabs> */
-  }
 }

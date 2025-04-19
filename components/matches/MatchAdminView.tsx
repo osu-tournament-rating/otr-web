@@ -78,9 +78,8 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
 
       form.reset(patchedMatch);
       saveToast();
-    } catch (error) {
+    } catch {
       errorSaveToast();
-      console.error('Failed to save patched match', error, values);
     }
   }
 

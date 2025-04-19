@@ -118,9 +118,8 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       // Reset forms
       form.reset(patchedScore);
       setAdminNote('');
-    } catch (error) {
+    } catch {
       errorSaveToast();
-      console.error('Failed to save patched score', error, values);
     } finally {
       setShowNotePrompt(false);
       setPendingSubmit(null);

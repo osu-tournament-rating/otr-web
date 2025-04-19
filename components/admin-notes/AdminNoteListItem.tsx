@@ -48,9 +48,8 @@ export default function AdminNoteListItem({
         entity,
       });
       toast.success('Note deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete note');
-      console.error('Failed to delete note', error);
     }
   };
 
@@ -62,14 +61,13 @@ export default function AdminNoteListItem({
         body: editedNote,
       });
       toast.success('Note updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update note');
-      console.error('Failed to update note', error);
     }
   };
 
   return (
-    <div className="flex flex-col font-sans">
+    <div className="flex flex-col">
       <p className="text-foreground">{note.note}</p>
       <div className="flex items-end gap-2">
         <p className="text-sm text-muted-foreground">
