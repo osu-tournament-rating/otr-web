@@ -6,6 +6,15 @@ on:
     tags:
       - v*
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -28,20 +37,21 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
+
   deploy:
     needs: publish
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment:
+        include:
           - name: Staging
-            condition: ${{ github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch' }}
             tag: latest
+            should_deploy: ${{ github.ref == 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging') }}
           - name: Production
-            condition: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
             tag: ${{ github.ref_name }}
-    environment: ${{ matrix.environment.name }}
-    if: ${{ matrix.environment.condition }}
+            should_deploy: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') }}
+    if: ${{ matrix.should_deploy == true }}
+    environment: ${{ matrix.name }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -62,10 +72,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.tag }}
             docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker run -d -p 3000:3000 --restart always \
               --name ${{ secrets.DOCKER_IMAGE_NAME }} \
               --env-file ${{ secrets.SSH_TARGET_DIR }}/.env \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.environment.tag }}
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ matrix.tag }}
