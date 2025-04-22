@@ -40,3 +40,4 @@ jobs:
     uses: osu-tournament-rating/otr-web/.github/workflows/deploy.yml@master
     with:
       target: ${{ needs.determine-environment.outputs.target }}
+    secrets: inherit
