@@ -8,7 +8,7 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronUp, Search, Trophy } from 'lucide-react';
+import { ChevronDown, Search, Trophy } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import {
@@ -194,7 +194,7 @@ export default function TournamentListFilter({
                       {sortToggleItems.map(({ value, text }) => (
                         <ToggleGroupItem
                           key={`sort-${value}`}
-                          className="flex flex-auto cursor-pointer rounded-xl"
+                          className="group flex flex-auto cursor-pointer rounded-xl"
                           value={value.toString()}
                           aria-label={TournamentQuerySortType[value]}
                           onClick={(e) => {
@@ -205,21 +205,15 @@ export default function TournamentListFilter({
                           }}
                         >
                           {text}
-                          {descending ? (
-                            <ChevronDown
-                              className={cn(
-                                'opacity-0',
-                                field.value === value && 'opacity-100'
-                              )}
-                            />
-                          ) : (
-                            <ChevronUp
-                              className={cn(
-                                'opacity-0',
-                                field.value === value && 'opacity-100'
-                              )}
-                            />
-                          )}
+                          <ChevronDown
+                            className={cn(
+                              'opacity-0 group-hover:opacity-100',
+                              field.value === value && 'opacity-100',
+                              field.value === value &&
+                                !descending &&
+                                'rotate-180'
+                            )}
+                          />
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
