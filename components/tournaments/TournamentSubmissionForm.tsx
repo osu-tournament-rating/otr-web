@@ -113,11 +113,11 @@ export default function TournamentSubmissionForm() {
 
       form.reset();
       toast.success(
-        <div className='flex flex-col gap-2'>
+        <div className="flex flex-col gap-2">
           <span>Tournament submitted successfully</span>
-          <Link className='flex flex-row gap-1 items-center' href={'/'}>
-            <LinkIcon className='size-4 text-primary' />
-            <span className='text-primary'>Check it out!</span>
+          <Link className="flex flex-row items-center gap-1" href={'/'}>
+            <LinkIcon className="size-4 text-primary" />
+            <span className="text-primary">Check it out!</span>
           </Link>
         </div>
       );

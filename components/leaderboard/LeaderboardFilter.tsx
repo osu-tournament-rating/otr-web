@@ -53,8 +53,8 @@ export default function LeaderboardFilter({
     values: filter,
     defaultValues: defaultLeaderboardFilterValues,
     resetOptions: {
-      keepDirtyValues: true
-    }
+      keepDirtyValues: true,
+    },
   });
 
   const router = useRouter();

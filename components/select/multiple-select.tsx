@@ -48,7 +48,7 @@ export function MultipleSelect({
   badgeClassName,
   disabled = false,
   maxDisplayItems = 3,
-  invalid
+  invalid,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');

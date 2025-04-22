@@ -33,7 +33,9 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
 
 /** Schema that ensures a numeric input is assignable to a given enumeration */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
-  z.coerce.number({ invalid_type_error: 'Required' }).refine((val) => Object.values(enumType).includes(val));
+  z.coerce
+    .number({ invalid_type_error: 'Required' })
+    .refine((val) => Object.values(enumType).includes(val));
 
 /** Schema that will convert string input of 'true' or 'false' to a boolean */
 const booleanStringSchema = z

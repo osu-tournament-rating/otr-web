@@ -6,7 +6,6 @@ import { ApiItemType } from '@/lib/types';
 import { TriangleAlertIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Badge } from '../ui/badge';
-import { toast } from 'sonner';
 
 export default function WarningFlagsBadge({
   itemType,
