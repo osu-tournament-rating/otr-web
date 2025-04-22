@@ -273,9 +273,7 @@ export default function TournamentAdminView({
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isValid || !form.formState.isDirty
-                }
+                disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

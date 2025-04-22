@@ -6,6 +6,7 @@ import {
   TournamentsGetRequestParams,
   TournamentSubmissionDTO,
   TournamentsUpdateRequestParams,
+  TournamentsListRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
 
@@ -42,6 +43,11 @@ const getCached = cache(async (id: number, verified?: boolean) => {
   const { result } = await tournaments.get({ id, verified });
   return result;
 });
+
+export async function getTournamentsList(params: TournamentsListRequestParams) {
+  const { result } = await tournaments.list(params);
+  return result;
+}
 
 export async function update(params: TournamentsUpdateRequestParams) {
   const { result } = await tournaments.update(params);

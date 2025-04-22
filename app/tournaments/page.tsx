@@ -1,22 +1,25 @@
-import TournamentCard from '@/components/tournaments/TournamentCard';
-import { tournaments } from '@/lib/api';
-import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
+import { Metadata } from 'next';
+import { PageSearchParams } from '@/lib/types';
+import { tournamentListFilterSchema } from '@/lib/schema';
+import TournamentListFilter from '@/components/tournaments/list/TournamentListFilter';
+import TournamentList from '@/components/tournaments/list/TournamentList';
+import { Trophy } from 'lucide-react';
 
-export default async function Page() {
-  const tournamentData = await tournaments.list({
-    page: 3,
-    pageSize: 75,
-    verified: false,
-    sort: TournamentQuerySortType.EndTime,
-  });
+export const metadata: Metadata = {
+  title: 'Tournaments',
+};
+
+export default async function Page({ searchParams }: PageSearchParams) {
+  const filter = tournamentListFilterSchema.parse(await searchParams);
 
   return (
-    <>
-      {tournamentData.result.map((t) => (
-        <div className="mt-2 flex-1" key={t.id}>
-          <TournamentCard tournament={t} titleIsLink />
-        </div>
-      ))}
-    </>
+    <div className="my-4 rounded-lg bg-card-alt">
+      <div className="flex flex-row items-center gap-2 rounded-t-lg border-b border-b-accent-foreground bg-[color-mix(in_hsl,var(--primary)_35%,var(--background))] p-4">
+        <Trophy />
+        <h1 className="text-xl font-bold">Tournaments</h1>
+      </div>
+      <TournamentListFilter filter={filter} />
+      <TournamentList filter={filter} />
+    </div>
   );
 }

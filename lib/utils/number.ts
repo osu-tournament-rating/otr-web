@@ -1,5 +1,3 @@
-import { TournamentDTO } from '@osu-tournament-rating/otr-api-client';
-
 /**
  * Formats a {@link TournamentDTO.rankRangeLowerBound | tournament rank range}
  * value into a string

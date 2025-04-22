@@ -26,7 +26,9 @@ export function useSearch(query: string) {
         return undefined;
       }
 
-      const { result } = await search(session.accessToken).search({ searchKey: searchQuery });
+      const { result } = await search(session.accessToken).search({
+        searchKey: searchQuery,
+      });
       return result;
     },
     {

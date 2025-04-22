@@ -28,7 +28,7 @@ export default function SearchDialog() {
   const { data, isLoading } = useSearch(debouncedQuery);
 
   const handleSetQuery = (input: string) => {
-    setQuery(input.trim());
+    setQuery(input.trimStart());
   };
 
   const closeDialog = () => {
