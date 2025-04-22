@@ -12,7 +12,7 @@ import LinkCard from '@/components/home/LinkCard';
 
 export default async function Page() {
   return (
-    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 font-sans text-foreground">
+    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
       {/* Hero section */}
       <FeatureCard
         decoration={2}
@@ -69,10 +69,7 @@ export default async function Page() {
       {/* Feature sections */}
       <div className="space-y-6">
         {/* Rating restricted tournaments */}
-        <FeatureCard
-          decoration={1}
-          contentClassName="md:w-5/9 xl:w-1/2"
-        >
+        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
           <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
           <FeatureCardDescription>
             o!TR opens the door to an all-new level of fair competition in
@@ -151,7 +148,7 @@ export default async function Page() {
           decoration={2}
           imagePosition="right"
           imageClassName="-top-25 -right-15"
-          imageFit='cover'
+          imageFit="cover"
           imageSize="h-[300px] w-[600px]"
           contentClassName="md:w-2/3"
         >

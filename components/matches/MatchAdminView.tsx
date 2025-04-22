@@ -19,7 +19,6 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useSession } from 'next-auth/react';
 import { update } from '@/lib/actions/matches';
 import { createPatchOperations } from '@/lib/utils/form';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +41,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import SimpleSelectContent from '../select/SimpleSelectContent';
 import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -77,10 +77,9 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
       });
 
       form.reset(patchedMatch);
-      toast.success('Saved successfully');
-    } catch (error) {
-      console.log(error);
-      toast.error('Failed to save due to server issue');
+      saveToast();
+    } catch {
+      errorSaveToast();
     }
   }
 

@@ -60,7 +60,7 @@ export default function SearchDialog() {
         </Button>
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
-      <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4 font-sans">
+      <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4">
         <div className="sticky top-0 z-50 bg-background shadow-sm">
           <div className="relative">
             <Input

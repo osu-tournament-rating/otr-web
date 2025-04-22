@@ -1,5 +1,7 @@
 import { auth } from '@/auth';
 import {
+  AdminNotesWrapper,
+  GameScoresWrapper,
   GamesWrapper,
   IOtrApiWrapperConfiguration,
   LeaderboardsWrapper,
@@ -81,10 +83,12 @@ export function isValidationProblemDetails<T extends object = object>(
   );
 }
 
+export const adminNotes = new AdminNotesWrapper(configuration);
 export const games = new GamesWrapper(configuration);
 export const leaderboards = new LeaderboardsWrapper(configuration);
 export const matches = new MatchesWrapper(configuration);
-export const oAuth = new OAuthWrapper(configuration);
 export const me = new MeWrapper(configuration);
+export const oAuth = new OAuthWrapper(configuration);
+export const scores = new GameScoresWrapper(configuration);
 export const search = new SearchWrapper(configuration);
 export const tournaments = new TournamentsWrapper(configuration);
