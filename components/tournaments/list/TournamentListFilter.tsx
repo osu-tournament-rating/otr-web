@@ -51,7 +51,7 @@ export default function TournamentListFilter({
   const debouncedQuery = useDebounce(searchQuery, 500);
 
   const handleSetQuery = (input: string) => {
-    setSearchQuery(input.trim());
+    setSearchQuery(input.trimStart());
   };
 
   const form = useForm<z.infer<typeof tournamentListFilterSchema>>({
