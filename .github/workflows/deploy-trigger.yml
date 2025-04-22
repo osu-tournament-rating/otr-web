@@ -34,7 +34,7 @@ jobs:
             echo "target=none" >> $GITHUB_OUTPUT
           fi
 
-  trigger-deployment:
+  exec-deployment:
     needs: determine-environment
     if: needs.determine-environment.outputs.target != 'none'
     uses: osu-tournament-rating/otr-web/.github/workflows/deploy.yml@master
