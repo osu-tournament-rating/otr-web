@@ -2,6 +2,7 @@
 
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
+import { TierName } from '@/lib/tierData';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
@@ -53,7 +54,11 @@ export const columns = [
     header: 'Tier',
     cell: ({ getValue }) => (
       <div className="flex justify-center">
-        <TierIcon tier={getValue() ?? ''} width={24} height={24} />
+        <TierIcon
+          tier={(getValue() ?? 'Bronze I') as TierName}
+          width={24}
+          height={24}
+        />
       </div>
     ),
   }),
