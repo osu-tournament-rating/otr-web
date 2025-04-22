@@ -214,7 +214,6 @@
       var(--foreground) 60%,
       var(--team-color) 40%
     );
-    --player-propic-mask-dir: 90deg;
 
     @apply order-1 w-full;
 
@@ -226,34 +225,21 @@
       flex-direction: var(--team-flex-col-dir);
     }
 
-    .player-propic {
-      mask-image: linear-gradient(
-        var(--player-propic-mask-dir),
-        rgba(0, 0, 0, 0.4) 0,
-        rgba(0, 0, 0, 0.25) 45%,
-        transparent
-      );
-    }
+    .performance-item {
+      @apply flex flex-col items-start justify-center;
 
-    .performance-group {
-      @apply first:ml-auto;
+      .label {
+        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
+      }
 
-      .performance-item {
-        @apply flex flex-col items-start justify-center;
+      .value {
+        @apply text-base tracking-tighter;
 
-        .label {
-          @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
-        }
-
-        .value {
-          @apply text-base tracking-tighter;
-
-          color: color-mix(
-            in oklab,
-            var(--foreground) 90%,
-            var(--team-color) 10%
-          );
-        }
+        color: color-mix(
+          in oklab,
+          var(--foreground) 90%,
+          var(--team-color) 10%
+        );
       }
     }
 
@@ -281,13 +267,8 @@
       @media (width >= 48rem) {
         --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
-        --player-propic-mask-dir: 270deg;
 
         @apply flex-row-reverse pl-0.5;
-
-        .player-propic {
-          @apply right-0;
-        }
       }
     }
   }

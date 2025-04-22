@@ -1,4 +1,5 @@
 import {
+  AdminNoteRouteTarget,
   GameScoreDTO,
   PlayerCompactDTO,
   Team,
@@ -7,8 +8,11 @@ import { ScoreGradeEnumHelper } from '@/lib/enums';
 import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
+import ScoreAdminView from '../scores/ScoreAdminView';
+import AdminNoteView from '../admin-notes/AdminNoteView';
+import Link from 'next/link';
 
-export default function NewScoreCard({
+export default function ScoreCard({
   score,
   player,
   won = false,
@@ -20,23 +24,25 @@ export default function NewScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 font-sans **:z-10"
+      className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 **:z-10"
     >
-      {/* Player propic bg */}
-      <div className="player-propic absolute top-1/2 z-[1] aspect-square w-3/5 transform-[translateY(-50%)_scale(1)]">
-        <Image
-          src={`https://s.ppy.sh/a/${player?.osuId}`}
-          alt={`${player?.username} profile picture`}
-          fill
-        />
+      {/* Background team color overlay */}
+      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
+
+      {/* Team color on the side of the card */}
+      <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-7">
+        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
+          <AdminNoteView
+            notes={score.adminNotes}
+            entity={AdminNoteRouteTarget.GameScore}
+            entityId={score.id}
+          />
+          <ScoreAdminView score={score} />
+        </div>
       </div>
 
-      {/* Team color overlay */}
-      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
-      <div className="h-full w-1.5 bg-[var(--team-color)]/70"></div>
-
       {/* Content */}
-      <div className="flex size-full flex-col px-2">
+      <div className="flex size-full flex-col gap-2 px-2">
         {/* Top row */}
         <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
@@ -48,13 +54,23 @@ export default function NewScoreCard({
                 fill
               />
             </span>
-            <span className="font-bold">{player?.username}</span>
+            <Link href={`/players/${player?.id}`}>
+              <span className="font-bold">{player?.username}</span>
+            </Link>
           </div>
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
-            <div className="flex h-full max-w-20 flex-row items-center justify-end">
-              <ModIconset className="max-h-6" mods={score.mods} />
-            </div>
+            <ModIconset
+              className="team-flex-row flex h-full max-w-20 items-center justify-end"
+              iconClassName={cn(
+                'max-h-6',
+                // Clear left margin
+                'md:group-data-[team="Blue"]:not-first:ml-0 md:group-data-[team="Blue"]:peer-hover:not-first:ml-0 md:group-data-[team="Blue"]:hover:not-first:ml-0',
+                // Add right margin
+                'md:group-data-[team="Blue"]:not-first:-mr-4 md:group-data-[team="Blue"]:peer-hover:not-first:-mr-2 md:group-data-[team="Blue"]:hover:not-first:-mr-2'
+              )}
+              mods={score.mods}
+            />
             <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
             <span
               className={cn(
@@ -69,7 +85,7 @@ export default function NewScoreCard({
         {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="performance-group team-flex-row flex items-center justify-start gap-4">
+          <div className="team-flex-row flex items-center justify-start gap-4">
             <div className="performance-item">
               <span className="label">{300}</span>
               <span className="value">{score.count300}x</span>
@@ -88,7 +104,7 @@ export default function NewScoreCard({
             </div>
           </div>
           {/* Acc / Combo */}
-          <div className="performance-group team-flex-row flex items-center justify-end gap-4">
+          <div className="team-flex-row flex items-center justify-end gap-4">
             <div className="performance-item">
               <span className="label">Combo</span>
               <span className="value">{score.maxCombo}x</span>

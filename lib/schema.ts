@@ -4,7 +4,11 @@ import {
   GameWarningFlags,
   Mods,
   Ruleset,
+  ScoreGrade,
+  ScoreProcessingStatus,
+  ScoreRejectionReason,
   ScoringType,
+  Team,
   TeamType,
   TournamentProcessingStatus,
   TournamentRejectionReason,
@@ -68,6 +72,26 @@ export const gameEditFormSchema = z.object({
   warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
   rejectionReason: bitwiseEnumValueSchema(GameRejectionReason),
   processingStatus: numericEnumValueSchema(GameProcessingStatus),
+});
+
+export const scoreEditFormSchema = z.object({
+  score: z.coerce.number().nonnegative().int(),
+  placement: z.coerce.number().nonnegative().int(),
+  maxCombo: z.coerce.number().nonnegative().int(),
+  count50: z.coerce.number().nonnegative().int(),
+  count100: z.coerce.number().nonnegative().int(),
+  count300: z.coerce.number().nonnegative().int(),
+  countKatu: z.coerce.number().nonnegative().int(),
+  countGeki: z.coerce.number().nonnegative().int(),
+  countMiss: z.coerce.number().nonnegative().int(),
+  accuracy: z.coerce.number().nonnegative(),
+  grade: bitwiseEnumValueSchema(ScoreGrade),
+  mods: bitwiseEnumValueSchema(Mods),
+  ruleset: numericEnumValueSchema(Ruleset),
+  verificationStatus: numericEnumValueSchema(VerificationStatus),
+  rejectionReason: bitwiseEnumValueSchema(ScoreRejectionReason),
+  processingStatus: numericEnumValueSchema(ScoreProcessingStatus),
+  team: numericEnumValueSchema(Team),
 });
 
 export const adminNoteFormSchema = z.object({
