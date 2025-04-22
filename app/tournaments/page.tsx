@@ -1,70 +1,25 @@
-import TournamentListFilter from '@/components/Tournaments/TournamentList/Filter/TournamentListFilter';
-import type { Metadata } from 'next';
-import {
-  buildTournamentListFilter,
-  getTournamentList,
-} from '@/app/actions/tournaments';
-import TournamentList from '@/components/Tournaments/TournamentList/TournamentList';
-import { TournamentQuerySortType } from '@osu-tournament-rating/otr-api-client';
-import {
-  PaginationProps,
-  SessionData,
-  TournamentListFilter as TournamentListFilterType,
-} from '@/lib/types';
-import TournamentListFilterProvider from '@/components/Context/TournamentListFilterContext';
-import AdminViewProvider from '@/components/Context/AdminViewContext';
-import AdminViewToggle from '@/components/AdminViewToggle/AdminViewToggle';
-import { isAdmin } from '@/lib/api';
-import { getSessionData } from '@/app/actions/session';
-
-export const revalidate = 60;
+import { Metadata } from 'next';
+import { PageSearchParams } from '@/lib/types';
+import { tournamentListFilterSchema } from '@/lib/schema';
+import TournamentListFilter from '@/components/tournaments/list/TournamentListFilter';
+import TournamentList from '@/components/tournaments/list/TournamentList';
+import { Trophy } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Tournaments',
 };
 
-const defaultFilter: TournamentListFilterType = {
-  verified: false,
-  sort: TournamentQuerySortType.StartTime,
-  descending: true,
-};
-
-const initialPagination: PaginationProps = {
-  page: 1,
-  pageSize: 40,
-};
-
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<object>;
-}) {
-  const requestParams = await buildTournamentListFilter(
-    await searchParams,
-    defaultFilter
-  );
-  const tournaments = await getTournamentList({
-    ...requestParams,
-    ...initialPagination,
-  });
-
-  const isAdminUser = isAdmin(
-    ((await getSessionData()) as SessionData).user?.scopes
-  );
+export default async function Page({ searchParams }: PageSearchParams) {
+  const filter = tournamentListFilterSchema.parse(await searchParams);
 
   return (
-    <div className={'content'}>
-      <h1>All tournaments</h1>
-      <AdminViewProvider>
-        {isAdminUser && <AdminViewToggle />}
-        <TournamentListFilterProvider
-          defaultFilter={defaultFilter}
-          initialFilter={requestParams}
-        >
-          <TournamentListFilter />
-          <TournamentList tournaments={tournaments} {...initialPagination} />
-        </TournamentListFilterProvider>
-      </AdminViewProvider>
+    <div className="my-4 rounded-lg bg-card-alt">
+      <div className="flex flex-row items-center gap-2 rounded-t-lg border-b border-b-accent-foreground bg-[color-mix(in_hsl,var(--primary)_35%,var(--background))] p-4">
+        <Trophy />
+        <h1 className="text-xl font-bold">Tournaments</h1>
+      </div>
+      <TournamentListFilter filter={filter} />
+      <TournamentList filter={filter} />
     </div>
   );
 }

@@ -1,47 +1,57 @@
-import { RootLayoutProvider } from '@/components/RootLayoutProvider/RootLayoutProvider';
-import UserProvider from '@/util/UserLoggedContext';
-import type { Metadata } from 'next';
-import { Viewport } from 'next';
+import { auth } from '@/auth';
+import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
-import { Inter } from 'next/font/google';
-import './globals.css';
+import { Toaster } from '@/components/ui/sonner';
+import type { Metadata } from 'next';
+import { SessionProvider } from 'next-auth/react';
+import { Geist, Geist_Mono } from 'next/font/google';
 import React from 'react';
-import { getSession } from '@/app/actions/session';
-import ConfiguredToaster from '@/components/Toasts/ConfiguredToaster';
+import './globals.css';
+import Footer from '@/components/footer/Footer';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-Inter' });
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
 
 export const metadata: Metadata = {
   title: {
     default: 'osu! Tournament Rating',
     template: '%s | o!TR',
   },
-  description: 'o!TR app.',
-  keywords: [],
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  themeColor: '#FFFFFF',
+  description: 'The newest osu! tournament statistics platform',
 };
 
 export default async function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const { user } = await getSession();
+}>) {
+  const session = await auth();
 
   return (
-    <html lang="en" className={inter.variable}>
-      <body>
-        <ThemeProvider defaultTheme="light" enableSystem={false}>
-          <ConfiguredToaster />
-          <UserProvider initialUser={user}>
-            <RootLayoutProvider>{children}</RootLayoutProvider>
-          </UserProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider attribute="class" disableTransitionOnChange>
+          <SessionProvider
+            basePath={'/auth'}
+            session={session}
+            refetchOnWindowFocus={false}
+          >
+            <Header />
+            <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
+              {children}
+            </main>
+            <Footer />
+            <Toaster richColors />
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

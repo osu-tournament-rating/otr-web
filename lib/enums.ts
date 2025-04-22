@@ -1,11 +1,5 @@
-import AllRulesetIcon from '@/public/icons/rulesets/all.svg';
-import CatchIcon from '@/public/icons/rulesets/catch.svg';
-import ManiaIcon from '@/public/icons/rulesets/mania.svg';
-import Mania4kIcon from '@/public/icons/rulesets/mania4k.svg';
-import Mania7kIcon from '@/public/icons/rulesets/mania7k.svg';
-import StandardIcon from '@/public/icons/rulesets/osu.svg';
-import TaikoIcon from '@/public/icons/rulesets/taiko.svg';
 import {
+  AdminNoteRouteTarget,
   GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
@@ -24,7 +18,6 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
-import { FC, SVGProps } from 'react';
 
 /** Basic enum metadata */
 export type EnumMetadata = {
@@ -37,7 +30,10 @@ export type EnumMetadata = {
  * @template T Enumeration type
  * @template M Metadata type
  */
-type EnumMetadataCollection<T extends number, M extends EnumMetadata> = {
+type EnumMetadataCollection<
+  T extends number | string,
+  M extends EnumMetadata,
+> = {
   [key in T]: M;
 };
 
@@ -46,7 +42,7 @@ type EnumMetadataCollection<T extends number, M extends EnumMetadata> = {
  * @template T Enumeration type
  * @template M Metadata type
  */
-interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
+interface IEnumHelperBase<T extends number | string, M extends EnumMetadata> {
   /** Collection of metadata */
   readonly metadata: EnumMetadataCollection<T, M>;
 }
@@ -57,7 +53,7 @@ interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
  * @template M Metadata type
  */
 export interface IEnumHelper<
-  T extends number,
+  T extends number | string,
   M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
   /**
@@ -76,7 +72,7 @@ export interface IEnumHelper<
  * @template M Metadata type
  */
 const defaultEnumHelper = <
-  T extends number,
+  T extends number | string,
   M extends EnumMetadata = EnumMetadata,
 >(): IEnumHelper<T, M> => ({
   metadata: {} as EnumMetadataCollection<T, M>,
@@ -158,137 +154,9 @@ const defaultBitwiseEnumHelper = <
   },
 });
 
-type RulesetMetadata = {
-  /**
-   * Icon image as a React element
-   * @example
-   * const taikoIcon = rulesetIcons[Ruleset.Taiko].image;
-   * return (<taikoIcon />);
-   */
-  image: FC<SVGProps<SVGElement>>;
-
-  /**
-   * Alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'osu!Taiko'
-   */
-  alt: string;
-
-  /**
-   * Shortened alt text
-   *
-   * Example:
-   * For {@link Ruleset.Taiko} - 'Taiko'
-   */
-  shortAlt: string;
-
-  /** Whether to display this ruleset in the selector */
-  displayInSelector?: boolean;
-
-  /** 0-Index position in the selector (from left -> right || top -> bottom) */
-  selectorIndex?: number;
-};
-
 const noneEnumMetadata: EnumMetadata = {
   text: 'None',
   description: 'No description',
-};
-
-// TODO: Refactor in favor of 'RulesetEnumHelper'
-/** Stylistic metadata for each {@link Ruleset} */
-export const RulesetMetadata: {
-  [key in Ruleset]: RulesetMetadata;
-} & {
-  /** The special case 'All Rulesets' icon */
-  All: RulesetMetadata;
-} = {
-  All: {
-    image: AllRulesetIcon,
-    alt: 'osu!',
-    shortAlt: 'Any Ruleset',
-    displayInSelector: true,
-    selectorIndex: 0,
-  },
-  [Ruleset.Osu]: {
-    image: StandardIcon,
-    alt: 'osu!',
-    shortAlt: 'Standard',
-    displayInSelector: true,
-    selectorIndex: 1,
-  },
-  [Ruleset.Taiko]: {
-    image: TaikoIcon,
-    alt: 'osu!Taiko',
-    shortAlt: 'Taiko',
-    displayInSelector: true,
-  },
-  [Ruleset.Catch]: {
-    image: CatchIcon,
-    alt: 'osu!Catch',
-    shortAlt: 'Catch',
-    displayInSelector: true,
-    selectorIndex: 2,
-  },
-  [Ruleset.ManiaOther]: {
-    image: ManiaIcon,
-    alt: 'osu!Mania',
-    shortAlt: 'Mania (Other)',
-  },
-  [Ruleset.Mania4k]: {
-    image: Mania4kIcon,
-    alt: 'osu!Mania 4K',
-    shortAlt: 'Mania 4K',
-    displayInSelector: true,
-    selectorIndex: 3,
-  },
-  [Ruleset.Mania7k]: {
-    image: Mania7kIcon,
-    alt: 'osu!Mania 7K',
-    shortAlt: 'Mania 7K',
-    displayInSelector: true,
-    selectorIndex: 4,
-  },
-};
-
-// TODO: Refactor in favor of 'VerificationStatusEnumHelper'
-/** Stylistic metadata for each {@link VerificationStatus} */
-export const VerificationStatusMetadata: {
-  [key in VerificationStatus]: {
-    /** CSS class name */
-    className: string;
-
-    /** Display text */
-    text: string;
-
-    /** Whether to display this status in a selectable dropdown */
-    displayInDropdown?: boolean;
-  };
-} = {
-  [VerificationStatus.None]: {
-    className: 'pending',
-    text: 'Pending',
-  },
-  [VerificationStatus.PreRejected]: {
-    className: 'rejected',
-    text: 'Pre-rejected',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.PreVerified]: {
-    className: 'verified',
-    text: 'Pre-verified',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.Rejected]: {
-    className: 'rejected',
-    text: 'Rejected',
-    displayInDropdown: true,
-  },
-  [VerificationStatus.Verified]: {
-    className: 'verified',
-    text: 'Verified',
-    displayInDropdown: true,
-  },
 };
 
 export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
@@ -297,53 +165,87 @@ export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
   metadata: {
     [VerificationStatus.None]: {
       text: 'Pending',
-      description: '',
+      description: 'The submitted item is pending approval by the o!TR Team',
     },
     [VerificationStatus.PreRejected]: {
       text: 'Pre-rejected',
-      description: '',
+      description: 'The system has found issues which warrant pre-rejection',
     },
     [VerificationStatus.PreVerified]: {
       text: 'Pre-verified',
-      description: '',
+      description:
+        'The system sees no major issues and marked the item as pre-verified',
     },
     [VerificationStatus.Rejected]: {
       text: 'Rejected',
-      description: '',
+      description: 'The item is not suitable for use in ratings',
     },
     [VerificationStatus.Verified]: {
       text: 'Verified',
-      description: '',
+      description:
+        'The item is suitable for ratings and has been manually verified by a member of the o!TR team',
     },
   },
 };
+
+export const AdminNoteRouteTargetEnumHelper: IEnumHelper<AdminNoteRouteTarget> =
+  {
+    ...defaultEnumHelper(),
+
+    metadata: {
+      [AdminNoteRouteTarget.Game]: {
+        text: 'Game',
+        description: '',
+      },
+      [AdminNoteRouteTarget.GameScore]: {
+        text: 'Score',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Match]: {
+        text: 'Match',
+        description: '',
+      },
+      [AdminNoteRouteTarget.OAuthClient]: {
+        text: 'OAuth Client',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Player]: {
+        text: 'Player',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Tournament]: {
+        text: 'Tournament',
+        description: '',
+      },
+    },
+  };
 
 export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
   ...defaultEnumHelper(),
 
   metadata: {
     [Ruleset.Osu]: {
-      text: 'Standard',
+      text: 'osu!',
       description: '',
     },
     [Ruleset.Taiko]: {
-      text: 'Taiko',
+      text: 'osu!taiko',
       description: '',
     },
     [Ruleset.Catch]: {
-      text: 'Catch',
+      text: 'osu!catch',
       description: '',
     },
     [Ruleset.ManiaOther]: {
-      text: 'Mania',
+      text: 'osu!mania (other)',
       description: '',
     },
     [Ruleset.Mania4k]: {
-      text: 'Mania 4K',
+      text: 'osu!mania 4K',
       description: '',
     },
     [Ruleset.Mania7k]: {
-      text: 'Mania 7K',
+      text: 'osu!mania 7K',
       description: '',
     },
   },
@@ -377,7 +279,7 @@ export const TournamentProcessingStatusEnumHelper: IEnumHelper<TournamentProcess
         description: 'Tournament is awaiting statistics calculation',
       },
       [TournamentProcessingStatus.Done]: {
-        text: 'Processing Completing',
+        text: 'Processing Completed',
         description: 'Tournament has completed processing',
       },
     },
@@ -515,6 +417,11 @@ export const MatchWarningFlagsEnumHelper: IBitwiseEnumHelper<MatchWarningFlags> 
         text: 'Unexpected beatmaps found',
         description:
           'The match has one or more games where a beatmap that was not pooled was played outside of the first two games',
+      },
+      [MatchWarningFlags.OverlappingRosters]: {
+        text: 'Overlapping rosters found',
+        description:
+          "The match's roster features one or more players on more than one roster. Only one player per roster is allowed.",
       },
     },
   };

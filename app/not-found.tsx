@@ -1,15 +1,14 @@
-import backgroundError from '@/public/images/error-background.svg?url';
 import Image from 'next/image';
-import Link from 'next/link';
-import styles from './error.module.css';
 
-export default function NotFound() {
+export default function Page() {
   return (
-    <div className={styles.errorDiv}>
-      <Image src={backgroundError} alt="Error background" fill />
-      <div className={styles.content}>
-        <h1>404</h1>
-        <span>We don&apos;t have that page</span>
+    <div className="relative">
+      <Image src={'/images/error-background.svg'} alt="Error background" fill />
+      <div className="m-5 flex flex-col gap-2 p-10 text-center">
+        <p className="font-mono text-4xl text-primary">404 Not Found</p>
+        <p className="font-mono text-accent-foreground">
+          Sorry, we don&apos;t have that page!
+        </p>
       </div>
     </div>
   );

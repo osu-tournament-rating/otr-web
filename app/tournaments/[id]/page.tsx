@@ -1,39 +1,47 @@
-import { getTournament } from '@/app/actions/tournaments';
-import MatchesList from '@/components/Matches/List/MatchesList';
-import TournamentInfoContainer from '@/components/Tournaments/InfoContainer/TournamentInfoContainer';
-import TournamentPageHeader from '@/components/Tournaments/PageContent/TournamentPageHeader';
+import TournamentCard from '@/components/tournaments/TournamentCard';
+import { get } from '@/lib/actions/tournaments';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import type { Metadata } from 'next';
+import { MatchRow, columns } from './columns';
+import TournamentDataTable from './data-table';
 
-export const revalidate = 60;
+type PageProps = { params: Promise<{ id: number }> };
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ id: number }>;
-}) {
-  const tournament = await getTournament({
-    id: (await params).id,
-    verified: false,
-  });
+}: PageProps): Promise<Metadata> {
+  const tournament = await get({ id: (await params).id, verified: false });
 
   return { title: tournament.name };
 }
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: number }>;
-}) {
-  const tournament = await getTournament({
-    id: (await params).id,
-    verified: false,
-  });
+function generateTableData(matches: MatchDTO[]): MatchRow[] {
+  return matches.map((match) => ({
+    id: match.id,
+    name: match.name,
+    status: {
+      verificationStatus: match.verificationStatus,
+      warningFlags: match.warningFlags,
+    },
+    startDate: match.startTime
+      ? new Date(match.startTime).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+  }));
+}
+
+export default async function Page({ params }: PageProps) {
+  const tournament = await get({ id: (await params).id, verified: false });
+  const tableData = generateTableData(tournament.matches ?? []);
 
   return (
-    <div className={'content'}>
-      <TournamentPageHeader data={tournament} />
-      <TournamentInfoContainer data={tournament} showName={false} />
-      <h1>Matches</h1>
-      <MatchesList data={tournament.matches ?? []} />
+    <div className="mt-5 mb-5 flex flex-col gap-y-5">
+      <TournamentCard
+        tournament={tournament}
+        displayStatusText
+        allowAdminView
+      />
+      {/* @ts-expect-error Column def type doesnt work :/ */}
+      <TournamentDataTable columns={columns} data={tableData} />
     </div>
   );
 }

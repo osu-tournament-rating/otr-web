@@ -1,27 +1,22 @@
-'use client';
-
-import LoginButton from '@/components/Button/LoginButton';
-import Card from '@/components/Card/Card';
-import { useUser } from '@/util/hooks';
-import { useRouter } from 'next/navigation';
+import { auth } from '@/auth';
+import { redirect, RedirectType } from 'next/navigation';
 import { Roles } from '@osu-tournament-rating/otr-api-client';
 
-export default function Unauthorized() {
-  const router = useRouter();
-  const { user } = useUser();
+export default async function Page() {
+  const session = await auth();
 
-  if (user && user.scopes?.includes(Roles.Whitelist)) {
-    return router.push('/');
+  if (session?.user?.scopes?.includes(Roles.Whitelist)) {
+    redirect('/', RedirectType.replace);
   }
 
   return (
-    <div>
-      <Card
-        title="Unauthorized"
-        description="Currently, the o!TR website is in a closed pre-alpha state. Only whitelisted users are allowed. We will open things up once we have more features implemented. Thanks for your patience!"
-      >
-        <LoginButton />
-      </Card>
+    <div className="m-5 flex flex-col gap-2 rounded-4xl bg-card p-10 text-center">
+      <p className="font-mono text-4xl text-primary">Unauthorized</p>
+      <p className="font-mono text-accent-foreground">
+        o!TR is currently under whitelist-only access.
+        <br />
+        Please sign in or come back later!
+      </p>
     </div>
   );
 }

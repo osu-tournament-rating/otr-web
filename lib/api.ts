@@ -1,55 +1,48 @@
-// noinspection SpellCheckingInspection
-
+import { auth } from '@/auth';
 import {
-  HttpValidationProblemDetails,
+  AdminNotesWrapper,
+  GameScoresWrapper,
+  GamesWrapper,
   IOtrApiWrapperConfiguration,
-  Operation,
-  OperationType,
+  LeaderboardsWrapper,
+  MatchesWrapper,
+  MeWrapper,
+  OAuthWrapper,
+  SearchWrapper,
+  TournamentsWrapper,
   ProblemDetails,
-  Roles,
+  HttpValidationProblemDetails,
 } from '@osu-tournament-rating/otr-api-client';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { getSession } from '@/app/actions/session';
-import { toast } from 'sonner';
-import { ServerActionError } from '@/lib/types';
-import { isServerActionError } from '@/lib/schemas';
 import { notFound } from 'next/navigation';
 
-export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
-  baseUrl: process.env.REACT_APP_API_BASE_URL,
-  clientConfiguration: {
-    headers: new AxiosHeaders()
-      .setContentType('application/json')
-      .set('Access-Control-Allow-Origin', process.env.REACT_APP_ORIGIN_URL),
-  },
+const configuration: IOtrApiWrapperConfiguration = {
+  baseUrl: process.env.OTR_API_ROOT as string,
   postConfigureClientMethod(instance) {
-    // Interceptor for handling access credentials
+    // Add authorization header
     instance.interceptors.request.use(
       async (config) => {
-        // 'requiresAuth' is a magic value set by the client lib
-        if (!('requiresAuth' in config) || !config.requiresAuth) {
+        if (!config.requiresAuthorization) {
           return config;
         }
 
-        const session = await getSession();
-        if (!session.accessToken) {
-          return Promise.reject(
-            new Error('Access is required for this request')
-          );
-        }
+        const session = await auth();
+        config.headers.setAuthorization(`Bearer ${session?.accessToken}`);
 
-        config.headers.setAuthorization(`Bearer ${session.accessToken}`);
         return config;
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error)
     );
 
+    // Automatically handle 404s with a redirect
+    // https://nextjs.org/docs/app/api-reference/functions/not-found
     instance.interceptors.response.use(
       (res) => res,
       (error) => {
-        if ((error as AxiosError).status === 404) {
+        if (
+          'status' in error &&
+          typeof error.status === 'number' &&
+          error.status === 404
+        ) {
           return notFound();
         }
 
@@ -58,6 +51,11 @@ export const apiWrapperConfiguration: IOtrApiWrapperConfiguration = {
     );
   },
 };
+
+interface ValidationProblemDetails<T extends object>
+  extends HttpValidationProblemDetails {
+  errors?: { [key in keyof Partial<T>]: string[] };
+}
 
 /** Type guard for determining if an object is {@link ProblemDetails} */
 export function isProblemDetails(obj: unknown): obj is ProblemDetails {
@@ -71,9 +69,9 @@ export function isProblemDetails(obj: unknown): obj is ProblemDetails {
 }
 
 /** Type guard for determining if an object is {@link HttpValidationProblemDetails} */
-export function isHttpValidationProblemDetails(
+export function isValidationProblemDetails<T extends object = object>(
   obj: unknown
-): obj is HttpValidationProblemDetails {
+): obj is ValidationProblemDetails<T> {
   return (
     isProblemDetails(obj) &&
     'errors' in obj &&
@@ -85,70 +83,12 @@ export function isHttpValidationProblemDetails(
   );
 }
 
-export type ApiCallHandlerOptions<T> = {
-  onSuccess?: (result: T) => void;
-  onError?: (
-    error: ServerActionError,
-    defaultCallback: (error: ServerActionError) => void
-  ) => void;
-};
-
-export async function handleApiCall<T>(
-  action: () => Promise<T | ServerActionError>,
-  options: ApiCallHandlerOptions<T> = {}
-) {
-  const { onSuccess, onError } = options;
-  const defaultOnError = (error: ServerActionError) => {
-    let message = 'Unhandled Server Error\n';
-    if (error.statusCode) {
-      message += `Status: ${error.statusCode}\n`;
-    }
-    message += error.message;
-
-    toast.error(message);
-  };
-
-  const response = await action();
-
-  if (isServerActionError(response)) {
-    if (onError) {
-      onError(response, defaultOnError);
-    } else {
-      defaultOnError(response);
-    }
-
-    return response;
-  }
-
-  if (onSuccess) {
-    onSuccess(response);
-  }
-
-  return response;
-}
-
-/** Denotes if a list of scopes contains the admin scope */
-export function isAdmin(scopes?: string[]) {
-  return (scopes ?? []).includes(Roles.Admin);
-}
-
-/**
- * Generate JSON Patch Replace {@link Operation}s by comparing two objects
- */
-export function createPatchOperations<T extends object>(
-  orig: T,
-  patched: T
-): Operation[] {
-  return Array.from(new Set([...Object.keys(orig), ...Object.keys(patched)]))
-    .filter(
-      (k) =>
-        typeof orig[k as keyof T] !== 'object' &&
-        orig[k as keyof T] !== patched[k as keyof T]
-    )
-    .map<Operation>((k) => ({
-      operationType: OperationType.Replace,
-      op: 'replace',
-      path: `/${k}`,
-      value: patched[k as keyof T],
-    }));
-}
+export const adminNotes = new AdminNotesWrapper(configuration);
+export const games = new GamesWrapper(configuration);
+export const leaderboards = new LeaderboardsWrapper(configuration);
+export const matches = new MatchesWrapper(configuration);
+export const me = new MeWrapper(configuration);
+export const oAuth = new OAuthWrapper(configuration);
+export const scores = new GameScoresWrapper(configuration);
+export const search = new SearchWrapper(configuration);
+export const tournaments = new TournamentsWrapper(configuration);

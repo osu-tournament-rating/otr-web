@@ -1,104 +1,162 @@
-import LoginButton from '@/components/Button/LoginButton';
-import Logo from '@/components/Homepage/Logo/Logo';
-import decoration1 from '@/public/decorations/decoration-1.svg?url';
-import decoration2 from '@/public/decorations/decoration-2.svg?url';
-import decoration3 from '@/public/decorations/decoration-3.svg?url';
-import decoration4 from '@/public/decorations/decoration-4.svg?url';
-import Image from 'next/image';
-import Balancer from 'react-wrap-balancer';
-import styles from './page.module.css';
+import { Card } from '@/components/ui/card';
+import RatingLadder from '@/components/rating/RatingLadder';
+import {
+  FeatureCard,
+  FeatureCardDescription,
+  FeatureCardTitle,
+} from '@/components/home/FeatureCard';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { RulesetEnumHelper } from '@/lib/enums';
+import LinkCard from '@/components/home/LinkCard';
 
-export default function Home() {
+export default async function Page() {
   return (
-    <div className={styles.main}>
-      <div className={styles.row}>
-        <div className={styles.box}>
-          <Balancer ratio={0.4}>
-            Suite of tools designed to make osu! tournaments better for everyone
-          </Balancer>
-          <LoginButton />
-        </div>
-        <div className={styles.box}>
-          <Logo />
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>Tournament Rating</h1>
-          <p>
-            A rating system that aims to predict your performance in tournaments
-            relative to others
+    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
+      {/* Hero section */}
+      <FeatureCard
+        decoration={2}
+        imagePosition="right"
+        imageSize="h-[240px] w-[475px]"
+        imageClassName="sm:-top-16"
+        className="mb-4 items-center lg:py-10"
+        contentClassName="px-2 max-w-md"
+      >
+        <FeatureCardTitle>osu! Tournament Rating</FeatureCardTitle>
+        <FeatureCardDescription>
+          A community-driven platform that ranks and predicts the performance of
+          all osu! tournament players
+        </FeatureCardDescription>
+      </FeatureCard>
+
+      {/* Rating Ladder */}
+      <Card className="mb-4 border-none bg-card-alt p-6 md:p-8">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold">Rise to the top</h2>
+          <p className="text-muted-foreground">
+            Join your friends on the ladder as soon as you play in a verified
+            tournament
           </p>
         </div>
-        <div className={styles.decoration}></div>
+        <RatingLadder />
+      </Card>
+
+      {/* Link cards */}
+      <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <LinkCard
+          title="View Rankings"
+          description="Find out where you stack up against your friends... and foes"
+          icon="medal"
+          href={'/leaderboard'}
+        />
+
+        <LinkCard
+          title="Browse Tournaments"
+          description="View the latest and greatest or go back in time"
+          icon="trophy"
+          href={'/tournaments'}
+        />
+
+        <LinkCard
+          title="Read the docs"
+          description="Learn the inner-workings of our rating algorithm"
+          icon="book"
+          href="https://docs.otr.stagec.xyz"
+          target="_blank"
+        />
       </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>Rank restricted tournaments</h1>
-          <p>
-            o!TR combined with BWS opens the door to an all-new level of fair
-            competition in tournaments targeting specific skill brackets
-          </p>
-        </div>
-        <div className={styles.decoration}>
-          <Image src={decoration1} alt="decoration-1" fill />
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>Verified Tournaments</h1>
-          <p>
-            Our goal is to only include legitimate tournament matches in the
-            rating algorithm
-          </p>
-        </div>
-        <div className={styles.decoration}>
-          <Image src={decoration2} alt="decoration-2" fill />
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>Stat nerd&apos;s heaven</h1>
-          <p>
-            We have a huge assortment of tools for players and teams. Dive into
-            all of your previous matches, compare your team to another team, see
-            exactly how your performance has changed overtime, and so much more
-          </p>
-        </div>
-        <div className={styles.decoration}>
-          <Image src={decoration3} alt="decoration-3" fill />
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>All game modes supported</h1>
-          <p>osu! doesn&apos;t just mean standard!</p>
-        </div>
-        <div className={styles.decoration}></div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>100% Open Source</h1>
-          <p>
-            We are committed to remaining open source and transparent with our
+
+      {/* Feature sections */}
+      <div className="space-y-6">
+        {/* Rating restricted tournaments */}
+        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
+          <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
+          <FeatureCardDescription>
+            o!TR opens the door to an all-new level of fair competition in
+            tournaments targeting specific skill brackets
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* Verified tournaments */}
+        <FeatureCard
+          decoration={3}
+          imagePosition="right"
+          imageSize="h-[260px] w-[380px]"
+          imageClassName="rotate-180"
+          contentClassName="md:w-1/2"
+        >
+          <FeatureCardTitle>Verified tournaments</FeatureCardTitle>
+          <FeatureCardDescription>
+            Only human-verified tournament matches are included in our rating
             algorithm
-          </p>
-        </div>
-        <div className={styles.decoration}>
-          <Image src={decoration4} alt="decoration-4" fill />
-        </div>
-      </div>
-      <div className={styles.row}>
-        <div className={styles.info}>
-          <h1>99.9999%</h1>
-          <p>
-            Our goal is to provide a service for all of osu!, so we want to
-            remain as reliable as possible. Outside of planned maintenance, we
-            aim to have a reliability of 99.9999%. That’s 31 seconds of
-            unexpected downtime per year.
-          </p>
-        </div>
-        <div className={styles.decoration}></div>
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* Stats on stats */}
+        <FeatureCard
+          decoration={2}
+          imageClassName="-left-50 top-0 rotate-180"
+          imageSize="h-[260px] w-[600px]"
+          contentClassName="md:w-2/3 xl:w-1/2"
+        >
+          <FeatureCardTitle>Stats on stats</FeatureCardTitle>
+          <FeatureCardDescription>
+            Powerful tools for players and teams. Compare performance, track
+            progress, and analyze your tournament history with ease
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* New updates every Tuesday */}
+        <FeatureCard
+          decoration={1}
+          imagePosition="right"
+          imageClassName="rotate-180"
+        >
+          <FeatureCardTitle>New updates every Tuesday</FeatureCardTitle>
+          <FeatureCardDescription>
+            Ratings are recalculated every Tuesday at 23:59 UTC
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* All modes supported */}
+        <FeatureCard
+          decoration={4}
+          imageSize="h-[300px] w-[618px]"
+          contentClassName="sm:max-md:flex-row items-center sm:items-center gap-4"
+        >
+          <div className="flex flex-col gap-2">
+            <FeatureCardTitle>All modes supported</FeatureCardTitle>
+            <FeatureCardDescription>
+              Yes, mania 4K and 7K are entirely separate rulesets
+            </FeatureCardDescription>
+          </div>
+          <div className="flex justify-center gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
+            {Object.keys(RulesetEnumHelper.metadata)
+              .filter((r) => Number(r) !== Ruleset.ManiaOther)
+              .map((r) => (
+                <RulesetIcon
+                  key={r}
+                  ruleset={Number(r)}
+                  className="size-8 fill-primary stroke-black/25 md:size-10 lg:size-12"
+                />
+              ))}
+          </div>
+        </FeatureCard>
+
+        {/* Open source, open data */}
+        <FeatureCard
+          decoration={2}
+          imagePosition="right"
+          imageClassName="-top-25 -right-15"
+          imageFit="cover"
+          imageSize="h-[300px] w-[600px]"
+          contentClassName="md:w-2/3"
+        >
+          <FeatureCardTitle>Open source, open data</FeatureCardTitle>
+          <FeatureCardDescription>
+            Built from the ground up with transparency in mind
+          </FeatureCardDescription>
+        </FeatureCard>
       </div>
     </div>
   );
