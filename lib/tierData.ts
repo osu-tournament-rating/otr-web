@@ -143,7 +143,7 @@ export type TierDataType = {
 
   /** How the tier text is displayed visually */
   displayName: string;
-}
+};
 
 /** Tier data for the ladder with simplified names */
 export const tierData: TierDataType[] = [

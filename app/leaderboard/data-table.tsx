@@ -33,7 +33,7 @@ export function LeaderboardDataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="rounded-md border overflow-x-auto">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
