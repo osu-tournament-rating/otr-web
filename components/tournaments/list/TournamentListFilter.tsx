@@ -162,7 +162,7 @@ export default function TournamentListFilter({
                               className="size-5"
                               fill="currentColor"
                             />
-                            <span>{text}</span>
+                            <span className="hidden md:block">{text}</span>
                           </ToggleGroupItem>
                         ))}
                     </ToggleGroup>
@@ -179,7 +179,7 @@ export default function TournamentListFilter({
             render={({ field }) => {
               const descending = form.watch('descending');
               return (
-                <FormItem className="flex flex-row items-baseline bg-[color-mix(in_hsl,var(--primary)_20%,var(--background))] px-2 py-1">
+                <FormItem className="flex flex-row flex-wrap items-baseline bg-[color-mix(in_hsl,var(--primary)_20%,var(--background))] px-2 py-1">
                   <span className="text-xs text-secondary-foreground">
                     Sort by
                   </span>
@@ -188,7 +188,7 @@ export default function TournamentListFilter({
                       {...field}
                       value={String(field.value)}
                       onValueChange={(val) => field.onChange(Number(val))}
-                      className="flex gap-2"
+                      className="flex flex-wrap gap-2"
                       type="single"
                     >
                       {sortToggleItems.map(({ value, text }) => (

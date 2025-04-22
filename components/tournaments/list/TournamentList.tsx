@@ -18,6 +18,7 @@ const pageSize = 30;
 
 const tournaments = (token: string) =>
   new TournamentsWrapper({
+    // The proxy will forward the request to the API instead of web
     baseUrl: '',
     clientConfiguration: {
       headers: {
