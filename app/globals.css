@@ -65,35 +65,31 @@
 }
 
 :root {
-  --background: hsl(210, 10%, 95%);
-  --foreground: hsl(0, 0%, 7%);
-  --card: hsl(210, 10%, 98%);
-  --card-foreground: hsl(0, 0%, 7%);
-  --card-alt: hsl(210, 15%, 94%);
-  --card-alt-foreground: hsl(0, 0%, 7%);
-  --card-alt-border: hsl(214.3, 20%, 85%);
-  --card-alt-hover: hsl(214.3, 20%, 80%);
-  --popover: hsl(210, 10%, 98%);
-  --popover-foreground: hsl(0, 0%, 7%);
-  --primary: hsl(221, 80%, 55%);
+  --background: hsl(2 4% 96%);
+  --foreground: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --card: hsl(255 12% 94%);
+  --card-foreground: hsl(222.2 84% 4.9%);
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: var(--border);
+  --primary: hsl(221, 83%, 61%);
   --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210, 20%, 92%);
-  --secondary-foreground: hsl(0, 0%, 25%);
-  --muted: hsl(210, 20%, 92%);
-  --muted-foreground: hsl(0, 0%, 40%);
-  --accent: hsl(210, 15%, 90%);
-  --accent-foreground: hsl(222.2, 40%, 15%);
-  --destructive: hsl(0, 80%, 55%);
+  --secondary: hsl(210 40% 96.1%);
+  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(222.2 47.4% 11.2%);
+  --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3, 20%, 85%);
-  --input: hsl(214.3, 20%, 85%);
-  --ring: hsl(221.2, 70%, 50%);
-  --radius: 0.3rem;
+  --ring: hsl(221.2 83.2% 53.3%);
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
+  --radius: 0.3rem;
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
@@ -115,45 +111,44 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 7%);
-  --foreground: hsl(210 40% 98%);
-  --card: hsl(0, 0%, 8%);
-  --card-foreground: hsl(210 40% 98%);
-  --card-alt: hsl(0, 0%, 12%);
-  --card-alt-foreground: hsl(210 40% 98%);
-  --card-alt-border: hsl(217.2 32.6% 17.5%);
-  --card-alt-hover: hsl(217.2 32.6% 21%);
-  --popover: hsl(0, 0%, 7%);
-  --popover-foreground: hsl(210 40% 98%);
-  --primary: hsl(217, 100%, 70%);
-  --primary-foreground: hsl(222.2 47.4% 11.2%);
-  --secondary: hsl(0, 0%, 12%);
-  --secondary-foreground: hsl(0, 0%, 71%);
-  --muted: hsl(0, 0%, 20%);
-  --muted-foreground: hsl(0, 0%, 60%);
-  --accent: hsl(0, 0%, 16%);
-  --accent-foreground: hsl(0, 0%, 70%);
-  --destructive: hsl(0, 100%, 58%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(217.2 32.6% 17.5%);
-  --input: hsl(217.2 32.6% 17.5%);
-  --ring: hsl(217, 100%, 30%);
-  --chart-1: hsl(217, 100%, 70%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
+  --background: hsl(224, 71%, 4%);
+  --foreground: hsl(210, 20%, 96%);
+  --muted: hsl(223, 30%, 12%);
+  --muted-foreground: hsl(216, 15%, 65%);
+  --card: hsl(224, 71%, 5%);
+  --card-foreground: hsl(210, 20%, 96%);
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --border: hsl(223, 20%, 15%);
+  --input: var(--border);
 
-  /* Dark mode tier text colors */
-  --text-elite-grandmaster: hsl(217, 100%, 70%);
-  --text-grandmaster: hsl(0, 100%, 58%);
-  --text-master: hsl(266, 81%, 61%);
-  --text-diamond: hsl(280, 65%, 70%);
-  --text-emerald: hsl(144, 70%, 60%);
-  --text-platinum: hsl(187, 59%, 58%);
-  --text-gold: hsl(43, 74%, 76%);
-  --text-silver: hsl(0, 0%, 60%);
-  --text-bronze: hsl(27, 71%, 58%);
+  --secondary: hsl(223, 30%, 12%);
+  --secondary-foreground: hsl(210, 20%, 96%);
+  --accent: hsl(223, 30%, 12%);
+  --accent-foreground: hsl(210, 20%, 96%);
+  --destructive: hsl(0, 75%, 55%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(221, 83%, 65%);
+
+  --chart-1: hsl(220, 85%, 65%);
+  --chart-2: hsl(160, 75%, 50%);
+  --chart-3: hsl(30, 90%, 60%);
+  --chart-4: hsl(280, 75%, 70%);
+  --chart-5: hsl(340, 85%, 65%);
+
+  --team-red: hsl(348, 85%, 62%);
+  --team-blue: hsl(228, 85%, 68%);
+  --score-performance-label: hsl(51, 80%, 65%);
+
+  --text-elite-grandmaster: hsl(217, 100%, 75%);
+  --text-grandmaster: hsl(0, 100%, 68%);
+  --text-master: hsl(266, 90%, 70%);
+  --text-diamond: hsl(280, 80%, 75%);
+  --text-emerald: hsl(144, 80%, 65%);
+  --text-platinum: hsl(187, 70%, 62%);
+  --text-gold: hsl(43, 85%, 78%);
+  --text-silver: hsl(210, 15%, 75%);
+  --text-bronze: hsl(27, 80%, 68%);
 }
 
 @layer base {
