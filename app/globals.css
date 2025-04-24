@@ -60,8 +60,8 @@
 
   /* Verification status color alias */
   --color-status-pending: var(--color-warning);
-  --color-status-rejected: var(--color-red-500);
-  --color-status-verified: var(--color-green-500);
+  --color-status-rejected: var(--destructive);
+  --color-status-verified: var(--color-green-400);
 }
 
 :root {
@@ -93,11 +93,11 @@
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: hsl(348 72% 52%);
-  --team-blue: hsl(228 72% 52%);
+  --team-red: var(--destructive);
+  --team-blue: var(--primary);
 
   /* Tier text colors */
-  --text-elite-grandmaster: hsl(221, 80%, 55%);
+  --text-elite-grandmaster: var(--primary);
   --text-grandmaster: hsl(0, 80%, 55%);
   --text-master: hsl(266, 81%, 61%);
   --text-diamond: hsl(280, 65%, 60%);
