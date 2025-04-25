@@ -81,9 +81,12 @@
   --accent-foreground: var(--muted-foreground);
   --secondary: hsl(221, 83%, 71%);
   --secondary-foreground: hsl(224, 71%, 4%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --ring: hsl(221.2 83.2% 53.3%);
+
+  --destructive: var(--color-red-400);
+  --destructive-foreground: var(--color-red-600);
+
+  --ring: var(--primary);
+
   --chart-1: hsl(220, 85%, 65%);
   --chart-2: hsl(160, 75%, 50%);
   --chart-3: hsl(30, 90%, 60%);
@@ -115,8 +118,11 @@
   --foreground: hsl(210, 20%, 96%);
   --muted: hsl(223, 30%, 12%);
   --muted-foreground: hsl(216, 15%, 65%);
-  --card: hsl(224, 71%, 6.01%);
+  --card: hsl(224, 71%, 8%);
   --border: hsl(223, 20%, 15%);
+
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-red-400);
 }
 
 @layer base {
