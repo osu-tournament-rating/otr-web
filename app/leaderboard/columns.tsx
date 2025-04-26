@@ -50,7 +50,9 @@ export const columns = [
       </div>
     ),
   }),
-  columnHelper.accessor('currentTier', {
+  // TODO: This columnHelper.accessor will never find the right tier icon
+  // because it's searching for a tier like 'Silver' without the subtier.
+  columnHelper.accessor('tierProgress.currentTier', {
     header: 'Tier',
     cell: ({ getValue }) => (
       <div className="flex justify-center">
