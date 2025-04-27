@@ -1,7 +1,7 @@
 import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
 import { cn } from '@/lib/utils';
-import { TierName, getTierColor } from '@/lib/tierData';
+import { TierName, getTierColor } from '@/lib/utils/tierData';
 
 export interface TierCardProps {
   /** Desired tier */
@@ -39,8 +39,8 @@ export default function TierCard({
       <div
         className={cn(
           'absolute inset-0 -z-10 rounded-lg bg-gradient-to-br opacity-40 blur-md',
-          tierColor.gradient.light || '',
-          'dark:' + (tierColor.gradient.dark || '')
+          tierColor?.gradient.light || '',
+          'dark:' + (tierColor?.gradient.dark || '')
         )}
       />
 
@@ -49,13 +49,14 @@ export default function TierCard({
         <div
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
-            tierColor.gradient.light || '',
-            'dark:' + (tierColor.gradient.dark || '')
+            tierColor?.gradient.light || '',
+            'dark:' + (tierColor?.gradient.dark || '')
           )}
         />
         <span className="relative z-10">
           <TierIcon
             tier={tier}
+            subTier={tier === 'Elite Grandmaster' ? undefined : 1}
             width={iconSize}
             height={iconSize}
             tooltip={false}
@@ -66,7 +67,7 @@ export default function TierCard({
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="text-sm font-semibold">{displayName}</span>
-        <span className={cn('text-xs font-semibold', tierColor.textClass)}>
+        <span className={cn('text-xs font-semibold', tierColor?.textClass)}>
           {rating}+
         </span>
       </div>

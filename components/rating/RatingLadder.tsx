@@ -1,6 +1,6 @@
 import React from 'react';
 import TierCard from './TierCard';
-import { tierData } from '@/lib/tierData';
+import { tierData } from '@/lib/utils/tierData';
 
 export default function RatingLadder() {
   return (

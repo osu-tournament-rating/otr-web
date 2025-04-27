@@ -60,7 +60,7 @@ export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-secondary px-4 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
       <div className="flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center">
@@ -99,7 +99,7 @@ export default function Header() {
           <SheetContent
             overlay={false}
             closeButton={false}
-            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-secondary p-6 sm:max-w-xs md:hidden"
+            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
           >
             {/* Required for screen reader */}
             <DialogTitle hidden />
@@ -208,7 +208,7 @@ function NavigationItem({
       {hasDropdown && (
         <NavigationMenuContent
           className={
-            'right-0 !rounded-xl !border-0 !bg-secondary pr-2 md:!rounded-t-none'
+            'right-0 !rounded-xl !border-0 !bg-card pr-2 md:!rounded-t-none'
           }
         >
           {/* Seamlessly extend the nav border */}

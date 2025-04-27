@@ -8,6 +8,7 @@ import {
   MatchesWrapper,
   MeWrapper,
   OAuthWrapper,
+  PlayersWrapper,
   SearchWrapper,
   TournamentsWrapper,
   ProblemDetails,
@@ -88,6 +89,7 @@ export const games = new GamesWrapper(configuration);
 export const leaderboards = new LeaderboardsWrapper(configuration);
 export const matches = new MatchesWrapper(configuration);
 export const me = new MeWrapper(configuration);
+export const players = new PlayersWrapper(configuration);
 export const oAuth = new OAuthWrapper(configuration);
 export const scores = new GameScoresWrapper(configuration);
 export const search = new SearchWrapper(configuration);
