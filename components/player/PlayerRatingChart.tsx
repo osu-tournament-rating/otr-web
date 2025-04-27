@@ -126,8 +126,8 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
   const totalChange = currentRating - initialRating;
 
   return (
-    <div className="flex flex-wrap gap-3 font-sans">
-      <div className="flex min-w-[140px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-4">
+    <div className="flex flex-wrap gap-2">
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
         <Award className="h-6 w-6 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">Peak Rating</div>
@@ -135,8 +135,8 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
             {highestRating.toFixed(0)} <TRText className="-ml-1" />
           </div>
         </div>
-      </div>
-      <div className="flex min-w-[140px] flex-1 items-center gap-2 rounded-lg bg-muted/50 p-4">
+      </Card>
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
         {totalChange >= 0 ? (
           <TrendingUp className="h-6 w-6 text-primary" />
         ) : (
@@ -152,7 +152,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
             <TRText />
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
