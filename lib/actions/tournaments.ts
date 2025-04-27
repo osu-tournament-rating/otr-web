@@ -1,10 +1,12 @@
 'use server';
 
-import { tournaments } from '@/lib/api';
+import { tournaments, isValidationProblemDetails } from '@/lib/api';
 import {
   TournamentsCreateRequestParams,
   TournamentsGetRequestParams,
+  TournamentSubmissionDTO,
   TournamentsUpdateRequestParams,
+  TournamentsListRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
 
@@ -42,12 +44,25 @@ const getCached = cache(async (id: number, verified?: boolean) => {
   return result;
 });
 
+export async function getTournamentsList(params: TournamentsListRequestParams) {
+  const { result } = await tournaments.list(params);
+  return result;
+}
+
 export async function update(params: TournamentsUpdateRequestParams) {
   const { result } = await tournaments.update(params);
   return result;
 }
 
 export async function submit(params: TournamentsCreateRequestParams) {
-  const { result } = await tournaments.create(params);
-  return result;
+  try {
+    const { result } = await tournaments.create(params);
+    return result;
+  } catch (error) {
+    if (isValidationProblemDetails<TournamentSubmissionDTO>(error)) {
+      return error;
+    }
+
+    throw error;
+  }
 }

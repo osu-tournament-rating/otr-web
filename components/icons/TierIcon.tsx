@@ -7,6 +7,7 @@ export const validTiers = [
   'Silver',
   'Gold',
   'Platinum',
+  'Emerald',
   'Diamond',
   'Master',
   'Grandmaster',
@@ -19,23 +20,31 @@ type TierName = (typeof validTiers)[number];
 export default function TierIcon({
   tier,
   subTier,
-  includeSubtierInTooltip,
+  tooltip,
   ...rest
 }: Omit<React.ComponentProps<typeof Image>, 'src' | 'alt'> & {
+  /** Target tier */
   tier: TierName;
+
+  /** Optional target subtier */
   subTier: number | undefined;
-  includeSubtierInTooltip: boolean;
+
+  /** If a tooltip with the tier text should be attached to the icon */
+  tooltip?: boolean;
 }) {
-  // We still use validTiers at runtime to ensure the tier is valid
-  // This prevents the ESLint error about validTiers only being used as a type
-  if (!validTiers.includes(tier)) {
-    console.warn(`Invalid tier: ${tier}`);
+  const Icon = () => (
+    <Image
+      src={`/icons/tiers/${tier}${subTier ?? ''}.svg`}
+      alt={tier + subTier?.toString()}
+      {...rest}
+    />
+  );
+
+  if (!tooltip) {
+    return <Icon />;
   }
 
-  const tooltipContent = getTierString(
-    tier,
-    includeSubtierInTooltip ? subTier : undefined
-  );
+  const tooltipContent = getTierString(tier, tooltip ? subTier : undefined);
 
   // Here purely for convenience
   if (tier === 'Elite Grandmaster') {
@@ -44,11 +53,7 @@ export default function TierIcon({
 
   return (
     <SimpleTooltip content={tooltipContent}>
-      <Image
-        src={`/icons/tiers/${tier}${subTier ?? ''}.svg`}
-        alt={tier + subTier?.toString()}
-        {...rest}
-      />
+      <Icon />
     </SimpleTooltip>
   );
 }

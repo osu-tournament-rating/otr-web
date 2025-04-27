@@ -4,10 +4,18 @@ import { cn } from '@/lib/utils';
 import { TierName, getTierColor } from '@/lib/utils/tierData';
 
 export interface TierCardProps {
+  /** Desired tier */
   tier: TierName;
+
+  /** Visual text representation of the tier */
   displayName: string;
+
+  /** Tier rating */
   rating: number;
+
+  /** Icon size */
   iconSize: number;
+
   className?: string;
 }
 
@@ -23,10 +31,7 @@ export default function TierCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-2 rounded-2xl p-3',
-        'bg-gray-800/60 dark:bg-card-alt/80',
-        'border border-white/5',
-        'shadow-lg',
+        'relative flex flex-col items-center gap-2 rounded-2xl border border-white/5 bg-gray-800/60 p-3 dark:bg-card-alt/80',
         className
       )}
     >
@@ -40,7 +45,7 @@ export default function TierCard({
       />
 
       {/* Icon container with enhanced glow */}
-      <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
+      <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
         <div
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
@@ -52,19 +57,19 @@ export default function TierCard({
           <TierIcon
             tier={tier}
             subTier={tier === 'Elite Grandmaster' ? undefined : 1}
-            includeSubtierInTooltip={false}
             width={iconSize}
             height={iconSize}
+            tooltip={false}
           />
         </span>
       </div>
 
       {/* Text content */}
       <div className="flex flex-col items-center text-center">
-        <span className="font-semibold">{displayName}</span>
-        <p className={cn('text-sm font-semibold', tierColor.textClass)}>
+        <span className="text-sm font-semibold">{displayName}</span>
+        <span className={cn('text-xs font-semibold', tierColor.textClass)}>
           {rating}+
-        </p>
+        </span>
       </div>
     </div>
   );

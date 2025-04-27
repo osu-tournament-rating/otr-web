@@ -7,7 +7,10 @@ type LabelWithTooltipProps = {
   tooltip: string;
 };
 
-export default function LabelWithTooltip({ label, tooltip }: LabelWithTooltipProps) {
+export default function LabelWithTooltip({
+  label,
+  tooltip,
+}: LabelWithTooltipProps) {
   return (
     <div className="flex items-center gap-2">
       <FormLabel className="font-medium text-foreground">{label}</FormLabel>

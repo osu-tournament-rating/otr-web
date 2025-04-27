@@ -1,41 +1,37 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { LucideIcon, Menu, Trophy, Upload, X } from 'lucide-react';
-import MobileNavItem from './MobileNavItem';
+import { ChevronDown, LucideIcon, Trophy, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import ProfileCard from '../profile/ProfileCard';
 import SearchDialog from '../search/SearchDialog';
-import { Button } from '../ui/button';
 import { DialogTitle } from '../ui/dialog';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
+  NavigationMenuContent,
 } from '../ui/navigation-menu';
+import { NavigationMenuTrigger } from '@radix-ui/react-navigation-menu';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
+import ClientOnly from '../client-only';
+import MobileNavTrigger from './MobileNavTrigger';
+import SupportButton from '../buttons/SupportButton';
 
 type NavItem = {
   title: string;
   href: string;
-  dropdown?: {
-    title: string;
-    href: string;
-    icon: LucideIcon;
-  }[];
+  dropdown?: SubNavItem[];
 };
 
-type MobileDropdownState = {
-  [key: string]: boolean;
-};
+type SubNavItem = {
+  icon: LucideIcon;
+} & Omit<NavItem, 'dropdown'>;
 
 const navItems: NavItem[] = [
   {
@@ -61,156 +57,186 @@ const navItems: NavItem[] = [
 ];
 
 export default function Header() {
-  const pathname = usePathname();
-
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [openMobileDropdowns, setOpenMobileDropdowns] =
-    useState<MobileDropdownState>(() => {
-      const initialOpen: MobileDropdownState = {};
-      navItems.forEach((item) => {
-        if (item.dropdown) {
-          initialOpen[item.title] = item.dropdown.some(
-            (dropdownItem) => pathname === dropdownItem.href
-          );
-        }
-      });
-      return initialOpen;
-    });
-
-  const toggleMobileDropdown = useCallback((title: string) => {
-    setOpenMobileDropdowns((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-b-muted bg-secondary px-4 shadow-sm">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src={'/logos/small.svg'}
-              alt="o!TR Logo"
-              width={36}
-              height={36}
-              className="transition-transform hover:scale-105"
-            />
-          </Link>
+    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-secondary px-4 shadow-sm">
+      <div className="flex items-center gap-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src={'/logos/small.svg'}
+            alt="o!TR Logo"
+            width={36}
+            height={36}
+            className="transition-transform hover:scale-105"
+          />
+        </Link>
 
-          {/* Main nav */}
-          <NavigationMenu viewport={false} className="hidden md:flex">
-            <NavigationMenuList>
-              {navItems.map((item) => (
-                <NavigationMenuItem key={item.title}>
-                  {item.dropdown ? (
-                    <>
-                      <Link href={item.href}>
-                        <NavigationMenuTrigger
-                          className={cn(
-                            'bg-secondary hover:cursor-pointer hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                            pathname.startsWith(item.href) &&
-                              'font-extrabold text-primary focus:bg-secondary focus:text-primary'
-                          )}
-                        >
-                          {item.title}
-                        </NavigationMenuTrigger>
-                      </Link>
-                      <NavigationMenuContent>
-                        <div className="py-1">
-                          {item.dropdown.map((dropdownItem) => (
-                            <NavigationMenuLink
-                              key={dropdownItem.title}
-                              asChild
-                              className={cn(
-                                'flex flex-row items-center gap-2 text-sm',
-                                pathname === dropdownItem.href &&
-                                  'font-medium text-primary focus:text-primary'
-                              )}
-                            >
-                              <Link href={dropdownItem.href}>
-                                <div className="flex items-center gap-2">
-                                  <dropdownItem.icon className="h-4 w-4" />
-                                  <p>{dropdownItem.title}</p>
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          ))}
-                        </div>
-                      </NavigationMenuContent>
-                    </>
-                  ) : (
-                    <NavigationMenuLink
-                      asChild
-                      className={cn(
-                        'transition-colors hover:bg-secondary hover:text-primary focus:bg-secondary focus:outline-none',
-                        pathname.startsWith(item.href) &&
-                          'font-extrabold text-primary focus:text-primary'
-                      )}
-                    >
-                      <Link href={item.href}>{item.title}</Link>
-                    </NavigationMenuLink>
-                  )}
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+        {/* Main nav */}
+        <NavigationMenu viewport={false} className="hidden md:flex">
+          <NavigationMenuList className="gap-1">
+            {navItems.map((item) => (
+              <NavigationItem key={item.title} {...item} />
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <SearchDialog />
+        <ModeToggle />
+        <SupportButton />
+        <div className="hidden md:block">
+          <ClientOnly>
+            <ProfileCard />
+          </ClientOnly>
         </div>
 
-        <div>
-          <div className="hidden items-center gap-3 md:flex">
-            <SearchDialog />
-            <ModeToggle />
-            <div className="pl-1">
-              <ProfileCard />
+        {/* Mobile menu */}
+        <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
+          <MobileNavTrigger isOpen={isMobileNavOpen} />
+          <SheetContent
+            overlay={false}
+            closeButton={false}
+            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-secondary p-6 sm:max-w-xs md:hidden"
+          >
+            {/* Required for screen reader */}
+            <DialogTitle hidden />
+
+            <div className="flex flex-col space-y-6">
+              <ClientOnly>
+                <ProfileCard />
+              </ClientOnly>
+              <Separator className="bg-muted" />
+              <nav className="flex flex-col space-y-1">
+                <NavigationMenu
+                  viewport={false}
+                  className="contents justify-start"
+                >
+                  <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
+                    {navItems.map((item) => (
+                      <NavigationItem isMobile key={item.title} {...item} />
+                    ))}
+                  </NavigationMenuList>
+                </NavigationMenu>
+              </nav>
             </div>
-          </div>
-
-          {/* Mobile hamburger menu */}
-          <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
-            {!isMobileNavOpen ? (
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-            ) : (
-              <SheetClose asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <X className="h-5 w-5" />
-                </Button>
-              </SheetClose>
-            )}
-            <SheetContent
-              overlay={false}
-              closeButton={false}
-              className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-secondary p-2 sm:w-1/3 md:hidden"
-            >
-              {/* Required for screen reader */}
-              <DialogTitle hidden />
-              <NavigationMenu className="contents" orientation={'vertical'}>
-                <div className="flex flex-col gap-y-4 px-2">
-                  <ProfileCard isMobile={true} />
-                  <Separator className="bg-muted" />
-                </div>
-                <NavigationMenuList className="flex-col">
-                  {navItems.map((item) => (
-                    <NavigationMenuItem className="w-full" key={item.title}>
-                      <MobileNavItem
-                        item={item}
-                        pathname={pathname}
-                        isOpen={!!openMobileDropdowns[item.title]}
-                        onToggle={() => toggleMobileDropdown(item.title)}
-                      />
-                    </NavigationMenuItem>
-                  ))}
-                </NavigationMenuList>
-              </NavigationMenu>
-            </SheetContent>
-          </Sheet>
-        </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
+  );
+}
+
+function NavLink({
+  isMobile,
+  className,
+  ...rest
+}: { isMobile: boolean } & React.ComponentProps<typeof Link>) {
+  const linkStyle =
+    'flex flex-row gap-2 rounded-md p-2 text-sm transition-colors hover:text-primary focus:bg-transparent focus:text-primary';
+
+  if (isMobile) {
+    return (
+      <SheetClose asChild>
+        <Link className={cn(linkStyle, className)} {...rest} />
+      </SheetClose>
+    );
+  }
+
+  return <Link className={cn(linkStyle, className)} {...rest} />;
+}
+
+function SubnavTrigger({
+  active,
+  dropdown,
+  children,
+}: {
+  dropdown: boolean;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  if (!dropdown) {
+    return children;
+  }
+
+  return (
+    <NavigationMenuTrigger
+      data-slot="navigation-menu-trigger"
+      className={cn(
+        'group inline-flex h-9 w-full items-center justify-start transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
+        active && 'bg-accent md:bg-transparent'
+      )}
+    >
+      {children}
+      <ChevronDown
+        className="relative top-[1px] size-3 transition duration-300 group-data-[state=open]:rotate-180"
+        aria-hidden="true"
+      />
+    </NavigationMenuTrigger>
+  );
+}
+
+function NavigationItem({
+  title,
+  href,
+  dropdown,
+  isMobile = false,
+}: NavItem & { isMobile?: boolean }) {
+  const pathname = usePathname();
+  const isActive = pathname.startsWith(href);
+  const hasDropdown = !!dropdown;
+
+  return (
+    <NavigationMenuItem className="w-full">
+      <SubnavTrigger active={isActive} dropdown={hasDropdown}>
+        <NavLink
+          isMobile={isMobile}
+          href={href}
+          className={cn(
+            'bg-transparent hover:bg-transparent',
+            !hasDropdown &&
+              'hover:bg-accent focus:bg-accent md:hover:bg-transparent md:focus:bg-transparent',
+            isActive && 'bg-accent font-bold text-primary md:bg-transparent'
+          )}
+        >
+          {title}
+        </NavLink>
+      </SubnavTrigger>
+      {/* Subnav */}
+      {hasDropdown && (
+        <NavigationMenuContent
+          className={
+            'right-0 !rounded-xl !border-0 !bg-secondary pr-2 md:!rounded-t-none'
+          }
+        >
+          {/* Seamlessly extend the nav border */}
+          <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
+          {dropdown.map(({ title, href, icon: Icon }) => (
+            <NavLink
+              isMobile={isMobile}
+              key={title}
+              href={href}
+              className={cn(
+                'hover:bg-accent md:hover:bg-transparent',
+                pathname === href &&
+                  'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Icon
+                  className={cn(
+                    'size-5 hover:text-primary focus:text-primary',
+                    pathname === href && 'text-primary'
+                  )}
+                />
+                <p>{title}</p>
+              </div>
+            </NavLink>
+          ))}
+        </NavigationMenuContent>
+      )}
+    </NavigationMenuItem>
   );
 }

@@ -22,7 +22,6 @@ import {
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
@@ -37,6 +36,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -68,9 +68,9 @@ export default function TournamentAdminView({
         body: createPatchOperations(tournament, values),
       });
       form.reset(patchedTournament);
-      toast.success('Saved successfully');
-    } catch (error) {
-      toast.error('Failed to save due to server issue');
+      saveToast();
+    } catch {
+      errorSaveToast();
     }
   }
 
@@ -273,9 +273,7 @@ export default function TournamentAdminView({
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isValid || !form.formState.isDirty
-                }
+                disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

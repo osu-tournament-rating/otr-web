@@ -15,7 +15,7 @@ export const columns = [
     header: 'Rank',
     cell: ({ getValue, row }) => (
       <div className="flex min-w-[100px] flex-row items-center justify-between">
-        <p className="font-sans">#{getValue()}</p>
+        <p>#{getValue()}</p>
         <div className="flex items-center">
           <Image
             src={`https://assets.ppy.sh/old-flags/${row.original.player.country}.png`}
@@ -34,7 +34,7 @@ export const columns = [
   columnHelper.accessor('player.osuId', {
     header: 'Player',
     cell: ({ getValue, row }) => (
-      <div className="flex min-w-[150px] flex-row items-center gap-2 font-sans">
+      <div className="flex min-w-[150px] flex-row items-center gap-2">
         <Image
           src={`https://a.ppy.sh/${getValue()}`}
           alt="avatar"
@@ -43,13 +43,15 @@ export const columns = [
           height={28}
         />
         <Link href={`/players/${row.original.player.id}`}>
-          <p className="max-w-[120px] truncate font-sans sm:max-w-full">
+          <p className="max-w-[120px] truncate sm:max-w-full">
             {row.original.player.username}
           </p>
         </Link>
       </div>
     ),
   }),
+  // TODO: This columnHelper.accessor will never find the right tier icon
+  // because it's searching for a tier like 'Silver' without the subtier.
   columnHelper.accessor('tierProgress.currentTier', {
     header: 'Tier',
     cell: ({ row }) => (
@@ -57,7 +59,7 @@ export const columns = [
         <TierIcon
           tier={row.original.tierProgress.currentTier as TierName}
           subTier={row.original.tierProgress.currentSubTier}
-          includeSubtierInTooltip
+          tooltip
           width={24}
           height={24}
         />
@@ -69,7 +71,7 @@ export const columns = [
     cell: ({ getValue }) => (
       <div className="flex min-w-[60px] justify-center">
         <SimpleTooltip content={`${getValue().toFixed(2)} TR`}>
-          <p className="font-sans">{getValue().toFixed(0)}</p>
+          <p>{getValue().toFixed(0)}</p>
         </SimpleTooltip>
       </div>
     ),
@@ -77,23 +79,19 @@ export const columns = [
   columnHelper.accessor('tournamentsPlayed', {
     header: 'Tournaments',
     cell: ({ getValue }) => (
-      <p className="text-center font-sans text-secondary-foreground">
-        {getValue()}
-      </p>
+      <p className="text-center text-secondary-foreground">{getValue()}</p>
     ),
   }),
   columnHelper.accessor('matchesPlayed', {
     header: 'Matches',
     cell: ({ getValue }) => (
-      <p className="text-center font-sans text-secondary-foreground">
-        {getValue()}
-      </p>
+      <p className="text-center text-secondary-foreground">{getValue()}</p>
     ),
   }),
   columnHelper.accessor('winRate', {
     header: 'Win %',
     cell: ({ getValue }) => (
-      <p className="text-center font-sans text-secondary-foreground">
+      <p className="text-center text-secondary-foreground">
         {~~((getValue() ?? 0) * 100)}%
       </p>
     ),

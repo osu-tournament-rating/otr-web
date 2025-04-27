@@ -20,7 +20,6 @@ import {
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 import {
   Dialog,
@@ -45,6 +44,7 @@ import {
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
 import { createPatchOperations } from '@/lib/utils/form';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -86,10 +86,10 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
         body: createPatchOperations(game, values),
       });
 
-      toast.success('Saved successfully');
       form.reset(patchedGame);
-    } catch (error) {
-      toast.error('Failed to save due to server issue');
+      saveToast();
+    } catch {
+      errorSaveToast();
     }
   }
 
@@ -297,9 +297,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isValid || !form.formState.isDirty
-                }
+                disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

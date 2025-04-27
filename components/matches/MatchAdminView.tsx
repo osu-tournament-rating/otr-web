@@ -4,7 +4,6 @@ import {
   getEnumFlags,
   MatchProcessingStatusEnumHelper,
   MatchWarningFlagsEnumHelper,
-  ModsEnumHelper,
 } from '@/lib/enums';
 import { matchEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -20,7 +19,6 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useSession } from 'next-auth/react';
 import { update } from '@/lib/actions/matches';
 import { createPatchOperations } from '@/lib/utils/form';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -43,6 +41,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import SimpleSelectContent from '../select/SimpleSelectContent';
 import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -78,10 +77,9 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
       });
 
       form.reset(patchedMatch);
-      toast.success('Saved successfully');
-    } catch (error) {
-      console.log(error);
-      toast.error('Failed to save due to server issue');
+      saveToast();
+    } catch {
+      errorSaveToast();
     }
   }
 
@@ -213,9 +211,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isValid || !form.formState.isDirty
-                }
+                disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

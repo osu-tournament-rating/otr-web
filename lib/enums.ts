@@ -1,4 +1,5 @@
 import {
+  AdminNoteRouteTarget,
   GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
@@ -30,7 +31,10 @@ export type EnumMetadata = {
  * @template T Enumeration type
  * @template M Metadata type
  */
-type EnumMetadataCollection<T extends number, M extends EnumMetadata> = {
+type EnumMetadataCollection<
+  T extends number | string,
+  M extends EnumMetadata,
+> = {
   [key in T]: M;
 };
 
@@ -39,7 +43,7 @@ type EnumMetadataCollection<T extends number, M extends EnumMetadata> = {
  * @template T Enumeration type
  * @template M Metadata type
  */
-interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
+interface IEnumHelperBase<T extends number | string, M extends EnumMetadata> {
   /** Collection of metadata */
   readonly metadata: EnumMetadataCollection<T, M>;
 }
@@ -50,7 +54,7 @@ interface IEnumHelperBase<T extends number, M extends EnumMetadata> {
  * @template M Metadata type
  */
 export interface IEnumHelper<
-  T extends number,
+  T extends number | string,
   M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
   /**
@@ -69,7 +73,7 @@ export interface IEnumHelper<
  * @template M Metadata type
  */
 const defaultEnumHelper = <
-  T extends number,
+  T extends number | string,
   M extends EnumMetadata = EnumMetadata,
 >(): IEnumHelper<T, M> => ({
   metadata: {} as EnumMetadataCollection<T, M>,
@@ -184,6 +188,38 @@ export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
     },
   },
 };
+
+export const AdminNoteRouteTargetEnumHelper: IEnumHelper<AdminNoteRouteTarget> =
+  {
+    ...defaultEnumHelper(),
+
+    metadata: {
+      [AdminNoteRouteTarget.Game]: {
+        text: 'Game',
+        description: '',
+      },
+      [AdminNoteRouteTarget.GameScore]: {
+        text: 'Score',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Match]: {
+        text: 'Match',
+        description: '',
+      },
+      [AdminNoteRouteTarget.OAuthClient]: {
+        text: 'OAuth Client',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Player]: {
+        text: 'Player',
+        description: '',
+      },
+      [AdminNoteRouteTarget.Tournament]: {
+        text: 'Tournament',
+        description: '',
+      },
+    },
+  };
 
 export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
   ...defaultEnumHelper(),
@@ -403,6 +439,11 @@ export const MatchWarningFlagsEnumHelper: IBitwiseEnumHelper<MatchWarningFlags> 
         text: 'Unexpected beatmaps found',
         description:
           'The match has one or more games where a beatmap that was not pooled was played outside of the first two games',
+      },
+      [MatchWarningFlags.OverlappingRosters]: {
+        text: 'Overlapping rosters found',
+        description:
+          "The match's roster features one or more players on more than one roster. Only one player per roster is allowed.",
       },
     },
   };

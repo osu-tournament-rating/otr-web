@@ -1,7 +1,11 @@
 'use client';
 
-import { AdminNoteDTO, Roles } from '@osu-tournament-rating/otr-api-client';
-import { StickyNote } from 'lucide-react';
+import {
+  AdminNoteDTO,
+  AdminNoteRouteTarget,
+  Roles,
+} from '@osu-tournament-rating/otr-api-client';
+import { Loader2, StickyNote } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -13,37 +17,93 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import { ScrollArea } from '../ui/scroll-area';
-import AdminNoteCard from './AdminNoteCard';
-import AdminNoteForm from './AdminNoteForm';
+import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
+import { adminNoteFormSchema } from '@/lib/schema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { createNote } from '@/lib/actions/admin-notes';
+import { toast } from 'sonner';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from '../ui/form';
+import { Textarea } from '../ui/textarea';
+import { z } from 'zod';
+import AdminNotesList from './AdminNoteList';
+
+interface AdminNoteViewProps {
+  /**
+   * Admin notes
+   */
+  notes: AdminNoteDTO[];
+
+  /**
+   * Type of parent entity
+   */
+  entity: AdminNoteRouteTarget;
+
+  /**
+   * Id of the parent entity
+   */
+  entityId: number;
+
+  /**
+   * Optional display name for the parent entity. Uses entityId if not provided
+   */
+  entityDisplayName?: string;
+}
 
 export default function AdminNoteView({
-  title,
   notes,
-}: {
-  title: string;
-  notes: AdminNoteDTO[];
-}) {
-  const [showNotification, setShowNotification] = useState(true);
+  entity,
+  entityId,
+  entityDisplayName,
+}: AdminNoteViewProps) {
   const { data: session } = useSession();
 
+  const form = useForm<z.infer<typeof adminNoteFormSchema>>({
+    resolver: zodResolver(adminNoteFormSchema),
+    defaultValues: {
+      note: '',
+    },
+  });
+
+  const [showNotification, setShowNotification] = useState(true);
   const notify = !!notes.length;
 
   if (!session?.user?.scopes?.includes(Roles.Admin) && !notify) {
     return null;
   }
 
-  const handleClick = () => {
-    if (showNotification) {
-      setShowNotification(false);
+  const entityMetadata = AdminNoteRouteTargetEnumHelper.getMetadata(entity);
+  entityDisplayName ??= `${entityMetadata.text} ${entityId}`;
+
+  async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
+    try {
+      await createNote({
+        entityId: entityId,
+        entity: entity,
+        body: data.note,
+      });
+
+      toast.success(`Created admin note for ${entityDisplayName}`);
+    } catch {
+      toast.error(`Failed to create admin note for ${entityDisplayName}`);
     }
-  };
+  }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          onClick={handleClick}
+          onClick={() => {
+            if (showNotification) {
+              setShowNotification(false);
+            }
+          }}
           className="relative h-5 w-5"
           variant={'ghost'}
         >
@@ -62,19 +122,57 @@ export default function AdminNoteView({
         <DialogHeader>
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
-            Viewing admin notes for <span className="font-bold">{title}</span>
+            Viewing admin notes for{' '}
+            <span className="font-semibold">{entityDisplayName}</span>
           </DialogDescription>
         </DialogHeader>
-        <AdminNoteForm />
-        {!!notes.length && (
-          <ScrollArea className="max-h-48 space-y-4 px-2 not-odd:max-h-84">
-            <div className="flex flex-col space-y-4">
-              {notes.map((note) => (
-                <AdminNoteCard key={note.id} note={note} />
-              ))}
+
+        {/* New note creation form */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+            <FormField
+              control={form.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add your note here"
+                      className="min-h-24 resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-between space-x-2">
+              {/* Reset changes */}
+              <Button
+                type="reset"
+                variant={'secondary'}
+                onClick={() => form.reset()}
+                disabled={
+                  !form.formState.isDirty || form.formState.isSubmitting
+                }
+              >
+                Discard
+              </Button>
+              {/* Save changes */}
+              <Button
+                type="submit"
+                disabled={!form.formState.isValid || !form.formState.isDirty}
+              >
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  'Submit'
+                )}
+              </Button>
             </div>
-          </ScrollArea>
-        )}
+          </form>
+        </Form>
+        <AdminNotesList entity={entity} notes={notes} />
       </DialogContent>
     </Dialog>
   );

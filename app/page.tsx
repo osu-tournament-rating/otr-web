@@ -1,274 +1,162 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Trophy, Flag, BookOpen } from 'lucide-react';
 import RatingLadder from '@/components/rating/RatingLadder';
-import FeatureCard from '@/components/FeatureCard';
+import {
+  FeatureCard,
+  FeatureCardDescription,
+  FeatureCardTitle,
+} from '@/components/home/FeatureCard';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { RulesetEnumHelper } from '@/lib/enums';
+import LinkCard from '@/components/home/LinkCard';
 
 export default async function Page() {
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground">
-      {/* Main content */}
-      <div className="container mx-auto px-4 py-8">
+    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
+      {/* Hero section */}
+      <FeatureCard
+        decoration={2}
+        imagePosition="right"
+        imageSize="h-[240px] w-[475px]"
+        imageClassName="sm:-top-16"
+        className="mb-4 items-center lg:py-10"
+        contentClassName="px-2 max-w-md"
+      >
+        <FeatureCardTitle>osu! Tournament Rating</FeatureCardTitle>
+        <FeatureCardDescription>
+          A community-driven platform that ranks and predicts the performance of
+          all osu! tournament players
+        </FeatureCardDescription>
+      </FeatureCard>
+
+      {/* Rating Ladder */}
+      <Card className="mb-4 border-none bg-card-alt p-6 md:p-8">
         <div className="flex flex-col gap-2">
-          {/* Hero section */}
-          <Card className="relative mb-4 overflow-hidden border-none bg-card-alt p-6 md:p-8">
-            <div className="absolute -top-16 right-0 h-[225px] w-[475px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-              <Image
-                src="/decorations/decoration-2.svg"
-                alt="Decorative background pattern"
-                fill
-                style={{ objectFit: 'cover' }}
-                aria-hidden="true"
-              />
-            </div>
-            <div className="flex flex-col items-center gap-6 md:h-full md:flex-row md:justify-between">
-              <div className="z-10 flex max-w-md flex-col gap-2">
-                <h1 className="text-2xl font-bold">osu! Tournament Rating</h1>
-                <p className="text-md text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                  A platform that ranks and predicts the performance of all osu!
-                  tournament players
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Rating Ladder */}
-          <Card className="mb-4 border-none bg-card-alt p-6 md:p-8">
-            <div className="mb-4 flex flex-col gap-2">
-              <h2 className="text-3xl font-bold">Rise to the top</h2>
-              <p className="text-muted-foreground">
-                Join your friends on the ladder as soon as you play in a
-                verified tournament!
-              </p>
-            </div>
-            <RatingLadder className="w-full" iconSize={40} />
-          </Card>
-
-          {/* Link cards */}
-          <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Link href="/leaderboard" className="block">
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 text-primary">
-                    <Trophy size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">View Rankings</h3>
-                    <p className="mt-1 text-muted-foreground">
-                      Find out where you stack up against your friends...and
-                      foes
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-            <Link href="/tournaments" className="block">
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 text-primary">
-                    <Flag size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">
-                      Browse Tournaments
-                    </h3>
-                    <p className="mt-1 text-muted-foreground">
-                      View the latest and greatest or go back in time
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="https://docs.otr.stagec.xyz"
-              className="block"
-              target="_blank"
-            >
-              <div className="h-full rounded-xl border border-card-alt-border bg-card-alt p-6 transition-colors hover:border-card-alt-hover hover:bg-card-alt-hover/30">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 text-primary">
-                    <BookOpen size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">Read the docs</h3>
-                    <p className="mt-1 text-muted-foreground">
-                      Learn how our rating system works
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-
-          {/* Feature sections */}
-          <div className="space-y-6">
-            {/* Rank restricted tournaments */}
-            <FeatureCard
-              title="Rank restricted tournaments"
-              description="oTR combined with BWS opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets"
-              imageUrl="/decorations/decoration-1.svg"
-              imagePosition="left"
-              contentPosition="right"
-              className="h-44 md:h-64"
-            />
-
-            {/* Verified tournaments */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 right-0 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-2.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 mr-auto flex flex-col gap-2 md:w-1/2">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    Verified tournaments
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Only human-verified tournament matches are included in our
-                    rating algorithm
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Stats on stats */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 -left-50 h-[260px] w-[600px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-2.svg"
-                  alt=""
-                  fill
-                  style={{
-                    objectFit: 'cover',
-                    transform: 'rotate(180deg)',
-                  }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    Stats on stats
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Powerful tools for players and teams. Compare performance,
-                    track progress, and analyze your tournament history with
-                    ease.
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* All modes supported */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div
-                className="absolute top-0 right-0 h-[225px] w-[618px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100"
-                style={{
-                  transform: 'scaleX(-1) scale(0.85)',
-                  transformOrigin: 'right top',
-                }}
-              >
-                <Image
-                  src="/decorations/decoration-4.svg"
-                  alt=""
-                  fill
-                  style={{
-                    objectFit: 'contain',
-                    right: '0',
-                    left: 'auto',
-                  }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row md:justify-between">
-                <div className="z-10 mr-auto flex flex-col gap-2 md:w-2/5">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    All modes supported
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    Yes, mania 4K and 7K are entirely separate rulesets!
-                  </p>
-                </div>
-                <div className="z-10 mt-4 flex flex-wrap gap-2 rounded-2xl bg-muted p-2 md:gap-4 md:p-4">
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/osu.svg"
-                      alt="osu!"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
-                  </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/taiko.svg"
-                      alt="osu!taiko"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
-                  </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/catch.svg"
-                      alt="osu!catch"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
-                  </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/mania4k.svg"
-                      alt="osu!mania 4K"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
-                  </div>
-                  <div className="flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-                    <Image
-                      src="/icons/rulesets/mania7k.svg"
-                      alt="osu!mania 7K"
-                      width={32}
-                      height={32}
-                      className="fill-muted-foreground md:h-12 md:w-12"
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* 100% Open source */}
-            <Card className="relative h-44 overflow-hidden border-none bg-card-alt p-4 md:h-64 md:p-6 lg:p-8">
-              <div className="absolute top-0 left-0 h-[282px] w-[314px] opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100">
-                <Image
-                  src="/decorations/decoration-1.svg"
-                  alt=""
-                  fill
-                  style={{ objectFit: 'cover' }}
-                />
-              </div>
-              <div className="flex h-full flex-col items-center justify-center md:flex-row">
-                <div className="z-10 ml-auto flex flex-col gap-2 md:w-2/3">
-                  <h2 className="text-2xl font-bold md:text-3xl">
-                    100% Open source
-                  </h2>
-                  <p className="text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground">
-                    We are committed to remaining open source and transparent
-                    with our algorithm
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* CTA section removed from here and moved to top */}
+          <h2 className="text-3xl font-bold">Rise to the top</h2>
+          <p className="text-muted-foreground">
+            Join your friends on the ladder as soon as you play in a verified
+            tournament
+          </p>
         </div>
+        <RatingLadder />
+      </Card>
+
+      {/* Link cards */}
+      <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <LinkCard
+          title="View Rankings"
+          description="Find out where you stack up against your friends... and foes"
+          icon="medal"
+          href={'/leaderboard'}
+        />
+
+        <LinkCard
+          title="Browse Tournaments"
+          description="View the latest and greatest or go back in time"
+          icon="trophy"
+          href={'/tournaments'}
+        />
+
+        <LinkCard
+          title="Read the docs"
+          description="Learn the inner-workings of our rating algorithm"
+          icon="book"
+          href="https://docs.otr.stagec.xyz"
+          target="_blank"
+        />
+      </div>
+
+      {/* Feature sections */}
+      <div className="space-y-6">
+        {/* Rating restricted tournaments */}
+        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
+          <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
+          <FeatureCardDescription>
+            o!TR opens the door to an all-new level of fair competition in
+            tournaments targeting specific skill brackets
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* Verified tournaments */}
+        <FeatureCard
+          decoration={3}
+          imagePosition="right"
+          imageSize="h-[260px] w-[380px]"
+          imageClassName="rotate-180"
+          contentClassName="md:w-1/2"
+        >
+          <FeatureCardTitle>Verified tournaments</FeatureCardTitle>
+          <FeatureCardDescription>
+            Only human-verified tournament matches are included in our rating
+            algorithm
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* Stats on stats */}
+        <FeatureCard
+          decoration={2}
+          imageClassName="-left-50 top-0 rotate-180"
+          imageSize="h-[260px] w-[600px]"
+          contentClassName="md:w-2/3 xl:w-1/2"
+        >
+          <FeatureCardTitle>Stats on stats</FeatureCardTitle>
+          <FeatureCardDescription>
+            Powerful tools for players and teams. Compare performance, track
+            progress, and analyze your tournament history with ease
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* New updates every Tuesday */}
+        <FeatureCard
+          decoration={1}
+          imagePosition="right"
+          imageClassName="rotate-180"
+        >
+          <FeatureCardTitle>New updates every Tuesday</FeatureCardTitle>
+          <FeatureCardDescription>
+            Ratings are recalculated every Tuesday at 23:59 UTC
+          </FeatureCardDescription>
+        </FeatureCard>
+
+        {/* All modes supported */}
+        <FeatureCard
+          decoration={4}
+          imageSize="h-[300px] w-[618px]"
+          contentClassName="sm:max-md:flex-row items-center sm:items-center gap-4"
+        >
+          <div className="flex flex-col gap-2">
+            <FeatureCardTitle>All modes supported</FeatureCardTitle>
+            <FeatureCardDescription>
+              Yes, mania 4K and 7K are entirely separate rulesets
+            </FeatureCardDescription>
+          </div>
+          <div className="flex justify-center gap-4 rounded-2xl bg-muted/90 p-4 backdrop-blur-md md:gap-6 md:p-6">
+            {Object.keys(RulesetEnumHelper.metadata)
+              .filter((r) => Number(r) !== Ruleset.ManiaOther)
+              .map((r) => (
+                <RulesetIcon
+                  key={r}
+                  ruleset={Number(r)}
+                  className="size-8 fill-primary stroke-black/25 md:size-10 lg:size-12"
+                />
+              ))}
+          </div>
+        </FeatureCard>
+
+        {/* Open source, open data */}
+        <FeatureCard
+          decoration={2}
+          imagePosition="right"
+          imageClassName="-top-25 -right-15"
+          imageFit="cover"
+          imageSize="h-[300px] w-[600px]"
+          contentClassName="md:w-2/3"
+        >
+          <FeatureCardTitle>Open source, open data</FeatureCardTitle>
+          <FeatureCardDescription>
+            Built from the ground up with transparency in mind
+          </FeatureCardDescription>
+        </FeatureCard>
       </div>
     </div>
   );

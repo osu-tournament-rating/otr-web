@@ -65,39 +65,38 @@
 }
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222 47% 11%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222 47% 11%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222 47% 11%);
-  --primary: hsl(221, 83%, 61%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(210 20% 98%);
-  --secondary-foreground: hsl(222 47% 20%);
-  --muted: hsl(210 20% 96%);
-  --muted-foreground: hsl(215 25% 40%);
-  --accent: hsl(221 83% 84%);
-  --accent-foreground: hsl(222 47% 20%);
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(214 20% 91%);
-  --input: hsl(214 20% 91%);
-  --ring: hsl(221 83% 61%);
-  --radius: 0.5rem;
-  --chart-1: hsl(221 83% 61%);
-  --chart-1: hsl(221, 83%, 61%);
-  --chart-2: hsl(173, 83%, 61%);
-  --chart-3: hsl(271, 83%, 61%);
-  --chart-4: hsl(43, 83%, 61%);
-  --chart-5: hsl(27, 83%, 61%);
-  --chart-6: hsl(2, 83%, 61%);
-  --chart-7: hsl(320, 83%, 61%);
-  --chart-8: hsl(133, 83%, 61%);
-  --chart-9: hsl(61, 83%, 61%);
+  --background: hsl(210, 10%, 95%);
+  --foreground: hsl(0, 0%, 7%);
+  --card: hsl(210, 10%, 98%);
+  --card-foreground: hsl(0, 0%, 7%);
+  --card-alt: hsl(210, 15%, 94%);
+  --card-alt-foreground: hsl(0, 0%, 7%);
+  --card-alt-border: hsl(214.3, 20%, 85%);
+  --card-alt-hover: hsl(214.3, 20%, 80%);
+  --popover: hsl(210, 10%, 98%);
+  --popover-foreground: hsl(0, 0%, 7%);
+  --primary: hsl(221, 80%, 55%);
+  --primary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(210, 20%, 92%);
+  --secondary-foreground: hsl(0, 0%, 25%);
+  --muted: hsl(210, 20%, 92%);
+  --muted-foreground: hsl(0, 0%, 40%);
+  --accent: hsl(210, 15%, 90%);
+  --accent-foreground: hsl(222.2, 40%, 15%);
+  --destructive: hsl(0, 80%, 55%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(214.3, 20%, 85%);
+  --input: hsl(214.3, 20%, 85%);
+  --ring: hsl(221.2, 70%, 50%);
+  --radius: 0.3rem;
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
 
   --score-performance-label: hsl(51 60% 55%);
-  --team-no-team: hsl(0 0% 20%);
+  --team-no-team: #333;
   --team-red: hsl(348 72% 52%);
   --team-blue: hsl(228 72% 52%);
 
@@ -106,62 +105,51 @@
   --text-grandmaster: hsl(0, 80%, 55%);
   --text-master: hsl(266, 81%, 61%);
   --text-diamond: hsl(280, 65%, 60%);
+  --text-emerald: hsl(144, 65%, 50%);
   --text-platinum: hsl(197, 54%, 46%);
   --text-gold: hsl(43, 69%, 57%);
   --text-silver: hsl(0, 0%, 40%);
   --text-bronze: hsl(27, 63%, 48%);
 
-  /* Mod colors */
-  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
-  --mod-hidden: hsl(49, 86%, 70%);
-  --mod-freemod: hsl(35, 82%, 74%);
-  --mod-flashlight: hsl(236, 36%, 39%);
-  --mod-easy: hsl(114, 86%, 69%);
-  --mod-half-time: hsl(152, 86%, 69%);
-  --mod-double-time: hsl(251, 86%, 70%);
-  --mod-nightcore: hsl(271, 86%, 70%);
-  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
-  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
-  --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
-  --mod-hidden-flashlight: hsl(197, 36%, 39%);
+  --header-height-px: calc(var(--spacing) * 16);
 }
 
 .dark {
-  --background: hsl(110, 13%, 9%);
+  --background: hsl(0, 0%, 7%);
   --foreground: hsl(210 40% 98%);
-  --card: hsl(220 13% 12%);
+  --card: hsl(0, 0%, 8%);
   --card-foreground: hsl(210 40% 98%);
-  --popover: hsl(220 13% 12%);
+  --card-alt: hsl(0, 0%, 12%);
+  --card-alt-foreground: hsl(210 40% 98%);
+  --card-alt-border: hsl(217.2 32.6% 17.5%);
+  --card-alt-hover: hsl(217.2 32.6% 21%);
+  --popover: hsl(0, 0%, 7%);
   --popover-foreground: hsl(210 40% 98%);
-  --primary: hsl(221, 83%, 61%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(220 13% 16%);
-  --secondary-foreground: hsl(210 40% 90%);
-  --muted: hsl(220 13% 16%);
-  --muted-foreground: hsl(215 25% 65%);
-  --accent: hsl(221 83% 44%);
-  --accent-foreground: hsl(0 0% 100%);
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(220 13% 16%);
-  --input: hsl(220 13% 16%);
-  --ring: hsl(221 83% 61%);
-  --chart-1: hsl(221 83% 61%);
-  --chart-1: hsl(221, 83%, 61%);
-  --chart-2: hsl(173, 83%, 61%);
-  --chart-3: hsl(271, 83%, 61%);
-  --chart-4: hsl(43, 83%, 61%);
-  --chart-5: hsl(27, 83%, 61%);
-  --chart-6: hsl(2, 83%, 61%);
-  --chart-7: hsl(320, 83%, 61%);
-  --chart-8: hsl(133, 83%, 61%);
-  --chart-9: hsl(61, 83%, 61%);
+  --primary: hsl(217, 100%, 70%);
+  --primary-foreground: hsl(222.2 47.4% 11.2%);
+  --secondary: hsl(0, 0%, 12%);
+  --secondary-foreground: hsl(0, 0%, 71%);
+  --muted: hsl(0, 0%, 20%);
+  --muted-foreground: hsl(0, 0%, 60%);
+  --accent: hsl(0, 0%, 16%);
+  --accent-foreground: hsl(0, 0%, 70%);
+  --destructive: hsl(0, 100%, 58%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217.2 32.6% 17.5%);
+  --input: hsl(217.2 32.6% 17.5%);
+  --ring: hsl(217, 100%, 30%);
+  --chart-1: hsl(217, 100%, 70%);
+  --chart-2: hsl(160 60% 45%);
+  --chart-3: hsl(30 80% 55%);
+  --chart-4: hsl(280 65% 60%);
+  --chart-5: hsl(340 75% 55%);
 
   /* Dark mode tier text colors */
   --text-elite-grandmaster: hsl(217, 100%, 70%);
   --text-grandmaster: hsl(0, 100%, 58%);
   --text-master: hsl(266, 81%, 61%);
   --text-diamond: hsl(280, 65%, 70%);
+  --text-emerald: hsl(144, 70%, 60%);
   --text-platinum: hsl(187, 59%, 58%);
   --text-gold: hsl(43, 74%, 76%);
   --text-silver: hsl(0, 0%, 60%);
@@ -201,22 +189,6 @@
 }
 
 @layer utilities {
-  .text-shadow-xs {
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--background) 0%, black 30%);
-  }
-
-  .text-shadow-sm {
-    text-shadow: 0 2px 4px color-mix(in srgb, var(--background) 0%, black 40%);
-  }
-
-  .text-shadow-md {
-    text-shadow: 0 4px 8px color-mix(in srgb, var(--background) 0%, black 50%);
-  }
-
-  .text-shadow-lg {
-    text-shadow: 0 8px 16px color-mix(in srgb, var(--background) 0%, black 60%);
-  }
-
   /* Tier text color classes */
   .text-elite-grandmaster {
     color: var(--text-elite-grandmaster);
@@ -229,6 +201,9 @@
   }
   .text-diamond {
     color: var(--text-diamond);
+  }
+  .text-emerald {
+    color: var(--text-emerald);
   }
   .text-platinum {
     color: var(--text-platinum);
@@ -255,7 +230,6 @@
       var(--foreground) 60%,
       var(--team-color) 40%
     );
-    --player-propic-mask-dir: 90deg;
 
     @apply order-1 w-full;
 
@@ -267,34 +241,21 @@
       flex-direction: var(--team-flex-col-dir);
     }
 
-    .player-propic {
-      mask-image: linear-gradient(
-        var(--player-propic-mask-dir),
-        rgba(0, 0, 0, 0.4) 0,
-        rgba(0, 0, 0, 0.25) 45%,
-        transparent
-      );
-    }
+    .performance-item {
+      @apply flex flex-col items-start justify-center;
 
-    .performance-group {
-      @apply first:ml-auto;
+      .label {
+        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
+      }
 
-      .performance-item {
-        @apply flex flex-col items-start justify-center;
+      .value {
+        @apply text-base tracking-tighter;
 
-        .label {
-          @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
-        }
-
-        .value {
-          @apply text-base tracking-tighter;
-
-          color: color-mix(
-            in oklab,
-            var(--foreground) 90%,
-            var(--team-color) 10%
-          );
-        }
+        color: color-mix(
+          in oklab,
+          var(--foreground) 90%,
+          var(--team-color) 10%
+        );
       }
     }
 
@@ -307,8 +268,8 @@
 
       @apply order-2;
 
-      /* md breakpoint */
-      @media (min-width: 48rem) {
+      /* --var(--breakpoint-md) */
+      @media (width >= 48rem) {
         @apply pr-0.5;
       }
     }
@@ -318,17 +279,12 @@
 
       @apply order-3;
 
-      /* md breakpoint */
-      @media (min-width: 48rem) {
+      /* --var(--breakpoint-md) */
+      @media (width >= 48rem) {
         --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
-        --player-propic-mask-dir: 270deg;
 
         @apply flex-row-reverse pl-0.5;
-
-        .player-propic {
-          @apply right-0;
-        }
       }
     }
   }

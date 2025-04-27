@@ -48,7 +48,7 @@ export default function VerificationBadge({
 
   return (
     <Outer tooltip={displayText ? undefined : text}>
-      <Badge className={style} variant={'outline'}>
+      <Badge className={style} variant={'secondary'}>
         <Icon /> {displayText && text}
       </Badge>
     </Outer>

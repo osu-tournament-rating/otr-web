@@ -88,6 +88,7 @@ const otrProvider: OAuthConfig<UserDTO> = {
 export const { handlers, auth } = NextAuth({
   basePath: '/auth',
   providers: [otrProvider],
+  trustHost: true,
   callbacks: {
     async jwt({ token, user, account }) {
       // Store user data
