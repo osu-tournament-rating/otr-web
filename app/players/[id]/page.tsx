@@ -73,7 +73,7 @@ export default async function PlayerPage(props: PageProps) {
   return (
     <div className="mx-auto flex flex-col gap-2 p-4">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
-      {playerData.rating ? (
+      {playerData.rating && playerData.rating.adjustments ? (
         <>
           <PlayerRatingStatsCard
             rating={playerData.rating}

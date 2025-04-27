@@ -54,7 +54,7 @@ export default function PlayerRatingStatsCard({
                 <TierIcon
                   tier={(rating.tierProgress.currentTier as TierName) || ''}
                   subTier={rating.tierProgress?.currentSubTier}
-                  includeSubtierInTooltip
+                  tooltip
                   width={32}
                   height={32}
                 />

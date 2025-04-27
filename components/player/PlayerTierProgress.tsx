@@ -1,16 +1,18 @@
-'use client'
+'use client';
 
-import { getTierString, TierName } from "@/lib/utils/tierData";
-import { PlayerRatingStatsDTO } from "@osu-tournament-rating/otr-api-client";
-import TierIcon from "../icons/TierIcon";
-import TRText from "../rating/TRText";
-import { Progress } from "../ui/progress";
+import { getTierString, TierName } from '@/lib/utils/tierData';
+import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
+import TierIcon from '../icons/TierIcon';
+import TRText from '../rating/TRText';
+import { Progress } from '../ui/progress';
 
 interface TierProgressProps {
   tierProgress: PlayerRatingStatsDTO['tierProgress'];
 }
 
-export default function PlayerTierProgress({ tierProgress }: TierProgressProps) {
+export default function PlayerTierProgress({
+  tierProgress,
+}: TierProgressProps) {
   if (!tierProgress.nextMajorTier) return null;
 
   return (
@@ -31,7 +33,7 @@ export default function PlayerTierProgress({ tierProgress }: TierProgressProps) 
           <TierIcon
             tier={(tierProgress.currentTier as TierName) || ''}
             subTier={3}
-            includeSubtierInTooltip
+            tooltip
             width={32}
             height={32}
           />
@@ -53,7 +55,7 @@ export default function PlayerTierProgress({ tierProgress }: TierProgressProps) 
                     100
                   )
                 )}
-                className="h-1 w-full bg-primary/10"
+                className="h-1 w-full bg-primary-foreground"
               />
             </div>
           ))}
@@ -63,7 +65,7 @@ export default function PlayerTierProgress({ tierProgress }: TierProgressProps) 
           <TierIcon
             tier={tierProgress.nextMajorTier as TierName}
             subTier={3}
-            includeSubtierInTooltip
+            tooltip
             width={32}
             height={32}
           />
