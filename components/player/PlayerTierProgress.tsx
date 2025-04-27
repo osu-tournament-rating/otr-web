@@ -55,7 +55,7 @@ export default function PlayerTierProgress({
                     100
                   )
                 )}
-                className="h-1 w-full bg-primary-foreground"
+                className="h-1 w-full bg-primary"
               />
             </div>
           ))}

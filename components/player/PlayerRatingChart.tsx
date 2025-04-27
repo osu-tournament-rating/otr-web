@@ -145,7 +145,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
         <div>
           <div className="text-sm text-muted-foreground">Total Change</div>
           <div
-            className={`text-xl font-semibold ${totalChange >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            className={`flex flex-row items-baseline gap-1 text-xl font-semibold ${totalChange >= 0 ? 'text-green-500' : 'text-red-500'}`}
           >
             {totalChange > 0 ? '+' : ''}
             {totalChange.toFixed(0)}
