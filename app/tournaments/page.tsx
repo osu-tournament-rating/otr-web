@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
 
   return (
     <div className="my-4 rounded-lg bg-card-alt">
-      <div className="flex flex-row items-center gap-2 rounded-t-lg border-b border-b-accent-foreground bg-[color-mix(in_hsl,var(--primary)_35%,var(--background))] p-4">
+      <div className="flex flex-row items-center gap-2 rounded-t-lg p-4">
         <Trophy />
         <h1 className="text-xl font-bold">Tournaments</h1>
       </div>

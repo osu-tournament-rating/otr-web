@@ -180,7 +180,7 @@
     --team-flex-col-dir: column;
     --team-flex-row-dir: row;
 
-    --score-text-color: color-mix(
+    --score-text-color: mix(
       in oklab,
       var(--foreground) 60%,
       var(--team-color) 40%
