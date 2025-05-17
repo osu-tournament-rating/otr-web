@@ -153,7 +153,7 @@ export default function TournamentListFilter({
                         .map(([ruleset, { text }]) => (
                           <ToggleGroupItem
                             key={`sort-ruleset-${ruleset}`}
-                            className="flex w-fit flex-auto text-foreground first:rounded-l-none last:rounded-r-none data-[state=on]:text-primary"
+                            className="flex w-fit flex-auto rounded data-[state=on]:text-primary"
                             value={ruleset}
                             aria-checked={field.value === Number(ruleset)}
                           >
@@ -179,10 +179,8 @@ export default function TournamentListFilter({
             render={({ field }) => {
               const descending = form.watch('descending');
               return (
-                <FormItem className="flex flex-row flex-wrap items-baseline bg-[color-mix(in_hsl,var(--primary)_20%,var(--background))] px-2 py-1">
-                  <span className="text-xs text-secondary-foreground">
-                    Sort by
-                  </span>
+                <FormItem className="flex flex-row flex-wrap items-baseline px-2 py-1">
+                  <span className="text-xs">Sort by</span>
                   <FormControl>
                     <ToggleGroup
                       {...field}
@@ -236,8 +234,8 @@ export default function TournamentListFilter({
               : 'top-(--header-height-px) translate-y-0 opacity-100'
           )}
         >
-          <div className="flex w-full flex-col gap-2 border border-t-0 border-muted bg-secondary p-2">
-            <div className="flex flex-row items-center gap-1 text-sm font-semibold text-primary">
+          <div className="light:border mt-4 flex w-full flex-col gap-2 rounded border bg-accent p-2">
+            <div className="flex flex-row items-center gap-1 text-sm font-semibold">
               <Trophy className="size-4" />
               Tournaments
             </div>
@@ -252,7 +250,7 @@ export default function TournamentListFilter({
                         {...field}
                         placeholder="type to search"
                         type="search"
-                        className="h-7 text-sm"
+                        className="h-7 bg-background text-sm"
                       />
                     </FormControl>
                   </FormItem>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TournamentSubmissionPage() {
   return (
-    <div className="relative container mx-auto flex w-full flex-col items-center justify-center bg-muted/30 px-6 py-12 md:px-12 xl:px-24 dark:bg-muted/10">
+    <div className="relative container mx-auto flex w-full flex-col items-center justify-center px-6 py-12 md:px-12 xl:px-24">
       <div className="mb-8 flex flex-col items-center text-center">
         <h1 className="mb-3 flex items-center justify-center gap-2 text-xl font-bold text-primary md:text-3xl">
           <Trophy className="size-9" />
