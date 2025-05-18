@@ -127,7 +127,7 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <Card className="overflow-hidden rounded-2xl border border-border bg-background px-8 shadow-xl">
+    <Card className="overflow-hidden rounded-2xl border border-border bg-card px-8 shadow-xl">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormSection

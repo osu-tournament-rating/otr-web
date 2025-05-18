@@ -18,7 +18,7 @@ export default async function Page({ params }: PageProps) {
   const match = await get({ id: (await params).id, verified: false });
 
   return (
-    <Card className="mt-2 bg-card-alt/50">
+    <Card className="bg-popover mt-2">
       <div className="flex flex-col gap-8">
         <MatchCard match={match} />
         <div className="space-y-4 px-4 md:px-12 xl:px-24">
