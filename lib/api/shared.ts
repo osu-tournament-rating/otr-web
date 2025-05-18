@@ -8,7 +8,9 @@ import { ProblemDetails } from '@osu-tournament-rating/otr-api-client';
  * https://nextjs.org/docs/app/api-reference/functions/not-found
  */
 export const notFoundInterceptor = [
+  // @ts-expect-error AxiosResponse<any, any>
   (res) => res,
+  // @ts-expect-error any (axios error)
   (error) => {
     if (
       'status' in error &&

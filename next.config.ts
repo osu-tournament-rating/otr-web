@@ -3,6 +3,7 @@ import { PHASE_DEVELOPMENT_SERVER } from 'next/dist/shared/lib/constants';
 
 const nextConfig: NextConfig = {
   webpack(config) {
+    // @ts-expect-error Loose typing
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg')
     );
