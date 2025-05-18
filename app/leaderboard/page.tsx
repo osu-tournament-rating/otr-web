@@ -1,4 +1,4 @@
-import { leaderboards, me } from '@/lib/api/server';
+import { getSession, leaderboards } from '@/lib/api/server';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';
@@ -17,10 +17,10 @@ import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const { result } = await me.get();
+  const session = await getSession();
 
   return await leaderboards.get({
-    ruleset: result.settings?.ruleset ?? Ruleset.Osu,
+    ruleset: session?.settings?.ruleset ?? Ruleset.Osu,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
     gold: params.tiers?.includes('gold'),

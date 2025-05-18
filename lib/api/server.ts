@@ -39,6 +39,14 @@ const config: IOtrApiWrapperConfiguration = {
   },
 };
 
+export async function getSession() {
+  try {
+    return (await me.get()).result;
+  } catch {
+    return null;
+  }
+}
+
 export const auth = new AuthWrapper(config);
 export const adminNotes = new AdminNotesWrapper(config);
 export const games = new GamesWrapper(config);
