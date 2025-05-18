@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -59,6 +60,18 @@ export default function FormattedDate({
   format?: Formats;
   className?: string;
 }) {
+  // Use client-side rendering only
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Only render the formatted date on the client side
+  if (!isClient) {
+    return <span className={className}>Loading...</span>;
+  }
+  
   const [fullDay, fullTime] = getFullTimestampParts(date);
   const dateString = formats[format](date);
 
