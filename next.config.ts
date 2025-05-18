@@ -3,7 +3,6 @@ import { PHASE_DEVELOPMENT_SERVER } from 'next/dist/shared/lib/constants';
 
 const nextConfig: NextConfig = {
   webpack(config) {
-    // @ts-expect-error - webpack config has incredibly loose typing
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg')
     );
@@ -95,7 +94,7 @@ const configure = (phase: string) => {
     nextConfig.rewrites = async () => [
       {
         source: '/api/:path*',
-        destination: `${process.env.OTR_API_ROOT}/api/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/:path*`,
       },
     ];
   }

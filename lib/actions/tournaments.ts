@@ -1,6 +1,7 @@
 'use server';
 
-import { tournaments, isValidationProblemDetails } from '@/lib/api';
+import { tournaments } from '@/lib/api/client';
+import { isValidationProblemDetails } from '../api/shared';
 import {
   TournamentsCreateRequestParams,
   TournamentsGetRequestParams,

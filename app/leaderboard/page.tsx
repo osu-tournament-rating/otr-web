@@ -1,4 +1,4 @@
-import { leaderboards } from '@/lib/api';
+import { leaderboards } from '@/lib/api/client';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';

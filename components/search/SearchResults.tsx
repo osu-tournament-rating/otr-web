@@ -23,7 +23,7 @@ export default function SearchResults({
             <h2 className="text-xl font-bold">Players</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {data.matches.length ? (
+            {data.players.length ? (
               Object.entries(data.players)
                 .sort((a, b) => (b[1].rating ?? 0) - (a[1].rating ?? 0))
                 .slice(0, 5)
@@ -45,7 +45,7 @@ export default function SearchResults({
             <h2 className="text-xl font-bold">Tournaments</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {data.matches.length ? (
+            {data.tournaments.length ? (
               Object.entries(data.tournaments)
                 .slice(0, 5)
                 .map(([key, entry]) => (

@@ -1,6 +1,6 @@
 'use server';
 
-import { search as searchWrapper } from '@/lib/api';
+import { search as searchWrapper } from '@/lib/api/client';
 
 export async function search(query: string) {
   const { result } = await searchWrapper.search({ searchKey: query });

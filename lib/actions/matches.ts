@@ -5,7 +5,7 @@ import {
   MatchesUpdateRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
-import { matches } from '../api';
+import { matches } from '../api/client';
 
 export const get = async ({ id, verified }: MatchesGetRequestParams) =>
   await getCached(id, verified);

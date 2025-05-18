@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -16,7 +15,6 @@ import LoginButton from '../buttons/LoginButton';
 import Link from 'next/link';
 import ProfileRoleBadge from './ProfileRoleBadge';
 import Image from 'next/image';
-import { Session } from 'next-auth';
 import { cn } from '@/lib/utils';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 import {
@@ -24,11 +22,18 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '../ui/collapsible';
+import { useSession } from '@/lib/hooks/useSession';
+import { UserDTO } from '@osu-tournament-rating/otr-api-client';
+import { logout } from '@/lib/actions/auth';
+import { useAbsolutePath } from '@/lib/hooks/useAbsolutePath';
 
 export default function ProfileCard() {
   const [isOpen, toggleIsOpen] = useToggle();
-  const { data: session } = useSession();
+  const session = useSession();
+  const path = useAbsolutePath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
+
+  const handleLogout = () => logout(path);
 
   if (!session) {
     return <LoginButton />;
@@ -51,13 +56,13 @@ export default function ProfileCard() {
             </div>
             <div className="relative z-10 flex items-center justify-between p-2">
               <div className="flex items-center gap-3">
-                <UserAvatar session={session} />
+                <UserAvatar user={session} />
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    {session.user?.player.username}
+                    {session.player.username}
                   </span>
-                  {session.user?.scopes && (
-                    <ProfileRoleBadge scopes={session.user?.scopes} />
+                  {session.scopes && (
+                    <ProfileRoleBadge scopes={session.scopes} />
                   )}
                 </div>
               </div>
@@ -72,7 +77,7 @@ export default function ProfileCard() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Link
-            href={`/players/${session.user?.player.id}`}
+            href={`/players/${session.player.id}`}
             className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
           >
             <User className="size-4" />
@@ -88,8 +93,8 @@ export default function ProfileCard() {
           </Link>
 
           <button
-            onClick={() => signOut()}
             className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
           >
             <LogOut className="size-4" />
             <span>Log out</span>
@@ -108,7 +113,7 @@ export default function ProfileCard() {
           whileTap={{ scale: 0.97 }}
           className="cursor-pointer focus:outline-none"
         >
-          <UserAvatar session={session} />
+          <UserAvatar user={session} />
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
@@ -128,19 +133,17 @@ export default function ProfileCard() {
             <div className="flex items-center gap-2">
               <p className="text-sm leading-none">
                 <span className="font-bold">
-                  {session.user?.player.username ?? 'Username'}
+                  {session.player.username ?? 'Username'}
                 </span>
               </p>
-              {session.user?.scopes && (
-                <ProfileRoleBadge scopes={session.user?.scopes} />
-              )}
+              {session.scopes && <ProfileRoleBadge scopes={session.scopes} />}
             </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {/* Player page link */}
         <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href={`/players/${session.user?.player.id}`}>
+          <Link href={`/players/${session.player.id}`}>
             <User className="mr-2 size-4" />
             <span>My Profile</span>
           </Link>
@@ -155,8 +158,8 @@ export default function ProfileCard() {
         <DropdownMenuSeparator />
         {/* Log out */}
         <DropdownMenuItem
-          onClick={() => signOut()}
           className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
           <span>Log out</span>
@@ -166,14 +169,14 @@ export default function ProfileCard() {
   );
 }
 
-function UserAvatar({ session }: { session: Session }) {
+function UserAvatar({ user }: { user: UserDTO }) {
   return (
     <Avatar className="size-9 transition-all hover:border-primary/80">
       <AvatarImage
-        src={`https://a.ppy.sh/${session.user?.player.osuId}`}
+        src={`https://a.ppy.sh/${user.player.osuId}`}
         alt={
-          session.user?.player.username
-            ? `${session.user.player.username}'s avatar`
+          user.player.username
+            ? `${user.player.username}'s avatar`
             : 'User avatar'
         }
       />

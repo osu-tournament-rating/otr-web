@@ -1,12 +1,8 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
-     * osu! oauth client id
+     * o!TR API base url
      */
-    OSU_CLIENT_ID: string;
-
-    OTR_API_ROOT: string;
-
-    AUTH_SECRET: string;
+    NEXT_PUBLIC_API_BASE_URL: string;
   }
 }

@@ -23,7 +23,7 @@ import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { submit } from '@/lib/actions/tournaments';
-import { isValidationProblemDetails } from '@/lib/api';
+import { isValidationProblemDetails } from '@/lib/api/shared';
 import {
   TournamentSubmissionDTO,
   Roles,
