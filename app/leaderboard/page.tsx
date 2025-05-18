@@ -15,9 +15,14 @@ import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
+import { redirect } from 'next/navigation';
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
   const session = await getSession();
+
+  if (!session) {
+    return redirect('/unauthorized');
+  }
 
   return await leaderboards.get({
     ruleset: session?.settings?.ruleset ?? Ruleset.Osu,
