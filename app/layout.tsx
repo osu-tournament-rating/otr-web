@@ -32,11 +32,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let user = null;
   try {
-    const user = await me.get();
-    console.log(user);
+    const { result } = await me.get();
+    user = result;
   } catch {
-    console.log('no');
+    // Ignore
   }
 
   return (
@@ -45,7 +46,7 @@ export default async function RootLayout({
         className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider>
+          <SessionProvider user={user}>
             <Header />
             <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
               {children}

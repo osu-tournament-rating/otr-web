@@ -1,16 +1,17 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { auth } from '../api/client';
 
 export async function login(redirectUrl: string) {
+  // TODO: Client should provide a type-safe way to get the route of an endpoint
   redirect(
-    auth.getAbsoluteOperationPath('login') + `?redirectUri=${redirectUrl}`
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/login?redirectUri=${redirectUrl}`
   );
 }
 
 export async function logout(redirectUrl: string) {
+  // TODO: Client should provide a type-safe way to get the route of an endpoint
   redirect(
-    auth.getAbsoluteOperationPath('logout') + `?redirectUri=${redirectUrl}`
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/logout?redirectUri=${redirectUrl}`
   );
 }
