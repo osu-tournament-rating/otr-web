@@ -2,10 +2,8 @@
 
 import {
   TournamentCompactDTO,
-  TournamentsWrapper,
 } from '@osu-tournament-rating/otr-api-client';
 import { Fetcher } from 'swr';
-import { useSession } from 'next-auth/react';
 import { useEffect, useRef } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
@@ -13,30 +11,16 @@ import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-cli
 import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSession } from '@/lib/hooks/useSession';
+import { tournaments } from '@/lib/api/client';
 
 const pageSize = 30;
 
-const tournaments = (token: string) =>
-  new TournamentsWrapper({
-    // The proxy will forward the request to the API instead of web
-    baseUrl: '',
-    clientConfiguration: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-
-const fetcher = (
-  token?: string
-): Fetcher<TournamentCompactDTO[], TournamentsListRequestParams> => {
-  if (!token) {
-    return () => [];
-  }
-  return (params) =>
-    tournaments(token)
-      .list(params)
-      .then((res) => res.result);
+const fetcher = (): Fetcher<
+  TournamentCompactDTO[],
+  TournamentsListRequestParams
+> => {
+  return async (params) => (await tournaments.list(params)).result;
 };
 
 const getKey = (
@@ -63,10 +47,10 @@ export default function TournamentList({
 }: {
   filter: TournamentListFilter;
 }) {
-  const { data: session } = useSession();
+  const session = useSession();
   const { data, error, setSize, isValidating, isLoading } = useSWRInfinite(
     getKey(filter),
-    fetcher(session?.accessToken),
+    fetcher(),
     {
       revalidateOnFocus: false,
       revalidateFirstPage: false,
