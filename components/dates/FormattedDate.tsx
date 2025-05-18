@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import ClientOnly from '../client-only';
 
 type Formats = 'short' | 'full';
 
@@ -60,34 +61,24 @@ export default function FormattedDate({
   format?: Formats;
   className?: string;
 }) {
-  // Use client-side rendering only
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Only render the formatted date on the client side
-  if (!isClient) {
-    return <span className={className}>Loading...</span>;
-  }
-  
   const [fullDay, fullTime] = getFullTimestampParts(date);
   const dateString = formats[format](date);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className={className}>{dateString}</span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="flex gap-1">
-            <span>{fullDay}</span>
-            <span className="text-primary">{fullTime}</span>
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <ClientOnly>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={className}>{dateString}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="flex gap-1">
+              <span>{fullDay}</span>
+              <span className="text-primary">{fullTime}</span>
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </ClientOnly>
   );
 }
