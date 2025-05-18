@@ -50,6 +50,8 @@ export const search = new SearchWrapper(config);
 export const tournaments = new TournamentsWrapper(config);
 export const users = new UsersWrapper(config);
 
+export const getSession = async () => await getCachedSession();
+
 const getCachedSession = cache(async () => {
   try {
     return (await me.get()).result;
@@ -57,5 +59,3 @@ const getCachedSession = cache(async () => {
     return null;
   }
 });
-
-export const getSession = async () => await getCachedSession();
