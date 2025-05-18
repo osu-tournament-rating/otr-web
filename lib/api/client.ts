@@ -10,13 +10,12 @@ import {
   UsersWrapper,
   AuthWrapper,
   IOtrApiWrapperConfiguration,
-} from '@osu-tournament-rating/otr-api-client/index';
+} from '@osu-tournament-rating/otr-api-client';
 import { notFoundInterceptor } from './shared';
 
 const config: IOtrApiWrapperConfiguration = {
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
   postConfigureClientMethod: (instance) => {
-    // Add authorization header
     instance.interceptors.request.use(
       async (config) => {
         if (!config.requiresAuthorization) {

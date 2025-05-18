@@ -7,7 +7,7 @@ import React from 'react';
 import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
-import { me } from '@/lib/api/server';
+import { getSession, me } from '@/lib/api/server';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,13 +32,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let user = null;
-  try {
-    const { result } = await me.get();
-    user = result;
-  } catch {
-    // Ignore
-  }
+  const session = await getSession();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -46,7 +40,7 @@ export default async function RootLayout({
         className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider user={user}>
+          <SessionProvider user={session}>
             <Header />
             <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
               {children}

@@ -11,16 +11,16 @@ import {
   UsersWrapper,
   AuthWrapper,
   IOtrApiWrapperConfiguration,
-} from '@osu-tournament-rating/otr-api-client/index';
+} from '@osu-tournament-rating/otr-api-client';
 import { notFoundInterceptor } from './shared';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 
 const SESSION_COOKIE_NAME = 'otr-session';
 
 const config: IOtrApiWrapperConfiguration = {
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
   postConfigureClientMethod: (instance) => {
-    // Add authorization header
     instance.interceptors.request.use(
       async (config) => {
         if (!config.requiresAuthorization) {
@@ -39,14 +39,6 @@ const config: IOtrApiWrapperConfiguration = {
   },
 };
 
-export async function getSession() {
-  try {
-    return (await me.get()).result;
-  } catch {
-    return null;
-  }
-}
-
 export const auth = new AuthWrapper(config);
 export const adminNotes = new AdminNotesWrapper(config);
 export const games = new GamesWrapper(config);
@@ -57,3 +49,13 @@ export const scores = new GameScoresWrapper(config);
 export const search = new SearchWrapper(config);
 export const tournaments = new TournamentsWrapper(config);
 export const users = new UsersWrapper(config);
+
+const getCachedSession = cache(async () => {
+  try {
+    return (await me.get()).result;
+  } catch {
+    return null;
+  }
+});
+
+export const getSession = async () => await getCachedSession();

@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
                   {
                     name: 'preset-default',
                     params: {
-                      overrides: {
+                      woverrides: {
                         removeViewBox: false,
                       },
                     },
@@ -89,18 +89,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const configure = (phase: string) => {
-  if (phase === PHASE_DEVELOPMENT_SERVER) {
-    // During development, proxy API requests
-    nextConfig.rewrites = async () => [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/:path*`,
-      },
-    ];
-  }
-
-  return nextConfig;
-};
-
-export default configure;
+export default nextConfig;

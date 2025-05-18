@@ -18,14 +18,10 @@ export default function SessionProvider({
     'session',
     async () => {
       if (user) {
-        console.log('user parameter used');
         return user;
       }
 
       const { result } = await me.get();
-
-      console.log('swr invoked');
-
       return result;
     },
     {
