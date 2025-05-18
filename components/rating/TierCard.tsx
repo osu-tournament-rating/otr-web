@@ -2,6 +2,7 @@ import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
 import { cn } from '@/lib/utils';
 import { TierName, getTierColor } from '@/lib/tierData';
+import { Card } from '../ui/card';
 
 export interface TierCardProps {
   /** Desired tier */
@@ -29,9 +30,9 @@ export default function TierCard({
 }: TierCardProps) {
   const tierColor = getTierColor(tier);
   return (
-    <div
+    <Card
       className={cn(
-        'relative flex flex-col items-center gap-2 rounded-2xl border border-white/5 bg-gray-800/60 p-3 dark:bg-card-alt/80',
+        'bg-popover relative flex flex-col items-center gap-2 rounded-2xl border-none p-3',
         className
       )}
     >
@@ -70,6 +71,6 @@ export default function TierCard({
           {rating}+
         </span>
       </div>
-    </div>
+    </Card>
   );
 }

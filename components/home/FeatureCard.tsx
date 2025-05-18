@@ -51,7 +51,7 @@ function FeatureCard({
   return (
     <Card
       className={cn(
-        'relative overflow-hidden border-none bg-card-alt p-4 md:p-6 lg:py-16',
+        'relative overflow-hidden border-none p-4 md:p-6 lg:py-16',
         className
       )}
       {...rest}
@@ -109,7 +109,7 @@ function FeatureCardDescription({
   return (
     <CardDescription
       className={cn(
-        'text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground',
+        'text-foreground/90 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground transition-colors duration-300',
         className
       )}
       {...props}
