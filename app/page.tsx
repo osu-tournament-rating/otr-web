@@ -30,7 +30,7 @@ export default async function Page() {
       </FeatureCard>
 
       {/* Rating Ladder */}
-      <Card className="bg-card-alt mb-4 border-none p-6 md:p-8">
+      <Card className="bg-card mb-4 border-none p-6 md:p-8">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-bold">Rise to the top</h2>
           <p className="text-muted-foreground">
