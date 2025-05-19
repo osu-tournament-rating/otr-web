@@ -11,10 +11,11 @@ import {
   UsersWrapper,
   AuthWrapper,
   IOtrApiWrapperConfiguration,
+  UserDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { notFoundInterceptor } from './shared';
 import { cookies } from 'next/headers';
-import { cache } from 'react';
+import { createStorage } from 'unstorage';
 
 const SESSION_COOKIE_NAME = 'otr-session';
 
@@ -39,6 +40,9 @@ const config: IOtrApiWrapperConfiguration = {
   },
 };
 
+// Caching
+const storage = createStorage();
+
 export const auth = new AuthWrapper(config);
 export const adminNotes = new AdminNotesWrapper(config);
 export const games = new GamesWrapper(config);
@@ -50,12 +54,19 @@ export const search = new SearchWrapper(config);
 export const tournaments = new TournamentsWrapper(config);
 export const users = new UsersWrapper(config);
 
-export const getSession = async () => await getCachedSession();
+export async function getSession(): Promise<UserDTO | null> {
+  if (await storage.hasItem('session')) {
+    // Cache hit
+    return (await storage.getItem('session')) as UserDTO;
+  }
 
-const getCachedSession = cache(async () => {
+  // Cache miss
   try {
-    return (await me.get()).result;
+    const { result } = await me.get();
+    storage.set('session', result);
+
+    return result;
   } catch {
     return null;
   }
-});
+}

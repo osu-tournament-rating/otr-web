@@ -17,10 +17,8 @@ import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const session = await getSession();
-
   return await leaderboards.get({
-    ruleset: session?.settings?.ruleset ?? Ruleset.Osu,
+    ruleset: params.ruleset,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
     gold: params.tiers?.includes('gold'),
@@ -37,11 +35,14 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
 export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const session = await getSession();
+  const ruleset = session?.settings?.ruleset ?? Ruleset.Osu;
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
   const page = filter.page ?? 1;
 
   const data = await getData({
     ...filter,
+    ruleset,
     minWinRate: (filter.minWinRate ?? 0) / 100,
     maxWinRate: (filter.maxWinRate ?? 100) / 100,
   });
