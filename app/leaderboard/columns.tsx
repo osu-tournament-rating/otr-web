@@ -2,7 +2,7 @@
 
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { TierName } from '@/lib/tierData';
+import { TierName } from '@/lib/utils/tierData';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
@@ -54,10 +54,12 @@ export const columns = [
   // because it's searching for a tier like 'Silver' without the subtier.
   columnHelper.accessor('tierProgress.currentTier', {
     header: 'Tier',
-    cell: ({ getValue }) => (
+    cell: ({ row }) => (
       <div className="flex justify-center">
         <TierIcon
-          tier={(getValue() ?? 'Bronze I') as TierName}
+          tier={row.original.tierProgress.currentTier as TierName}
+          subTier={row.original.tierProgress.currentSubTier}
+          tooltip
           width={24}
           height={24}
         />
