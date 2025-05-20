@@ -2,9 +2,8 @@ import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
 import { cn } from '@/lib/utils';
 
-import { TierName, getTierColor } from '@/lib/tierData';
+import { TierName, getTierColor } from '@/lib/utils/tierData';
 import { Card } from '../ui/card';
-
 
 export interface TierCardProps {
   /** Desired tier */
