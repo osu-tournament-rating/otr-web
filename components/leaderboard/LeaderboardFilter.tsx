@@ -182,7 +182,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="flex justify-between text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex justify-between text-sm">
                         <Input
                           type="number"
                           value={
@@ -246,7 +246,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="flex justify-between text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex justify-between text-sm">
                         <Input
                           type="number"
                           value={
@@ -331,7 +331,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="flex justify-between text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex justify-between text-sm">
                         <Input
                           type="number"
                           value={
@@ -395,7 +395,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="flex justify-between text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex justify-between text-sm">
                         <Input
                           type="number"
                           value={

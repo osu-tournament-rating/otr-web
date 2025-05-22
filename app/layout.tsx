@@ -1,13 +1,13 @@
-import { auth } from '@/auth';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
-import { SessionProvider } from 'next-auth/react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import React from 'react';
 import './globals.css';
 import Footer from '@/components/footer/Footer';
+import SessionProvider from '@/components/session-provider';
+import { getSession, me } from '@/lib/api/server';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,7 +32,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await getSession();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -40,11 +40,7 @@ export default async function RootLayout({
         className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider
-            basePath={'/auth'}
-            session={session}
-            refetchOnWindowFocus={false}
-          >
+          <SessionProvider user={session}>
             <Header />
             <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
               {children}

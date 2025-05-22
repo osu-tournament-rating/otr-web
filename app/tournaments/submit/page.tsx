@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function TournamentSubmissionPage() {
   return (
-    <div className="relative container mx-auto flex w-full flex-col items-center justify-center px-6 py-12 md:px-12 xl:px-24">
+    <div className="container relative mx-auto flex w-full flex-col items-center justify-center px-6 py-12 md:px-12 xl:px-24">
       <div className="mb-8 flex flex-col items-center text-center">
-        <h1 className="mb-3 flex items-center justify-center gap-2 text-xl font-bold text-primary md:text-3xl">
+        <h1 className="text-primary mb-3 flex items-center justify-center gap-2 text-xl font-bold md:text-3xl">
           <Trophy className="size-9" />
           Tournament Submission
         </h1>
@@ -23,7 +23,7 @@ export default function TournamentSubmissionPage() {
         <Link
           href="https://docs.otr.stagec.xyz/tournament-approval.html#acceptance-criteria"
           target="_blank"
-          className="mt-3 inline-flex items-center text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
+          className="text-primary hover:text-primary/80 mt-3 inline-flex items-center underline underline-offset-4 transition-colors"
         >
           <ExternalLink className="mr-1 size-4" />
           Read our acceptance criteria

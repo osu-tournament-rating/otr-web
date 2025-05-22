@@ -15,7 +15,7 @@ export default function TournamentSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <div className="flex items-center justify-between rounded-xl bg-accent p-3">
+    <div className="bg-accent flex items-center justify-between rounded-xl p-3">
       <div className="flex flex-1 items-center gap-2">
         <Link href={`/tournaments/${data.id}`} onClick={closeDialog}>
           <p className="text-lg font-medium">
@@ -23,7 +23,7 @@ export default function TournamentSearchResult({
           </p>
         </Link>
       </div>
-      <div className="flex items-center gap-5 text-accent-foreground">
+      <div className="text-accent-foreground flex items-center gap-5">
         <p className="font-medium">
           {data.lobbySize}v{data.lobbySize}
         </p>
@@ -34,7 +34,7 @@ export default function TournamentSearchResult({
             ruleset={data.ruleset}
             width={24}
             height={24}
-            className="flex-shrink-0 fill-primary"
+            className="fill-primary flex-shrink-0"
           />
         </SimpleTooltip>
       </div>

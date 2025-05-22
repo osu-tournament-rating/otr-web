@@ -18,12 +18,12 @@ export default function SearchResults({
     <ScrollArea type="always" className="flex flex-1 overflow-y-auto pb-2">
       <div className="flex flex-1 flex-col gap-6 px-4">
         <section className="flex flex-col gap-2">
-          <div className="flex flex-row items-center gap-2 text-primary">
+          <div className="text-primary flex flex-row items-center gap-2">
             <User />
             <h2 className="text-xl font-bold">Players</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {data.matches.length ? (
+            {data.players.length ? (
               Object.entries(data.players)
                 .sort((a, b) => (b[1].rating ?? 0) - (a[1].rating ?? 0))
                 .slice(0, 5)
@@ -40,12 +40,12 @@ export default function SearchResults({
         </section>
 
         <section className="flex flex-col gap-2">
-          <div className="flex flex-row items-center gap-2 text-primary">
+          <div className="text-primary flex flex-row items-center gap-2">
             <Trophy />
             <h2 className="text-xl font-bold">Tournaments</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {data.matches.length ? (
+            {data.tournaments.length ? (
               Object.entries(data.tournaments)
                 .slice(0, 5)
                 .map(([key, entry]) => (
@@ -61,7 +61,7 @@ export default function SearchResults({
         </section>
 
         <section className="flex flex-col gap-2">
-          <div className="flex flex-row items-center gap-2 text-primary">
+          <div className="text-primary flex flex-row items-center gap-2">
             <Swords />
             <h2 className="text-xl font-bold">Matches</h2>
           </div>

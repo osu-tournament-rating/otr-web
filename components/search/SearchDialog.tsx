@@ -61,17 +61,17 @@ export default function SearchDialog() {
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
       <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4">
-        <div className="sticky top-0 z-50 bg-background shadow-sm">
+        <div className="bg-background sticky top-0 z-50 shadow-sm">
           <div className="relative">
             <Input
-              className="m-auto rounded-xl border-0 bg-accent pr-10 pl-3 focus-visible:ring-0"
+              className="bg-accent m-auto rounded-xl border-0 pl-3 pr-10 focus-visible:ring-0"
               placeholder="Search players, tournaments, matches..."
               autoFocus
               value={query}
               onChange={(e) => handleSetQuery(e.target.value)}
               aria-label="Search query"
             />
-            <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
+            <div className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2">
               {isLoading ? (
                 <LoaderCircle className="size-5 animate-spin" />
               ) : (

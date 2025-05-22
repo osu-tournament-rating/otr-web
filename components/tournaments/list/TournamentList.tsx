@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  TournamentCompactDTO,
-  TournamentsWrapper,
-} from '@osu-tournament-rating/otr-api-client';
+import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Fetcher } from 'swr';
-import { useSession } from 'next-auth/react';
 import { useEffect, useRef } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
@@ -13,30 +9,16 @@ import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-cli
 import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSession } from '@/lib/hooks/useSession';
+import { tournaments } from '@/lib/api/client';
 
 const pageSize = 30;
 
-const tournaments = (token: string) =>
-  new TournamentsWrapper({
-    // The proxy will forward the request to the API instead of web
-    baseUrl: '',
-    clientConfiguration: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-
-const fetcher = (
-  token?: string
-): Fetcher<TournamentCompactDTO[], TournamentsListRequestParams> => {
-  if (!token) {
-    return () => [];
-  }
-  return (params) =>
-    tournaments(token)
-      .list(params)
-      .then((res) => res.result);
+const fetcher = (): Fetcher<
+  TournamentCompactDTO[],
+  TournamentsListRequestParams
+> => {
+  return async (params) => (await tournaments.list(params)).result;
 };
 
 const getKey = (
@@ -63,10 +45,10 @@ export default function TournamentList({
 }: {
   filter: TournamentListFilter;
 }) {
-  const { data: session } = useSession();
+  const session = useSession();
   const { data, error, setSize, isValidating, isLoading } = useSWRInfinite(
     getKey(filter),
-    fetcher(session?.accessToken),
+    fetcher(),
     {
       revalidateOnFocus: false,
       revalidateFirstPage: false,
@@ -145,7 +127,7 @@ export default function TournamentList({
         }}
       >
         <div
-          className="absolute top-0 left-0 w-full space-y-1 p-4"
+          className="absolute left-0 top-0 w-full space-y-1 p-4"
           style={{
             transform: `translateY(${
               (virtualizedItems[0]?.start ?? 0) -
@@ -199,8 +181,8 @@ function PlaceholderBase({ children }: { children: React.ReactNode }) {
 function NoMoreResultsPlaceholder() {
   return (
     <PlaceholderBase>
-      <span className="text-lg text-primary">No more results!</span>
-      <span className="text-sm text-muted">
+      <span className="text-primary text-lg">No more results!</span>
+      <span className="text-muted text-sm">
         Try a less restrictive filter to see more
       </span>
     </PlaceholderBase>
@@ -210,7 +192,7 @@ function NoMoreResultsPlaceholder() {
 function NoResultsPlaceholder() {
   return (
     <PlaceholderBase>
-      <strong className="text-2xl text-primary">Nothing found...</strong>
+      <strong className="text-primary text-2xl">Nothing found...</strong>
       <span className="text-muted">
         Try a less restrictive filter for better results!
       </span>

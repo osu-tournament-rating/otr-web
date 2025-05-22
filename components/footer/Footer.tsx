@@ -5,7 +5,7 @@ const navItems = [
   {
     parent: 'About',
     title: 'Team',
-    href: 'https://docs.otr.stagec.xyz/team.html',
+    href: 'https://docs.otr.stagec.xyz/About/Team',
   },
   {
     parent: 'Contact',
@@ -55,7 +55,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-x-16 gap-y-8 md:grid-cols-4">
             {Object.entries(groupedItems).map(([parent, items]) => (
               <div key={parent} className="space-y-2">
-                <span className="text-lg font-semibold text-primary">
+                <span className="text-primary text-lg font-semibold">
                   {parent}
                 </span>
                 <ul className="space-y-1">
@@ -64,7 +64,7 @@ export default function Footer() {
                       <Link
                         href={item.href}
                         target={item.parent === 'Browse' ? '' : '_blank'}
-                        className="text-sm text-muted-foreground hover:text-accent-foreground"
+                        className="text-muted-foreground hover:text-accent-foreground text-sm"
                       >
                         {item.title}
                       </Link>
@@ -75,7 +75,7 @@ export default function Footer() {
             ))}
           </div>
         </div>
-        <div className="mt-4 border-t border-border pt-4 text-center text-sm text-muted-foreground">
+        <div className="border-border text-muted-foreground mt-4 border-t pt-4 text-center text-sm">
           <span>&copy; 2025 osu! Tournament Rating</span>
         </div>
       </div>

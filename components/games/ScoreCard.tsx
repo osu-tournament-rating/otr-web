@@ -24,14 +24,14 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="group team-flex-row relative flex overflow-clip rounded-xl border border-secondary-foreground/15 **:z-10"
+      className="team-flex-row border-secondary-foreground/15 **:z-10 group relative flex overflow-clip rounded-xl border"
     >
       {/* Background team color overlay */}
-      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
+      <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />
 
       {/* Team color on the side of the card */}
-      <div className="relative z-[3] h-full w-1.5 bg-[var(--team-color)]/70 transition-all duration-250 ease-in-out group-hover:w-7">
-        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity duration-250 ease-in-out group-hover:opacity-100">
+      <div className="bg-[var(--team-color)]/70 duration-250 relative z-[3] h-full w-1.5 transition-all ease-in-out group-hover:w-7">
+        <div className="duration-250 absolute inset-0 flex flex-col items-center justify-center space-y-3 opacity-0 transition-opacity ease-in-out group-hover:opacity-100">
           <AdminNoteView
             notes={score.adminNotes}
             entity={AdminNoteRouteTarget.GameScore}
@@ -74,7 +74,7 @@ export default function ScoreCard({
             <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
             <span
               className={cn(
-                'text-lg text-(--score-text-color)',
+                'text-(--score-text-color) text-lg',
                 won && 'font-bold'
               )}
             >

@@ -20,7 +20,7 @@ import {
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -82,14 +82,14 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     mode: 'all',
   });
 
-  const { data: session } = useSession();
+  const session = useSession();
   const [showNotePrompt, setShowNotePrompt] = useState(false);
   const [adminNote, setAdminNote] = useState('');
   const [pendingSubmit, setPendingSubmit] = useState<z.infer<
     typeof scoreEditFormSchema
   > | null>(null);
 
-  if (!session?.user?.scopes?.includes(Roles.Admin)) {
+  if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
 

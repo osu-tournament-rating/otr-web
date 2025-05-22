@@ -1,4 +1,4 @@
-import { leaderboards } from '@/lib/api';
+import { getSession, leaderboards } from '@/lib/api/server';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';
@@ -14,13 +14,11 @@ import { leaderboardFilterSchema } from '@/lib/schema';
 import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
-import { auth } from '@/auth';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const session = await auth();
   return await leaderboards.get({
-    ruleset: session?.user?.settings?.ruleset ?? Ruleset.Osu,
+    ruleset: params.ruleset,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
     gold: params.tiers?.includes('gold'),
@@ -37,11 +35,14 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
 export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const session = await getSession();
+  const ruleset = session?.settings?.ruleset ?? Ruleset.Osu;
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
   const page = filter.page ?? 1;
 
   const data = await getData({
     ...filter,
+    ruleset,
     minWinRate: (filter.minWinRate ?? 0) / 100,
     maxWinRate: (filter.maxWinRate ?? 100) / 100,
   });

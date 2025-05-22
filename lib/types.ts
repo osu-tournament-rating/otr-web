@@ -1,4 +1,7 @@
-import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-client';
+import {
+  TournamentsListRequestParams,
+  UserDTO,
+} from '@osu-tournament-rating/otr-api-client';
 
 /** Types of items in the main structure */
 export type ApiItemType = 'tournament' | 'match' | 'game' | 'score';
@@ -25,3 +28,9 @@ export type PaginationParams = Pick<
   TournamentsListRequestParams,
   'page' | 'pageSize'
 >;
+
+/** Session data */
+export type Session = {
+  /** Session user, if logged in */
+  user?: UserDTO;
+};
