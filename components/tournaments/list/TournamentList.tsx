@@ -10,7 +10,7 @@ import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/hooks/useSession';
-import { tournaments } from '@/lib/api/client';
+import { getTournamentsList } from '@/lib/actions/tournaments';
 
 const pageSize = 30;
 
@@ -18,7 +18,7 @@ const fetcher = (): Fetcher<
   TournamentCompactDTO[],
   TournamentsListRequestParams
 > => {
-  return async (params) => (await tournaments.list(params)).result;
+  return async (params) => await getTournamentsList(params);
 };
 
 const getKey = (
@@ -127,7 +127,7 @@ export default function TournamentList({
         }}
       >
         <div
-          className="absolute left-0 top-0 w-full space-y-1 p-4"
+          className="absolute top-0 left-0 w-full space-y-1 p-4"
           style={{
             transform: `translateY(${
               (virtualizedItems[0]?.start ?? 0) -
@@ -181,8 +181,8 @@ function PlaceholderBase({ children }: { children: React.ReactNode }) {
 function NoMoreResultsPlaceholder() {
   return (
     <PlaceholderBase>
-      <span className="text-primary text-lg">No more results!</span>
-      <span className="text-muted text-sm">
+      <span className="text-lg text-primary">No more results!</span>
+      <span className="text-sm text-muted">
         Try a less restrictive filter to see more
       </span>
     </PlaceholderBase>
@@ -192,7 +192,7 @@ function NoMoreResultsPlaceholder() {
 function NoResultsPlaceholder() {
   return (
     <PlaceholderBase>
-      <strong className="text-primary text-2xl">Nothing found...</strong>
+      <strong className="text-2xl text-primary">Nothing found...</strong>
       <span className="text-muted">
         Try a less restrictive filter for better results!
       </span>

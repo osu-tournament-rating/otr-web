@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { search } from '../api/client';
+import { getSearch } from '../actions/search';
 
 export function useSearch(query: string) {
   return useSWR(
@@ -12,9 +12,10 @@ export function useSearch(query: string) {
         return undefined;
       }
 
-      const { result } = await search.search({
+      const result = await getSearch({
         searchKey: searchQuery,
       });
+
       return result;
     },
     {
