@@ -47,6 +47,7 @@ import TRText from '../rating/TRText';
 import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
 import { formattedDate } from './PlayerRatingChartTooltip';
+import { capitalize } from '@/lib/utils';
 
 export type ChartDataPoint = {
   formattedAxisDate: string;
@@ -265,6 +266,7 @@ function ChartView({ data, activeTab, highestRating, theme }: ChartViewProps) {
                 : chartColors.volatility
             }
             strokeWidth={2}
+            name={capitalize(activeTab)}
             dot={false}
             activeDot={renderActiveDot}
             connectNulls
@@ -293,7 +295,7 @@ function TableView({ data, activeTab }: TableViewProps) {
           </thead>
           <tbody>
             {sortData(data, true).map((point, index) => (
-              <tr key={index} className="border-b font-sans hover:bg-muted/50">
+              <tr key={index} className="border-b font-sans hover:bg-muted">
                 <td className="p-2">{formattedDate(point.timestamp)}</td>
                 <td className="p-2">
                   <div className="flex items-center gap-2">
