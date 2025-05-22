@@ -7,7 +7,7 @@ import React from 'react';
 import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
-import { getSession, me } from '@/lib/api/server';
+import { getSession } from '@/lib/api/server';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
