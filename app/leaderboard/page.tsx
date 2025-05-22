@@ -1,5 +1,4 @@
-import { getSession, leaderboards } from '@/lib/api/server';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { leaderboards } from '@/lib/api/server';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';
 import {
@@ -35,14 +34,11 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
 export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const session = await getSession();
-  const ruleset = session?.settings?.ruleset ?? Ruleset.Osu;
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
   const page = filter.page ?? 1;
 
   const data = await getData({
     ...filter,
-    ruleset,
     minWinRate: (filter.minWinRate ?? 0) / 100,
     maxWinRate: (filter.maxWinRate ?? 100) / 100,
   });
