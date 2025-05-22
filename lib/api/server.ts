@@ -85,7 +85,7 @@ export async function clearSession() {
   const cookieManager = await cookies();
   const cookie = cookieManager.get(SESSION_COOKIE_NAME);
 
-  if (cookie && (await storage.hasItem(cookie.value))) {
+  if (cookie && (await storage.has(cookie.value))) {
     await storage.del(cookie.value);
   }
 }
