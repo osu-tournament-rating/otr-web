@@ -34,7 +34,7 @@ export default async function Page({ params }: PageProps) {
   const tableData = generateTableData(tournament.matches ?? []);
 
   return (
-    <div className="mt-5 mb-5 flex flex-col gap-y-5">
+    <div className="mb-5 mt-5 flex flex-col gap-y-5">
       <TournamentCard
         tournament={tournament}
         displayStatusText

@@ -17,7 +17,7 @@ export default function PlayerSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <div className="flex items-center rounded-xl bg-accent p-3">
+    <div className="bg-accent flex items-center rounded-xl p-3">
       <div className="flex flex-1 items-center gap-3">
         <Image
           className="rounded-full"
@@ -33,7 +33,7 @@ export default function PlayerSearchResult({
           </p>
         </Link>
       </div>
-      <div className="flex items-center gap-3 text-accent-foreground">
+      <div className="text-accent-foreground flex items-center gap-3">
         {data.rating && data.ratingTier && (
           <div className="flex flex-row items-center gap-1">
             <TierIcon

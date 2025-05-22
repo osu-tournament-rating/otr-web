@@ -109,9 +109,9 @@ export default function AdminNoteView({
         >
           <StickyNote />
           {showNotification && notify && (
-            <div className="absolute -top-1 -right-1">
+            <div className="absolute -right-1 -top-1">
               <span className="relative flex h-3 w-3">
-                <span className="absolute h-4/6 w-4/6 animate-ping rounded-full bg-orange-400/75 duration-1500" />
+                <span className="duration-1500 absolute h-4/6 w-4/6 animate-ping rounded-full bg-orange-400/75" />
                 <span className="absolute h-4/6 w-4/6 rounded-full bg-orange-400" />
               </span>
             </div>

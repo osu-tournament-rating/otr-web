@@ -78,7 +78,7 @@ export default function ProfileCard() {
         <CollapsibleContent>
           <Link
             href={`/players/${session.player.id}`}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
           >
             <User className="size-4" />
             <span>My Profile</span>
@@ -86,14 +86,14 @@ export default function ProfileCard() {
 
           <Link
             href="/settings"
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
           >
             <Settings className="size-4" />
             <span>Settings</span>
           </Link>
 
           <button
-            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -116,7 +116,7 @@ export default function ProfileCard() {
           <UserAvatar user={session} />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
+      <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
         {/* Player card */}
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
@@ -158,7 +158,7 @@ export default function ProfileCard() {
         <DropdownMenuSeparator />
         {/* Log out */}
         <DropdownMenuItem
-          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+          className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
@@ -171,7 +171,7 @@ export default function ProfileCard() {
 
 function UserAvatar({ user }: { user: UserDTO }) {
   return (
-    <Avatar className="size-9 transition-all hover:border-primary/80">
+    <Avatar className="hover:border-primary/80 size-9 transition-all">
       <AvatarImage
         src={`https://a.ppy.sh/${user.player.osuId}`}
         alt={

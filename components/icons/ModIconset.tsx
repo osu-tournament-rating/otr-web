@@ -29,7 +29,7 @@ export default function ModIconset({
         <div
           key={mod}
           className={cn(
-            `peer relative aspect-[60/45] h-full max-h-12 transition-[margin] duration-200 ease-in-out not-first:-ml-4 peer-hover:not-first:-ml-2 hover:not-first:-ml-2`,
+            `not-first:-ml-4 peer-hover:not-first:-ml-2 hover:not-first:-ml-2 peer relative aspect-[60/45] h-full max-h-12 transition-[margin] duration-200 ease-in-out`,
             iconClassName
           )}
           style={{ zIndex: idx }}

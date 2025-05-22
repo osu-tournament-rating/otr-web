@@ -13,9 +13,9 @@ export default function LabelWithTooltip({
 }: LabelWithTooltipProps) {
   return (
     <div className="flex items-center gap-2">
-      <FormLabel className="font-medium text-foreground">{label}</FormLabel>
+      <FormLabel className="text-foreground font-medium">{label}</FormLabel>
       <SimpleTooltip content={tooltip}>
-        <HelpCircle className="h-4 w-4 text-primary/70" />
+        <HelpCircle className="text-primary/70 h-4 w-4" />
       </SimpleTooltip>
     </div>
   );

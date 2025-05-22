@@ -127,7 +127,7 @@ export default function TournamentListFilter({
                   </FormItem>
                 )}
               />
-              <Search className="absolute inset-y-1/6 right-2" />
+              <Search className="inset-y-1/6 absolute right-2" />
             </div>
             {/* Ruleset */}
             <FormField
@@ -153,7 +153,7 @@ export default function TournamentListFilter({
                         .map(([ruleset, { text }]) => (
                           <ToggleGroupItem
                             key={`sort-ruleset-${ruleset}`}
-                            className="flex w-fit flex-auto rounded data-[state=on]:text-primary"
+                            className="data-[state=on]:text-primary flex w-fit flex-auto rounded"
                             value={ruleset}
                             aria-checked={field.value === Number(ruleset)}
                           >
@@ -225,7 +225,7 @@ export default function TournamentListFilter({
         {/* Sticky, appears when hero section is not visible */}
         <div
           className={cn(
-            'fixed top-0 right-0 left-0 z-40 mx-auto hidden w-full px-5 transition-all duration-300 md:max-w-4xl xl:max-w-6xl',
+            'fixed left-0 right-0 top-0 z-40 mx-auto hidden w-full px-5 transition-all duration-300 md:max-w-4xl xl:max-w-6xl',
             // Hidden until intersection observer is available
             entry && 'flex',
             // Animate slide-in from behind navbar
@@ -234,7 +234,7 @@ export default function TournamentListFilter({
               : 'top-(--header-height-px) translate-y-0 opacity-100'
           )}
         >
-          <div className="light:border mt-4 flex w-full flex-col gap-2 rounded border bg-accent p-2">
+          <div className="light:border bg-accent mt-4 flex w-full flex-col gap-2 rounded border p-2">
             <div className="flex flex-row items-center gap-1 text-sm font-semibold">
               <Trophy className="size-4" />
               Tournaments
@@ -250,13 +250,13 @@ export default function TournamentListFilter({
                         {...field}
                         placeholder="type to search"
                         type="search"
-                        className="h-7 bg-background text-sm"
+                        className="bg-background h-7 text-sm"
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              <Search className="absolute inset-y-1/6 right-2 size-4" />
+              <Search className="inset-y-1/6 absolute right-2 size-4" />
             </div>
           </div>
         </div>
