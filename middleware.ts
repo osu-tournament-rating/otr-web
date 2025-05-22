@@ -12,8 +12,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only check session for protected routes
   const session = await getSession();
+
   if (!session || !session.scopes?.includes(Roles.Whitelist)) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }

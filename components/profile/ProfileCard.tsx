@@ -25,15 +25,28 @@ import {
 import { useSession } from '@/lib/hooks/useSession';
 import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 import { logout } from '@/lib/actions/auth';
-import { useAbsolutePath } from '@/lib/hooks/useAbsolutePath';
+import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
+import { SessionContext } from '@/components/session-provider';
+import { useContext } from 'react';
 
 export default function ProfileCard() {
   const [isOpen, toggleIsOpen] = useToggle();
   const session = useSession();
-  const path = useAbsolutePath();
+  const { isLoading } = useContext(SessionContext);
+  const path = useAuthRedirectPath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
 
-  const handleLogout = () => logout(path);
+  const handleLogout = () => {
+    logout(path);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
+      </div>
+    );
+  }
 
   if (!session) {
     return <LoginButton />;
@@ -78,7 +91,7 @@ export default function ProfileCard() {
         <CollapsibleContent>
           <Link
             href={`/players/${session.player.id}`}
-            className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
           >
             <User className="size-4" />
             <span>My Profile</span>
@@ -86,14 +99,14 @@ export default function ProfileCard() {
 
           <Link
             href="/settings"
-            className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
           >
             <Settings className="size-4" />
             <span>Settings</span>
           </Link>
 
           <button
-            className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -116,7 +129,7 @@ export default function ProfileCard() {
           <UserAvatar user={session} />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
+      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         {/* Player card */}
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
@@ -158,7 +171,7 @@ export default function ProfileCard() {
         <DropdownMenuSeparator />
         {/* Log out */}
         <DropdownMenuItem
-          className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
+          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
@@ -171,7 +184,7 @@ export default function ProfileCard() {
 
 function UserAvatar({ user }: { user: UserDTO }) {
   return (
-    <Avatar className="hover:border-primary/80 size-9 transition-all">
+    <Avatar className="size-9 transition-all hover:border-primary/80">
       <AvatarImage
         src={`https://a.ppy.sh/${user.player.osuId}`}
         alt={
