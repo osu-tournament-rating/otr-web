@@ -17,7 +17,7 @@ import { notFoundInterceptor } from './shared';
 import { cookies } from 'next/headers';
 import { createStorage } from 'unstorage';
 
-const SESSION_COOKIE_NAME = 'otr-session';
+export const SESSION_COOKIE_NAME = 'otr-session';
 
 const config: IOtrApiWrapperConfiguration = {
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -40,7 +40,7 @@ const config: IOtrApiWrapperConfiguration = {
   },
 };
 
-// Caching
+// In-memory cache
 const storage = createStorage();
 
 export const auth = new AuthWrapper(config);
@@ -55,18 +55,37 @@ export const tournaments = new TournamentsWrapper(config);
 export const users = new UsersWrapper(config);
 
 export async function getSession(): Promise<UserDTO | null> {
-  if (await storage.hasItem('session')) {
+  const cookieManager = await cookies();
+  const cookie = cookieManager.get(SESSION_COOKIE_NAME);
+
+  if (cookie && (await storage.hasItem(cookie.value))) {
     // Cache hit
-    return (await storage.getItem('session')) as UserDTO;
+    return (await storage.getItem(cookie.value)) as UserDTO;
   }
 
   // Cache miss
   try {
     const { result } = await me.get();
-    storage.set('session', result);
+
+    // re-fetch cookie
+    const cookie = cookieManager.get(SESSION_COOKIE_NAME);
+
+    if (cookie) {
+      // Cache for next time
+      storage.set(cookie.value, result);
+    }
 
     return result;
   } catch {
     return null;
+  }
+}
+
+export async function clearSession() {
+  const cookieManager = await cookies();
+  const cookie = cookieManager.get(SESSION_COOKIE_NAME);
+
+  if (cookie && (await storage.hasItem(cookie.value))) {
+    await storage.del(cookie.value);
   }
 }
