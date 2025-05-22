@@ -4,7 +4,7 @@ export default function TRText({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'align-bottom text-sm font-bold text-muted-foreground/60 italic',
+        'align-bottom font-mono text-xs font-bold text-muted-foreground',
         className
       )}
     >
