@@ -42,28 +42,28 @@ export function getModColor(mods: Mods) {
     case Mods.None:
       return 'var(--chart-1)';
     case Mods.HardRock:
-      return 'var(--mod-hard-rock)';
+      return 'var(--mod-hard-rock, var(--chart-2))';
     case Mods.Hidden:
-      return 'var(--mod-hidden)';
+      return 'var(--mod-hidden, var(--chart-3))';
     case Mods.Flashlight:
-      return 'var(--mod-flashlight)';
+      return 'var(--mod-flashlight, var(--chart-3))';
     case Mods.Easy:
-      return 'var(--mod-easy)';
+      return 'var(--mod-easy, var(--chart-2))';
     case Mods.DoubleTime:
-      return 'var(--mod-double-time)';
+      return 'var(--mod-double-time, var(--chart-4))';
     case Mods.HalfTime:
-      return 'var(--mod-half-time)';
+      return 'var(--mod-half-time, var(--chart-4))';
     case Mods.Nightcore:
-      return 'var(--mod-nightcore)';
+      return 'var(--mod-nightcore, var(--chart-4))';
     case Mods.Hidden | Mods.HardRock:
-      return 'var(--mod-hidden-hard-rock)';
+      return 'var(--mod-hidden-hard-rock, var(--chart-2))';
     case Mods.Hidden | Mods.Easy:
-      return 'var(--mod-hidden-easy)';
+      return 'var(--mod-hidden-easy, var(--chart-3))';
     case Mods.Easy | Mods.DoubleTime:
-      return 'var(--mod-easy-double-time)';
+      return 'var(--mod-easy-double-time, var(--chart-2))';
     case Mods.Hidden | Mods.Flashlight:
-      return 'var(--mod-hidden-flashlight)';
+      return 'var(--mod-hidden-flashlight, var(--chart-3))';
     default:
-      return 'var(--chart-2)';
+      return 'var(--chart-1)';
   }
 }

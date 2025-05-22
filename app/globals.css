@@ -201,6 +201,30 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
 
   --tracking-normal: 0em;
+
+  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
+
+  --mod-hidden: hsl(49, 86%, 70%);
+
+  --mod-freemod: hsl(35, 82%, 74%);
+
+  --mod-flashlight: hsl(236, 36%, 39%);
+
+  --mod-easy: hsl(114, 86%, 69%);
+
+  --mod-half-time: hsl(152, 86%, 69%);
+
+  --mod-double-time: hsl(251, 86%, 70%);
+
+  --mod-nightcore: hsl(271, 86%, 70%);
+
+  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
+
+  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
+
+  --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
+
+  --mod-hidden-flashlight: hsl(197, 36%, 39%);
 }
 
 .dark {
@@ -339,7 +363,7 @@
       @apply flex flex-col items-start justify-center;
 
       .label {
-        @apply text-(--score-performance-label) text-xs font-semibold opacity-95;
+        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
       }
 
       .value {
