@@ -1,55 +1,54 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { refreshServerSession } from '@/lib/actions/session';
+import { handleAuthCallback } from '@/lib/actions/auth-callback';
 import Image from 'next/image';
 
+interface NextRedirectError extends Error {
+  digest?: string;
+}
+
+function isNextRedirectError(error: unknown): error is NextRedirectError {
+  if (!(error instanceof Error)) return false;
+  if (!('digest' in error)) return false;
+  const digest = (error as NextRedirectError).digest;
+  return typeof digest === 'string' && digest.startsWith('NEXT_REDIRECT');
+}
+
 export default function Page() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const verifyAndRedirect = async () => {
+    const processCallback = async () => {
       try {
         const redirectTo = searchParams.get('redirectTo') || '/';
 
-        // Wait a moment
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Wait a moment for cookies to bake and blobs to roll
+        await new Promise((resolve) => setTimeout(resolve, 800));
 
-        // Only use server-side session refresh to avoid multiple API calls
-        const serverResult = await refreshServerSession(redirectTo);
-
-        if (serverResult.success) {
-          // Server session established, redirect and let layout handle the rest
-          router.replace(redirectTo);
-        } else {
-          // If server refresh failed, wait a bit longer and try once more
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-          const retryResult = await refreshServerSession(redirectTo);
-
-          if (retryResult.success) {
-            router.replace(redirectTo);
-          } else {
-            setError('Authentication failed. Please try logging in again.');
-          }
+        await handleAuthCallback(redirectTo);
+      } catch (err: unknown) {
+        // NEXT_REDIRECT is expected behavior, not an error
+        if (isNextRedirectError(err)) {
+          return; // This is normal redirect behavior
         }
-      } catch (err) {
+
         console.error('Auth callback error:', err);
-        setError('An error occurred during authentication.');
+        setError('Authentication failed. Please try logging in again.');
       }
     };
 
-    verifyAndRedirect();
-  }, [searchParams, router]);
+    processCallback();
+  }, [searchParams]);
 
   if (error) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
         <p className="text-destructive">{error}</p>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => (window.location.href = '/')}
           className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Return Home
@@ -65,6 +64,7 @@ export default function Page() {
         width={32}
         height={32}
         alt="blobrollfast"
+        unoptimized
       />
       <p>Logging in... </p>
     </div>

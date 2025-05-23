@@ -57,32 +57,40 @@ export const users = new UsersWrapper(config);
  * @returns User data, or null if fetch failed
  */
 export async function fetchSession(): Promise<UserDTO | null> {
+  const cookieManager = await cookies();
+
+  try {
+    const { result } = await me.get();
+
+    // Two weeks in seconds
+    const expirationSeconds = 1209600000;
+
+    cookieManager.set(USER_INFO_COOKIE_NAME, JSON.stringify(result), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(Date.now() + expirationSeconds),
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch session:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch session with caching (for non-critical operations)
+ * @returns User data, or null if fetch failed
+ */
+export async function fetchSessionCached(): Promise<UserDTO | null> {
   return withRequestCache(
     'fetch-session',
     async () => {
-      const cookieManager = await cookies();
-
-      try {
-        const { result } = await me.get();
-
-        // Two weeks in seconds
-        const expirationSeconds = 1209600000;
-
-        cookieManager.set(USER_INFO_COOKIE_NAME, JSON.stringify(result), {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'strict',
-          expires: new Date(Date.now() + expirationSeconds),
-        });
-
-        return result;
-      } catch (error) {
-        console.error('Failed to fetch session:', error);
-        return null;
-      }
+      return await fetchSession();
     },
-    5000
-  ); // 5 second cache to prevent rapid duplicate calls
+    3000
+  ); // 3 second cache to prevent rapid duplicate calls
 }
 
 /**
