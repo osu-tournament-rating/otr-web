@@ -14,10 +14,10 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg dim */}
-      <div className="bg:black z-2 absolute inset-0 h-full w-full bg-black/20 dark:bg-black/50" />
+      <div className="bg:black absolute inset-0 z-2 h-full w-full bg-black/20 dark:bg-black/50" />
       {/* Beatmap bg */}
       <Image
-        className="z-1 absolute rounded-xl object-cover"
+        className="absolute z-1 rounded-xl object-cover"
         src={`https://assets.ppy.sh/beatmaps/${game.beatmap.beatmapset?.osuId}/covers/cover@2x.jpg`}
         alt={'beatmap cover'}
         fill
@@ -28,7 +28,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         <div className="flex h-8 w-full items-center justify-between gap-2">
           <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">
             <RulesetIcon
-              className="fill-foreground h-full w-fit min-w-6 stroke-0 py-1"
+              className="h-full w-fit min-w-6 fill-foreground stroke-0 py-1"
               ruleset={game.ruleset}
             />
             <span className="truncate text-sm sm:text-base">
@@ -57,7 +57,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         </div>
         {/* Bottom row */}
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
-          <div className="max-w-3/4 flex flex-1 flex-col justify-end overflow-hidden">
+          <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs sm:text-sm">
               <span>Set by</span>
               <span className="font-semibold">
@@ -75,7 +75,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
           <ModIconset
             mods={game.mods}
             freemod={game.isFreeMod}
-            className="min-w-1/8 flex flex-row items-end justify-end"
+            className="flex min-w-1/8 flex-row items-end justify-end"
             iconClassName="max-h-8 sm:max-h-12"
           />
         </div>

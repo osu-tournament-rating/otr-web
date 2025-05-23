@@ -13,21 +13,25 @@ export function useSession(): UserDTO | null {
 
 export function useSessionRefresh() {
   const { refreshSession, setLoading } = useContext(SessionContext);
-  
+
   const refresh = useCallback(async (): Promise<UserDTO | null> => {
     setLoading(true);
-    
-    return withRequestCache('client-session-refresh', async () => {
-      try {
-        const { result } = await me.get();
-        refreshSession(result);
-        return result;
-      } catch (error) {
-        console.error('Failed to refresh session:', error);
-        refreshSession(null);
-        return null;
-      }
-    }, 2000); // 2 second cache for client-side requests
+
+    return withRequestCache(
+      'client-session-refresh',
+      async () => {
+        try {
+          const { result } = await me.get();
+          refreshSession(result);
+          return result;
+        } catch (error) {
+          console.error('Failed to refresh session:', error);
+          refreshSession(null);
+          return null;
+        }
+      },
+      2000
+    ); // 2 second cache for client-side requests
   }, [refreshSession, setLoading]);
 
   return refresh;

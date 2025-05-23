@@ -13,7 +13,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
   const filter = tournamentListFilterSchema.parse(await searchParams);
 
   return (
-    <div className="bg-popover my-4 rounded-lg">
+    <div className="my-4 rounded-lg bg-popover">
       <div className="flex flex-row items-center gap-2 rounded-t-lg p-4">
         <Trophy />
         <h1 className="text-xl font-bold">Tournaments</h1>

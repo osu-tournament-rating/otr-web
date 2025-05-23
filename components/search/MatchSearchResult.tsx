@@ -12,7 +12,7 @@ export default function MatchSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <div className="bg-accent flex items-center rounded-xl p-3">
+    <div className="flex items-center rounded-xl bg-accent p-3">
       <Link href={`/matches/${data.id}`} onClick={closeDialog}>
         <p className="text-lg font-medium">
           {highlightMatch(data.name ?? 'Unknown match', query)}

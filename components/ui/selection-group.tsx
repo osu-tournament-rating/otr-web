@@ -82,10 +82,10 @@ const SelectionGroupItem = React.forwardRef<
       ref={ref}
       type="button"
       className={cn(
-        'ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
         isSelected
           ? 'bg-primary text-primary-foreground'
-          : 'hover:bg-muted hover:text-muted-foreground bg-transparent',
+          : 'bg-transparent hover:bg-muted hover:text-muted-foreground',
         className
       )}
       onClick={() => onValueChange(value)}

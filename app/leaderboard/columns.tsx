@@ -24,7 +24,7 @@ export const columns = [
             width={32}
             height={22}
           />
-          <p className="text-secondary-foreground w-6 self-end align-bottom text-xs">
+          <p className="w-6 self-end align-bottom text-xs text-secondary-foreground">
             #{row.original.countryRank}
           </p>
         </div>
@@ -77,19 +77,19 @@ export const columns = [
   columnHelper.accessor('tournamentsPlayed', {
     header: 'Tournaments',
     cell: ({ getValue }) => (
-      <p className="text-secondary-foreground text-center">{getValue()}</p>
+      <p className="text-center text-secondary-foreground">{getValue()}</p>
     ),
   }),
   columnHelper.accessor('matchesPlayed', {
     header: 'Matches',
     cell: ({ getValue }) => (
-      <p className="text-secondary-foreground text-center">{getValue()}</p>
+      <p className="text-center text-secondary-foreground">{getValue()}</p>
     ),
   }),
   columnHelper.accessor('winRate', {
     header: 'Win %',
     cell: ({ getValue }) => (
-      <p className="text-secondary-foreground text-center">
+      <p className="text-center text-secondary-foreground">
         {~~((getValue() ?? 0) * 100)}%
       </p>
     ),

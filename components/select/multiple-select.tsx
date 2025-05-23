@@ -89,7 +89,7 @@ export function MultipleSelect({
                     key={value}
                     variant="secondary"
                     className={cn(
-                      'mb-1 mr-1 px-1 py-0 text-xs font-normal',
+                      'mr-1 mb-1 px-1 py-0 text-xs font-normal',
                       badgeClassName
                     )}
                   >
@@ -98,7 +98,7 @@ export function MultipleSelect({
                     <span
                       role="button"
                       tabIndex={0}
-                      className="ring-offset-background focus:ring-ring ml-1 cursor-pointer rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                      className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleUnselect(value);
@@ -114,7 +114,7 @@ export function MultipleSelect({
                         handleUnselect(value);
                       }}
                     >
-                      <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                     </span>
                   </Badge>
                 ))}
@@ -122,7 +122,7 @@ export function MultipleSelect({
                   <Badge
                     variant="secondary"
                     className={cn(
-                      'mb-1 mr-1 px-1 py-0 text-xs font-normal',
+                      'mr-1 mb-1 px-1 py-0 text-xs font-normal',
                       badgeClassName
                     )}
                   >
@@ -147,7 +147,7 @@ export function MultipleSelect({
           />
           {selected.length > 0 && (
             <div className="flex items-center justify-between border-b px-2 py-1">
-              <div className="text-muted-foreground text-xs">
+              <div className="text-xs text-muted-foreground">
                 {selected.length} selected
               </div>
               <Button
@@ -182,7 +182,7 @@ export function MultipleSelect({
                     >
                       <div
                         className={cn(
-                          'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
                           isSelected
                             ? 'bg-primary text-primary-foreground'
                             : 'opacity-50'

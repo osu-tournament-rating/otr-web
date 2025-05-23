@@ -12,7 +12,7 @@ import LinkCard from '@/components/home/LinkCard';
 
 export default async function Page() {
   return (
-    <div className="bg-background text-foreground container m-4 mx-auto flex min-h-screen flex-col gap-2 py-4">
+    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
       {/* Hero section */}
       <FeatureCard
         decoration={2}
@@ -30,7 +30,7 @@ export default async function Page() {
       </FeatureCard>
 
       {/* Rating Ladder */}
-      <Card className="bg-card mb-4 border-none p-6 md:p-8">
+      <Card className="mb-4 border-none bg-card p-6 md:p-8">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-bold">Rise to the top</h2>
           <p className="text-muted-foreground">
@@ -130,14 +130,14 @@ export default async function Page() {
               Yes, mania 4K and 7K are entirely separate rulesets
             </FeatureCardDescription>
           </div>
-          <div className="bg-popover flex justify-center gap-4 rounded-2xl border p-4 md:gap-6 md:p-6">
+          <div className="flex justify-center gap-4 rounded-2xl border bg-popover p-4 md:gap-6 md:p-6">
             {Object.keys(RulesetEnumHelper.metadata)
               .filter((r) => Number(r) !== Ruleset.ManiaOther)
               .map((r) => (
                 <RulesetIcon
                   key={r}
                   ruleset={Number(r)}
-                  className="fill-primary size-8 stroke-black/25 md:size-10 lg:size-12"
+                  className="size-8 fill-primary stroke-black/25 md:size-10 lg:size-12"
                 />
               ))}
           </div>

@@ -17,10 +17,10 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
   const displayGames = hasGames ? games.slice(0, 15) : [];
 
   return (
-    <Card className="bg-secondary mx-4 border-0 px-0.5 py-2 lg:px-0">
+    <Card className="mx-4 border-0 bg-secondary px-0.5 py-2 lg:px-0">
       <div className="relative mx-2 flex h-32 flex-col overflow-hidden rounded-xl">
         {/* Background collage */}
-        <div className="z-1 blur-xs absolute inset-0 flex overflow-hidden">
+        <div className="absolute inset-0 z-1 flex overflow-hidden blur-xs">
           {hasGames ? (
             <>
               {displayGames.map((game, index) => (
@@ -52,12 +52,12 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
               ))}
             </>
           ) : (
-            <div className="bg-card/50 absolute inset-0" />
+            <div className="absolute inset-0 bg-card/50" />
           )}
         </div>
 
         {/* Dimming */}
-        <div className="z-2 absolute h-full w-full bg-black/40" />
+        <div className="absolute z-2 h-full w-full bg-black/40" />
 
         <div className="z-2 flex h-full w-full flex-col p-2 text-slate-50 dark:text-slate-100">
           {/* Top row with text shadow */}
@@ -89,7 +89,7 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
 
           {/* Bottom row with stronger contrast */}
           <div className="flex w-full flex-1 flex-row justify-between">
-            <div className="max-w-3/4 flex flex-1 flex-col justify-end [text-shadow:_0_1px_3px_rgb(0_0_0_/_90%)]">
+            <div className="flex max-w-3/4 flex-1 flex-col justify-end [text-shadow:_0_1px_3px_rgb(0_0_0_/_90%)]">
               <span className="text-lg">
                 Played in{' '}
                 <Link

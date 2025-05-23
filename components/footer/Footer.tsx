@@ -55,7 +55,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-x-16 gap-y-8 md:grid-cols-4">
             {Object.entries(groupedItems).map(([parent, items]) => (
               <div key={parent} className="space-y-2">
-                <span className="text-primary text-lg font-semibold">
+                <span className="text-lg font-semibold text-primary">
                   {parent}
                 </span>
                 <ul className="space-y-1">
@@ -64,7 +64,7 @@ export default function Footer() {
                       <Link
                         href={item.href}
                         target={item.parent === 'Browse' ? '' : '_blank'}
-                        className="text-muted-foreground hover:text-accent-foreground text-sm"
+                        className="text-sm text-muted-foreground hover:text-accent-foreground"
                       >
                         {item.title}
                       </Link>
@@ -75,7 +75,7 @@ export default function Footer() {
             ))}
           </div>
         </div>
-        <div className="border-border text-muted-foreground mt-4 border-t pt-4 text-center text-sm">
+        <div className="mt-4 border-t border-border pt-4 text-center text-sm text-muted-foreground">
           <span>&copy; 2025 osu! Tournament Rating</span>
         </div>
       </div>
