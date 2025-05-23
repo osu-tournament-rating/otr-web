@@ -137,7 +137,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
         <Award className="h-6 w-6 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">Peak Rating</div>
@@ -146,7 +146,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
           </div>
         </div>
       </Card>
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
         {totalChange >= 0 ? (
           <TrendingUp className="h-6 w-6 text-primary" />
         ) : (
