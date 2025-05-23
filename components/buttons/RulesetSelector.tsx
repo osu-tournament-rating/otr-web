@@ -27,7 +27,7 @@ export default function PlayerRulesetSelector() {
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-full bg-card fill-primary p-1">
+    <div className="flex items-center gap-1 rounded fill-primary p-1">
       {[
         ...Object.entries(RulesetEnumHelper.metadata)
           .keys()
