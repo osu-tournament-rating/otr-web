@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from './lib/api/server';
+import {
+  getSession,
+  SESSION_COOKIE_NAME,
+  USER_INFO_COOKIE_NAME,
+} from './lib/api/server';
 import { Roles } from '@osu-tournament-rating/otr-api-client';
 
 const publicRoutes = ['/unauthorized', '/not-found'];
@@ -12,13 +16,28 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only check session for protected routes
-  const session = await getSession();
-  if (!session || !session.scopes?.includes(Roles.Whitelist)) {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
+  const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
+  const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
+
+  // If we have both cookies, try to get session
+  if (sessionCookie && userInfoCookie) {
+    try {
+      const session = await getSession();
+      if (session && session.scopes?.includes(Roles.Whitelist)) {
+        return NextResponse.next();
+      }
+    } catch (error) {
+      console.error('Middleware session check error:', error);
+    }
   }
 
-  return NextResponse.next();
+  // Session is being established, proceed
+  if (sessionCookie && !userInfoCookie) {
+    return NextResponse.next();
+  }
+
+  // No valid session found, redirect to unauthorized
+  return NextResponse.redirect(new URL('/unauthorized', req.url));
 }
 
 export const config = {

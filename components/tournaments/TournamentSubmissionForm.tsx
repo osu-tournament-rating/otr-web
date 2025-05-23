@@ -48,9 +48,9 @@ type FormSectionProps = {
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
   <div className="space-y-6">
-    <div className="border-border mb-4 flex items-center gap-3 rounded-md border-b p-3 pb-3">
+    <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
       {icon}
-      <h3 className="text-foreground text-xl font-semibold">{title}</h3>
+      <h3 className="text-xl font-semibold text-foreground">{title}</h3>
     </div>
     {children}
   </div>
@@ -119,7 +119,7 @@ export default function TournamentSubmissionForm() {
             className="flex flex-row items-center gap-1"
             href={`/tournaments/${result.id}`}
           >
-            <LinkIcon className="text-primary size-4" />
+            <LinkIcon className="size-4 text-primary" />
             <span className="text-primary">Click to view</span>
           </Link>
         </div>
@@ -130,11 +130,11 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <Card className="border-border bg-card overflow-hidden rounded-2xl border px-8 shadow-xl">
+    <Card className="overflow-hidden rounded-2xl border border-border bg-card px-8 shadow-xl">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormSection
-            icon={<Trophy className="text-primary size-6" />}
+            icon={<Trophy className="size-6 text-primary" />}
             title="Information"
           >
             <div className="flex flex-col items-start gap-4 md:flex-row">
@@ -151,7 +151,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="OWC2024"
                         {...field}
-                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                       />
                     </FormControl>
                     <FormMessage />
@@ -171,7 +171,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="osu! World Cup 2024"
                         {...field}
-                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                       />
                     </FormControl>
                     <FormMessage />
@@ -193,7 +193,7 @@ export default function TournamentSubmissionForm() {
                     <Input
                       placeholder="https://osu.ppy.sh/community/forums/topics/..."
                       {...field}
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                       onChange={(e) => {
                         // Strip query parameters before setting value
                         const url = e.target.value;
@@ -223,7 +223,7 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
+                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
                     </FormControl>
@@ -247,7 +247,7 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
+                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                     </FormControl>
@@ -271,7 +271,7 @@ export default function TournamentSubmissionForm() {
                       type="number"
                       min={1}
                       placeholder="Enter rank restriction"
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                       {...field}
                       value={field.value || ''}
                       onChange={(e) => {
@@ -344,7 +344,7 @@ export default function TournamentSubmissionForm() {
           )}
 
           <FormSection
-            icon={<Database className="text-primary h-6 w-6" />}
+            icon={<Database className="h-6 w-6 text-primary" />}
             title="Data"
           >
             {/* Matches */}
@@ -364,7 +364,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
+                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                     />
                   </FormControl>
                   <FormMessage />
@@ -389,7 +389,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
+                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                     />
                   </FormControl>
                   <FormMessage />
@@ -400,7 +400,7 @@ export default function TournamentSubmissionForm() {
 
           <Button
             type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md py-6 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? (

@@ -18,7 +18,7 @@ export default function SearchResults({
     <ScrollArea type="always" className="flex flex-1 overflow-y-auto pb-2">
       <div className="flex flex-1 flex-col gap-6 px-4">
         <section className="flex flex-col gap-2">
-          <div className="text-primary flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
             <User />
             <h2 className="text-xl font-bold">Players</h2>
           </div>
@@ -40,7 +40,7 @@ export default function SearchResults({
         </section>
 
         <section className="flex flex-col gap-2">
-          <div className="text-primary flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
             <Trophy />
             <h2 className="text-xl font-bold">Tournaments</h2>
           </div>
@@ -61,7 +61,7 @@ export default function SearchResults({
         </section>
 
         <section className="flex flex-col gap-2">
-          <div className="text-primary flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-2 text-primary">
             <Swords />
             <h2 className="text-xl font-bold">Matches</h2>
           </div>

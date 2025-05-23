@@ -1,37 +1,55 @@
 'use client';
 
-import { me } from '@/lib/api/client';
 import { UserDTO } from '@osu-tournament-rating/otr-api-client';
-import React, { createContext } from 'react';
-import useSWR from 'swr';
+import React, { createContext, useEffect, useState, ReactNode } from 'react';
 
-export const SessionContext = createContext<UserDTO | null>(null);
+interface SessionContextType {
+  user: UserDTO | null;
+  refreshSession: (newUser: UserDTO | null) => void;
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+}
+
+export const SessionContext = createContext<SessionContextType>({
+  user: null,
+  refreshSession: () => {},
+  isLoading: false,
+  setLoading: () => {},
+});
 
 export default function SessionProvider({
   user,
   children,
 }: {
   user: UserDTO | null;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const { data } = useSWR(
-    'session',
-    async () => {
-      if (user) {
-        return user;
-      }
+  const [currentUser, setCurrentUser] = useState(user);
+  const [isLoading, setIsLoading] = useState(false);
 
-      const { result } = await me.get();
-      return result;
-    },
-    {
-      revalidateOnFocus: false,
-      shouldRetryOnError: false,
-    }
-  );
+  useEffect(() => {
+    setCurrentUser(user);
+    setIsLoading(false);
+  }, [user]);
+
+  const refreshSession = (newUser: UserDTO | null) => {
+    setCurrentUser(newUser);
+    setIsLoading(false);
+  };
+
+  const setLoading = (loading: boolean) => {
+    setIsLoading(loading);
+  };
+
+  const contextValue: SessionContextType = {
+    user: currentUser,
+    refreshSession,
+    isLoading,
+    setLoading,
+  };
 
   return (
-    <SessionContext.Provider value={data ?? null}>
+    <SessionContext.Provider value={contextValue}>
       {children}
     </SessionContext.Provider>
   );

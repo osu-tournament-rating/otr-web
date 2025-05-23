@@ -4,11 +4,11 @@ import { Button } from '../ui/button';
 import { login } from '@/lib/actions/auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useAbsolutePath } from '@/lib/hooks/useAbsolutePath';
+import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 
 export default function LoginButton() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const path = useAbsolutePath();
+  const path = useAuthRedirectPath();
 
   return (
     <Button

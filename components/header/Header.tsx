@@ -60,7 +60,7 @@ export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <header className="h-(--header-height-px) border-b-muted bg-card sticky top-0 z-50 flex w-full flex-row items-center justify-between border-b px-4 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
       <div className="flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center">
@@ -99,7 +99,7 @@ export default function Header() {
           <SheetContent
             overlay={false}
             closeButton={false}
-            className="border-t-muted border-l-muted bg-card inset-y-16 w-full border-t p-6 sm:max-w-xs md:hidden"
+            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
           >
             {/* Required for screen reader */}
             <DialogTitle hidden />
@@ -165,7 +165,7 @@ function SubnavTrigger({
     <NavigationMenuTrigger
       data-slot="navigation-menu-trigger"
       className={cn(
-        'hover:bg-accent data-[state=open]:bg-accent group inline-flex h-9 w-full items-center justify-start transition-[color,box-shadow] hover:cursor-pointer md:hover:bg-transparent md:data-[state=open]:bg-transparent',
+        'group inline-flex h-9 w-full items-center justify-start transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
         active && 'bg-accent md:bg-transparent'
       )}
     >
@@ -198,7 +198,7 @@ function NavigationItem({
             'bg-transparent hover:bg-transparent',
             !hasDropdown &&
               'hover:bg-accent focus:bg-accent md:hover:bg-transparent md:focus:bg-transparent',
-            isActive && 'bg-accent text-primary font-bold md:bg-transparent'
+            isActive && 'bg-accent font-bold text-primary md:bg-transparent'
           )}
         >
           {title}
@@ -208,11 +208,11 @@ function NavigationItem({
       {hasDropdown && (
         <NavigationMenuContent
           className={
-            '!bg-card right-0 !rounded-xl !border-0 pr-2 md:!rounded-t-none'
+            'right-0 !rounded-xl !border-0 !bg-card pr-2 md:!rounded-t-none'
           }
         >
           {/* Seamlessly extend the nav border */}
-          <div className="h-10/11 border-muted pointer-events-none absolute bottom-0 left-0 hidden w-full rounded-b-xl border border-t-0 bg-transparent md:block" />
+          <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
           {dropdown.map(({ title, href, icon: Icon }) => (
             <NavLink
               isMobile={isMobile}
@@ -221,13 +221,13 @@ function NavigationItem({
               className={cn(
                 'hover:bg-accent md:hover:bg-transparent',
                 pathname === href &&
-                  'bg-accent text-primary hover:text-primary focus:text-primary font-semibold md:bg-transparent'
+                  'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
               )}
             >
               <div className="flex items-center gap-2">
                 <Icon
                   className={cn(
-                    'hover:text-primary focus:text-primary size-5',
+                    'size-5 hover:text-primary focus:text-primary',
                     pathname === href && 'text-primary'
                   )}
                 />

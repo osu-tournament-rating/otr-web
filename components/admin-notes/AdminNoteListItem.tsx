@@ -70,11 +70,11 @@ export default function AdminNoteListItem({
     <div className="flex flex-col">
       <p className="text-foreground">{note.note}</p>
       <div className="flex items-end gap-2">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           By{' '}
           <Link
             href={`/players/${note.adminUser.player.id}`}
-            className="text-primary font-semibold"
+            className="font-semibold text-primary"
           >
             {note.adminUser.player.username}
           </Link>{' '}

@@ -17,7 +17,7 @@ export const highlightMatch = (
       <>
         {parts.map((part, i) =>
           part.toLowerCase() === match.toLowerCase() ? (
-            <span key={i} className="text-primary font-semibold">
+            <span key={i} className="font-semibold text-primary">
               {part}
             </span>
           ) : (

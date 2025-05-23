@@ -39,8 +39,8 @@ export default function LinkCart({
 
   return (
     <Link className={cn('block', className)} {...rest}>
-      <Card className="hover:bg-accent size-full flex-row gap-4 border border-none p-6 transition-colors hover:border">
-        <div className="text-primary mt-1">
+      <Card className="size-full flex-row gap-4 border border-none p-6 transition-colors hover:border hover:bg-accent">
+        <div className="mt-1 text-primary">
           <Icon size={24} />
         </div>
         <div className="flex flex-col gap-1">
