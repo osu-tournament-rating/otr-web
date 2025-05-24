@@ -17,25 +17,25 @@ export default function TournamentSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <Card className="border-none bg-popover p-4 transition-colors hover:bg-popover/80">
+    <Card className="border-none bg-popover p-3 transition-colors hover:bg-popover/80 sm:p-4">
       <Link
         href={`/tournaments/${data.id}`}
         onClick={closeDialog}
-        className="flex items-center justify-between"
+        className="flex flex-col gap-2 overflow-hidden sm:flex-row sm:items-center sm:gap-3"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
-            <Trophy className="h-5 w-5 text-primary" />
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted/50 sm:h-10 sm:w-10">
+            <Trophy className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
           </div>
-          <p className="text-lg font-medium">
+          <p className="min-w-0 text-base font-medium sm:text-lg">
             {highlightMatch(data.name, query)}
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">
+        <div className="ml-10 flex flex-shrink items-center gap-3 sm:ml-0 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Users className="h-4 w-4 flex-shrink-0 text-primary sm:h-4 sm:w-4" />
+            <span className="text-xs font-medium sm:text-sm">
               {data.lobbySize}v{data.lobbySize}
             </span>
           </div>
@@ -47,7 +47,7 @@ export default function TournamentSearchResult({
               ruleset={data.ruleset}
               width={20}
               height={20}
-              className="flex-shrink-0 fill-primary"
+              className="flex-shrink-0 fill-primary sm:h-5 sm:w-5"
             />
           </SimpleTooltip>
         </div>

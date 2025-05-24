@@ -59,12 +59,12 @@ export default function SearchDialog() {
         </Button>
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
-      <DialogContent className="flex max-h-[85vh] max-w-[700px] min-w-[600px] flex-col gap-0 p-0">
-        <div className="border-b bg-background p-4">
+      <DialogContent className="flex max-h-[85vh] w-[95vw] max-w-[700px] flex-col gap-0 p-0 sm:w-[90vw] sm:min-w-[500px] md:min-w-[600px]">
+        <div className="border-b bg-background p-3 sm:p-4">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="border-0 bg-background pr-10 pl-10 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="border-0 bg-background pr-10 pl-10 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-base"
               placeholder="Search players, tournaments, matches..."
               autoFocus
               value={query}
@@ -77,15 +77,6 @@ export default function SearchDialog() {
               ) : null}
             </div>
           </div>
-          {query && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Press</span>
-              <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs">
-                Esc
-              </kbd>
-              <span>to close</span>
-            </div>
-          )}
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -95,13 +86,13 @@ export default function SearchDialog() {
             {debouncedQuery !== '' ? (
               <SearchResults data={data} />
             ) : (
-              <div className="flex flex-1 items-center justify-center p-8">
+              <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
                 <div className="space-y-2 text-center">
-                  <Search className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                  <p className="text-lg font-medium text-muted-foreground">
+                  <Search className="mx-auto h-10 w-10 text-muted-foreground/50 sm:h-12 sm:w-12" />
+                  <p className="text-base font-medium text-muted-foreground sm:text-lg">
                     Start typing to search
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground sm:text-sm">
                     Find players, tournaments, and matches
                   </p>
                 </div>

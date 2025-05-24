@@ -8,17 +8,15 @@ import MatchSearchResult from './MatchSearchResult';
 interface SectionHeaderProps {
   icon: React.ReactNode;
   title: string;
-  count: number;
 }
 
-function SectionHeader({ icon, title, count }: SectionHeaderProps) {
+function SectionHeader({ icon, title }: SectionHeaderProps) {
   return (
-    <div className="flex items-center gap-3 pb-2">
-      <div className="flex items-center gap-2 text-primary">
+    <div className="flex items-center gap-2 pb-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 text-primary sm:gap-2">
         {icon}
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="text-base font-semibold sm:text-lg">{title}</h2>
       </div>
-      <span className="text-sm text-muted-foreground">({count})</span>
     </div>
   );
 }
@@ -39,12 +37,12 @@ export default function SearchResults({
 
   if (!hasResults) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
+      <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
         <div className="text-center">
-          <p className="text-lg font-medium text-muted-foreground">
+          <p className="text-base font-medium text-muted-foreground sm:text-lg">
             No results found
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground sm:text-sm">
             Try adjusting your search terms
           </p>
         </div>
@@ -54,15 +52,14 @@ export default function SearchResults({
 
   return (
     <ScrollArea type="always" className="flex flex-1 overflow-y-auto">
-      <div className="flex flex-1 flex-col gap-6 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-4">
         {data.players.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-2 sm:space-y-3">
             <SectionHeader
-              icon={<User className="h-5 w-5" />}
+              icon={<User className="h-4 w-4 sm:h-5 sm:w-5" />}
               title="Players"
-              count={data.players.length}
             />
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {Object.entries(data.players)
                 .sort((a, b) => (b[1].rating ?? 0) - (a[1].rating ?? 0))
                 .slice(0, 5)
@@ -77,13 +74,12 @@ export default function SearchResults({
         )}
 
         {data.tournaments.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-2 sm:space-y-3">
             <SectionHeader
-              icon={<Trophy className="h-5 w-5" />}
+              icon={<Trophy className="h-4 w-4 sm:h-5 sm:w-5" />}
               title="Tournaments"
-              count={data.tournaments.length}
             />
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {Object.entries(data.tournaments)
                 .slice(0, 5)
                 .map(([key, entry]) => (
@@ -97,13 +93,12 @@ export default function SearchResults({
         )}
 
         {data.matches.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-2 sm:space-y-3">
             <SectionHeader
-              icon={<Swords className="h-5 w-5" />}
+              icon={<Swords className="h-4 w-4 sm:h-5 sm:w-5" />}
               title="Matches"
-              count={data.matches.length}
             />
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {Object.entries(data.matches)
                 .slice(0, 5)
                 .map(([key, entry]) => (

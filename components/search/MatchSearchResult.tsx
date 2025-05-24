@@ -14,16 +14,16 @@ export default function MatchSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <Card className="border-none bg-popover p-4 transition-colors hover:bg-popover/80">
+    <Card className="border-none bg-popover p-3 transition-colors hover:bg-popover/80 sm:p-4">
       <Link
         href={`/matches/${data.id}`}
         onClick={closeDialog}
-        className="flex items-center gap-3"
+        className="flex items-center gap-2 overflow-hidden sm:gap-3"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
-          <Swords className="h-5 w-5 text-primary" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted/50 sm:h-10 sm:w-10">
+          <Swords className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
         </div>
-        <p className="text-lg font-medium">
+        <p className="min-w-0 text-base font-medium sm:text-lg">
           {highlightMatch(data.name ?? 'Unknown match', query)}
         </p>
       </Link>
