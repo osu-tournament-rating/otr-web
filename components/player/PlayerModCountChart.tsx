@@ -142,9 +142,7 @@ export default function PlayerModCountChart({
     <Card className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
-        <CardDescription>
-          Games played with each mod combination
-        </CardDescription>
+        <CardDescription>Games played (min. 10 games)</CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
         <ChartContainer
