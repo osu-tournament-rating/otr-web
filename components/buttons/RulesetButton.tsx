@@ -32,7 +32,13 @@ export function RulesetButton({
       )}
     >
       <SimpleTooltip content={tooltipText}>
-        <RulesetIcon ruleset={ruleset} className="h-6 w-6" />
+        <RulesetIcon
+          ruleset={ruleset}
+          className={cn(
+            'h-6 w-6',
+            isSelected ? 'fill-primary' : 'fill-muted-foreground'
+          )}
+        />
       </SimpleTooltip>
     </button>
   );
