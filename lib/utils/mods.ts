@@ -13,9 +13,9 @@ const modMultipliers: Record<number, number> = {
 
 /**
  * Calculates a normalized score by applying mod multipliers
- * @param mods Mods
- * @param score Score to normalize
- * @returns Normalized score after applying mod multipliers
+ * @param mods Mods applied to the score
+ * @param score Raw score to normalize
+ * @returns Normalized score after removing mod multiplier effects
  */
 export function normalizedScore(mods: Mods, score: number): number {
   if (score < 0) {
@@ -34,6 +34,11 @@ export function normalizedScore(mods: Mods, score: number): number {
   return Math.round(score / multiplier);
 }
 
+/**
+ * Gets the CSS color variable for a given mod combination
+ * @param mods Mod combination to get color for
+ * @returns CSS color variable string
+ */
 export function getModColor(mods: Mods) {
   // Strip NF
   mods &= ~Mods.NoFail;

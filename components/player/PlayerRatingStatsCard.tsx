@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { getTierString, TierName } from '@/lib/utils/tierData';
 import TRText from '../rating/TRText';
-import { StatCard } from './StatCard';
+import StatCard from './StatCard';
 import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
 
@@ -25,12 +25,14 @@ function formatPercentage(value: number | undefined | null): string {
   return `${formattedValue}%`;
 }
 
-export default function PlayerRatingStatsCard({
-  rating,
-}: {
+interface PlayerRatingStatsCardProps {
   rating: PlayerRatingStatsDTO;
   currentRuleset: Ruleset;
-}) {
+}
+
+export default function PlayerRatingStatsCard({
+  rating,
+}: PlayerRatingStatsCardProps) {
   return (
     <Card className="p-6 font-sans">
       <PlayerCard player={rating.player} />
@@ -39,7 +41,6 @@ export default function PlayerRatingStatsCard({
         <div className="flex min-w-[250px] flex-wrap gap-2">
           {/* Tier Card */}
           <StatCard
-            bordered
             label="Tier"
             value={
               <span className="text-nowrap">
@@ -65,7 +66,6 @@ export default function PlayerRatingStatsCard({
 
           {/* Rating Card */}
           <StatCard
-            bordered
             label="Rating"
             value={
               <span className="text-nowrap">

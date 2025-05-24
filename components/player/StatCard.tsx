@@ -7,23 +7,19 @@ interface StatCardProps {
   label: string;
   value: ReactNode;
   className?: string;
-  iconClassName?: string;
-  bordered?: boolean;
 }
 
-export function StatCard({
+export default function StatCard({
   icon,
   label,
   value,
   className,
-  iconClassName,
-  bordered = false,
 }: StatCardProps) {
   return (
     <Card
       className={cn(
         'flex flex-1 shrink-0 flex-row items-center justify-start gap-2 rounded-lg border-none bg-popover !p-4',
-        // bordered ? 'border ' : 'bg-muted/50',
+
         className
       )}
     >

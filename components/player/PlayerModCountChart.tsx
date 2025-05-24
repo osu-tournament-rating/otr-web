@@ -25,15 +25,20 @@ interface ProcessedEntry {
   fill: string;
 }
 
+interface PlayerModCountChartProps {
+  modStats: PlayerModStatsDTO[];
+  className?: string;
+}
+
 export default function PlayerModCountChart({
   modStats,
   className,
-}: {
-  modStats: PlayerModStatsDTO[];
-  className?: string;
-}) {
+}: PlayerModCountChartProps) {
   // Process mod stats data
   const processedData = React.useMemo(() => {
+    if (!modStats || modStats.length === 0) {
+      return [];
+    }
     // Create a map to aggregate counts by mod combination
     const modMap = new Map<string, ProcessedEntry>();
 
@@ -89,7 +94,9 @@ export default function PlayerModCountChart({
   };
 
   const renderCenterLabel = React.useCallback(
-    ({ viewBox }: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (props: any) => {
+      const { viewBox } = props;
       if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
         return (
           <text
@@ -119,6 +126,17 @@ export default function PlayerModCountChart({
     },
     [totalGames]
   );
+
+  if (processedData.length === 0) {
+    return (
+      <Card className={className}>
+        <CardHeader className="items-center">
+          <CardTitle>Mod Distribution</CardTitle>
+          <CardDescription>No mod data available</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>
@@ -154,7 +172,6 @@ export default function PlayerModCountChart({
                   className="font-sans"
                   labelFormatter={(value, payload) => {
                     if (payload && payload.length > 0 && payload[0].payload) {
-                      console.log(payload);
                       return payload[0].payload.label;
                     }
                     return value;

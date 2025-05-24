@@ -111,10 +111,17 @@ export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
     },
     textClass: 'text-gold',
   },
+  Emerald: {
+    gradient: {
+      dark: 'from-emerald-500/30 to-emerald-700/10',
+      light: 'from-emerald-600/20 to-emerald-800/10',
+    },
+    textClass: 'text-emerald',
+  },
   Silver: {
     gradient: {
-      dark: '',
-      light: '',
+      dark: 'from-slate-400/30 to-slate-600/10',
+      light: 'from-slate-500/20 to-slate-700/10',
     },
     textClass: 'text-silver',
   },

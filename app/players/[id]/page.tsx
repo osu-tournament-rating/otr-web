@@ -10,7 +10,7 @@ import {
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
 import { notFound } from 'next/navigation';
-import { toast } from 'sonner';
+
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -43,11 +43,7 @@ async function getPlayerData(
 
     return result;
   } catch (error) {
-    console.error(error);
-    toast.error(
-      'Failed to fetch player data. Please check the console logs and report to the developers if needed!'
-    );
-
+    console.error('Failed to fetch player data:', error);
     return undefined;
   }
 }

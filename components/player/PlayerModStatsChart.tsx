@@ -26,13 +26,15 @@ interface ChartDataEntry {
   fill: string;
 }
 
+interface PlayerModStatsChartProps {
+  className?: string;
+  modStats: PlayerModStatsDTO[];
+}
+
 export default function PlayerModStatsChart({
   className,
   modStats,
-}: {
-  className?: string;
-  modStats: PlayerModStatsDTO[];
-}) {
+}: PlayerModStatsChartProps) {
   const chartConfig: ChartConfig = {
     averageScore: {
       label: 'Score',
@@ -42,6 +44,9 @@ export default function PlayerModStatsChart({
 
   // Process mod stats data
   const chartData = useMemo(() => {
+    if (!modStats || modStats.length === 0) {
+      return [];
+    }
     // Create a map to aggregate scores by mod combination
     const modMap = new Map<string, ChartDataEntry>();
 
@@ -102,6 +107,17 @@ export default function PlayerModStatsChart({
       }))
       .sort((a, b) => b.averageScore - a.averageScore);
   }, [modStats]);
+
+  if (chartData.length === 0) {
+    return (
+      <Card className={className}>
+        <CardHeader className="items-center">
+          <CardTitle>Mod Performance</CardTitle>
+          <CardDescription>No mod performance data available</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>

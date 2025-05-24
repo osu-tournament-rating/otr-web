@@ -28,25 +28,23 @@ export default function PlayerRulesetSelector() {
 
   return (
     <div className="flex items-center gap-1 rounded fill-primary p-1">
-      {[
-        ...Object.entries(RulesetEnumHelper.metadata)
-          .keys()
-          .map((k) => {
-            const ruleset = k as Ruleset;
-            if (ruleset === Ruleset.ManiaOther) {
-              return;
-            }
+      {Object.entries(RulesetEnumHelper.metadata)
+        .map(([rulesetKey]) => {
+          const ruleset = Number(rulesetKey) as Ruleset;
+          if (ruleset === Ruleset.ManiaOther) {
+            return null;
+          }
 
-            return (
-              <RulesetButton
-                key={`ruleset-${k}`}
-                ruleset={ruleset}
-                isSelected={selectedRuleset === ruleset}
-                onClick={() => handleRulesetChange(ruleset)}
-              />
-            );
-          }),
-      ]}
+          return (
+            <RulesetButton
+              key={`ruleset-${rulesetKey}`}
+              ruleset={ruleset}
+              isSelected={selectedRuleset === ruleset}
+              onClick={() => handleRulesetChange(ruleset)}
+            />
+          );
+        })
+        .filter(Boolean)}
     </div>
   );
 }

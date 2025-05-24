@@ -136,7 +136,7 @@
   --text-emerald: hsl(144, 65%, 50%);
   --text-platinum: hsl(197, 54%, 46%);
   --text-gold: hsl(43, 69%, 57%);
-  --text-silver: hsl(0, 0%, 40%);
+  --text-silver: hsl(0, 0%, 55%);
   --text-bronze: hsl(27, 63%, 48%);
 
   --header-height-px: calc(var(--spacing) * 16);
@@ -234,6 +234,9 @@
   --muted-foreground: oklch(0.69 0 0);
   --card: oklch(0.2 0 264.47);
   --border: oklch(0.32 0 0);
+
+  /* Dark mode tier text colors */
+  --text-silver: hsl(0, 0%, 70%);
 
   --destructive: oklch(0.69 0.2 23.91);
   --destructive-foreground: oklch(0 0 0);

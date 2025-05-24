@@ -1,33 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Info,
-  LineChartIcon,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Award,
-} from 'lucide-react';
+import { LineChartIcon, Info, Calendar } from 'lucide-react';
 import PlayerRatingChartOptions, {
   PlayerRatingChartFilterValues,
 } from './PlayerRatingChartOptions';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  DotProps,
-  Legend,
-} from 'recharts';
-
 import SimpleTooltip from '@/components/simple-tooltip';
 import {
   RatingAdjustmentDTO,
@@ -43,335 +21,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '../ui/card';
 import { useTheme } from 'next-themes';
-import TRText from '../rating/TRText';
-import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
-import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
-import { formattedDate } from './PlayerRatingChartTooltip';
-import { capitalize } from '@/lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
-
-export type ChartDataPoint = {
-  formattedAxisDate: string;
-} & RatingAdjustmentDTO;
+import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
+import { sortData } from '@/lib/utils/playerRatingChart';
+import PlayerRatingChartTable from './PlayerRatingChartTable';
+import PlayerRatingChartView from './PlayerRatingChartView';
 
 interface PlayerRatingChartProps {
   adjustments: RatingAdjustmentDTO[];
   highestRating: number;
-}
-
-interface ChartColors {
-  rating: string;
-  volatility: string;
-  grid: string;
-  text: string;
-  background: string;
-}
-
-interface SummaryStatsProps {
-  data: RatingAdjustmentDTO[];
-  highestRating: number;
-}
-
-interface ChartViewProps {
-  data: RatingAdjustmentDTO[];
-  activeTab: 'rating' | 'volatility';
-  highestRating: number;
-  theme?: string;
-}
-
-interface TableViewProps {
-  data: RatingAdjustmentDTO[];
-  activeTab: 'rating' | 'volatility';
-}
-
-function sortData(
-  data: RatingAdjustmentDTO[],
-  descending: boolean
-): RatingAdjustmentDTO[] {
-  return [...data].sort((a, b) =>
-    descending
-      ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-}
-
-function getChartColors(theme?: string): ChartColors {
-  return {
-    rating: '#3b82f6', // blue-500
-    volatility: '#8b5cf6', // violet-500
-    grid: theme === 'dark' ? '#374151' : '#e5e7eb', // gray-700 : gray-200
-    text: theme === 'dark' ? '#d1d5db' : '#4b5563', // gray-300 : gray-600
-    background: theme === 'dark' ? '#1f2937' : '#f9fafb', // gray-800 : gray-50
-  };
-}
-
-function getAdjustmentTypeColor(
-  type: RatingAdjustmentType,
-  delta: number
-): string {
-  switch (type) {
-    case RatingAdjustmentType.Decay:
-      return 'bg-gray-500';
-    case RatingAdjustmentType.Match:
-      return delta > 0 ? 'bg-green-500' : 'bg-red-500';
-    default:
-      return 'bg-blue-500';
-  }
-}
-
-function SummaryStats({ data, highestRating }: SummaryStatsProps) {
-  if (data.length === 0) return null;
-
-  const sortedData = sortData(data, false);
-  const currentRating = sortedData[sortedData.length - 1]?.ratingAfter || 0;
-  const initialRating = sortedData[0]?.ratingAfter || 0;
-  const totalChange = currentRating - initialRating;
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
-        <Award className="h-6 w-6 text-primary" />
-        <div>
-          <div className="text-sm text-muted-foreground">Peak Rating</div>
-          <div className="text-xl font-semibold">
-            {highestRating.toFixed(0)} <TRText className="-ml-1" />
-          </div>
-        </div>
-      </Card>
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
-        {totalChange >= 0 ? (
-          <TrendingUp className="h-6 w-6 text-primary" />
-        ) : (
-          <TrendingDown className="h-6 w-6 text-primary" />
-        )}
-        <div>
-          <div className="text-sm text-muted-foreground">Total Change</div>
-          <div
-            className={`flex flex-row items-baseline gap-1 text-xl font-semibold ${totalChange >= 0 ? 'text-green-500' : 'text-red-500'}`}
-          >
-            {totalChange > 0 ? '+' : ''}
-            {totalChange.toFixed(0)}
-            <TRText />
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ChartView({ data, activeTab, highestRating, theme }: ChartViewProps) {
-  if (!data || !data.length) {
-    return (
-      <div className="flex h-[350px] items-center justify-center">
-        No data available
-      </div>
-    );
-  }
-
-  const chartColors = getChartColors(theme);
-
-  // Prepare data for recharts
-  const chartData: ChartDataPoint[] = sortData(data, false).map(
-    (adjustment) => ({
-      ...adjustment,
-      // Format date for x-axis
-      formattedAxisDate: format(adjustment.timestamp, "MMM ''yy"),
-    })
-  );
-
-  const renderActiveDot = (props: DotProps) => {
-    if (props === undefined) {
-      return <circle cx={0} cy={0} r={0} fill="transparent" opacity={0} />;
-    }
-
-    // TODO: payload is in props, fix error
-    const { cx, cy, payload } = props;
-
-    // For non-match adjustments, render an invisible dot (opacity 0)
-    if (
-      payload.adjustmentType !== RatingAdjustmentType.Match ||
-      !payload.match?.id
-    ) {
-      return <circle cx={cx} cy={cy} r={0} fill="transparent" opacity={0} />;
-    }
-
-    // For match adjustments, show a clickable dot
-    return (
-      <Link href={`/matches/${payload.match?.id}`}>
-        <circle
-          cx={cx}
-          cy={cy}
-          r={6}
-          fill={
-            activeTab === 'rating' ? chartColors.rating : chartColors.volatility
-          }
-          stroke={theme === 'dark' ? '#1f2937' : '#ffffff'}
-          strokeWidth={2}
-          style={{ cursor: 'pointer' }}
-        />
-      </Link>
-    );
-  };
-
-  return (
-    <div className="h-[350px] w-full">
-      <ResponsiveContainer width="100%" height="100%" minWidth={300}>
-        <LineChart
-          data={chartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-          <XAxis
-            dataKey="formattedAxisDate"
-            stroke={chartColors.text}
-            tick={{ fill: chartColors.text }}
-            tickLine={{ stroke: chartColors.grid }}
-            minTickGap={50}
-            fontFamily="sans-serif"
-          />
-          <YAxis
-            stroke={chartColors.text}
-            tick={{ fill: chartColors.text }}
-            tickLine={{ stroke: chartColors.grid }}
-            domain={
-              activeTab === 'rating'
-                ? ['auto', 'auto']
-                : [
-                    (dataMin: number) => Math.max(0, dataMin - 25),
-                    'auto' as const,
-                  ]
-            }
-          />
-          <RechartsTooltip
-            content={<PlayerRatingChartTooltip activeTab={activeTab} />}
-          />
-          <Legend />
-          {activeTab === 'rating' && (
-            <ReferenceLine
-              y={highestRating}
-              label={{
-                value: 'Peak',
-                position: 'insideTopLeft',
-                fill: chartColors.text,
-              }}
-              stroke="#8884d8"
-              strokeDasharray="3 3"
-            />
-          )}
-          <Line
-            type="natural"
-            dataKey={`${activeTab}After`}
-            stroke={
-              activeTab === 'rating'
-                ? chartColors.rating
-                : chartColors.volatility
-            }
-            strokeWidth={2}
-            name={capitalize(activeTab)}
-            dot={false}
-            activeDot={renderActiveDot}
-            connectNulls
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function TableView({ data, activeTab }: TableViewProps) {
-  return (
-    <ScrollArea className="relative h-[350px] rounded">
-      <div className="min-w-[600px]">
-        <Table>
-          <TableHeader className="sticky top-0 bg-popover">
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">
-                {activeTab === 'rating' ? 'Rating' : 'Volatility'}
-              </TableHead>
-              <TableHead className="text-right">Change</TableHead>
-              <TableHead>Match</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortData(data, true).map((point, index) => (
-              <TableRow key={index} className="hover:bg-muted">
-                <TableCell>{formattedDate(point.timestamp)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(
-                        point.adjustmentType,
-                        point.ratingDelta
-                      )}`}
-                    />
-                    {
-                      RatingAdjustmentTypeEnumhelper.getMetadata(
-                        point.adjustmentType
-                      ).text
-                    }
-                  </div>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {activeTab === 'rating'
-                    ? point.ratingAfter.toFixed(0)
-                    : point.volatilityAfter.toFixed(2)}
-                </TableCell>
-                {activeTab === 'rating' ? (
-                  <TableCell
-                    className={`text-right font-medium ${
-                      point.ratingDelta > 0
-                        ? 'text-green-500'
-                        : point.ratingDelta < 0
-                          ? 'text-red-500'
-                          : ''
-                    }`}
-                  >
-                    {point.ratingDelta > 0 ? '+' : ''}
-                    {point.ratingDelta.toFixed(2)}
-                  </TableCell>
-                ) : (
-                  <TableCell
-                    className={`text-right font-medium ${
-                      point.volatilityDelta < 0
-                        ? 'text-green-500'
-                        : point.volatilityDelta > 0
-                          ? 'text-red-500'
-                          : ''
-                    }`}
-                  >
-                    {point.volatilityDelta > 0 ? '+' : ''}
-                    {point.volatilityDelta.toFixed(2)}
-                  </TableCell>
-                )}
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {point.match?.id && point.match?.name ? (
-                    <Link
-                      href={`/matches/${point.match.id}`}
-                      className="hover:text-primary hover:underline"
-                    >
-                      {point.match.name}
-                    </Link>
-                  ) : (
-                    '-'
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </ScrollArea>
-  );
 }
 
 export default function PlayerRatingChart({
@@ -394,7 +51,6 @@ export default function PlayerRatingChart({
       showDecay: true,
     });
 
-  // Date range state
   const [dateFrom, setDateFrom] = useState<Date | undefined>(
     searchParams.get('dateMin')
       ? new Date(searchParams.get('dateMin')!)
@@ -408,7 +64,6 @@ export default function PlayerRatingChart({
 
   const { showDecay } = filterValues;
 
-  // Filter data based on user preferences
   const filteredData = useMemo(() => {
     if (!showDecay) {
       return adjustments.filter(
@@ -418,12 +73,11 @@ export default function PlayerRatingChart({
     return adjustments;
   }, [adjustments, showDecay]);
 
-  // Compute daily data for volatility chart
   const dailyData = useMemo(() => {
     const dailyMap = new Map<string, RatingAdjustmentDTO>();
 
     sortData(filteredData, true).forEach((point) => {
-      const dateKey = format(point.timestamp, 'yyyy-MM-dd');
+      const dateKey = new Date(point.timestamp).toISOString().split('T')[0];
       dailyMap.set(dateKey, point);
     });
 
@@ -433,7 +87,6 @@ export default function PlayerRatingChart({
   const handleTimeRangeChange = (value: string) => {
     setTimeRange(value);
 
-    // Set date range based on selected time range
     const now = new Date();
     const params = new URLSearchParams(searchParams.toString());
 
@@ -521,7 +174,10 @@ export default function PlayerRatingChart({
         </div>
       </div>
 
-      <SummaryStats data={filteredData} highestRating={highestRating} />
+      <PlayerRatingChartSummaryStats
+        data={filteredData}
+        highestRating={highestRating}
+      />
 
       <Tabs
         defaultValue="chart"
@@ -533,7 +189,7 @@ export default function PlayerRatingChart({
         </TabsList>
 
         <TabsContent value="chart">
-          <ChartView
+          <PlayerRatingChartView
             data={
               viewMode === 'chart' && activeTab === 'rating'
                 ? filteredData
@@ -545,7 +201,7 @@ export default function PlayerRatingChart({
           />
         </TabsContent>
         <TabsContent value="table">
-          <TableView data={filteredData} activeTab={activeTab} />
+          <PlayerRatingChartTable data={filteredData} activeTab={activeTab} />
         </TabsContent>
       </Tabs>
     </Card>
