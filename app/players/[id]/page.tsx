@@ -4,7 +4,7 @@ import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import { Card } from '@/components/ui/card';
-import { getStats } from '@/lib/actions/players';
+import { getStatsCached } from '@/lib/actions/players';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
@@ -31,7 +31,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `o!TR | ${playerData.playerInfo.username}`,
+    title: playerData.playerInfo.username,
   };
 }
 
@@ -52,13 +52,7 @@ async function getPlayerData(
     : undefined;
 
   try {
-    const result = await getStats({
-      key: key,
-      dateMin: dateMin,
-      dateMax: dateMax,
-      ruleset: ruleset,
-    });
-
+    const result = await getStatsCached(key, dateMin, dateMax, ruleset);
     return result;
   } catch (error) {
     console.error('Failed to fetch player data:', error);
