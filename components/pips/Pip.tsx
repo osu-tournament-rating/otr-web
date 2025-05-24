@@ -36,7 +36,7 @@ const Pip = ({
   gameIndex,
 }: PipProps) => {
   let Icon = HelpCircle;
-  let color = 'text-gray-500'; // Default color
+  let color = 'text-muted';
   const titleText = `Game ${gameIndex + 1}`;
   let statusText = 'Status Unknown';
   const warningMetadata =
@@ -53,33 +53,33 @@ const Pip = ({
   switch (verificationStatus) {
     case VerificationStatus.Verified:
       Icon = Circle;
-      color = 'text-green-500';
+      color = 'text-success';
       statusText = 'Verified';
       break;
     case VerificationStatus.PreVerified:
       if (hasWarnings) {
         Icon = Triangle;
-        color = 'text-yellow-500';
+        color = 'text-warning';
         statusText = 'Pre-verified with warnings';
       } else {
         Icon = Square;
-        color = 'text-blue-500';
+        color = 'text-success';
         statusText = 'Pre-verified';
       }
       break;
     case VerificationStatus.Rejected:
       Icon = MinusCircle;
-      color = 'text-red-500';
+      color = 'text-destructive';
       statusText = 'Rejected';
       break;
     case VerificationStatus.PreRejected:
       Icon = AlertTriangle;
-      color = 'text-orange-500';
+      color = 'text-warning';
       statusText = 'Pre-rejected';
       break;
-    case VerificationStatus.None: // Assuming this is the same as Pending for icon/color
+    case VerificationStatus.None:
       Icon = Circle;
-      color = 'text-gray-400';
+      color = 'text-muted-foreground';
       statusText = 'Pending';
       break;
   }

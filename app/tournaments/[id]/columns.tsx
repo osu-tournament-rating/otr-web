@@ -41,7 +41,14 @@ export const columns = [
   columnHelper.accessor('name', {
     header: 'Name',
     cell: ({ getValue, row }) => (
-      <Link href={`/matches/${row.original.id}`}>{getValue()}</Link>
+      <div className="max-w-[500px] text-wrap">
+        <Link
+          href={`/matches/${row.original.id}`}
+          className="break-words hover:underline"
+        >
+          {getValue()}
+        </Link>
+      </div>
     ),
   }),
   columnHelper.display({
