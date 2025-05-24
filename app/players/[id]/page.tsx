@@ -20,9 +20,8 @@ type PageProps = {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  // read route params
   const { id } = await params;
-  const playerData = await getPlayerData(id, {}); // Fetch player data for username
+  const playerData = await getPlayerData(id, {});
 
   if (!playerData) {
     return {
@@ -39,7 +38,6 @@ async function getPlayerData(
   key: string,
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<PlayerDashboardStatsDTO | undefined> {
-  // Parse date filters from URL params
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
     : undefined;
