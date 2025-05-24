@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import { PlayerSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
 import TierIcon from '../icons/TierIcon';
@@ -20,10 +21,16 @@ export default function PlayerSearchResult({
 }) {
   const { query, closeDialog } = useContext(SearchDialogContext);
 
+  // Build the href with ruleset query parameter if available
+  const href =
+    data.ruleset !== undefined && data.ruleset !== null
+      ? `/players/${data.id}?ruleset=${data.ruleset}`
+      : `/players/${data.id}`;
+
   return (
     <Card className="border-none bg-popover p-3 transition-colors hover:bg-popover/80 sm:p-4">
       <Link
-        href={`/players/${data.id}`}
+        href={href}
         onClick={closeDialog}
         className="flex flex-col gap-2 overflow-hidden sm:flex-row sm:items-center sm:gap-3"
       >

@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { LoaderCircle, Search } from 'lucide-react';
-import { useState, createContext } from 'react';
+import { useState, createContext, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import SearchResults from './SearchResults';
@@ -32,13 +32,22 @@ export default function SearchDialog() {
   };
 
   const closeDialog = () => {
-    setIsDialogOpen((open) => {
-      if (!open) {
-        handleSetQuery('');
-      }
-      return !open;
-    });
+    setIsDialogOpen(false);
   };
+
+  // Clear search query when dialog opens to ensure clean search window
+  useEffect(() => {
+    if (isDialogOpen) {
+      setQuery('');
+    }
+  }, [isDialogOpen]);
+
+  // Clear search query when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setQuery('');
+    }
+  }, [isDialogOpen]);
 
   useHotkeys('CTRL+K', (e) => {
     e.preventDefault();
@@ -87,13 +96,10 @@ export default function SearchDialog() {
               <SearchResults data={data} />
             ) : (
               <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
-                <div className="space-y-2 text-center">
-                  <Search className="mx-auto h-10 w-10 text-muted-foreground/50 sm:h-12 sm:w-12" />
-                  <p className="text-base font-medium text-muted-foreground sm:text-lg">
+                <div className="space-y-3 text-center">
+                  <Search className="mx-auto h-8 w-8 text-muted-foreground/30 sm:h-10 sm:w-10" />
+                  <p className="text-sm font-medium text-muted-foreground/70 sm:text-base">
                     Start typing to search
-                  </p>
-                  <p className="text-xs text-muted-foreground sm:text-sm">
-                    Find players, tournaments, and matches
                   </p>
                 </div>
               </div>

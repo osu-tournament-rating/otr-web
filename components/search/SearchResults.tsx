@@ -1,3 +1,5 @@
+'use client';
+
 import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
 import { ScrollArea } from '../ui/scroll-area';
 import { Swords, User, Trophy } from 'lucide-react';

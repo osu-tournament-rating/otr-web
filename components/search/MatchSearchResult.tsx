@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import { MatchSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
 import { highlightMatch } from '@/lib/utils/search';
