@@ -23,7 +23,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         fill
       />
       {/* Game / beatmap info */}
-      <div className="z-2 flex h-full w-full flex-col p-2 text-slate-50 dark:text-slate-300">
+      <div className="z-2 flex h-full w-full flex-col p-2 text-white">
         {/* Top row */}
         <div className="flex h-8 w-full items-center justify-between gap-2">
           <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">

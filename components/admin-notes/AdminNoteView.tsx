@@ -111,8 +111,8 @@ export default function AdminNoteView({
           {showNotification && notify && (
             <div className="absolute -top-1 -right-1">
               <span className="relative flex h-3 w-3">
-                <span className="absolute h-4/6 w-4/6 animate-ping rounded-full bg-orange-400/75 duration-1500" />
-                <span className="absolute h-4/6 w-4/6 rounded-full bg-orange-400" />
+                <span className="absolute h-4/6 w-4/6 animate-ping rounded-full bg-warning duration-1500" />
+                <span className="absolute h-4/6 w-4/6 rounded-full bg-warning-foreground" />
               </span>
             </div>
           )}

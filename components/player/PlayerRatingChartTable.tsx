@@ -27,11 +27,11 @@ function getAdjustmentTypeColor(
 ): string {
   switch (type) {
     case RatingAdjustmentType.Decay:
-      return 'bg-gray-500';
+      return 'bg-accent';
     case RatingAdjustmentType.Match:
-      return delta > 0 ? 'bg-green-500' : 'bg-red-500';
+      return delta > 0 ? 'bg-success' : 'bg-destructive';
     default:
-      return 'bg-blue-500';
+      return 'bg-primary';
   }
 }
 
@@ -82,9 +82,9 @@ export default function PlayerRatingChartTable({
                   <TableCell
                     className={`text-right font-medium ${
                       point.ratingDelta > 0
-                        ? 'text-green-500'
+                        ? 'text-success'
                         : point.ratingDelta < 0
-                          ? 'text-red-500'
+                          ? 'text-destructive'
                           : ''
                     }`}
                   >
@@ -95,9 +95,9 @@ export default function PlayerRatingChartTable({
                   <TableCell
                     className={`text-right font-medium ${
                       point.volatilityDelta < 0
-                        ? 'text-green-500'
+                        ? 'text-success'
                         : point.volatilityDelta > 0
-                          ? 'text-red-500'
+                          ? 'text-destructive'
                           : ''
                     }`}
                   >

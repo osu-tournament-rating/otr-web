@@ -59,7 +59,7 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
         {/* Dimming */}
         <div className="absolute z-2 h-full w-full bg-black/40" />
 
-        <div className="z-2 flex h-full w-full flex-col p-2 text-slate-50 dark:text-slate-100">
+        <div className="z-2 flex h-full w-full flex-col p-2">
           {/* Top row with text shadow */}
           <div className="flex h-8 w-full items-center justify-between">
             <div className="text-shadow flex h-full flex-row items-center gap-4 whitespace-nowrap">

@@ -85,12 +85,15 @@
 }
 
 @theme {
-  --color-warning: var(--color-yellow-400);
+  --color-success: var(--color-green-400);
+  --color-success-foreground: var(--color-green-900);
 
+  --color-warning: var(--color-yellow-400);
+  --color-warning-foreground: var(--color-yellow-900);
   /* Verification status color alias */
   --color-status-pending: var(--color-warning);
   --color-status-rejected: var(--destructive);
-  --color-status-verified: var(--color-green-400);
+  --color-status-verified: var(--color-success);
 }
 
 :root {
@@ -111,21 +114,21 @@
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
-  --destructive: oklch(0.63 0.19 23.03);
-  --destructive-foreground: oklch(1 0 0);
+  --destructive: var(--color-red-400);
+  --destructive-foreground: var(--color-red-900);
 
   --ring: oklch(0 0 0);
 
-  --chart-1: oklch(0.81 0.17 75.35);
-  --chart-2: oklch(0.55 0.22 264.53);
-  --chart-3: oklch(0.72 0 0);
-  --chart-4: oklch(0.92 0 0);
-  --chart-5: oklch(0.56 0 0);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.69 0.2 23.91);
+  --chart-3: oklch(0.56 0 0);
+  --chart-4: oklch(0.44 0 0);
+  --chart-5: oklch(0.92 0 0);
   --radius: 0.5rem;
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: var(--destructive);
+  --team-red: var(--destructive-foreground);
   --team-blue: var(--primary);
 
   /* Tier text colors */
@@ -238,8 +241,6 @@
   /* Dark mode tier text colors */
   --text-silver: hsl(0, 0%, 70%);
 
-  --destructive: oklch(0.69 0.2 23.91);
-  --destructive-foreground: oklch(0 0 0);
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);
   --popover-foreground: oklch(1 0 0);
@@ -251,11 +252,7 @@
   --accent-foreground: oklch(1 0 0);
   --input: oklch(0.32 0 0);
   --ring: oklch(0.67 0.17 258.51);
-  --chart-1: oklch(0.67 0.17 258.51);
-  --chart-2: oklch(0.69 0.2 23.91);
-  --chart-3: oklch(0.56 0 0);
-  --chart-4: oklch(0.44 0 0);
-  --chart-5: oklch(0.92 0 0);
+
   --radius: 0.5rem;
   --sidebar: oklch(0.2 0 264.47);
   --sidebar-foreground: oklch(1 0 0);

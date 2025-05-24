@@ -35,7 +35,11 @@ export default function PlayerRatingChartTooltip({
   const isNegativeChange = isRatingTab ? delta < 0 : delta > 0;
 
   const deltaClassName = `font-medium ${
-    isPositiveChange ? 'text-green-500' : isNegativeChange ? 'text-red-500' : ''
+    isPositiveChange
+      ? 'text-success'
+      : isNegativeChange
+        ? 'text-destructive'
+        : ''
   }`;
 
   return (
