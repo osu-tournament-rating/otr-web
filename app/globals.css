@@ -116,11 +116,11 @@
 
   --ring: oklch(0 0 0);
 
-  --chart-1: oklch(0.81 0.17 75.35);
-  --chart-2: oklch(0.55 0.22 264.53);
-  --chart-3: oklch(0.72 0 0);
-  --chart-4: oklch(0.92 0 0);
-  --chart-5: oklch(0.56 0 0);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.69 0.2 23.91);
+  --chart-3: oklch(0.56 0 0);
+  --chart-4: oklch(0.44 0 0);
+  --chart-5: oklch(0.92 0 0);
   --radius: 0.5rem;
 
   --score-performance-label: hsl(51 60% 55%);
@@ -251,11 +251,7 @@
   --accent-foreground: oklch(1 0 0);
   --input: oklch(0.32 0 0);
   --ring: oklch(0.67 0.17 258.51);
-  --chart-1: oklch(0.67 0.17 258.51);
-  --chart-2: oklch(0.69 0.2 23.91);
-  --chart-3: oklch(0.56 0 0);
-  --chart-4: oklch(0.44 0 0);
-  --chart-5: oklch(0.92 0 0);
+
   --radius: 0.5rem;
   --sidebar: oklch(0.2 0 264.47);
   --sidebar-foreground: oklch(1 0 0);
