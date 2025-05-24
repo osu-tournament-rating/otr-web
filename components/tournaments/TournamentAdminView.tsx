@@ -1,6 +1,29 @@
 'use client';
 
+import { useSession } from '@/lib/hooks/useSession';
+import { update } from '@/lib/actions/tournaments';
+import { tournamentEditFormSchema } from '@/lib/schema';
+import { cn } from '@/lib/utils';
+import { createPatchOperations } from '@/lib/utils/form';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Roles,
+  TournamentCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import { EditIcon, Loader2 } from 'lucide-react';
+import { ControllerFieldState, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -10,33 +33,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { update } from '@/lib/actions/tournaments';
-import { tournamentEditFormSchema } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { createPatchOperations } from '@/lib/utils/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Roles,
-  TournamentCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2 } from 'lucide-react';
-import { ControllerFieldState, useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import TournamentProcessingStatusSelectContent from '../select/TournamentProcessingStatusSelectContent';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
-import { useSession } from '@/lib/hooks/useSession';
+import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
+
+interface TournamentAdminViewProps {
+  tournament: TournamentCompactDTO;
+}
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -47,21 +54,21 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
 
 export default function TournamentAdminView({
   tournament,
-}: {
-  tournament: TournamentCompactDTO;
-}) {
+}: TournamentAdminViewProps) {
+  const session = useSession();
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
     resolver: zodResolver(tournamentEditFormSchema),
     defaultValues: tournament,
     mode: 'all',
   });
 
-  const session = useSession();
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
 
-  async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
+  const handleSubmit = async (
+    values: z.infer<typeof tournamentEditFormSchema>
+  ) => {
     try {
       const patchedTournament = await update({
         id: tournament.id,
@@ -72,7 +79,7 @@ export default function TournamentAdminView({
     } catch {
       errorSaveToast();
     }
-  }
+  };
 
   return (
     <Dialog>
@@ -88,7 +95,10 @@ export default function TournamentAdminView({
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <div className="flex gap-5">
               <FormField
                 control={form.control}
@@ -259,17 +269,23 @@ export default function TournamentAdminView({
 
             {/* Form action buttons */}
             <div className="flex justify-between">
-              {/* Reset changes */}
-              <Button
-                type="reset"
-                variant={'secondary'}
-                onClick={() => form.reset()}
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting
-                }
-              >
-                Reset
-              </Button>
+              <div className="flex gap-2">
+                {/* Clear changes */}
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Clear
+                </Button>
+
+                {/* Reset automated checks */}
+                <ResetAutomatedChecksButton tournament={tournament} />
+              </div>
+
               {/* Save changes */}
               <Button
                 type="submit"

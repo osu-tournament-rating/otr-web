@@ -8,6 +8,7 @@ import {
   TournamentSubmissionDTO,
   TournamentsUpdateRequestParams,
   TournamentsListRequestParams,
+  TournamentsRerunAutomationChecksRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
 
@@ -66,4 +67,11 @@ export async function submit(params: TournamentsCreateRequestParams) {
 
     throw error;
   }
+}
+
+export async function rerunAutomatedChecks(
+  params: TournamentsRerunAutomationChecksRequestParams
+) {
+  const { result } = await tournaments.rerunAutomationChecks(params);
+  return result;
 }
