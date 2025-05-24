@@ -136,6 +136,10 @@ export const adminNoteFormSchema = z.object({
   note: z.string().min(1),
 });
 
+export const playerRatingChartFilterSchema = z.object({
+  showDecay: z.boolean().default(true),
+});
+
 export const tournamentSubmissionFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),

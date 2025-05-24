@@ -136,7 +136,7 @@
   --text-emerald: hsl(144, 65%, 50%);
   --text-platinum: hsl(197, 54%, 46%);
   --text-gold: hsl(43, 69%, 57%);
-  --text-silver: hsl(0, 0%, 40%);
+  --text-silver: hsl(0, 0%, 55%);
   --text-bronze: hsl(27, 63%, 48%);
 
   --header-height-px: calc(var(--spacing) * 16);
@@ -201,6 +201,30 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
 
   --tracking-normal: 0em;
+
+  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
+
+  --mod-hidden: hsl(49, 86%, 70%);
+
+  --mod-freemod: hsl(35, 82%, 74%);
+
+  --mod-flashlight: hsl(236, 36%, 39%);
+
+  --mod-easy: hsl(114, 86%, 69%);
+
+  --mod-half-time: hsl(152, 86%, 69%);
+
+  --mod-double-time: hsl(251, 86%, 70%);
+
+  --mod-nightcore: hsl(271, 86%, 70%);
+
+  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
+
+  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
+
+  --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
+
+  --mod-hidden-flashlight: hsl(197, 36%, 39%);
 }
 
 .dark {
@@ -210,6 +234,9 @@
   --muted-foreground: oklch(0.69 0 0);
   --card: oklch(0.2 0 264.47);
   --border: oklch(0.32 0 0);
+
+  /* Dark mode tier text colors */
+  --text-silver: hsl(0, 0%, 70%);
 
   --destructive: oklch(0.69 0.2 23.91);
   --destructive-foreground: oklch(0 0 0);
