@@ -34,7 +34,7 @@ export default function PlayerRatingChartTooltip({
   const isPositiveChange = isRatingTab ? delta > 0 : delta < 0;
   const isNegativeChange = isRatingTab ? delta < 0 : delta > 0;
 
-  const deltaClassName = `ml-1 font-medium ${
+  const deltaClassName = `font-medium ${
     isPositiveChange ? 'text-green-500' : isNegativeChange ? 'text-red-500' : ''
   }`;
 
@@ -47,13 +47,14 @@ export default function PlayerRatingChartTooltip({
       </p>
       <p className="text-sm">
         {label}:{' '}
-        <span className="font-medium">
-          {value} {isRatingTab && <TRText />}
+        <span className="inline-flex items-baseline gap-1 font-medium">
+          {value}
+          {isRatingTab && <TRText />}
         </span>
       </p>
       <p className="text-sm">
-        Change:
-        <span className={deltaClassName}>
+        Change:{' '}
+        <span className={`inline-flex items-baseline gap-1 ${deltaClassName}`}>
           {delta > 0 ? '+' : ''}
           {delta.toFixed(2)}
           {isRatingTab && <TRText />}
