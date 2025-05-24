@@ -3,7 +3,7 @@
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import { RulesetButton } from './RulesetButton';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RulesetEnumHelper } from '@/lib/enums';
 
 export default function PlayerRulesetSelector() {
@@ -14,6 +14,14 @@ export default function PlayerRulesetSelector() {
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(
     Number(searchParams.get('ruleset') || Ruleset.Osu) as Ruleset
   );
+
+  // Sync state with URL changes (e.g., when navigating from search results)
+  useEffect(() => {
+    const rulesetFromUrl = Number(
+      searchParams.get('ruleset') || Ruleset.Osu
+    ) as Ruleset;
+    setSelectedRuleset(rulesetFromUrl);
+  }, [searchParams]);
 
   const handleRulesetChange = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);

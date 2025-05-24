@@ -7,6 +7,7 @@ import Mania4k from '@/public/icons/rulesets/mania4k.svg';
 import Mania7k from '@/public/icons/rulesets/mania7k.svg';
 import { FC, SVGProps } from 'react';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { cn } from '@/lib/utils';
 
 const iconMap = {
   [Ruleset.Osu]: Standard,
@@ -19,9 +20,21 @@ const iconMap = {
 
 export default function RulesetIcon({
   ruleset,
+  className,
   ...rest
 }: { ruleset: Ruleset | 'all' } & SVGProps<SVGElement>) {
   const Icon = ruleset === 'all' ? AllRuleset : iconMap[ruleset];
 
-  return <Icon {...rest} />;
+  return (
+    <Icon
+      className={cn(
+        // Anti-aliasing optimizations for smooth circular rendering
+        'antialiased',
+        // Optimize for smooth scaling
+        '[will-change:transform]',
+        className
+      )}
+      {...rest}
+    />
+  );
 }

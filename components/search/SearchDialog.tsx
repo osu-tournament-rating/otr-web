@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { LoaderCircle, Search } from 'lucide-react';
-import { useState, createContext } from 'react';
+import { useState, createContext, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import SearchResults from './SearchResults';
@@ -32,13 +32,22 @@ export default function SearchDialog() {
   };
 
   const closeDialog = () => {
-    setIsDialogOpen((open) => {
-      if (!open) {
-        handleSetQuery('');
-      }
-      return !open;
-    });
+    setIsDialogOpen(false);
   };
+
+  // Clear search query when dialog opens to ensure clean search window
+  useEffect(() => {
+    if (isDialogOpen) {
+      setQuery('');
+    }
+  }, [isDialogOpen]);
+
+  // Clear search query when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setQuery('');
+    }
+  }, [isDialogOpen]);
 
   useHotkeys('CTRL+K', (e) => {
     e.preventDefault();
@@ -59,12 +68,12 @@ export default function SearchDialog() {
         </Button>
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
-      <DialogContent className="flex max-h-[85vh] max-w-[700px] min-w-[600px] flex-col gap-0 p-0">
-        <div className="border-b bg-background p-4">
+      <DialogContent className="flex max-h-[85vh] w-[95vw] max-w-[700px] flex-col gap-0 p-0 sm:w-[90vw] sm:min-w-[500px] md:min-w-[600px]">
+        <div className="border-b bg-background p-3 sm:p-4">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="border-0 bg-background pr-10 pl-10 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="border-0 bg-background pr-10 pl-10 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-base"
               placeholder="Search players, tournaments, matches..."
               autoFocus
               value={query}
@@ -77,15 +86,6 @@ export default function SearchDialog() {
               ) : null}
             </div>
           </div>
-          {query && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Press</span>
-              <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs">
-                Esc
-              </kbd>
-              <span>to close</span>
-            </div>
-          )}
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -95,14 +95,11 @@ export default function SearchDialog() {
             {debouncedQuery !== '' ? (
               <SearchResults data={data} />
             ) : (
-              <div className="flex flex-1 items-center justify-center p-8">
-                <div className="space-y-2 text-center">
-                  <Search className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                  <p className="text-lg font-medium text-muted-foreground">
+              <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
+                <div className="space-y-3 text-center">
+                  <Search className="mx-auto h-8 w-8 text-muted-foreground/30 sm:h-10 sm:w-10" />
+                  <p className="text-sm font-medium text-muted-foreground/70 sm:text-base">
                     Start typing to search
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Find players, tournaments, and matches
                   </p>
                 </div>
               </div>

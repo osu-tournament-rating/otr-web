@@ -4,11 +4,12 @@ import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import { Card } from '@/components/ui/card';
-import { getStats } from '@/lib/actions/players';
+import { getStatsCached } from '@/lib/actions/players';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 type PageProps = {
@@ -16,11 +17,27 @@ type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const playerData = await getPlayerData(id, {});
+
+  if (!playerData) {
+    return {
+      title: 'Player Not Found',
+    };
+  }
+
+  return {
+    title: playerData.playerInfo.username,
+  };
+}
+
 async function getPlayerData(
   key: string,
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<PlayerDashboardStatsDTO | undefined> {
-  // Parse date filters from URL params
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
     : undefined;
@@ -33,13 +50,7 @@ async function getPlayerData(
     : undefined;
 
   try {
-    const result = await getStats({
-      key: key,
-      dateMin: dateMin,
-      dateMax: dateMax,
-      ruleset: ruleset,
-    });
-
+    const result = await getStatsCached(key, dateMin, dateMax, ruleset);
     return result;
   } catch (error) {
     console.error('Failed to fetch player data:', error);
@@ -66,7 +77,7 @@ export default async function PlayerPage(props: PageProps) {
     playerData.modStats?.reduce((sum, current) => sum + current.count, 0) ?? 0;
 
   return (
-    <div className="container mx-auto flex flex-col gap-2 py-10">
+    <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
       {playerData.rating && playerData.rating.adjustments ? (
         <>
