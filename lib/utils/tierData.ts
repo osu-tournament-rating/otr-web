@@ -142,34 +142,9 @@ export type TierDataType = {
 /** Tier data for the ladder with simplified names */
 export const tierData: TierDataType[] = [
   {
-    tier: 'Grandmaster',
-    baseRating: 1900,
-    displayName: 'Grandmaster',
-  },
-  {
-    tier: 'Master',
-    baseRating: 1500,
-    displayName: 'Master',
-  },
-  {
-    tier: 'Diamond',
-    baseRating: 1200,
-    displayName: 'Diamond',
-  },
-  {
-    tier: 'Emerald',
-    baseRating: 900,
-    displayName: 'Emerald',
-  },
-  {
-    tier: 'Platinum',
-    baseRating: 700,
-    displayName: 'Platinum',
-  },
-  {
-    tier: 'Gold',
-    baseRating: 500,
-    displayName: 'Gold',
+    tier: 'Bronze',
+    baseRating: 100,
+    displayName: 'Bronze',
   },
   {
     tier: 'Silver',
@@ -177,8 +152,38 @@ export const tierData: TierDataType[] = [
     displayName: 'Silver',
   },
   {
-    tier: 'Bronze',
-    baseRating: 100,
-    displayName: 'Bronze',
+    tier: 'Gold',
+    baseRating: 500,
+    displayName: 'Gold',
+  },
+  {
+    tier: 'Platinum',
+    baseRating: 700,
+    displayName: 'Platinum',
+  },
+  {
+    tier: 'Emerald',
+    baseRating: 900,
+    displayName: 'Emerald',
+  },
+  {
+    tier: 'Diamond',
+    baseRating: 1200,
+    displayName: 'Diamond',
+  },
+  {
+    tier: 'Master',
+    baseRating: 1500,
+    displayName: 'Master',
+  },
+  {
+    tier: 'Grandmaster',
+    baseRating: 1900,
+    displayName: 'Grandmaster',
+  },
+  {
+    tier: 'Elite Grandmaster',
+    baseRating: 2500,
+    displayName: 'Elite GM',
   },
 ];
