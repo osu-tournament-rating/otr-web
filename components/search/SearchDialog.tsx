@@ -24,7 +24,7 @@ export const SearchDialogContext = createContext<SearchDialogContextType>({
 export default function SearchDialog() {
   const [query, setQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const debouncedQuery = useDebounce(query, 500);
+  const debouncedQuery = useDebounce(query, 300);
   const { data, isLoading } = useSearch(debouncedQuery);
 
   const handleSetQuery = (input: string) => {
@@ -36,7 +36,6 @@ export default function SearchDialog() {
       if (!open) {
         handleSetQuery('');
       }
-
       return !open;
     });
   };
@@ -60,11 +59,12 @@ export default function SearchDialog() {
         </Button>
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
-      <DialogContent className="flex max-h-[80vh] min-w-[50%] flex-col p-4">
-        <div className="sticky top-0 z-50 bg-background shadow-sm">
+      <DialogContent className="flex max-h-[85vh] max-w-[700px] min-w-[600px] flex-col gap-0 p-0">
+        <div className="border-b bg-background p-4">
           <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="m-auto rounded-xl border-0 bg-accent pr-10 pl-3 focus-visible:ring-0"
+              className="border-0 bg-background pr-10 pl-10 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
               placeholder="Search players, tournaments, matches..."
               autoFocus
               value={query}
@@ -73,18 +73,42 @@ export default function SearchDialog() {
             />
             <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
               {isLoading ? (
-                <LoaderCircle className="size-5 animate-spin" />
-              ) : (
-                <Search className="size-5" />
-              )}
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : null}
             </div>
           </div>
+          {query && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Press</span>
+              <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs">
+                Esc
+              </kbd>
+              <span>to close</span>
+            </div>
+          )}
         </div>
-        <SearchDialogContext.Provider
-          value={{ closeDialog, query: debouncedQuery }}
-        >
-          {debouncedQuery !== '' && <SearchResults data={data} />}
-        </SearchDialogContext.Provider>
+
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <SearchDialogContext.Provider
+            value={{ closeDialog, query: debouncedQuery }}
+          >
+            {debouncedQuery !== '' ? (
+              <SearchResults data={data} />
+            ) : (
+              <div className="flex flex-1 items-center justify-center p-8">
+                <div className="space-y-2 text-center">
+                  <Search className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                  <p className="text-lg font-medium text-muted-foreground">
+                    Start typing to search
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Find players, tournaments, and matches
+                  </p>
+                </div>
+              </div>
+            )}
+          </SearchDialogContext.Provider>
+        </div>
       </DialogContent>
     </Dialog>
   );
