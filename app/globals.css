@@ -85,12 +85,15 @@
 }
 
 @theme {
-  --color-warning: var(--warning);
+  --color-success: var(--color-green-400);
+  --color-success-foreground: var(--color-green-900);
 
+  --color-warning: var(--color-yellow-400);
+  --color-warning-foreground: var(--color-yellow-900);
   /* Verification status color alias */
   --color-status-pending: var(--color-warning);
   --color-status-rejected: var(--destructive);
-  --color-status-verified: var(--color-green-400);
+  --color-status-verified: var(--color-success);
 }
 
 :root {
@@ -113,12 +116,6 @@
 
   --destructive: var(--color-red-400);
   --destructive-foreground: var(--color-red-900);
-
-  --success: var(--color-green-400);
-  --success-foreground: var(--color-green-900);
-
-  --warning: var(--color-yellow-400);
-  --warning-foreground: var(--color-yellow-900);
 
   --ring: oklch(0 0 0);
 
