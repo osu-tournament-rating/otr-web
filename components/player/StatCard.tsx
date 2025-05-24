@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Card } from '../ui/card';
 
 interface StatCardProps {
   icon?: ReactNode;
@@ -19,22 +20,19 @@ export function StatCard({
   bordered = false,
 }: StatCardProps) {
   return (
-    <div
+    <Card
       className={cn(
-        'flex flex-1 shrink-0 items-center gap-2 rounded-lg p-4',
-        bordered ? 'border border-muted bg-muted/30' : 'bg-muted/50',
+        'flex flex-1 shrink-0 flex-row items-center justify-start gap-2 rounded-lg border-none bg-popover !p-4',
+        // bordered ? 'border ' : 'bg-muted/50',
         className
       )}
     >
-      {icon && (
-        <div className={cn('flex items-center justify-center', iconClassName)}>
-          {icon}
-        </div>
-      )}
-      <div>
+      {icon}
+
+      <div className="flex flex-col">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-lg font-semibold">{value}</p>
       </div>
-    </div>
+    </Card>
   );
 }

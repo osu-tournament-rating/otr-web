@@ -47,6 +47,16 @@ import TRText from '../rating/TRText';
 import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
 import { formattedDate } from './PlayerRatingChartTooltip';
+import { capitalize } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
 
 export type ChartDataPoint = {
   formattedAxisDate: string;
@@ -127,7 +137,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
         <Award className="h-6 w-6 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">Peak Rating</div>
@@ -136,7 +146,7 @@ function SummaryStats({ data, highestRating }: SummaryStatsProps) {
           </div>
         </div>
       </Card>
-      <Card className="flex-1 flex-row items-center gap-2 rounded-xl p-4">
+      <Card className="flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
         {totalChange >= 0 ? (
           <TrendingUp className="h-6 w-6 text-primary" />
         ) : (
@@ -265,6 +275,7 @@ function ChartView({ data, activeTab, highestRating, theme }: ChartViewProps) {
                 : chartColors.volatility
             }
             strokeWidth={2}
+            name={capitalize(activeTab)}
             dot={false}
             activeDot={renderActiveDot}
             connectNulls
@@ -277,28 +288,31 @@ function ChartView({ data, activeTab, highestRating, theme }: ChartViewProps) {
 
 function TableView({ data, activeTab }: TableViewProps) {
   return (
-    <div className="h-[350px] overflow-auto">
+    <ScrollArea className="relative h-[350px] rounded">
       <div className="min-w-[600px]">
-        <table className="w-full border-collapse">
-          <thead className="sticky top-0 bg-background">
-            <tr className="border-b font-sans">
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Type</th>
-              <th className="p-2 text-right">
+        <Table>
+          <TableHeader className="sticky top-0 bg-popover">
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">
                 {activeTab === 'rating' ? 'Rating' : 'Volatility'}
-              </th>
-              <th className="p-2 text-right">Change</th>
-              <th className="p-2 text-left">Match</th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+              <TableHead className="text-right">Change</TableHead>
+              <TableHead>Match</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sortData(data, true).map((point, index) => (
-              <tr key={index} className="border-b font-sans hover:bg-muted/50">
-                <td className="p-2">{formattedDate(point.timestamp)}</td>
-                <td className="p-2">
+              <TableRow key={index} className="hover:bg-muted">
+                <TableCell>{formattedDate(point.timestamp)}</TableCell>
+                <TableCell>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(point.adjustmentType, point.ratingDelta)}`}
+                      className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(
+                        point.adjustmentType,
+                        point.ratingDelta
+                      )}`}
                     />
                     {
                       RatingAdjustmentTypeEnumhelper.getMetadata(
@@ -306,16 +320,15 @@ function TableView({ data, activeTab }: TableViewProps) {
                       ).text
                     }
                   </div>
-                </td>
-                <td className="p-2 text-right font-medium">
+                </TableCell>
+                <TableCell className="text-right font-medium">
                   {activeTab === 'rating'
                     ? point.ratingAfter.toFixed(0)
                     : point.volatilityAfter.toFixed(2)}
-                </td>
+                </TableCell>
                 {activeTab === 'rating' ? (
-                  // Rating 'Change' data (table)
-                  <td
-                    className={`p-2 text-right font-medium ${
+                  <TableCell
+                    className={`text-right font-medium ${
                       point.ratingDelta > 0
                         ? 'text-green-500'
                         : point.ratingDelta < 0
@@ -325,11 +338,10 @@ function TableView({ data, activeTab }: TableViewProps) {
                   >
                     {point.ratingDelta > 0 ? '+' : ''}
                     {point.ratingDelta.toFixed(2)}
-                  </td>
+                  </TableCell>
                 ) : (
-                  // Volatility 'Change' data (table)
-                  <td
-                    className={`p-2 text-right font-medium ${
+                  <TableCell
+                    className={`text-right font-medium ${
                       point.volatilityDelta < 0
                         ? 'text-green-500'
                         : point.volatilityDelta > 0
@@ -339,10 +351,9 @@ function TableView({ data, activeTab }: TableViewProps) {
                   >
                     {point.volatilityDelta > 0 ? '+' : ''}
                     {point.volatilityDelta.toFixed(2)}
-                  </td>
+                  </TableCell>
                 )}
-
-                <td className="max-w-[200px] truncate p-2 text-muted-foreground">
+                <TableCell className="max-w-[200px] truncate text-muted-foreground">
                   {point.match?.id && point.match?.name ? (
                     <Link
                       href={`/matches/${point.match.id}`}
@@ -353,13 +364,13 @@ function TableView({ data, activeTab }: TableViewProps) {
                   ) : (
                     '-'
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 

@@ -7,7 +7,7 @@ import { Card } from '../ui/card';
 
 export default function PlayerCard({ player }: { player: PlayerCompactDTO }) {
   return (
-    <Card className="flex flex-row flex-wrap justify-between p-4">
+    <Card className="flex flex-row flex-wrap justify-between border-none bg-popover p-4">
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
         <Avatar className="h-16 w-16 transition-all hover:border-primary/80">
           <AvatarImage
