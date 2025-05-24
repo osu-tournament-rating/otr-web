@@ -16,7 +16,14 @@ export async function generateMetadata({
 }
 
 function generateTableData(matches: MatchDTO[]): MatchRow[] {
-  return matches.map((match) => ({
+  // Sort matches by start time descending
+  const sortedMatches = [...matches].sort((a, b) => {
+    const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
+    const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
+    return timeB - timeA;
+  });
+
+  return sortedMatches.map((match) => ({
     id: match.id,
     name: match.name,
     status: {
@@ -26,6 +33,12 @@ function generateTableData(matches: MatchDTO[]): MatchRow[] {
     startDate: match.startTime
       ? new Date(match.startTime).toLocaleDateString()
       : new Date().toLocaleDateString(),
+    games: (match.games ?? []).map((game) => ({
+      verificationStatus: game.verificationStatus,
+      warningFlags: game.warningFlags,
+      startTime: game.startTime,
+      rejectionReason: game.rejectionReason,
+    })),
   }));
 }
 

@@ -3,11 +3,14 @@
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import WarningFlagsBadge from '@/components/badges/WarningFlagsBadge';
 import {
+  GameDTO,
+  GameWarningFlags,
   MatchWarningFlags,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
+import Pip from '@/components/pips/Pip';
 
 export type MatchRow = {
   id: number;
@@ -17,6 +20,10 @@ export type MatchRow = {
     warningFlags: MatchWarningFlags;
   };
   startDate: string;
+  games: Pick<
+    GameDTO,
+    'verificationStatus' | 'warningFlags' | 'startTime' | 'rejectionReason'
+  >[];
 };
 
 const columnHelper = createColumnHelper<MatchRow>();
@@ -36,6 +43,31 @@ export const columns = [
     cell: ({ getValue, row }) => (
       <Link href={`/matches/${row.original.id}`}>{getValue()}</Link>
     ),
+  }),
+  columnHelper.display({
+    id: 'pips',
+    header: 'Games',
+    cell: ({ row }) => {
+      const games = row.original.games;
+      // Sort games by start time before rendering pips
+      const sortedGames = [...games].sort(
+        (a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+      return (
+        <div className="flex max-w-[200px] flex-wrap gap-1">
+          {sortedGames.map((game, index) => (
+            <Pip
+              key={index}
+              gameIndex={index}
+              verificationStatus={game.verificationStatus}
+              warningFlags={game.warningFlags}
+              rejectionReason={game.rejectionReason}
+            />
+          ))}
+        </div>
+      );
+    },
   }),
   columnHelper.accessor('startDate', {
     header: 'Start Date',
