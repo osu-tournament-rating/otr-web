@@ -66,7 +66,7 @@ export default async function PlayerPage(props: PageProps) {
     playerData.modStats?.reduce((sum, current) => sum + current.count, 0) ?? 0;
 
   return (
-    <div className="mx-auto flex flex-col gap-2 p-4">
+    <div className="container mx-auto flex flex-col gap-2 py-10">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
       {playerData.rating && playerData.rating.adjustments ? (
         <>

@@ -48,7 +48,7 @@ export default function PlayerRatingChartOptions({
       <PopoverTrigger asChild>
         <Button variant="secondary" className="flex items-center gap-2">
           <Menu className="h-4 w-4" />
-          Options
+          <span className="hidden sm:inline">Options</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="z-1 w-64 p-4 font-sans" align="end">
