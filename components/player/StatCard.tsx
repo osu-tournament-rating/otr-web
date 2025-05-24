@@ -18,8 +18,7 @@ export default function StatCard({
   return (
     <Card
       className={cn(
-        'flex flex-1 shrink-0 flex-row items-center justify-start gap-2 rounded-lg border-none bg-popover !p-4',
-
+        'flex w-full flex-row items-center justify-start gap-2 rounded-lg border-none bg-popover !p-4',
         className
       )}
     >

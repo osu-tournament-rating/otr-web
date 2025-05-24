@@ -38,7 +38,7 @@ export default function PlayerRatingStatsCard({
       <PlayerCard player={rating.player} />
       <div className="flex flex-col gap-4">
         {/* Stats Cards */}
-        <div className="flex min-w-[250px] flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {/* Tier Card */}
           <StatCard
             label="Tier"
@@ -61,7 +61,7 @@ export default function PlayerRatingStatsCard({
                 />
               </div>
             }
-            className="gap-2 px-3"
+            className="col-span-2 md:col-span-3 lg:col-span-2"
           />
 
           {/* Rating Card */}
@@ -74,6 +74,7 @@ export default function PlayerRatingStatsCard({
               </span>
             }
             icon={<BarChart4 className="h-5 w-5 text-primary" />}
+            className="lg:col-span-1"
           />
 
           {/* Global Rank Card */}
@@ -81,7 +82,7 @@ export default function PlayerRatingStatsCard({
             label="Global"
             value={`#${rating.globalRank.toLocaleString()}`}
             icon={<Globe className="h-5 w-5 text-primary" />}
-            className="gap-2 p-3"
+            className="lg:col-span-1"
           />
 
           {/* Country Rank Card */}
@@ -89,7 +90,6 @@ export default function PlayerRatingStatsCard({
             label="Country"
             value={`#${rating.countryRank.toLocaleString()}`}
             icon={<Flag className="h-5 w-5 text-primary" />}
-            className="gap-2 p-3"
           />
 
           {/* Percentile Card */}
@@ -98,25 +98,24 @@ export default function PlayerRatingStatsCard({
             value={formatPercentage(rating.percentile)}
             icon={<PercentCircle className="h-6 w-6 text-primary" />}
           />
+
+          {/* Tournaments Card */}
+          <StatCard
+            label="Tournaments"
+            value={rating.tournamentsPlayed || 0}
+            icon={<Trophy className="h-6 w-6 text-primary" />}
+          />
+
+          {/* Matches Card */}
+          <StatCard
+            label="Matches"
+            value={rating.matchesPlayed || 0}
+            icon={<Swords className="h-6 w-6 text-primary" />}
+          />
         </div>
 
         {/* Tier Progress Card - Only show if there's a next tier */}
         <PlayerTierProgress tierProgress={rating.tierProgress} />
-      </div>
-
-      {/* Stats Section */}
-      <div className="flex flex-wrap gap-3">
-        <StatCard
-          label="Tournaments"
-          value={rating.tournamentsPlayed || 0}
-          icon={<Trophy className="h-6 w-6 text-primary" />}
-        />
-
-        <StatCard
-          label="Matches"
-          value={rating.matchesPlayed || 0}
-          icon={<Swords className="h-6 w-6 text-primary" />}
-        />
       </div>
     </Card>
   );
