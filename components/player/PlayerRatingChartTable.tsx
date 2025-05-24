@@ -27,11 +27,11 @@ function getAdjustmentTypeColor(
 ): string {
   switch (type) {
     case RatingAdjustmentType.Decay:
-      return 'bg-gray-500';
+      return 'bg-accent';
     case RatingAdjustmentType.Match:
       return delta > 0 ? 'bg-success' : 'bg-destructive';
     default:
-      return 'bg-blue-500';
+      return 'bg-primary';
   }
 }
 
