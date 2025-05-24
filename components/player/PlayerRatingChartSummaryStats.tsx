@@ -26,8 +26,9 @@ export default function PlayerRatingChartSummaryStats({
         <Award className="h-6 w-6 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">Peak Rating</div>
-          <div className="text-xl font-semibold">
-            {highestRating.toFixed(0)} <TRText className="-ml-1" />
+          <div className="flex items-baseline gap-1 text-xl font-semibold">
+            {highestRating.toFixed(0)}
+            <TRText />
           </div>
         </div>
       </Card>

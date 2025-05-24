@@ -68,8 +68,9 @@ export default function PlayerRatingStatsCard({
           <StatCard
             label="Rating"
             value={
-              <span className="text-nowrap">
-                {rating.rating.toFixed()} <TRText />
+              <span className="flex items-baseline gap-1 text-nowrap">
+                {rating.rating.toFixed()}
+                <TRText />
               </span>
             }
             icon={<BarChart4 className="h-5 w-5 text-primary" />}

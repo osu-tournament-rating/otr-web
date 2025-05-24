@@ -21,9 +21,9 @@ export default function PlayerTierProgress({
         <span className="text-xl font-semibold">Tier Progress</span>
         <span className="text-sm text-muted-foreground">
           <span className="font-semibold text-primary">
-            {tierProgress.ratingForNextMajorTier.toFixed()}{' '}
+            {tierProgress.ratingForNextMajorTier.toFixed()}
           </span>
-          <TRText className="-ml-1 text-xs" /> until{' '}
+          <TRText className="text-xs" /> until{' '}
           {getTierString(tierProgress.nextMajorTier as TierName, 3)}
         </span>
       </div>

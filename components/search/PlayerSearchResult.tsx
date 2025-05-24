@@ -49,8 +49,9 @@ export default function PlayerSearchResult({
                 height={20}
                 className="flex-shrink-0"
               />
-              <span className="text-sm font-medium">
-                {data.rating.toFixed(0)} <TRText />
+              <span className="flex items-baseline gap-1 text-sm font-medium">
+                {data.rating.toFixed(0)}
+                <TRText />
               </span>
             </div>
           )}
