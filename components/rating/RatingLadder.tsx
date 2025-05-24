@@ -6,7 +6,7 @@ export default function RatingLadder() {
   return (
     <div
       className={
-        'bg-card grid grid-cols-2 gap-2 rounded-2xl border p-4 sm:grid-cols-3 xl:auto-cols-fr xl:grid-flow-col'
+        'grid grid-cols-2 gap-2 rounded-2xl border bg-card p-4 sm:grid-cols-3 xl:auto-cols-fr xl:grid-flow-col'
       }
     >
       {/* All tiers in a responsive grid layout */}

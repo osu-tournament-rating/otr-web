@@ -32,7 +32,7 @@ export default function GameCard({
 
   // Sort by score and group by team
   game.scores
-    .toSorted((a, b) => b.score - a.score)
+    .sort((a, b) => b.score - a.score)
     .forEach((s) => {
       if (!(s.team in scoreMap)) {
         scoreMap[s.team] = [];
@@ -42,9 +42,7 @@ export default function GameCard({
     });
 
   // To determine "winning matchups" we don't want to look at teamless scores
-  const teamMaps = Object.entries(scoreMap)
-    .filter(([team]) => team !== String(Team.NoTeam))
-    .map(([, scores]) => scores);
+  const teamMaps = Object.entries(scoreMap).map(([, scores]) => scores);
 
   // Find the highest number of scores so we have an accurate iterator
   const nScores = teamMaps.reduce((max, cur) =>
@@ -58,7 +56,7 @@ export default function GameCard({
       .map((map) => map.at(i))
       .sort((a, b) => (b?.score?.score ?? 0) - (a?.score?.score ?? 0));
 
-    if (matchups[0]) {
+    if (matchups[0] && matchups[0].score.team != Team.NoTeam) {
       matchups[0].won = true;
     }
   }

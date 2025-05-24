@@ -6,6 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import ClientOnly from '../client-only';
 
 type Formats = 'short' | 'full';
 
@@ -63,18 +64,20 @@ export default function FormattedDate({
   const dateString = formats[format](date);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className={className}>{dateString}</span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="flex gap-1">
-            <span>{fullDay}</span>
-            <span className="text-primary">{fullTime}</span>
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <ClientOnly>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={className}>{dateString}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="flex gap-1">
+              <span>{fullDay}</span>
+              <span className="text-primary">{fullTime}</span>
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </ClientOnly>
   );
 }

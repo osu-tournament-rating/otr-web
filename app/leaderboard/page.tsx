@@ -1,5 +1,4 @@
-import { leaderboards } from '@/lib/api';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { leaderboards } from '@/lib/api/server';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';
 import {
@@ -14,13 +13,11 @@ import { leaderboardFilterSchema } from '@/lib/schema';
 import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
-import { auth } from '@/auth';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const session = await auth();
   return await leaderboards.get({
-    ruleset: session?.user?.settings?.ruleset ?? Ruleset.Osu,
+    ruleset: params.ruleset,
     bronze: params.tiers?.includes('bronze'),
     silver: params.tiers?.includes('silver'),
     gold: params.tiers?.includes('gold'),

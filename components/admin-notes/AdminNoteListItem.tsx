@@ -6,7 +6,6 @@ import {
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
 import { PencilLineIcon, Trash } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { iconButtonStyle } from '../buttons/IconButton';
 import { useState } from 'react';
 import {
@@ -25,6 +24,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
+import { useSession } from '@/lib/hooks/useSession';
 
 export default function AdminNoteListItem({
   note,
@@ -33,12 +33,12 @@ export default function AdminNoteListItem({
   note: AdminNoteDTO;
   entity: AdminNoteRouteTarget;
 }) {
-  const { data: session } = useSession();
+  const session = useSession();
 
-  // Restrict edit/delete functionality to only the user who created the note
+  // Restrict edit/delete functionality to the user who created the note
   const showModificationButtons =
-    session?.user?.scopes?.includes(Roles.Admin) &&
-    note.adminUser.id === Number(session?.user?.id ?? -1);
+    session?.scopes?.includes(Roles.Admin) &&
+    note.adminUser.id === Number(session?.id ?? -1);
   const [editedNote, setEditedNote] = useState(note.note);
 
   const handleDelete = async () => {

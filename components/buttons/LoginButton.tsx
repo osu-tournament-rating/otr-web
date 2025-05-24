@@ -1,22 +1,24 @@
 'use client';
 
 import { Button } from '../ui/button';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { login } from '@/lib/actions/auth';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 
 export default function LoginButton() {
-  const { data: session } = useSession();
-
-  if (session) {
-    return (
-      <Button className="cursor-pointer" onClick={() => signOut()}>
-        Logout
-      </Button>
-    );
-  }
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const path = useAuthRedirectPath();
 
   return (
-    <Button className="cursor-pointer" onClick={() => signIn('otr')}>
-      Login
+    <Button
+      className="cursor-pointer"
+      onClick={() => {
+        setIsLoggingIn(true);
+        login(path);
+      }}
+    >
+      {isLoggingIn ? <Loader2 className="animate-spin" /> : 'Login'}
     </Button>
   );
 }

@@ -1,9 +1,8 @@
 import type { NextConfig } from 'next';
-import { PHASE_DEVELOPMENT_SERVER } from 'next/dist/shared/lib/constants';
 
 const nextConfig: NextConfig = {
   webpack(config) {
-    // @ts-expect-error - webpack config has incredibly loose typing
+    // @ts-expect-error Loose typing
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg')
     );
@@ -69,7 +68,7 @@ const nextConfig: NextConfig = {
                   {
                     name: 'preset-default',
                     params: {
-                      overrides: {
+                      woverrides: {
                         removeViewBox: false,
                       },
                     },
@@ -89,18 +88,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const configure = (phase: string) => {
-  if (phase === PHASE_DEVELOPMENT_SERVER) {
-    // During development, proxy API requests
-    nextConfig.rewrites = async () => [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.OTR_API_ROOT}/api/:path*`,
-      },
-    ];
-  }
-
-  return nextConfig;
-};
-
-export default configure;
+export default nextConfig;

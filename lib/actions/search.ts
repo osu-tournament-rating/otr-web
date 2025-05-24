@@ -1,9 +1,9 @@
 'use server';
 
-import { search as searchWrapper } from '@/lib/api';
+import { SearchSearchRequestParams } from '@osu-tournament-rating/otr-api-client';
+import { search } from '../api/server';
 
-export async function search(query: string) {
-  const { result } = await searchWrapper.search({ searchKey: query });
-
+export async function getSearch(params: SearchSearchRequestParams) {
+  const { result } = await search.search(params);
   return result;
 }

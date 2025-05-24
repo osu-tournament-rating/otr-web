@@ -18,7 +18,7 @@ import {
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -74,8 +74,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
     mode: 'all',
   });
 
-  const { data: session } = useSession();
-  if (!session?.user?.scopes?.includes(Roles.Admin)) {
+  const session = useSession();
+  if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
 

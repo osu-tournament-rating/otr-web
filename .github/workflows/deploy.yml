@@ -24,7 +24,7 @@ jobs:
       - name: Set Docker Tag
         id: set-tag
         run: |
-          if [[ "${{ inputs.target }}" == "production" && "${{ github.ref_type }}" == "tag" ]]; then
+          if [[ "${{ inputs.target }}" == "Production" && "${{ github.ref_type }}" == "tag" ]]; then
             echo "TAG=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           else
             echo "TAG=latest" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            TAG=${{ inputs.target == 'production' && github.ref_type == 'tag' && github.ref_name || 'latest' }}
+            TAG=${{ inputs.target == 'Production' && github.ref_type == 'tag' && github.ref_name || 'latest' }}
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:$TAG
             docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true

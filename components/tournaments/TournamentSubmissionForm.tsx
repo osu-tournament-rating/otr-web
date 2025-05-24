@@ -23,13 +23,13 @@ import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { submit } from '@/lib/actions/tournaments';
-import { isValidationProblemDetails } from '@/lib/api';
+import { isValidationProblemDetails } from '@/lib/api/shared';
 import {
   TournamentSubmissionDTO,
   Roles,
   TournamentRejectionReason,
 } from '@osu-tournament-rating/otr-api-client';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/hooks/useSession';
 import { Checkbox } from '../ui/checkbox';
 import { MultipleSelect } from '../select/multiple-select';
 import { TournamentRejectionReasonEnumHelper } from '@/lib/enums';
@@ -57,8 +57,8 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
 );
 
 export default function TournamentSubmissionForm() {
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.scopes?.includes(Roles.Admin);
+  const session = useSession();
+  const isAdmin = session?.scopes?.includes(Roles.Admin);
 
   const form = useForm<TournamentSubmissionFormValues>({
     resolver: zodResolver(tournamentSubmissionFormSchema),
@@ -115,9 +115,12 @@ export default function TournamentSubmissionForm() {
       toast.success(
         <div className="flex flex-col gap-2">
           <span>Tournament submitted successfully</span>
-          <Link className="flex flex-row items-center gap-1" href={'/'}>
+          <Link
+            className="flex flex-row items-center gap-1"
+            href={`/tournaments/${result.id}`}
+          >
             <LinkIcon className="size-4 text-primary" />
-            <span className="text-primary">Check it out!</span>
+            <span className="text-primary">Click to view</span>
           </Link>
         </div>
       );

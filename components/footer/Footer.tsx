@@ -5,7 +5,7 @@ const navItems = [
   {
     parent: 'About',
     title: 'Team',
-    href: 'https://docs.otr.stagec.xyz/team.html',
+    href: 'https://docs.otr.stagec.xyz/About/Team',
   },
   {
     parent: 'Contact',
