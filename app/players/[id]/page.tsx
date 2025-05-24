@@ -9,12 +9,31 @@ import {
   PlayerDashboardStatsDTO,
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  // read route params
+  const { id } = await params;
+  const playerData = await getPlayerData(id, {}); // Fetch player data for username
+
+  if (!playerData) {
+    return {
+      title: 'Player Not Found',
+    };
+  }
+
+  return {
+    title: `o!TR | ${playerData.playerInfo.username}`,
+  };
+}
 
 async function getPlayerData(
   key: string,
@@ -66,7 +85,7 @@ export default async function PlayerPage(props: PageProps) {
     playerData.modStats?.reduce((sum, current) => sum + current.count, 0) ?? 0;
 
   return (
-    <div className="container mx-auto flex flex-col gap-2 py-10">
+    <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
       {playerData.rating && playerData.rating.adjustments ? (
         <>
