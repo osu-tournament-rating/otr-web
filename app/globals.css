@@ -85,7 +85,7 @@
 }
 
 @theme {
-  --color-warning: var(--color-yellow-400);
+  --color-warning: var(--warning);
 
   /* Verification status color alias */
   --color-status-pending: var(--color-warning);
@@ -111,8 +111,14 @@
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
-  --destructive: oklch(0.63 0.19 23.03);
-  --destructive-foreground: oklch(1 0 0);
+  --destructive: var(--color-red-400);
+  --destructive-foreground: var(--color-red-900);
+
+  --success: var(--color-green-400);
+  --success-foreground: var(--color-green-900);
+
+  --warning: var(--color-yellow-400);
+  --warning-foreground: var(--color-yellow-900);
 
   --ring: oklch(0 0 0);
 
@@ -125,7 +131,7 @@
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: var(--destructive);
+  --team-red: var(--destructive-foreground);
   --team-blue: var(--primary);
 
   /* Tier text colors */
@@ -238,8 +244,6 @@
   /* Dark mode tier text colors */
   --text-silver: hsl(0, 0%, 70%);
 
-  --destructive: oklch(0.69 0.2 23.91);
-  --destructive-foreground: oklch(0 0 0);
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);
   --popover-foreground: oklch(1 0 0);
