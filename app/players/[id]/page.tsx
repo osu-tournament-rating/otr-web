@@ -11,7 +11,6 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { notFound } from 'next/navigation';
 
-
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
