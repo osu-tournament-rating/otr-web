@@ -1,12 +1,11 @@
 'use client';
 
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import WarningFlagsBadge from '@/components/badges/WarningFlagsBadge';
 import {
   GameDTO,
-  GameWarningFlags,
   MatchWarningFlags,
   VerificationStatus,
+  MatchRejectionReason,
 } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
@@ -17,6 +16,7 @@ export type MatchRow = {
   status: {
     verificationStatus: VerificationStatus;
     warningFlags: MatchWarningFlags;
+    rejectionReason: MatchRejectionReason;
   };
   startDate: string;
   games: Pick<
@@ -32,12 +32,12 @@ export const columns = [
     header: 'Status',
     cell: ({ getValue }) => (
       <div className="-mr-3 flex gap-1">
-        <VerificationBadge 
+        <VerificationBadge
           verificationStatus={getValue().verificationStatus}
           warningFlags={getValue().warningFlags}
+          rejectionReason={getValue().rejectionReason}
           entityType="match"
         />
-        <WarningFlagsBadge itemType={'match'} value={getValue().warningFlags} />
       </div>
     ),
   }),

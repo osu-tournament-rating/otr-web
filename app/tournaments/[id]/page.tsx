@@ -29,6 +29,7 @@ function generateTableData(matches: MatchDTO[]): MatchRow[] {
     status: {
       verificationStatus: match.verificationStatus,
       warningFlags: match.warningFlags,
+      rejectionReason: match.rejectionReason,
     },
     startDate: match.startTime
       ? new Date(match.startTime).toLocaleDateString()

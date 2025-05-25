@@ -11,7 +11,7 @@ import {
 import {
   CheckCircle2, // Verified
   Square, // PreVerified
-  AlertTriangle, // PreRejected/PreVerified with warnings
+  AlertTriangle, // PreRejected
   XCircle, // Rejected
   Clock, // None/Pending
 } from 'lucide-react';
@@ -26,8 +26,9 @@ import {
   ScoreRejectionReasonEnumHelper,
   TournamentRejectionReasonEnumHelper,
 } from '@/lib/enums';
+import { ApiItemType } from '@/lib/types';
 
-const variants = {
+const statusDisplayConfig = {
   [VerificationStatus.None]: {
     Icon: Clock,
     color: 'text-muted-foreground',
@@ -80,7 +81,7 @@ type EntityRejectionReason =
 
 interface VerificationBadgeProps {
   verificationStatus: VerificationStatus;
-  /** Include verification status as text instead of a tooltip */
+  /** Include verification status as text instead of a tooltip. Will show tooltip if warnings or rejections are present. */
   displayText?: boolean;
   /** Size variant of the badge */
   size?: 'small' | 'large';
@@ -91,7 +92,7 @@ interface VerificationBadgeProps {
   /** Rejection reason for the entity */
   rejectionReason?: EntityRejectionReason;
   /** Entity type for proper enum handling */
-  entityType?: 'game' | 'match' | 'score' | 'tournament';
+  entityType?: ApiItemType;
   /** Game index for tooltip (when used in games column) */
   gameIndex?: number;
 }
@@ -106,63 +107,107 @@ export default function VerificationBadge({
   entityType,
   gameIndex,
 }: VerificationBadgeProps) {
-  const { text } = VerificationStatusEnumHelper.getMetadata(verificationStatus);
-  const { Icon, color, bgColor } = variants[verificationStatus];
+  const { text: statusText } =
+    VerificationStatusEnumHelper.getMetadata(verificationStatus);
   const sizeConfig = sizeVariants[size];
 
   // Check for warnings and rejections
-  const hasWarnings = warningFlags !== undefined && warningFlags !== 0;
-  const isRejected = rejectionReason !== undefined && rejectionReason !== 0;
+  const hasWarnings =
+    warningFlags !== undefined && (warningFlags as number) !== 0;
+  const isRejected =
+    rejectionReason !== undefined && (rejectionReason as number) !== 0;
 
-  // Override icon for PreVerified with warnings
-  let FinalIcon = Icon;
-  let finalColor = color;
-  if (verificationStatus === VerificationStatus.PreVerified && hasWarnings) {
-    FinalIcon = AlertTriangle;
-    finalColor = 'text-warning';
+  // Determine FinalIcon, finalColor, and finalBgColor
+  let {
+    Icon: FinalIcon,
+    color: finalColor,
+    bgColor: finalBgColor,
+  } = statusDisplayConfig[verificationStatus];
+
+  if (hasWarnings) {
+    finalColor = 'text-orange-500';
+    finalBgColor = 'bg-orange-500/20';
+    // For statuses other than PreVerified or PreRejected with warnings, use AlertTriangle icon.
+    // PreVerified/PreRejected with warnings will retain their original icon but adopt the orange color.
+    if (
+      verificationStatus !== VerificationStatus.PreVerified &&
+      verificationStatus !== VerificationStatus.PreRejected
+    ) {
+      FinalIcon = AlertTriangle;
+    }
   }
 
   // Get metadata for tooltips
   const getWarningMetadata = () => {
     if (!hasWarnings || !entityType) return [];
 
+    let metadata;
     switch (entityType) {
       case 'game':
-        return GameWarningFlagsEnumHelper.getMetadata(
+        metadata = GameWarningFlagsEnumHelper.getMetadata(
           warningFlags as GameWarningFlags
-        ).filter(Boolean);
+        );
+        break;
       case 'match':
-        return MatchWarningFlagsEnumHelper.getMetadata(
+        metadata = MatchWarningFlagsEnumHelper.getMetadata(
           warningFlags as MatchWarningFlags
-        ).filter(Boolean);
+        );
+        break;
       default:
+        // Fallback for unexpected warning flags on other entity types.
+        if (warningFlags && (warningFlags as number) !== 0) {
+          return [
+            {
+              text: `[BUG]: Unexpected warning flag value ${warningFlags} for type ${entityType}`,
+              description: '',
+            },
+          ];
+        }
         return [];
     }
+    return metadata.filter(
+      (m): m is NonNullable<typeof m> => m !== undefined && m.text !== ''
+    );
   };
 
   const getRejectionMetadata = () => {
     if (!isRejected || !entityType) return [];
 
+    let metadata;
     switch (entityType) {
       case 'game':
-        return GameRejectionReasonEnumHelper.getMetadata(
+        metadata = GameRejectionReasonEnumHelper.getMetadata(
           rejectionReason as GameRejectionReason
-        ).filter(Boolean);
+        );
+        break;
       case 'match':
-        return MatchRejectionReasonEnumHelper.getMetadata(
+        metadata = MatchRejectionReasonEnumHelper.getMetadata(
           rejectionReason as MatchRejectionReason
-        ).filter(Boolean);
+        );
+        break;
       case 'score':
-        return ScoreRejectionReasonEnumHelper.getMetadata(
+        metadata = ScoreRejectionReasonEnumHelper.getMetadata(
           rejectionReason as ScoreRejectionReason
-        ).filter(Boolean);
+        );
+        break;
       case 'tournament':
-        return TournamentRejectionReasonEnumHelper.getMetadata(
+        metadata = TournamentRejectionReasonEnumHelper.getMetadata(
           rejectionReason as TournamentRejectionReason
-        ).filter(Boolean);
+        );
+        break;
       default:
+        // Fallback for unexpected rejection reasons on other entity types.
+        if (rejectionReason && (rejectionReason as number) !== 0) {
+          return [
+            {
+              text: `[BUG]: Unexpected rejection reason value ${rejectionReason} for type ${entityType}`,
+              description: '',
+            },
+          ];
+        }
         return [];
     }
+    return metadata;
   };
 
   const warningMetadata = getWarningMetadata();
@@ -177,7 +222,7 @@ export default function VerificationBadge({
         finalColor,
         !minimal && [
           'rounded-md border',
-          bgColor,
+          finalBgColor,
           'border-current/20',
           'hover:border-current/40',
         ]
@@ -186,7 +231,7 @@ export default function VerificationBadge({
       <FinalIcon className={sizeConfig.icon} />
       {displayText && (
         <span className={cn('ml-1.5 font-medium', sizeConfig.text)}>
-          {text}
+          {statusText}
         </span>
       )}
     </div>
@@ -197,35 +242,60 @@ export default function VerificationBadge({
     gameIndex !== undefined ? (
       <div>
         <p className="font-bold">Game {gameIndex + 1}</p>
-        <p>{text}</p>
-        {isRejected && rejectionMetadata.length > 0 && (
-          <div className="mt-1">
-            <p className="font-semibold">Rejection Reasons:</p>
-            <ul className="list-disc pl-3.5">
-              {rejectionMetadata.map(({ text: reasonText, description }) => (
-                <li key={reasonText}>{reasonText || description}</li>
+        <p>{statusText}</p>
+        {hasWarnings && warningMetadata.length > 0 && (
+          <div className="mt-2">
+            <strong className="text-orange-500">Warnings:</strong>
+            <ul className="mt-1 list-disc pl-3.5">
+              {warningMetadata.map(({ text: warningText }, index) => (
+                <li key={`warning-${index}`}>{warningText}</li>
               ))}
             </ul>
           </div>
         )}
-        {hasWarnings && warningMetadata.length > 0 && (
-          <div className="mt-1">
-            <p className="font-semibold">Warnings:</p>
-            <ul className="list-disc pl-3.5">
-              {warningMetadata.map(({ text: warningText, description }) => (
-                <li key={warningText}>{warningText || description}</li>
+        {isRejected && rejectionMetadata.length > 0 && (
+          <div className="mt-2">
+            <strong className="text-destructive">Rejection Reasons:</strong>
+            <ul className="mt-1 list-disc pl-3.5">
+              {rejectionMetadata.map(({ text: rejectionText }, index) => (
+                <li key={`rejection-${index}`}>{rejectionText}</li>
               ))}
             </ul>
           </div>
         )}
       </div>
     ) : (
-      text
+      <div>
+        <p>{statusText}</p>
+        {hasWarnings && warningMetadata.length > 0 && (
+          <div className="mt-2">
+            <strong className="text-orange-500">Warnings:</strong>
+            <ul className="mt-1 list-disc pl-3.5">
+              {warningMetadata.map(({ text: warningText }, index) => (
+                <li key={`warning-${index}`}>{warningText}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {isRejected && rejectionMetadata.length > 0 && (
+          <div className="mt-2">
+            <strong className="text-destructive">Rejection Reasons:</strong>
+            <ul className="mt-1 list-disc pl-3.5">
+              {rejectionMetadata.map(({ text: rejectionText }, index) => (
+                <li key={`rejection-${index}`}>{rejectionText}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     );
 
-  return displayText ? (
-    badge
-  ) : (
-    <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>
-  );
+  // If displayText is true, only return the badge directly if there are no warnings or rejections.
+  // Otherwise, wrap it in a tooltip to show the details.
+  if (displayText && !hasWarnings && !isRejected) {
+    return badge;
+  }
+
+  // In all other cases (displayText is false, or displayText is true with warnings/rejections), show the tooltip.
+  return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
 }
