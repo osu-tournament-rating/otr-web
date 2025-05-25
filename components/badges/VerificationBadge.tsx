@@ -14,23 +14,28 @@ import { Badge } from '../ui/badge';
 const variants = {
   [VerificationStatus.None]: {
     Icon: PauseIcon,
-    style: 'text-warning',
+    style:
+      'bg-warning/90 text-warning-foreground border-warning/50 hover:bg-warning',
   },
   [VerificationStatus.PreRejected]: {
     Icon: EllipsisIcon,
-    style: 'text-status-rejected',
+    style:
+      'bg-destructive/90 text-white border-destructive/50 hover:bg-destructive',
   },
   [VerificationStatus.PreVerified]: {
     Icon: ChevronsUpIcon,
-    style: 'text-status-verified',
+    style:
+      'bg-success/90 text-success-foreground border-success/50 hover:bg-success',
   },
   [VerificationStatus.Rejected]: {
     Icon: XIcon,
-    style: 'text-status-rejected',
+    style:
+      'bg-destructive/90 text-white border-destructive/50 hover:bg-destructive',
   },
   [VerificationStatus.Verified]: {
     Icon: CheckIcon,
-    style: 'text-status-verified',
+    style:
+      'bg-success/90 text-success-foreground border-success/50 hover:bg-success',
   },
 };
 
@@ -48,8 +53,12 @@ export default function VerificationBadge({
 
   return (
     <Outer tooltip={displayText ? undefined : text}>
-      <Badge className={style} variant={'outline'}>
-        <Icon /> {displayText && text}
+      <Badge
+        className={`${style} font-medium shadow-sm transition-colors`}
+        variant={'outline'}
+      >
+        <Icon className="h-3 w-3" />
+        {displayText && <span className="ml-1">{text}</span>}
       </Badge>
     </Outer>
   );
