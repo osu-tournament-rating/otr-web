@@ -93,68 +93,78 @@ function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
   const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
 
   return (
-    <Card className="p-6 font-sans">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        {/* Left side - Tournament info */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <VerificationBadge
-              verificationStatus={tournament.verificationStatus}
-              rejectionReason={tournament.rejectionReason}
-              entityType="tournament"
-              displayText={true}
-            />
+    <Card className="p-4 font-sans sm:p-6">
+      <div className="flex flex-col gap-4">
+        {/* Top row - verification badge, abbreviation, and admin actions */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Verification badge - will be on its own line on mobile */}
+          <VerificationBadge
+            verificationStatus={tournament.verificationStatus}
+            rejectionReason={tournament.rejectionReason}
+            entityType="tournament"
+            displayText={true}
+          />
+
+          {/* Abbreviation and admin actions */}
+          <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
             <span className="font-mono text-sm text-muted-foreground">
               {tournament.abbreviation}
             </span>
-          </div>
-
-          <h1 className="text-2xl font-bold md:text-3xl">{tournament.name}</h1>
-
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <RulesetIcon
-                ruleset={tournament.ruleset}
-                width={16}
-                height={16}
-                className="fill-current"
+            <div className="flex gap-2">
+              {' '}
+              {/* Admin actions */}
+              <AdminNoteView
+                notes={tournament.adminNotes ?? []}
+                entity={AdminNoteRouteTarget.Tournament}
+                entityId={tournament.id}
+                entityDisplayName={tournament.name}
               />
-              <span>
-                {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
-              </span>
+              <TournamentAdminView tournament={tournament} />
             </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>
-                {tournament.lobbySize}v{tournament.lobbySize}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Target className="h-4 w-4" />
-              <span>
-                {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
-              </span>
-            </div>
-            {startDate && endDate && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Right side - Admin actions */}
-        <div className="flex gap-2">
-          <AdminNoteView
-            notes={tournament.adminNotes ?? []}
-            entity={AdminNoteRouteTarget.Tournament}
-            entityId={tournament.id}
-            entityDisplayName={tournament.name}
-          />
-          <TournamentAdminView tournament={tournament} />
+        {/* Tournament name */}
+        <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
+          {tournament.name}
+        </h1>
+
+        {/* Tournament metadata */}
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="flex items-center gap-1.5">
+            <RulesetIcon
+              ruleset={tournament.ruleset}
+              width={16}
+              height={16}
+              className="flex-shrink-0 fill-current"
+            />
+            <span className="truncate">
+              {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span>
+              {tournament.lobbySize}v{tournament.lobbySize}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Target className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">
+              {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
+            </span>
+          </div>
+
+          {startDate && endDate && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate text-xs sm:text-sm">
+                {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Card>
