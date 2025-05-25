@@ -41,6 +41,7 @@ import TournamentProcessingStatusSelectContent from '../select/TournamentProcess
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
+import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -95,7 +96,13 @@ export default function TournamentAdminView({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Tournament</DialogTitle>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              Edit Tournament
+              {/* Accept pre-verification statuses */}
+              <AcceptPreVerificationStatusesButton tournament={tournament} />
+            </div>
+          </DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
         {/* Edit form */}
@@ -286,10 +293,8 @@ export default function TournamentAdminView({
                 >
                   Clear
                 </Button>
-
                 {/* Reset automated checks */}
                 <ResetAutomatedChecksButton tournament={tournament} />
-
                 {/* Delete tournament */}
                 <DeleteButton
                   entityType="tournament"

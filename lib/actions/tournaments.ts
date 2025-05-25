@@ -9,6 +9,7 @@ import {
   TournamentsUpdateRequestParams,
   TournamentsListRequestParams,
   TournamentsRerunAutomationChecksRequestParams,
+  TournamentsAcceptPreVerificationStatusesRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
 
@@ -78,4 +79,11 @@ export async function rerunAutomatedChecks(
 
 export async function deleteTournament(id: number) {
   await tournaments.delete({ id });
+}
+
+export async function acceptPreVerificationStatuses(
+  params: TournamentsAcceptPreVerificationStatusesRequestParams
+) {
+  const { result } = await tournaments.acceptPreVerificationStatuses(params);
+  return result;
 }
