@@ -46,7 +46,7 @@ export default function Page() {
   if (error) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
-        <p className="text-destructive">{error}</p>
+        <p className="text-destructive-foreground">{error}</p>
         <button
           onClick={() => (window.location.href = '/')}
           className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"

@@ -364,7 +364,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="field-sizing-fixed min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                     />
                   </FormControl>
                   <FormMessage />
@@ -389,7 +389,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="field-sizing-fixed min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                     />
                   </FormControl>
                   <FormMessage />
