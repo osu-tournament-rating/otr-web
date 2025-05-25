@@ -32,8 +32,8 @@ function generateTableData(matches: MatchDTO[]): MatchRow[] {
       rejectionReason: match.rejectionReason,
     },
     startDate: match.startTime
-      ? new Date(match.startTime).toLocaleDateString()
-      : new Date().toLocaleDateString(),
+      ? new Date(match.startTime).toISOString()
+      : new Date().toISOString(),
     games: (match.games ?? []).map((game) => ({
       verificationStatus: game.verificationStatus,
       warningFlags: game.warningFlags,

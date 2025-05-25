@@ -157,8 +157,12 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     <>
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="h-5 w-5" variant={'ghost'}>
-            <EditIcon />
+          <Button
+            className="h-6 w-6 hover:bg-white/20 hover:text-white"
+            variant={'ghost'}
+            size="icon"
+          >
+            <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
           </Button>
         </DialogTrigger>
         <DialogContent>
