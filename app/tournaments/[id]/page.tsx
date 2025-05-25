@@ -29,7 +29,6 @@ import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
 import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
 
 type PageProps = { params: Promise<{ id: number }> };
@@ -312,22 +311,6 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <TournamentStatsCard tournament={tournament} />
-
-          {/* Player Statistics Dashboard */}
-          {tournament.playerTournamentStats &&
-            tournament.playerTournamentStats.length > 0 && (
-              <Card className="p-6 font-sans">
-                <div className="mb-4 flex items-center gap-2">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                  <h3 className="font-sans text-lg font-semibold">
-                    Player Performance Analytics
-                  </h3>
-                </div>
-                <TournamentPlayerStatsDashboard
-                  playerStats={tournament.playerTournamentStats}
-                />
-              </Card>
-            )}
         </TabsContent>
       </Tabs>
     </div>

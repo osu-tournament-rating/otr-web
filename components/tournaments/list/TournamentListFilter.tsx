@@ -8,7 +8,7 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, Search, Trophy } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import {
