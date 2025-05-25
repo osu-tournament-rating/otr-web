@@ -87,3 +87,12 @@ export async function acceptPreVerificationStatuses(
   const { result } = await tournaments.acceptPreVerificationStatuses(params);
   return result;
 }
+
+export async function getBeatmaps(id: number) {
+  const { result } = await tournaments.getBeatmaps({ id });
+  return result;
+}
+
+export async function deleteBeatmaps(id: number) {
+  await tournaments.deleteBeatmaps({ id });
+}

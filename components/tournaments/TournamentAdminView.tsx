@@ -42,6 +42,7 @@ import VerificationStatusSelectContent from '../select/VerificationStatusSelectC
 import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
 import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
+import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -295,6 +296,8 @@ export default function TournamentAdminView({
                 </Button>
                 {/* Reset automated checks */}
                 <ResetAutomatedChecksButton tournament={tournament} />
+                {/* Delete pooled beatmaps */}
+                <DeleteTournamentBeatmapsButton tournament={tournament} />
                 {/* Delete tournament */}
                 <DeleteButton
                   entityType="tournament"
