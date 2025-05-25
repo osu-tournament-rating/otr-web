@@ -11,6 +11,7 @@ import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/hooks/useSession';
 import { getTournamentsList } from '@/lib/actions/tournaments';
+import Link from 'next/link';
 
 const pageSize = 30;
 
@@ -152,10 +153,12 @@ export default function TournamentList({
                     <NoMoreResultsPlaceholder />
                   )
                 ) : (
-                  <TournamentCard
-                    tournament={tournamentData[item.index]}
-                    titleIsLink
-                  />
+                  <Link href={`/tournaments/${tournamentData[item.index].id}`}>
+                    <TournamentCard
+                      tournament={tournamentData[item.index]}
+                      displayStatusText
+                    />
+                  </Link>
                 )}
               </div>
             );

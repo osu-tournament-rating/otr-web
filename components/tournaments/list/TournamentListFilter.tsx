@@ -21,7 +21,7 @@ import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enums';
-import { useDebounce, useIntersectionObserver } from '@uidotdev/usehooks';
+import { useDebounce } from '@uidotdev/usehooks';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -99,13 +99,11 @@ export default function TournamentListFilter({
     return () => unsubscribe();
   }, [watch, handleSubmit, filter, router, pathName]);
 
-  const [ref, entry] = useIntersectionObserver();
-
   return (
     <Form {...form}>
       <form>
         {/* Hero */}
-        <div ref={ref} className="flex flex-col">
+        <div className="flex flex-col">
           {/* Input based filters */}
           <div className="flex flex-col gap-2 p-4">
             {/* Search bar */}
@@ -120,14 +118,15 @@ export default function TournamentListFilter({
                         {...field}
                         value={searchQuery}
                         onChange={(e) => handleSetQuery(e.target.value)}
-                        placeholder="type to search"
+                        placeholder="Type to search for tournaments..."
                         type="search"
+                        className="h-12 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              <Search className="absolute inset-y-1/6 right-2" />
+              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-muted-foreground" />
             </div>
             {/* Ruleset */}
             <FormField
@@ -162,7 +161,7 @@ export default function TournamentListFilter({
                               className="size-5"
                               fill="currentColor"
                             />
-                            <span className="hidden md:block">{text}</span>
+                            <span className="ml-2 hidden md:block">{text}</span>
                           </ToggleGroupItem>
                         ))}
                     </ToggleGroup>
@@ -192,7 +191,7 @@ export default function TournamentListFilter({
                       {sortToggleItems.map(({ value, text }) => (
                         <ToggleGroupItem
                           key={`sort-${value}`}
-                          className="group flex flex-auto cursor-pointer rounded-xl"
+                          className="group flex flex-auto cursor-pointer rounded-xl px-3 py-1.5 text-sm"
                           value={value.toString()}
                           aria-label={TournamentQuerySortType[value]}
                           onClick={(e) => {
@@ -205,11 +204,12 @@ export default function TournamentListFilter({
                           {text}
                           <ChevronDown
                             className={cn(
-                              'opacity-0 group-hover:opacity-100',
-                              field.value === value && 'opacity-100',
-                              field.value === value &&
-                                !descending &&
-                                'rotate-180'
+                              'ml-1.5 size-4 transition-transform duration-200 ease-in-out',
+                              {
+                                'rotate-180':
+                                  field.value === value && descending,
+                                'hidden group-aria-checked:block': true,
+                              }
                             )}
                           />
                         </ToggleGroupItem>
@@ -220,45 +220,6 @@ export default function TournamentListFilter({
               );
             }}
           />
-        </div>
-
-        {/* Sticky, appears when hero section is not visible */}
-        <div
-          className={cn(
-            'fixed top-0 right-0 left-0 z-40 mx-auto hidden w-full px-5 transition-all duration-300 md:max-w-4xl xl:max-w-6xl',
-            // Hidden until intersection observer is available
-            entry && 'flex',
-            // Animate slide-in from behind navbar
-            entry?.isIntersecting
-              ? 'top-0 -translate-y-0 opacity-0'
-              : 'top-(--header-height-px) translate-y-0 opacity-100'
-          )}
-        >
-          <div className="light:border mt-4 flex w-full flex-col gap-2 rounded border bg-accent p-2">
-            <div className="flex flex-row items-center gap-1 text-sm font-semibold">
-              <Trophy className="size-4" />
-              Tournaments
-            </div>
-            <div className="relative w-full">
-              <FormField
-                control={form.control}
-                name="searchQuery"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="type to search"
-                        type="search"
-                        className="h-7 bg-background text-sm"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Search className="absolute inset-y-1/6 right-2 size-4" />
-            </div>
-          </div>
         </div>
       </form>
     </Form>

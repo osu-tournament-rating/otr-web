@@ -8,8 +8,15 @@ import {
 import Link from 'next/link';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
-import { Card, CardDescription, CardHeader } from '../ui/card';
+import { Card } from '../ui/card';
 import TournamentAdminView from './TournamentAdminView';
+import RulesetIcon from '../icons/RulesetIcon';
+import { Users, Target, Calendar } from 'lucide-react';
+
+function formatRankRangeDisplay(rankRange: number): string {
+  if (rankRange === 1) return 'Open';
+  return formatRankRange(rankRange);
+}
 
 export default function TournamentCard({
   tournament,
@@ -28,37 +35,26 @@ export default function TournamentCard({
   /** If the button to open the admin view is present */
   allowAdminView?: boolean;
 }) {
-  const startDate = new Date(tournament.startTime);
-  const endDate = new Date(tournament.endTime);
+  const startDate = tournament.startTime
+    ? new Date(tournament.startTime)
+    : null;
+  const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between">
-          <div className="flex gap-3">
-            <div>
-              <VerificationBadge
-                verificationStatus={tournament.verificationStatus}
-                rejectionReason={tournament.rejectionReason}
-                entityType="tournament"
-                displayText={displayStatusText}
-              />
-            </div>
-            <div>
-              <p className="text-muted-foreground">{tournament.abbreviation}</p>
-            </div>
-            <div>
-              {titleIsLink ? (
-                <Link href={`/tournaments/${tournament.id}`}>
-                  <p className="font-bold">{tournament.name}</p>
-                </Link>
-              ) : (
-                <p className="font-bold">{tournament.name}</p>
-              )}
-            </div>
-          </div>
+  const cardContent = (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <VerificationBadge
+          verificationStatus={tournament.verificationStatus}
+          rejectionReason={tournament.rejectionReason}
+          entityType="tournament"
+          displayText={displayStatusText}
+        />
+        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
+          <span className="font-mono text-sm text-muted-foreground">
+            {tournament.abbreviation}
+          </span>
           {allowAdminView && (
-            <div>
+            <div className="flex gap-2">
               <AdminNoteView
                 notes={tournament.adminNotes ?? []}
                 entity={AdminNoteRouteTarget.Tournament}
@@ -69,19 +65,60 @@ export default function TournamentCard({
             </div>
           )}
         </div>
-        <CardDescription>
-          <div className="flex items-baseline justify-between font-mono">
-            <p>
-              {RulesetEnumHelper.getMetadata(tournament.ruleset).text} •{' '}
-              {tournament.lobbySize}v{tournament.lobbySize} •{' '}
-              {formatRankRange(tournament.rankRangeLowerBound)}
-            </p>
-            <p className="text-xs">
+      </div>
+
+      <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
+        {tournament.name}
+      </h2>
+
+      <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex items-center gap-1.5">
+          <RulesetIcon
+            ruleset={tournament.ruleset}
+            width={16}
+            height={16}
+            className="flex-shrink-0 fill-current"
+          />
+          <span className="truncate">
+            {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Users className="h-4 w-4 flex-shrink-0" />
+          <span>
+            {tournament.lobbySize}v{tournament.lobbySize}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Target className="h-4 w-4 flex-shrink-0" />
+          <span className="truncate">
+            {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
+          </span>
+        </div>
+
+        {startDate && endDate && (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate text-xs sm:text-sm">
               {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
-            </p>
+            </span>
           </div>
-        </CardDescription>
-      </CardHeader>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Card className="p-4 font-sans sm:p-6">
+      {titleIsLink ? (
+        <Link href={`/tournaments/${tournament.id}`} className="block">
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Card>
   );
 }
