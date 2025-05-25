@@ -19,3 +19,7 @@ export async function update(params: MatchesUpdateRequestParams) {
   const { result } = await matches.update(params);
   return result;
 }
+
+export async function deleteMatch(id: number) {
+  await matches.delete({ id });
+}

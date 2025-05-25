@@ -75,3 +75,7 @@ export async function rerunAutomatedChecks(
   const { result } = await tournaments.rerunAutomationChecks(params);
   return result;
 }
+
+export async function deleteTournament(id: number) {
+  await tournaments.delete({ id });
+}

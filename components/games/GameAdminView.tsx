@@ -45,6 +45,7 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
 import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+import DeleteButton from '../shared/DeleteButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -287,17 +288,28 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
 
             {/* Form action buttons */}
             <div className="flex justify-between">
-              {/* Reset changes */}
-              <Button
-                type="reset"
-                variant={'secondary'}
-                onClick={() => form.reset()}
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting
-                }
-              >
-                Reset
-              </Button>
+              <div className="flex gap-2">
+                {/* Reset changes */}
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Reset
+                </Button>
+
+                {/* Delete game */}
+                <DeleteButton
+                  entityType="game"
+                  entityId={game.id}
+                  entityName={`Game ${game.id}`}
+                  onDeleted={() => window.location.reload()}
+                />
+              </div>
+
               {/* Save changes */}
               <Button
                 type="submit"

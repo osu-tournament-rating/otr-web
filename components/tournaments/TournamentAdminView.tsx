@@ -40,6 +40,7 @@ import RulesetSelectContent from '../select/RulesetSelectContent';
 import TournamentProcessingStatusSelectContent from '../select/TournamentProcessingStatusSelectContent';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
+import DeleteButton from '../shared/DeleteButton';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -84,8 +85,8 @@ export default function TournamentAdminView({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button 
-          className="h-6 w-6 hover:bg-white/20 hover:text-white" 
+        <Button
+          className="h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
           size="icon"
         >
@@ -288,6 +289,14 @@ export default function TournamentAdminView({
 
                 {/* Reset automated checks */}
                 <ResetAutomatedChecksButton tournament={tournament} />
+
+                {/* Delete tournament */}
+                <DeleteButton
+                  entityType="tournament"
+                  entityId={tournament.id}
+                  entityName={tournament.name}
+                  onDeleted={() => (window.location.href = '/tournaments')}
+                />
               </div>
 
               {/* Save changes */}

@@ -60,6 +60,7 @@ import { createNote } from '@/lib/actions/admin-notes';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import AdminNotesList from '../admin-notes/AdminNoteList';
+import DeleteButton from '../shared/DeleteButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -499,16 +500,27 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
               </div>
 
               <div className="flex justify-between">
-                <Button
-                  type="reset"
-                  variant={'secondary'}
-                  onClick={() => form.reset()}
-                  disabled={
-                    !form.formState.isDirty || form.formState.isSubmitting
-                  }
-                >
-                  Reset
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="reset"
+                    variant={'secondary'}
+                    onClick={() => form.reset()}
+                    disabled={
+                      !form.formState.isDirty || form.formState.isSubmitting
+                    }
+                  >
+                    Reset
+                  </Button>
+
+                  {/* Delete score */}
+                  <DeleteButton
+                    entityType="score"
+                    entityId={score.id}
+                    entityName={`Score ${score.id}`}
+                    onDeleted={() => window.location.reload()}
+                  />
+                </div>
+
                 <Button
                   type="submit"
                   disabled={!form.formState.isValid || !form.formState.isDirty}

@@ -7,3 +7,7 @@ export async function update(params: GamesUpdateRequestParams) {
   const { result } = await games.update(params);
   return result;
 }
+
+export async function deleteGame(id: number) {
+  await games.delete({ id });
+}
