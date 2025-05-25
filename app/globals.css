@@ -128,7 +128,7 @@
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: var(--destructive-foreground);
+  --team-red: var(--destructive);
   --team-blue: var(--primary);
 
   /* Tier text colors */
