@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { MatchRow, columns } from './columns';
 import TournamentDataTable from './data-table';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Users,
   Gamepad2,
@@ -27,6 +28,7 @@ import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -256,23 +258,67 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDTO }) {
 export default async function Page({ params }: PageProps) {
   const tournament = await get({ id: (await params).id, verified: false });
   const tableData = generateTableData(tournament.matches ?? []);
+  const isVerified =
+    tournament.verificationStatus === VerificationStatus.Verified;
 
   return (
     <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
       <TournamentHeader tournament={tournament} />
-      <TournamentStatsCard tournament={tournament} />
 
-      <Card className="p-6 font-sans">
-        <div className="mb-4 flex items-center gap-2">
-          <Swords className="h-6 w-6 text-primary" />
-          <h3 className="font-sans text-lg font-semibold">Matches</h3>
-          <span className="text-sm text-muted-foreground">
-            ({tableData.length})
-          </span>
-        </div>
-        {/* @ts-expect-error Column def type doesnt work :/ */}
-        <TournamentDataTable columns={columns} data={tableData} />
-      </Card>
+      {isVerified ? (
+        <Tabs defaultValue="matches" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="matches">Matches</TabsTrigger>
+            <TabsTrigger value="stats">Stats</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="matches" className="mt-4">
+            <Card className="p-6 font-sans">
+              <div className="mb-4 flex items-center gap-2">
+                <Swords className="h-6 w-6 text-primary" />
+                <h3 className="font-sans text-lg font-semibold">Matches</h3>
+                <span className="text-sm text-muted-foreground">
+                  ({tableData.length})
+                </span>
+              </div>
+              {/* @ts-expect-error Column def type doesnt work :/ */}
+              <TournamentDataTable columns={columns} data={tableData} />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="stats" className="mt-4 space-y-4">
+            <TournamentStatsCard tournament={tournament} />
+
+            {/* Player Statistics Dashboard */}
+            {tournament.playerTournamentStats &&
+              tournament.playerTournamentStats.length > 0 && (
+                <Card className="p-6 font-sans">
+                  <div className="mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                    <h3 className="font-sans text-lg font-semibold">
+                      Player Performance Analytics
+                    </h3>
+                  </div>
+                  <TournamentPlayerStatsDashboard
+                    playerStats={tournament.playerTournamentStats}
+                  />
+                </Card>
+              )}
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <Card className="p-6 font-sans">
+          <div className="mb-4 flex items-center gap-2">
+            <Swords className="h-6 w-6 text-primary" />
+            <h3 className="font-sans text-lg font-semibold">Matches</h3>
+            <span className="text-sm text-muted-foreground">
+              ({tableData.length})
+            </span>
+          </div>
+          {/* @ts-expect-error Column def type doesnt work :/ */}
+          <TournamentDataTable columns={columns} data={tableData} />
+        </Card>
+      )}
     </div>
   );
 }

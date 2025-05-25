@@ -51,6 +51,7 @@ export const columns = [
   columnHelper.accessor('status', {
     header: ({ column }) => {
       return (
+        // TODO: Refactor into reusable component
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -68,7 +69,7 @@ export const columns = [
       );
     },
     cell: ({ getValue }) => (
-      <div className="-mr-3 flex gap-1">
+      <div className="flex gap-1">
         <VerificationBadge
           verificationStatus={getValue().verificationStatus}
           warningFlags={getValue().warningFlags}
@@ -125,7 +126,7 @@ export const columns = [
       </div>
     ),
   }),
-  columnHelper.display({
+  columnHelper.accessor('games', {
     id: 'pips',
     header: ({ column }) => {
       return (
@@ -145,8 +146,8 @@ export const columns = [
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const games = row.original.games;
+    cell: ({ getValue }) => {
+      const games = getValue();
       // Sort games by start time before rendering pips
       const sortedGames = [...games].sort(
         (a, b) =>

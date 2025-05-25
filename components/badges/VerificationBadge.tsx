@@ -28,7 +28,7 @@ import {
 } from '@/lib/enums';
 import { ApiItemType } from '@/lib/types';
 
-const statusDisplayConfig = {
+const statusConfig = {
   [VerificationStatus.None]: {
     Icon: Clock,
     color: 'text-muted-foreground',
@@ -97,6 +97,138 @@ interface VerificationBadgeProps {
   gameIndex?: number;
 }
 
+function getWarningMetadata(
+  warningFlags: EntityWarningFlags,
+  entityType?: ApiItemType
+) {
+  if (!warningFlags || (warningFlags as number) === 0 || !entityType) {
+    return [];
+  }
+
+  switch (entityType) {
+    case 'game':
+      return GameWarningFlagsEnumHelper.getMetadata(
+        warningFlags as GameWarningFlags
+      ).filter(
+        (m): m is NonNullable<typeof m> => m !== undefined && m.text !== ''
+      );
+    case 'match':
+      return MatchWarningFlagsEnumHelper.getMetadata(
+        warningFlags as MatchWarningFlags
+      ).filter(
+        (m): m is NonNullable<typeof m> => m !== undefined && m.text !== ''
+      );
+    default:
+      return [
+        {
+          text: `[BUG]: Unexpected warning flag value ${warningFlags} for type ${entityType}`,
+          description: '',
+        },
+      ];
+  }
+}
+
+function getRejectionMetadata(
+  rejectionReason: EntityRejectionReason,
+  entityType?: ApiItemType
+) {
+  if (!rejectionReason || (rejectionReason as number) === 0 || !entityType) {
+    return [];
+  }
+
+  switch (entityType) {
+    case 'game':
+      return GameRejectionReasonEnumHelper.getMetadata(
+        rejectionReason as GameRejectionReason
+      );
+    case 'match':
+      return MatchRejectionReasonEnumHelper.getMetadata(
+        rejectionReason as MatchRejectionReason
+      );
+    case 'score':
+      return ScoreRejectionReasonEnumHelper.getMetadata(
+        rejectionReason as ScoreRejectionReason
+      );
+    case 'tournament':
+      return TournamentRejectionReasonEnumHelper.getMetadata(
+        rejectionReason as TournamentRejectionReason
+      );
+    default:
+      return [
+        {
+          text: `[BUG]: Unexpected rejection reason value ${rejectionReason} for type ${entityType}`,
+          description: '',
+        },
+      ];
+  }
+}
+
+function getBadgeStyles(
+  verificationStatus: VerificationStatus,
+  hasWarnings: boolean,
+  minimal: boolean
+) {
+  const config = statusConfig[verificationStatus];
+
+  // Override colors for warnings
+  const color = hasWarnings ? 'text-orange-500' : config.color;
+  const bgColor = hasWarnings ? 'bg-orange-500/20' : config.bgColor;
+
+  const baseStyles = [
+    'inline-flex items-center justify-center transition-colors',
+    color,
+  ];
+
+  if (!minimal) {
+    baseStyles.push(
+      'rounded-md border',
+      bgColor,
+      'border-current/20',
+      'hover:border-current/40'
+    );
+  }
+
+  return baseStyles;
+}
+
+function createTooltipContent(
+  statusText: string,
+  warningMetadata: Array<{ text: string }>,
+  rejectionMetadata: Array<{ text: string }>,
+  gameIndex?: number
+) {
+  return (
+    <div>
+      {gameIndex !== undefined && (
+        <p className="font-bold">Game {gameIndex + 1}</p>
+      )}
+      <p>{statusText}</p>
+
+      {warningMetadata.length > 0 && (
+        <div className="mt-2">
+          <strong className="text-orange-500">Warnings:</strong>
+          <ul className="mt-1 list-disc pl-3.5">
+            {warningMetadata.map(({ text }, index) => (
+              <li key={`warning-${index}`}>{text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {rejectionMetadata.length > 0 && (
+        <div className="mt-2">
+          <strong className="text-destructive">Rejection Reasons:</strong>
+          <ul className="mt-1 list-disc pl-3.5">
+            {rejectionMetadata.map(({ text }, index) => (
+              <li key={`rejection-${index}`}>{text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function VerificationBadge({
   verificationStatus,
   displayText = false,
@@ -110,125 +242,27 @@ export default function VerificationBadge({
   const { text: statusText } =
     VerificationStatusEnumHelper.getMetadata(verificationStatus);
   const sizeConfig = sizeVariants[size];
+  const { Icon } = statusConfig[verificationStatus];
 
-  // Check for warnings and rejections
   const hasWarnings =
     warningFlags !== undefined && (warningFlags as number) !== 0;
-  const isRejected =
+  const hasRejections =
     rejectionReason !== undefined && (rejectionReason as number) !== 0;
 
-  // Determine FinalIcon, finalColor, and finalBgColor
-  let {
-    Icon: FinalIcon,
-    color: finalColor,
-    bgColor: finalBgColor,
-  } = statusDisplayConfig[verificationStatus];
+  const warningMetadata = getWarningMetadata(warningFlags, entityType);
+  const rejectionMetadata = getRejectionMetadata(rejectionReason, entityType);
 
-  if (hasWarnings) {
-    finalColor = 'text-orange-500';
-    finalBgColor = 'bg-orange-500/20';
-    // For statuses other than PreVerified or PreRejected with warnings, use AlertTriangle icon.
-    // PreVerified/PreRejected with warnings will retain their original icon but adopt the orange color.
-    if (
-      verificationStatus !== VerificationStatus.PreVerified &&
-      verificationStatus !== VerificationStatus.PreRejected
-    ) {
-      FinalIcon = AlertTriangle;
-    }
-  }
-
-  // Get metadata for tooltips
-  const getWarningMetadata = () => {
-    if (!hasWarnings || !entityType) return [];
-
-    let metadata;
-    switch (entityType) {
-      case 'game':
-        metadata = GameWarningFlagsEnumHelper.getMetadata(
-          warningFlags as GameWarningFlags
-        );
-        break;
-      case 'match':
-        metadata = MatchWarningFlagsEnumHelper.getMetadata(
-          warningFlags as MatchWarningFlags
-        );
-        break;
-      default:
-        // Fallback for unexpected warning flags on other entity types.
-        if (warningFlags && (warningFlags as number) !== 0) {
-          return [
-            {
-              text: `[BUG]: Unexpected warning flag value ${warningFlags} for type ${entityType}`,
-              description: '',
-            },
-          ];
-        }
-        return [];
-    }
-    return metadata.filter(
-      (m): m is NonNullable<typeof m> => m !== undefined && m.text !== ''
-    );
-  };
-
-  const getRejectionMetadata = () => {
-    if (!isRejected || !entityType) return [];
-
-    let metadata;
-    switch (entityType) {
-      case 'game':
-        metadata = GameRejectionReasonEnumHelper.getMetadata(
-          rejectionReason as GameRejectionReason
-        );
-        break;
-      case 'match':
-        metadata = MatchRejectionReasonEnumHelper.getMetadata(
-          rejectionReason as MatchRejectionReason
-        );
-        break;
-      case 'score':
-        metadata = ScoreRejectionReasonEnumHelper.getMetadata(
-          rejectionReason as ScoreRejectionReason
-        );
-        break;
-      case 'tournament':
-        metadata = TournamentRejectionReasonEnumHelper.getMetadata(
-          rejectionReason as TournamentRejectionReason
-        );
-        break;
-      default:
-        // Fallback for unexpected rejection reasons on other entity types.
-        if (rejectionReason && (rejectionReason as number) !== 0) {
-          return [
-            {
-              text: `[BUG]: Unexpected rejection reason value ${rejectionReason} for type ${entityType}`,
-              description: '',
-            },
-          ];
-        }
-        return [];
-    }
-    return metadata;
-  };
-
-  const warningMetadata = getWarningMetadata();
-  const rejectionMetadata = getRejectionMetadata();
+  const badgeStyles = getBadgeStyles(verificationStatus, hasWarnings, minimal);
 
   const badge = (
     <div
       className={cn(
-        'inline-flex items-center justify-center transition-colors',
+        ...badgeStyles,
         sizeConfig.container,
-        displayText ? sizeConfig.padding : 'p-1',
-        finalColor,
-        !minimal && [
-          'rounded-md border',
-          finalBgColor,
-          'border-current/20',
-          'hover:border-current/40',
-        ]
+        displayText ? sizeConfig.padding : 'p-1'
       )}
     >
-      <FinalIcon className={sizeConfig.icon} />
+      <Icon className={sizeConfig.icon} />
       {displayText && (
         <span className={cn('ml-1.5 font-medium', sizeConfig.text)}>
           {statusText}
@@ -237,65 +271,19 @@ export default function VerificationBadge({
     </div>
   );
 
-  // Enhanced tooltip content for games column usage
-  const tooltipContent =
-    gameIndex !== undefined ? (
-      <div>
-        <p className="font-bold">Game {gameIndex + 1}</p>
-        <p>{statusText}</p>
-        {hasWarnings && warningMetadata.length > 0 && (
-          <div className="mt-2">
-            <strong className="text-orange-500">Warnings:</strong>
-            <ul className="mt-1 list-disc pl-3.5">
-              {warningMetadata.map(({ text: warningText }, index) => (
-                <li key={`warning-${index}`}>{warningText}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {isRejected && rejectionMetadata.length > 0 && (
-          <div className="mt-2">
-            <strong className="text-destructive">Rejection Reasons:</strong>
-            <ul className="mt-1 list-disc pl-3.5">
-              {rejectionMetadata.map(({ text: rejectionText }, index) => (
-                <li key={`rejection-${index}`}>{rejectionText}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    ) : (
-      <div>
-        <p>{statusText}</p>
-        {hasWarnings && warningMetadata.length > 0 && (
-          <div className="mt-2">
-            <strong className="text-orange-500">Warnings:</strong>
-            <ul className="mt-1 list-disc pl-3.5">
-              {warningMetadata.map(({ text: warningText }, index) => (
-                <li key={`warning-${index}`}>{warningText}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {isRejected && rejectionMetadata.length > 0 && (
-          <div className="mt-2">
-            <strong className="text-destructive">Rejection Reasons:</strong>
-            <ul className="mt-1 list-disc pl-3.5">
-              {rejectionMetadata.map(({ text: rejectionText }, index) => (
-                <li key={`rejection-${index}`}>{rejectionText}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
+  // Show tooltip if there are warnings, rejections, or if displayText is false
+  const shouldShowTooltip = !displayText || hasWarnings || hasRejections;
 
-  // If displayText is true, only return the badge directly if there are no warnings or rejections.
-  // Otherwise, wrap it in a tooltip to show the details.
-  if (displayText && !hasWarnings && !isRejected) {
+  if (!shouldShowTooltip) {
     return badge;
   }
 
-  // In all other cases (displayText is false, or displayText is true with warnings/rejections), show the tooltip.
+  const tooltipContent = createTooltipContent(
+    statusText,
+    warningMetadata,
+    rejectionMetadata,
+    gameIndex
+  );
+
   return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
 }

@@ -9,7 +9,8 @@ import { RulesetEnumHelper } from '@/lib/enums';
 import { useContext } from 'react';
 import { SearchDialogContext } from './SearchDialog';
 import { Card } from '../ui/card';
-import { Trophy, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
+import VerificationBadge from '../badges/VerificationBadge';
 
 export default function TournamentSearchResult({
   data,
@@ -27,7 +28,11 @@ export default function TournamentSearchResult({
       >
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted/50 sm:h-10 sm:w-10">
-            <Trophy className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+            <VerificationBadge
+              verificationStatus={data.verificationStatus}
+              rejectionReason={data.rejectionReason}
+              entityType="tournament"
+            />
           </div>
           <p className="min-w-0 text-base font-medium sm:text-lg">
             {highlightMatch(data.name, query)}
