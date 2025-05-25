@@ -11,6 +11,7 @@ import ModIconset from '../icons/ModIconset';
 import FormattedDate from '../dates/FormattedDate';
 import GameAdminView from './GameAdminView';
 import AdminNoteView from '../admin-notes/AdminNoteView';
+import VerificationBadge from '../badges/VerificationBadge';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
 
@@ -33,6 +34,13 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
         {/* Top row */}
         <div className="flex h-8 w-full items-center justify-between gap-2">
           <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">
+            <VerificationBadge
+              verificationStatus={game.verificationStatus}
+              warningFlags={game.warningFlags}
+              rejectionReason={game.rejectionReason}
+              entityType="game"
+              size="small"
+            />
             <RulesetIcon
               className="h-full w-fit min-w-6 fill-white stroke-0 py-1"
               ruleset={game.ruleset}

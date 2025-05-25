@@ -74,7 +74,11 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
             <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">
               <VerificationBadge
                 verificationStatus={match.verificationStatus}
+                warningFlags={match.warningFlags}
+                rejectionReason={match.rejectionReason}
+                entityType="match"
                 displayText
+                size="small"
               />
               <span className="text-xs text-white/80 sm:text-sm">
                 {formatUTCDate(new Date(match.startTime ?? ''))}

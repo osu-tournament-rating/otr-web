@@ -10,7 +10,6 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
-import Pip from '@/components/pips/Pip';
 
 export type MatchRow = {
   id: number;
@@ -33,7 +32,11 @@ export const columns = [
     header: 'Status',
     cell: ({ getValue }) => (
       <div className="-mr-3 flex gap-1">
-        <VerificationBadge verificationStatus={getValue().verificationStatus} />
+        <VerificationBadge 
+          verificationStatus={getValue().verificationStatus}
+          warningFlags={getValue().warningFlags}
+          entityType="match"
+        />
         <WarningFlagsBadge itemType={'match'} value={getValue().warningFlags} />
       </div>
     ),
@@ -64,12 +67,15 @@ export const columns = [
       return (
         <div className="flex max-w-[200px] flex-wrap gap-1">
           {sortedGames.map((game, index) => (
-            <Pip
+            <VerificationBadge
               key={index}
-              gameIndex={index}
               verificationStatus={game.verificationStatus}
               warningFlags={game.warningFlags}
               rejectionReason={game.rejectionReason}
+              entityType="game"
+              gameIndex={index}
+              size="small"
+              minimal
             />
           ))}
         </div>

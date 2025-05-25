@@ -39,6 +39,8 @@ export default function TournamentCard({
             <div>
               <VerificationBadge
                 verificationStatus={tournament.verificationStatus}
+                rejectionReason={tournament.rejectionReason}
+                entityType="tournament"
                 displayText={displayStatusText}
               />
             </div>
