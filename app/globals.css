@@ -114,8 +114,8 @@
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
-  --destructive: var(--color-red-400);
-  --destructive-foreground: var(--color-red-900);
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-red-500);
 
   --ring: oklch(0 0 0);
 
@@ -128,7 +128,7 @@
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: var(--destructive-foreground);
+  --team-red: var(--destructive);
   --team-blue: var(--primary);
 
   /* Tier text colors */

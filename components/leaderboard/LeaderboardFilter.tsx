@@ -75,7 +75,10 @@ export default function LeaderboardFilter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 bg-popover"
+        >
           <Filter className="h-4 w-4" />
           Filters
         </Button>

@@ -15,7 +15,7 @@ const navItems = [
   {
     parent: 'Contact',
     title: 'Status',
-    href: 'https://status.stagec.xyz/',
+    href: 'https://status.stagec.xyz/status/otr',
   },
   {
     parent: 'Contribute',

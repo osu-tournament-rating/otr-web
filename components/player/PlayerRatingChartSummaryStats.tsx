@@ -1,8 +1,8 @@
 import { TrendingUp, TrendingDown, Award } from 'lucide-react';
 import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
-import { Card } from '../ui/card';
 import TRText from '../rating/TRText';
 import { sortData } from '@/lib/utils/playerRatingChart';
+import StatCard from '../shared/StatCard';
 
 interface PlayerRatingChartSummaryStatsProps {
   data: RatingAdjustmentDTO[];
@@ -22,33 +22,37 @@ export default function PlayerRatingChartSummaryStats({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Card className="min-w-[150px] flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
-        <Award className="h-6 w-6 text-primary" />
-        <div>
-          <div className="text-sm text-muted-foreground">Peak Rating</div>
-          <div className="flex items-baseline gap-1 text-xl font-semibold">
+      <StatCard
+        icon={<Award className="h-6 w-6" />}
+        label="Peak Rating"
+        value={
+          <span className="flex items-baseline gap-1">
             {highestRating.toFixed(0)}
             <TRText />
-          </div>
-        </div>
-      </Card>
-      <Card className="min-w-[150px] flex-1 flex-row items-center gap-2 rounded-xl border-none bg-popover p-4">
-        {totalChange >= 0 ? (
-          <TrendingUp className="h-6 w-6 text-primary" />
-        ) : (
-          <TrendingDown className="h-6 w-6 text-primary" />
-        )}
-        <div>
-          <div className="text-sm text-muted-foreground">Total Change</div>
-          <div
-            className={`flex flex-row items-baseline gap-1 text-xl font-semibold ${totalChange >= 0 ? 'text-success' : 'text-destructive'}`}
-          >
+          </span>
+        }
+        className="min-w-[150px] flex-1 gap-2 rounded-xl"
+        valueClassName="text-xl"
+      />
+      <StatCard
+        icon={
+          totalChange >= 0 ? (
+            <TrendingUp className="h-6 w-6" />
+          ) : (
+            <TrendingDown className="h-6 w-6" />
+          )
+        }
+        label="Total Change"
+        value={
+          <span className="flex items-baseline gap-1">
             {totalChange > 0 ? '+' : ''}
             {totalChange.toFixed(0)}
             <TRText />
-          </div>
-        </div>
-      </Card>
+          </span>
+        }
+        className="min-w-[150px] flex-1 gap-2 rounded-xl"
+        valueClassName={`text-xl ${totalChange >= 0 ? 'text-success' : 'text-destructive'}`}
+      />
     </div>
   );
 }

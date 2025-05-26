@@ -1,6 +1,29 @@
 'use client';
 
+import { useSession } from '@/lib/hooks/useSession';
+import { update } from '@/lib/actions/tournaments';
+import { tournamentEditFormSchema } from '@/lib/schema';
+import { cn } from '@/lib/utils';
+import { createPatchOperations } from '@/lib/utils/form';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Roles,
+  TournamentCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import { EditIcon, Loader2 } from 'lucide-react';
+import { ControllerFieldState, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -10,33 +33,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { update } from '@/lib/actions/tournaments';
-import { tournamentEditFormSchema } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { createPatchOperations } from '@/lib/utils/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Roles,
-  TournamentCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2 } from 'lucide-react';
-import { ControllerFieldState, useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import TournamentProcessingStatusSelectContent from '../select/TournamentProcessingStatusSelectContent';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
-import { useSession } from '@/lib/hooks/useSession';
+import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
+import DeleteButton from '../shared/DeleteButton';
+import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
+import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
+
+interface TournamentAdminViewProps {
+  tournament: TournamentCompactDTO;
+}
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -47,21 +57,21 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
 
 export default function TournamentAdminView({
   tournament,
-}: {
-  tournament: TournamentCompactDTO;
-}) {
+}: TournamentAdminViewProps) {
+  const session = useSession();
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
     resolver: zodResolver(tournamentEditFormSchema),
     defaultValues: tournament,
     mode: 'all',
   });
 
-  const session = useSession();
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
 
-  async function onSubmit(values: z.infer<typeof tournamentEditFormSchema>) {
+  const handleSubmit = async (
+    values: z.infer<typeof tournamentEditFormSchema>
+  ) => {
     try {
       const patchedTournament = await update({
         id: tournament.id,
@@ -72,23 +82,36 @@ export default function TournamentAdminView({
     } catch {
       errorSaveToast();
     }
-  }
+  };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="h-5 w-5" variant={'ghost'}>
-          <EditIcon />
+        <Button
+          className="h-6 w-6 hover:bg-white/20 hover:text-white"
+          variant={'ghost'}
+          size="icon"
+        >
+          <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Tournament</DialogTitle>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              Edit Tournament
+              {/* Accept pre-verification statuses */}
+              <AcceptPreVerificationStatusesButton tournament={tournament} />
+            </div>
+          </DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <div className="flex gap-5">
               <FormField
                 control={form.control}
@@ -259,17 +282,31 @@ export default function TournamentAdminView({
 
             {/* Form action buttons */}
             <div className="flex justify-between">
-              {/* Reset changes */}
-              <Button
-                type="reset"
-                variant={'secondary'}
-                onClick={() => form.reset()}
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting
-                }
-              >
-                Reset
-              </Button>
+              <div className="flex gap-2">
+                {/* Clear changes */}
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Clear
+                </Button>
+                {/* Reset automated checks */}
+                <ResetAutomatedChecksButton tournament={tournament} />
+                {/* Delete pooled beatmaps */}
+                <DeleteTournamentBeatmapsButton tournament={tournament} />
+                {/* Delete tournament */}
+                <DeleteButton
+                  entityType="tournament"
+                  entityId={tournament.id}
+                  entityName={tournament.name}
+                  onDeleted={() => (window.location.href = '/tournaments')}
+                />
+              </div>
+
               {/* Save changes */}
               <Button
                 type="submit"

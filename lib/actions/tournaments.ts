@@ -8,6 +8,8 @@ import {
   TournamentSubmissionDTO,
   TournamentsUpdateRequestParams,
   TournamentsListRequestParams,
+  TournamentsRerunAutomationChecksRequestParams,
+  TournamentsAcceptPreVerificationStatusesRequestParams,
 } from '@osu-tournament-rating/otr-api-client';
 import { cache } from 'react';
 
@@ -66,4 +68,31 @@ export async function submit(params: TournamentsCreateRequestParams) {
 
     throw error;
   }
+}
+
+export async function rerunAutomatedChecks(
+  params: TournamentsRerunAutomationChecksRequestParams
+) {
+  const { result } = await tournaments.rerunAutomationChecks(params);
+  return result;
+}
+
+export async function deleteTournament(id: number) {
+  await tournaments.delete({ id });
+}
+
+export async function acceptPreVerificationStatuses(
+  params: TournamentsAcceptPreVerificationStatusesRequestParams
+) {
+  const { result } = await tournaments.acceptPreVerificationStatuses(params);
+  return result;
+}
+
+export async function getBeatmaps(id: number) {
+  const { result } = await tournaments.getBeatmaps({ id });
+  return result;
+}
+
+export async function deleteBeatmaps(id: number) {
+  await tournaments.deleteBeatmaps({ id });
 }

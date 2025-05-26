@@ -11,6 +11,8 @@ import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/hooks/useSession';
 import { getTournamentsList } from '@/lib/actions/tournaments';
+import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 
 const pageSize = 30;
 
@@ -57,11 +59,10 @@ export default function TournamentList({
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const tournamentData = data ? data.flat() : [];
-  const firstPageHasData = data?.at(0)?.length ?? 0 > 0;
   const expectNextPage = data?.at(-1)?.length === pageSize;
 
   const virtualizer = useWindowVirtualizer({
-    count: tournamentData.length + 1,
+    count: Math.max(tournamentData.length + 1, 1),
     estimateSize: () => 100,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
@@ -113,13 +114,8 @@ export default function TournamentList({
     );
   }
 
-  // No results
-  if (!firstPageHasData) {
-    return <NoResultsPlaceholder />;
-  }
-
   return (
-    <div ref={listRef}>
+    <div ref={listRef} className="p-4">
       <div
         className="relative w-full"
         style={{
@@ -127,7 +123,7 @@ export default function TournamentList({
         }}
       >
         <div
-          className="absolute top-0 left-0 w-full space-y-1 p-4"
+          className="absolute top-0 left-0 w-full space-y-1"
           style={{
             transform: `translateY(${
               (virtualizedItems[0]?.start ?? 0) -
@@ -136,6 +132,20 @@ export default function TournamentList({
           }}
         >
           {virtualizedItems.map((item) => {
+            // Show "no results" card if there are no tournaments
+            if (tournamentData.length === 0 && item.index === 0) {
+              return (
+                <div
+                  className="relative w-full"
+                  key={item.key}
+                  data-index={item.index}
+                  ref={virtualizer.measureElement}
+                >
+                  <NoResultsCard />
+                </div>
+              );
+            }
+
             const isPlaceholder = item.index >= tournamentData.length;
 
             return (
@@ -148,14 +158,14 @@ export default function TournamentList({
                 {isPlaceholder ? (
                   expectNextPage ? (
                     <ListItemSkeleton />
-                  ) : (
-                    <NoMoreResultsPlaceholder />
-                  )
+                  ) : null
                 ) : (
-                  <TournamentCard
-                    tournament={tournamentData[item.index]}
-                    titleIsLink
-                  />
+                  <Link href={`/tournaments/${tournamentData[item.index].id}`}>
+                    <TournamentCard
+                      tournament={tournamentData[item.index]}
+                      displayStatusText
+                    />
+                  </Link>
                 )}
               </div>
             );
@@ -170,32 +180,15 @@ function ListItemSkeleton() {
   return <Skeleton className="h-24 w-full rounded-xl" />;
 }
 
-function PlaceholderBase({ children }: { children: React.ReactNode }) {
+function NoResultsCard() {
   return (
-    <div className="flex justify-center py-4">
-      <p className="flex flex-col items-center">{children}</p>
-    </div>
-  );
-}
-
-function NoMoreResultsPlaceholder() {
-  return (
-    <PlaceholderBase>
-      <span className="text-lg text-primary">No more results!</span>
-      <span className="text-sm text-muted">
-        Try a less restrictive filter to see more
-      </span>
-    </PlaceholderBase>
-  );
-}
-
-function NoResultsPlaceholder() {
-  return (
-    <PlaceholderBase>
-      <strong className="text-2xl text-primary">Nothing found...</strong>
-      <span className="text-muted">
-        Try a less restrictive filter for better results!
-      </span>
-    </PlaceholderBase>
+    <Card className="p-4 font-sans sm:p-6">
+      <div className="flex flex-col items-center justify-center space-y-2 text-center">
+        <h3 className="text-2xl font-bold text-primary">Nothing found...</h3>
+        <p className="text-muted-foreground">
+          Try a less restrictive filter for better results!
+        </p>
+      </div>
+    </Card>
   );
 }

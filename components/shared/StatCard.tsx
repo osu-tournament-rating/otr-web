@@ -7,6 +7,7 @@ interface StatCardProps {
   label: string;
   value: ReactNode;
   className?: string;
+  valueClassName?: string;
 }
 
 export default function StatCard({
@@ -14,19 +15,20 @@ export default function StatCard({
   label,
   value,
   className,
+  valueClassName,
 }: StatCardProps) {
   return (
     <Card
       className={cn(
-        'flex w-full flex-row items-center justify-start gap-2 rounded-lg border-none bg-popover !p-4',
+        'flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none bg-popover !p-4',
         className
       )}
     >
-      {icon}
+      {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
 
-      <div className="flex flex-col">
+      <div className="flex min-w-0 flex-col">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold">{value}</p>
+        <p className={cn('text-lg font-semibold', valueClassName)}>{value}</p>
       </div>
     </Card>
   );

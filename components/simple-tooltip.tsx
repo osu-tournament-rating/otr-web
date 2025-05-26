@@ -10,7 +10,7 @@ export default function SimpleTooltip({
   content,
   children,
 }: {
-  content: string;
+  content: ReactNode;
   children: ReactNode;
 }) {
   return (

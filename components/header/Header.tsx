@@ -87,11 +87,11 @@ export default function Header() {
         <SearchDialog />
         <ModeToggle />
         <SupportButton />
-        <div className="hidden md:block">
-          <ClientOnly>
+        <ClientOnly>
+          <div className="hidden md:ml-1 md:block">
             <ProfileCard />
-          </ClientOnly>
-        </div>
+          </div>
+        </ClientOnly>
 
         {/* Mobile menu */}
         <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>

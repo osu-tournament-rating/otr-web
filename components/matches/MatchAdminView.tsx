@@ -42,6 +42,7 @@ import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
+import DeleteButton from '../shared/DeleteButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -86,8 +87,12 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="h-5 w-5" variant={'ghost'}>
-          <EditIcon />
+        <Button
+          className="h-6 w-6 hover:bg-white/20 hover:text-white"
+          variant={'ghost'}
+          size="icon"
+        >
+          <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -197,17 +202,28 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
 
             {/* Form action buttons */}
             <div className="flex justify-between">
-              {/* Reset changes */}
-              <Button
-                type="reset"
-                variant={'secondary'}
-                onClick={() => form.reset()}
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting
-                }
-              >
-                Reset
-              </Button>
+              <div className="flex gap-2">
+                {/* Reset changes */}
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Reset
+                </Button>
+
+                {/* Delete match */}
+                <DeleteButton
+                  entityType="match"
+                  entityId={match.id}
+                  entityName={match.name}
+                  onDeleted={() => window.location.reload()}
+                />
+              </div>
+
               {/* Save changes */}
               <Button
                 type="submit"

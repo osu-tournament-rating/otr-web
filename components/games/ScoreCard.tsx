@@ -10,6 +10,7 @@ import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import AdminNoteView from '../admin-notes/AdminNoteView';
+import VerificationBadge from '../badges/VerificationBadge';
 import Link from 'next/link';
 
 export default function ScoreCard({
@@ -47,6 +48,12 @@ export default function ScoreCard({
         <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
           <div className="team-flex-row flex h-full w-fit items-center justify-start gap-2">
+            <VerificationBadge
+              verificationStatus={score.verificationStatus}
+              rejectionReason={score.rejectionReason}
+              entityType="score"
+              size="small"
+            />
             <span className="relative aspect-[70/50] h-1/2">
               <Image
                 src={`https://osu.ppy.sh/images/flags/${player?.country}.png`}

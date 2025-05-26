@@ -104,10 +104,11 @@ export default function AdminNoteView({
               setShowNotification(false);
             }
           }}
-          className="relative h-5 w-5"
+          className="relative h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
+          size="icon"
         >
-          <StickyNote />
+          <StickyNote className="h-3 w-3 text-white/70 hover:text-white" />
           {showNotification && notify && (
             <div className="absolute -top-1 -right-1">
               <span className="relative flex h-3 w-3">

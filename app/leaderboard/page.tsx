@@ -14,6 +14,15 @@ import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Trophy } from 'lucide-react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Global Leaderboard',
+  description:
+    'View the global tournament rating leaderboard and player rankings.',
+};
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
   return await leaderboards.get({
@@ -113,17 +122,32 @@ export default async function Page(props: {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-4 flex justify-end">
-        <LeaderboardFilter filter={filter} />
-      </div>
+    <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
+      {/* Leaderboard Table */}
       {data && (
-        <LeaderboardDataTable
-          // @ts-expect-error: `columns` is safe to use here without strict type checking
-          columns={columns}
-          data={data.result.leaderboard}
-        />
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-row items-center justify-between">
+              <div className="flex flex-row items-center gap-2">
+                <Trophy className="h-6 w-6 text-primary" />
+                <CardTitle className="text-xl font-bold">
+                  Global Leaderboard
+                </CardTitle>
+              </div>
+              <LeaderboardFilter filter={filter} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <LeaderboardDataTable
+              // @ts-expect-error: `columns` is safe to use here without strict type checking
+              columns={columns}
+              data={data.result.leaderboard}
+            />
+          </CardContent>
+        </Card>
       )}
+
+      {/* Pagination */}
       <Pagination className="mt-4">
         <PaginationContent>
           <PaginationItem>

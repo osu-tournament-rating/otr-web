@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { getTierString, TierName } from '@/lib/utils/tierData';
 import TRText from '../rating/TRText';
-import StatCard from './StatCard';
+import StatCard from '../shared/StatCard';
 import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
 

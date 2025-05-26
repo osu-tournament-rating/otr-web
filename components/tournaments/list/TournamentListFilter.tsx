@@ -8,20 +8,32 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, Search, Trophy } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import {
   Ruleset,
   TournamentQuerySortType,
 } from '@osu-tournament-rating/otr-api-client';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enums';
-import { useDebounce, useIntersectionObserver } from '@uidotdev/usehooks';
+import { useDebounce } from '@uidotdev/usehooks';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -99,13 +111,11 @@ export default function TournamentListFilter({
     return () => unsubscribe();
   }, [watch, handleSubmit, filter, router, pathName]);
 
-  const [ref, entry] = useIntersectionObserver();
-
   return (
     <Form {...form}>
       <form>
         {/* Hero */}
-        <div ref={ref} className="flex flex-col">
+        <div className="flex flex-col">
           {/* Input based filters */}
           <div className="flex flex-col gap-2 p-4">
             {/* Search bar */}
@@ -120,14 +130,15 @@ export default function TournamentListFilter({
                         {...field}
                         value={searchQuery}
                         onChange={(e) => handleSetQuery(e.target.value)}
-                        placeholder="type to search"
+                        placeholder="Type to search for tournaments..."
                         type="search"
+                        className="h-12 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              <Search className="absolute inset-y-1/6 right-2" />
+              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-muted-foreground" />
             </div>
             {/* Ruleset */}
             <FormField
@@ -136,36 +147,37 @@ export default function TournamentListFilter({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <ToggleGroup
-                      className="w-full gap-2"
-                      {...field}
-                      value={String(field.value)}
-                      onValueChange={(val) => {
-                        field.onChange(val === '' ? undefined : Number(val));
-                        console.log(val);
-                      }}
-                      type="single"
-                    >
+                    <div className="flex w-full flex-wrap gap-2">
                       {Object.entries(RulesetEnumHelper.metadata)
                         .filter(
                           ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
                         )
                         .map(([ruleset, { text }]) => (
-                          <ToggleGroupItem
-                            key={`sort-ruleset-${ruleset}`}
-                            className="flex w-fit flex-auto rounded data-[state=on]:text-primary"
-                            value={ruleset}
-                            aria-checked={field.value === Number(ruleset)}
+                          <Button
+                            key={`ruleset-${ruleset}`}
+                            variant={
+                              field.value === Number(ruleset)
+                                ? 'default'
+                                : 'outline'
+                            }
+                            onClick={() =>
+                              field.onChange(
+                                field.value === Number(ruleset)
+                                  ? undefined
+                                  : Number(ruleset)
+                              )
+                            }
+                            className="flex-auto"
                           >
                             <RulesetIcon
                               ruleset={Number(ruleset)}
-                              className="size-5"
+                              className="mr-2 size-5"
                               fill="currentColor"
                             />
-                            <span className="hidden md:block">{text}</span>
-                          </ToggleGroupItem>
+                            {text}
+                          </Button>
                         ))}
-                    </ToggleGroup>
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
@@ -173,91 +185,67 @@ export default function TournamentListFilter({
           </div>
 
           {/* Sort type and direction */}
-          <FormField
-            control={form.control}
-            name="sort"
-            render={({ field }) => {
-              const descending = form.watch('descending');
-              return (
-                <FormItem className="flex flex-row flex-wrap items-baseline px-2 py-1">
-                  <span className="text-xs">Sort by</span>
-                  <FormControl>
-                    <ToggleGroup
-                      {...field}
-                      value={String(field.value)}
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      className="flex flex-wrap gap-2"
-                      type="single"
-                    >
-                      {sortToggleItems.map(({ value, text }) => (
-                        <ToggleGroupItem
-                          key={`sort-${value}`}
-                          className="group flex flex-auto cursor-pointer rounded-xl"
-                          value={value.toString()}
-                          aria-label={TournamentQuerySortType[value]}
-                          onClick={(e) => {
-                            if (field.value === value) {
-                              e.preventDefault();
-                              form.setValue('descending', !descending);
-                            }
-                          }}
-                        >
-                          {text}
-                          <ChevronDown
-                            className={cn(
-                              'opacity-0 group-hover:opacity-100',
-                              field.value === value && 'opacity-100',
-                              field.value === value &&
-                                !descending &&
-                                'rotate-180'
-                            )}
-                          />
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  </FormControl>
-                </FormItem>
-              );
-            }}
-          />
-        </div>
-
-        {/* Sticky, appears when hero section is not visible */}
-        <div
-          className={cn(
-            'fixed top-0 right-0 left-0 z-40 mx-auto hidden w-full px-5 transition-all duration-300 md:max-w-4xl xl:max-w-6xl',
-            // Hidden until intersection observer is available
-            entry && 'flex',
-            // Animate slide-in from behind navbar
-            entry?.isIntersecting
-              ? 'top-0 -translate-y-0 opacity-0'
-              : 'top-(--header-height-px) translate-y-0 opacity-100'
-          )}
-        >
-          <div className="light:border mt-4 flex w-full flex-col gap-2 rounded border bg-accent p-2">
-            <div className="flex flex-row items-center gap-1 text-sm font-semibold">
-              <Trophy className="size-4" />
-              Tournaments
-            </div>
-            <div className="relative w-full">
-              <FormField
-                control={form.control}
-                name="searchQuery"
-                render={({ field }) => (
-                  <FormItem className="w-full">
+          <div className="flex items-center gap-2 px-4 pb-4">
+            <FormField
+              control={form.control}
+              name="sort"
+              render={({ field }) => (
+                <FormItem className="flex-grow">
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="type to search"
-                        type="search"
-                        className="h-7 bg-background text-sm"
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
                     </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Search className="absolute inset-y-1/6 right-2 size-4" />
-            </div>
+                    <SelectContent>
+                      {sortToggleItems.map(({ value, text }) => (
+                        <SelectItem key={`sort-${value}`} value={String(value)}>
+                          {text}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="descending"
+              render={({ field }) => (
+                <FormItem>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => field.onChange(!field.value)}
+                            aria-label={
+                              field.value ? 'Sort Ascending' : 'Sort Descending'
+                            }
+                          >
+                            {field.value ? (
+                              <ArrowDown className="h-4 w-4" />
+                            ) : (
+                              <ArrowUp className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </FormControl>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {field.value ? 'Sort Ascending' : 'Sort Descending'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </FormItem>
+              )}
+            />
           </div>
         </div>
       </form>
