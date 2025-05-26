@@ -134,7 +134,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
         </h1>
 
         {/* Tournament metadata */}
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-2 bg-popover text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <div className="flex items-center gap-1.5">
             <RulesetIcon
               ruleset={tournament.ruleset}

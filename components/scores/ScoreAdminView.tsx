@@ -61,6 +61,7 @@ import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import AdminNotesList from '../admin-notes/AdminNoteList';
 import DeleteButton from '../shared/DeleteButton';
+import { useRouter } from 'next/navigation';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -90,6 +91,8 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     typeof scoreEditFormSchema
   > | null>(null);
 
+  const router = useRouter();
+
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
@@ -116,6 +119,8 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       // Reset forms
       form.reset(patchedScore);
       setAdminNote('');
+
+      router.refresh();
     } catch {
       errorSaveToast();
     } finally {

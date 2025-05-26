@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { useSession } from '@/lib/hooks/useSession';
+import { useRouter } from 'next/navigation';
 
 export default function AdminNoteListItem({
   note,
@@ -34,6 +35,7 @@ export default function AdminNoteListItem({
   entity: AdminNoteRouteTarget;
 }) {
   const session = useSession();
+  const router = useRouter();
 
   // Restrict edit/delete functionality to the user who created the note
   const showModificationButtons =
@@ -48,6 +50,7 @@ export default function AdminNoteListItem({
         entity,
       });
       toast.success('Note deleted successfully');
+      router.refresh();
     } catch {
       toast.error('Failed to delete note');
     }
@@ -61,6 +64,7 @@ export default function AdminNoteListItem({
         body: editedNote,
       });
       toast.success('Note updated successfully');
+      router.refresh();
     } catch {
       toast.error('Failed to update note');
     }

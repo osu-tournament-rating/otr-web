@@ -7,6 +7,7 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { Loader2, StickyNote } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -63,6 +64,7 @@ export default function AdminNoteView({
   entityDisplayName,
 }: AdminNoteViewProps) {
   const session = useSession();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
@@ -89,7 +91,9 @@ export default function AdminNoteView({
         body: data.note,
       });
 
+      form.reset();
       toast.success(`Created admin note for ${entityDisplayName}`);
+      router.refresh();
     } catch {
       toast.error(`Failed to create admin note for ${entityDisplayName}`);
     }

@@ -46,6 +46,7 @@ import { update } from '@/lib/actions/games';
 import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import DeleteButton from '../shared/DeleteButton';
+import { useRouter } from 'next/navigation';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -76,6 +77,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
   });
 
   const session = useSession();
+  const router = useRouter();
+
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
@@ -89,6 +92,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
 
       form.reset(patchedGame);
       saveToast();
+      router.refresh();
     } catch {
       errorSaveToast();
     }

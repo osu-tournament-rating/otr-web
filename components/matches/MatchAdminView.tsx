@@ -43,6 +43,7 @@ import VerificationStatusSelectContent from '../select/VerificationStatusSelectC
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
 import DeleteButton from '../shared/DeleteButton';
+import { useRouter } from 'next/navigation';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -66,6 +67,8 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
   });
 
   const session = useSession();
+  const router = useRouter();
+
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
   }
@@ -79,6 +82,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
 
       form.reset(patchedMatch);
       saveToast();
+      router.refresh();
     } catch {
       errorSaveToast();
     }
