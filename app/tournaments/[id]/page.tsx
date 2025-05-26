@@ -19,7 +19,7 @@ import {
   BarChart3,
   Award,
   Music,
-  TrendingUp,
+  // TrendingUp,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -32,7 +32,7 @@ import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
 import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
-import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
+// import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 
 type PageProps = { params: Promise<{ id: number }> };
 
