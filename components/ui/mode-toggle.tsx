@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 
 export function ModeToggle() {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
 
   useHotkeys('CTRL+L', (e) => {
     e.preventDefault();
@@ -21,13 +21,17 @@ export function ModeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
-
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
+
+  if (!mounted) {
+    return (
+      <Button className="cursor-pointer" variant="ghost" size="icon" disabled>
+        <Sun className="scale-100 rotate-0 transition-all" />
+      </Button>
+    );
+  }
 
   return (
     <Button
@@ -36,7 +40,7 @@ export function ModeToggle() {
       size="icon"
       onClick={toggleTheme}
     >
-      {theme === 'dark' ? (
+      {resolvedTheme === 'dark' ? (
         <Sun className="scale-100 rotate-0 transition-all" />
       ) : (
         <Moon className="scale-100 rotate-0 transition-all" />
