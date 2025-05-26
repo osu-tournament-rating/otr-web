@@ -19,6 +19,7 @@ import {
   BarChart3,
   Award,
   Music,
+  TrendingUp,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -31,6 +32,7 @@ import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
 import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
+import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -280,6 +282,7 @@ export default async function Page({ params }: PageProps) {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="matches">Matches</TabsTrigger>
           <TabsTrigger value="beatmaps">Beatmaps</TabsTrigger>
+          {/* <TabsTrigger value="ratings">Ratings</TabsTrigger> */}
           <TabsTrigger value="stats">Stats</TabsTrigger>
         </TabsList>
 
@@ -309,6 +312,23 @@ export default async function Page({ params }: PageProps) {
             <TournamentBeatmapsView beatmaps={beatmaps} />
           </Card>
         </TabsContent>
+
+        {/* <TabsContent value="ratings" className="mt-4">
+          <Card className="p-6 font-sans">
+            <div className="mb-4 flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <h3 className="font-sans text-lg font-semibold">
+                Rating Changes
+              </h3>
+              <span className="text-sm text-muted-foreground">
+                ({tournament.playerTournamentStats?.length || 0})
+              </span>
+            </div>
+            <TournamentRatingsView
+              playerStats={tournament.playerTournamentStats ?? []}
+            />
+          </Card>
+        </TabsContent> */}
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <TournamentStatsCard tournament={tournament} />
