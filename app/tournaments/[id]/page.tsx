@@ -30,6 +30,7 @@ import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
+import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -311,6 +312,9 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <TournamentStatsCard tournament={tournament} />
+          <TournamentPlayerStatsDashboard
+            playerStats={tournament.playerTournamentStats ?? []}
+          />
         </TabsContent>
       </Tabs>
     </div>
