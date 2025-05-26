@@ -8,20 +8,32 @@ import {
 } from '@/lib/schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, Search } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import {
   Ruleset,
   TournamentQuerySortType,
 } from '@osu-tournament-rating/otr-api-client';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enums';
 import { useDebounce } from '@uidotdev/usehooks';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
   {
@@ -135,36 +147,37 @@ export default function TournamentListFilter({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <ToggleGroup
-                      className="w-full gap-2"
-                      {...field}
-                      value={String(field.value)}
-                      onValueChange={(val) => {
-                        field.onChange(val === '' ? undefined : Number(val));
-                        console.log(val);
-                      }}
-                      type="single"
-                    >
+                    <div className="flex w-full flex-wrap gap-2">
                       {Object.entries(RulesetEnumHelper.metadata)
                         .filter(
                           ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
                         )
                         .map(([ruleset, { text }]) => (
-                          <ToggleGroupItem
-                            key={`sort-ruleset-${ruleset}`}
-                            className="flex w-fit flex-auto rounded data-[state=on]:text-primary"
-                            value={ruleset}
-                            aria-checked={field.value === Number(ruleset)}
+                          <Button
+                            key={`ruleset-${ruleset}`}
+                            variant={
+                              field.value === Number(ruleset)
+                                ? 'default'
+                                : 'outline'
+                            }
+                            onClick={() =>
+                              field.onChange(
+                                field.value === Number(ruleset)
+                                  ? undefined
+                                  : Number(ruleset)
+                              )
+                            }
+                            className="flex-auto"
                           >
                             <RulesetIcon
                               ruleset={Number(ruleset)}
-                              className="size-5"
+                              className="mr-2 size-5"
                               fill="currentColor"
                             />
-                            <span className="ml-2 hidden md:block">{text}</span>
-                          </ToggleGroupItem>
+                            {text}
+                          </Button>
                         ))}
-                    </ToggleGroup>
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
@@ -172,54 +185,68 @@ export default function TournamentListFilter({
           </div>
 
           {/* Sort type and direction */}
-          <FormField
-            control={form.control}
-            name="sort"
-            render={({ field }) => {
-              const descending = form.watch('descending');
-              return (
-                <FormItem className="flex flex-row flex-wrap items-baseline px-2 py-1">
-                  <span className="text-xs">Sort by</span>
-                  <FormControl>
-                    <ToggleGroup
-                      {...field}
-                      value={String(field.value)}
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      className="flex flex-wrap gap-2"
-                      type="single"
-                    >
+          <div className="flex items-center gap-2 px-4 pb-4">
+            <FormField
+              control={form.control}
+              name="sort"
+              render={({ field }) => (
+                <FormItem className="flex-grow">
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
                       {sortToggleItems.map(({ value, text }) => (
-                        <ToggleGroupItem
-                          key={`sort-${value}`}
-                          className="group flex flex-auto cursor-pointer rounded-xl px-3 py-1.5 text-sm"
-                          value={value.toString()}
-                          aria-label={TournamentQuerySortType[value]}
-                          onClick={(e) => {
-                            if (field.value === value) {
-                              e.preventDefault();
-                              form.setValue('descending', !descending);
-                            }
-                          }}
-                        >
+                        <SelectItem key={`sort-${value}`} value={String(value)}>
                           {text}
-                          <ChevronDown
-                            className={cn(
-                              'ml-1.5 size-4 transition-transform duration-200 ease-in-out',
-                              {
-                                'rotate-180':
-                                  field.value === value && descending,
-                                'hidden group-aria-checked:block': true,
-                              }
-                            )}
-                          />
-                        </ToggleGroupItem>
+                        </SelectItem>
                       ))}
-                    </ToggleGroup>
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
-              );
-            }}
-          />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="descending"
+              render={({ field }) => (
+                <FormItem>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => field.onChange(!field.value)}
+                            aria-label={
+                              field.value ? 'Sort Ascending' : 'Sort Descending'
+                            }
+                          >
+                            {field.value ? (
+                              <ArrowDown className="h-4 w-4" />
+                            ) : (
+                              <ArrowUp className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </FormControl>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {field.value ? 'Sort Ascending' : 'Sort Descending'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       </form>
     </Form>
