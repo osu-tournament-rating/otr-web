@@ -14,6 +14,7 @@ import {
 import { EditIcon, Loader2 } from 'lucide-react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +60,7 @@ export default function TournamentAdminView({
   tournament,
 }: TournamentAdminViewProps) {
   const session = useSession();
+  const router = useRouter();
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
     resolver: zodResolver(tournamentEditFormSchema),
     defaultValues: tournament,
@@ -79,6 +81,7 @@ export default function TournamentAdminView({
       });
       form.reset(patchedTournament);
       saveToast();
+      router.refresh();
     } catch {
       errorSaveToast();
     }
