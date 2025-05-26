@@ -97,8 +97,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button 
-          className="h-6 w-6 hover:bg-white/20 hover:text-white" 
+        <Button
+          className="h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
           size="icon"
         >

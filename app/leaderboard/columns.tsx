@@ -63,7 +63,7 @@ const createCenteredColumn = (
   header: string,
   formatter?: (value: unknown) => React.ReactNode
 ) =>
-  columnHelper.accessor(accessor as any, {
+  columnHelper.accessor(accessor, {
     header,
     cell: ({ getValue }) => (
       <CenteredText>
