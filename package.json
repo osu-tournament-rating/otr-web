@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "overrides": {
-    "react-is": "^19.0.0"
+    "react-is": "^19.0.0",
+    "@radix-ui/react-focus-scope": "1.1.1"
   },
   "scripts": {
     "dev": "next dev --turbopack",
