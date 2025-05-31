@@ -297,6 +297,20 @@ export default async function Page({ params }: PageProps) {
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = (await getBeatmaps((await params).id)) ?? [];
 
+  // Extract all games from tournament matches for mod calculation
+  const tournamentGames = (tournament.matches ?? []).flatMap(
+    (match) => match.games ?? []
+  );
+
+  // Calculate hidden beatmaps count
+  const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {
+    const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
+    const title = beatmap.beatmapset?.title || 'Unknown Title';
+    return artist === 'Unknown Artist' && title === 'Unknown Title';
+  }).length;
+
+  const visibleBeatmapsCount = beatmaps.length - hiddenBeatmapsCount;
+
   return (
     <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
       <TournamentHeader tournament={tournament} />
@@ -331,10 +345,14 @@ export default async function Page({ params }: PageProps) {
                 Pooled Beatmaps
               </h3>
               <span className="text-sm text-muted-foreground">
-                ({beatmaps.length})
+                ({visibleBeatmapsCount}
+                {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>
             </div>
-            <TournamentBeatmapsView beatmaps={beatmaps} />
+            <TournamentBeatmapsView
+              beatmaps={beatmaps}
+              tournamentGames={tournamentGames}
+            />
           </Card>
         </TabsContent>
 
