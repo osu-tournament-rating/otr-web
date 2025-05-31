@@ -39,35 +39,41 @@ export default function TournamentBeatmapsView({
   };
 
   const sortedBeatmaps = useMemo(() => {
-    return [...beatmaps].sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
+    return [...beatmaps]
+      .filter((beatmap) => {
+        const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
+        const title = beatmap.beatmapset?.title || 'Unknown Title';
+        return !(artist === 'Unknown Artist' && title === 'Unknown Title');
+      })
+      .sort((a, b) => {
+        let aValue: string | number;
+        let bValue: string | number;
 
-      switch (sortField) {
-        case 'title':
-          aValue = a.beatmapset?.title?.toLowerCase() || '';
-          bValue = b.beatmapset?.title?.toLowerCase() || '';
-          break;
-        case 'sr':
-          aValue = a.sr;
-          bValue = b.sr;
-          break;
-        case 'length':
-          aValue = a.totalLength;
-          bValue = b.totalLength;
-          break;
-        case 'bpm':
-          aValue = a.bpm || 0;
-          bValue = b.bpm || 0;
-          break;
-        default:
-          return 0;
-      }
+        switch (sortField) {
+          case 'title':
+            aValue = a.beatmapset?.title?.toLowerCase() || '';
+            bValue = b.beatmapset?.title?.toLowerCase() || '';
+            break;
+          case 'sr':
+            aValue = a.sr;
+            bValue = b.sr;
+            break;
+          case 'length':
+            aValue = a.totalLength;
+            bValue = b.totalLength;
+            break;
+          case 'bpm':
+            aValue = a.bpm || 0;
+            bValue = b.bpm || 0;
+            break;
+          default:
+            return 0;
+        }
 
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
   }, [beatmaps, sortField, sortDirection]);
 
   const SortButton = ({
