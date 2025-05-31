@@ -9,8 +9,8 @@ import {
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, ArrowUp, ArrowDown } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { useEffect, useState } from 'react';
+import { useForm, Control } from 'react-hook-form';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   Ruleset,
   TournamentQuerySortType,
@@ -35,7 +35,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
+const DEBOUNCE_DELAY = 500;
+
+const sortToggleItems: readonly {
+  value: TournamentQuerySortType;
+  text: string;
+}[] = [
   {
     value: TournamentQuerySortType.SubmissionDate,
     text: 'Submission Date',
@@ -52,201 +57,255 @@ const sortToggleItems: { value: TournamentQuerySortType; text: string }[] = [
     value: TournamentQuerySortType.LobbySize,
     text: 'Lobby Size',
   },
-];
+] as const;
+
+type FilterFormData = z.infer<typeof tournamentListFilterSchema>;
+
+interface TournamentListFilterProps {
+  filter: FilterFormData;
+}
+
+const useSearchInput = (initialQuery: string) => {
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const debouncedQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
+
+  const handleSetQuery = useCallback((input: string) => {
+    setSearchQuery(input.trimStart());
+  }, []);
+
+  useEffect(() => {
+    setSearchQuery(initialQuery);
+  }, [initialQuery]);
+
+  return {
+    searchQuery,
+    debouncedQuery,
+    handleSetQuery,
+  };
+};
+
+const useUrlSync = (watchedValues: FilterFormData) => {
+  const pathName = usePathname();
+  const router = useRouter();
+  const lastPushedUrl = useRef<string>('');
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams();
+
+    Object.entries(watchedValues).forEach(([key, value]) => {
+      const filterKey = key as keyof TournamentListFilterType;
+
+      if (
+        value === undefined ||
+        defaultTournamentListFilter[filterKey] === value ||
+        (typeof value === 'string' && value.trim() === '')
+      ) {
+        return;
+      }
+
+      if (value instanceof Date) {
+        searchParams.set(filterKey, value.toISOString().split('T')[0]);
+      } else {
+        searchParams.set(filterKey, String(value));
+      }
+    });
+
+    const queryString = searchParams.toString();
+    const newPath = queryString ? `${pathName}?${queryString}` : pathName;
+    const currentUrl = window.location.pathname + window.location.search;
+
+    if (currentUrl !== newPath && lastPushedUrl.current !== newPath) {
+      lastPushedUrl.current = newPath;
+      router.push(newPath, { scroll: false });
+    }
+  }, [watchedValues, router, pathName]);
+};
+
+const SearchInput = ({
+  searchQuery,
+  onQueryChange,
+  onKeyDown,
+  control,
+}: {
+  searchQuery: string;
+  onQueryChange: (value: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  control: Control<FilterFormData>;
+}) => (
+  <div className="relative w-full">
+    <FormField
+      control={control}
+      name="searchQuery"
+      render={({ field }) => (
+        <FormItem className="w-full">
+          <FormControl>
+            <Input
+              {...field}
+              value={searchQuery}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="Type to search for tournaments..."
+              type="search"
+              className="h-12 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
+              onKeyDown={onKeyDown}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+    <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-muted-foreground" />
+  </div>
+);
+
+const RulesetFilter = ({ control }: { control: Control<FilterFormData> }) => {
+  const availableRulesets = useMemo(
+    () =>
+      Object.entries(RulesetEnumHelper.metadata).filter(
+        ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
+      ),
+    []
+  );
+
+  return (
+    <FormField
+      control={control}
+      name="ruleset"
+      render={({ field }) => (
+        <FormItem>
+          <FormControl>
+            <div className="flex w-full flex-wrap gap-2">
+              {availableRulesets.map(([ruleset, { text }]) => {
+                const rulesetNumber = Number(ruleset);
+                const isSelected = field.value === rulesetNumber;
+
+                return (
+                  <Button
+                    key={`ruleset-${ruleset}`}
+                    variant={isSelected ? 'default' : 'outline'}
+                    onClick={() =>
+                      field.onChange(isSelected ? undefined : rulesetNumber)
+                    }
+                    className="flex-auto"
+                  >
+                    <RulesetIcon
+                      ruleset={rulesetNumber}
+                      className="mr-2 size-5"
+                      fill="currentColor"
+                    />
+                    {text}
+                  </Button>
+                );
+              })}
+            </div>
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  );
+};
+
+const SortControls = ({ control }: { control: Control<FilterFormData> }) => (
+  <div className="flex items-center gap-2 px-4 pb-4">
+    <FormField
+      control={control}
+      name="sort"
+      render={({ field }) => (
+        <FormItem className="flex-grow">
+          <Select
+            value={String(field.value)}
+            onValueChange={(val) => field.onChange(Number(val))}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort by..." />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {sortToggleItems.map(({ value, text }) => (
+                <SelectItem key={`sort-${value}`} value={String(value)}>
+                  {text}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={control}
+      name="descending"
+      render={({ field }) => (
+        <FormItem>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => field.onChange(!field.value)}
+                    aria-label={
+                      field.value ? 'Sort Ascending' : 'Sort Descending'
+                    }
+                  >
+                    {field.value ? (
+                      <ArrowDown className="h-4 w-4" />
+                    ) : (
+                      <ArrowUp className="h-4 w-4" />
+                    )}
+                  </Button>
+                </FormControl>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{field.value ? 'Sort Ascending' : 'Sort Descending'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </FormItem>
+      )}
+    />
+  </div>
+);
 
 export default function TournamentListFilter({
   filter,
-}: {
-  filter: z.infer<typeof tournamentListFilterSchema>;
-}) {
-  const [searchQuery, setSearchQuery] = useState(filter.searchQuery);
-  const debouncedQuery = useDebounce(searchQuery, 500);
+}: TournamentListFilterProps) {
+  const { searchQuery, debouncedQuery, handleSetQuery } = useSearchInput(
+    filter.searchQuery ?? ''
+  );
 
-  const handleSetQuery = (input: string) => {
-    setSearchQuery(input.trimStart());
-  };
-
-  const form = useForm<z.infer<typeof tournamentListFilterSchema>>({
+  const form = useForm<FilterFormData>({
     resolver: zodResolver(tournamentListFilterSchema),
     values: { ...filter, searchQuery: debouncedQuery },
     mode: 'all',
   });
 
-  const { watch, handleSubmit } = form;
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        form.setValue('searchQuery', searchQuery, { shouldValidate: true });
+      }
+    },
+    [searchQuery, form]
+  );
 
-  const pathName = usePathname();
-  const router = useRouter();
-
-  // Automatically "submit" the form on any change event by setting the filter
-  useEffect(() => {
-    const { unsubscribe } = watch(() =>
-      handleSubmit((values) => {
-        // Build search params
-        const searchParams = new URLSearchParams();
-        Object.entries(values).forEach(([k, v]) => {
-          if (
-            defaultTournamentListFilter[k as keyof TournamentListFilterType] ===
-              v ||
-            (typeof v === 'string' && v === '')
-          ) {
-            return;
-          }
-
-          if (v instanceof Date) {
-            searchParams.set(k, v.toISOString().split('T')[0]);
-            return;
-          }
-
-          searchParams.set(k, String(v));
-        });
-
-        // Push new route
-        const query =
-          searchParams.size > 0 ? '?' + searchParams.toString() : '';
-
-        router.push(pathName + query, { scroll: false });
-      })()
-    );
-
-    return () => unsubscribe();
-  }, [watch, handleSubmit, filter, router, pathName]);
+  const watchedValues = form.watch();
+  useUrlSync(watchedValues);
 
   return (
     <Form {...form}>
       <form>
-        {/* Hero */}
         <div className="flex flex-col">
-          {/* Input based filters */}
           <div className="flex flex-col gap-2 p-4">
-            {/* Search bar */}
-            <div className="relative w-full">
-              <FormField
-                control={form.control}
-                name="searchQuery"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        value={searchQuery}
-                        onChange={(e) => handleSetQuery(e.target.value)}
-                        placeholder="Type to search for tournaments..."
-                        type="search"
-                        className="h-12 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-muted-foreground" />
-            </div>
-            {/* Ruleset */}
-            <FormField
+            <SearchInput
+              searchQuery={searchQuery}
+              onQueryChange={handleSetQuery}
+              onKeyDown={handleSearchKeyDown}
               control={form.control}
-              name="ruleset"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex w-full flex-wrap gap-2">
-                      {Object.entries(RulesetEnumHelper.metadata)
-                        .filter(
-                          ([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther
-                        )
-                        .map(([ruleset, { text }]) => (
-                          <Button
-                            key={`ruleset-${ruleset}`}
-                            variant={
-                              field.value === Number(ruleset)
-                                ? 'default'
-                                : 'outline'
-                            }
-                            onClick={() =>
-                              field.onChange(
-                                field.value === Number(ruleset)
-                                  ? undefined
-                                  : Number(ruleset)
-                              )
-                            }
-                            className="flex-auto"
-                          >
-                            <RulesetIcon
-                              ruleset={Number(ruleset)}
-                              className="mr-2 size-5"
-                              fill="currentColor"
-                            />
-                            {text}
-                          </Button>
-                        ))}
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
             />
+            <RulesetFilter control={form.control} />
           </div>
-
-          {/* Sort type and direction */}
-          <div className="flex items-center gap-2 px-4 pb-4">
-            <FormField
-              control={form.control}
-              name="sort"
-              render={({ field }) => (
-                <FormItem className="flex-grow">
-                  <Select
-                    value={String(field.value)}
-                    onValueChange={(val) => field.onChange(Number(val))}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sortToggleItems.map(({ value, text }) => (
-                        <SelectItem key={`sort-${value}`} value={String(value)}>
-                          {text}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="descending"
-              render={({ field }) => (
-                <FormItem>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => field.onChange(!field.value)}
-                            aria-label={
-                              field.value ? 'Sort Ascending' : 'Sort Descending'
-                            }
-                          >
-                            {field.value ? (
-                              <ArrowDown className="h-4 w-4" />
-                            ) : (
-                              <ArrowUp className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </FormControl>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {field.value ? 'Sort Ascending' : 'Sort Descending'}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </FormItem>
-              )}
-            />
-          </div>
+          <SortControls control={form.control} />
         </div>
       </form>
     </Form>
