@@ -297,6 +297,11 @@ export default async function Page({ params }: PageProps) {
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = (await getBeatmaps((await params).id)) ?? [];
 
+  // Extract all games from tournament matches for mod calculation
+  const tournamentGames = (tournament.matches ?? []).flatMap(
+    (match) => match.games ?? []
+  );
+
   // Calculate hidden beatmaps count
   const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {
     const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
@@ -344,7 +349,10 @@ export default async function Page({ params }: PageProps) {
                 {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>
             </div>
-            <TournamentBeatmapsView beatmaps={beatmaps} />
+            <TournamentBeatmapsView
+              beatmaps={beatmaps}
+              tournamentGames={tournamentGames}
+            />
           </Card>
         </TabsContent>
 

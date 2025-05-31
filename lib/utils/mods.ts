@@ -72,3 +72,44 @@ export function getModColor(mods: Mods) {
       return 'var(--chart-1)';
   }
 }
+
+/**
+ * Gets the most commonly used mod for a beatmap across tournament games
+ * @param beatmapOsuId The osu! ID of the beatmap
+ * @param tournamentGames Array of all games in the tournament
+ * @returns Object with the most common mod and total game count, or null if no games found
+ */
+export function getMostCommonModForBeatmap(
+  beatmapOsuId: number,
+  tournamentGames: Array<{ beatmap: { osuId: number } | null; mods: Mods }>
+): { mod: Mods; gameCount: number } | null {
+  const beatmapGames = tournamentGames.filter(
+    (game) => game.beatmap?.osuId === beatmapOsuId
+  );
+
+  if (beatmapGames.length === 0) {
+    return null;
+  }
+
+  const modCounts = new Map<Mods, number>();
+
+  for (const game of beatmapGames) {
+    const currentCount = modCounts.get(game.mods) || 0;
+    modCounts.set(game.mods, currentCount + 1);
+  }
+
+  let mostCommonMod = Mods.None;
+  let maxCount = 0;
+
+  for (const [mod, count] of modCounts.entries()) {
+    if (count > maxCount) {
+      maxCount = count;
+      mostCommonMod = mod;
+    }
+  }
+
+  return {
+    mod: mostCommonMod,
+    gameCount: beatmapGames.length,
+  };
+}
