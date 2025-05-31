@@ -19,6 +19,7 @@ import {
   BarChart3,
   Award,
   Music,
+  ExternalLink,
   // TrendingUp,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
@@ -32,6 +33,9 @@ import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
 import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
+import { Button } from '@/components/ui/button';
+import SimpleTooltip from '@/components/simple-tooltip';
+import Link from 'next/link';
 // import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 
 type PageProps = { params: Promise<{ id: number }> };
@@ -128,13 +132,32 @@ function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
           </div>
         </div>
 
-        {/* Tournament name */}
-        <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
-          {tournament.name}
-        </h1>
+        <div className="flex flex-row items-center gap-2">
+          {/* Tournament name */}
+          <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
+            {tournament.name}
+          </h1>
+          <SimpleTooltip content="View tournament on osu! website">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 hover:bg-white/20 hover:text-white"
+            >
+              <Link
+                href={tournament.forumUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View tournament on osu! website"
+              >
+                <ExternalLink className="h-3 w-3 text-white/70 hover:text-white" />
+              </Link>
+            </Button>
+          </SimpleTooltip>
+        </div>
 
         {/* Tournament metadata */}
-        <div className="flex flex-col gap-2 bg-popover text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <div className="flex items-center gap-1.5">
             <RulesetIcon
               ruleset={tournament.ruleset}
@@ -304,7 +327,9 @@ export default async function Page({ params }: PageProps) {
           <Card className="p-6 font-sans">
             <div className="mb-4 flex items-center gap-2">
               <Music className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">Beatmaps</h3>
+              <h3 className="font-sans text-lg font-semibold">
+                Pooled Beatmaps
+              </h3>
               <span className="text-sm text-muted-foreground">
                 ({beatmaps.length})
               </span>
@@ -313,6 +338,7 @@ export default async function Page({ params }: PageProps) {
           </Card>
         </TabsContent>
 
+        {/* TODO: Add ratings tab */}
         {/* <TabsContent value="ratings" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="mb-4 flex items-center gap-2">

@@ -107,13 +107,6 @@ export default function TournamentBeatmapsView({
 
   return (
     <div className="space-y-3">
-      {/* Header with count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {beatmaps.length} beatmap{beatmaps.length !== 1 ? 's' : ''}
-        </p>
-      </div>
-
       {/* Compact table */}
       <div className="overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
@@ -121,13 +114,13 @@ export default function TournamentBeatmapsView({
             {/* Header */}
             <thead className="border-b bg-muted/50">
               <tr>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
                   <SortButton field="title">Beatmap</SortButton>
                 </th>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
                   Difficulty
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
                       <SortButton field="sr">
@@ -136,7 +129,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
                       <SortButton field="length">
@@ -145,7 +138,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
                       <SortButton field="bpm">
@@ -154,27 +147,27 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Circle Size">
                     <p>CS</p>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Approach Rate">
                     <p>AR</p>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Overall Difficulty">
                     <p>OD</p>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="HP Drain Rate">
                     <p>HP</p>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   Creator
                 </th>
               </tr>
@@ -228,7 +221,7 @@ export default function TournamentBeatmapsView({
 
                   {/* Difficulty */}
                   <td className="px-2 py-2">
-                    <span className="block max-w-[100px] truncate text-xs font-medium text-primary">
+                    <span className="block max-w-[100px] truncate text-xs font-medium">
                       {beatmap.diffName || 'Unknown'}
                     </span>
                   </td>
