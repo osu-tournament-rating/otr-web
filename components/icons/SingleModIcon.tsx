@@ -34,13 +34,6 @@ export default function SingleModIcon({
         alt={`mod-${modText}`}
         fill
         className="object-contain"
-        onError={(e) => {
-          // Fallback to NM icon if the specific mod icon is missing
-          const target = e.target as HTMLImageElement;
-          if (target.src !== `/icons/mods/ModNM.svg`) {
-            target.src = `/icons/mods/ModNM.svg`;
-          }
-        }}
       />
     </div>
   );
