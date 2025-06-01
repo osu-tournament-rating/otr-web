@@ -42,7 +42,7 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <SessionProvider user={session}>
             <Header />
-            <main className="mx-auto w-full px-5 md:max-w-4xl xl:max-w-6xl">
+            <main className="mx-auto w-full sm:px-5 md:max-w-4xl xl:max-w-6xl">
               {children}
             </main>
             <Footer />
