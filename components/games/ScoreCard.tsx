@@ -85,7 +85,7 @@ export default function ScoreCard({
         {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="team-flex-row flex items-center justify-start gap-4">
+          <div className="flex flex-row items-center justify-start gap-4">
             <div className="performance-item">
               <span className="label text-neutral-600 dark:text-neutral-400">
                 {300}
@@ -120,7 +120,7 @@ export default function ScoreCard({
             </div>
           </div>
           {/* Acc / Combo */}
-          <div className="team-flex-row flex items-center justify-end gap-4">
+          <div className="flex flex-row items-center justify-end gap-4">
             <div className="performance-item">
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Combo
