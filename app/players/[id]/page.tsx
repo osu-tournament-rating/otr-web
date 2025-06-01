@@ -88,7 +88,7 @@ export default async function PlayerPage(props: PageProps) {
           <PlayerRatingChart
             adjustments={playerData.rating.adjustments}
             highestRating={
-              playerData.matchStats?.highestRating ??
+              playerData.matchStats?.highestRating ||
               playerData.rating.adjustments.sort(
                 (a, b) => b.ratingAfter - a.ratingAfter
               )[0].ratingAfter

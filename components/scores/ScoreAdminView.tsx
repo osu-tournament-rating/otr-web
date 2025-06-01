@@ -19,7 +19,7 @@ import {
   Mods,
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2 } from 'lucide-react';
+import { EditIcon, Loader2, Trash2 } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -42,6 +42,7 @@ import {
   getEnumFlags,
 } from '@/lib/enums';
 import { update } from '@/lib/actions/scores';
+import { deletePlayerScores } from '@/lib/actions/matches';
 import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
@@ -62,6 +63,7 @@ import { toast } from 'sonner';
 import AdminNotesList from '../admin-notes/AdminNoteList';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -85,16 +87,42 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
   });
 
   const session = useSession();
+  const params = useParams();
   const [showNotePrompt, setShowNotePrompt] = useState(false);
+  const [showDeletePlayerScoresDialog, setShowDeletePlayerScoresDialog] =
+    useState(false);
   const [adminNote, setAdminNote] = useState('');
   const [pendingSubmit, setPendingSubmit] = useState<z.infer<
     typeof scoreEditFormSchema
   > | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
+  const matchId = params?.id ? Number(params.id) : null;
 
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
+  }
+
+  async function handleDeletePlayerScores() {
+    if (!matchId) {
+      toast.error('Match ID not found');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const deletedCount = await deletePlayerScores(matchId, score.playerId);
+      toast.success(
+        `Deleted ${deletedCount} scores for player ${score.playerId}`
+      );
+      setShowDeletePlayerScoresDialog(false);
+      router.refresh();
+    } catch {
+      toast.error('Failed to delete player scores');
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   async function submitScorePatch(values: z.infer<typeof scoreEditFormSchema>) {
@@ -524,6 +552,18 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                     entityName={`Score ${score.id}`}
                     onDeleted={() => window.location.reload()}
                   />
+
+                  {/* Delete all player scores */}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeletePlayerScoresDialog(true)}
+                    disabled={!matchId}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Delete All Player Scores
+                  </Button>
                 </div>
 
                 <Button
@@ -541,6 +581,39 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Player Scores Confirmation Dialog */}
+      <AlertDialog
+        open={showDeletePlayerScoresDialog}
+        onOpenChange={setShowDeletePlayerScoresDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Player Scores</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all scores for player{' '}
+              {score.playerId} in this match? This action cannot be undone and
+              will remove all scores across all games in this match for this
+              player.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePlayerScores}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete All Scores
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showNotePrompt} onOpenChange={setShowNotePrompt}>
         <AlertDialogContent>

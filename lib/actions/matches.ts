@@ -23,3 +23,8 @@ export async function update(params: MatchesUpdateRequestParams) {
 export async function deleteMatch(id: number) {
   await matches.delete({ id });
 }
+
+export async function deletePlayerScores(matchId: number, playerId: number) {
+  const { result } = await matches.deletePlayerScores({ id: matchId, playerId });
+  return result;
+}
