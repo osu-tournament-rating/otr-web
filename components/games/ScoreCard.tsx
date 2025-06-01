@@ -23,7 +23,7 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[score.team]}
-      className="team-flex-row group relative flex overflow-clip rounded-xl border border-secondary-foreground/15 **:z-10"
+      className="team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white **:z-10 dark:border-neutral-700 dark:bg-neutral-800"
     >
       {/* Background team color overlay */}
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
@@ -51,7 +51,9 @@ export default function ScoreCard({
               />
             </span>
             <Link href={`/players/${player?.id}`}>
-              <span className="font-bold">{player?.username}</span>
+              <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                {player?.username}
+              </span>
             </Link>
           </div>
           {/* Grade / Mods / Score */}
@@ -67,7 +69,9 @@ export default function ScoreCard({
               )}
               mods={score.mods}
             />
-            <span>{ScoreGradeEnumHelper.getMetadata(score.grade).text}</span>
+            <span className="text-neutral-800 dark:text-neutral-200">
+              {ScoreGradeEnumHelper.getMetadata(score.grade).text}
+            </span>
             <span
               className={cn(
                 'text-lg text-(--score-text-color)',
@@ -83,31 +87,55 @@ export default function ScoreCard({
           {/* 300 / 100 / 50 / Miss */}
           <div className="team-flex-row flex items-center justify-start gap-4">
             <div className="performance-item">
-              <span className="label">{300}</span>
-              <span className="value">{score.count300}x</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                {300}
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.count300}x
+              </span>
             </div>
             <div className="performance-item">
-              <span className="label">{100}</span>
-              <span className="value">{score.count100}x</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                {100}
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.count100}x
+              </span>
             </div>
             <div className="performance-item">
-              <span className="label">{50}</span>
-              <span className="value">{score.count50}x</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                {50}
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.count50}x
+              </span>
             </div>
             <div className="performance-item">
-              <span className="label">Miss</span>
-              <span className="value">{score.countMiss}x</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                Miss
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.countMiss}x
+              </span>
             </div>
           </div>
           {/* Acc / Combo */}
           <div className="team-flex-row flex items-center justify-end gap-4">
             <div className="performance-item">
-              <span className="label">Combo</span>
-              <span className="value">{score.maxCombo}x</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                Combo
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.maxCombo}x
+              </span>
             </div>
             <div className="performance-item">
-              <span className="label">Accuracy</span>
-              <span className="value">{score.accuracy.toFixed(2)}%</span>
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                Accuracy
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.accuracy.toFixed(2)}%
+              </span>
             </div>
           </div>
         </div>
