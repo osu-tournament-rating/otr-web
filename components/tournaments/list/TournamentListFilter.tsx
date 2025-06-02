@@ -180,6 +180,7 @@ const RulesetFilter = ({ control }: { control: Control<FilterFormData> }) => {
                 return (
                   <Button
                     key={`ruleset-${ruleset}`}
+                    type="button"
                     variant={isSelected ? 'default' : 'outline'}
                     onClick={() =>
                       field.onChange(isSelected ? undefined : rulesetNumber)
@@ -240,6 +241,7 @@ const SortControls = ({ control }: { control: Control<FilterFormData> }) => (
               <TooltipTrigger asChild>
                 <FormControl>
                   <Button
+                    type="button"
                     variant="outline"
                     size="icon"
                     onClick={() => field.onChange(!field.value)}
