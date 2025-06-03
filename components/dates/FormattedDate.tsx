@@ -65,19 +65,17 @@ export default function FormattedDate({
 
   return (
     <ClientOnly>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className={className}>{dateString}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="flex gap-1">
-              <span>{fullDay}</span>
-              <span className="text-primary">{fullTime}</span>
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={className}>{dateString}</span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="flex gap-1">
+            <span>{fullDay}</span>
+            <span className="text-primary">{fullTime}</span>
+          </p>
+        </TooltipContent>
+      </Tooltip>
     </ClientOnly>
   );
 }

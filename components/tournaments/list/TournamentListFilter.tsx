@@ -235,31 +235,29 @@ const SortControls = ({ control }: { control: Control<FilterFormData> }) => (
       name="descending"
       render={({ field }) => (
         <FormItem>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => field.onChange(!field.value)}
-                    aria-label={
-                      field.value ? 'Sort Ascending' : 'Sort Descending'
-                    }
-                  >
-                    {field.value ? (
-                      <ArrowDown className="h-4 w-4" />
-                    ) : (
-                      <ArrowUp className="h-4 w-4" />
-                    )}
-                  </Button>
-                </FormControl>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{field.value ? 'Sort Ascending' : 'Sort Descending'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <FormControl>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => field.onChange(!field.value)}
+                  aria-label={
+                    field.value ? 'Sort Ascending' : 'Sort Descending'
+                  }
+                >
+                  {field.value ? (
+                    <ArrowDown className="h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4" />
+                  )}
+                </Button>
+              </FormControl>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{field.value ? 'Sort Ascending' : 'Sort Descending'}</p>
+            </TooltipContent>
+          </Tooltip>
         </FormItem>
       )}
     />

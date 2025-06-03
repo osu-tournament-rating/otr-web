@@ -2,7 +2,7 @@
 
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { TierName } from '@/lib/utils/tierData';
+import { TierName, getTierString } from '@/lib/utils/tierData';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
@@ -36,35 +36,13 @@ const CenteredText = ({ children }: { children: React.ReactNode }) => (
   <p className="text-center font-medium text-muted-foreground">{children}</p>
 );
 
-const PlayerImage = ({
-  src,
-  alt,
-  className,
-  width,
-  height,
-}: {
-  src: string;
-  alt: string;
-  className: string;
-  width: number;
-  height: number;
-}) => (
-  <Image
-    src={src}
-    alt={alt}
-    className={className}
-    width={width}
-    height={height}
-  />
-);
-
 const createCenteredColumn = (
   accessor: keyof PlayerRatingStatsDTO,
   header: string,
   formatter?: (value: unknown) => React.ReactNode
 ) =>
   columnHelper.accessor(accessor, {
-    header,
+    header: () => <div className="text-center">{header}</div>,
     cell: ({ getValue }) => (
       <CenteredText>
         {formatter ? formatter(getValue()) : String(getValue())}
@@ -76,16 +54,18 @@ export const columns = [
   columnHelper.accessor('globalRank', {
     header: 'Rank',
     cell: ({ getValue, row }) => (
-      <div className="flex min-w-[100px] flex-row items-center justify-between">
-        {getRankDisplay(getValue())}
-        <div className="flex items-center gap-1">
-          <PlayerImage
-            src={`https://assets.ppy.sh/old-flags/${row.original.player.country}.png`}
-            alt={`${row.original.player.country} flag`}
-            className="rounded-sm shadow-sm"
-            width={24}
-            height={16}
-          />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-shrink-0">{getRankDisplay(getValue())}</div>
+        <div className="flex items-center gap-1.5">
+          <SimpleTooltip content={row.original.player.country}>
+            <Image
+              src={`https://assets.ppy.sh/old-flags/${row.original.player.country}.png`}
+              alt={`${row.original.player.country} flag`}
+              className="rounded-sm shadow-sm"
+              width={20}
+              height={14}
+            />
+          </SimpleTooltip>
           <p className="text-xs font-medium text-muted-foreground">
             #{row.original.countryRank}
           </p>
@@ -96,8 +76,8 @@ export const columns = [
   columnHelper.accessor('player.osuId', {
     header: 'Player',
     cell: ({ getValue, row }) => (
-      <div className="flex min-w-[150px] flex-row items-center gap-3">
-        <PlayerImage
+      <div className="ml-1.5 flex min-w-[150px] flex-row items-center gap-3">
+        <Image
           src={`https://a.ppy.sh/${getValue()}`}
           alt={`${row.original.player.username} avatar`}
           className="flex-shrink-0 rounded-full ring-2 ring-muted/20"
@@ -113,23 +93,31 @@ export const columns = [
     ),
   }),
   columnHelper.accessor('tierProgress.currentTier', {
-    header: 'Tier',
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="rounded-lg bg-muted/20 p-1">
-          <TierIcon
-            tier={row.original.tierProgress.currentTier as TierName}
-            subTier={row.original.tierProgress.currentSubTier}
-            tooltip
-            width={28}
-            height={28}
-          />
+    header: () => <div className="text-center">Tier</div>,
+    cell: ({ row }) => {
+      const tier = row.original.tierProgress.currentTier as TierName;
+      const subTier = row.original.tierProgress.currentSubTier;
+
+      return (
+        <div className="flex justify-center rounded-lg bg-muted/20 p-1">
+          <SimpleTooltip content={getTierString(tier, subTier)}>
+            {/* We actually have to use a div here, else we encounter a 'Maximum update depth exceeded' error */}
+            <div>
+              <TierIcon
+                tier={tier || 'Bronze'}
+                subTier={subTier}
+                tooltip={false}
+                width={28}
+                height={28}
+              />
+            </div>
+          </SimpleTooltip>
         </div>
-      </div>
-    ),
+      );
+    },
   }),
   columnHelper.accessor('rating', {
-    header: 'Rating',
+    header: () => <div className="text-center">Rating</div>,
     cell: ({ getValue }) => (
       <div className="flex min-w-[60px] justify-center">
         <SimpleTooltip content={`${getValue().toFixed(2)} TR`}>
