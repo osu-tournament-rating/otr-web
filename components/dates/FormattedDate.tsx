@@ -3,7 +3,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
 import ClientOnly from '../client-only';
