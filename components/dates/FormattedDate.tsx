@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import ClientOnly from '../client-only';
 
 type Formats = 'short' | 'full';
