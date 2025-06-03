@@ -4,12 +4,12 @@ import {
   Team,
 } from '@osu-tournament-rating/otr-api-client';
 import { ScoreGradeEnumHelper } from '@/lib/enums';
-import Image from 'next/image';
 import ModIconset from '../icons/ModIconset';
 import { cn } from '@/lib/utils';
 import VerificationBadge from '../badges/VerificationBadge';
 import Link from 'next/link';
 import ScoreTeamColorBar from './ScoreTeamColorBar';
+import CountryFlag from '../shared/CountryFlag';
 
 export default function ScoreCard({
   score,
@@ -43,13 +43,15 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
-            <span className="relative aspect-[70/50] h-1/2">
-              <Image
-                src={`https://osu.ppy.sh/images/flags/${player?.country}.png`}
-                alt={`country ${player?.country}`}
-                fill
+            {player?.country && (
+              <CountryFlag
+                country={player.country}
+                width={20}
+                height={14}
+                showTooltip={false}
+                className="flex-shrink-0"
               />
-            </span>
+            )}
             <Link href={`/players/${player?.id}`}>
               <span className="font-bold text-neutral-800 dark:text-neutral-200">
                 {player?.username}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
 import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
+import CountryFlag from '../shared/CountryFlag';
 
 interface PlayerCardProps {
   player: PlayerCompactDTO;
@@ -22,14 +23,25 @@ export default function PlayerCard({ player }: PlayerCardProps) {
             <User className="h-16 w-16" />
           </AvatarFallback>
         </Avatar>
-        <span className="text-3xl font-medium">{player.username}</span>
-        <Link
-          href={`https://osu.ppy.sh/u/${player.osuId}`}
-          target="_blank"
-          aria-label="View profile on osu! website"
-        >
-          <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <span className="text-3xl font-medium">{player.username}</span>
+          {player.country && (
+            <CountryFlag
+              country={player.country}
+              width={24}
+              height={17}
+              className="flex-shrink-0 translate-y-px"
+            />
+          )}
+          <Link
+            href={`https://osu.ppy.sh/u/${player.osuId}`}
+            target="_blank"
+            aria-label="View profile on osu! website"
+            className="flex translate-y-px items-center"
+          >
+            <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
+          </Link>
+        </div>
       </div>
       <PlayerRulesetSelector />
     </Card>
