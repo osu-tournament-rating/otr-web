@@ -50,65 +50,62 @@ export default function DeleteTournamentBeatmapsButton({
   };
 
   return (
-      <Tooltip>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Music className="size-4" />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Delete pooled beatmaps</p>
-          </TooltipContent>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Delete Pooled Beatmaps</DialogTitle>
-              <DialogDescription asChild>
-                <div>
-                  Are you sure you want to delete all pooled beatmaps from{' '}
-                  <strong>{tournament.name}</strong>? This action cannot be
-                  undone.
-                  <br />
-                  <br />
-                  <ul className="list-disc pl-4">
-                    <li>
-                      This action unlinks all beatmaps from the tournament.
-                    </li>
-                    <li>
-                      The beatmaps themselves will not be deleted from the
-                      system.
-                    </li>
-                  </ul>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </Tooltip>
+    <Tooltip>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Music className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Delete pooled beatmaps</p>
+        </TooltipContent>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete Pooled Beatmaps</DialogTitle>
+            <DialogDescription asChild>
+              <div>
+                Are you sure you want to delete all pooled beatmaps from{' '}
+                <strong>{tournament.name}</strong>? This action cannot be
+                undone.
+                <br />
+                <br />
+                <ul className="list-disc pl-4">
+                  <li>This action unlinks all beatmaps from the tournament.</li>
+                  <li>
+                    The beatmaps themselves will not be deleted from the system.
+                  </li>
+                </ul>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Tooltip>
   );
 }

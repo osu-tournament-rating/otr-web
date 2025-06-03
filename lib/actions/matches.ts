@@ -25,6 +25,9 @@ export async function deleteMatch(id: number) {
 }
 
 export async function deletePlayerScores(matchId: number, playerId: number) {
-  const { result } = await matches.deletePlayerScores({ id: matchId, playerId });
+  const { result } = await matches.deletePlayerScores({
+    id: matchId,
+    playerId,
+  });
   return result;
 }
