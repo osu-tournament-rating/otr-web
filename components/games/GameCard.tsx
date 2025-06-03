@@ -44,8 +44,9 @@ export default function GameCard({
   // To determine "winning matchups" we don't want to look at teamless scores
   const teamMaps = Object.entries(scoreMap).map(([, scores]) => scores);
 
-  const nScores = teamMaps.reduce((max, cur) =>
-    cur.length > max.length ? cur : max
+  const nScores = teamMaps.reduce(
+    (max, cur) => (cur.length > max.length ? cur : max),
+    []
   ).length;
 
   // Iterate over each "matchup" and compare scores of each team for that slot
@@ -119,36 +120,44 @@ export default function GameCard({
   return (
     <div className="flex flex-col space-y-2 rounded-xl bg-secondary p-3">
       <GameCardHeader game={game} />
-      <div className="flex flex-row flex-wrap gap-1 md:gap-0">
-        {/* Team containers */}
-        {Object.entries(scoreMap).map(([teamKey, scores]) => {
-          const teamEnumValue = parseInt(teamKey, 10) as Team;
-          if (isNaN(teamEnumValue) || Team[teamEnumValue] === undefined) {
-            return null;
-          }
-          const teamName = TeamEnumHelper.getMetadata(teamEnumValue).text;
+      {game.scores.length === 0 ? (
+        <div className="rounded-md border p-4 text-center">
+          <p className="text-gray-600 dark:text-gray-400">
+            No scores available
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-row flex-wrap gap-1 md:gap-0">
+          {/* Team containers */}
+          {Object.entries(scoreMap).map(([teamKey, scores]) => {
+            const teamEnumValue = parseInt(teamKey, 10) as Team;
+            if (isNaN(teamEnumValue) || Team[teamEnumValue] === undefined) {
+              return null;
+            }
+            const teamName = TeamEnumHelper.getMetadata(teamEnumValue).text;
 
-          return (
-            <div
-              key={teamKey}
-              data-team={teamName}
-              className="team-container flex flex-col gap-1"
-            >
-              {/* Score cards */}
-              {scores.map(({ score, won }) => (
-                <ScoreCard
-                  key={score.id}
-                  score={score}
-                  won={won}
-                  player={players.find((p) => p.id === score.playerId)}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={teamKey}
+                data-team={teamName}
+                className="team-container flex flex-col gap-1"
+              >
+                {/* Score cards */}
+                {scores.map(({ score, won }) => (
+                  <ScoreCard
+                    key={score.id}
+                    score={score}
+                    won={won}
+                    player={players.find((p) => p.id === score.playerId)}
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
       {outcomeText && (
-        <div className="mt-2 rounded-md border border-gray-300 p-2 text-center dark:border-gray-700">
+        <div className="mt-2 rounded-md border p-2 text-center">
           <p
             className={`text-lg font-semibold ${
               outcomeText.includes('wins')
