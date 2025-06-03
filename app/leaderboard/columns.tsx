@@ -99,7 +99,7 @@ export const columns = [
       const subTier = row.original.tierProgress.currentSubTier;
 
       return (
-        <div className="flex justify-center rounded-lg bg-muted/20 p-1">
+        <div className="flex justify-center rounded-lg">
           <SimpleTooltip content={getTierString(tier, subTier)}>
             {/* We actually have to use a div here, else we encounter a 'Maximum update depth exceeded' error */}
             <div>
