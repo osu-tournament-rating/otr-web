@@ -75,63 +75,59 @@ export default function DeleteButton({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="size-4" />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Delete {entityLabels[entityType]}</p>
-          </TooltipContent>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                Confirm Delete {entityLabels[entityType]}
-              </DialogTitle>
-              <DialogDescription asChild>
-                <div>
-                  Are you sure you want to delete <strong>{entityName}</strong>?
-                  This action cannot be undone.
-                  <br />
-                  <br />
-                  <ul className="list-disc pl-4">
-                    <li>This action will cascade to all children.</li>
-                    <li>All associated data will be permanently removed.</li>
-                  </ul>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Delete {entityLabels[entityType]}</p>
+        </TooltipContent>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete {entityLabels[entityType]}</DialogTitle>
+            <DialogDescription asChild>
+              <div>
+                Are you sure you want to delete <strong>{entityName}</strong>?
+                This action cannot be undone.
+                <br />
+                <br />
+                <ul className="list-disc pl-4">
+                  <li>This action will cascade to all children.</li>
+                  <li>All associated data will be permanently removed.</li>
+                </ul>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Tooltip>
   );
 }

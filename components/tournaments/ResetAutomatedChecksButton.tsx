@@ -57,7 +57,6 @@ export default function ResetAutomatedChecksButton({
   };
 
   return (
-    <TooltipProvider>
       <Tooltip>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <TooltipTrigger asChild>
@@ -126,6 +125,5 @@ export default function ResetAutomatedChecksButton({
           </DialogContent>
         </Dialog>
       </Tooltip>
-    </TooltipProvider>
   );
 }

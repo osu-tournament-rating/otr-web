@@ -8,6 +8,7 @@ import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
 import { getSession } from '@/lib/api/server';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,14 +41,16 @@ export default async function RootLayout({
         className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" disableTransitionOnChange>
-          <SessionProvider user={session}>
-            <Header />
-            <main className="mx-auto w-full sm:px-5 md:max-w-4xl xl:max-w-6xl">
-              {children}
-            </main>
-            <Footer />
-            <Toaster richColors />
-          </SessionProvider>
+          <TooltipProvider>
+            <SessionProvider user={session}>
+              <Header />
+              <main className="mx-auto w-full sm:px-5 md:max-w-4xl xl:max-w-6xl">
+                {children}
+              </main>
+              <Footer />
+              <Toaster richColors />
+            </SessionProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

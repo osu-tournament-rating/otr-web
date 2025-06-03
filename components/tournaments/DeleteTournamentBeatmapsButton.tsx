@@ -51,7 +51,6 @@ export default function DeleteTournamentBeatmapsButton({
   };
 
   return (
-    <TooltipProvider>
       <Tooltip>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <TooltipTrigger asChild>
@@ -112,6 +111,5 @@ export default function DeleteTournamentBeatmapsButton({
           </DialogContent>
         </Dialog>
       </Tooltip>
-    </TooltipProvider>
   );
 }

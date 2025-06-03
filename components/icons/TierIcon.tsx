@@ -44,7 +44,7 @@ export default function TierIcon({
     return <Icon />;
   }
 
-  const tooltipContent = getTierString(tier, tooltip ? subTier : undefined);
+  const tooltipContent = getTierString(tier, subTier);
 
   // Here purely for convenience
   if (tier === 'Elite Grandmaster') {

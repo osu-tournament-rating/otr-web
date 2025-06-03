@@ -32,20 +32,16 @@ export function LeaderboardDataTable<TData, TValue>({
   });
 
   const getRowClassName = (index: number) => {
-    const baseClasses = 'transition-colors duration-200 hover:bg-muted/30';
     // Simple alternating row colors for all ranks
-    return `${baseClasses} ${index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'}`;
+    return `${index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'}`;
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow
-              key={headerGroup.id}
-              className="bg-muted/50 hover:bg-muted/70"
-            >
+            <TableRow key={headerGroup.id} className="bg-muted/50">
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead
