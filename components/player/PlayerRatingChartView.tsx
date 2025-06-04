@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -45,12 +46,33 @@ function getChartColors(theme?: string): ChartColors {
   };
 }
 
+function getResponsiveInterval(): number {
+  if (typeof window === 'undefined') return 4;
+
+  const width = window.innerWidth;
+  if (width < 640) return 12; // mobile
+  if (width < 1024) return 8; // tablet
+  return 4; // desktop
+}
+
 export default function PlayerRatingChartView({
   data,
   activeTab,
   highestRating,
   theme,
 }: PlayerRatingChartViewProps) {
+  const [interval, setInterval] = useState(4);
+
+  useEffect(() => {
+    const updateInterval = () => {
+      setInterval(getResponsiveInterval());
+    };
+
+    updateInterval();
+    window.addEventListener('resize', updateInterval);
+    return () => window.removeEventListener('resize', updateInterval);
+  }, []);
+
   if (!data || !data.length) {
     return (
       <div className="flex h-[350px] items-center justify-center">
@@ -122,6 +144,8 @@ export default function PlayerRatingChartView({
         margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
       >
         <XAxis
+          type="category"
+          interval={interval}
           dataKey="formattedAxisDate"
           stroke={chartColors.text}
           tick={{ fill: chartColors.text }}
