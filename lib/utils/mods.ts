@@ -55,12 +55,10 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-flashlight)';
     case Mods.Easy:
       return 'var(--mod-easy)';
-    case Mods.DoubleTime:
+    case Mods.DoubleTime | Mods.Nightcore:
       return 'var(--mod-double-time)';
     case Mods.HalfTime:
       return 'var(--mod-half-time)';
-    case Mods.Nightcore:
-      return 'var(--mod-nightcore)';
     case Mods.Hidden | Mods.HardRock:
       return 'var(--mod-hidden-hard-rock)';
     case Mods.Hidden | Mods.Easy:
@@ -71,7 +69,9 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-hidden-flashlight)';
     case Mods.Hidden | Mods.DoubleTime:
       return 'var(--mod-hidden-double-time)';
-    case Mods.Relax:
+    case Mods.SuddenDeath:
+      return 'var(--mod-sudden-death)';
+    case Mods.Relax | Mods.Autoplay | Mods.Relax2:
       return 'var(--mod-relax)';
     case Mods.Mirror:
       return 'var(--mod-mirror)';
@@ -79,6 +79,8 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-spun-out)';
     case Mods.Random:
       return 'var(--mod-random)';
+    case Mods.Key4 | Mods.Key7:
+      return 'var(--mod-mania-key)';
     default:
       return 'var(--chart-1)';
   }

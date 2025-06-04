@@ -238,6 +238,10 @@
   --mod-relax: hsl(198, 86%, 49%);
 
   --mod-random: hsl(141, 54%, 57%);
+
+  --mod-sudden-death: hsl(27, 100%, 61%);
+
+  --mod-mania-key: hsl(207, 78%, 73%);
 }
 
 .dark {
