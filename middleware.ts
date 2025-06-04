@@ -16,11 +16,7 @@ const publicRoutes = [
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Skip middleware for public routes
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
+  const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
   const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
 
@@ -29,14 +25,10 @@ export async function middleware(req: NextRequest) {
     try {
       const session = await getSession();
       if (session) {
-        // Check if environment is restricted and user lacks whitelist role
-        // This var is set to true in staging, false in production.
-        // This is to keep users away from the staging environment.
-        const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
+        // Check whitelist requirement in restricted environment
         if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
           return NextResponse.redirect(new URL('/unauthorized', req.url));
         }
-
         return NextResponse.next();
       }
     } catch (error) {
@@ -44,7 +36,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Session is being established, proceed
+  // In restricted environment, reject users without session or during session establishment
+  if (isRestrictedEnv) {
+    return NextResponse.redirect(new URL('/unauthorized', req.url));
+  }
+
+  // Skip middleware for public routes in non-restricted environments
+  if (publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Session is being established, proceed (only in non-restricted environment)
   if (sessionCookie && !userInfoCookie) {
     return NextResponse.next();
   }
