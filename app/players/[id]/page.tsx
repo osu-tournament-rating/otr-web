@@ -111,10 +111,7 @@ export default async function PlayerPage(props: PageProps) {
       ) : (
         // No ruleset data
         <Card className="p-6 font-sans">
-          <PlayerCard
-            player={playerData.playerInfo}
-            provisional={playerData.rating?.isProvisional ?? false}
-          />
+          <PlayerCard player={playerData.playerInfo} />
           <Card className="gap-2 rounded-lg p-6 text-center">
             <h2 className="text-xl font-semibold">No Data Available</h2>
             <p className="text-muted-foreground">
