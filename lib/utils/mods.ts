@@ -81,7 +81,14 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-spun-out)';
     case Mods.Random:
       return 'var(--mod-random)';
-    case Mods.Key4 | Mods.Key7:
+    case Mods.Key1 |
+      Mods.Key2 |
+      Mods.Key3 |
+      Mods.Key5 |
+      Mods.Key6 |
+      Mods.Key7 |
+      Mods.Key8 |
+      Mods.Key9:
       return 'var(--mod-mania-key)';
     default:
       return 'var(--chart-1)';
