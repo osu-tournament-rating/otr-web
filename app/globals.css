@@ -215,7 +215,7 @@
 
   --mod-easy: hsl(114, 86%, 69%);
 
-  --mod-half-time: hsl(152, 86%, 69%);
+  --mod-half-time: hsl(145, 66%, 54%);
 
   --mod-double-time: hsl(251, 86%, 70%);
 
@@ -228,6 +228,16 @@
   --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
 
   --mod-hidden-flashlight: hsl(197, 36%, 39%);
+
+  --mod-hidden-double-time: hsla(276, 84%, 70%, 0.952);
+
+  --mod-mirror: hsl(215, 70%, 84%);
+
+  --mod-spun-out: hsl(331, 67%, 61%);
+
+  --mod-relax: hsl(198, 86%, 49%);
+
+  --mod-random: hsl(141, 54%, 57%);
 }
 
 .dark {

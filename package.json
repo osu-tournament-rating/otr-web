@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "overrides": {
-    "react-is": "^19.0.0"
+    "react-is": "^19.1.0"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -48,12 +48,12 @@
     "lucide-react": "^0.477.0",
     "next": "^15.3.2",
     "next-themes": "^0.4.4",
-    "react": "^19.0.0",
+    "react": "^19.1.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-hotkeys-hook": "^4.6.1",
-    "recharts": "^2.15.2",
+    "recharts": "^2.15.3",
     "sonner": "^2.0.1",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.0.2",

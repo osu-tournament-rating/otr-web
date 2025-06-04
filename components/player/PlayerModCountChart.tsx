@@ -18,6 +18,7 @@ import {
 import { PieChart, Pie, Label } from 'recharts';
 import * as React from 'react';
 import { getModColor } from '@/lib/utils/mods';
+import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 
 interface ProcessedEntry {
   label: string;
@@ -75,10 +76,7 @@ export default function PlayerModCountChart({
       }
     });
 
-    // Filter for entries with count >= 10 and sort by count (descending)
-    return Array.from(modMap.values())
-      .filter((entry) => entry.count >= 10)
-      .sort((a, b) => b.count - a.count);
+    return Array.from(modMap.values()).sort((a, b) => b.count - a.count);
   }, [modStats]);
 
   // Calculate total games for percentage display and center label
@@ -142,18 +140,18 @@ export default function PlayerModCountChart({
     <Card className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
-        <CardDescription>Games played (min. 10 games)</CardDescription>
+        <CardDescription>
+          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
+          verified games
+        </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] w-full pb-0 sm:h-[320px] sm:max-w-[320px] [&_.recharts-pie-label-text]:font-sans"
-        >
+        <ChartContainer config={chartConfig} className="min-h-[190px] w-full">
           <PieChart>
             <Pie
               data={processedData}
-              innerRadius="50%"
-              outerRadius="70%"
+              innerRadius="45%"
+              outerRadius="60%"
               paddingAngle={3}
               dataKey="count"
               nameKey="label"

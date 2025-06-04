@@ -44,30 +44,41 @@ export function getModColor(mods: Mods) {
   mods &= ~Mods.NoFail;
 
   switch (mods) {
+    // Simply return the mod color for both arguments
     case Mods.None:
       return 'var(--chart-1)';
     case Mods.HardRock:
-      return 'var(--mod-hard-rock, var(--chart-2))';
+      return 'var(--mod-hard-rock)';
     case Mods.Hidden:
-      return 'var(--mod-hidden, var(--chart-3))';
+      return 'var(--mod-hidden)';
     case Mods.Flashlight:
-      return 'var(--mod-flashlight, var(--chart-3))';
+      return 'var(--mod-flashlight)';
     case Mods.Easy:
-      return 'var(--mod-easy, var(--chart-2))';
+      return 'var(--mod-easy)';
     case Mods.DoubleTime:
-      return 'var(--mod-double-time, var(--chart-4))';
+      return 'var(--mod-double-time)';
     case Mods.HalfTime:
-      return 'var(--mod-half-time, var(--chart-4))';
+      return 'var(--mod-half-time)';
     case Mods.Nightcore:
-      return 'var(--mod-nightcore, var(--chart-4))';
+      return 'var(--mod-nightcore)';
     case Mods.Hidden | Mods.HardRock:
-      return 'var(--mod-hidden-hard-rock, var(--chart-2))';
+      return 'var(--mod-hidden-hard-rock)';
     case Mods.Hidden | Mods.Easy:
-      return 'var(--mod-hidden-easy, var(--chart-3))';
+      return 'var(--mod-hidden-easy)';
     case Mods.Easy | Mods.DoubleTime:
-      return 'var(--mod-easy-double-time, var(--chart-2))';
+      return 'var(--mod-easy-double-time)';
     case Mods.Hidden | Mods.Flashlight:
-      return 'var(--mod-hidden-flashlight, var(--chart-3))';
+      return 'var(--mod-hidden-flashlight)';
+    case Mods.Hidden | Mods.DoubleTime:
+      return 'var(--mod-hidden-double-time)';
+    case Mods.Relax:
+      return 'var(--mod-relax)';
+    case Mods.Mirror:
+      return 'var(--mod-mirror)';
+    case Mods.SpunOut:
+      return 'var(--mod-spun-out)';
+    case Mods.Random:
+      return 'var(--mod-random)';
     default:
       return 'var(--chart-1)';
   }
