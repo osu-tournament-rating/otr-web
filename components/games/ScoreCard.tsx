@@ -52,7 +52,7 @@ export default function ScoreCard({
                 className="flex-shrink-0"
               />
             )}
-            <Link href={`/players/${player?.id}`}>
+            <Link href={`/players/${player?.id}?ruleset=${score.ruleset}`}>
               <span className="font-bold text-neutral-800 dark:text-neutral-200">
                 {player?.username}
               </span>
