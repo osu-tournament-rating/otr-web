@@ -71,6 +71,8 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-hidden-double-time)';
     case Mods.SuddenDeath:
       return 'var(--mod-sudden-death)';
+    case Mods.TouchDevice:
+      return 'var(--mod-touch-device)';
     case Mods.Relax | Mods.Autoplay | Mods.Relax2:
       return 'var(--mod-relax)';
     case Mods.Mirror:
