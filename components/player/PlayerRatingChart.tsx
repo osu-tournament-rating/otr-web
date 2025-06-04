@@ -28,7 +28,7 @@ import PlayerRatingChartView from './PlayerRatingChartView';
 
 interface PlayerRatingChartProps {
   adjustments: RatingAdjustmentDTO[];
-  highestRating: number;
+  highestRating: number | undefined;
 }
 
 export default function PlayerRatingChart({
