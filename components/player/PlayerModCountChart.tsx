@@ -127,49 +127,6 @@ export default function PlayerModCountChart({
     [totalGames]
   );
 
-  const renderCustomLabel = React.useCallback(
-    ({
-      cx,
-      cy,
-      midAngle,
-      innerRadius,
-      outerRadius,
-      percent,
-      name,
-    }: {
-      cx: number;
-      cy: number;
-      midAngle: number;
-      innerRadius: number;
-      outerRadius: number;
-      percent: number;
-      name: string;
-    }) => {
-      // Only show labels for slices with >= 8% to avoid overcrowding on mobile
-      if (percent < 0.08) return null;
-
-      const RADIAN = Math.PI / 180;
-      // Reduce label radius to keep them closer to the chart
-      const radius = innerRadius + (outerRadius - innerRadius) * 1.2;
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-      return (
-        <text
-          x={x}
-          y={y}
-          fill="currentColor"
-          textAnchor={x > cx ? 'start' : 'end'}
-          dominantBaseline="central"
-          className="fill-foreground text-xs font-medium"
-        >
-          {`${name} (${(percent * 100).toFixed(0)}%)`}
-        </text>
-      );
-    },
-    []
-  );
-
   if (processedData.length === 0) {
     return (
       <Card className={className}>
@@ -198,7 +155,6 @@ export default function PlayerModCountChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={renderCustomLabel}
               outerRadius="65%"
               innerRadius="45%"
               paddingAngle={2}
