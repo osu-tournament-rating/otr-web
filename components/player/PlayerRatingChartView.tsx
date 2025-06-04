@@ -31,7 +31,7 @@ interface ChartColors {
 interface PlayerRatingChartViewProps {
   data: RatingAdjustmentDTO[];
   activeTab: 'rating' | 'volatility';
-  highestRating: number;
+  highestRating: number | undefined;
   theme?: string;
 }
 
