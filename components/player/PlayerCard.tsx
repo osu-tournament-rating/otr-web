@@ -25,14 +25,6 @@ export default function PlayerCard({ player }: PlayerCardProps) {
         </Avatar>
         <div className="flex items-center gap-2">
           <span className="text-3xl font-medium">{player.username}</span>
-          {player.country && (
-            <CountryFlag
-              country={player.country}
-              width={24}
-              height={17}
-              className="flex-shrink-0 translate-y-px"
-            />
-          )}
           <Link
             href={`https://osu.ppy.sh/u/${player.osuId}`}
             target="_blank"

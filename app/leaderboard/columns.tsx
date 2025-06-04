@@ -57,12 +57,6 @@ export const columns = [
     cell: ({ getValue, row }) => (
       <div className="flex items-center justify-between gap-3">
         <div className="flex-shrink-0">{getRankDisplay(getValue())}</div>
-        <div className="flex items-center gap-1.5">
-          <CountryFlag country={row.original.player.country} />
-          <p className="text-xs font-medium text-muted-foreground">
-            #{row.original.countryRank}
-          </p>
-        </div>
       </div>
     ),
   }),
