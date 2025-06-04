@@ -18,6 +18,7 @@ import {
 import { PieChart, Pie, Label } from 'recharts';
 import * as React from 'react';
 import { getModColor } from '@/lib/utils/mods';
+import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 
 interface ProcessedEntry {
   label: string;
@@ -75,10 +76,7 @@ export default function PlayerModCountChart({
       }
     });
 
-    // Filter for entries with count >= 10 and sort by count (descending)
-    return Array.from(modMap.values())
-      .filter((entry) => entry.count >= 10)
-      .sort((a, b) => b.count - a.count);
+    return Array.from(modMap.values()).sort((a, b) => b.count - a.count);
   }, [modStats]);
 
   // Calculate total games for percentage display and center label
@@ -142,7 +140,9 @@ export default function PlayerModCountChart({
     <Card className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
-        <CardDescription>Games played (min. 10 games)</CardDescription>
+        <CardDescription>
+          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all verified games
+        </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
         <ChartContainer

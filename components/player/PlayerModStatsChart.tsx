@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
+import { Mods, PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { ModsEnumHelper } from '@/lib/enums';
 import { getModColor, normalizedScore } from '@/lib/utils/mods';
 import {
@@ -18,6 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
+import { InfoIcon } from 'lucide-react';
+import SimpleTooltip from '../simple-tooltip';
+import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 
 interface ChartDataEntry {
   label: string;
@@ -97,9 +100,7 @@ export default function PlayerModStatsChart({
       }
     });
 
-    // Filter for entries with count >= 10 and sort by average score (highest first)
     return Array.from(modMap.values())
-      .filter((entry) => entry.count >= 10)
       .map(({ label, averageScore, fill }) => ({
         label,
         averageScore,
@@ -119,12 +120,27 @@ export default function PlayerModStatsChart({
     );
   }
 
+  // Display a tooltip if the player has played at least MOD_CHART_DISPLAY_THRESHOLD% of all verified games with the Easy mod
+  const hasEasyMod =
+    modStats.filter((stat) => stat.mods & Mods.Easy).length >=
+    modStats.length * MOD_CHART_DISPLAY_THRESHOLD;
+
   return (
     <Card className={className}>
       <CardHeader className="items-center">
-        <CardTitle>Mod Performance</CardTitle>
+        <CardTitle className="flex flex-row gap-2">
+          <span>Mod Performance</span>
+          {hasEasyMod && (
+            <span className="flex items-center">
+              <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
+                <InfoIcon className="h-5 w-5 text-muted-foreground" />
+              </SimpleTooltip>
+            </span>
+          )}
+        </CardTitle>
         <CardDescription>
-          Average normalized score (min. 10 games)
+          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
+          verified games
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">

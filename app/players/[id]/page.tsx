@@ -5,6 +5,7 @@ import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import { Card } from '@/components/ui/card';
 import { getStatsCached } from '@/lib/actions/players';
+import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
@@ -73,8 +74,13 @@ export default async function PlayerPage(props: PageProps) {
     ? (Number(searchParams.ruleset) as Ruleset)
     : Ruleset.Osu;
 
-  const modSum =
-    playerData.modStats?.reduce((sum, current) => sum + current.count, 0) ?? 0;
+  const modStatsData = playerData.modStats?.filter(
+    (stat) =>
+      stat.count >=
+      ((playerData.modStats?.reduce((sum, stat) => sum + stat.count, 0) ?? 0) *
+        MOD_CHART_DISPLAY_THRESHOLD) /
+        100.0
+  );
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
@@ -95,15 +101,15 @@ export default async function PlayerPage(props: PageProps) {
             }
           />
           {/* Display mod statistics if available */}
-          {playerData.modStats && modSum >= 10 && (
+          {modStatsData && (
             <div className="flex flex-col gap-4 md:flex-row md:gap-2">
               <PlayerModStatsChart
                 className="w-full md:w-80 md:flex-none lg:flex-1"
-                modStats={playerData.modStats}
+                modStats={modStatsData}
               />
               <PlayerModCountChart
                 className="w-full md:flex-1"
-                modStats={playerData.modStats}
+                modStats={modStatsData}
               />
             </div>
           )}
