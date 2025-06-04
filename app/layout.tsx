@@ -44,7 +44,7 @@ export default async function RootLayout({
           <TooltipProvider>
             <SessionProvider user={session}>
               <Header />
-              <main className="mx-auto w-full sm:px-5 md:max-w-4xl xl:max-w-6xl">
+              <main className="mx-auto w-full md:w-[60%] pb-5 sm:px-5 sm:py-10 sm:pb-0 max-w-5xl">
                 {children}
               </main>
               <Footer />

@@ -122,10 +122,10 @@ export default async function Page(props: {
   };
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
+    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Leaderboard Table */}
       {data && (
-        <Card>
+        <Card className="rounded-none sm:rounded-xl">
           <CardHeader className="pb-3">
             <div className="flex flex-row items-center justify-between">
               <div className="flex flex-row items-center gap-2">

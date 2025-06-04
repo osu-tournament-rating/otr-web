@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
   const filter = tournamentListFilterSchema.parse(await searchParams);
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 p-4 py-10 md:gap-2">
+    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <Card>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
