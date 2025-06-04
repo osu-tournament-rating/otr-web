@@ -146,10 +146,7 @@ export default function PlayerModCountChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] w-full pb-0 sm:h-[320px] sm:max-w-[320px] [&_.recharts-pie-label-text]:font-sans"
-        >
+        <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
           <PieChart>
             <Pie
               data={processedData}

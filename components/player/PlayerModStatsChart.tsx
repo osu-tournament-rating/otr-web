@@ -144,10 +144,7 @@ export default function PlayerModStatsChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] w-full pb-0 sm:h-[320px] sm:max-w-[320px] [&_.recharts-pie-label-text]:font-sans"
-        >
+        <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
           <BarChart data={chartData} layout="vertical">
             <XAxis
               type="number"
