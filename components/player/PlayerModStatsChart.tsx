@@ -121,33 +121,60 @@ export default function PlayerModStatsChart({
 
   return (
     <Card className={className}>
-      <CardHeader className="items-center">
+      <CardHeader className="items-center pb-2">
         <CardTitle>Mod Performance</CardTitle>
         <CardDescription>
           Average normalized score (min. 10 games)
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-0 font-sans">
+      <CardContent className="overflow-hidden pb-4 font-sans">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] w-full pb-0 [&_.recharts-pie-label-text]:font-sans"
+          className="mx-auto !aspect-auto h-[280px] w-full overflow-hidden sm:h-[320px]"
         >
-          <BarChart data={chartData} layout="vertical">
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
+          >
             <XAxis
               type="number"
               ticks={[0, 200_000, 400_000, 600_000, 800_000]}
               tickFormatter={(value) =>
                 value > 0 ? `${(value / 1000).toFixed(0)}k` : '0'
               }
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
             />
             <YAxis
               dataKey="label"
               type="category"
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 11 }}
               interval={0}
+              width={40}
+              tickLine={false}
+              axisLine={false}
             />
-            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={30} />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  formatter={(value) => [
+                    `${Number(value).toLocaleString()}`,
+                    'Score',
+                  ]}
+                />
+              }
+            />
+            <Bar
+              dataKey="averageScore"
+              radius={[0, 4, 4, 0]}
+              barSize={Math.min(
+                30,
+                Math.max(15, 280 / Math.max(chartData.length, 1) - 5)
+              )}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

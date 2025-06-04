@@ -20,6 +20,10 @@ export const tierNames = [
 export type TierName = (typeof tierNames)[number];
 
 export function getTierString(tier: TierName, subTier: number | undefined) {
+  if (tier === 'Elite Grandmaster') {
+    return 'Elite Grandmaster';
+  }
+
   const romanNumeral = (() => {
     switch (subTier) {
       case 1:

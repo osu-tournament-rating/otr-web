@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { PieChart, Pie, Label } from 'recharts';
+import { PieChart, Pie, Label, Cell } from 'recharts';
 import * as React from 'react';
 import { getModColor } from '@/lib/utils/mods';
 
@@ -108,14 +108,14 @@ export default function PlayerModCountChart({
             <tspan
               x={viewBox.cx}
               y={viewBox.cy}
-              className="fill-foreground text-3xl font-bold"
+              className="fill-foreground text-2xl font-bold sm:text-3xl"
             >
               {totalGames.toLocaleString()}
             </tspan>
             <tspan
               x={viewBox.cx}
-              y={(viewBox.cy || 0) + 24}
-              className="fill-muted-foreground"
+              y={(viewBox.cy || 0) + 20}
+              className="fill-muted-foreground text-sm"
             >
               Games
             </tspan>
@@ -140,27 +140,30 @@ export default function PlayerModCountChart({
 
   return (
     <Card className={className}>
-      <CardHeader className="items-center">
+      <CardHeader className="items-center pb-2">
         <CardTitle>Mod Distribution</CardTitle>
         <CardDescription>Games played (min. 10 games)</CardDescription>
       </CardHeader>
-      <CardContent className="pb-0 font-sans">
+      <CardContent className="overflow-hidden pb-4 font-sans">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] w-full pb-0 [&_.recharts-pie-label-text]:font-sans"
+          className="mx-auto !aspect-auto h-[280px] w-full max-w-[280px] overflow-hidden sm:h-[320px] sm:max-w-[320px]"
         >
           <PieChart>
             <Pie
               data={processedData}
-              innerRadius="50%"
-              outerRadius="70%"
-              paddingAngle={3}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius="65%"
+              innerRadius="45%"
+              paddingAngle={2}
               dataKey="count"
               nameKey="label"
-              label={({ name, percent }) =>
-                `${name} (${(percent * 100).toFixed(1)}%)`
-              }
             >
+              {processedData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
               <Label content={renderCenterLabel} />
             </Pie>
             <ChartTooltip
