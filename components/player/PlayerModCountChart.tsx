@@ -150,8 +150,8 @@ export default function PlayerModCountChart({
           <PieChart>
             <Pie
               data={processedData}
-              innerRadius="45%"
-              outerRadius="60%"
+              innerRadius="50%"
+              outerRadius="70%"
               paddingAngle={3}
               dataKey="count"
               nameKey="label"
