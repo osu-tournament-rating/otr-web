@@ -4,9 +4,14 @@ import {
   SESSION_COOKIE_NAME,
   USER_INFO_COOKIE_NAME,
 } from './lib/api/server';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
 
-const publicRoutes = ['/unauthorized', '/not-found'];
+const publicRoutes = [
+  '/',
+  '/unauthorized',
+  '/not-found',
+  '/leaderboard',
+  '/tournaments',
+];
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -23,7 +28,7 @@ export async function middleware(req: NextRequest) {
   if (sessionCookie && userInfoCookie) {
     try {
       const session = await getSession();
-      if (session && session.scopes?.includes(Roles.Whitelist)) {
+      if (session) {
         return NextResponse.next();
       }
     } catch (error) {

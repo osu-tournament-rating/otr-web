@@ -8,6 +8,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Crown } from 'lucide-react';
+import { useSession } from '@/lib/hooks/useSession';
 
 const columnHelper = createColumnHelper<PlayerRatingStatsDTO>();
 
@@ -61,25 +62,37 @@ export const columns = [
   }),
   columnHelper.accessor('player.osuId', {
     header: 'Player',
-    cell: ({ getValue, row }) => (
-      <div className="ml-1.5 flex min-w-[150px] flex-row items-center gap-3">
-        <Image
-          src={`https://a.ppy.sh/${getValue()}`}
-          alt={`${row.original.player.username} avatar`}
-          className="flex-shrink-0 rounded-full ring-2 ring-muted/20"
-          width={32}
-          height={32}
-        />
-        <Link
-          href={`/players/${row.original.player.id}?ruleset=${row.original.ruleset}`}
-          className="group"
-        >
-          <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
-            {row.original.player.username}
-          </p>
-        </Link>
-      </div>
-    ),
+    cell: ({ getValue, row }) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const session = useSession();
+
+      return (
+        <div className="ml-1.5 flex min-w-[150px] flex-row items-center gap-3">
+          <Image
+            src={`https://a.ppy.sh/${getValue()}`}
+            alt={`${row.original.player.username} avatar`}
+            className="flex-shrink-0 rounded-full ring-2 ring-muted/20"
+            width={32}
+            height={32}
+          />
+          {/* If the user is signed out, do not link */}
+          {session ? (
+            <Link
+              href={`/players/${row.original.player.id}?ruleset=${row.original.ruleset}`}
+              className="group"
+            >
+              <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
+                {row.original.player.username}
+              </p>
+            </Link>
+          ) : (
+            <p className="hover:cursor-not-allowed max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
+              {row.original.player.username}
+            </p>
+          )}
+        </div>
+      );
+    },
   }),
   columnHelper.accessor('tierProgress.currentTier', {
     header: () => <div className="text-center">Tier</div>,
