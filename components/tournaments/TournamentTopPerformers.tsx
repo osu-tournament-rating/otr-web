@@ -2,7 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Award, User } from 'lucide-react';
-import { PlayerTournamentStatsBaseDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  PlayerTournamentStatsBaseDTO,
+  Ruleset,
+} from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TRText from '../rating/TRText';
@@ -10,11 +13,13 @@ import TRText from '../rating/TRText';
 interface TournamentTopPerformersProps {
   playerStats: PlayerTournamentStatsBaseDTO[];
   className?: string;
+  ruleset: Ruleset;
 }
 
 export default function TournamentTopPerformers({
   playerStats,
   className,
+  ruleset,
 }: TournamentTopPerformersProps) {
   const topPerformers = playerStats
     .filter((stats) => stats.matchesPlayed >= 3)
@@ -67,7 +72,7 @@ export default function TournamentTopPerformers({
 
           return (
             <div
-              key={stats.player.osuId}
+              key={stats.player.id}
               className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
             >
               <div className="flex items-center gap-2">
@@ -89,7 +94,7 @@ export default function TournamentTopPerformers({
 
               <div className="min-w-0 flex-1">
                 <Link
-                  href={`/players/${stats.player.osuId}`}
+                  href={`/players/${stats.player.id}?ruleset=${ruleset}`}
                   className="block truncate text-sm font-medium hover:underline"
                 >
                   {stats.player.username}
