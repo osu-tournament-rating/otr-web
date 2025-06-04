@@ -113,12 +113,14 @@ export default function PlayerRatingChartView({
   };
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+    <ChartContainer
+      config={chartConfig}
+      className="max-h-[400px] min-h-[300px] w-full"
+    >
       <LineChart
         data={chartData}
         margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
         <XAxis
           dataKey="formattedAxisDate"
           stroke={chartColors.text}
@@ -140,6 +142,7 @@ export default function PlayerRatingChartView({
                 ]
           }
         />
+        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
         <RechartsTooltip
           content={<PlayerRatingChartTooltip activeTab={activeTab} />}
         />
