@@ -127,7 +127,7 @@ export default function PlayerModStatsChart({
           Average normalized score (min. 10 games)
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-0 overflow-hidden font-sans">
+      <CardContent className="overflow-hidden pb-0 font-sans">
         <ChartContainer
           config={chartConfig}
           className="mx-auto aspect-square max-h-[250px] w-full pb-0 sm:h-[320px] sm:max-w-[320px] [&_.recharts-pie-label-text]:font-sans"
