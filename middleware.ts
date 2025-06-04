@@ -29,6 +29,14 @@ export async function middleware(req: NextRequest) {
     try {
       const session = await getSession();
       if (session) {
+        // Check if environment is restricted and user lacks whitelist role
+        // This var is set to true in staging, false in production.
+        // This is to keep users away from the staging environment.
+        const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
+        if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
+          return NextResponse.redirect(new URL('/unauthorized', req.url));
+        }
+
         return NextResponse.next();
       }
     } catch (error) {
