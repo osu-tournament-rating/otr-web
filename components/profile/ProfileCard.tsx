@@ -29,6 +29,7 @@ import { logout } from '@/lib/actions/auth';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 import { SessionContext } from '@/components/session-provider';
 import { useContext } from 'react';
+import CountryFlag from '../shared/CountryFlag';
 
 export default function ProfileCard() {
   const [isOpen, toggleIsOpen] = useToggle();
@@ -75,6 +76,14 @@ export default function ProfileCard() {
                   <span className="text-sm font-medium">
                     {session.player.username}
                   </span>
+                  {session.player.country && (
+                    <CountryFlag
+                      country={session.player.country}
+                      width={16}
+                      height={11}
+                      className="flex-shrink-0"
+                    />
+                  )}
                   {session.scopes && (
                     <ProfileRoleBadge scopes={session.scopes} />
                   )}
@@ -154,6 +163,14 @@ export default function ProfileCard() {
                   {session.player.username ?? 'Username'}
                 </span>
               </p>
+              {session.player.country && (
+                <CountryFlag
+                  country={session.player.country}
+                  width={16}
+                  height={11}
+                  className="flex-shrink-0"
+                />
+              )}
               {session.scopes && <ProfileRoleBadge scopes={session.scopes} />}
             </div>
           </div>

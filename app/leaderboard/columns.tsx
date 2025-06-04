@@ -53,23 +53,9 @@ const createCenteredColumn = (
 export const columns = [
   columnHelper.accessor('globalRank', {
     header: 'Rank',
-    cell: ({ getValue, row }) => (
+    cell: ({ getValue }) => (
       <div className="flex items-center justify-between gap-3">
         <div className="flex-shrink-0">{getRankDisplay(getValue())}</div>
-        <div className="flex items-center gap-1.5">
-          <SimpleTooltip content={row.original.player.country}>
-            <Image
-              src={`https://assets.ppy.sh/old-flags/${row.original.player.country}.png`}
-              alt={`${row.original.player.country} flag`}
-              className="rounded-sm shadow-sm"
-              width={20}
-              height={14}
-            />
-          </SimpleTooltip>
-          <p className="text-xs font-medium text-muted-foreground">
-            #{row.original.countryRank}
-          </p>
-        </div>
       </div>
     ),
   }),

@@ -27,8 +27,10 @@ export default function StatCard({
       {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
 
       <div className="flex min-w-0 flex-col">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className={cn('text-lg font-semibold', valueClassName)}>{value}</p>
+        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className={cn('text-lg font-semibold', valueClassName)}>
+          {value}
+        </div>
       </div>
     </Card>
   );

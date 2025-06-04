@@ -17,6 +17,7 @@ import TRText from '../rating/TRText';
 import StatCard from '../shared/StatCard';
 import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
+import CountryFlag from '@/components/shared/CountryFlag';
 
 function formatPercentage(value: number | undefined | null): string {
   if (value === undefined || value === null) return 'N/A';
@@ -88,7 +89,12 @@ export default function PlayerRatingStatsCard({
           {/* Country Rank Card */}
           <StatCard
             label="Country"
-            value={`#${rating.countryRank.toLocaleString()}`}
+            value={
+              <div className="flex items-center gap-1.5">
+                <CountryFlag country={rating.player.country} />
+                <span>{`#${rating.countryRank.toLocaleString()}`}</span>
+              </div>
+            }
             icon={<Flag className="h-5 w-5 text-primary" />}
           />
 

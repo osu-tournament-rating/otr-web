@@ -5,6 +5,7 @@ import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import TierIcon from '../icons/TierIcon';
 import TRText from '../rating/TRText';
 import { Progress } from '../ui/progress';
+import SimpleTooltip from '../simple-tooltip';
 
 interface TierProgressProps {
   tierProgress: PlayerRatingStatsDTO['tierProgress'];
@@ -31,13 +32,18 @@ export default function PlayerTierProgress({
 
       <div className="flex">
         <div className="flex h-16 w-16 items-end justify-center">
-          <TierIcon
-            tier={(tierProgress.currentTier as TierName) || ''}
-            subTier={3}
-            tooltip
-            width={32}
-            height={32}
-          />
+          <SimpleTooltip
+            content={getTierString(tierProgress.currentTier as TierName, 3)}
+          >
+            <div>
+              <TierIcon
+                tier={(tierProgress.currentTier as TierName) || ''}
+                subTier={3}
+                width={32}
+                height={32}
+              />
+            </div>
+          </SimpleTooltip>
         </div>
 
         {/* Tier progress bars */}
@@ -63,13 +69,18 @@ export default function PlayerTierProgress({
         </div>
 
         <div className="flex h-16 w-16 items-end justify-center">
-          <TierIcon
-            tier={tierProgress.nextMajorTier as TierName}
-            subTier={3}
-            tooltip
-            width={32}
-            height={32}
-          />
+          <SimpleTooltip
+            content={getTierString(tierProgress.nextMajorTier as TierName, 3)}
+          >
+            <div>
+              <TierIcon
+                tier={tierProgress.nextMajorTier as TierName}
+                subTier={3}
+                width={32}
+                height={32}
+              />
+            </div>
+          </SimpleTooltip>
         </div>
       </div>
     </div>
