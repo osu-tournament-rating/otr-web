@@ -32,9 +32,14 @@ export default function TierIcon({
   /** If a tooltip with the tier text should be attached to the icon */
   tooltip?: boolean;
 }) {
+  const fileName =
+    tier === 'Elite Grandmaster'
+      ? 'Elite Grandmaster'
+      : `${tier}${subTier ?? ''}`;
+
   const Icon = () => (
     <Image
-      src={`/icons/tiers/${tier}${subTier ?? ''}.svg`}
+      src={`/icons/tiers/${fileName}.svg`}
       alt={tier + subTier?.toString()}
       {...rest}
     />

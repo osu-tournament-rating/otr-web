@@ -38,7 +38,6 @@ export default function PlayerRatingStatsCard({
     <Card className="p-6 font-sans">
       <PlayerCard
         player={rating.player}
-        provisional={rating.isProvisional ?? false}
       />
       <div className="flex flex-col gap-4">
         {/* Stats Cards */}

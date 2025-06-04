@@ -1,17 +1,15 @@
 import { PlayerCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';
-import { CircleAlertIcon, ExternalLink, User } from 'lucide-react';
+import { ExternalLink, User } from 'lucide-react';
 import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
-import SimpleTooltip from '../simple-tooltip';
 
 interface PlayerCardProps {
   player: PlayerCompactDTO;
-  provisional: boolean;
 }
 
-export default function PlayerCard({ player, provisional }: PlayerCardProps) {
+export default function PlayerCard({ player }: PlayerCardProps) {
   return (
     <Card className="flex flex-row flex-wrap justify-between border-none bg-popover p-4">
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
@@ -26,11 +24,6 @@ export default function PlayerCard({ player, provisional }: PlayerCardProps) {
         </Avatar>
         <div className="flex items-center gap-2">
           <span className="text-3xl font-medium">{player.username}</span>
-          {provisional && (
-            <SimpleTooltip content="This player's rating is provisional">
-              <CircleAlertIcon className="h-4 w-4 text-red-500" />
-            </SimpleTooltip>
-          )}
           <Link
             href={`https://osu.ppy.sh/u/${player.osuId}`}
             target="_blank"
