@@ -2,7 +2,6 @@
 
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import CountryFlag from '@/components/shared/CountryFlag';
 import { TierName, getTierString } from '@/lib/utils/tierData';
 import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { createColumnHelper } from '@tanstack/react-table';
@@ -54,7 +53,7 @@ const createCenteredColumn = (
 export const columns = [
   columnHelper.accessor('globalRank', {
     header: 'Rank',
-    cell: ({ getValue, row }) => (
+    cell: ({ getValue }) => (
       <div className="flex items-center justify-between gap-3">
         <div className="flex-shrink-0">{getRankDisplay(getValue())}</div>
       </div>

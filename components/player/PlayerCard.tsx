@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
 import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
-import CountryFlag from '../shared/CountryFlag';
 
 interface PlayerCardProps {
   player: PlayerCompactDTO;
