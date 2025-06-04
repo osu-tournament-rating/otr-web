@@ -242,6 +242,8 @@
   --mod-sudden-death: hsl(27, 100%, 61%);
 
   --mod-mania-key: hsl(207, 78%, 73%);
+
+  --mod-touch-device: hsl(27, 100%, 61%);
 }
 
 .dark {
