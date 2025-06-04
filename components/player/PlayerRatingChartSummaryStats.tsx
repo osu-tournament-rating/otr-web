@@ -6,7 +6,7 @@ import StatCard from '../shared/StatCard';
 
 interface PlayerRatingChartSummaryStatsProps {
   data: RatingAdjustmentDTO[];
-  highestRating: number;
+  highestRating: number | undefined;
 }
 
 export default function PlayerRatingChartSummaryStats({
@@ -27,7 +27,7 @@ export default function PlayerRatingChartSummaryStats({
         label="Peak Rating"
         value={
           <span className="flex items-baseline gap-1">
-            {highestRating.toFixed(0)}
+            {highestRating?.toFixed(0) ?? 'N/A'}
             <TRText />
           </span>
         }
