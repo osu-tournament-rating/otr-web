@@ -130,9 +130,12 @@ export default function TournamentSubmissionForm() {
   }
 
   return (
-    <Card className="overflow-hidden rounded-2xl border border-border bg-card px-8 shadow-xl">
+    <Card className="w-full overflow-hidden">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mx-2 space-y-8 lg:mx-8"
+        >
           <FormSection
             icon={<Trophy className="size-6 text-primary" />}
             title="Information"

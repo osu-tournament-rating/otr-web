@@ -204,7 +204,7 @@ const RulesetFilter = ({ control }: { control: Control<FilterFormData> }) => {
 };
 
 const SortControls = ({ control }: { control: Control<FilterFormData> }) => (
-  <div className="flex items-center gap-2 px-4 pb-4">
+  <div className="flex items-center gap-2">
     <FormField
       control={control}
       name="sort"
@@ -294,16 +294,14 @@ export default function TournamentListFilter({
   return (
     <Form {...form}>
       <form>
-        <div className="flex flex-col">
-          <div className="flex flex-col gap-2 p-4">
-            <SearchInput
-              searchQuery={searchQuery}
-              onQueryChange={handleSetQuery}
-              onKeyDown={handleSearchKeyDown}
-              control={form.control}
-            />
-            <RulesetFilter control={form.control} />
-          </div>
+        <div className="flex flex-col gap-4">
+          <SearchInput
+            searchQuery={searchQuery}
+            onQueryChange={handleSetQuery}
+            onKeyDown={handleSearchKeyDown}
+            control={form.control}
+          />
+          <RulesetFilter control={form.control} />
           <SortControls control={form.control} />
         </div>
       </form>

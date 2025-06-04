@@ -115,7 +115,7 @@ export default function TournamentList({
   }
 
   return (
-    <div ref={listRef} className="p-4">
+    <div ref={listRef}>
       <div
         className="relative w-full"
         style={{
