@@ -146,7 +146,7 @@ export default function PlayerModCountChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="min-h-[190px] w-full">
           <PieChart>
             <Pie
               data={processedData}
