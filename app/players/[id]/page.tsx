@@ -96,13 +96,13 @@ export default async function PlayerPage(props: PageProps) {
           />
           {/* Display mod statistics if available */}
           {playerData.modStats && modSum >= 10 && (
-            <div className="flex flex-col justify-between gap-2 md:flex-row">
+            <div className="flex flex-col gap-4 md:flex-row md:gap-2">
               <PlayerModStatsChart
-                className="flex-1 md:w-80 md:flex-none lg:flex-1"
+                className="w-full md:w-80 md:flex-none lg:flex-1"
                 modStats={playerData.modStats}
               />
               <PlayerModCountChart
-                className="flex-1"
+                className="w-full md:flex-1"
                 modStats={playerData.modStats}
               />
             </div>
@@ -111,7 +111,10 @@ export default async function PlayerPage(props: PageProps) {
       ) : (
         // No ruleset data
         <Card className="p-6 font-sans">
-          <PlayerCard player={playerData.playerInfo} />
+          <PlayerCard
+            player={playerData.playerInfo}
+            provisional={playerData.rating?.isProvisional ?? false}
+          />
           <Card className="gap-2 rounded-lg p-6 text-center">
             <h2 className="text-xl font-semibold">No Data Available</h2>
             <p className="text-muted-foreground">
