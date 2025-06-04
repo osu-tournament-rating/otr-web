@@ -70,7 +70,10 @@ export const columns = [
           width={32}
           height={32}
         />
-        <Link href={`/players/${row.original.player.id}`} className="group">
+        <Link
+          href={`/players/${row.original.player.id}?ruleset=${row.original.ruleset}`}
+          className="group"
+        >
           <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
             {row.original.player.username}
           </p>
