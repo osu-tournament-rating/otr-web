@@ -141,7 +141,8 @@ export default function PlayerModCountChart({
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
         <CardDescription>
-          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all verified games
+          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
+          verified games
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
@@ -152,8 +153,8 @@ export default function PlayerModCountChart({
           <PieChart>
             <Pie
               data={processedData}
-              innerRadius="50%"
-              outerRadius="70%"
+              innerRadius="45%"
+              outerRadius="60%"
               paddingAngle={3}
               dataKey="count"
               nameKey="label"
