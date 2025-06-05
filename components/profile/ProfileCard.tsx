@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoginButton from '../buttons/LoginButton';
 import Link from 'next/link';
@@ -109,7 +109,7 @@ export default function ProfileCard() {
             </Link>
           </SheetClose>
 
-          <SheetClose asChild>
+          {/* <SheetClose asChild>
             <Link
               href="/settings"
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
@@ -117,7 +117,7 @@ export default function ProfileCard() {
               <Settings className="size-4" />
               <span>Settings</span>
             </Link>
-          </SheetClose>
+          </SheetClose> */}
 
           <button
             className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
@@ -184,13 +184,13 @@ export default function ProfileCard() {
           </Link>
         </DropdownMenuItem>
         {/* Settings */}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        {/* <DropdownMenuItem asChild className="cursor-pointer">
           <Link href="/settings">
             <Settings className="mr-2 size-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator /> */}
         {/* Log out */}
         <DropdownMenuItem
           className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
