@@ -16,7 +16,6 @@ import { getMostCommonModForBeatmap } from '@/lib/utils/mods';
 import Link from 'next/link';
 import SimpleTooltip from '@/components/simple-tooltip';
 import SingleModIcon from '@/components/icons/SingleModIcon';
-import Image from 'next/image';
 import { useState, useMemo } from 'react';
 import BeatmapBackground from '../games/BeatmapBackground';
 
