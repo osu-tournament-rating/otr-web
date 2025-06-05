@@ -86,7 +86,7 @@ export const columns = [
               </p>
             </Link>
           ) : (
-            <p className="hover:cursor-not-allowed max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
+            <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary hover:cursor-not-allowed sm:max-w-full">
               {row.original.player.username}
             </p>
           )}
