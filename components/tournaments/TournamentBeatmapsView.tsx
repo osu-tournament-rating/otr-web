@@ -18,6 +18,7 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import SingleModIcon from '@/components/icons/SingleModIcon';
 import Image from 'next/image';
 import { useState, useMemo } from 'react';
+import BeatmapBackground from '../games/BeatmapBackground';
 
 interface TournamentBeatmapsViewProps {
   beatmaps: BeatmapDTO[];
@@ -281,12 +282,9 @@ export default function TournamentBeatmapsView({
                         {/* Thumbnail */}
                         <div className="relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
                           {beatmap.beatmapset?.osuId ? (
-                            <Image
-                              src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset.osuId}/covers/list@2x.jpg`}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              sizes="64px"
+                            <BeatmapBackground
+                              beatmapsetId={beatmap.beatmapset?.osuId}
+                              alt={`${beatmap.beatmapset?.title} cover`}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-muted">
