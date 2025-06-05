@@ -51,7 +51,6 @@ export const columns = [
   columnHelper.accessor('status', {
     header: ({ column }) => {
       return (
-        // TODO: Refactor into reusable component
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -69,12 +68,13 @@ export const columns = [
       );
     },
     cell: ({ getValue }) => (
-      <div className="flex gap-1">
+      <div className="flex justify-center">
         <VerificationBadge
           verificationStatus={getValue().verificationStatus}
           warningFlags={getValue().warningFlags}
           rejectionReason={getValue().rejectionReason}
           entityType="match"
+          displayText
         />
       </div>
     ),
