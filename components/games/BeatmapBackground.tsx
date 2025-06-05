@@ -19,6 +19,8 @@ export default function BeatmapBackground({
     ? `https://assets.ppy.sh/beatmaps/${beatmapsetId}/covers/cover@2x.jpg`
     : fallbackSrc;
 
+  const isExternalImage = !!beatmapsetId && !hasError;
+
   return (
     <Image
       className="absolute z-1 rounded-xl object-cover"
@@ -26,7 +28,7 @@ export default function BeatmapBackground({
       alt={alt}
       fill
       onError={() => setHasError(true)}
-      unoptimized={!hasError}
+      unoptimized={isExternalImage}
     />
   );
 }
