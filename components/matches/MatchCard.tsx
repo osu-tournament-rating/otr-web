@@ -4,7 +4,6 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import VerificationBadge from '../badges/VerificationBadge';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
 import { formatUTCDate } from '@/lib/utils/date';
 import AdminNoteView from '../admin-notes/AdminNoteView';
