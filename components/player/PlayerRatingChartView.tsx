@@ -113,7 +113,10 @@ export default function PlayerRatingChartView({
   };
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+    <ChartContainer
+      config={chartConfig}
+      className="max-h-[375px] min-h-[300px] w-full"
+    >
       <LineChart
         data={chartData}
         margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
