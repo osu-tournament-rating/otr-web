@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
       <Card>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
-            <Trophy className="h-6 w-6" />
+            <Trophy className="h-6 w-6 text-primary" />
             <CardTitle className="text-xl font-bold">Tournaments</CardTitle>
           </div>
         </CardHeader>
