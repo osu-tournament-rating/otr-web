@@ -184,7 +184,7 @@ export default function PlayerRatingChartView({
           />
         )}
         <Line
-          type="natural"
+          type="monotone"
           dataKey={`${activeTab}After`}
           stroke={
             activeTab === 'rating' ? chartColors.rating : chartColors.volatility
