@@ -166,7 +166,11 @@ export default function AdminNoteView({
               {/* Save changes */}
               <Button
                 type="submit"
-                disabled={!form.formState.isValid || !form.formState.isDirty}
+                disabled={
+                  !form.formState.isValid ||
+                  !form.formState.isDirty ||
+                  form.formState.isSubmitting
+                }
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="animate-spin" />

@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
