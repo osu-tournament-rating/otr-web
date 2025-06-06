@@ -21,8 +21,7 @@ import CountryFlag from '@/components/shared/CountryFlag';
 
 function formatPercentage(value: number | undefined | null): string {
   if (value === undefined || value === null) return 'N/A';
-  const formattedValue =
-    value < 1 ? (value * 100).toFixed(2) : value.toFixed(2);
+  const formattedValue = value.toFixed(2);
   return `${formattedValue}%`;
 }
 
