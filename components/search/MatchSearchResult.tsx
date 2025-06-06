@@ -19,16 +19,15 @@ export default function MatchSearchResult({
       <Link
         href={`/matches/${data.id}`}
         onClick={closeDialog}
-        className="flex flex-col items-center gap-2 overflow-hidden sm:gap-3"
+        className="flex flex-row items-center gap-2 overflow-hidden sm:gap-3"
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted/50 sm:h-10 sm:w-10">
-            <Swords className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+        <div className="flex items-center gap-3">
+          <div className="flex w-full min-w-66 flex-row items-center gap-4 md:min-w-96">
+            <Swords className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
+            <span>{highlightMatch(data.name ?? 'Unknown match', query)}</span>
           </div>
-          <p className="min-w-0 flex-2 text-base font-medium sm:text-lg">
-            {highlightMatch(data.name ?? 'Unknown match', query)}
-          </p>
-          <div className="flex-1 text-sm text-muted-foreground">
+
+          <div className="flex w-full flex-col text-sm text-muted-foreground">
             <p>Played in</p>
             <p className="font-bold break-words">{data.tournamentName}</p>
           </div>
