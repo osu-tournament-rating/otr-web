@@ -3,8 +3,8 @@ import {
   AdminNoteRouteTarget,
   GameDTO,
 } from '@osu-tournament-rating/otr-api-client';
-import Image from 'next/image';
 import Link from 'next/link';
+import BeatmapBackground from './BeatmapBackground';
 import { ExternalLink } from 'lucide-react';
 import RulesetIcon from '../icons/RulesetIcon';
 import ModIconset from '../icons/ModIconset';
@@ -19,11 +19,9 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg */}
-      <Image
-        className="absolute z-1 rounded-xl object-cover"
-        src={`https://assets.ppy.sh/beatmaps/${game.beatmap.beatmapset?.osuId}/covers/cover@2x.jpg`}
-        alt={'beatmap cover'}
-        fill
+      <BeatmapBackground
+        beatmapsetId={game.beatmap.beatmapset?.osuId}
+        alt="beatmap cover"
       />
 
       {/* Enhanced overlay for better text contrast */}

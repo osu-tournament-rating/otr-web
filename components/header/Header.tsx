@@ -22,11 +22,14 @@ import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
 import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
+import { useSession } from '@/lib/hooks/useSession';
 
 type NavItem = {
   title: string;
   href: string;
   dropdown?: SubNavItem[];
+  roles?: Roles[];
 };
 
 type SubNavItem = {
@@ -37,20 +40,24 @@ const navItems: NavItem[] = [
   {
     title: 'Leaderboard',
     href: '/leaderboard',
+    roles: [],
   },
   {
     title: 'Tournaments',
     href: '/tournaments',
+    roles: [],
     dropdown: [
       {
         title: 'Browse',
         href: '/tournaments',
         icon: Trophy,
+        roles: [],
       },
       {
         title: 'Submit',
         href: '/tournaments/submit',
         icon: Upload,
+        roles: [Roles.Submit],
       },
     ],
   },
@@ -58,74 +65,88 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const session = useSession();
 
   return (
-    <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
-      <div className="flex items-center gap-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src={'/logos/small.svg'}
-            alt="o!TR Logo"
-            width={36}
-            height={36}
-            className="transition-transform hover:scale-105"
-          />
-        </Link>
+    <>
+      <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <Image
+              src={'/logos/small.svg'}
+              alt="o!TR Logo"
+              width={36}
+              height={36}
+              className="transition-transform hover:scale-105"
+            />
+          </Link>
 
-        {/* Main nav */}
-        <NavigationMenu viewport={false} className="hidden md:flex">
-          <NavigationMenuList className="gap-1">
-            {navItems.map((item) => (
-              <NavigationItem key={item.title} {...item} />
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-      </div>
+          {/* Main nav */}
+          <NavigationMenu viewport={false} className="hidden md:flex">
+            <NavigationMenuList className="gap-1">
+              {navItems.map((item) => (
+                <NavigationItem key={item.title} {...item} />
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <SearchDialog />
-        <ModeToggle />
-        <SupportButton />
-        <ClientOnly>
-          <div className="hidden md:ml-1 md:block">
-            <ProfileCard />
-          </div>
-        </ClientOnly>
-
-        {/* Mobile menu */}
-        <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
-          <MobileNavTrigger isOpen={isMobileNavOpen} />
-          <SheetContent
-            overlay={false}
-            closeButton={false}
-            className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
-          >
-            {/* Required for screen reader */}
-            <DialogTitle hidden />
-
-            <div className="flex flex-col space-y-6">
-              <ClientOnly>
-                <ProfileCard />
-              </ClientOnly>
-              <Separator className="bg-muted" />
-              <nav className="flex flex-col space-y-1">
-                <NavigationMenu
-                  viewport={false}
-                  className="contents justify-start"
-                >
-                  <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
-                    {navItems.map((item) => (
-                      <NavigationItem isMobile key={item.title} {...item} />
-                    ))}
-                  </NavigationMenuList>
-                </NavigationMenu>
-              </nav>
+        <div className="flex items-center gap-2">
+          <SearchDialog />
+          <ModeToggle />
+          <SupportButton />
+          <ClientOnly>
+            <div className="hidden md:ml-1 md:block">
+              <ProfileCard />
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </header>
+          </ClientOnly>
+
+          {/* Mobile menu */}
+          <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
+            <MobileNavTrigger isOpen={isMobileNavOpen} />
+            <SheetContent
+              overlay={false}
+              closeButton={false}
+              className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
+            >
+              {/* Required for screen reader */}
+              <DialogTitle hidden />
+
+              <div className="flex flex-col space-y-6">
+                <ClientOnly>
+                  <ProfileCard />
+                </ClientOnly>
+                <Separator className="bg-muted" />
+                <nav className="flex flex-col space-y-1">
+                  <NavigationMenu
+                    viewport={false}
+                    className="contents justify-start"
+                  >
+                    <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
+                      {navItems.map((item) => (
+                        <NavigationItem isMobile key={item.title} {...item} />
+                      ))}
+                    </NavigationMenuList>
+                  </NavigationMenu>
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </header>
+
+      {/* Sign-in banner */}
+      <ClientOnly>
+        {!session && (
+          <div className="w-full bg-accent/50 py-1 text-center">
+            <p className="font-mono text-xs text-muted-foreground">
+              Most features are not available while signed out.
+            </p>
+          </div>
+        )}
+      </ClientOnly>
+    </>
   );
 }
 
@@ -182,14 +203,20 @@ function NavigationItem({
   title,
   href,
   dropdown,
+  roles,
   isMobile = false,
 }: NavItem & { isMobile?: boolean }) {
+  const session = useSession();
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
   const hasDropdown = !!dropdown;
 
+  const isVisible =
+    roles?.length === 0 ||
+    roles?.some((role) => session?.scopes?.includes(role));
+
   return (
-    <NavigationMenuItem className="w-full">
+    <NavigationMenuItem className={cn('w-full', !isVisible && 'hidden')}>
       <SubnavTrigger active={isActive} dropdown={hasDropdown}>
         <NavLink
           isMobile={isMobile}
@@ -213,11 +240,16 @@ function NavigationItem({
         >
           {/* Seamlessly extend the nav border */}
           <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
-          {dropdown.map(({ title, href, icon: Icon }) => (
+          {dropdown.map(({ title, href, icon: Icon, roles }) => (
             <NavLink
               isMobile={isMobile}
               key={title}
               href={href}
+              hidden={
+                roles &&
+                roles.length > 0 &&
+                !roles.some((role) => session?.scopes?.includes(role))
+              }
               className={cn(
                 'hover:bg-accent md:hover:bg-transparent',
                 pathname === href &&

@@ -4,18 +4,19 @@ import {
   SESSION_COOKIE_NAME,
   USER_INFO_COOKIE_NAME,
 } from './lib/api/server';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
 
-const publicRoutes = ['/unauthorized', '/not-found'];
+const publicRoutes = [
+  '/',
+  '/unauthorized',
+  '/not-found',
+  '/leaderboard',
+  '/tournaments',
+];
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Skip middleware for public routes
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
+  const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
   const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
 
@@ -23,7 +24,11 @@ export async function middleware(req: NextRequest) {
   if (sessionCookie && userInfoCookie) {
     try {
       const session = await getSession();
-      if (session && session.scopes?.includes(Roles.Whitelist)) {
+      if (session) {
+        // Check whitelist requirement in restricted environment
+        if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
+          return NextResponse.redirect(new URL('/unauthorized', req.url));
+        }
         return NextResponse.next();
       }
     } catch (error) {
@@ -31,7 +36,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Session is being established, proceed
+  // In restricted environment, reject users without session or during session establishment
+  if (isRestrictedEnv) {
+    return NextResponse.redirect(new URL('/unauthorized', req.url));
+  }
+
+  // Skip middleware for public routes in non-restricted environments
+  if (publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Session is being established, proceed (only in non-restricted environment)
   if (sessionCookie && !userInfoCookie) {
     return NextResponse.next();
   }

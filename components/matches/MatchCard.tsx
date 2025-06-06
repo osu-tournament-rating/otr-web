@@ -4,7 +4,6 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import VerificationBadge from '../badges/VerificationBadge';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
 import { formatUTCDate } from '@/lib/utils/date';
 import AdminNoteView from '../admin-notes/AdminNoteView';
@@ -13,6 +12,7 @@ import React, { Fragment } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
+import BeatmapBackground from '../games/BeatmapBackground';
 
 export default function MatchCard({ match }: { match: MatchDTO }) {
   const games = match.games ?? [];
@@ -47,15 +47,10 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
                       marginLeft: index > 0 ? '-20px' : '0',
                     }}
                   >
-                    {game.beatmap?.beatmapset?.osuId && (
-                      <Image
-                        src={`https://assets.ppy.sh/beatmaps/${game.beatmap.beatmapset.osuId}/covers/cover@2x.jpg`}
-                        alt={`${game.beatmap.beatmapset.title} cover`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    )}
+                    <BeatmapBackground
+                      beatmapsetId={game.beatmap?.beatmapset?.osuId}
+                      alt={`${game.beatmap.beatmapset?.title} cover`}
+                    />
                   </div>
                 </Fragment>
               ))}

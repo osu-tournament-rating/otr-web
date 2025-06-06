@@ -99,8 +99,8 @@ export default function TournamentList({
   ]);
 
   // Errors
-  if (!session || error) {
-    return <h1>Something is wrong :D</h1>;
+  if (error) {
+    return <h1>Failed to fetch tournament data</h1>;
   }
 
   // Initial load
@@ -150,7 +150,7 @@ export default function TournamentList({
 
             return (
               <div
-                className="relative w-full"
+                className="relative w-full pb-5"
                 key={item.key}
                 data-index={item.index}
                 ref={virtualizer.measureElement}
@@ -159,13 +159,20 @@ export default function TournamentList({
                   expectNextPage ? (
                     <ListItemSkeleton />
                   ) : null
-                ) : (
+                ) : session ? (
                   <Link href={`/tournaments/${tournamentData[item.index].id}`}>
                     <TournamentCard
                       tournament={tournamentData[item.index]}
                       displayStatusText
                     />
                   </Link>
+                ) : (
+                  <div className="hover:cursor-not-allowed">
+                    <TournamentCard
+                      tournament={tournamentData[item.index]}
+                      displayStatusText
+                    />
+                  </div>
                 )}
               </div>
             );

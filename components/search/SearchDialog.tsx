@@ -10,6 +10,7 @@ import SearchResults from './SearchResults';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { useDebounce } from '@uidotdev/usehooks';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { useSession } from '@/lib/hooks/useSession';
 
 export interface SearchDialogContextType {
   query: string;
@@ -26,6 +27,7 @@ export default function SearchDialog() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const { data, isLoading } = useSearch(debouncedQuery);
+  const session = useSession();
 
   const handleSetQuery = (input: string) => {
     setQuery(input.trimStart());
@@ -53,6 +55,10 @@ export default function SearchDialog() {
     e.preventDefault();
     setIsDialogOpen((prev) => !prev);
   });
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

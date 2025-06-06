@@ -159,37 +159,37 @@ export const tierData: TierDataType[] = [
   },
   {
     tier: 'Silver',
-    baseRating: 300,
+    baseRating: 400,
     displayName: 'Silver',
   },
   {
     tier: 'Gold',
-    baseRating: 500,
+    baseRating: 700,
     displayName: 'Gold',
   },
   {
     tier: 'Platinum',
-    baseRating: 700,
+    baseRating: 1000,
     displayName: 'Platinum',
   },
   {
     tier: 'Emerald',
-    baseRating: 900,
+    baseRating: 1300,
     displayName: 'Emerald',
   },
   {
     tier: 'Diamond',
-    baseRating: 1200,
+    baseRating: 1600,
     displayName: 'Diamond',
   },
   {
     tier: 'Master',
-    baseRating: 1500,
+    baseRating: 1900,
     displayName: 'Master',
   },
   {
     tier: 'Grandmaster',
-    baseRating: 1900,
+    baseRating: 2200,
     displayName: 'Grandmaster',
   },
   {

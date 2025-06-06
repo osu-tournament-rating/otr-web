@@ -1,16 +1,21 @@
 'use client';
 
-import { PlayerTournamentStatsBaseDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  PlayerTournamentStatsBaseDTO,
+  Ruleset,
+} from '@osu-tournament-rating/otr-api-client';
 import TournamentTopPerformers from './TournamentTopPerformers';
 
 interface TournamentPlayerStatsDashboardProps {
   playerStats: PlayerTournamentStatsBaseDTO[];
   className?: string;
+  ruleset: Ruleset;
 }
 
 export default function TournamentPlayerStatsDashboard({
   playerStats,
   className,
+  ruleset,
 }: TournamentPlayerStatsDashboardProps) {
   if (!playerStats || playerStats.length === 0) {
     return (
@@ -26,7 +31,7 @@ export default function TournamentPlayerStatsDashboard({
     <div className={className}>
       <div className="grid gap-6">
         {/* Top row - Key highlights */}
-        <TournamentTopPerformers playerStats={playerStats} />
+        <TournamentTopPerformers playerStats={playerStats} ruleset={ruleset} />
 
         {/* More can live here */}
       </div>

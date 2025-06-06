@@ -43,7 +43,7 @@ export default function PlayerRatingChartTooltip({
   }`;
 
   return (
-    <div className="rounded-md border bg-background p-3 font-sans shadow-md">
+    <div className="rounded-md border bg-popover/90 p-3 font-sans shadow-md">
       <p className="mb-1 font-medium">{formattedDate(data.timestamp)}</p>
       <p className="text-sm text-muted-foreground">
         Type:{' '}

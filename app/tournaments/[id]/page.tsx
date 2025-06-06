@@ -378,6 +378,7 @@ export default async function Page({ params }: PageProps) {
           <TournamentStatsCard tournament={tournament} />
           <TournamentPlayerStatsDashboard
             playerStats={tournament.playerTournamentStats ?? []}
+            ruleset={tournament.ruleset}
           />
         </TabsContent>
       </Tabs>
