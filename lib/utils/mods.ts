@@ -55,25 +55,25 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-flashlight)';
     case Mods.Easy:
       return 'var(--mod-easy)';
-    case Mods.DoubleTime | Mods.Nightcore:
+    case Mods.DoubleTime || Mods.Nightcore:
       return 'var(--mod-double-time)';
     case Mods.HalfTime:
       return 'var(--mod-half-time)';
-    case Mods.Hidden | Mods.HardRock:
+    case Mods.Hidden || Mods.HardRock:
       return 'var(--mod-hidden-hard-rock)';
-    case Mods.Hidden | Mods.Easy:
+    case Mods.Hidden || Mods.Easy:
       return 'var(--mod-hidden-easy)';
-    case Mods.Easy | Mods.DoubleTime:
+    case Mods.Easy || Mods.DoubleTime:
       return 'var(--mod-easy-double-time)';
-    case Mods.Hidden | Mods.Flashlight:
+    case Mods.Hidden || Mods.Flashlight:
       return 'var(--mod-hidden-flashlight)';
-    case Mods.Hidden | Mods.DoubleTime:
+    case Mods.Hidden || Mods.DoubleTime:
       return 'var(--mod-hidden-double-time)';
     case Mods.SuddenDeath:
       return 'var(--mod-sudden-death)';
     case Mods.TouchDevice:
       return 'var(--mod-touch-device)';
-    case Mods.Relax | Mods.Autoplay | Mods.Relax2:
+    case Mods.Relax || Mods.Autoplay || Mods.Relax2:
       return 'var(--mod-relax)';
     case Mods.Mirror:
       return 'var(--mod-mirror)';
@@ -81,13 +81,13 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-spun-out)';
     case Mods.Random:
       return 'var(--mod-random)';
-    case Mods.Key1 |
-      Mods.Key2 |
-      Mods.Key3 |
-      Mods.Key5 |
-      Mods.Key6 |
-      Mods.Key7 |
-      Mods.Key8 |
+    case Mods.Key1 ||
+      Mods.Key2 ||
+      Mods.Key3 ||
+      Mods.Key5 ||
+      Mods.Key6 ||
+      Mods.Key7 ||
+      Mods.Key8 ||
       Mods.Key9:
       return 'var(--mod-mania-key)';
     default:
