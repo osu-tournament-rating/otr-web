@@ -59,15 +59,15 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-double-time)';
     case Mods.HalfTime:
       return 'var(--mod-half-time)';
-    case Mods.Hidden || Mods.HardRock:
+    case Mods.Hidden | Mods.HardRock:
       return 'var(--mod-hidden-hard-rock)';
-    case Mods.Hidden || Mods.Easy:
+    case Mods.Hidden | Mods.Easy:
       return 'var(--mod-hidden-easy)';
-    case Mods.Easy || Mods.DoubleTime:
+    case Mods.Easy | Mods.DoubleTime:
       return 'var(--mod-easy-double-time)';
-    case Mods.Hidden || Mods.Flashlight:
+    case Mods.Hidden | Mods.Flashlight:
       return 'var(--mod-hidden-flashlight)';
-    case Mods.Hidden || Mods.DoubleTime:
+    case Mods.Hidden | Mods.DoubleTime:
       return 'var(--mod-hidden-double-time)';
     case Mods.SuddenDeath:
       return 'var(--mod-sudden-death)';
