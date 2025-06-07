@@ -55,24 +55,40 @@ export const tournaments = new TournamentsWrapper(config);
 export const users = new UsersWrapper(config);
 
 /**
- * Fetch session and store in cookie
+ * Fetch session data from API without setting cookies
+ * @returns User data, or null if fetch failed
+ */
+export async function fetchSessionData(): Promise<UserDTO | null> {
+  try {
+    const { result } = await me.get();
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch session:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch session and store in cookie (for use in Server Actions/Route Handlers only)
  * @returns User data, or null if fetch failed
  */
 export async function fetchSession(): Promise<UserDTO | null> {
   const cookieManager = await cookies();
 
   try {
-    const { result } = await me.get();
+    const result = await fetchSessionData();
 
-    // Two weeks in seconds
-    const expirationSeconds = 1209600000;
+    if (result) {
+      // Two weeks in seconds
+      const expirationSeconds = 1209600000;
 
-    cookieManager.set(USER_INFO_COOKIE_NAME, JSON.stringify(result), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      expires: new Date(Date.now() + expirationSeconds),
-    });
+      cookieManager.set(USER_INFO_COOKIE_NAME, JSON.stringify(result), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        expires: new Date(Date.now() + expirationSeconds),
+      });
+    }
 
     return result;
   } catch (error) {
@@ -102,6 +118,7 @@ export async function fetchSessionCached(): Promise<UserDTO | null> {
 export async function getSession(): Promise<UserDTO | null> {
   const cookieManager = await cookies();
   const userInfoCookie = cookieManager.get(USER_INFO_COOKIE_NAME);
+  const sessionCookie = cookieManager.get(SESSION_COOKIE_NAME);
 
   // If we have user info cached, return it
   if (userInfoCookie?.value) {
@@ -114,8 +131,21 @@ export async function getSession(): Promise<UserDTO | null> {
     }
   }
 
-  // Don't try to fetch session here if we're missing user info.
-  // If we do, we end up in situations where runaway API requests are made.
+  // If we have a session cookie but no user info cookie, try to fetch the session
+  // This handles the case where users access the site via external links
+  if (sessionCookie?.value && !userInfoCookie?.value) {
+    try {
+      return await fetchSessionData();
+    } catch (error) {
+      console.error(
+        'Failed to fetch session when user info cookie missing:',
+        error
+      );
+      return null;
+    }
+  }
+
+  // No session cookie available
   return null;
 }
 
