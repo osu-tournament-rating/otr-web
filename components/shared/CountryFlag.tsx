@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 
 interface CountryFlagProps {
   country: string;
@@ -8,6 +9,7 @@ interface CountryFlagProps {
   width?: number;
   height?: number;
   showTooltip?: boolean;
+  tooltipContent?: ReactNode;
 }
 
 export default function CountryFlag({
@@ -16,6 +18,7 @@ export default function CountryFlag({
   width = 20,
   height = 14,
   showTooltip = true,
+  tooltipContent,
 }: CountryFlagProps) {
   const flag = (
     <Image
@@ -31,5 +34,7 @@ export default function CountryFlag({
     return flag;
   }
 
-  return <SimpleTooltip content={country}>{flag}</SimpleTooltip>;
+  return (
+    <SimpleTooltip content={tooltipContent || country}>{flag}</SimpleTooltip>
+  );
 }
