@@ -133,54 +133,56 @@ export default function AdminNoteView({
         </DialogHeader>
 
         {/* New note creation form */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-            <FormField
-              control={form.control}
-              name="note"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add your note here"
-                      className="min-h-24 resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-between space-x-2">
-              {/* Reset changes */}
-              <Button
-                type="reset"
-                variant={'secondary'}
-                onClick={() => form.reset()}
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting
-                }
-              >
-                Discard
-              </Button>
-              {/* Save changes */}
-              <Button
-                type="submit"
-                disabled={
-                  !form.formState.isValid ||
-                  !form.formState.isDirty ||
-                  form.formState.isSubmitting
-                }
-              >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  'Submit'
+        {session?.scopes?.includes(Roles.Admin) && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+              <FormField
+                control={form.control}
+                name="note"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add your note here"
+                        className="min-h-24 resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              />
+              <div className="flex justify-between space-x-2">
+                {/* Reset changes */}
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Discard
+                </Button>
+                {/* Save changes */}
+                <Button
+                  type="submit"
+                  disabled={
+                    !form.formState.isValid ||
+                    !form.formState.isDirty ||
+                    form.formState.isSubmitting
+                  }
+                >
+                  {form.formState.isSubmitting ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    'Submit'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
         <AdminNotesList entity={entity} notes={notes} />
       </DialogContent>
     </Dialog>
