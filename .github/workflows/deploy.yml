@@ -11,6 +11,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      TAG: ${{ steps.set-tag.outputs.PRIMARY_TAG }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -21,13 +23,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set Docker Tag
+      - name: Set Docker Tags
         id: set-tag
         run: |
-          if [[ "${{ inputs.target }}" == "Production" && "${{ github.ref_type }}" == "tag" ]]; then
-            echo "TAG=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          image_prefix="${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}"
+          if [[ "${{ inputs.target }}" == "Staging" ]]; then
+            echo "PRIMARY_TAG=staging" >> $GITHUB_OUTPUT
+            echo "TAGS=${image_prefix}:staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.target }}" == "Production" && "${{ github.ref_type }}" == "tag" ]]; then
+            echo "PRIMARY_TAG=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            {
+              echo 'TAGS<<EOF'
+              echo "${image_prefix}:${{ github.ref_name }}"
+              echo "${image_prefix}:latest"
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "TAG=latest" >> $GITHUB_OUTPUT
+            echo "Invalid target: ${{ inputs.target }}"
+            exit 1
           fi
 
       - name: Build and Push Docker Image
@@ -36,7 +49,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-tag.outputs.TAG }}
+          tags: ${{ steps.set-tag.outputs.TAGS }}
 
   deploy:
     needs: publish
@@ -65,7 +78,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            TAG=${{ inputs.target == 'Production' && github.ref_type == 'tag' && github.ref_name || 'latest' }}
+            TAG=${{ needs.publish.outputs.TAG }}
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:$TAG
             docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true
