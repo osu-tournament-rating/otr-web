@@ -20,8 +20,8 @@ export async function middleware(req: NextRequest) {
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
   const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
 
-  // If we have both cookies, try to get session
-  if (sessionCookie && userInfoCookie) {
+  // If we have a session cookie, try to get session (handles both cached and fresh sessions)
+  if (sessionCookie) {
     try {
       const session = await getSession();
       if (session) {
@@ -36,7 +36,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // In restricted environment, reject users without session or during session establishment
+  // In restricted environments, reject users without valid sessions
   if (isRestrictedEnv) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
