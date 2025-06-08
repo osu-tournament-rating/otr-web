@@ -22,7 +22,8 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const playerData = await getPlayerData(id, {});
+  const decodedId = decodeURIComponent(id);
+  const playerData = await getPlayerData(decodedId, {});
 
   if (!playerData) {
     return {
@@ -39,6 +40,8 @@ async function getPlayerData(
   key: string,
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<PlayerDashboardStatsDTO | undefined> {
+  const decodedKey = decodeURIComponent(key);
+
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
     : undefined;
@@ -51,7 +54,7 @@ async function getPlayerData(
     : undefined;
 
   try {
-    const result = await getStatsCached(key, dateMin, dateMax, ruleset);
+    const result = await getStatsCached(decodedKey, dateMin, dateMax, ruleset);
     return result;
   } catch (error) {
     console.error('Failed to fetch player data:', error);
@@ -62,7 +65,9 @@ async function getPlayerData(
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const playerData = await getPlayerData(params.id, searchParams);
+
+  const decodedId = decodeURIComponent(params.id);
+  const playerData = await getPlayerData(decodedId, searchParams);
 
   // Handle case where player data might not be found
   if (!playerData) {
