@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DateTimeInput from '@/components/ui/datetime-input';
 
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
@@ -184,19 +185,10 @@ export default function TournamentAdminView({
                 <FormItem>
                   <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />
@@ -210,19 +202,10 @@ export default function TournamentAdminView({
                 <FormItem>
                   <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />

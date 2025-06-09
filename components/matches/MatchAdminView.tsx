@@ -42,6 +42,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import SimpleSelectContent from '../select/SimpleSelectContent';
 import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
+import DateTimeInput from '@/components/ui/datetime-input';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
 import DeleteButton from '../shared/DeleteButton';
@@ -143,19 +144,10 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                 <FormItem>
                   <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />
@@ -169,19 +161,10 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                 <FormItem>
                   <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />

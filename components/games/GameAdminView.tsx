@@ -49,9 +49,9 @@ import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
+import DateTimeInput from '@/components/ui/datetime-input';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -208,19 +208,10 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 <FormItem>
                   <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />
@@ -234,19 +225,10 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 <FormItem>
                   <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <Input
-                      className={inputChangedStyle(fieldState)}
-                      type="datetime-local"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : null
-                        )
-                      }
+                    <DateTimeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />
@@ -260,6 +242,8 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               render={({ field: { value, onChange }, fieldState }) => (
                 <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
+                    {/* Disabled because this is a property set on the
+                     DTO but isn't configurable or in the database */}
                     <Checkbox
                       disabled
                       className={inputChangedStyle(fieldState)}
