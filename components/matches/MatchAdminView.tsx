@@ -44,6 +44,7 @@ import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
+import MergeMatchButton from './MergeMatchButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -218,6 +219,9 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                 >
                   Reset
                 </Button>
+
+                {/* Merge match */}
+                <MergeMatchButton match={match} />
 
                 {/* Delete match */}
                 <DeleteButton
