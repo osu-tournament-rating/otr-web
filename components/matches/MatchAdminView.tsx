@@ -56,19 +56,22 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
   );
 
-const warningFlagOptions = Object.entries(
-  MatchWarningFlagsEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+const warningFlagOptions = Object.entries(MatchWarningFlagsEnumHelper.metadata)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 const matchRejectionReasonOptions = Object.entries(
   MatchRejectionReasonEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+)
+  .filter(([value]) => Number(value) !== MatchRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
   const form = useForm<z.infer<typeof matchEditFormSchema>>({

@@ -88,10 +88,13 @@ const modOptions = Object.entries(ModsEnumHelper.metadata)
 
 const scoreRejectionReasonOptions = Object.entries(
   ScoreRejectionReasonEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+)
+  .filter(([value]) => Number(value) !== ScoreRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
   const form = useForm<z.infer<typeof scoreEditFormSchema>>({

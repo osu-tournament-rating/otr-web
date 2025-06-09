@@ -68,19 +68,22 @@ const modOptions = Object.entries(ModsEnumHelper.metadata)
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-const warningFlagOptions = Object.entries(
-  GameWarningFlagsEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+const warningFlagOptions = Object.entries(GameWarningFlagsEnumHelper.metadata)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 const gameRejectionReasonOptions = Object.entries(
   GameRejectionReasonEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+)
+  .filter(([value]) => Number(value) !== GameRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function GameAdminView({ game }: { game: GameDTO }) {
   const form = useForm<z.infer<typeof gameEditFormSchema>>({

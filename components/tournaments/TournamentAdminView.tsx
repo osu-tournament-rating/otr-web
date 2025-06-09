@@ -61,10 +61,13 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
 
 const tournamentRejectionReasonOptions = Object.entries(
   TournamentRejectionReasonEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+)
+  .filter(([value]) => Number(value) !== TournamentRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function TournamentAdminView({
   tournament,
