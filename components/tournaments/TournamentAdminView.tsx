@@ -44,6 +44,9 @@ import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
 import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
 import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
+import { MultipleSelect, Option } from '@/components/select/multiple-select';
+import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -55,6 +58,13 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
       !fieldState.invalid &&
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
   );
+
+const tournamentRejectionReasonOptions = Object.entries(
+  TournamentRejectionReasonEnumHelper.metadata
+).map(([value, { text }]) => ({
+  label: text,
+  value,
+})) satisfies Option[];
 
 export default function TournamentAdminView({
   tournament,
@@ -170,6 +180,61 @@ export default function TournamentAdminView({
             <div className="flex gap-5">
               <FormField
                 control={form.control}
+                name="startTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
                 name="ruleset"
                 render={({ field: { onChange, value }, fieldState }) => (
                   <FormItem className="flex-1">
@@ -234,6 +299,34 @@ export default function TournamentAdminView({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, TournamentRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={tournamentRejectionReasonOptions}
+                      onChange={(values) => {
+                        let flag = 0;
+                        values.forEach((v) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
 
             <div className="flex gap-5">
               <FormField

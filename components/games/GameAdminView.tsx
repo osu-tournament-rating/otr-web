@@ -7,6 +7,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   GameDTO,
   GameWarningFlags,
+  GameRejectionReason,
   Mods,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
@@ -37,9 +39,9 @@ import {
   GameWarningFlagsEnumHelper,
   getEnumFlags,
   ModsEnumHelper,
-  RulesetEnumHelper,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
+  GameRejectionReasonEnumHelper,
 } from '@/lib/enums';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
@@ -47,6 +49,9 @@ import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import RulesetSelectContent from '@/components/select/RulesetSelectContent';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -64,6 +69,13 @@ const modOptions = Object.entries(ModsEnumHelper.metadata)
 
 const warningFlagOptions = Object.entries(
   GameWarningFlagsEnumHelper.metadata
+).map(([value, { text }]) => ({
+  label: text,
+  value,
+})) satisfies Option[];
+
+const gameRejectionReasonOptions = Object.entries(
+  GameRejectionReasonEnumHelper.metadata
 ).map(([value, { text }]) => ({
   label: text,
   value,
@@ -117,71 +129,175 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
         {/* Edit form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="scoringType"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Scoring Type</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SimpleSelectContent enumHelper={ScoringTypeEnumHelper} />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="teamType"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Team Type</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SimpleSelectContent enumHelper={TeamTypeEnumHelper} />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ruleset"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Ruleset</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <RulesetSelectContent />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="ruleset"
+              name="isFreeMod"
               render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Ruleset</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={RulesetEnumHelper} />
-                  </Select>
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                  <FormControl>
+                    <Checkbox
+                      className={inputChangedStyle(fieldState)}
+                      checked={value}
+                      onCheckedChange={onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Free Mod</FormLabel>
+                  </div>
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
-              name="scoringType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={ScoringTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="teamType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={TeamTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, GameRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={gameRejectionReasonOptions}
+                      onChange={(values) => {
+                        let flag = 0;
+                        values.forEach((v) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
@@ -195,6 +311,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                     <FormLabel>Mods</FormLabel>
                     <MultipleSelect
                       className={inputChangedStyle(fieldState)}
+                      placeholder={'No mods'}
                       selected={flags.map(String)}
                       options={modOptions}
                       onChange={(values) => {

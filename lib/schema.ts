@@ -15,6 +15,7 @@ import {
   VerificationStatus,
   TournamentQuerySortType,
   MatchWarningFlags,
+  MatchRejectionReason,
 } from '@osu-tournament-rating/otr-api-client';
 import { EnumLike, z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
@@ -65,6 +66,8 @@ export const tournamentEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
+  startTime: z.coerce.date().optional(),
+  endTime: z.coerce.date().optional(),
 });
 
 export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
@@ -96,9 +99,11 @@ export const tournamentListFilterSchema = z.object({
 export const matchEditFormSchema = z.object({
   name: z.string().min(1),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
-  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
+  rejectionReason: bitwiseEnumValueSchema(MatchRejectionReason),
   processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
   warningFlags: bitwiseEnumValueSchema(MatchWarningFlags),
+  startTime: z.coerce.date().optional(),
+  endTime: z.coerce.date().optional(),
 });
 
 export const gameEditFormSchema = z.object({
@@ -110,6 +115,9 @@ export const gameEditFormSchema = z.object({
   warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
   rejectionReason: bitwiseEnumValueSchema(GameRejectionReason),
   processingStatus: numericEnumValueSchema(GameProcessingStatus),
+  isFreeMod: z.boolean(),
+  startTime: z.coerce.date().optional(),
+  endTime: z.coerce.date().optional(),
 });
 
 export const scoreEditFormSchema = z.object({

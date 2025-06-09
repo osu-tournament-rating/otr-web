@@ -4,6 +4,7 @@ import {
   getEnumFlags,
   MatchProcessingStatusEnumHelper,
   MatchWarningFlagsEnumHelper,
+  MatchRejectionReasonEnumHelper,
 } from '@/lib/enums';
 import { matchEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   MatchCompactDTO,
   MatchWarningFlags,
+  MatchRejectionReason,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
 import { ControllerFieldState, useForm } from 'react-hook-form';
@@ -55,6 +57,13 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
 
 const warningFlagOptions = Object.entries(
   MatchWarningFlagsEnumHelper.metadata
+).map(([value, { text }]) => ({
+  label: text,
+  value,
+})) satisfies Option[];
+
+const matchRejectionReasonOptions = Object.entries(
+  MatchRejectionReasonEnumHelper.metadata
 ).map(([value, { text }]) => ({
   label: text,
   value,
@@ -126,6 +135,90 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                 </FormItem>
               )}
             />
+
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        type="datetime-local"
+                        value={
+                          field.value
+                            ? new Date(field.value).toISOString().slice(0, 16)
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? new Date(e.target.value) : null
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, MatchRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={matchRejectionReasonOptions}
+                      onChange={(values) => {
+                        let flag = 0;
+                        values.forEach((v) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
+
             <FormField
               control={form.control}
               name="warningFlags"

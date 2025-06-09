@@ -17,6 +17,7 @@ import {
   Roles,
   GameScoreDTO,
   Mods,
+  ScoreRejectionReason,
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2, Trash2 } from 'lucide-react';
@@ -39,6 +40,8 @@ import {
   RulesetEnumHelper,
   TeamEnumHelper,
   ModsEnumHelper,
+  ScoreGradeEnumHelper,
+  ScoreRejectionReasonEnumHelper,
   getEnumFlags,
 } from '@/lib/enums';
 import { update } from '@/lib/actions/scores';
@@ -78,6 +81,13 @@ const modOptions = Object.entries(ModsEnumHelper.metadata)
     label: text,
     value,
   })) satisfies Option[];
+
+const scoreRejectionReasonOptions = Object.entries(
+  ScoreRejectionReasonEnumHelper.metadata
+).map(([value, { text }]) => ({
+  label: text,
+  value,
+})) satisfies Option[];
 
 export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
   const form = useForm<z.infer<typeof scoreEditFormSchema>>({
@@ -169,6 +179,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       'countMiss',
       'countGeki',
       'countKatu',
+      'grade',
       'mods',
     ] as const;
 
@@ -457,6 +468,57 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
               </div>
               <FormField
                 control={form.control}
+                name="grade"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>Grade</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SimpleSelectContent enumHelper={ScoreGradeEnumHelper} />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rejectionReason"
+                render={({ field: { value, onChange }, fieldState }) => {
+                  const flags = getEnumFlags(value, ScoreRejectionReason);
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Rejection Reason</FormLabel>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No rejection reason'}
+                        selected={flags.map(String)}
+                        options={scoreRejectionReasonOptions}
+                        onChange={(values) => {
+                          let flag = 0;
+                          values.forEach((v) => {
+                            flag |= Number(v);
+                          });
+
+                          onChange(flag);
+                        }}
+                      />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
                 name="mods"
                 render={({ field: { value, onChange }, fieldState }) => {
                   const flags = getEnumFlags(value, Mods);
@@ -466,6 +528,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                       <FormLabel>Mods</FormLabel>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
+                        placeholder={'No mods'}
                         selected={flags.map(String)}
                         options={modOptions}
                         onChange={(values) => {
