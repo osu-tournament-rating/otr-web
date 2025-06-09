@@ -20,7 +20,7 @@ import {
   ScoreRejectionReason,
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2, Trash2 } from 'lucide-react';
+import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -67,6 +67,7 @@ import AdminNotesList from '../admin-notes/AdminNoteList';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import SimpleTooltip from '../simple-tooltip';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -621,16 +622,18 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                   />
 
                   {/* Delete all player scores */}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeletePlayerScoresDialog(true)}
-                    disabled={!matchId}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete All Player Scores
-                  </Button>
+                  <SimpleTooltip content="Delete All Player Scores">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => setShowDeletePlayerScoresDialog(true)}
+                      disabled={!matchId}
+                      className="h-8 w-8"
+                    >
+                      <UserRoundMinusIcon className="h-4 w-4" />
+                    </Button>
+                  </SimpleTooltip>
                 </div>
 
                 <Button
