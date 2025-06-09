@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
+
+import { Check, X, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -11,7 +11,6 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
 } from '@/components/ui/command';
 import {
   Popover,
@@ -19,7 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export type Option<TValue extends string = string> = {
   label: string;
@@ -30,106 +28,201 @@ export type Option<TValue extends string = string> = {
 interface MultiSelectProps {
   options: Option[];
   selected: string[];
-  onChange: (values: string[]) => void;
-  placeholder?: string;
+  onChange:
+    | ((values: string[]) => void)
+    | React.Dispatch<React.SetStateAction<string[]>>;
   className?: string;
-  badgeClassName?: string;
+  placeholder?: string;
   disabled?: boolean;
-  maxDisplayItems?: number;
   invalid?: boolean;
 }
 
-export function MultipleSelect({
+function MultiSelect({
   options,
   selected,
   onChange,
-  placeholder = 'Select options',
   className,
-  badgeClassName,
+  placeholder = 'Select options...',
   disabled = false,
-  maxDisplayItems = 3,
   invalid,
+  ...props
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
+  const [searchValue, setSearchValue] = React.useState('');
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const commandRef = React.useRef<HTMLDivElement>(null);
 
-  const handleUnselect = (value: string) => {
-    onChange(selected.filter((item) => item !== value));
+  // Filter options based on search
+  const filteredOptions = React.useMemo(() => {
+    if (!searchValue) return options;
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [options, searchValue]);
+
+  // Reset highlighted index when options change
+  React.useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [filteredOptions]);
+
+  // Focus management when popover opens/closes
+  React.useEffect(() => {
+    if (open) {
+      setHighlightedIndex(-1);
+      setSearchValue('');
+    } else {
+      triggerRef.current?.focus();
+    }
+  }, [open]);
+
+  const handleUnselect = (item: string) => {
+    const newValues = selected.filter((i) => i !== item);
+    onChange(newValues);
   };
 
-  const handleClearAll = () => {
-    onChange([]);
+  const handleSelect = (optionValue: string) => {
+    const newValues = selected.includes(optionValue)
+      ? selected.filter((item) => item !== optionValue)
+      : [...selected, optionValue];
+    onChange(newValues);
   };
 
-  const displayedItems = selected.slice(0, maxDisplayItems);
-  const extraItemsCount = selected.length - maxDisplayItems;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      // When closed, open on Enter, Space, or Arrow keys
+      if (
+        e.key === 'Enter' ||
+        e.key === ' ' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'ArrowUp'
+      ) {
+        e.preventDefault();
+        setOpen(true);
+      }
+      return;
+    }
+
+    // When open, handle navigation
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) => {
+          const nextIndex = prev + 1;
+          return nextIndex >= filteredOptions.length ? 0 : nextIndex;
+        });
+        break;
+
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((prev) => {
+          const nextIndex = prev - 1;
+          return nextIndex < 0 ? filteredOptions.length - 1 : nextIndex;
+        });
+        break;
+
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (
+          highlightedIndex >= 0 &&
+          highlightedIndex < filteredOptions.length
+        ) {
+          const option = filteredOptions[highlightedIndex];
+          if (!option.disabled) {
+            handleSelect(option.value);
+          }
+        }
+        break;
+
+      case 'Escape':
+        e.preventDefault();
+        setOpen(false);
+        break;
+
+      case 'Tab':
+        setOpen(false);
+        break;
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    // Let the search input handle typing, but intercept navigation keys
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+      case 'Enter':
+      case 'Escape':
+        handleKeyDown(e);
+        break;
+    }
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} {...props}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           role="combobox"
           aria-expanded={open}
           aria-invalid={invalid}
+          aria-haspopup="listbox"
+          aria-label={
+            selected.length > 0
+              ? `${selected.length} items selected`
+              : placeholder
+          }
           className={cn(
-            'h-auto min-h-10 w-full justify-between px-3 py-2',
+            'w-full justify-between',
+            selected.length > 1 ? 'h-full' : 'h-10',
             'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-            selected.length > 0 ? 'pl-3' : 'pl-4',
             className
           )}
           onClick={() => setOpen(!open)}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
         >
-          <div className="mr-2 flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1">
             {selected.length > 0 ? (
-              <>
-                {displayedItems.map((value) => (
-                  <Badge
-                    key={value}
-                    variant="secondary"
-                    className={cn(
-                      'mr-1 mb-1 px-1 py-0 text-xs font-normal',
-                      badgeClassName
-                    )}
-                  >
-                    {options.find((option) => option.value === value)?.label ||
-                      value}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleUnselect(value);
-                        }
-                      }}
-                      onMouseDown={(e) => {
+              selected.map((item) => (
+                <Badge
+                  variant="secondary"
+                  key={item}
+                  className="mr-1 mb-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleUnselect(item);
+                  }}
+                >
+                  {options.find((option) => option.value === item)?.label ||
+                    item}
+                  <span
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={`Remove ${item}`}
+                    className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleUnselect(value);
-                      }}
-                    >
-                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </span>
-                  </Badge>
-                ))}
-                {extraItemsCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      'mr-1 mb-1 px-1 py-0 text-xs font-normal',
-                      badgeClassName
-                    )}
+                        handleUnselect(item);
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleUnselect(item);
+                    }}
                   >
-                    +{extraItemsCount} more
-                  </Badge>
-                )}
-              </>
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </span>
+                </Badge>
+              ))
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
@@ -137,68 +230,62 @@ export function MultipleSelect({
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command className="w-full">
+      <PopoverContent
+        className="w-full p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <Command ref={commandRef} shouldFilter={false}>
           <CommandInput
-            placeholder="Search options..."
-            value={searchQuery}
-            onValueChange={setSearchQuery}
+            placeholder="Search..."
+            value={searchValue}
+            onValueChange={setSearchValue}
+            onKeyDown={handleSearchKeyDown}
             className="h-9"
           />
-          {selected.length > 0 && (
-            <div className="flex items-center justify-between border-b px-2 py-1">
-              <div className="text-xs text-muted-foreground">
-                {selected.length} selected
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-1 text-xs"
-                onClick={handleClearAll}
+          <CommandEmpty>No item found.</CommandEmpty>
+          <CommandGroup
+            className="max-h-64 overflow-auto"
+            role="listbox"
+            onWheel={(e) => {
+              // Allow wheel scrolling to work properly
+              e.stopPropagation();
+            }}
+          >
+            {filteredOptions.map((option, index) => (
+              <CommandItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+                data-highlighted={highlightedIndex === index}
+                className={cn(
+                  highlightedIndex === index &&
+                    'bg-accent text-accent-foreground'
+                )}
+                onSelect={() => {
+                  if (!option.disabled) {
+                    handleSelect(option.value);
+                  }
+                }}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                role="option"
+                aria-selected={selected.includes(option.value)}
               >
-                Clear all
-              </Button>
-            </div>
-          )}
-          <CommandList>
-            <CommandEmpty>No options found.</CommandEmpty>
-            <ScrollArea className="max-h-[300px] overflow-auto">
-              <CommandGroup>
-                {options.map((option) => {
-                  const isSelected = selected.includes(option.value);
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      disabled={option.disabled}
-                      onSelect={() => {
-                        onChange(
-                          isSelected
-                            ? selected.filter((item) => item !== option.value)
-                            : [...selected, option.value]
-                        );
-                        setSearchQuery('');
-                      }}
-                    >
-                      <div
-                        className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'opacity-50'
-                        )}
-                      >
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </div>
-                      <span>{option.label}</span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </ScrollArea>
-          </CommandList>
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    selected.includes(option.value)
+                      ? 'opacity-100'
+                      : 'opacity-0'
+                  )}
+                />
+                {option.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
         </Command>
       </PopoverContent>
     </Popover>
   );
 }
+
+export { MultiSelect, MultiSelect as MultipleSelect };

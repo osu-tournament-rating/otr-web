@@ -312,9 +312,9 @@ export default function TournamentAdminView({
                       placeholder={'No rejection reason'}
                       selected={flags.map(String)}
                       options={tournamentRejectionReasonOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 

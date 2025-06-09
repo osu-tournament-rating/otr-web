@@ -61,11 +61,14 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
   );
 
 const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([, { text }]) => !!text)
-  .map(([value, { text }]) => ({
-    label: text,
+  .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
+  .map(([value, { text, description }]) => ({
+    label: description
+      ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
+      : text,
     value,
-  })) satisfies Option[];
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 const warningFlagOptions = Object.entries(
   GameWarningFlagsEnumHelper.metadata
@@ -287,9 +290,9 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                       placeholder={'No rejection reason'}
                       selected={flags.map(String)}
                       options={gameRejectionReasonOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
@@ -315,9 +318,9 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                       placeholder={'No mods'}
                       selected={flags.map(String)}
                       options={modOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
@@ -344,9 +347,9 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                       disabled
                       selected={flags.map(String)}
                       options={warningFlagOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 

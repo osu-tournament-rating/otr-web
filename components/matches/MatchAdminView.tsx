@@ -203,9 +203,9 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                       placeholder={'No rejection reason'}
                       selected={flags.map(String)}
                       options={matchRejectionReasonOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
@@ -232,9 +232,9 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                       disabled
                       selected={flags.map(String)}
                       options={warningFlagOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
