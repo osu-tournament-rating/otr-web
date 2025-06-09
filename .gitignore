@@ -47,4 +47,4 @@ next-env.d.ts
 
 # Other
 .aider*
-.cursorrules
+.cursor/
