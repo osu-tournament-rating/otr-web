@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2, Merge } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { MatchCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,16 +16,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -35,11 +25,15 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { get, merge } from '@/lib/actions/matches';
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import { MatchProcessingStatusEnumHelper } from '@/lib/enums';
+import {
+  MatchProcessingStatusEnumHelper,
+  RulesetEnumHelper,
+} from '@/lib/enums';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import SimpleTooltip from '../simple-tooltip';
 
 interface MergeMatchButtonProps {
-  match: MatchCompactDTO;
+  match: MatchDTO;
 }
 
 const MATCH_ID_SEPARATORS = /[,\s\n]+/;
@@ -48,13 +42,13 @@ const TEXTAREA_PLACEHOLDER =
 
 export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
   const router = useRouter();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [matchIdsInput, setMatchIdsInput] = useState('');
-  const [targetMatches, setTargetMatches] = useState<MatchCompactDTO[]>([]);
+  const [targetMatches, setTargetMatches] = useState<MatchDTO[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const parseMatchIds = (input: string): number[] => {
     return input
@@ -100,7 +94,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     setError(null);
 
     try {
-      const fetchPromises = uniqueIds.map((id) => get({ id }));
+      const fetchPromises = uniqueIds.map((id) => get({ id, verified: false }));
       const fetchedMatches = await Promise.all(fetchPromises);
       setTargetMatches(fetchedMatches);
     } catch {
@@ -111,9 +105,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
   };
 
   const handleMerge = async () => {
-    if (targetMatches.length === 0) {
-      return;
-    }
+    if (targetMatches.length === 0) return;
 
     setIsLoading(true);
     try {
@@ -128,7 +120,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
         `Successfully merged ${matchCount} match${pluralSuffix} (${matchNames}) into ${match.name}`
       );
 
-      resetDialog();
+      handleCancel();
       router.refresh();
     } catch {
       toast.error('Failed to merge matches');
@@ -137,12 +129,16 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     }
   };
 
-  const resetDialog = () => {
-    setIsDialogOpen(false);
+  const handleCancel = () => {
+    setIsOpen(false);
     setShowConfirmation(false);
     setMatchIdsInput('');
     setTargetMatches([]);
     setError(null);
+  };
+
+  const handleBackToInput = () => {
+    setShowConfirmation(false);
   };
 
   const handleProceedToConfirmation = () => {
@@ -159,10 +155,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     return MatchProcessingStatusEnumHelper.getMetadata(status).text;
   };
 
-  const renderTargetMatchInfo = (
-    targetMatch: MatchCompactDTO,
-    index: number
-  ) => (
+  const renderTargetMatchInfo = (targetMatch: MatchDTO, index: number) => (
     <div key={targetMatch.id} className="space-y-1 rounded border p-3 text-sm">
       <p>
         <strong>
@@ -171,10 +164,29 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
       </p>
       <p className="flex items-center gap-2">
         <strong>Ruleset:</strong>
-        <RulesetIcon
-          ruleset={targetMatch.ruleset}
-          className="h-4 w-4 fill-primary"
-        />
+        <SimpleTooltip
+          content={RulesetEnumHelper.getMetadata(targetMatch.ruleset).text}
+        >
+          <RulesetIcon
+            ruleset={targetMatch.ruleset}
+            className="h-4 w-4 fill-primary"
+          />
+        </SimpleTooltip>
+      </p>
+      <p className="flex items-center gap-2">
+        <strong>MP Link:</strong>
+        <a
+          href={`https://osu.ppy.sh/community/matches/${targetMatch.osuId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          https://osu.ppy.sh/community/matches/{targetMatch.osuId}
+        </a>
+      </p>
+      <p className="flex items-center gap-2">
+        <strong>Game Count:</strong>
+        {targetMatch.games?.length ?? 0}
       </p>
       <p>
         <strong>End Time:</strong>{' '}
@@ -215,131 +227,122 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     );
   };
 
-  const renderConfirmationContent = () => {
+  if (showConfirmation) {
     const matchCount = targetMatches.length;
     const pluralSuffix = matchCount > 1 ? 'es' : '';
 
     return (
-      <div>
-        Are you sure you want to merge{' '}
-        <strong>
-          {matchCount} match{pluralSuffix}
-        </strong>{' '}
-        into <strong>{match.name}</strong>?
-        <br />
-        <br />
-        <ul className="list-disc pl-4">
-          <li>
-            All games from the selected {matchCount} match{pluralSuffix} will be
-            moved to {match.name}
-          </li>
-          <li>
-            The following match{pluralSuffix} will be permanently deleted:
-            <ul className="mt-1 list-disc pl-4">
-              {targetMatches.map((targetMatch) => (
-                <li key={targetMatch.id}>&quot;{targetMatch.name}&quot;</li>
-              ))}
-            </ul>
-          </li>
-          <li>This action cannot be undone</li>
-        </ul>
-      </div>
-    );
-  };
-
-  return (
-    <>
-      <Tooltip>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button variant="secondary" size="sm">
-                <Merge className="size-4" />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Merge matches</p>
-          </TooltipContent>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Merge Matches</DialogTitle>
-              <DialogDescription>
-                Merge another match into <strong>{match.name}</strong>. All
-                games from the target match will be moved to this match, and the
-                target match will be deleted.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="matchIds">Target Match IDs</Label>
-                <div className="space-y-2">
-                  <Textarea
-                    id="matchIds"
-                    placeholder={TEXTAREA_PLACEHOLDER}
-                    value={matchIdsInput}
-                    onChange={(e) => setMatchIdsInput(e.target.value)}
-                    rows={3}
-                  />
-                  <Button
-                    onClick={handleFetchMatches}
-                    disabled={isFetching || !matchIdsInput.trim()}
-                    className="w-full"
-                  >
-                    {isFetching ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      'Fetch Matches'
-                    )}
-                  </Button>
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Match Merge</DialogTitle>
+            <DialogDescription asChild>
+              <div>
+                Are you sure you want to merge{' '}
+                <strong>
+                  {matchCount} match{pluralSuffix}
+                </strong>{' '}
+                into <strong>{match.name}</strong>? This action cannot be
+                undone.
               </div>
-
-              {renderTargetMatchesList()}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={resetDialog}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleProceedToConfirmation}
-                disabled={targetMatches.length === 0}
-              >
-                Continue
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </Tooltip>
-
-      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Match Merge</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              {renderConfirmationContent()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBackToInput}
+              disabled={isLoading}
+            >
+              Back
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleMerge}
               disabled={isLoading}
-              className="bg-destructive hover:bg-destructive/90"
             >
               {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Merging...
+                </>
               ) : (
-                <Merge className="mr-2 h-4 w-4" />
+                'Merge'
               )}
-              Merge Matches
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="secondary" size="sm">
+              <Merge className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Merge matches</p>
+        </TooltipContent>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Merge Matches</DialogTitle>
+            <DialogDescription>
+              Merge another match into <strong>{match.name}</strong>? All games
+              from the target match will be moved to this match, and the target
+              match will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="matchIds">Target Match IDs</Label>
+              <div className="space-y-2">
+                <Textarea
+                  id="matchIds"
+                  placeholder={TEXTAREA_PLACEHOLDER}
+                  value={matchIdsInput}
+                  onChange={(e) => setMatchIdsInput(e.target.value)}
+                  rows={3}
+                />
+                <Button
+                  onClick={handleFetchMatches}
+                  disabled={isFetching || !matchIdsInput.trim()}
+                  className="w-full"
+                >
+                  {isFetching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Fetching...
+                    </>
+                  ) : (
+                    'Fetch Matches'
+                  )}
+                </Button>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+            </div>
+
+            {renderTargetMatchesList()}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleProceedToConfirmation}
+              disabled={targetMatches.length === 0}
+            >
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Tooltip>
   );
 }
