@@ -383,6 +383,7 @@ export default function TournamentAdminView({
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -406,6 +407,7 @@ export default function TournamentAdminView({
               {/* Save changes */}
               <Button
                 type="submit"
+                size="sm"
                 disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (

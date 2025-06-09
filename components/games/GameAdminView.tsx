@@ -414,6 +414,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -434,6 +435,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
+                size="sm"
                 disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (

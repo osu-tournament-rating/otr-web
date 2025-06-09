@@ -305,6 +305,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -328,6 +329,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
+                size="sm"
                 disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
