@@ -35,7 +35,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
-import DateTimeInput from '@/components/ui/datetime-input';
 
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
@@ -171,41 +170,6 @@ export default function TournamentAdminView({
                     <Input
                       className={inputChangedStyle(fieldState)}
                       {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="startTime"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>Start Time</FormLabel>
-                  <FormControl>
-                    <DateTimeInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      fieldState={fieldState}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endTime"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <DateTimeInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      fieldState={fieldState}
                     />
                   </FormControl>
                   <FormMessage />

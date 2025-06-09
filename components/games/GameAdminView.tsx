@@ -7,7 +7,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -51,7 +50,6 @@ import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
-import DateTimeInput from '@/components/ui/datetime-input';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -200,41 +198,6 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="startTime"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>Start Time</FormLabel>
-                  <FormControl>
-                    <DateTimeInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      fieldState={fieldState}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endTime"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <DateTimeInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      fieldState={fieldState}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
