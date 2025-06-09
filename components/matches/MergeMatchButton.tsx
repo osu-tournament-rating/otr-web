@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2, Merge } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { MatchCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +39,7 @@ import { MatchProcessingStatusEnumHelper } from '@/lib/enums';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 
 interface MergeMatchButtonProps {
-  match: MatchCompactDTO;
+  match: MatchDTO;
 }
 
 const MATCH_ID_SEPARATORS = /[,\s\n]+/;
@@ -53,7 +53,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [matchIdsInput, setMatchIdsInput] = useState('');
-  const [targetMatches, setTargetMatches] = useState<MatchCompactDTO[]>([]);
+  const [targetMatches, setTargetMatches] = useState<MatchDTO[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const parseMatchIds = (input: string): number[] => {
@@ -100,7 +100,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     setError(null);
 
     try {
-      const fetchPromises = uniqueIds.map((id) => get({ id }));
+      const fetchPromises = uniqueIds.map((id) => get({ id, verified: false }));
       const fetchedMatches = await Promise.all(fetchPromises);
       setTargetMatches(fetchedMatches);
     } catch {
@@ -159,10 +159,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     return MatchProcessingStatusEnumHelper.getMetadata(status).text;
   };
 
-  const renderTargetMatchInfo = (
-    targetMatch: MatchCompactDTO,
-    index: number
-  ) => (
+  const renderTargetMatchInfo = (targetMatch: MatchDTO, index: number) => (
     <div key={targetMatch.id} className="space-y-1 rounded border p-3 text-sm">
       <p>
         <strong>
@@ -175,6 +172,21 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
           ruleset={targetMatch.ruleset}
           className="h-4 w-4 fill-primary"
         />
+      </p>
+      <p className="flex items-center gap-2">
+        <strong>MP Link:</strong>
+        <a
+          href={`https://osu.ppy.sh/beatmapsets/${targetMatch.osuId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          https://osu.ppy.sh/beatmapsets/{targetMatch.osuId}
+        </a>
+      </p>
+      <p className="flex items-center gap-2">
+        <strong>Game Count:</strong>
+        {targetMatch.games?.length ?? 0}
       </p>
       <p>
         <strong>End Time:</strong>{' '}
