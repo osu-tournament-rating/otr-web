@@ -258,13 +258,16 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox
+                      disabled
                       className={inputChangedStyle(fieldState)}
                       checked={value}
                       onCheckedChange={onChange}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Free Mod</FormLabel>
+                    <FormLabel className="text-muted-foreground">
+                      Free Mod
+                    </FormLabel>
                   </div>
                 </FormItem>
               )}
