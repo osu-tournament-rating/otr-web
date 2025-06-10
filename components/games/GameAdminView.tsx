@@ -125,14 +125,14 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>Edit Game</DialogTitle>
           <DialogDescription>Editing Game {game.id}</DialogDescription>
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <div className="flex gap-5">
               <FormField
                 control={form.control}

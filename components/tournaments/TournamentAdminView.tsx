@@ -111,8 +111,8 @@ export default function TournamentAdminView({
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>
             <div className="flex items-center gap-2">
               Edit Tournament
@@ -126,7 +126,7 @@ export default function TournamentAdminView({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className="space-y-3"
           >
             <div className="flex gap-5">
               <FormField

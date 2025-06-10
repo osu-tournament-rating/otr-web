@@ -100,7 +100,7 @@ export default function AdminNoteListItem({
                 <Textarea
                   value={editedNote}
                   onChange={(e) => setEditedNote(e.target.value)}
-                  className="min-h-20"
+                  className="min-h-16"
                 />
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>

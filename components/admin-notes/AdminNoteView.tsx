@@ -123,8 +123,8 @@ export default function AdminNoteView({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
             Viewing admin notes for{' '}
@@ -144,7 +144,7 @@ export default function AdminNoteView({
                     <FormControl>
                       <Textarea
                         placeholder="Add your note here"
-                        className="min-h-24 resize-none"
+                        className="min-h-16 resize-none"
                         {...field}
                       />
                     </FormControl>

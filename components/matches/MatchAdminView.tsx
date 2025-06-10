@@ -113,8 +113,8 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>Edit Match</DialogTitle>
           <DialogDescription>
             Editing <strong>{match.name}</strong>
@@ -122,7 +122,7 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <FormField
               control={form.control}
               name="name"
