@@ -44,6 +44,9 @@ import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
 import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
 import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
+import { MultipleSelect, Option } from '@/components/select/multiple-select';
+import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -55,6 +58,16 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
       !fieldState.invalid &&
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
   );
+
+const tournamentRejectionReasonOptions = Object.entries(
+  TournamentRejectionReasonEnumHelper.metadata
+)
+  .filter(([value]) => Number(value) !== TournamentRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function TournamentAdminView({
   tournament,
@@ -98,8 +111,8 @@ export default function TournamentAdminView({
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>
             <div className="flex items-center gap-2">
               Edit Tournament
@@ -113,7 +126,7 @@ export default function TournamentAdminView({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className="space-y-3"
           >
             <div className="flex gap-5">
               <FormField
@@ -235,6 +248,34 @@ export default function TournamentAdminView({
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, TournamentRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={tournamentRejectionReasonOptions}
+                      onChange={(values: string[]) => {
+                        let flag = 0;
+                        values.forEach((v: string) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
+
             <div className="flex gap-5">
               <FormField
                 control={form.control}
@@ -290,6 +331,7 @@ export default function TournamentAdminView({
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -313,6 +355,7 @@ export default function TournamentAdminView({
               {/* Save changes */}
               <Button
                 type="submit"
+                size="sm"
                 disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (

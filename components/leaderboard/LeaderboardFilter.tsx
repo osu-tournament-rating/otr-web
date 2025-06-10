@@ -444,7 +444,7 @@ export default function LeaderboardFilter({
                   <MultipleSelect
                     selected={field.value ?? []}
                     options={tierItems}
-                    onChange={(value) => {
+                    onChange={(value: string[]) => {
                       field.onChange(value);
                       form.handleSubmit(onSubmit)();
                     }}

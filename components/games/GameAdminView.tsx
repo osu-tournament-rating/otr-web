@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   GameDTO,
   GameWarningFlags,
+  GameRejectionReason,
   Mods,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
@@ -37,9 +38,9 @@ import {
   GameWarningFlagsEnumHelper,
   getEnumFlags,
   ModsEnumHelper,
-  RulesetEnumHelper,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
+  GameRejectionReasonEnumHelper,
 } from '@/lib/enums';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
@@ -47,6 +48,8 @@ import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
+import { Checkbox } from '@/components/ui/checkbox';
+import RulesetSelectContent from '@/components/select/RulesetSelectContent';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -56,18 +59,31 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
   );
 
 const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([, { text }]) => !!text)
+  .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
+  .map(([value, { text, description }]) => ({
+    label: description
+      ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
+      : text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
+
+const warningFlagOptions = Object.entries(GameWarningFlagsEnumHelper.metadata)
   .map(([value, { text }]) => ({
     label: text,
     value,
-  })) satisfies Option[];
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-const warningFlagOptions = Object.entries(
-  GameWarningFlagsEnumHelper.metadata
-).map(([value, { text }]) => ({
-  label: text,
-  value,
-})) satisfies Option[];
+const gameRejectionReasonOptions = Object.entries(
+  GameRejectionReasonEnumHelper.metadata
+)
+  .filter(([value]) => Number(value) !== GameRejectionReason.None)
+  .map(([value, { text }]) => ({
+    label: text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function GameAdminView({ game }: { game: GameDTO }) {
   const form = useForm<z.infer<typeof gameEditFormSchema>>({
@@ -109,79 +125,133 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>Edit Game</DialogTitle>
           <DialogDescription>Editing Game {game.id}</DialogDescription>
         </DialogHeader>
         {/* Edit form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="scoringType"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Scoring Type</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SimpleSelectContent enumHelper={ScoringTypeEnumHelper} />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="teamType"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Team Type</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SimpleSelectContent enumHelper={TeamTypeEnumHelper} />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ruleset"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Ruleset</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <RulesetSelectContent />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="ruleset"
+              name="isFreeMod"
               render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Ruleset</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={RulesetEnumHelper} />
-                  </Select>
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                  <FormControl>
+                    {/* Disabled because this is a property set on the
+                     DTO but isn't configurable or in the database */}
+                    <Checkbox
+                      disabled
+                      className={inputChangedStyle(fieldState)}
+                      checked={value}
+                      onCheckedChange={onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-muted-foreground">
+                      Free Mod
+                    </FormLabel>
+                  </div>
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
-              name="scoringType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={ScoringTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="teamType"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Scoring Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      onChange(Number(val));
-                    }}
-                    value={value.toString()}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger className={inputChangedStyle(fieldState)}>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SimpleSelectContent enumHelper={TeamTypeEnumHelper} />
-                  </Select>
-                </FormItem>
-              )}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, GameRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={gameRejectionReasonOptions}
+                      onChange={(values: string[]) => {
+                        let flag = 0;
+                        values.forEach((v: string) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
@@ -195,11 +265,12 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                     <FormLabel>Mods</FormLabel>
                     <MultipleSelect
                       className={inputChangedStyle(fieldState)}
+                      placeholder={'No mods'}
                       selected={flags.map(String)}
                       options={modOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
@@ -226,9 +297,9 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                       disabled
                       selected={flags.map(String)}
                       options={warningFlagOptions}
-                      onChange={(values) => {
+                      onChange={(values: string[]) => {
                         let flag = 0;
-                        values.forEach((v) => {
+                        values.forEach((v: string) => {
                           flag |= Number(v);
                         });
 
@@ -297,6 +368,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -317,6 +389,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
               {/* Save changes */}
               <Button
                 type="submit"
+                size="sm"
                 disabled={!form.formState.isValid || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (

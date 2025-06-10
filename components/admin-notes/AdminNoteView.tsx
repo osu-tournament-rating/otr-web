@@ -123,8 +123,8 @@ export default function AdminNoteView({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
           <DialogTitle>Admin Notes</DialogTitle>
           <DialogDescription>
             Viewing admin notes for{' '}
@@ -144,7 +144,7 @@ export default function AdminNoteView({
                     <FormControl>
                       <Textarea
                         placeholder="Add your note here"
-                        className="min-h-24 resize-none"
+                        className="min-h-16 resize-none"
                         {...field}
                       />
                     </FormControl>
@@ -157,6 +157,7 @@ export default function AdminNoteView({
                 <Button
                   type="reset"
                   variant={'secondary'}
+                  size="sm"
                   onClick={() => form.reset()}
                   disabled={
                     !form.formState.isDirty || form.formState.isSubmitting
@@ -167,6 +168,7 @@ export default function AdminNoteView({
                 {/* Save changes */}
                 <Button
                   type="submit"
+                  size="sm"
                   disabled={
                     !form.formState.isValid ||
                     !form.formState.isDirty ||
