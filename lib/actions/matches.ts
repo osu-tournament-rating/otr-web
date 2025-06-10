@@ -20,6 +20,11 @@ export async function update(params: MatchesUpdateRequestParams) {
   return result;
 }
 
+export async function merge(parentId: number, matchIds: number[]) {
+  const { result } = await matches.merge({ id: parentId, body: matchIds });
+  return result;
+}
+
 export async function deleteMatch(id: number) {
   await matches.delete({ id });
 }

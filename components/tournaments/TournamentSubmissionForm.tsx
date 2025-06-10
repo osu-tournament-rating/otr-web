@@ -327,9 +327,9 @@ export default function TournamentSubmissionForm() {
                           selected={TournamentRejectionReasonEnumHelper.getFlags(
                             value
                           ).map(String)}
-                          onChange={(values) => {
+                          onChange={(values: string[]) => {
                             let flag = 0;
-                            values.forEach((v) => {
+                            values.forEach((v: string) => {
                               flag |= Number(v);
                             });
 

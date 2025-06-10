@@ -17,9 +17,10 @@ import {
   Roles,
   GameScoreDTO,
   Mods,
+  ScoreRejectionReason,
   AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2, Trash2 } from 'lucide-react';
+import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -39,6 +40,8 @@ import {
   RulesetEnumHelper,
   TeamEnumHelper,
   ModsEnumHelper,
+  ScoreGradeEnumHelper,
+  ScoreRejectionReasonEnumHelper,
   getEnumFlags,
 } from '@/lib/enums';
 import { update } from '@/lib/actions/scores';
@@ -64,6 +67,7 @@ import AdminNotesList from '../admin-notes/AdminNoteList';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import SimpleTooltip from '../simple-tooltip';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -73,11 +77,24 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
   );
 
 const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([, { text }]) => !!text)
+  .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
+  .map(([value, { text, description }]) => ({
+    label: description
+      ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
+      : text,
+    value,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
+
+const scoreRejectionReasonOptions = Object.entries(
+  ScoreRejectionReasonEnumHelper.metadata
+)
+  .filter(([value]) => Number(value) !== ScoreRejectionReason.None)
   .map(([value, { text }]) => ({
     label: text,
     value,
-  })) satisfies Option[];
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
   const form = useForm<z.infer<typeof scoreEditFormSchema>>({
@@ -169,6 +186,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       'countMiss',
       'countGeki',
       'countKatu',
+      'grade',
       'mods',
     ] as const;
 
@@ -199,15 +217,15 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
             <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="p-4">
+          <DialogHeader className="space-y-1">
             <DialogTitle>Edit Score</DialogTitle>
             <DialogDescription>Editing Score {score.id}</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-4"
+              className="space-y-3"
             >
               <div className="flex gap-5">
                 <FormField
@@ -281,49 +299,6 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                 />
                 <FormField
                   control={form.control}
-                  name="placement"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Placement</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          type="number"
-                          min={0}
-                          disabled
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex gap-5">
-                <FormField
-                  control={form.control}
-                  name="accuracy"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Accuracy</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          type="number"
-                          step="any"
-                          min={0}
-                          max={100}
-                          disabled // Calculated server-side from judgements
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="maxCombo"
                   render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
@@ -337,6 +312,30 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field: { value, onChange }, fieldState }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Grade</FormLabel>
+                      <Select
+                        onValueChange={(val) => onChange(Number(val))}
+                        value={value.toString()}
+                      >
+                        <FormControl className="w-full">
+                          <SelectTrigger
+                            className={inputChangedStyle(fieldState)}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SimpleSelectContent
+                          enumHelper={ScoreGradeEnumHelper}
+                        />
+                      </Select>
                     </FormItem>
                   )}
                 />
@@ -455,32 +454,63 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="mods"
-                render={({ field: { value, onChange }, fieldState }) => {
-                  const flags = getEnumFlags(value, Mods);
 
-                  return (
-                    <FormItem>
-                      <FormLabel>Mods</FormLabel>
-                      <MultipleSelect
-                        className={inputChangedStyle(fieldState)}
-                        selected={flags.map(String)}
-                        options={modOptions}
-                        onChange={(values) => {
-                          let flag = 0;
-                          values.forEach((v) => {
-                            flag |= Number(v);
-                          });
+              <div className="flex gap-5">
+                <FormField
+                  control={form.control}
+                  name="rejectionReason"
+                  render={({ field: { value, onChange }, fieldState }) => {
+                    const flags = getEnumFlags(value, ScoreRejectionReason);
 
-                          onChange(flag);
-                        }}
-                      />
-                    </FormItem>
-                  );
-                }}
-              />
+                    return (
+                      <FormItem className="flex-1">
+                        <FormLabel>Rejection Reason</FormLabel>
+                        <MultipleSelect
+                          className={inputChangedStyle(fieldState)}
+                          placeholder={'No rejection reason'}
+                          selected={flags.map(String)}
+                          options={scoreRejectionReasonOptions}
+                          onChange={(values: string[]) => {
+                            let flag = 0;
+                            values.forEach((v: string) => {
+                              flag |= Number(v);
+                            });
+
+                            onChange(flag);
+                          }}
+                        />
+                      </FormItem>
+                    );
+                  }}
+                />
+                <FormField
+                  control={form.control}
+                  name="mods"
+                  render={({ field: { value, onChange }, fieldState }) => {
+                    const flags = getEnumFlags(value, Mods);
+
+                    return (
+                      <FormItem className="flex-1">
+                        <FormLabel>Mods</FormLabel>
+                        <MultipleSelect
+                          className={inputChangedStyle(fieldState)}
+                          placeholder={'No mods'}
+                          selected={flags.map(String)}
+                          options={modOptions}
+                          onChange={(values: string[]) => {
+                            let flag = 0;
+                            values.forEach((v: string) => {
+                              flag |= Number(v);
+                            });
+
+                            onChange(flag);
+                          }}
+                        />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
 
               <div className="flex gap-5">
                 <FormField
@@ -537,6 +567,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                   <Button
                     type="reset"
                     variant={'secondary'}
+                    size="sm"
                     onClick={() => form.reset()}
                     disabled={
                       !form.formState.isDirty || form.formState.isSubmitting
@@ -554,20 +585,23 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                   />
 
                   {/* Delete all player scores */}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeletePlayerScoresDialog(true)}
-                    disabled={!matchId}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete All Player Scores
-                  </Button>
+                  <SimpleTooltip content="Delete All Player Scores">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => setShowDeletePlayerScoresDialog(true)}
+                      disabled={!matchId}
+                      className="h-8 w-8"
+                    >
+                      <UserRoundMinusIcon className="h-4 w-4" />
+                    </Button>
+                  </SimpleTooltip>
                 </div>
 
                 <Button
                   type="submit"
+                  size="sm"
                   disabled={!form.formState.isValid || !form.formState.isDirty}
                 >
                   {form.formState.isSubmitting ? (
@@ -628,7 +662,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
             value={adminNote}
             onChange={(e) => setAdminNote(e.target.value)}
             placeholder="Enter your reason for modifying this score..."
-            className="min-h-24 resize-none"
+            className="min-h-16 resize-none"
           />
           <AdminNotesList
             entity={AdminNoteRouteTarget.GameScore}
