@@ -38,7 +38,7 @@ export default function TournamentsByYearChart({
   data,
   className,
 }: TournamentsByYearChartProps) {
-  const { chartData, total } = useMemo(() => {
+  const { chartData } = useMemo(() => {
     const processedData: ChartDataItem[] = Object.entries(data)
       .map(([year, count]) => ({ year, count }))
       .sort((a, b) => parseInt(a.year, 10) - parseInt(b.year, 10));

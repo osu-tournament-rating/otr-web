@@ -40,7 +40,7 @@ export default function TournamentsByLobbySizeChart({
   data,
   className,
 }: TournamentsByLobbySizeChartProps) {
-  const { chartData, total } = useMemo(() => {
+  const { chartData } = useMemo(() => {
     const processedData: ChartDataItem[] = Object.entries(data)
       .map(([lobbySize, count]) => ({
         lobbySize: parseInt(lobbySize, 10),

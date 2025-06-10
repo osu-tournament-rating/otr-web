@@ -67,7 +67,7 @@ export default function TournamentsByRulesetChart({
   data,
   className,
 }: TournamentsByRulesetChartProps) {
-  const { chartData, total } = useMemo(() => {
+  const { chartData } = useMemo(() => {
     const processedData: ChartDataItem[] = Object.entries(data)
       .map(([rulesetId, count]) => {
         const ruleset = parseInt(rulesetId, 10) as Ruleset;

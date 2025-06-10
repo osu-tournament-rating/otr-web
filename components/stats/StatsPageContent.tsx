@@ -1,7 +1,6 @@
 import { PlatformStats } from '@/lib/actions/platform-stats';
-import { BarChart3, Trophy, Users, Calendar } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
-import StatCard from '@/components/shared/StatCard';
 import RatingDistributionChart from './RatingDistributionChart';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import TournamentsByYearChart from './TournamentsByYearChart';
