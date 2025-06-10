@@ -82,9 +82,7 @@ export default function TournamentsByLobbySizeChart({
           <Users className="h-6 w-6 text-primary" />
           Tournaments by Team Size
         </CardTitle>
-        <CardDescription>
-          Verified tournaments by team size
-        </CardDescription>
+        <CardDescription>Verified tournaments by team size</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer

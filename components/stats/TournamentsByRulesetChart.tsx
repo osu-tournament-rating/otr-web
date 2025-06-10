@@ -115,9 +115,7 @@ export default function TournamentsByRulesetChart({
           <Gamepad2 className="h-6 w-6 text-primary" />
           Tournaments by Ruleset
         </CardTitle>
-        <CardDescription>
-          Verified tournaments by ruleset
-        </CardDescription>
+        <CardDescription>Verified tournaments by ruleset</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer
