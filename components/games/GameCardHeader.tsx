@@ -94,7 +94,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
               </span>
               <span>• Map by</span>
               <span className="font-semibold text-white">
-                {game.beatmap.creators.map((c) => c.username).join(',')}
+                {game.beatmap.creators.map((c) => c.username).join(', ')}
               </span>
             </span>
             <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
