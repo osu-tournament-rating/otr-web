@@ -1,6 +1,6 @@
 // Chart constants and utilities
 export const CHART_CONSTANTS = {
-  DEFAULT_HEIGHT: 300,
+  DEFAULT_HEIGHT: 250,
   DEFAULT_MARGIN: { top: 20, right: 20, left: 0, bottom: 25 },
   VERTICAL_MARGIN: { top: 20, right: 20, left: 20, bottom: 5 },
   BUCKET_SIZE: 25,
