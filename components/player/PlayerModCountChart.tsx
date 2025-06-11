@@ -19,6 +19,7 @@ import { PieChart, Pie, Label } from 'recharts';
 import * as React from 'react';
 import { getModColor } from '@/lib/utils/mods';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
+import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 
 interface ProcessedEntry {
   label: string;
@@ -108,7 +109,7 @@ export default function PlayerModCountChart({
               y={viewBox.cy}
               className="fill-foreground text-3xl font-bold"
             >
-              {totalGames.toLocaleString()}
+              {formatChartNumber(totalGames)}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -156,7 +157,7 @@ export default function PlayerModCountChart({
               dataKey="count"
               nameKey="label"
               label={({ name, percent }) =>
-                `${name} (${(percent * 100).toFixed(1)}%)`
+                `${name} (${formatPercentage(percent * 100, 1)})`
               }
             >
               <Label content={renderCenterLabel} />

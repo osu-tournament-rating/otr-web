@@ -21,6 +21,7 @@ import {
 import { InfoIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
+import { formatChartNumber } from '@/lib/utils/chart';
 
 interface ChartDataEntry {
   label: string;
@@ -150,7 +151,7 @@ export default function PlayerModStatsChart({
               type="number"
               ticks={[0, 200_000, 400_000, 600_000, 800_000]}
               tickFormatter={(value) =>
-                value > 0 ? `${(value / 1000).toFixed(0)}k` : '0'
+                value > 0 ? `${formatChartNumber(value / 1000)}k` : '0'
               }
             />
             <YAxis

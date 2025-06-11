@@ -19,6 +19,7 @@ import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { capitalize } from '@/lib/utils';
 import { sortData, ChartDataPoint } from '@/lib/utils/playerRatingChart';
 import { ChartContainer } from '../ui/chart';
+import { CHART_CONSTANTS } from '@/lib/utils/chart';
 
 interface ChartColors {
   rating: string;
@@ -117,10 +118,7 @@ export default function PlayerRatingChartView({
       config={chartConfig}
       className="max-h-[375px] min-h-[300px] w-full"
     >
-      <LineChart
-        data={chartData}
-        margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-      >
+      <LineChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
         <XAxis
           type="category"
           dataKey="formattedAxisDate"

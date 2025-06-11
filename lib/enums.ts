@@ -252,6 +252,18 @@ export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
   },
 };
 
+export const LobbySizeEnumHelper = {
+  toString: (lobbySize: number): string => {
+    if (lobbySize < 1) {
+      return 'Unknown';
+    }
+    if (lobbySize === 1) {
+      return '1v1';
+    }
+    return `${lobbySize}v${lobbySize}`;
+  },
+};
+
 export const RatingAdjustmentTypeEnumhelper: IEnumHelper<RatingAdjustmentType> =
   {
     ...defaultEnumHelper(),
