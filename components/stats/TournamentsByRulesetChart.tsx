@@ -122,7 +122,7 @@ export default function TournamentsByRulesetChart({
           width="100%"
           height={CHART_CONSTANTS.DEFAULT_HEIGHT}
         >
-          <BarChart data={chartData} margin={{ bottom: 20 }}>
+          <BarChart data={chartData}>
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}

@@ -152,7 +152,7 @@ export default function TournamentVerificationChart({
       <CardContent className="pb-0 font-sans">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-video max-h-[300px] w-full"
+          className="mx-auto max-h-[300px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
