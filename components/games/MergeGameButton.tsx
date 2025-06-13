@@ -130,10 +130,14 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
       toast.error(
         <div className="flex flex-col gap-1">
           <span className="font-semibold">Failed to merge games</span>
-          <span className="text-sm">
-            Please check that: • All games are from the same match • All games
-            have the same beatmap • No player has scores in multiple games
-          </span>
+          <div className="text-sm">
+            <p>Please check that:</p>
+            <ul className="list-inside list-disc space-y-1">
+              <li>All games are from the same match</li>
+              <li>All games have the same beatmap</li>
+              <li>No player has scores in multiple games</li>
+            </ul>
+          </div>
         </div>
       );
     } finally {
