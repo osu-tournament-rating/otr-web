@@ -50,6 +50,7 @@ import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
+import MergeGameButton from './MergeGameButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -376,6 +377,9 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 >
                   Reset
                 </Button>
+
+                {/* Merge game */}
+                <MergeGameButton game={game} />
 
                 {/* Delete game */}
                 <DeleteButton
