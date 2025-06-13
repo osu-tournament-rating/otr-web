@@ -25,10 +25,6 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { mergeGames } from '@/lib/actions/games';
 import { get } from '@/lib/actions/games';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import { RulesetEnumHelper } from '@/lib/enums';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import SimpleTooltip from '../simple-tooltip';
 
 interface MergeGameButtonProps {
   game: GameDTO;
@@ -155,7 +151,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
     return dateTime ? new Date(dateTime).toLocaleString() : 'N/A';
   };
 
-  const renderTargetGameInfo = (targetGame: GameDTO, index: number) => {
+  const renderTargetGameInfo = (targetGame: GameDTO) => {
     const beatmapTitle = targetGame.beatmap?.beatmapset?.title || 'Unknown beatmap';
     const diffName = targetGame.beatmap?.diffName || 'Unknown difficulty';
     const playerCount = targetGame.scores?.length ?? 0;
@@ -169,10 +165,6 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
           {beatmapTitle} [{diffName}]
         </p>
         <div className="space-y-1 text-xs">
-          <p>
-            <span className="text-muted-foreground">Match ID:</span>{' '}
-            <span className="font-mono">{targetGame.match?.id || 'N/A'}</span>
-          </p>
           <p>
             <span className="text-muted-foreground">Beatmap ID:</span>{' '}
             <span className="font-mono">{targetGame.beatmap?.osuId || 'N/A'}</span>
@@ -200,7 +192,6 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
     const totalScores = targetGames.reduce((sum, g) => sum + (g.scores?.length ?? 0), 0);
 
     // Check for validation issues
-    const differentMatches = targetGames.some(g => g.match?.id !== game.match?.id);
     const differentBeatmaps = targetGames.some(g => g.beatmap?.osuId !== game.beatmap?.osuId);
 
     return (
@@ -214,15 +205,14 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
           </span>
         </div>
         
-        {(differentMatches || differentBeatmaps) && (
+        {differentBeatmaps && (
           <div className="text-sm text-destructive space-y-1">
-            {differentMatches && <p>⚠️ Warning: Some games are from different matches</p>}
-            {differentBeatmaps && <p>⚠️ Warning: Some games have different beatmaps</p>}
+            <p>⚠️ Warning: Some games have different beatmaps</p>
           </div>
         )}
         
         <div className="max-h-60 space-y-2 overflow-y-auto">
-          {targetGames.map((targetGame, index) => renderTargetGameInfo(targetGame, index))}
+          {targetGames.map((targetGame) => renderTargetGameInfo(targetGame))}
         </div>
       </div>
     );
@@ -250,9 +240,11 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                     <li>Move {totalScoresMoved} player score{scorePlural} to Game #{game.id}</li>
                     <li>Permanently delete {gameCount} source game{pluralSuffix}</li>
-                    <li>Cannot be undone</li>
                   </ul>
                 </div>
+                <p className="text-sm font-medium text-destructive">
+                  This action cannot be undone.
+                </p>
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -308,7 +300,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                 <div className="text-xs space-y-1 text-muted-foreground">
                   <p>• All scores will be moved to this game</p>
                   <p>• Source games will be permanently deleted</p>
-                  <p>• Games must be from the same match and beatmap</p>
+                  <p>• Games must have the same beatmap</p>
                   <p>• Players cannot have scores in multiple games</p>
                 </div>
               </div>
