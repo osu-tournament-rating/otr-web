@@ -123,7 +123,17 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
       handleCancel();
       router.refresh();
     } catch {
-      toast.error('Failed to merge games');
+      toast.error(
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold">Failed to merge games</span>
+          <span className="text-sm">
+            Please check that:
+            • All games are from the same match
+            • All games have the same beatmap
+            • No player has scores in multiple games
+          </span>
+        </div>
+      );
     } finally {
       setIsLoading(false);
     }
