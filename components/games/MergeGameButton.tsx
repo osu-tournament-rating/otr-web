@@ -161,7 +161,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
         <p className="font-semibold">
           Game #{targetGame.id}
         </p>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="text-xs text-muted-foreground break-words">
           {beatmapTitle} [{diffName}]
         </p>
         <div className="space-y-1 text-xs">
@@ -297,12 +297,12 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                 <p>
                   Merge scores from other games into <strong>Game #{game.id}</strong>
                 </p>
-                <div className="text-xs space-y-1 text-muted-foreground">
-                  <p>• All scores will be moved to this game</p>
-                  <p>• Source games will be permanently deleted</p>
-                  <p>• Games must have the same beatmap</p>
-                  <p>• Players cannot have scores in multiple games</p>
-                </div>
+                <ul className="text-xs space-y-1 text-muted-foreground list-disc list-inside">
+                  <li>All scores will be moved to this game</li>
+                  <li>Source games will be permanently deleted</li>
+                  <li>Games must have the same beatmap</li>
+                  <li>Players cannot have scores in multiple games</li>
+                </ul>
               </div>
             </DialogDescription>
           </DialogHeader>
