@@ -94,7 +94,7 @@
   --color-warning: var(--color-yellow-400);
   --color-warning-foreground: var(--color-yellow-900);
   /* Verification status color alias */
-  --color-status-pending: var(--color-warning);
+  --color-status-pending: var(--color-muted-foreground);
   --color-status-rejected: var(--destructive);
   --color-status-verified: var(--color-success);
 }

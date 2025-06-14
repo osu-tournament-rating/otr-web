@@ -61,6 +61,11 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  {
+    title: 'Stats',
+    href: '/stats',
+    roles: [],
+  },
 ];
 
 export default function Header() {

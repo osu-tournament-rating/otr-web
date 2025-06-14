@@ -13,6 +13,7 @@ import {
   IOtrApiWrapperConfiguration,
   UserDTO,
   PlayersWrapper,
+  PlatformStatsWrapper,
 } from '@osu-tournament-rating/otr-api-client';
 import { notFoundInterceptor } from './shared';
 import { cookies } from 'next/headers';
@@ -48,6 +49,7 @@ export const games = new GamesWrapper(config);
 export const leaderboards = new LeaderboardsWrapper(config);
 export const matches = new MatchesWrapper(config);
 export const me = new MeWrapper(config);
+export const platformStats = new PlatformStatsWrapper(config);
 export const players = new PlayersWrapper(config);
 export const scores = new GameScoresWrapper(config);
 export const search = new SearchWrapper(config);
