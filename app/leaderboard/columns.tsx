@@ -38,12 +38,13 @@ export const columns = [
       const countryRank = row.original.countryRank;
       const country = getValue();
       return (
-        <p className="text-center font-medium text-muted-foreground">
+        <p className="flex w-full gap-2 align-baseline font-medium text-muted-foreground">
           <CountryFlag
-            tooltipContent={`#${countryRank} ${country}`}
+            tooltipContent={country}
             className="w-9"
             country={country}
           />
+          <span className="align-baseline">#{countryRank}</span>
         </p>
       );
     },
