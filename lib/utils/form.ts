@@ -10,13 +10,14 @@ function isValidDateString(str: string): boolean {
   if (typeof str !== 'string') {
     return false;
   }
-  
+
   // Check for ISO 8601 format patterns
-  const isoPattern = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?)?$/;
+  const isoPattern =
+    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?)?$/;
   if (isoPattern.test(str)) {
     return true;
   }
-  
+
   // Check for other common date formats
   const commonDatePatterns = [
     /^\d{1,2}\/\d{1,2}\/\d{4}$/, // MM/DD/YYYY or M/D/YYYY
@@ -24,8 +25,8 @@ function isValidDateString(str: string): boolean {
     /^\w{3}\s+\d{1,2}\s+\d{4}$/, // Mon DD YYYY
     /^\d{1,2}-\w{3}-\d{4}$/, // DD-Mon-YYYY
   ];
-  
-  return commonDatePatterns.some(pattern => pattern.test(str));
+
+  return commonDatePatterns.some((pattern) => pattern.test(str));
 }
 
 /**

@@ -74,7 +74,11 @@ const matchRejectionReasonOptions = Object.entries(
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-export default function MatchAdminView({ match }: { match: MatchCompactDTO | MatchDTO }) {
+export default function MatchAdminView({
+  match,
+}: {
+  match: MatchCompactDTO | MatchDTO;
+}) {
   const defaultValues = {
     name: match.name,
     verificationStatus: match.verificationStatus,

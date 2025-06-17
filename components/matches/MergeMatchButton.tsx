@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { Loader2, Merge } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { MatchDTO, MatchCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  MatchDTO,
+  MatchCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
 
 import { Button } from '@/components/ui/button';
 import {
