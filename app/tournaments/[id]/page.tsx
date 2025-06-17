@@ -1,6 +1,6 @@
 import { get, getBeatmaps } from '@/lib/actions/tournaments';
 import {
-  MatchDTO,
+  MatchCompactDTO,
   TournamentDTO,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
@@ -43,12 +43,12 @@ type PageProps = { params: Promise<{ id: number }> };
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const tournament = await get({ id: (await params).id, verified: false });
+  const tournament = await get({ id: (await params).id });
 
   return { title: tournament.name };
 }
 
-function generateTableData(matches: MatchDTO[]): MatchRow[] {
+function generateTableData(matches: MatchCompactDTO[]): MatchRow[] {
   // Sort matches by start time descending
   const sortedMatches = [...matches].sort((a, b) => {
     const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
@@ -201,18 +201,11 @@ function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
 function TournamentStatsCard({ tournament }: { tournament: TournamentDTO }) {
   const matches = tournament.matches ?? [];
   const totalGames = matches.reduce(
-    (sum: number, match: MatchDTO) => sum + (match.games?.length ?? 0),
+    (sum: number, match: MatchCompactDTO) => sum + (match.games?.length ?? 0),
     0
   );
-  const uniquePlayerIds = new Set(
-    matches.flatMap(
-      (match: MatchDTO) =>
-        match.games?.flatMap((game) =>
-          game.scores.map((score) => score.playerId)
-        ) ?? []
-    )
-  );
-  const totalPlayers = uniquePlayerIds.size;
+  // Use tournament player stats to get the total number of players
+  const totalPlayers = tournament.playerTournamentStats?.length ?? 0;
 
   const startDate = tournament.startTime
     ? new Date(tournament.startTime)
@@ -293,14 +286,13 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDTO }) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const tournament = await get({ id: (await params).id, verified: false });
+  const tournament = await get({ id: (await params).id });
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = (await getBeatmaps((await params).id)) ?? [];
 
-  // Extract all games from tournament matches for mod calculation
-  const tournamentGames = (tournament.matches ?? []).flatMap(
-    (match) => match.games ?? []
-  );
+  // Note: GameCompactDTO doesn't include beatmap and mods properties needed for mod calculation
+  // This functionality would require fetching full game data
+  const tournamentGames: never[] = [];
 
   // Calculate hidden beatmaps count
   const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {

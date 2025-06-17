@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2, Merge } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import { MatchDTO, MatchCompactDTO } from '@osu-tournament-rating/otr-api-client';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,7 @@ import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 
 interface MergeMatchButtonProps {
-  match: MatchDTO;
+  match: MatchDTO | MatchCompactDTO;
 }
 
 const MATCH_ID_SEPARATORS = /[,\s\n]+/;
@@ -94,7 +94,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     setError(null);
 
     try {
-      const fetchPromises = uniqueIds.map((id) => get({ id, verified: false }));
+      const fetchPromises = uniqueIds.map((id) => get({ id }));
       const fetchedMatches = await Promise.all(fetchPromises);
       setTargetMatches(fetchedMatches);
     } catch {

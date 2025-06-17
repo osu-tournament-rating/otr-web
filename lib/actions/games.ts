@@ -7,11 +7,11 @@ import {
 import { cache } from 'react';
 import { games } from '../api/server';
 
-export const get = async ({ id, verified }: GamesGetRequestParams) =>
-  await getCached(id, verified);
+export const get = async ({ id }: GamesGetRequestParams) =>
+  await getCached(id);
 
-const getCached = cache(async (id: number, verified?: boolean) => {
-  const { result } = await games.get({ id, verified });
+const getCached = cache(async (id: number) => {
+  const { result } = await games.get({ id });
   return result;
 });
 

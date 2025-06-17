@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   MatchCompactDTO,
+  MatchDTO,
   MatchWarningFlags,
   MatchRejectionReason,
   Roles,
@@ -73,10 +74,20 @@ const matchRejectionReasonOptions = Object.entries(
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
+export default function MatchAdminView({ match }: { match: MatchCompactDTO | MatchDTO }) {
+  const defaultValues = {
+    name: match.name,
+    verificationStatus: match.verificationStatus,
+    rejectionReason: match.rejectionReason,
+    processingStatus: match.processingStatus,
+    warningFlags: match.warningFlags,
+    startTime: match.startTime,
+    endTime: match.endTime,
+  };
+
   const form = useForm<z.infer<typeof matchEditFormSchema>>({
     resolver: zodResolver(matchEditFormSchema),
-    defaultValues: match,
+    defaultValues,
     mode: 'all',
   });
 
@@ -89,12 +100,11 @@ export default function MatchAdminView({ match }: { match: MatchCompactDTO }) {
 
   async function onSubmit(values: z.infer<typeof matchEditFormSchema>) {
     try {
-      const patchedMatch = await update({
+      await update({
         id: match.id,
         body: createPatchOperations(match, values),
       });
 
-      form.reset(patchedMatch);
       saveToast();
       router.refresh();
     } catch {
