@@ -88,7 +88,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
     setError(null);
 
     try {
-      const fetchPromises = uniqueIds.map((id) => get({ id, verified: false }));
+      const fetchPromises = uniqueIds.map((id) => get({ id }));
       const fetchedGames = await Promise.all(fetchPromises);
       setTargetGames(fetchedGames);
     } catch {

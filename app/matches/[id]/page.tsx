@@ -9,13 +9,13 @@ type PageProps = { params: Promise<{ id: number }> };
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const match = await get({ id: (await params).id, verified: false });
+  const match = await get({ id: (await params).id });
 
   return { title: match.name };
 }
 
 export default async function Page({ params }: PageProps) {
-  const match = await get({ id: (await params).id, verified: false });
+  const match = await get({ id: (await params).id });
 
   return (
     <Card className="bg-popover">
