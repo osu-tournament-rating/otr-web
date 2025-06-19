@@ -4,6 +4,32 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 
 /**
+ * Check if a string is intended to be parsed as a date
+ */
+function isValidDateString(str: string): boolean {
+  if (typeof str !== 'string') {
+    return false;
+  }
+
+  // Check for ISO 8601 format patterns
+  const isoPattern =
+    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?)?$/;
+  if (isoPattern.test(str)) {
+    return true;
+  }
+
+  // Check for other common date formats
+  const commonDatePatterns = [
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/, // MM/DD/YYYY or M/D/YYYY
+    /^\d{4}\/\d{2}\/\d{2}$/, // YYYY/MM/DD
+    /^\w{3}\s+\d{1,2}\s+\d{4}$/, // Mon DD YYYY
+    /^\d{1,2}-\w{3}-\d{4}$/, // DD-Mon-YYYY
+  ];
+
+  return commonDatePatterns.some((pattern) => pattern.test(str));
+}
+
+/**
  * Check if two values represent the same date/time, handling timezone differences
  */
 function areDatesEqual(orig: unknown, patched: unknown): boolean {
@@ -16,16 +42,17 @@ function areDatesEqual(orig: unknown, patched: unknown): boolean {
     return orig === patched;
   }
 
-  // Try to parse as dates
-  const origDate = new Date(orig as string);
-  const patchedDate = new Date(patched as string);
-
-  // If both are valid dates, compare their time values
-  if (!isNaN(origDate.getTime()) && !isNaN(patchedDate.getTime())) {
-    return origDate.getTime() === patchedDate.getTime();
+  // Only attempt date parsing for strings that look like valid dates
+  if (
+    typeof orig === 'string' &&
+    typeof patched === 'string' &&
+    isValidDateString(orig) &&
+    isValidDateString(patched)
+  ) {
+    return new Date(orig).getTime() === new Date(patched).getTime();
   }
 
-  // If not dates, fall back to regular comparison
+  // Not dates, use regular comparison
   return orig === patched;
 }
 

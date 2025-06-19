@@ -39,11 +39,11 @@ import { cache } from 'react';
  * Get a tournament
  * @param params see {@link TournamentsGetRequestParams}
  */
-export const get = async ({ id, verified }: TournamentsGetRequestParams) =>
-  await getCached(id, verified);
+export const get = async ({ id }: TournamentsGetRequestParams) =>
+  await getCached(id);
 
-const getCached = cache(async (id: number, verified?: boolean) => {
-  const { result } = await tournaments.get({ id, verified });
+const getCached = cache(async (id: number) => {
+  const { result } = await tournaments.get({ id });
   return result;
 });
 
