@@ -8,6 +8,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from '@/lib/hooks/useSession';
+import CountryFlag from '@/components/shared/CountryFlag';
 
 const columnHelper = createColumnHelper<PlayerRatingStatsDTO>();
 
@@ -30,6 +31,23 @@ export const columns = [
     return (
       <span className="font-semibold text-foreground">#{rank as number}</span>
     );
+  }),
+  columnHelper.accessor('player.country', {
+    header: 'Country',
+    cell: ({ getValue, row }) => {
+      const countryRank = row.original.countryRank;
+      const country = getValue();
+      return (
+        <p className="flex w-full gap-2 align-baseline font-medium text-muted-foreground">
+          <CountryFlag
+            tooltipContent={country}
+            className="w-7"
+            country={country}
+          />
+          <span className="align-baseline">#{countryRank}</span>
+        </p>
+      );
+    },
   }),
   columnHelper.accessor('player.osuId', {
     header: 'Player',
