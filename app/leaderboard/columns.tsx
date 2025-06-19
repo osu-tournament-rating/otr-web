@@ -41,7 +41,7 @@ export const columns = [
         <p className="flex w-full gap-2 align-baseline font-medium text-muted-foreground">
           <CountryFlag
             tooltipContent={country}
-            className="w-9"
+            className="w-7"
             country={country}
           />
           <span className="align-baseline">#{countryRank}</span>
