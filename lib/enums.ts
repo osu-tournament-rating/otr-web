@@ -1,5 +1,6 @@
 import {
   AdminNoteRouteTarget,
+  FilteringFailReason,
   GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
@@ -857,3 +858,48 @@ export const ScoreGradeEnumHelper: IEnumHelper<ScoreGrade> = {
     },
   },
 };
+
+export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReason> =
+  {
+    ...defaultBitwiseEnumHelper(FilteringFailReason),
+
+    metadata: {
+      [FilteringFailReason.None]: {
+        text: 'None',
+        description: 'No failure reason',
+      },
+      [FilteringFailReason.NoData]: {
+        text: 'No data for ruleset',
+        description:
+          'The player does not have a rating for the specified ruleset',
+      },
+      [FilteringFailReason.MinRating]: {
+        text: 'Rating too low',
+        description: "The player's rating is below the minimum threshold",
+      },
+      [FilteringFailReason.MaxRating]: {
+        text: 'Rating too high',
+        description: "The player's rating is above the maximum threshold",
+      },
+      [FilteringFailReason.IsProvisional]: {
+        text: 'Has provisional rating',
+        description:
+          "The player's rating is provisional and the filter disallows provisional ratings",
+      },
+      [FilteringFailReason.NotEnoughTournaments]: {
+        text: 'Not enough tournaments',
+        description:
+          'The player has not played in the minimum specified number of tournaments',
+      },
+      [FilteringFailReason.PeakRatingTooHigh]: {
+        text: 'Peak rating too high',
+        description:
+          "The player's all-time peak rating exceeds the maximum allowed",
+      },
+      [FilteringFailReason.NotEnoughMatches]: {
+        text: 'Not enough matches',
+        description:
+          'The player has not played in the minimum specified number of matches',
+      },
+    },
+  };

@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown, LucideIcon, Trophy, Upload } from 'lucide-react';
+import { ChevronDown, Filter, LucideIcon, Trophy, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -58,6 +58,12 @@ const navItems: NavItem[] = [
         href: '/tournaments/submit',
         icon: Upload,
         roles: [Roles.Submit],
+      },
+      {
+        title: 'Player Filtering',
+        href: '/tournaments/filtering',
+        icon: Filter,
+        roles: [Roles.User],
       },
     ],
   },
