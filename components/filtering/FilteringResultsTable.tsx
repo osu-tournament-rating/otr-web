@@ -31,14 +31,23 @@ import {
   ArrowDown,
   CheckCircle,
   XCircle,
+  ListFilter,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface FilteringResultsTableProps {
   results: FilteringResultDTO;
+  onDownloadCSV: () => void;
 }
 
 const SortableHeader = ({
@@ -68,7 +77,7 @@ const SortableHeader = ({
 );
 
 const StatusCell = ({ isSuccess }: { isSuccess: boolean }) => (
-  <div className="flex items-center justify-center">
+  <div className="flex items-center">
     {isSuccess ? (
       <CheckCircle className="size-5 text-green-600 dark:text-green-400" />
     ) : (
@@ -124,18 +133,28 @@ const FailureReasonsCell = ({
   const reasons = FilteringFailReasonEnumHelper.getMetadata(failureReason);
 
   return (
-    <div className="flex flex-wrap gap-1">
-      {reasons.map((reason) => (
-        <Badge key={reason.text} variant="destructive" className="text-xs">
-          {reason.text}
-        </Badge>
-      ))}
-    </div>
+    <TooltipProvider>
+      <div className="flex flex-wrap gap-1">
+        {reasons.map((reason) => (
+          <Tooltip key={reason.text}>
+            <TooltipTrigger asChild>
+              <Badge variant="destructive" className="cursor-help text-xs">
+                {reason.text}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">{reason.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 };
 
 export default function FilteringResultsTable({
   results,
+  onDownloadCSV,
 }: FilteringResultsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'isSuccess', desc: false },
@@ -157,7 +176,7 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>osu! ID</SortableHeader>
         ),
         cell: ({ getValue }) => (
-          <div className="text-center font-mono">{getValue() as number}</div>
+          <div className="font-mono">{getValue() as number}</div>
         ),
         size: 120,
       },
@@ -193,18 +212,33 @@ export default function FilteringResultsTable({
 
   return (
     <Card className="w-full overflow-hidden">
-      <div className="p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Filtering Results</h3>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
-              <span>Passed: {results.playersPassed}</span>
+      <div className="p-3 sm:p-6">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 rounded-md border-b border-border pb-3 sm:border-0 sm:pb-0">
+            <ListFilter className="size-6 text-primary" />
+            <h3 className="text-xl font-semibold text-foreground">
+              Filtering Results
+            </h3>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+                <span>Passed: {results.playersPassed}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="size-4 text-red-600 dark:text-red-400" />
+                <span>Failed: {results.playersFailed}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <XCircle className="size-4 text-red-600 dark:text-red-400" />
-              <span>Failed: {results.playersFailed}</span>
-            </div>
+            <Button
+              variant="outline"
+              onClick={onDownloadCSV}
+              className="flex items-center gap-2"
+            >
+              <Download className="size-4" />
+              Download CSV
+            </Button>
           </div>
         </div>
 
@@ -213,7 +247,7 @@ export default function FilteringResultsTable({
             No players to display.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20">
+          <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -238,7 +272,7 @@ export default function FilteringResultsTable({
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows.map((row, index) => {
+                {table.getRowModel().rows.map((row) => {
                   const isFailed = !row.original.isSuccess;
                   return (
                     <TableRow
@@ -247,9 +281,7 @@ export default function FilteringResultsTable({
                         'transition-colors duration-200',
                         isFailed
                           ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/30'
-                          : index % 2 === 0
-                            ? 'bg-background/50 hover:bg-muted/30'
-                            : 'bg-muted/10 hover:bg-muted/30'
+                          : 'hover:bg-muted/50'
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (

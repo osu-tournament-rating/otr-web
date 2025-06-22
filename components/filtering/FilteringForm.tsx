@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Filter, Settings, LoaderCircle, Users, Download } from 'lucide-react';
+import { Settings, LoaderCircle, Users } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
 import { useState } from 'react';
 import {
@@ -20,7 +20,6 @@ import { toast } from 'sonner';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { filterPlayers } from '@/lib/actions/filtering';
-import { Checkbox } from '../ui/checkbox';
 import { z } from 'zod';
 import {
   FilteringResultDTO,
@@ -48,11 +47,12 @@ const filteringFormSchema = z.object({
       }
     ),
   minRating: z.coerce.number().min(100).optional().or(z.literal('')),
-  maxRating: z.coerce.number().optional().or(z.literal('')),
-  allowProvisional: z.boolean().default(true),
-  tournamentsPlayed: z.coerce.number().min(0).optional().or(z.literal('')),
-  peakRating: z.coerce.number().optional().or(z.literal('')),
-  matchesPlayed: z.coerce.number().min(0).optional().or(z.literal('')),
+  maxRating: z.coerce.number().min(100).optional().or(z.literal('')),
+  tournamentsPlayed: z.coerce.number().min(1).optional().or(z.literal('')),
+  peakRating: z.coerce.number().min(100).optional().or(z.literal('')),
+  matchesPlayed: z.coerce.number().min(1).optional().or(z.literal('')),
+  minRank: z.coerce.number().min(1).optional().or(z.literal('')),
+  maxRank: z.coerce.number().min(1).optional().or(z.literal('')),
   osuPlayerIds: z.string().min(1, 'Please enter at least one osu! player ID'),
 });
 
@@ -86,10 +86,11 @@ export default function FilteringForm() {
       ruleset: undefined,
       minRating: '',
       maxRating: '',
-      allowProvisional: true,
       tournamentsPlayed: '',
       peakRating: '',
       matchesPlayed: '',
+      minRank: '',
+      maxRank: '',
       osuPlayerIds: '',
     },
     mode: 'onChange',
@@ -114,7 +115,7 @@ export default function FilteringForm() {
         ruleset: values.ruleset as Ruleset,
         minRating: values.minRating === '' ? undefined : values.minRating,
         maxRating: values.maxRating === '' ? undefined : values.maxRating,
-        allowProvisional: values.allowProvisional,
+        allowProvisional: true,
         tournamentsPlayed:
           values.tournamentsPlayed === ''
             ? undefined
@@ -122,6 +123,11 @@ export default function FilteringForm() {
         peakRating: values.peakRating === '' ? undefined : values.peakRating,
         matchesPlayed:
           values.matchesPlayed === '' ? undefined : values.matchesPlayed,
+        // TODO: Remove @ts-expect-error once API client is regenerated with updated FilteringRequestDTO
+        // @ts-expect-error - minRank is not yet in the generated FilteringRequestDTO
+        minRank: values.minRank === '' ? undefined : values.minRank,
+        // @ts-expect-error - maxRank is not yet in the generated FilteringRequestDTO
+        maxRank: values.maxRank === '' ? undefined : values.maxRank,
         osuPlayerIds,
       });
 
@@ -206,14 +212,17 @@ export default function FilteringForm() {
               icon={<Settings className="size-6 text-primary" />}
               title="Filter Criteria"
             >
+              <p className="mb-4 text-sm text-muted-foreground">
+                Fields marked with * are required
+              </p>
               <FormField
                 control={form.control}
                 name="ruleset"
                 render={({ field }) => (
                   <FormItem>
                     <LabelWithTooltip
-                      label="Ruleset"
-                      tooltip="The game mode to filter players for"
+                      label="Ruleset *"
+                      tooltip="The game mode to filter players for (required)"
                     />
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
@@ -231,15 +240,15 @@ export default function FilteringForm() {
                 )}
               />
 
-              <div className="flex flex-col items-start gap-4 md:flex-row">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="minRating"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <LabelWithTooltip
                         label="Minimum Rating"
-                        tooltip="Players below this rating will be filtered out (minimum: 100)"
+                        tooltip="Players below this rating will be filtered out (optional, minimum: 100)"
                       />
                       <FormControl>
                         <Input
@@ -257,10 +266,10 @@ export default function FilteringForm() {
                   control={form.control}
                   name="maxRating"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <LabelWithTooltip
                         label="Maximum Rating"
-                        tooltip="Players above this rating will be filtered out"
+                        tooltip="Players above this rating will be filtered out (optional)"
                       />
                       <FormControl>
                         <Input
@@ -276,15 +285,15 @@ export default function FilteringForm() {
                 />
               </div>
 
-              <div className="flex flex-col items-start gap-4 md:flex-row">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="peakRating"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <LabelWithTooltip
                         label="Maximum Peak Rating"
-                        tooltip="Players whose all-time peak rating exceeds this value will be filtered out"
+                        tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional)"
                       />
                       <FormControl>
                         <Input
@@ -302,10 +311,10 @@ export default function FilteringForm() {
                   control={form.control}
                   name="tournamentsPlayed"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <LabelWithTooltip
                         label="Minimum Tournaments"
-                        tooltip="Players must have played in at least this many distinct tournaments"
+                        tooltip="Players must have played in at least this many distinct tournaments (optional)"
                       />
                       <FormControl>
                         <Input
@@ -323,10 +332,10 @@ export default function FilteringForm() {
                   control={form.control}
                   name="matchesPlayed"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <LabelWithTooltip
                         label="Minimum Matches"
-                        tooltip="Players must have played in at least this many matches"
+                        tooltip="Players must have played in at least this many matches (optional)"
                       />
                       <FormControl>
                         <Input
@@ -342,26 +351,50 @@ export default function FilteringForm() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="allowProvisional"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="minRank"
+                  render={({ field }) => (
+                    <FormItem>
                       <LabelWithTooltip
-                        label="Allow Provisional Ratings"
-                        tooltip="When unchecked, players with provisional ratings will be filtered out"
+                        label="Minimum osu! Global Rank"
+                        tooltip="Players with an osu! global rank (NOT o!TR rank) below this value will be filtered out (optional)"
                       />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 1000"
+                          {...field}
+                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maxRank"
+                  render={({ field }) => (
+                    <FormItem>
+                      <LabelWithTooltip
+                        label="Maximum osu! Global Rank"
+                        tooltip="Players with an osu! global rank (NOT o!TR rank) above this value will be filtered out (optional)"
+                      />
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 10000"
+                          {...field}
+                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </FormSection>
 
             <FormSection
@@ -374,13 +407,13 @@ export default function FilteringForm() {
                 render={({ field }) => (
                   <FormItem>
                     <LabelWithTooltip
-                      label="osu! Player IDs"
-                      tooltip="Enter osu! player IDs separated by commas, spaces, or new lines"
+                      label="osu! Player IDs *"
+                      tooltip="Enter osu! player IDs separated by commas, spaces, or new lines (required)"
                     />
                     <FormControl>
                       <Textarea
                         placeholder="Enter osu! player IDs (e.g., 1234567, 2345678, 3456789)"
-                        className="min-h-[150px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                        className="min-h-[120px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary sm:min-h-[150px]"
                         {...field}
                       />
                     </FormControl>
@@ -390,35 +423,26 @@ export default function FilteringForm() {
               />
             </FormSection>
 
-            <div className="flex justify-between pb-6">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Filter className="size-4" />
-                )}
-                Filter Players
-              </Button>
-              {filteringResults && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={downloadCSV}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="size-4" />
-                  Download CSV
-                </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+            >
+              {isLoading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                'Filter Players'
               )}
-            </div>
+            </Button>
           </form>
         </Form>
       </Card>
-      {filteringResults && <FilteringResultsTable results={filteringResults} />}
+      {filteringResults && (
+        <FilteringResultsTable
+          results={filteringResults}
+          onDownloadCSV={downloadCSV}
+        />
+      )}
     </>
   );
 }

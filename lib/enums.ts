@@ -901,5 +901,18 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
         description:
           'The player has not played in the minimum specified number of matches',
       },
+      // TODO: Remove these once API client is regenerated with updated FilteringFailReason enum
+      // @ts-expect-error - MinRank is not yet in the generated enum
+      [FilteringFailReason.MinRank ?? (1 << 7)]: {
+        text: 'osu! rank too low',
+        description:
+          "The player's osu! global rank (NOT o!TR rank) is below the minimum threshold",
+      },
+      // @ts-expect-error - MaxRank is not yet in the generated enum
+      [FilteringFailReason.MaxRank ?? (1 << 8)]: {
+        text: 'osu! rank too high',
+        description:
+          "The player's osu! global rank (NOT o!TR rank) is above the maximum threshold",
+      },
     },
   };

@@ -34,6 +34,7 @@ type NavItem = {
 
 type SubNavItem = {
   icon: LucideIcon;
+  requiresSession?: boolean;
 } & Omit<NavItem, 'dropdown'>;
 
 const navItems: NavItem[] = [
@@ -58,12 +59,7 @@ const navItems: NavItem[] = [
         href: '/tournaments/submit',
         icon: Upload,
         roles: [Roles.Submit],
-      },
-      {
-        title: 'Player Filtering',
-        href: '/tournaments/filtering',
-        icon: Filter,
-        roles: [Roles.User],
+        requiresSession: true,
       },
     ],
   },
@@ -71,6 +67,20 @@ const navItems: NavItem[] = [
     title: 'Stats',
     href: '/stats',
     roles: [],
+  },
+  {
+    title: 'Tools',
+    href: '#',
+    roles: [],
+    dropdown: [
+      {
+        title: 'Registrant Filtering',
+        href: '/tools/filter',
+        icon: Filter,
+        roles: [],
+        requiresSession: true,
+      },
+    ],
   },
 ];
 
@@ -152,7 +162,7 @@ export default function Header() {
         {!session && (
           <div className="w-full bg-accent/50 py-1 text-center">
             <p className="font-mono text-xs text-muted-foreground">
-              Most features are not available while signed out.
+              Some features are not available while signed out.
             </p>
           </div>
         )}
@@ -184,10 +194,12 @@ function SubnavTrigger({
   active,
   dropdown,
   children,
+  hasDropdown,
 }: {
   dropdown: boolean;
   active: boolean;
   children: React.ReactNode;
+  hasDropdown: boolean;
 }) {
   if (!dropdown) {
     return children;
@@ -200,6 +212,9 @@ function SubnavTrigger({
         'group inline-flex h-9 w-full items-center justify-start transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
         active && 'bg-accent md:bg-transparent'
       )}
+      onClick={
+        hasDropdown ? (e: React.MouseEvent) => e.preventDefault() : undefined
+      }
     >
       {children}
       <ChevronDown
@@ -228,10 +243,15 @@ function NavigationItem({
 
   return (
     <NavigationMenuItem className={cn('w-full', !isVisible && 'hidden')}>
-      <SubnavTrigger active={isActive} dropdown={hasDropdown}>
+      <SubnavTrigger
+        active={isActive}
+        dropdown={hasDropdown}
+        hasDropdown={hasDropdown}
+      >
         <NavLink
           isMobile={isMobile}
-          href={href}
+          href={hasDropdown ? '#' : href}
+          onClick={hasDropdown ? (e) => e.preventDefault() : undefined}
           className={cn(
             'bg-transparent hover:bg-transparent',
             !hasDropdown &&
@@ -244,40 +264,42 @@ function NavigationItem({
       </SubnavTrigger>
       {/* Subnav */}
       {hasDropdown && (
-        <NavigationMenuContent
-          className={
-            'right-0 !rounded-xl !border-0 !bg-card pr-2 md:!rounded-t-none'
-          }
-        >
+        <NavigationMenuContent>
           {/* Seamlessly extend the nav border */}
           <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
-          {dropdown.map(({ title, href, icon: Icon, roles }) => (
-            <NavLink
-              isMobile={isMobile}
-              key={title}
-              href={href}
-              hidden={
-                roles &&
-                roles.length > 0 &&
-                !roles.some((role) => session?.scopes?.includes(role))
-              }
-              className={cn(
-                'hover:bg-accent md:hover:bg-transparent',
-                pathname === href &&
-                  'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <Icon
+          {dropdown.map(
+            ({ title, href, icon: Icon, roles, requiresSession }) => {
+              const isHidden = requiresSession
+                ? !session
+                : roles &&
+                  roles.length > 0 &&
+                  !roles.some((role) => session?.scopes?.includes(role));
+
+              return (
+                <NavLink
+                  isMobile={isMobile}
+                  key={title}
+                  href={href}
+                  hidden={isHidden}
                   className={cn(
-                    'size-5 hover:text-primary focus:text-primary',
-                    pathname === href && 'text-primary'
+                    'whitespace-nowrap hover:bg-accent md:hover:bg-transparent',
+                    pathname === href &&
+                      'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
                   )}
-                />
-                <p>{title}</p>
-              </div>
-            </NavLink>
-          ))}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon
+                      className={cn(
+                        'size-5 hover:text-primary focus:text-primary',
+                        pathname === href && 'text-primary'
+                      )}
+                    />
+                    <p>{title}</p>
+                  </div>
+                </NavLink>
+              );
+            }
+          )}
         </NavigationMenuContent>
       )}
     </NavigationMenuItem>
