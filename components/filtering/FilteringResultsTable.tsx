@@ -168,24 +168,6 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>Status</SortableHeader>
         ),
         cell: ({ row }) => <StatusCell isSuccess={row.original.isSuccess} />,
-        size: 80,
-      },
-      {
-        accessorKey: 'osuId',
-        header: ({ column }) => (
-          <SortableHeader column={column}>osu! ID</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <div className="font-mono">{getValue() as number}</div>
-        ),
-        size: 120,
-      },
-      {
-        accessorKey: 'player',
-        header: () => <div className="font-semibold">Player</div>,
-        cell: ({ row }) => <PlayerCell result={row.original} />,
-        size: 250,
-        enableSorting: false,
       },
       {
         accessorKey: 'failureReason',
@@ -196,6 +178,91 @@ export default function FilteringResultsTable({
           />
         ),
         enableSorting: false,
+      },
+      {
+        accessorKey: 'osuId',
+        header: ({ column }) => (
+          <SortableHeader column={column}>osu! ID</SortableHeader>
+        ),
+        cell: ({ getValue }) => (
+          <div className="font-mono text-right">{getValue() as number}</div>
+        ),
+      },
+      {
+        accessorKey: 'player',
+        header: () => <div className="font-semibold">Player</div>,
+        cell: ({ row }) => <PlayerCell result={row.original} />,
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'currentRating',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Current Rating</SortableHeader>
+        ),
+        cell: ({ getValue }) => {
+          const rating = getValue() as number | undefined;
+          return rating !== undefined ? (
+            <div className="font-mono text-right">{rating.toFixed(0)}</div>
+          ) : (
+            <span className="text-muted-foreground text-right block">-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'peakRating',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Peak Rating</SortableHeader>
+        ),
+        cell: ({ getValue }) => {
+          const rating = getValue() as number | undefined;
+          return rating !== undefined ? (
+            <div className="font-mono text-right">{rating.toFixed(0)}</div>
+          ) : (
+            <span className="text-muted-foreground text-right block">-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'osuGlobalRank',
+        header: ({ column }) => (
+          <SortableHeader column={column}>osu! Rank</SortableHeader>
+        ),
+        cell: ({ getValue }) => {
+          const rank = getValue() as number | undefined;
+          return rank !== undefined ? (
+            <div className="font-mono text-right">#{rank.toLocaleString()}</div>
+          ) : (
+            <span className="text-muted-foreground text-right block">-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'tournamentsPlayed',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Tournaments</SortableHeader>
+        ),
+        cell: ({ getValue }) => {
+          const count = getValue() as number | undefined;
+          return count !== undefined ? (
+            <div className="font-mono text-center">{count}</div>
+          ) : (
+            <span className="text-muted-foreground text-center block">-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'matchesPlayed',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Matches</SortableHeader>
+        ),
+        cell: ({ getValue }) => {
+          const count = getValue() as number | undefined;
+          return count !== undefined ? (
+            <div className="font-mono text-center">{count}</div>
+          ) : (
+            <span className="text-muted-foreground text-center block">-</span>
+          );
+        },
       },
     ],
     []
@@ -212,11 +279,11 @@ export default function FilteringResultsTable({
 
   return (
     <Card className="w-full overflow-hidden">
-      <div className="p-3 sm:p-6">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 rounded-md border-b border-border pb-3 sm:border-0 sm:pb-0">
-            <ListFilter className="size-6 text-primary" />
-            <h3 className="text-xl font-semibold text-foreground">
+      <div className="p-4">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <ListFilter className="size-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">
               Filtering Results
             </h3>
           </div>
@@ -255,19 +322,44 @@ export default function FilteringResultsTable({
                     key={headerGroup.id}
                     className="bg-muted/50 hover:bg-muted/70"
                   >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="font-semibold text-foreground"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
+                    {headerGroup.headers.map((header) => {
+                      const getHeaderClass = () => {
+                        switch (header.column.id) {
+                          case 'isSuccess':
+                            return 'w-20 text-center';
+                          case 'failureReason':
+                            return 'w-48';
+                          case 'osuId':
+                            return 'w-28 text-right';
+                          case 'player':
+                            return 'min-w-[200px]';
+                          case 'currentRating':
+                          case 'peakRating':
+                            return 'w-32 text-right';
+                          case 'osuGlobalRank':
+                            return 'w-32 text-right';
+                          case 'tournamentsPlayed':
+                          case 'matchesPlayed':
+                            return 'w-28 text-center';
+                          default:
+                            return '';
+                        }
+                      };
+                      
+                      return (
+                        <TableHead
+                          key={header.id}
+                          className={cn('font-semibold text-foreground', getHeaderClass())}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -284,14 +376,35 @@ export default function FilteringResultsTable({
                           : 'hover:bg-muted/50'
                       )}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="py-3">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const getCellClass = () => {
+                          switch (cell.column.id) {
+                            case 'isSuccess':
+                              return 'text-center';
+                            case 'failureReason':
+                              return '';
+                            case 'osuId':
+                            case 'currentRating':
+                            case 'peakRating':
+                            case 'osuGlobalRank':
+                              return 'text-right';
+                            case 'tournamentsPlayed':
+                            case 'matchesPlayed':
+                              return 'text-center';
+                            default:
+                              return '';
+                          }
+                        };
+                        
+                        return (
+                          <TableCell key={cell.id} className={cn('py-3', getCellClass())}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   );
                 })}

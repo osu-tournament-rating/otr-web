@@ -75,9 +75,15 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
   </div>
 );
 
-export default function FilteringForm() {
-  const [filteringResults, setFilteringResults] =
-    useState<FilteringResultDTO | null>(null);
+interface FilteringFormProps {
+  onFilteringComplete: (results: FilteringResultDTO) => void;
+  filteringResults: FilteringResultDTO | null;
+}
+
+export default function FilteringForm({
+  onFilteringComplete,
+  filteringResults,
+}: FilteringFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FilteringFormValues>({
@@ -115,7 +121,6 @@ export default function FilteringForm() {
         ruleset: values.ruleset as Ruleset,
         minRating: values.minRating === '' ? undefined : values.minRating,
         maxRating: values.maxRating === '' ? undefined : values.maxRating,
-        allowProvisional: true,
         tournamentsPlayed:
           values.tournamentsPlayed === ''
             ? undefined
@@ -123,10 +128,7 @@ export default function FilteringForm() {
         peakRating: values.peakRating === '' ? undefined : values.peakRating,
         matchesPlayed:
           values.matchesPlayed === '' ? undefined : values.matchesPlayed,
-        // TODO: Remove @ts-expect-error once API client is regenerated with updated FilteringRequestDTO
-        // @ts-expect-error - minRank is not yet in the generated FilteringRequestDTO
         minRank: values.minRank === '' ? undefined : values.minRank,
-        // @ts-expect-error - maxRank is not yet in the generated FilteringRequestDTO
         maxRank: values.maxRank === '' ? undefined : values.maxRank,
         osuPlayerIds,
       });
@@ -137,7 +139,7 @@ export default function FilteringForm() {
       }
 
       if (result.data) {
-        setFilteringResults(result.data);
+        onFilteringComplete(result.data);
         toast.success(`Filtered ${osuPlayerIds.length} players successfully`);
       }
     } catch (error) {
@@ -159,6 +161,11 @@ export default function FilteringForm() {
       'Username',
       'Player ID',
       'Status',
+      'Current Rating',
+      'Peak Rating',
+      'osu! Global Rank',
+      'Tournaments Played',
+      'Matches Played',
       'Failure Reasons',
     ];
     const rows = filteringResults.filteringResults.map(
@@ -169,6 +176,11 @@ export default function FilteringForm() {
           result.username || 'Unknown',
           result.playerId || 'N/A',
           result.isSuccess ? 'Passed' : 'Failed',
+          result.currentRating?.toFixed(0) || 'N/A',
+          result.peakRating?.toFixed(0) || 'N/A',
+          result.osuGlobalRank || 'N/A',
+          result.tournamentsPlayed || 'N/A',
+          result.matchesPlayed || 'N/A',
           failureReasons.join(', '),
         ];
       }
