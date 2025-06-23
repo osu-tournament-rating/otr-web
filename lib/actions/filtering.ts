@@ -1,20 +1,14 @@
 'use server';
 
-import { filtering } from '@/lib/api/server';
-import type {
-  FilteringRequestDTO,
-  FilteringResultDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { parseErrorMessage } from '@/lib/utils/error';
+import { FilteringRequestDTO } from '@osu-tournament-rating/otr-api-client';
+import { filtering } from '../api/server';
 
-export async function filterPlayers(
-  filteringRequest: FilteringRequestDTO
-): Promise<{ data?: FilteringResultDTO; error?: string }> {
-  try {
-    const { result } = await filtering.filter({ body: filteringRequest });
-    return { data: result };
-  } catch (error) {
-    console.error('Error filtering players:', error);
-    return { error: parseErrorMessage(error) };
-  }
+export async function filterPlayers(body: FilteringRequestDTO) {
+  const { result } = await filtering.filter({ body });
+  return { data: result };
+}
+
+export async function getFilterReport(id: number) {
+  const { result } = await filtering.getFilterReport({ id });
+  return { data: result };
 }

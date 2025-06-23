@@ -1,7 +1,14 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown, Filter, LucideIcon, Trophy, Upload } from 'lucide-react';
+import {
+  ChevronDown,
+  FileText,
+  Filter,
+  LucideIcon,
+  Trophy,
+  Upload,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -79,6 +86,12 @@ const navItems: NavItem[] = [
         icon: Filter,
         roles: [],
         requiresSession: true,
+      },
+      {
+        title: 'Filter Reports',
+        href: '/tools/filter-reports',
+        icon: FileText,
+        roles: [],
       },
     ],
   },
