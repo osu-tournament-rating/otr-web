@@ -365,17 +365,28 @@ export default function FilteringForm({
               />
             </FormSection>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
-            >
-              {isLoading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                'Filter Players'
-              )}
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+              >
+                {isLoading ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : (
+                  'Filter Players'
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+                disabled={isLoading}
+                className="rounded-md py-6 px-8 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Reset
+              </Button>
+            </div>
           </form>
         </Form>
       </Card>
