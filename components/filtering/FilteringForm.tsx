@@ -324,7 +324,7 @@ export default function FilteringForm({
                   control={form.control}
                   name="minRank"
                   label="Minimum osu! Global Rank"
-                  tooltip="Players with an osu! global rank (NOT o!TR rank) below this value will be filtered out (optional)"
+                  tooltip="Players with an osu! global rank below this value will be filtered out (optional)"
                   placeholder="e.g. 1000"
                   min={1}
                 />
@@ -332,7 +332,7 @@ export default function FilteringForm({
                   control={form.control}
                   name="maxRank"
                   label="Maximum osu! Global Rank"
-                  tooltip="Players with an osu! global rank (NOT o!TR rank) above this value will be filtered out (optional)"
+                  tooltip="Players with an osu! global rank above this value will be filtered out (optional)"
                   placeholder="e.g. 10000"
                   min={1}
                 />
