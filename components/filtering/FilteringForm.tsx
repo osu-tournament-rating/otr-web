@@ -31,6 +31,7 @@ import FilteringResultsTable from './FilteringResultsTable';
 import { downloadCSV } from '@/lib/utils/csv';
 import { Control, FieldPath, FieldValues } from 'react-hook-form';
 import FilterComplianceNotice from './FilterComplianceNotice';
+import { useEffect, useRef } from 'react';
 
 const filteringFormSchema = z.object({
   ruleset: z.coerce
@@ -128,6 +129,7 @@ export default function FilteringForm({
   filteringResults,
 }: FilteringFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const initialValuesRef = useRef<FilteringFormValues | null>(null);
 
   const form = useForm<FilteringFormValues>({
     resolver: zodResolver(filteringFormSchema),
@@ -145,7 +147,46 @@ export default function FilteringForm({
     mode: 'onChange',
   });
 
+  // Store initial values when form is first loaded
+  useEffect(() => {
+    if (!initialValuesRef.current) {
+      initialValuesRef.current = form.getValues();
+    }
+  }, [form]);
+
+  // Check if only ruleset has changed
+  const hasOnlyRulesetChanged = (values: FilteringFormValues): boolean => {
+    if (!initialValuesRef.current) return false;
+
+    const initial = initialValuesRef.current;
+    const fieldsToCheck: (keyof FilteringFormValues)[] = [
+      'minRating',
+      'maxRating',
+      'tournamentsPlayed',
+      'peakRating',
+      'matchesPlayed',
+      'minRank',
+      'maxRank',
+    ];
+
+    // Check if any field other than ruleset has changed
+    const hasOtherChanges = fieldsToCheck.some(
+      (field) => values[field] !== initial[field]
+    );
+
+    // Return true if ruleset changed but nothing else
+    return values.ruleset !== initial.ruleset && !hasOtherChanges;
+  };
+
   async function onSubmit(values: FilteringFormValues) {
+    // Validate that not only ruleset has changed
+    if (hasOnlyRulesetChanged(values)) {
+      toast.error(
+        'Please modify at least one filter criteria in addition to the ruleset'
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Parse osu player IDs from the textarea
@@ -380,9 +421,13 @@ export default function FilteringForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => form.reset()}
+                onClick={() => {
+                  form.reset();
+                  // Reset initial values reference after form reset
+                  initialValuesRef.current = form.getValues();
+                }}
                 disabled={isLoading}
-                className="rounded-md py-6 px-8 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                className="rounded-md px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
               >
                 Reset
               </Button>
