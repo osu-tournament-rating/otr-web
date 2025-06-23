@@ -83,7 +83,7 @@ export default function FilterComplianceNotice({
           <Info className="h-5 w-5 text-primary" />
           <h4 className="text-base font-semibold">Filtering Information</h4>
         </div>
-        
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -94,26 +94,22 @@ export default function FilterComplianceNotice({
               {dateTimeString || 'Loading...'}
             </p>
           </div>
-          
+
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Info className="h-4 w-4" />
               <span>Report ID</span>
             </div>
-            <p className="font-mono text-sm font-medium">
-              #{filterReportId}
-            </p>
+            <p className="font-mono text-sm font-medium">#{filterReportId}</p>
           </div>
         </div>
-        
+
         <div className="mt-4 space-y-2 border-t pt-4">
           <p className="text-sm font-medium text-muted-foreground">
             Forum post text
           </p>
           <div className="flex items-center gap-2 rounded-md bg-muted/50 p-3">
-            <code className="flex-1 text-xs break-all">
-              {forumPostString}
-            </code>
+            <code className="flex-1 text-xs break-all">{forumPostString}</code>
             <Button
               variant="ghost"
               size="icon"

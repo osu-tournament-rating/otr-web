@@ -76,8 +76,8 @@ const SortableHeader = ({
   </Button>
 );
 
-const StatusCell = ({ isSuccess }: { isSuccess: boolean }) => (
-  <div className="flex items-center">
+const StatusCell = ({ isSuccess }: { isSuccess: boolean | undefined | null }) => (
+  <div className="flex items-center justify-center">
     {isSuccess ? (
       <CheckCircle className="size-5 text-green-600 dark:text-green-400" />
     ) : (
@@ -86,7 +86,11 @@ const StatusCell = ({ isSuccess }: { isSuccess: boolean }) => (
   </div>
 );
 
-const PlayerCell = ({ result }: { result: PlayerFilteringResultDTO }) => {
+const PlayerCell = ({ result }: { result: PlayerFilteringResultDTO | null | undefined }) => {
+  if (!result) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
   if (!result.username || !result.playerId) {
     return (
       <div className="flex items-center gap-3">
@@ -106,6 +110,11 @@ const PlayerCell = ({ result }: { result: PlayerFilteringResultDTO }) => {
         className="flex-shrink-0 rounded-full"
         width={32}
         height={32}
+        onError={(e) => {
+          // Fallback to default avatar on error
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+        }}
       />
       <Link
         href={`/players/${result.playerId}`}
@@ -127,14 +136,14 @@ const FailureReasonsCell = ({
     failureReason === null ||
     failureReason === FilteringFailReason.None
   ) {
-    return <span className="text-muted-foreground">-</span>;
+    return <div className="text-center text-muted-foreground">-</div>;
   }
 
   const reasons = FilteringFailReasonEnumHelper.getMetadata(failureReason);
 
   return (
     <TooltipProvider>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap justify-center gap-1">
         {reasons.map((reason) => (
           <Tooltip key={reason.text}>
             <TooltipTrigger asChild>
@@ -171,7 +180,7 @@ export default function FilteringResultsTable({
       },
       {
         accessorKey: 'failureReason',
-        header: () => <div className="font-semibold">Failure Reasons</div>,
+        header: () => <div className="text-center font-semibold">Failure Reasons</div>,
         cell: ({ getValue }) => (
           <FailureReasonsCell
             failureReason={getValue() as FilteringFailReason | undefined}
@@ -184,9 +193,14 @@ export default function FilteringResultsTable({
         header: ({ column }) => (
           <SortableHeader column={column}>osu! ID</SortableHeader>
         ),
-        cell: ({ getValue }) => (
-          <div className="font-mono text-right">{getValue() as number}</div>
-        ),
+        cell: ({ getValue }) => {
+          const osuId = getValue() as number | undefined | null;
+          return osuId !== undefined && osuId !== null ? (
+            <div className="text-center font-mono">{osuId}</div>
+          ) : (
+            <div className="text-center text-muted-foreground">-</div>
+          );
+        },
       },
       {
         accessorKey: 'player',
@@ -200,11 +214,11 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>Current Rating</SortableHeader>
         ),
         cell: ({ getValue }) => {
-          const rating = getValue() as number | undefined;
-          return rating !== undefined ? (
-            <div className="font-mono text-right">{rating.toFixed(0)}</div>
+          const rating = getValue() as number | undefined | null;
+          return rating !== undefined && rating !== null ? (
+            <div className="text-center font-mono">{rating.toFixed(0)}</div>
           ) : (
-            <span className="text-muted-foreground text-right block">-</span>
+            <div className="text-center text-muted-foreground">-</div>
           );
         },
       },
@@ -214,11 +228,11 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>Peak Rating</SortableHeader>
         ),
         cell: ({ getValue }) => {
-          const rating = getValue() as number | undefined;
-          return rating !== undefined ? (
-            <div className="font-mono text-right">{rating.toFixed(0)}</div>
+          const rating = getValue() as number | undefined | null;
+          return rating !== undefined && rating !== null ? (
+            <div className="text-center font-mono">{rating.toFixed(0)}</div>
           ) : (
-            <span className="text-muted-foreground text-right block">-</span>
+            <div className="text-center text-muted-foreground">-</div>
           );
         },
       },
@@ -228,11 +242,11 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>osu! Rank</SortableHeader>
         ),
         cell: ({ getValue }) => {
-          const rank = getValue() as number | undefined;
-          return rank !== undefined ? (
-            <div className="font-mono text-right">#{rank.toLocaleString()}</div>
+          const rank = getValue() as number | undefined | null;
+          return rank !== undefined && rank !== null ? (
+            <div className="text-center font-mono">#{rank.toLocaleString()}</div>
           ) : (
-            <span className="text-muted-foreground text-right block">-</span>
+            <div className="text-center text-muted-foreground">-</div>
           );
         },
       },
@@ -242,11 +256,11 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>Tournaments</SortableHeader>
         ),
         cell: ({ getValue }) => {
-          const count = getValue() as number | undefined;
-          return count !== undefined ? (
-            <div className="font-mono text-center">{count}</div>
+          const count = getValue() as number | undefined | null;
+          return count !== undefined && count !== null ? (
+            <div className="font-mono">{count}</div>
           ) : (
-            <span className="text-muted-foreground text-center block">-</span>
+            <span className="text-muted-foreground">-</span>
           );
         },
       },
@@ -256,11 +270,11 @@ export default function FilteringResultsTable({
           <SortableHeader column={column}>Matches</SortableHeader>
         ),
         cell: ({ getValue }) => {
-          const count = getValue() as number | undefined;
-          return count !== undefined ? (
-            <div className="font-mono text-center">{count}</div>
+          const count = getValue() as number | undefined | null;
+          return count !== undefined && count !== null ? (
+            <div className="font-mono">{count}</div>
           ) : (
-            <span className="text-muted-foreground text-center block">-</span>
+            <span className="text-muted-foreground">-</span>
           );
         },
       },
@@ -268,14 +282,28 @@ export default function FilteringResultsTable({
     []
   );
 
+  // Ensure data is an array
+  const safeData = results && Array.isArray(results.filteringResults) ? results.filteringResults : [];
+
   const table = useReactTable({
-    data: results.filteringResults,
+    data: safeData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     state: { sorting },
   });
+
+  // Early return if no results
+  if (!results || !results.filteringResults) {
+    return (
+      <Card className="w-full">
+        <div className="p-8 text-center text-muted-foreground">
+          No filtering results to display.
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full overflow-hidden">
@@ -291,11 +319,11 @@ export default function FilteringResultsTable({
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
-                <span>Passed: {results.playersPassed}</span>
+                <span>Passed: {results.playersPassed ?? 0}</span>
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="size-4 text-red-600 dark:text-red-400" />
-                <span>Failed: {results.playersFailed}</span>
+                <span>Failed: {results.playersFailed ?? 0}</span>
               </div>
             </div>
             <Button
@@ -309,7 +337,7 @@ export default function FilteringResultsTable({
           </div>
         </div>
 
-        {results.filteringResults.length === 0 ? (
+        {safeData.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             No players to display.
           </div>
@@ -328,16 +356,16 @@ export default function FilteringResultsTable({
                           case 'isSuccess':
                             return 'w-20 text-center';
                           case 'failureReason':
-                            return 'w-48';
+                            return 'w-48 text-center';
                           case 'osuId':
-                            return 'w-28 text-right';
+                            return 'w-28 text-center';
                           case 'player':
                             return 'min-w-[200px]';
                           case 'currentRating':
                           case 'peakRating':
-                            return 'w-32 text-right';
+                            return 'w-32 text-center';
                           case 'osuGlobalRank':
-                            return 'w-32 text-right';
+                            return 'w-32 text-center';
                           case 'tournamentsPlayed':
                           case 'matchesPlayed':
                             return 'w-28 text-center';
@@ -345,11 +373,14 @@ export default function FilteringResultsTable({
                             return '';
                         }
                       };
-                      
+
                       return (
                         <TableHead
                           key={header.id}
-                          className={cn('font-semibold text-foreground', getHeaderClass())}
+                          className={cn(
+                            'font-semibold text-foreground',
+                            getHeaderClass()
+                          )}
                         >
                           {header.isPlaceholder
                             ? null
@@ -365,7 +396,7 @@ export default function FilteringResultsTable({
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.map((row) => {
-                  const isFailed = !row.original.isSuccess;
+                  const isFailed = row.original?.isSuccess === false;
                   return (
                     <TableRow
                       key={row.id}
@@ -382,12 +413,11 @@ export default function FilteringResultsTable({
                             case 'isSuccess':
                               return 'text-center';
                             case 'failureReason':
-                              return '';
                             case 'osuId':
                             case 'currentRating':
                             case 'peakRating':
                             case 'osuGlobalRank':
-                              return 'text-right';
+                              return 'text-center';
                             case 'tournamentsPlayed':
                             case 'matchesPlayed':
                               return 'text-center';
@@ -395,9 +425,12 @@ export default function FilteringResultsTable({
                               return '';
                           }
                         };
-                        
+
                         return (
-                          <TableCell key={cell.id} className={cn('py-3', getCellClass())}>
+                          <TableCell
+                            key={cell.id}
+                            className={cn('py-3', getCellClass())}
+                          >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()
