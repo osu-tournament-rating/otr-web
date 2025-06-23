@@ -25,10 +25,11 @@ import {
   FilteringResultDTO,
   PlayerFilteringResultDTO,
   Ruleset,
-  FilteringFailReason,
 } from '@osu-tournament-rating/otr-api-client';
-import { FilteringFailReasonEnumHelper } from '@/lib/enums';
+import { getFailureReasons } from './FailureReasonsBadges';
 import FilteringResultsTable from './FilteringResultsTable';
+import { downloadCSV } from '@/lib/utils/csv';
+import { Control, FieldPath, FieldValues } from 'react-hook-form';
 
 const filteringFormSchema = z.object({
   ruleset: z.coerce
@@ -74,6 +75,47 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
     {children}
   </div>
 );
+
+// Local NumberInput component
+interface NumberInputProps<TFieldValues extends FieldValues> {
+  control: Control<TFieldValues>;
+  name: FieldPath<TFieldValues>;
+  label: string;
+  tooltip: string;
+  placeholder?: string;
+  min?: number;
+}
+
+function NumberInput<TFieldValues extends FieldValues>({
+  control,
+  name,
+  label,
+  tooltip,
+  placeholder,
+  min,
+}: NumberInputProps<TFieldValues>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <LabelWithTooltip label={label} tooltip={tooltip} />
+          <FormControl>
+            <Input
+              type="number"
+              placeholder={placeholder}
+              min={min}
+              {...field}
+              className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
 
 interface FilteringFormProps {
   onFilteringComplete: (results: FilteringResultDTO) => void;
@@ -153,7 +195,7 @@ export default function FilteringForm({
     }
   }
 
-  function downloadCSV() {
+  function handleDownloadCSV() {
     if (!filteringResults) return;
 
     const headers = [
@@ -172,44 +214,22 @@ export default function FilteringForm({
       (result: PlayerFilteringResultDTO) => {
         const failureReasons = getFailureReasons(result.failureReason);
         return [
-          result.osuId,
+          result.osuId?.toString() || '',
           result.username || 'Unknown',
-          result.playerId || 'N/A',
+          result.playerId?.toString() || 'N/A',
           result.isSuccess ? 'Passed' : 'Failed',
           result.currentRating?.toFixed(0) || 'N/A',
           result.peakRating?.toFixed(0) || 'N/A',
-          result.osuGlobalRank || 'N/A',
-          result.tournamentsPlayed || 'N/A',
-          result.matchesPlayed || 'N/A',
+          result.osuGlobalRank?.toString() || 'N/A',
+          result.tournamentsPlayed?.toString() || 'N/A',
+          result.matchesPlayed?.toString() || 'N/A',
           failureReasons.join(', '),
         ];
       }
     );
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
     const timestamp = new Date().toISOString().split('T')[0];
-    link.setAttribute('href', url);
-    link.setAttribute('download', `otr-filtering-results-${timestamp}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  function getFailureReasons(failureReason?: number): string[] {
-    if (!failureReason || failureReason === FilteringFailReason.None) return [];
-
-    return FilteringFailReasonEnumHelper.getMetadata(failureReason).map(
-      (metadata) => metadata.text
-    );
+    downloadCSV(rows, headers, `otr-filtering-results-${timestamp}.csv`);
   }
 
   return (
@@ -253,158 +273,67 @@ export default function FilteringForm({
               />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="minRating"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Minimum Rating"
-                        tooltip="Players below this rating will be filtered out (optional, minimum: 100)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 500"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Minimum Rating"
+                  tooltip="Players below this rating will be filtered out (optional, minimum: 100)"
+                  placeholder="e.g. 500"
+                  min={100}
                 />
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="maxRating"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Maximum Rating"
-                        tooltip="Players above this rating will be filtered out (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 2000"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Maximum Rating"
+                  tooltip="Players above this rating will be filtered out (optional)"
+                  placeholder="e.g. 2000"
+                  min={100}
                 />
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="peakRating"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Maximum Peak Rating"
-                        tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 2500"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Maximum Peak Rating"
+                  tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional)"
+                  placeholder="e.g. 2500"
+                  min={100}
                 />
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="tournamentsPlayed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Minimum Tournaments"
-                        tooltip="Players must have played in at least this many distinct tournaments (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 3"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Minimum Tournaments"
+                  tooltip="Players must have played in at least this many distinct tournaments (optional)"
+                  placeholder="e.g. 3"
+                  min={1}
                 />
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="matchesPlayed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Minimum Matches"
-                        tooltip="Players must have played in at least this many matches (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 10"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Minimum Matches"
+                  tooltip="Players must have played in at least this many matches (optional)"
+                  placeholder="e.g. 10"
+                  min={1}
                 />
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="minRank"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Minimum osu! Global Rank"
-                        tooltip="Players with an osu! global rank (NOT o!TR rank) below this value will be filtered out (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 1000"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Minimum osu! Global Rank"
+                  tooltip="Players with an osu! global rank (NOT o!TR rank) below this value will be filtered out (optional)"
+                  placeholder="e.g. 1000"
+                  min={1}
                 />
-                <FormField
+                <NumberInput
                   control={form.control}
                   name="maxRank"
-                  render={({ field }) => (
-                    <FormItem>
-                      <LabelWithTooltip
-                        label="Maximum osu! Global Rank"
-                        tooltip="Players with an osu! global rank (NOT o!TR rank) above this value will be filtered out (optional)"
-                      />
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 10000"
-                          {...field}
-                          className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Maximum osu! Global Rank"
+                  tooltip="Players with an osu! global rank (NOT o!TR rank) above this value will be filtered out (optional)"
+                  placeholder="e.g. 10000"
+                  min={1}
                 />
               </div>
             </FormSection>
@@ -452,7 +381,7 @@ export default function FilteringForm({
       {filteringResults && (
         <FilteringResultsTable
           results={filteringResults}
-          onDownloadCSV={downloadCSV}
+          onDownloadCSV={handleDownloadCSV}
         />
       )}
     </>

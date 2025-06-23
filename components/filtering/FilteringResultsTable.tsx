@@ -3,9 +3,7 @@
 import {
   FilteringResultDTO,
   PlayerFilteringResultDTO,
-  FilteringFailReason,
 } from '@osu-tournament-rating/otr-api-client';
-import { FilteringFailReasonEnumHelper } from '@/lib/enums';
 import {
   Table,
   TableBody,
@@ -23,143 +21,19 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  CheckCircle,
-  XCircle,
-  ListFilter,
-  Download,
-} from 'lucide-react';
+import { CheckCircle, XCircle, ListFilter, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import FailureReasonsBadges from './FailureReasonsBadges';
+import PlayerCell from './PlayerCell';
+import StatusIcon from './StatusIcon';
+import { SortableHeader, NumericCell } from './tableHelpers';
 
 interface FilteringResultsTableProps {
   results: FilteringResultDTO;
   onDownloadCSV: () => void;
 }
-
-const SortableHeader = ({
-  column,
-  children,
-}: {
-  column: {
-    toggleSorting: (desc?: boolean) => void;
-    getIsSorted: () => false | 'asc' | 'desc';
-  };
-  children: React.ReactNode;
-}) => (
-  <Button
-    variant="ghost"
-    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-    className="h-auto p-0 font-semibold hover:bg-transparent"
-  >
-    {children}
-    {column.getIsSorted() === 'asc' ? (
-      <ArrowUp className="ml-2 h-4 w-4" />
-    ) : column.getIsSorted() === 'desc' ? (
-      <ArrowDown className="ml-2 h-4 w-4" />
-    ) : (
-      <ArrowUpDown className="ml-2 h-4 w-4" />
-    )}
-  </Button>
-);
-
-const StatusCell = ({ isSuccess }: { isSuccess: boolean | undefined | null }) => (
-  <div className="flex items-center justify-center">
-    {isSuccess ? (
-      <CheckCircle className="size-5 text-green-600 dark:text-green-400" />
-    ) : (
-      <XCircle className="size-5 text-red-600 dark:text-red-400" />
-    )}
-  </div>
-);
-
-const PlayerCell = ({ result }: { result: PlayerFilteringResultDTO | null | undefined }) => {
-  if (!result) {
-    return <span className="text-muted-foreground">-</span>;
-  }
-
-  if (!result.username || !result.playerId) {
-    return (
-      <div className="flex items-center gap-3">
-        <div className="size-8 rounded-full bg-muted" />
-        <span className="text-muted-foreground">
-          Unknown Player (ID: {result.osuId})
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Image
-        src={`https://a.ppy.sh/${result.osuId}`}
-        alt={`${result.username} avatar`}
-        className="flex-shrink-0 rounded-full"
-        width={32}
-        height={32}
-        onError={(e) => {
-          // Fallback to default avatar on error
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-        }}
-      />
-      <Link
-        href={`/players/${result.playerId}`}
-        className="truncate font-medium transition-colors hover:text-primary"
-      >
-        {result.username}
-      </Link>
-    </div>
-  );
-};
-
-const FailureReasonsCell = ({
-  failureReason,
-}: {
-  failureReason?: FilteringFailReason;
-}) => {
-  if (
-    failureReason === undefined ||
-    failureReason === null ||
-    failureReason === FilteringFailReason.None
-  ) {
-    return <div className="text-center text-muted-foreground">-</div>;
-  }
-
-  const reasons = FilteringFailReasonEnumHelper.getMetadata(failureReason);
-
-  return (
-    <TooltipProvider>
-      <div className="flex flex-wrap justify-center gap-1">
-        {reasons.map((reason) => (
-          <Tooltip key={reason.text}>
-            <TooltipTrigger asChild>
-              <Badge variant="destructive" className="cursor-help text-xs">
-                {reason.text}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">{reason.description}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-    </TooltipProvider>
-  );
-};
 
 export default function FilteringResultsTable({
   results,
@@ -176,15 +50,15 @@ export default function FilteringResultsTable({
         header: ({ column }) => (
           <SortableHeader column={column}>Status</SortableHeader>
         ),
-        cell: ({ row }) => <StatusCell isSuccess={row.original.isSuccess} />,
+        cell: ({ row }) => <StatusIcon isSuccess={row.original.isSuccess} />,
       },
       {
         accessorKey: 'failureReason',
-        header: () => <div className="text-center font-semibold">Failure Reasons</div>,
-        cell: ({ getValue }) => (
-          <FailureReasonsCell
-            failureReason={getValue() as FilteringFailReason | undefined}
-          />
+        header: () => (
+          <div className="text-center font-semibold">Failure Reasons</div>
+        ),
+        cell: ({ row }) => (
+          <FailureReasonsBadges failureReason={row.original.failureReason} />
         ),
         enableSorting: false,
       },
@@ -193,14 +67,9 @@ export default function FilteringResultsTable({
         header: ({ column }) => (
           <SortableHeader column={column}>osu! ID</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const osuId = getValue() as number | undefined | null;
-          return osuId !== undefined && osuId !== null ? (
-            <div className="text-center font-mono">{osuId}</div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell value={getValue() as number | undefined | null} />
+        ),
       },
       {
         accessorKey: 'player',
@@ -213,77 +82,64 @@ export default function FilteringResultsTable({
         header: ({ column }) => (
           <SortableHeader column={column}>Current Rating</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const rating = getValue() as number | undefined | null;
-          return rating !== undefined && rating !== null ? (
-            <div className="text-center font-mono">{rating.toFixed(0)}</div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell
+            value={getValue() as number | undefined | null}
+            format={(v) => v.toFixed(0)}
+          />
+        ),
       },
       {
         accessorKey: 'peakRating',
         header: ({ column }) => (
           <SortableHeader column={column}>Peak Rating</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const rating = getValue() as number | undefined | null;
-          return rating !== undefined && rating !== null ? (
-            <div className="text-center font-mono">{rating.toFixed(0)}</div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell
+            value={getValue() as number | undefined | null}
+            format={(v) => v.toFixed(0)}
+          />
+        ),
       },
       {
         accessorKey: 'osuGlobalRank',
         header: ({ column }) => (
           <SortableHeader column={column}>osu! Rank</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const rank = getValue() as number | undefined | null;
-          return rank !== undefined && rank !== null ? (
-            <div className="text-center font-mono">#{rank.toLocaleString()}</div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell
+            value={getValue() as number | undefined | null}
+            format={(v) => `#${v.toLocaleString()}`}
+          />
+        ),
       },
       {
         accessorKey: 'tournamentsPlayed',
         header: ({ column }) => (
           <SortableHeader column={column}>Tournaments</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const count = getValue() as number | undefined | null;
-          return count !== undefined && count !== null ? (
-            <div className="font-mono">{count}</div>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell value={getValue() as number | undefined | null} />
+        ),
       },
       {
         accessorKey: 'matchesPlayed',
         header: ({ column }) => (
           <SortableHeader column={column}>Matches</SortableHeader>
         ),
-        cell: ({ getValue }) => {
-          const count = getValue() as number | undefined | null;
-          return count !== undefined && count !== null ? (
-            <div className="font-mono">{count}</div>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          );
-        },
+        cell: ({ getValue }) => (
+          <NumericCell value={getValue() as number | undefined | null} />
+        ),
       },
     ],
     []
   );
 
   // Ensure data is an array
-  const safeData = results && Array.isArray(results.filteringResults) ? results.filteringResults : [];
+  const safeData =
+    results && Array.isArray(results.filteringResults)
+      ? results.filteringResults
+      : [];
 
   const table = useReactTable({
     data: safeData,
