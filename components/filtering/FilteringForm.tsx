@@ -30,6 +30,7 @@ import { getFailureReasons } from './FailureReasonsBadges';
 import FilteringResultsTable from './FilteringResultsTable';
 import { downloadCSV } from '@/lib/utils/csv';
 import { Control, FieldPath, FieldValues } from 'react-hook-form';
+import FilterComplianceNotice from './FilterComplianceNotice';
 
 const filteringFormSchema = z.object({
   ruleset: z.coerce
@@ -379,10 +380,15 @@ export default function FilteringForm({
         </Form>
       </Card>
       {filteringResults && (
-        <FilteringResultsTable
-          results={filteringResults}
-          onDownloadCSV={handleDownloadCSV}
-        />
+        <>
+          <FilterComplianceNotice
+            filterReportId={filteringResults.filterReportId}
+          />
+          <FilteringResultsTable
+            results={filteringResults}
+            onDownloadCSV={handleDownloadCSV}
+          />
+        </>
       )}
     </>
   );

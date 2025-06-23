@@ -1,7 +1,6 @@
 'use client';
 
 import FilteringForm from '@/components/filtering/FilteringForm';
-import FilterComplianceNotice from '@/components/filtering/FilterComplianceNotice';
 import { Card } from '@/components/ui/card';
 import { Filter } from 'lucide-react';
 import { useState } from 'react';
@@ -25,11 +24,6 @@ export default function FilteringPage() {
           </span>
         </div>
       </Card>
-      {filteringResults && (
-        <FilterComplianceNotice
-          filterReportId={filteringResults.filterReportId}
-        />
-      )}
       <FilteringForm
         onFilteringComplete={setFilteringResults}
         filteringResults={filteringResults}
