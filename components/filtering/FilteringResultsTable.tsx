@@ -162,8 +162,7 @@ export default function FilteringResultsTable({
   }
 
   return (
-    <Card className="w-full overflow-hidden">
-      <div className="p-4">
+    <Card className="w-full overflow-hidden p-4">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <ListFilter className="size-5 text-primary" />
@@ -301,7 +300,6 @@ export default function FilteringResultsTable({
             </Table>
           </div>
         )}
-      </div>
     </Card>
   );
 }
