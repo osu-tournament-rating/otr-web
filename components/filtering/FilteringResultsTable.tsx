@@ -215,7 +215,7 @@ export default function FilteringResultsTable({
                           case 'osuId':
                             return 'w-28 text-center';
                           case 'player':
-                            return 'min-w-[200px]';
+                            return 'min-w-[160px]';
                           case 'currentRating':
                           case 'peakRating':
                             return 'w-32 text-center';
@@ -263,28 +263,10 @@ export default function FilteringResultsTable({
                       )}
                     >
                       {row.getVisibleCells().map((cell) => {
-                        const getCellClass = () => {
-                          switch (cell.column.id) {
-                            case 'isSuccess':
-                              return 'text-center';
-                            case 'failureReason':
-                            case 'osuId':
-                            case 'currentRating':
-                            case 'peakRating':
-                            case 'osuGlobalRank':
-                              return 'text-center';
-                            case 'tournamentsPlayed':
-                            case 'matchesPlayed':
-                              return 'text-center';
-                            default:
-                              return '';
-                          }
-                        };
-
                         return (
                           <TableCell
                             key={cell.id}
-                            className={cn('py-3', getCellClass())}
+                            className={cn('py-3 text-center')}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
