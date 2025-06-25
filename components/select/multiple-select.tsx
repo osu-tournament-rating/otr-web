@@ -244,7 +244,7 @@ function MultiSelect({
           />
           <CommandEmpty>No item found.</CommandEmpty>
           <CommandGroup
-            className="max-h-64 overflow-auto"
+            className="max-h-[200px] overflow-auto"
             role="listbox"
             onWheel={(e) => {
               // Allow wheel scrolling to work properly
