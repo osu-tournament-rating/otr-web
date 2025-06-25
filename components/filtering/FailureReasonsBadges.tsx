@@ -36,7 +36,7 @@ export default function FailureReasonsBadges({
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-xs">{reason.description}</p>
+              <p>{reason.description}</p>
             </TooltipContent>
           </Tooltip>
         ))}

@@ -33,11 +33,13 @@ import { SortableHeader, NumericCell } from './tableHelpers';
 interface FilteringResultsTableProps {
   results: FilteringResultDTO;
   onDownloadCSV: () => void;
+  hideCard?: boolean;
 }
 
 export default function FilteringResultsTable({
   results,
   onDownloadCSV,
+  hideCard = false,
 }: FilteringResultsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'isSuccess', desc: false },
@@ -152,37 +154,59 @@ export default function FilteringResultsTable({
 
   // Early return if no results
   if (!results || !results.filteringResults) {
-    return (
-      <Card className="w-full">
-        <div className="p-8 text-center text-muted-foreground">
-          No filtering results to display.
-        </div>
-      </Card>
+    const noResultsContent = (
+      <div className="p-8 text-center text-muted-foreground">
+        No filtering results to display.
+      </div>
+    );
+    return hideCard ? (
+      noResultsContent
+    ) : (
+      <Card className="w-full">{noResultsContent}</Card>
     );
   }
 
-  return (
-    <Card className="w-full overflow-hidden p-4">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <ListFilter className="size-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">
-            Filtering Results
-          </h3>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
-              <span>Passed: {results.playersPassed ?? 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <XCircle className="size-4 text-red-600 dark:text-red-400" />
-              <span>Failed: {results.playersFailed ?? 0}</span>
-            </div>
+  const tableContent = (
+    <>
+      {!hideCard && (
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <ListFilter className="size-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">
+              Filtering Results
+            </h3>
           </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+                <span>Passed: {results.playersPassed ?? 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="size-4 text-red-600 dark:text-red-400" />
+                <span>Failed: {results.playersFailed ?? 0}</span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={onDownloadCSV}
+              className="flex items-center gap-2"
+            >
+              <Download className="size-4" />
+              Download CSV
+            </Button>
+          </div>
+        </div>
+      )}
+      {hideCard && (
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-base font-semibold">
+            <ListFilter className="size-4 text-muted-foreground" />
+            Results
+          </h3>
           <Button
             variant="outline"
+            size="sm"
             onClick={onDownloadCSV}
             className="flex items-center gap-2"
           >
@@ -190,20 +214,23 @@ export default function FilteringResultsTable({
             Download CSV
           </Button>
         </div>
-      </div>
+      )}
 
       {safeData.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground">
           No players to display.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className={cn(
+          "overflow-x-auto rounded-lg border",
+          hideCard && "bg-background"
+        )}>
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="bg-muted/50 hover:bg-muted/70"
+                  className="bg-muted/50 hover:bg-muted/50"
                 >
                   {headerGroup.headers.map((header) => {
                     const getHeaderClass = () => {
@@ -282,6 +309,12 @@ export default function FilteringResultsTable({
           </Table>
         </div>
       )}
-    </Card>
+    </>
+  );
+
+  return hideCard ? (
+    tableContent
+  ) : (
+    <Card className="w-full overflow-hidden p-4">{tableContent}</Card>
   );
 }

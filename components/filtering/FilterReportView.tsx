@@ -21,11 +21,6 @@ import {
 } from 'lucide-react';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { downloadCSV } from '@/lib/utils/csv';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { getFailureReasons } from './FailureReasonsBadges';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -183,115 +178,199 @@ export function FilterReportView() {
       </Card>
 
       {report && results && (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="size-6 text-primary" />
-                Report #{report.id}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950/20">
-                  <p className="text-sm font-medium text-green-900 dark:text-green-400">
-                    Players Passed
-                  </p>
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-500">
+        <Card>
+          {/* Report Header */}
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <ClipboardCheck className="size-6 text-primary" />
+                  Filter Report #{report.id}
+                </CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Generated on{' '}
+                  {new Date(report.created).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              <div className="flex gap-4 rounded-lg bg-muted/50 p-3">
+                <div className="px-2 text-center">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-500">
                     {results.playersPassed}
                   </p>
-                </div>
-                <div className="rounded-lg bg-red-50 p-4 dark:bg-red-950/20">
-                  <p className="text-sm font-medium text-red-900 dark:text-red-400">
-                    Players Failed
+                  <p className="text-xs tracking-wider text-muted-foreground uppercase">
+                    Passed
                   </p>
-                  <p className="text-2xl font-bold text-red-700 dark:text-red-500">
+                </div>
+                <div className="h-auto w-px bg-border" />
+                <div className="px-2 text-center">
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-500">
                     {results.playersFailed}
+                  </p>
+                  <p className="text-xs tracking-wider text-muted-foreground uppercase">
+                    Failed
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardHeader>
 
-          {report.request && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="size-6 text-primary" />
-                  Filter Criteria{' '}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    ({report.request.osuPlayerIds.length}{' '}
-                    {report.request.osuPlayerIds.length === 1 ? 'player' : 'players'})
+          <CardContent className="space-y-6">
+            {/* Filter Criteria Section */}
+            {report.request && (
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <Filter className="size-4 text-muted-foreground" />
+                    Filter Criteria
+                  </h3>
+                  <span className="text-sm text-muted-foreground">
+                    {report.request.osuPlayerIds.length}{' '}
+                    {report.request.osuPlayerIds.length === 1
+                      ? 'player'
+                      : 'players'}{' '}
+                    checked
                   </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm md:grid-cols-3 lg:grid-cols-4">
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg bg-muted/30 p-4 text-sm md:grid-cols-3 lg:grid-cols-4">
                   <div>
-                    <span className="text-muted-foreground">Ruleset</span>
-                    <p className="font-medium flex items-center gap-1.5">
-                          <span className="inline-flex">
-                            <RulesetIcon ruleset={report.request.ruleset} className="size-4 fill-primary" />
-                          </span>
-                      <span>{RulesetEnumHelper.metadata[report.request.ruleset].text}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Ruleset
+                    </span>
+                    <p className="mt-0.5 flex items-center gap-1.5 font-medium">
+                      <RulesetIcon
+                        ruleset={report.request.ruleset}
+                        className="size-4 fill-primary"
+                      />
+                      <span>
+                        {
+                          RulesetEnumHelper.metadata[report.request.ruleset]
+                            .text
+                        }
+                      </span>
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Min Rating</span>
-                    <p className={report.request.minRating ? 'font-medium' : 'text-muted-foreground'}>
-                      {report.request.minRating ?? 'N/A'}
+                    <span className="text-xs text-muted-foreground">
+                      Min. Rating
+                    </span>
+                    <p
+                      className={
+                        report.request.minRating
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.minRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Max Rating</span>
-                    <p className={report.request.maxRating ? 'font-medium' : 'text-muted-foreground'}>
-                      {report.request.maxRating ?? 'N/A'}
+                    <span className="text-xs text-muted-foreground">
+                      Max Rating
+                    </span>
+                    <p
+                      className={
+                        report.request.maxRating
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.maxRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Peak Rating Limit</span>
-                    <p className={report.request.peakRating ? 'font-medium' : 'text-muted-foreground'}>
-                      {report.request.peakRating ?? 'N/A'}
+                    <span className="text-xs text-muted-foreground">
+                      Peak Rating Limit
+                    </span>
+                    <p
+                      className={
+                        report.request.peakRating
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.peakRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Min osu! Rank</span>
-                    <p className={report.request.minOsuRank ? 'font-medium' : 'text-muted-foreground'}>
+                    <span className="text-xs text-muted-foreground">
+                      Min. osu! Rank
+                    </span>
+                    <p
+                      className={
+                        report.request.minOsuRank
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
                       {report.request.minOsuRank
                         ? `#${report.request.minOsuRank.toLocaleString()}`
-                        : 'N/A'}
+                        : '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Max osu! Rank</span>
-                    <p className={report.request.maxOsuRank ? 'font-medium' : 'text-muted-foreground'}>
+                    <span className="text-xs text-muted-foreground">
+                      Max osu! Rank
+                    </span>
+                    <p
+                      className={
+                        report.request.maxOsuRank
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
                       {report.request.maxOsuRank
                         ? `#${report.request.maxOsuRank.toLocaleString()}`
-                        : 'N/A'}
+                        : '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Min Tournaments</span>
-                    <p className={report.request.tournamentsPlayed ? 'font-medium' : 'text-muted-foreground'}>
-                      {report.request.tournamentsPlayed ?? 'N/A'}
+                    <span className="text-xs text-muted-foreground">
+                      Min. Tournaments
+                    </span>
+                    <p
+                      className={
+                        report.request.tournamentsPlayed
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.tournamentsPlayed ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Min Matches</span>
-                    <p className={report.request.matchesPlayed ? 'font-medium' : 'text-muted-foreground'}>
-                      {report.request.matchesPlayed ?? 'N/A'}
+                    <span className="text-xs text-muted-foreground">
+                      Min. Matches
+                    </span>
+                    <p
+                      className={
+                        report.request.matchesPlayed
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.matchesPlayed ?? '—'}
                     </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
 
-          <FilteringResultsTable
-            results={results}
-            onDownloadCSV={handleDownloadCSV}
-          />
-        </>
+            {/* Results Table Section */}
+            <div>
+              <FilteringResultsTable
+                results={results}
+                onDownloadCSV={handleDownloadCSV}
+                hideCard
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
