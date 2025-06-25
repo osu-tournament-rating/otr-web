@@ -221,10 +221,12 @@ export default function FilteringResultsTable({
           No players to display.
         </div>
       ) : (
-        <div className={cn(
-          "overflow-x-auto rounded-lg border",
-          hideCard && "bg-background"
-        )}>
+        <div
+          className={cn(
+            'overflow-x-auto rounded-lg border',
+            hideCard && 'bg-background'
+          )}
+        >
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
