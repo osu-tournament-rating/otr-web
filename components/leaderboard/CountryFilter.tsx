@@ -56,7 +56,7 @@ export function CountrySearchSelect({
               <span className="truncate">{selectedCountry.name}</span>
             </div>
           ) : (
-            'Select country...'
+            <span className="text-muted-foreground">Select country...</span>
           )}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
