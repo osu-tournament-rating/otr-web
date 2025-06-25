@@ -212,15 +212,10 @@ export default function FilteringForm({
         peakRating: values.peakRating === '' ? undefined : values.peakRating,
         matchesPlayed:
           values.matchesPlayed === '' ? undefined : values.matchesPlayed,
-        minRank: values.minRank === '' ? undefined : values.minRank,
-        maxRank: values.maxRank === '' ? undefined : values.maxRank,
+        minOsuRank: values.minRank === '' ? undefined : values.minRank,
+        maxOsuRank: values.maxRank === '' ? undefined : values.maxRank,
         osuPlayerIds,
       });
-
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
 
       if (result.data) {
         onFilteringComplete(result.data);

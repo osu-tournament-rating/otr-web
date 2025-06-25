@@ -6,10 +6,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
 import { getFilterReport } from '@/lib/actions/filtering';
-import type { FilteringResultDTO } from '@osu-tournament-rating/otr-api-client';
+import type {
+  FilteringResultDTO,
+  FilterReportDTO,
+} from '@osu-tournament-rating/otr-api-client';
+import { RulesetEnumHelper } from '@/lib/enums';
 import { toast } from 'sonner';
-import { Loader2, Search, FileText, ClipboardCheck } from 'lucide-react';
+import {
+  Loader2,
+  Search,
+  FileText,
+  ClipboardCheck,
+  Filter,
+} from 'lucide-react';
+import RulesetIcon from '@/components/icons/RulesetIcon';
 import { downloadCSV } from '@/lib/utils/csv';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { getFailureReasons } from './FailureReasonsBadges';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -38,6 +54,7 @@ type FilterReportForm = z.infer<typeof filterReportSchema>;
 
 export function FilterReportView() {
   const [isLoading, setIsLoading] = useState(false);
+  const [report, setReport] = useState<FilterReportDTO | null>(null);
   const [results, setResults] = useState<FilteringResultDTO | null>(null);
 
   const form = useForm<FilterReportForm>({
@@ -49,21 +66,24 @@ export function FilterReportView() {
 
   const onSubmit = async (data: FilterReportForm) => {
     setIsLoading(true);
+    setReport(null);
     setResults(null);
 
     try {
-      const { data: report, error } = await getFilterReport(
+      const { data: report } = await getFilterReport(
         parseInt(data.reportId, 10)
       );
 
-      if (error) {
-        toast.error(error);
-        return;
-      }
-
       if (report) {
-        setResults(report);
-        toast.success(`Successfully loaded filter report #${data.reportId}`);
+        setReport(report);
+        if (report.response) {
+          setResults(report.response);
+          toast.success(`Successfully loaded filter report #${data.reportId}`);
+        } else {
+          toast.error('Filter report exists but contains no results data');
+        }
+      } else {
+        toast.error('Filter report not found');
       }
     } catch {
       toast.error('Failed to load filter report. Please try again.');
@@ -106,7 +126,7 @@ export function FilterReportView() {
     downloadCSV(
       rows,
       headers,
-      `filter-report-${results.filterReportId}-${new Date().toISOString().split('T')[0]}.csv`
+      `filter-report-${report?.id || 'unknown'}-${new Date().toISOString().split('T')[0]}.csv`
     );
   };
 
@@ -162,13 +182,13 @@ export function FilterReportView() {
         </CardContent>
       </Card>
 
-      {results && (
+      {report && results && (
         <>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardCheck className="size-6 text-primary" />
-                Report #{results.filterReportId}
+                Report #{report.id}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -192,6 +212,80 @@ export function FilterReportView() {
               </div>
             </CardContent>
           </Card>
+
+          {report.request && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="size-6 text-primary" />
+                  Filter Criteria{' '}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({report.request.osuPlayerIds.length}{' '}
+                    {report.request.osuPlayerIds.length === 1 ? 'player' : 'players'})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm md:grid-cols-3 lg:grid-cols-4">
+                  <div>
+                    <span className="text-muted-foreground">Ruleset</span>
+                    <p className="font-medium flex items-center gap-1.5">
+                          <span className="inline-flex">
+                            <RulesetIcon ruleset={report.request.ruleset} className="size-4 fill-primary" />
+                          </span>
+                      <span>{RulesetEnumHelper.metadata[report.request.ruleset].text}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Min Rating</span>
+                    <p className={report.request.minRating ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.minRating ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Max Rating</span>
+                    <p className={report.request.maxRating ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.maxRating ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Peak Rating Limit</span>
+                    <p className={report.request.peakRating ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.peakRating ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Min osu! Rank</span>
+                    <p className={report.request.minOsuRank ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.minOsuRank
+                        ? `#${report.request.minOsuRank.toLocaleString()}`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Max osu! Rank</span>
+                    <p className={report.request.maxOsuRank ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.maxOsuRank
+                        ? `#${report.request.maxOsuRank.toLocaleString()}`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Min Tournaments</span>
+                    <p className={report.request.tournamentsPlayed ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.tournamentsPlayed ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Min Matches</span>
+                    <p className={report.request.matchesPlayed ? 'font-medium' : 'text-muted-foreground'}>
+                      {report.request.matchesPlayed ?? 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <FilteringResultsTable
             results={results}
