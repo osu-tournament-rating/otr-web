@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import {
   Command,
   CommandEmpty,

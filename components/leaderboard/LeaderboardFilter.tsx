@@ -22,15 +22,8 @@ import {
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+
 import { getAllCountries } from 'countries-and-timezones';
-import CountryFlag from '../shared/CountryFlag';
 import { CountrySearchSelect } from './CountryFilter';
 
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
