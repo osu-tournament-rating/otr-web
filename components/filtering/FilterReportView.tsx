@@ -299,7 +299,7 @@ export function FilterReportView() {
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">
-                      Min. osu! Rank
+                      Min. osu! Global Rank
                     </span>
                     <p
                       className={
@@ -315,7 +315,7 @@ export function FilterReportView() {
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">
-                      Max osu! Rank
+                      Max osu! Global Rank
                     </span>
                     <p
                       className={

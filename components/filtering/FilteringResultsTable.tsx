@@ -106,7 +106,7 @@ export default function FilteringResultsTable({
       {
         accessorKey: 'osuGlobalRank',
         header: ({ column }) => (
-          <SortableHeader column={column}>osu! Rank</SortableHeader>
+          <SortableHeader column={column}>osu! Global Rank</SortableHeader>
         ),
         cell: ({ getValue }) => (
           <NumericCell
