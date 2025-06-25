@@ -20,7 +20,7 @@ export const defaultLeaderboardFilterValues: z.infer<
 > = {
   page: 1,
   ruleset: Ruleset.Osu,
-  country: undefined,
+  country: '',
   minOsuRank: 1,
   maxOsuRank: 1000000,
   minRating: 100,
