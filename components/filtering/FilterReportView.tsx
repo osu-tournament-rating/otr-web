@@ -36,7 +36,7 @@ const filterReportSchema = z.object({
 
 type FilterReportForm = z.infer<typeof filterReportSchema>;
 
-export function FilterReportViewer() {
+export function FilterReportView() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<FilteringResultDTO | null>(null);
 

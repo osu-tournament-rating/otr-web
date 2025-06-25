@@ -1,4 +1,4 @@
-import { FilterReportViewer } from '@/components/filtering/FilterReportViewer';
+import { FilterReportView } from '@/components/filtering/FilterReportView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export default function FilterReportsPage() {
           participants.
         </p>
       </div>
-      <FilterReportViewer />
+      <FilterReportView />
     </main>
   );
 }
