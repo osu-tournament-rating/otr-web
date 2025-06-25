@@ -9,7 +9,7 @@ import { clearRequestCache } from '../utils/request-cache';
  * After successful authentication, the API will redirect the user back to the provided `redirectUrl`.
  *
  * It is recommended that `redirectUrl` be an intermediary callback page within this application
- * (e.g., /auth/callback). This callback page can then refresh client-side data and navigate
+ * (e.g. /auth/callback). This callback page can then refresh client-side data and navigate
  * the user to their originally intended page.
  *
  * @param originalPath The originalPath the user was on, e.g. /leaderboard

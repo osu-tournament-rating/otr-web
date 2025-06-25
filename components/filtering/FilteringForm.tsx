@@ -390,7 +390,7 @@ export default function FilteringForm({
                     />
                     <FormControl>
                       <Textarea
-                        placeholder="Enter osu! player IDs (e.g., 1234567, 2345678, 3456789)"
+                        placeholder="Enter osu! player IDs (e.g. 1234567, 2345678, 3456789)"
                         className="min-h-[120px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary sm:min-h-[150px]"
                         {...field}
                       />
