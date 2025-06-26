@@ -247,8 +247,10 @@ function NavigationItem({
 }: NavItem & { isMobile?: boolean }) {
   const session = useSession();
   const pathname = usePathname();
-  const isActive = pathname.startsWith(href);
   const hasDropdown = !!dropdown;
+  const isActive = hasDropdown
+    ? dropdown.some((item) => pathname.startsWith(item.href))
+    : pathname.startsWith(href);
 
   const isVisible =
     roles?.length === 0 ||
