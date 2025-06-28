@@ -97,7 +97,6 @@ export function FilterReportView() {
       'Status',
       'Current Rating',
       'Peak Rating',
-      'osu! Global Rank',
       'Tournaments Played',
       'Matches Played',
       'Failure Reasons',
@@ -110,7 +109,6 @@ export function FilterReportView() {
       player.isSuccess ? 'Passed' : 'Failed',
       player.currentRating?.toFixed(2) || 'N/A',
       player.peakRating?.toFixed(2) || 'N/A',
-      player.osuGlobalRank?.toString() || 'N/A',
       player.tournamentsPlayed?.toString() || 'N/A',
       player.matchesPlayed?.toString() || 'N/A',
       player.failureReason
@@ -295,38 +293,6 @@ export function FilterReportView() {
                       }
                     >
                       {report.request.peakRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      Min. osu! Global Rank
-                    </span>
-                    <p
-                      className={
-                        report.request.minOsuRank
-                          ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
-                      }
-                    >
-                      {report.request.minOsuRank
-                        ? `#${report.request.minOsuRank.toLocaleString()}`
-                        : '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      Max osu! Global Rank
-                    </span>
-                    <p
-                      className={
-                        report.request.maxOsuRank
-                          ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
-                      }
-                    >
-                      {report.request.maxOsuRank
-                        ? `#${report.request.maxOsuRank.toLocaleString()}`
-                        : '—'}
                     </p>
                   </div>
                   <div>

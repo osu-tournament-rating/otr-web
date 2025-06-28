@@ -49,13 +49,41 @@ const filteringFormSchema = z.object({
         message: 'Please select a valid ruleset',
       }
     ),
-  minRating: z.coerce.number().min(100).optional().or(z.literal('')),
-  maxRating: z.coerce.number().min(100).optional().or(z.literal('')),
-  tournamentsPlayed: z.coerce.number().min(1).optional().or(z.literal('')),
-  peakRating: z.coerce.number().min(100).optional().or(z.literal('')),
-  matchesPlayed: z.coerce.number().min(1).optional().or(z.literal('')),
-  minRank: z.coerce.number().min(1).optional().or(z.literal('')),
-  maxRank: z.coerce.number().min(1).optional().or(z.literal('')),
+  minRating: z.coerce
+    .number()
+    .int()
+    .min(100, 'Minimum rating must be at least 100')
+    .max(5000, 'Maximum rating cannot exceed 5000')
+    .optional()
+    .or(z.literal('')),
+  maxRating: z.coerce
+    .number()
+    .int()
+    .min(100, 'Minimum rating must be at least 100')
+    .max(5000, 'Maximum rating cannot exceed 5000')
+    .optional()
+    .or(z.literal('')),
+  tournamentsPlayed: z.coerce
+    .number()
+    .int()
+    .min(1, 'Must be at least 1')
+    .max(1000, 'Cannot exceed 1000 tournaments')
+    .optional()
+    .or(z.literal('')),
+  peakRating: z.coerce
+    .number()
+    .int()
+    .min(100, 'Minimum rating must be at least 100')
+    .max(5000, 'Maximum rating cannot exceed 5000')
+    .optional()
+    .or(z.literal('')),
+  matchesPlayed: z.coerce
+    .number()
+    .int()
+    .min(1, 'Must be at least 1')
+    .max(10000, 'Cannot exceed 10000 matches')
+    .optional()
+    .or(z.literal('')),
   osuPlayerIds: z.string().min(1, 'Please enter at least one osu! player ID'),
 });
 
@@ -108,6 +136,7 @@ function NumberInput<TFieldValues extends FieldValues>({
               type="number"
               placeholder={placeholder}
               min={min}
+              step="0.01"
               {...field}
               className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -134,14 +163,12 @@ export default function FilteringForm({
   const form = useForm<FilteringFormValues>({
     resolver: zodResolver(filteringFormSchema),
     defaultValues: {
-      ruleset: undefined,
+      ruleset: '' as any,
       minRating: '',
       maxRating: '',
       tournamentsPlayed: '',
       peakRating: '',
       matchesPlayed: '',
-      minRank: '',
-      maxRank: '',
       osuPlayerIds: '',
     },
     mode: 'onChange',
@@ -165,8 +192,6 @@ export default function FilteringForm({
       'tournamentsPlayed',
       'peakRating',
       'matchesPlayed',
-      'minRank',
-      'maxRank',
     ];
 
     // Check if any field other than ruleset has changed
@@ -212,8 +237,6 @@ export default function FilteringForm({
         peakRating: values.peakRating === '' ? undefined : values.peakRating,
         matchesPlayed:
           values.matchesPlayed === '' ? undefined : values.matchesPlayed,
-        minOsuRank: values.minRank === '' ? undefined : values.minRank,
-        maxOsuRank: values.maxRank === '' ? undefined : values.maxRank,
         osuPlayerIds,
       });
 
@@ -242,7 +265,6 @@ export default function FilteringForm({
       'Status',
       'Current Rating',
       'Peak Rating',
-      'osu! Global Rank',
       'Tournaments Played',
       'Matches Played',
       'Failure Reasons',
@@ -257,7 +279,6 @@ export default function FilteringForm({
           result.isSuccess ? 'Passed' : 'Failed',
           result.currentRating?.toFixed(0) || 'N/A',
           result.peakRating?.toFixed(0) || 'N/A',
-          result.osuGlobalRank?.toString() || 'N/A',
           result.tournamentsPlayed?.toString() || 'N/A',
           result.matchesPlayed?.toString() || 'N/A',
           failureReasons.join(', '),
@@ -314,16 +335,16 @@ export default function FilteringForm({
                   control={form.control}
                   name="minRating"
                   label="Minimum Rating"
-                  tooltip="Players below this rating will be filtered out (optional, minimum: 100)"
-                  placeholder="e.g. 500"
+                  tooltip="Players below this rating will be filtered out (optional, minimum: 100, supports decimals)"
+                  placeholder="500"
                   min={100}
                 />
                 <NumberInput
                   control={form.control}
                   name="maxRating"
                   label="Maximum Rating"
-                  tooltip="Players above this rating will be filtered out (optional)"
-                  placeholder="e.g. 2000"
+                  tooltip="Players above this rating will be filtered out (optional, supports decimals)"
+                  placeholder="2000"
                   min={100}
                 />
               </div>
@@ -333,8 +354,8 @@ export default function FilteringForm({
                   control={form.control}
                   name="peakRating"
                   label="Maximum Peak Rating"
-                  tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional)"
-                  placeholder="e.g. 2500"
+                  tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional, supports decimals)"
+                  placeholder="2500"
                   min={100}
                 />
                 <NumberInput
@@ -342,7 +363,7 @@ export default function FilteringForm({
                   name="tournamentsPlayed"
                   label="Minimum Tournaments"
                   tooltip="Players must have played in at least this many distinct tournaments (optional)"
-                  placeholder="e.g. 3"
+                  placeholder="3"
                   min={1}
                 />
                 <NumberInput
@@ -350,26 +371,7 @@ export default function FilteringForm({
                   name="matchesPlayed"
                   label="Minimum Matches"
                   tooltip="Players must have played in at least this many matches (optional)"
-                  placeholder="e.g. 10"
-                  min={1}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <NumberInput
-                  control={form.control}
-                  name="minRank"
-                  label="Minimum osu! Global Rank"
-                  tooltip="Players with an osu! global rank below this value will be filtered out (optional)"
-                  placeholder="e.g. 1000"
-                  min={1}
-                />
-                <NumberInput
-                  control={form.control}
-                  name="maxRank"
-                  label="Maximum osu! Global Rank"
-                  tooltip="Players with an osu! global rank above this value will be filtered out (optional)"
-                  placeholder="e.g. 10000"
+                  placeholder="10"
                   min={1}
                 />
               </div>
@@ -417,7 +419,15 @@ export default function FilteringForm({
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  form.reset();
+                  form.reset({
+                    ruleset: '' as any,
+                    minRating: '',
+                    maxRating: '',
+                    tournamentsPlayed: '',
+                    peakRating: '',
+                    matchesPlayed: '',
+                    osuPlayerIds: '',
+                  });
                   // Reset initial values reference after form reset
                   initialValuesRef.current = form.getValues();
                 }}
