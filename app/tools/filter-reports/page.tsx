@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function FilterReportsPage() {
   return (
-    <main className="container mx-auto flex flex-col py-8">
+    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <div className="mb-8 flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Filter Reports</h1>
         <p className="text-muted-foreground">
@@ -17,6 +17,6 @@ export default function FilterReportsPage() {
         </p>
       </div>
       <FilterReportView />
-    </main>
+    </div>
   );
 }
