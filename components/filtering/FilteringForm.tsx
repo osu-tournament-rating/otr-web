@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Settings, LoaderCircle, Users } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Form,
   FormControl,
@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Control, FieldPath } from 'react-hook-form';
 import { toast } from 'sonner';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
@@ -29,67 +29,115 @@ import {
 import { getFailureReasons } from './FailureReasonsBadges';
 import FilteringResultsTable from './FilteringResultsTable';
 import { downloadCSV } from '@/lib/utils/csv';
-import { Control, FieldPath, FieldValues } from 'react-hook-form';
 import FilterComplianceNotice from './FilterComplianceNotice';
-import { useEffect, useRef } from 'react';
 
-const filteringFormSchema = z.object({
-  ruleset: z.coerce
-    .number({ invalid_type_error: 'Please select a ruleset' })
-    .refine(
-      (val) =>
-        [
-          Ruleset.Osu,
-          Ruleset.Taiko,
-          Ruleset.Catch,
-          Ruleset.Mania4k,
-          Ruleset.Mania7k,
-        ].includes(val),
-      {
-        message: 'Please select a valid ruleset',
+const optionalNumberSchema = (
+  options: {
+    min?: number;
+    max?: number;
+    integer?: boolean;
+    minMsg?: string;
+    maxMsg?: string;
+    intMsg?: string;
+  } = {}
+) =>
+  z.preprocess(
+    (val) => (val === '' || val === null ? undefined : val),
+    z.coerce
+      .number({ invalid_type_error: 'Please enter a valid number' })
+      .min(options.min ?? -Infinity, options.minMsg)
+      .max(options.max ?? Infinity, options.maxMsg)
+      .int(options.integer ? { message: options.intMsg } : undefined)
+      .optional()
+  );
+
+const filteringFormSchema = z
+  .object({
+    ruleset: z.coerce.number({
+      invalid_type_error: 'Please select a ruleset',
+      required_error: 'Please select a ruleset',
+    }),
+    minRating: optionalNumberSchema({
+      min: 100,
+      max: 5000,
+      minMsg: 'Minimum rating must be at least 100',
+      maxMsg: 'Maximum rating cannot exceed 5000',
+    }),
+    maxRating: optionalNumberSchema({
+      min: 100,
+      max: 5000,
+      minMsg: 'Minimum rating must be at least 100',
+      maxMsg: 'Maximum rating cannot exceed 5000',
+    }),
+    tournamentsPlayed: optionalNumberSchema({
+      min: 1,
+      max: 2000,
+      integer: true,
+      minMsg: 'Must be at least 1',
+      maxMsg: 'Cannot exceed 2000 tournaments',
+      intMsg: 'Must be a whole number',
+    }),
+    peakRating: optionalNumberSchema({
+      min: 100,
+      max: 5000,
+      minMsg: 'Minimum rating must be at least 100',
+      maxMsg: 'Maximum rating cannot exceed 5000',
+    }),
+    matchesPlayed: optionalNumberSchema({
+      min: 1,
+      max: 20000,
+      integer: true,
+      minMsg: 'Must be at least 1',
+      maxMsg: 'Cannot exceed 20000 matches',
+      intMsg: 'Must be a whole number',
+    }),
+    osuPlayerIds: z
+      .string()
+      .min(1, 'Please enter at least one osu! player ID')
+      .refine(
+        (val) => {
+          const ids = val.split(/[\s,\n]+/).filter((id) => id.trim() !== '');
+          if (ids.length === 0) return false;
+
+          return ids.every((id) => {
+            const trimmed = id.trim();
+            return /^\d+$/.test(trimmed) && parseInt(trimmed, 10) > 0;
+          });
+        },
+        {
+          message:
+            'Please enter valid, positive osu! player IDs separated by spaces, commas, or new lines',
+        }
+      )
+      .refine(
+        (val) => {
+          const ids = val
+            .split(/[\s,\n]+/)
+            .filter((id) => id.trim() !== '')
+            .map((id) => id.trim());
+          const uniqueIds = new Set(ids);
+          return ids.length === uniqueIds.size;
+        },
+        {
+          message: 'Duplicate osu! player IDs are not allowed',
+        }
+      ),
+  })
+  .refine(
+    (data) => {
+      if (data.minRating && data.maxRating) {
+        return data.maxRating >= data.minRating;
       }
-    ),
-  minRating: z.coerce
-    .number()
-    .int()
-    .min(100, 'Minimum rating must be at least 100')
-    .max(5000, 'Maximum rating cannot exceed 5000')
-    .optional()
-    .or(z.literal('')),
-  maxRating: z.coerce
-    .number()
-    .int()
-    .min(100, 'Minimum rating must be at least 100')
-    .max(5000, 'Maximum rating cannot exceed 5000')
-    .optional()
-    .or(z.literal('')),
-  tournamentsPlayed: z.coerce
-    .number()
-    .int()
-    .min(1, 'Must be at least 1')
-    .max(1000, 'Cannot exceed 1000 tournaments')
-    .optional()
-    .or(z.literal('')),
-  peakRating: z.coerce
-    .number()
-    .int()
-    .min(100, 'Minimum rating must be at least 100')
-    .max(5000, 'Maximum rating cannot exceed 5000')
-    .optional()
-    .or(z.literal('')),
-  matchesPlayed: z.coerce
-    .number()
-    .int()
-    .min(1, 'Must be at least 1')
-    .max(10000, 'Cannot exceed 10000 matches')
-    .optional()
-    .or(z.literal('')),
-  osuPlayerIds: z.string().min(1, 'Please enter at least one osu! player ID'),
-});
+      return true;
+    },
+    {
+      message: 'Maximum rating must be greater than or equal to minimum rating',
+      path: ['maxRating'],
+    }
+  );
 
 type FilteringFormValues = z.infer<typeof filteringFormSchema>;
 
-// Form section component for better organization
 type FormSectionProps = {
   icon: React.ReactNode;
   title: string;
@@ -106,24 +154,23 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
   </div>
 );
 
-// Local NumberInput component
-interface NumberInputProps<TFieldValues extends FieldValues> {
-  control: Control<TFieldValues>;
-  name: FieldPath<TFieldValues>;
+interface NumberInputProps {
+  control: Control<FilteringFormValues>;
+  name: FieldPath<FilteringFormValues>;
   label: string;
   tooltip: string;
   placeholder?: string;
-  min?: number;
+  isInteger?: boolean;
 }
 
-function NumberInput<TFieldValues extends FieldValues>({
+function NumberInput({
   control,
   name,
   label,
   tooltip,
   placeholder,
-  min,
-}: NumberInputProps<TFieldValues>) {
+  isInteger = false,
+}: NumberInputProps) {
   return (
     <FormField
       control={control}
@@ -133,11 +180,11 @@ function NumberInput<TFieldValues extends FieldValues>({
           <LabelWithTooltip label={label} tooltip={tooltip} />
           <FormControl>
             <Input
-              type="number"
+              type="text"
+              inputMode={isInteger ? 'numeric' : 'decimal'}
               placeholder={placeholder}
-              min={min}
-              step="0.01"
               {...field}
+              value={field.value ?? ''}
               className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
           </FormControl>
@@ -163,25 +210,23 @@ export default function FilteringForm({
   const form = useForm<FilteringFormValues>({
     resolver: zodResolver(filteringFormSchema),
     defaultValues: {
-      ruleset: '' as any,
-      minRating: '',
-      maxRating: '',
-      tournamentsPlayed: '',
-      peakRating: '',
-      matchesPlayed: '',
+      ruleset: undefined,
+      minRating: undefined,
+      maxRating: undefined,
+      tournamentsPlayed: undefined,
+      peakRating: undefined,
+      matchesPlayed: undefined,
       osuPlayerIds: '',
     },
     mode: 'onChange',
   });
 
-  // Store initial values when form is first loaded
   useEffect(() => {
     if (!initialValuesRef.current) {
       initialValuesRef.current = form.getValues();
     }
   }, [form]);
 
-  // Check if only ruleset has changed
   const hasOnlyRulesetChanged = (values: FilteringFormValues): boolean => {
     if (!initialValuesRef.current) return false;
 
@@ -194,17 +239,14 @@ export default function FilteringForm({
       'matchesPlayed',
     ];
 
-    // Check if any field other than ruleset has changed
     const hasOtherChanges = fieldsToCheck.some(
       (field) => values[field] !== initial[field]
     );
 
-    // Return true if ruleset changed but nothing else
     return values.ruleset !== initial.ruleset && !hasOtherChanges;
   };
 
   async function onSubmit(values: FilteringFormValues) {
-    // Validate that not only ruleset has changed
     if (hasOnlyRulesetChanged(values)) {
       toast.error(
         'Please modify at least one filter criteria in addition to the ruleset'
@@ -214,29 +256,18 @@ export default function FilteringForm({
 
     setIsLoading(true);
     try {
-      // Parse osu player IDs from the textarea
       const osuPlayerIds = values.osuPlayerIds
         .split(/[\s,\n]+/)
         .filter((id) => id.trim() !== '')
-        .map((id) => {
-          const parsed = parseInt(id.trim());
-          if (isNaN(parsed)) {
-            throw new Error(`Invalid osu! player ID: ${id}`);
-          }
-          return parsed;
-        });
+        .map((id) => parseInt(id.trim()));
 
       const result = await filterPlayers({
         ruleset: values.ruleset as Ruleset,
-        minRating: values.minRating === '' ? undefined : values.minRating,
-        maxRating: values.maxRating === '' ? undefined : values.maxRating,
-        tournamentsPlayed:
-          values.tournamentsPlayed === ''
-            ? undefined
-            : values.tournamentsPlayed,
-        peakRating: values.peakRating === '' ? undefined : values.peakRating,
-        matchesPlayed:
-          values.matchesPlayed === '' ? undefined : values.matchesPlayed,
+        minRating: values.minRating,
+        maxRating: values.maxRating,
+        tournamentsPlayed: values.tournamentsPlayed,
+        peakRating: values.peakRating,
+        matchesPlayed: values.matchesPlayed,
         osuPlayerIds,
       });
 
@@ -315,7 +346,7 @@ export default function FilteringForm({
                       tooltip="The game mode to filter players for (required)"
                     />
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => field.onChange(value)}
                       value={field.value?.toString()}
                     >
                       <FormControl>
@@ -330,14 +361,13 @@ export default function FilteringForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
                 <NumberInput
                   control={form.control}
                   name="minRating"
                   label="Minimum Rating"
                   tooltip="Players below this rating will be filtered out (optional, minimum: 100, supports decimals)"
                   placeholder="500"
-                  min={100}
                 />
                 <NumberInput
                   control={form.control}
@@ -345,18 +375,16 @@ export default function FilteringForm({
                   label="Maximum Rating"
                   tooltip="Players above this rating will be filtered out (optional, supports decimals)"
                   placeholder="2000"
-                  min={100}
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-start">
                 <NumberInput
                   control={form.control}
                   name="peakRating"
                   label="Maximum Peak Rating"
                   tooltip="Players whose all-time peak rating exceeds this value will be filtered out (optional, supports decimals)"
                   placeholder="2500"
-                  min={100}
                 />
                 <NumberInput
                   control={form.control}
@@ -364,7 +392,7 @@ export default function FilteringForm({
                   label="Minimum Tournaments"
                   tooltip="Players must have played in at least this many distinct tournaments (optional)"
                   placeholder="3"
-                  min={1}
+                  isInteger={true}
                 />
                 <NumberInput
                   control={form.control}
@@ -372,7 +400,7 @@ export default function FilteringForm({
                   label="Minimum Matches"
                   tooltip="Players must have played in at least this many matches (optional)"
                   placeholder="10"
-                  min={1}
+                  isInteger={true}
                 />
               </div>
             </FormSection>
@@ -385,7 +413,7 @@ export default function FilteringForm({
                 control={form.control}
                 name="osuPlayerIds"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <LabelWithTooltip
                       label="osu! Player IDs *"
                       tooltip="Enter osu! player IDs separated by commas, spaces, or new lines (required)"
@@ -420,15 +448,14 @@ export default function FilteringForm({
                 variant="outline"
                 onClick={() => {
                   form.reset({
-                    ruleset: '' as any,
-                    minRating: '',
-                    maxRating: '',
-                    tournamentsPlayed: '',
-                    peakRating: '',
-                    matchesPlayed: '',
+                    ruleset: undefined,
+                    minRating: undefined,
+                    maxRating: undefined,
+                    tournamentsPlayed: undefined,
+                    peakRating: undefined,
+                    matchesPlayed: undefined,
                     osuPlayerIds: '',
                   });
-                  // Reset initial values reference after form reset
                   initialValuesRef.current = form.getValues();
                 }}
                 disabled={isLoading}

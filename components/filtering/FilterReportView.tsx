@@ -73,7 +73,6 @@ export function FilterReportView() {
         setReport(report);
         if (report.response) {
           setResults(report.response);
-          toast.success(`Successfully loaded filter report #${data.reportId}`);
         } else {
           toast.error('Filter report exists but contains no results data');
         }
