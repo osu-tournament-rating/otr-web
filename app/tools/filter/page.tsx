@@ -11,7 +11,7 @@ export default function FilteringPage() {
     useState<FilteringResultDTO | null>(null);
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
+    <div className="container mx-auto flex w-full flex-col items-center justify-center gap-3">
       <Card className="flex w-full flex-col items-center justify-center gap-4">
         <div className="flex flex-row items-center gap-2 text-xl font-bold text-primary md:text-2xl">
           <Filter className="size-9" />
