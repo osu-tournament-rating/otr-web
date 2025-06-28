@@ -868,11 +868,6 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
         text: 'None',
         description: 'No failure reason',
       },
-      [FilteringFailReason.NoData]: {
-        text: 'No data for ruleset',
-        description:
-          'The player does not have a rating for the specified ruleset',
-      },
       [FilteringFailReason.MinRating]: {
         text: 'Rating too low',
         description: "The player's rating is below the minimum threshold",
@@ -895,16 +890,6 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
         text: 'Not enough matches',
         description:
           'The player has not played in the minimum specified number of matches',
-      },
-      [FilteringFailReason.MinRank]: {
-        text: 'osu! rank too low',
-        description:
-          "The player's osu! global rank is below the minimum threshold",
-      },
-      [FilteringFailReason.MaxRank]: {
-        text: 'osu! rank too high',
-        description:
-          "The player's osu! global rank is above the maximum threshold",
       },
     },
   };
