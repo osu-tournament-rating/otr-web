@@ -21,7 +21,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useState, useMemo } from 'react';
-import { CheckCircle, XCircle, ListFilter, Download } from 'lucide-react';
+import { CheckCircle2, XCircle, ListFilter, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -50,14 +50,14 @@ export default function FilteringResultsTable({
       {
         accessorKey: 'isSuccess',
         header: ({ column }) => (
-          <SortableHeader column={column}>Status</SortableHeader>
+          <SortableHeader column={column}>✓</SortableHeader>
         ),
         cell: ({ row }) => <StatusIcon isSuccess={row.original.isSuccess} />,
       },
       {
         accessorKey: 'failureReason',
         header: () => (
-          <div className="text-center font-semibold">Failure Reasons</div>
+          <div className="text-center text-sm font-semibold">Failures</div>
         ),
         cell: ({ row }) => (
           <FailureReasonsBadges failureReason={row.original.failureReason} />
@@ -82,7 +82,7 @@ export default function FilteringResultsTable({
       {
         accessorKey: 'currentRating',
         header: ({ column }) => (
-          <SortableHeader column={column}>Current Rating</SortableHeader>
+          <SortableHeader column={column}>Rating</SortableHeader>
         ),
         cell: ({ getValue }) => (
           <NumericCell
@@ -94,24 +94,12 @@ export default function FilteringResultsTable({
       {
         accessorKey: 'peakRating',
         header: ({ column }) => (
-          <SortableHeader column={column}>Peak Rating</SortableHeader>
+          <SortableHeader column={column}>Peak</SortableHeader>
         ),
         cell: ({ getValue }) => (
           <NumericCell
             value={getValue() as number | undefined | null}
             format={(v) => v.toFixed(0)}
-          />
-        ),
-      },
-      {
-        accessorKey: 'osuGlobalRank',
-        header: ({ column }) => (
-          <SortableHeader column={column}>osu! Global Rank</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell
-            value={getValue() as number | undefined | null}
-            format={(v) => `#${v.toLocaleString()}`}
           />
         ),
       },
@@ -171,15 +159,15 @@ export default function FilteringResultsTable({
       {!hideCard && (
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <ListFilter className="size-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">
+            <ListFilter className="size-4 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">
               Filtering Results
             </h3>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="size-4 text-green-600 dark:text-green-400" />
                 <span>Passed: {results.playersPassed ?? 0}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -238,21 +226,19 @@ export default function FilteringResultsTable({
                     const getHeaderClass = () => {
                       switch (header.column.id) {
                         case 'isSuccess':
-                          return 'w-20 text-center';
+                          return 'w-8 text-center';
                         case 'failureReason':
-                          return 'w-48 text-center';
+                          return 'text-center';
                         case 'osuId':
-                          return 'w-28 text-center';
+                          return 'w-[70px] text-center';
                         case 'player':
-                          return 'min-w-[160px]';
+                          return 'min-w-[60px]';
                         case 'currentRating':
                         case 'peakRating':
-                          return 'w-32 text-center';
-                        case 'osuGlobalRank':
-                          return 'w-32 text-center';
+                          return 'w-[50px] text-center';
                         case 'tournamentsPlayed':
                         case 'matchesPlayed':
-                          return 'w-28 text-center';
+                          return 'w-[50px] text-center';
                         default:
                           return '';
                       }
@@ -262,7 +248,7 @@ export default function FilteringResultsTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          'font-semibold text-foreground',
+                          'px-2 font-semibold text-foreground',
                           getHeaderClass()
                         )}
                       >
@@ -295,7 +281,7 @@ export default function FilteringResultsTable({
                       return (
                         <TableCell
                           key={cell.id}
-                          className={cn('py-3 text-center')}
+                          className={cn('px-2 py-1.5 text-center')}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,

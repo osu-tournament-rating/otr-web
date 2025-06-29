@@ -294,7 +294,7 @@ export default function FilteringForm({
       'Username',
       'Player ID',
       'Status',
-      'Current Rating',
+      'Rating',
       'Peak Rating',
       'Tournaments Played',
       'Matches Played',
@@ -445,7 +445,7 @@ export default function FilteringForm({
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => {
                   form.reset({
                     ruleset: undefined,
@@ -459,7 +459,7 @@ export default function FilteringForm({
                   initialValuesRef.current = form.getValues();
                 }}
                 disabled={isLoading}
-                className="rounded-md px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                className="rounded-md px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-xl"
               >
                 Reset
               </Button>

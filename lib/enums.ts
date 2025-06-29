@@ -869,25 +869,25 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
         description: 'No failure reason',
       },
       [FilteringFailReason.MinRating]: {
-        text: 'Rating too low',
+        text: 'Low Rating',
         description: "The player's rating is below the minimum threshold",
       },
       [FilteringFailReason.MaxRating]: {
-        text: 'Rating too high',
+        text: 'High Rating',
         description: "The player's rating is above the maximum threshold",
       },
       [FilteringFailReason.NotEnoughTournaments]: {
-        text: 'Not enough tournaments',
+        text: 'Low Tournaments',
         description:
           'The player has not played in the minimum specified number of tournaments',
       },
       [FilteringFailReason.PeakRatingTooHigh]: {
-        text: 'Peak rating too high',
+        text: 'High Peak',
         description:
           "The player's all-time peak rating exceeds the maximum allowed",
       },
       [FilteringFailReason.NotEnoughMatches]: {
-        text: 'Not enough matches',
+        text: 'Low Matches',
         description:
           'The player has not played in the minimum specified number of matches',
       },

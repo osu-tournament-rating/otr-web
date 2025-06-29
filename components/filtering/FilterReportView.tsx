@@ -94,7 +94,7 @@ export function FilterReportView() {
       'Username',
       'Player ID',
       'Status',
-      'Current Rating',
+      'Rating',
       'Peak Rating',
       'Tournaments Played',
       'Matches Played',
@@ -123,7 +123,7 @@ export function FilterReportView() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

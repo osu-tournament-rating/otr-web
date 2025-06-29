@@ -13,23 +13,23 @@ export default function PlayerCell({ result }: PlayerCellProps) {
 
   if (!result.username || !result.playerId) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="size-8 rounded-full bg-muted" />
-        <span className="text-muted-foreground">
-          Unknown Player (ID: {result.osuId})
+      <div className="flex items-center gap-2">
+        <div className="size-6 rounded-full bg-muted" />
+        <span className="text-sm text-muted-foreground">
+          Unknown
         </span>
       </div>
     );
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 items-center gap-2">
       <Image
         src={`https://a.ppy.sh/${result.osuId}`}
         alt={`${result.username} avatar`}
         className="flex-shrink-0 rounded-full"
-        width={32}
-        height={32}
+        width={24}
+        height={24}
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.style.display = 'none';
@@ -37,7 +37,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
       />
       <Link
         href={`/players/${result.playerId}`}
-        className="truncate font-medium transition-colors hover:text-primary"
+        className="truncate text-sm font-medium transition-colors hover:text-primary"
       >
         {result.username}
       </Link>

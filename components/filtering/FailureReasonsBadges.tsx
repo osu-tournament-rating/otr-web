@@ -31,7 +31,7 @@ export default function FailureReasonsBadges({
         {reasons.map((reason) => (
           <Tooltip key={reason.text}>
             <TooltipTrigger asChild>
-              <Badge variant="destructive" className="cursor-help text-xs">
+              <Badge variant="destructive" className="cursor-help px-1.5 py-0.5 text-[10px]">
                 {reason.text}
               </Badge>
             </TooltipTrigger>
