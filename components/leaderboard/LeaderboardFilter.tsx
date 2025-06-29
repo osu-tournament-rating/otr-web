@@ -46,7 +46,7 @@ const countryOptions = Object.entries(countries)
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
-  const scaleExponentially = (value: number, min: number, max: number) => {
+const scaleExponentially = (value: number, min: number, max: number) => {
   return Math.round(min * Math.pow(max / min, value / 100));
 };
 

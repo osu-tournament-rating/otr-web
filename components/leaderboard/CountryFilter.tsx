@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
@@ -80,7 +80,7 @@ export function CountrySearchSelect({
                 value={`${country.name} ${country.code}`}
                 onSelect={() => {
                   // If clicking the selected country, deselect it
-                  onValueChange(value === country.code ? '' : country.code)
+                  onValueChange(value === country.code ? '' : country.code);
                   setOpen(false);
                   setSearchValue('');
                 }}
