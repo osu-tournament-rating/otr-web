@@ -15,7 +15,7 @@ export default function PlayerRulesetSelector() {
     Number(searchParams.get('ruleset') || Ruleset.Osu) as Ruleset
   );
 
-  // Sync state with URL changes (e.g., when navigating from search results)
+  // Sync state with URL changes (e.g. when navigating from search results)
   useEffect(() => {
     const rulesetFromUrl = Number(
       searchParams.get('ruleset') || Ruleset.Osu

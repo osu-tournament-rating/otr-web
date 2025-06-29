@@ -30,7 +30,7 @@ export function formatUTCDate(date: Date): string {
 /**
  * Formats a duration in seconds to a human-readable string
  * @param seconds Duration in seconds
- * @returns Formatted duration string (e.g., "3:45", "1:23:45")
+ * @returns Formatted duration string (e.g. "3:45", "1:23:45")
  */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);

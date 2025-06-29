@@ -14,6 +14,7 @@ import {
   UserDTO,
   PlayersWrapper,
   PlatformStatsWrapper,
+  FilteringWrapper,
 } from '@osu-tournament-rating/otr-api-client';
 import { notFoundInterceptor } from './shared';
 import { cookies } from 'next/headers';
@@ -45,6 +46,7 @@ const config: IOtrApiWrapperConfiguration = {
 
 export const auth = new AuthWrapper(config);
 export const adminNotes = new AdminNotesWrapper(config);
+export const filtering = new FilteringWrapper(config);
 export const games = new GamesWrapper(config);
 export const leaderboards = new LeaderboardsWrapper(config);
 export const matches = new MatchesWrapper(config);

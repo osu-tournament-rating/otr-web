@@ -157,7 +157,7 @@ export default function LeaderboardFilter({
                   name="maxOsuRank"
                   render={({ field: maxRankField }) => (
                     <FormItem>
-                      <FormLabel>osu! Rank</FormLabel>
+                      <FormLabel>osu! Global Rank</FormLabel>
                       <Slider
                         // All exponentially scaling sliders have a range of 0 - 100
                         min={0}

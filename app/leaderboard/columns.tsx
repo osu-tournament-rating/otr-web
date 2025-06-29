@@ -66,6 +66,7 @@ export const columns = [
             className="flex-shrink-0 rounded-full ring-2 ring-muted/20"
             width={32}
             height={32}
+            unoptimized
           />
           {/* If the user is signed out, do not link */}
           {session ? (
