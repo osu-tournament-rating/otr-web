@@ -1,6 +1,7 @@
 'use client';
 
 import FilteringForm from '@/components/filtering/FilteringForm';
+import { BetaWarningBanner } from '@/components/filtering/BetaWarningBanner';
 import { Card } from '@/components/ui/card';
 import { Filter } from 'lucide-react';
 import { useState } from 'react';
@@ -12,6 +13,7 @@ export default function FilteringPage() {
 
   return (
     <div className="container mx-auto flex w-full flex-col items-center justify-center gap-3">
+      <BetaWarningBanner />
       <Card className="flex w-full flex-col items-center justify-center gap-4">
         <div className="flex flex-row items-center gap-2 text-xl font-bold text-primary md:text-2xl">
           <Filter className="size-9" />
