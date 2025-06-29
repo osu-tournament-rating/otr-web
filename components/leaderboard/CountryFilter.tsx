@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ChevronDown, XIcon } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
 import CountryFlag from '../shared/CountryFlag';
 import { cn } from '@/lib/utils';
-import { useSearchParams } from 'next/navigation';
 
 interface CountrySearchSelectProps {
   value: string;
