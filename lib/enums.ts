@@ -891,5 +891,15 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
         description:
           'The player has not played in the minimum specified number of matches',
       },
+      [FilteringFailReason.TooManyMatches]: {
+        text: 'High Matches',
+        description:
+          'The player has played in more than the maximum specified number of matches',
+      },
+      [FilteringFailReason.TooManyTournaments]: {
+        text: 'High Tournaments',
+        description:
+          'The player has participated in more than the maximum specified number of tournaments',
+      },
     },
   };
