@@ -23,6 +23,9 @@ import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { cn } from '@/lib/utils';
 
+import { getAllCountries } from 'countries-and-timezones';
+import { CountrySearchSelect } from './CountryFilter';
+
 const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Bronze', value: 'bronze' },
   { label: 'Silver', value: 'silver' },
@@ -34,6 +37,14 @@ const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Grandmaster', value: 'grandmaster' },
   { label: 'Elite Grandmaster', value: 'eliteGrandmaster' },
 ];
+// Get all countries and create options
+const countries = getAllCountries();
+const countryOptions = Object.entries(countries)
+  .map(([code, country]) => ({
+    code,
+    name: country.name,
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const scaleExponentially = (value: number, min: number, max: number) => {
   return Math.round(min * Math.pow(max / min, value / 100));
@@ -431,6 +442,27 @@ export default function LeaderboardFilter({
                     </FormItem>
                   )}
                 />
+              )}
+            />
+
+            {/* Country select */}
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <CountrySearchSelect
+                      value={field.value || ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      countries={countryOptions}
+                    />
+                  </FormControl>
+                </FormItem>
               )}
             />
 

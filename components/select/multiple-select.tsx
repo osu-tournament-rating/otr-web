@@ -175,7 +175,7 @@ function MultiSelect({
           }
           className={cn(
             'w-full justify-between',
-            selected.length > 1 ? 'h-full' : 'h-10',
+            selected.length > 1 ? 'h-full' : 'h-9',
             'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
             className
           )}
@@ -244,7 +244,7 @@ function MultiSelect({
           />
           <CommandEmpty>No item found.</CommandEmpty>
           <CommandGroup
-            className="max-h-64 overflow-auto"
+            className="max-h-[200px] overflow-auto"
             role="listbox"
             onWheel={(e) => {
               // Allow wheel scrolling to work properly
