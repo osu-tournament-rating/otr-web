@@ -20,6 +20,7 @@ export const defaultLeaderboardFilterValues: z.infer<
 > = {
   page: 1,
   ruleset: Ruleset.Osu,
+  country: '',
   minOsuRank: 1,
   maxOsuRank: 1000000,
   minRating: 100,
@@ -40,7 +41,7 @@ export function createSearchParamsFromSchema(
       const key = k as keyof typeof defaultLeaderboardFilterValues;
       const defaultValue = defaultLeaderboardFilterValues[key];
 
-      if (v === undefined || v === defaultValue) {
+      if (v === undefined || v === defaultValue || v === '') {
         return;
       }
 

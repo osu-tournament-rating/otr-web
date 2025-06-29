@@ -235,6 +235,7 @@ export const tournamentSubmissionFormSchema = z.object({
 
 export const leaderboardFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
+  country: z.string().optional(),
   ruleset: numericEnumValueSchema(Ruleset).optional(),
   minOsuRank: z.coerce.number().int().min(1).optional(),
   maxOsuRank: z.coerce.number().int().min(1).optional(),
