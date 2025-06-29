@@ -15,9 +15,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
     return (
       <div className="flex items-center gap-2">
         <div className="size-6 rounded-full bg-muted" />
-        <span className="text-sm text-muted-foreground">
-          Unknown
-        </span>
+        <span className="text-sm text-muted-foreground">Unknown</span>
       </div>
     );
   }
