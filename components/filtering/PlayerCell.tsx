@@ -28,6 +28,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
         className="flex-shrink-0 rounded-full"
         width={24}
         height={24}
+        unoptimized
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.style.display = 'none';
@@ -35,7 +36,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
       />
       <Link
         href={`/players/${result.playerId}`}
-        className="truncate text-sm font-medium transition-colors hover:text-primary"
+        className="max-w-30 text-sm font-medium transition-colors hover:text-primary"
       >
         {result.username}
       </Link>
