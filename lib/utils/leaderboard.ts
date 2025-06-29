@@ -41,7 +41,7 @@ export function createSearchParamsFromSchema(
       const key = k as keyof typeof defaultLeaderboardFilterValues;
       const defaultValue = defaultLeaderboardFilterValues[key];
 
-      if (v === undefined || v === defaultValue) {
+      if (v === undefined || v === defaultValue || v === '') {
         return;
       }
 

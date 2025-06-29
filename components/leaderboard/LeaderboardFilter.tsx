@@ -45,8 +45,8 @@ const countryOptions = Object.entries(countries)
     name: country.name,
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
-console.log(countries);
-const scaleExponentially = (value: number, min: number, max: number) => {
+
+  const scaleExponentially = (value: number, min: number, max: number) => {
   return Math.round(min * Math.pow(max / min, value / 100));
 };
 
@@ -445,6 +445,27 @@ export default function LeaderboardFilter({
               )}
             />
 
+            {/* Country select */}
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <CountrySearchSelect
+                      value={field.value || ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      countries={countryOptions}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             {/* Tier select */}
             <FormField
               control={form.control}
@@ -460,27 +481,6 @@ export default function LeaderboardFilter({
                       form.handleSubmit(onSubmit)();
                     }}
                   />
-                </FormItem>
-              )}
-            />
-            {/* Country select */}
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <CountrySearchSelect
-                      value={field.value ?? ''}
-                      onValueChange={(value) => {
-                        field.onChange(value || undefined);
-
-                        form.handleSubmit(onSubmit)();
-                      }}
-                      countries={countryOptions}
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />
