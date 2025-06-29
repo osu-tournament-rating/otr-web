@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, XIcon } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
 import CountryFlag from '../shared/CountryFlag';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
 interface CountrySearchSelectProps {
   value: string;
@@ -26,6 +27,8 @@ export function CountrySearchSelect({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
+  const selectedCountry = countries.find((country) => country.code === value);
+  console.log(value);
   const filteredCountries = countries.filter(
     (country) =>
       country.name.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -38,8 +41,6 @@ export function CountrySearchSelect({
     if (b.code === value) return 1;
     return a.name.localeCompare(b.name);
   });
-
-  const selectedCountry = countries.find((country) => country.code === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,7 +73,7 @@ export function CountrySearchSelect({
             />
           </div>
           <CommandEmpty>No country found.</CommandEmpty>
-          <CommandGroup className="max-h-[200px] overflow-auto">
+          <CommandGroup className="relative max-h-[200px] overflow-auto">
             {sortedCountries.map((country) => (
               <CommandItem
                 key={country.code}
@@ -88,8 +89,9 @@ export function CountrySearchSelect({
                   setSearchValue('');
                 }}
                 className={cn(
-                  'flex items-center gap-2',
-                  country.code === value && 'bg-accent text-accent-foreground'
+                  'flex cursor-pointer items-center gap-2',
+                  country.code === value &&
+                    'bg-accent text-accent-foreground opacity-100'
                 )}
               >
                 <CountryFlag country={country.code} />

@@ -475,6 +475,7 @@ export default function LeaderboardFilter({
                       value={field.value ?? ''}
                       onValueChange={(value) => {
                         field.onChange(value || undefined);
+
                         form.handleSubmit(onSubmit)();
                       }}
                       countries={countryOptions}
