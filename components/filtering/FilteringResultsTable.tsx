@@ -74,10 +74,18 @@ export default function FilteringResultsTable({
         ),
       },
       {
-        accessorKey: 'player',
-        header: () => <div className="font-semibold">Player</div>,
+        accessorKey: 'username',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Player</SortableHeader>
+        ),
         cell: ({ row }) => <PlayerCell result={row.original} />,
-        enableSorting: false,
+        sortingFn: (rowA, rowB) => {
+          const usernameA = rowA.original.username || '';
+          const usernameB = rowB.original.username || '';
+          return usernameA.localeCompare(usernameB, undefined, {
+            sensitivity: 'base',
+          });
+        },
       },
       {
         accessorKey: 'currentRating',
