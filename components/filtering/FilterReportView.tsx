@@ -322,6 +322,34 @@ export function FilterReportView() {
                       {report.request.matchesPlayed ?? '—'}
                     </p>
                   </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">
+                      Max. Tournaments
+                    </span>
+                    <p
+                      className={
+                        report.request.maxTournamentsPlayed
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.maxTournamentsPlayed ?? '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">
+                      Max. Matches
+                    </span>
+                    <p
+                      className={
+                        report.request.maxMatchesPlayed
+                          ? 'mt-0.5 font-medium'
+                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                      }
+                    >
+                      {report.request.maxMatchesPlayed ?? '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
