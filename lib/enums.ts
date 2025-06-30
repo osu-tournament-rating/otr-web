@@ -1,5 +1,6 @@
 import {
   AdminNoteRouteTarget,
+  FilteringFailReason,
   GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
@@ -857,3 +858,48 @@ export const ScoreGradeEnumHelper: IEnumHelper<ScoreGrade> = {
     },
   },
 };
+
+export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReason> =
+  {
+    ...defaultBitwiseEnumHelper(FilteringFailReason),
+
+    metadata: {
+      [FilteringFailReason.None]: {
+        text: 'None',
+        description: 'No failure reason',
+      },
+      [FilteringFailReason.MinRating]: {
+        text: 'Low Rating',
+        description: "The player's rating is below the minimum threshold",
+      },
+      [FilteringFailReason.MaxRating]: {
+        text: 'High Rating',
+        description: "The player's rating is above the maximum threshold",
+      },
+      [FilteringFailReason.NotEnoughTournaments]: {
+        text: 'Low Tournaments',
+        description:
+          'The player has not played in the minimum specified number of tournaments',
+      },
+      [FilteringFailReason.PeakRatingTooHigh]: {
+        text: 'High Peak',
+        description:
+          "The player's all-time peak rating exceeds the maximum allowed",
+      },
+      [FilteringFailReason.NotEnoughMatches]: {
+        text: 'Low Matches',
+        description:
+          'The player has not played in the minimum specified number of matches',
+      },
+      [FilteringFailReason.TooManyMatches]: {
+        text: 'High Matches',
+        description:
+          'The player has played in more than the maximum specified number of matches',
+      },
+      [FilteringFailReason.TooManyTournaments]: {
+        text: 'High Tournaments',
+        description:
+          'The player has participated in more than the maximum specified number of tournaments',
+      },
+    },
+  };
