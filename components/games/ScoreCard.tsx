@@ -1,7 +1,11 @@
+'use client';
+
 import {
   GameScoreDTO,
   PlayerCompactDTO,
   Team,
+  AdminNoteRouteTarget,
+  Roles,
 } from '@osu-tournament-rating/otr-api-client';
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import ModIconset from '../icons/ModIconset';
@@ -10,6 +14,9 @@ import VerificationBadge from '../badges/VerificationBadge';
 import Link from 'next/link';
 import ScoreTeamColorBar from './ScoreTeamColorBar';
 import CountryFlag from '../shared/CountryFlag';
+import AdminNoteView from '../admin-notes/AdminNoteView';
+import ScoreAdminView from '../scores/ScoreAdminView';
+import { useSession } from '@/lib/hooks/useSession';
 
 export default function ScoreCard({
   score,
@@ -20,6 +27,11 @@ export default function ScoreCard({
   player?: PlayerCompactDTO;
   won?: boolean;
 }) {
+  const session = useSession();
+  const isAdmin = session?.scopes?.includes(Roles.Admin);
+  const hasNotes = score.adminNotes && score.adminNotes.length > 0;
+  const showAdminControls = isAdmin || hasNotes;
+
   return (
     <div
       data-team={Team[score.team]}
@@ -29,7 +41,7 @@ export default function ScoreCard({
       <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
 
       {/* Team color on the side of the card */}
-      <ScoreTeamColorBar score={score} />
+      <ScoreTeamColorBar />
 
       {/* Content */}
       <div className="flex size-full flex-col gap-2 px-2">
@@ -43,6 +55,22 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
+            {showAdminControls && (
+              <div className="relative flex items-center gap-0.5">
+                <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
+                  <AdminNoteView
+                    notes={score.adminNotes}
+                    entity={AdminNoteRouteTarget.GameScore}
+                    entityId={score.id}
+                  />
+                </div>
+                {isAdmin && (
+                  <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
+                    <ScoreAdminView score={score} />
+                  </div>
+                )}
+              </div>
+            )}
             {player?.country && (
               <CountryFlag
                 country={player.country}
