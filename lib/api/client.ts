@@ -18,10 +18,6 @@ const config: IOtrApiWrapperConfiguration = {
   postConfigureClientMethod: (instance) => {
     instance.interceptors.request.use(
       async (config) => {
-        if (!config.requiresAuthorization) {
-          return config;
-        }
-
         config.withCredentials = true;
 
         return config;

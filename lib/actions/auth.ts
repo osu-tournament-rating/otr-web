@@ -38,9 +38,22 @@ export async function login(originalPath: string) {
 export async function logout(redirectUrl: string) {
   await clearSession();
   clearRequestCache(); // Clear any cached session requests
+
+  // In restricted environments, always redirect to unauthorized page after logout
+  const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL;
+
+  if (!appBaseUrl) {
+    throw new Error('NEXT_PUBLIC_APP_BASE_URL is not configured');
+  }
+
+  const finalRedirectUrl = isRestrictedEnv
+    ? new URL('/unauthorized', appBaseUrl).toString()
+    : redirectUrl;
+
   const apiLogoutUrl = new URL(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/logout`
   );
-  apiLogoutUrl.searchParams.set('redirectUri', redirectUrl);
+  apiLogoutUrl.searchParams.set('redirectUri', finalRedirectUrl);
   redirect(apiLogoutUrl.toString());
 }

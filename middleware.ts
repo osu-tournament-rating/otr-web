@@ -1,58 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getSession,
-  SESSION_COOKIE_NAME,
-  USER_INFO_COOKIE_NAME,
-} from './lib/api/server';
+import { getSession, SESSION_COOKIE_NAME } from './lib/api/server';
 
+// Constants
+const UNAUTHORIZED_ROUTE = '/unauthorized';
+const LEGACY_COOKIE_NAME = 'otr-user';
+
+// Define route categories
 const publicRoutes = [
   '/',
-  '/unauthorized',
-  '/not-found',
   '/leaderboard',
+  '/matches',
+  '/not-found',
+  '/players',
+  '/stats',
+  '/tools/filter-reports',
   '/tournaments',
+  UNAUTHORIZED_ROUTE,
 ];
+
+const authRequiredRoutes = ['/tournaments/submit', '/tools/filter'];
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
-
   const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
-  const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
 
-  // If we have a session cookie, try to get session (handles both cached and fresh sessions)
-  if (sessionCookie) {
+  // Clean up legacy otr-user cookies if present
+  const response = NextResponse.next();
+  if (req.cookies.has(LEGACY_COOKIE_NAME)) {
+    response.cookies.delete(LEGACY_COOKIE_NAME);
+  }
+
+  // Check route types - check public routes first to handle more specific paths
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
+  );
+
+  // Only check auth required if not already determined to be public
+  const isAuthRequired =
+    !isPublicRoute &&
+    authRequiredRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + '/')
+    );
+
+  // Determine if session validation is needed
+  // In restricted environments, always validate except for the unauthorized page
+  const needsSessionValidation =
+    isAuthRequired ||
+    (isRestrictedEnv && pathname !== UNAUTHORIZED_ROUTE) ||
+    sessionCookie;
+
+  // Skip validation for public routes in non-restricted environments without a session
+  if (!needsSessionValidation && isPublicRoute) {
+    return response;
+  }
+
+  // Validate session when needed
+  if (needsSessionValidation) {
     try {
       const session = await getSession();
+
       if (session) {
+        // Pass session data through headers to avoid duplicate API calls
+        response.headers.set('x-session-data', JSON.stringify(session));
+        response.headers.set('x-session-validated', 'true');
+
         // Check whitelist requirement in restricted environment
         if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
-          return NextResponse.redirect(new URL('/unauthorized', req.url));
+          return redirectToUnauthorized(req);
         }
-        return NextResponse.next();
+
+        return response;
+      }
+
+      // No valid session - redirect if auth required or restricted env
+      if (isAuthRequired || isRestrictedEnv) {
+        return redirectToUnauthorized(req);
       }
     } catch (error) {
-      console.error('Middleware session check error:', error);
+      console.error('Middleware session validation error:', error);
+      // Redirect on error if auth required or restricted env
+      if (isAuthRequired || isRestrictedEnv) {
+        return redirectToUnauthorized(req);
+      }
     }
   }
 
-  // In restricted environments, reject users without valid sessions
-  if (isRestrictedEnv) {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
+  // Default: allow access
+  return response;
+}
 
-  // Skip middleware for public routes in non-restricted environments
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
+function redirectToUnauthorized(req: NextRequest) {
+  const redirectResponse = NextResponse.redirect(
+    new URL(UNAUTHORIZED_ROUTE, req.url)
+  );
+  if (req.cookies.has(LEGACY_COOKIE_NAME)) {
+    redirectResponse.cookies.delete(LEGACY_COOKIE_NAME);
   }
-
-  // Session is being established, proceed (only in non-restricted environment)
-  if (sessionCookie && !userInfoCookie) {
-    return NextResponse.next();
-  }
-
-  // No valid session found, redirect to unauthorized
-  return NextResponse.redirect(new URL('/unauthorized', req.url));
+  return redirectResponse;
 }
 
 export const config = {
@@ -61,10 +106,9 @@ export const config = {
      * Middleware runs on all paths except:
      * - '/api/*' API routes
      * - '/auth/*' Authorization routes
-     * - '/unauthorized/*' Access control redirect
      * - '/_next/*' Next.js internals
      * - '/[static, decorations, icons, images, logos, favicon]/*' Static assets / public dir
      */
-    '/((?!api|auth|unauthorized|_next|static|decorations|icons|images|logos|favicon.ico).*)',
+    '/((?!api|auth|_next|static|decorations|icons|images|logos|favicon.ico).*)',
   ],
 };

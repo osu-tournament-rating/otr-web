@@ -1,0 +1,22 @@
+#\!/bin/sh
+
+# Run TypeScript compiler to check for type errors
+echo "Running TypeScript type check..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "TypeScript type check failed. Please fix the errors and try again."
+  exit 1
+fi
+
+# Run Prettier to format code
+echo "Running Prettier..."
+npx prettier . --write --ignore-unknown
+if [ $? -ne 0 ]; then
+  echo "Prettier formatting failed. Please fix the errors and try again."
+  exit 1
+fi
+
+# Stage any files modified by Prettier
+git add -A
+
+echo "Pre-commit checks passed\!"
