@@ -9,7 +9,6 @@ import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-cli
 import { TournamentListFilter } from '@/lib/types';
 import TournamentCard from '../TournamentCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSession } from '@/lib/hooks/useSession';
 import { getTournamentsList } from '@/lib/actions/tournaments';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -47,7 +46,6 @@ export default function TournamentList({
 }: {
   filter: TournamentListFilter;
 }) {
-  const session = useSession();
   const { data, error, setSize, isValidating, isLoading } = useSWRInfinite(
     getKey(filter),
     fetcher(),
@@ -159,20 +157,13 @@ export default function TournamentList({
                   expectNextPage ? (
                     <ListItemSkeleton />
                   ) : null
-                ) : session ? (
+                ) : (
                   <Link href={`/tournaments/${tournamentData[item.index].id}`}>
                     <TournamentCard
                       tournament={tournamentData[item.index]}
                       displayStatusText
                     />
                   </Link>
-                ) : (
-                  <div className="hover:cursor-not-allowed">
-                    <TournamentCard
-                      tournament={tournamentData[item.index]}
-                      displayStatusText
-                    />
-                  </div>
                 )}
               </div>
             );
