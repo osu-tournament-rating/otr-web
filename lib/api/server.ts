@@ -29,12 +29,12 @@ const config: IOtrApiWrapperConfiguration = {
   postConfigureClientMethod: (instance) => {
     instance.interceptors.request.use(
       async (config) => {
-        if (!config.requiresAuthorization) {
-          return config;
-        }
-
         const authCookie = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
-        config.headers['Cookie'] = `${SESSION_COOKIE_NAME}=${authCookie}`;
+
+        // Always attach session cookie if it exists
+        if (authCookie) {
+          config.headers['Cookie'] = `${SESSION_COOKIE_NAME}=${authCookie}`;
+        }
 
         return config;
       },
@@ -128,6 +128,30 @@ export async function getSession(): Promise<UserDTO | null> {
     },
     5000 // 5 second cache for session data
   );
+}
+
+/**
+ * Get session from middleware headers or fetch if not available
+ * This is used in layout to avoid duplicate API calls
+ * @returns User data or null if not authenticated
+ */
+export async function getSessionFromHeaders(
+  headers: Headers
+): Promise<UserDTO | null> {
+  // Check if middleware already validated and passed session data
+  const sessionValidated = headers.get('x-session-validated');
+  const sessionData = headers.get('x-session-data');
+
+  if (sessionValidated === 'true' && sessionData) {
+    try {
+      return JSON.parse(sessionData) as UserDTO;
+    } catch (error) {
+      console.error('Failed to parse session data from headers:', error);
+    }
+  }
+
+  // Fallback to regular session fetch if not in headers
+  return getSession();
 }
 
 /**

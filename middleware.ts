@@ -34,12 +34,12 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // For public routes in non-restricted environments, skip all validation
-  if (!isRestrictedEnv && isPublicRoute) {
+  // For public routes in non-restricted environments without a session cookie, skip validation
+  if (!isRestrictedEnv && isPublicRoute && !sessionCookie) {
     return response;
   }
 
-  // For auth-required routes or restricted environments, we need to validate
+  // For auth-required routes, restricted environments, or when we have a session cookie, validate
   if (isAuthRequired || isRestrictedEnv || sessionCookie) {
     try {
       const session = await getSession();
