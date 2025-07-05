@@ -10,6 +10,7 @@ const publicRoutes = [
   '/matches',
   '/players',
   '/unauthorized',
+  '/tools/filter-reports',
   '/not-found',
 ];
 
@@ -26,21 +27,26 @@ export async function middleware(req: NextRequest) {
     response.cookies.delete('otr-user');
   }
 
-  // Check route type
+  // Check route types - check public routes first to handle more specific paths
   const isPublicRoute = publicRoutes.some((route) =>
-    pathname.startsWith(route)
+    pathname === route || pathname.startsWith(route + '/')
   );
-  const isAuthRequired = authRequiredRoutes.some((route) =>
-    pathname.startsWith(route)
+  
+  // Only check auth required if not already determined to be public
+  const isAuthRequired = !isPublicRoute && authRequiredRoutes.some((route) =>
+    pathname === route || pathname.startsWith(route + '/')
   );
 
-  // For public routes in non-restricted environments without a session cookie, skip validation
-  if (!isRestrictedEnv && isPublicRoute && !sessionCookie) {
+  // Determine if session validation is needed
+  const needsSessionValidation = isAuthRequired || isRestrictedEnv || sessionCookie;
+
+  // Skip validation for public routes in non-restricted environments without a session
+  if (!needsSessionValidation && isPublicRoute) {
     return response;
   }
 
-  // For auth-required routes, restricted environments, or when we have a session cookie, validate
-  if (isAuthRequired || isRestrictedEnv || sessionCookie) {
+  // Validate session when needed
+  if (needsSessionValidation) {
     try {
       const session = await getSession();
 
@@ -56,16 +62,18 @@ export async function middleware(req: NextRequest) {
 
         return response;
       }
-      // Session cookie exists but is invalid - fall through to redirect logic
+
+      // No valid session - redirect if auth required or restricted env
+      if (isAuthRequired || isRestrictedEnv) {
+        return redirectToUnauthorized(req);
+      }
     } catch (error) {
       console.error('Middleware session validation error:', error);
-      // Fall through to redirect logic
+      // Redirect on error if auth required or restricted env
+      if (isAuthRequired || isRestrictedEnv) {
+        return redirectToUnauthorized(req);
+      }
     }
-  }
-
-  // Handle no session cases
-  if (isAuthRequired || isRestrictedEnv) {
-    return redirectToUnauthorized(req);
   }
 
   // Default: allow access
