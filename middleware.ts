@@ -46,8 +46,8 @@ export async function middleware(req: NextRequest) {
   // Determine if session validation is needed
   // In restricted environments, always validate except for the unauthorized page
   const needsSessionValidation =
-    isAuthRequired || 
-    (isRestrictedEnv && pathname !== UNAUTHORIZED_ROUTE) || 
+    isAuthRequired ||
+    (isRestrictedEnv && pathname !== UNAUTHORIZED_ROUTE) ||
     sessionCookie;
 
   // Skip validation for public routes in non-restricted environments without a session

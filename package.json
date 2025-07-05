@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "npx prettier . --write --ignore-unknown"
+    "format": "npx prettier . --write --ignore-unknown",
+    "prepare": "husky"
   },
   "dependencies": {
     "@alduino/humanizer": "^1.1.0",
@@ -71,6 +72,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.1-canary.5",
+    "husky": "^9.1.7",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.1",
