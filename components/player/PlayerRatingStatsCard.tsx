@@ -18,6 +18,7 @@ import StatCard from '../shared/StatCard';
 import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
 import CountryFlag from '@/components/shared/CountryFlag';
+import Link from 'next/link';
 
 function formatPercentage(value: number | undefined | null): string {
   if (value === undefined || value === null) return 'N/A';
@@ -32,6 +33,7 @@ interface PlayerRatingStatsCardProps {
 
 export default function PlayerRatingStatsCard({
   rating,
+  currentRuleset,
 }: PlayerRatingStatsCardProps) {
   return (
     <Card className="p-6 font-sans">
@@ -90,7 +92,13 @@ export default function PlayerRatingStatsCard({
             label="Country"
             value={
               <div className="flex items-center gap-1.5">
-                <CountryFlag country={rating.player.country} />
+                <Link
+                  href={`/leaderboard?country=${rating.player.country}&ruleset=${currentRuleset}`}
+                  className="transition-opacity hover:opacity-80"
+                  title={`View ${rating.player.country} leaderboard`}
+                >
+                  <CountryFlag country={rating.player.country} />
+                </Link>
                 <span>{`#${rating.countryRank.toLocaleString()}`}</span>
               </div>
             }
