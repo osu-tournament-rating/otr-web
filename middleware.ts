@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, SESSION_COOKIE_NAME } from './lib/api/server';
 
+// Constants
+const UNAUTHORIZED_ROUTE = '/unauthorized';
+const LEGACY_COOKIE_NAME = 'otr-user';
+
 // Define route categories
 const publicRoutes = [
   '/',
   '/leaderboard',
-  '/tournaments',
-  '/stats',
   '/matches',
-  '/players',
-  '/unauthorized',
-  '/tools/filter-reports',
   '/not-found',
+  '/players',
+  '/stats',
+  '/tools/filter-reports',
+  '/tournaments',
+  UNAUTHORIZED_ROUTE,
 ];
 
 const authRequiredRoutes = ['/tournaments/submit', '/tools/filter'];
@@ -23,8 +27,8 @@ export async function middleware(req: NextRequest) {
 
   // Clean up legacy otr-user cookies if present
   const response = NextResponse.next();
-  if (req.cookies.has('otr-user')) {
-    response.cookies.delete('otr-user');
+  if (req.cookies.has(LEGACY_COOKIE_NAME)) {
+    response.cookies.delete(LEGACY_COOKIE_NAME);
   }
 
   // Check route types - check public routes first to handle more specific paths
@@ -40,8 +44,11 @@ export async function middleware(req: NextRequest) {
     );
 
   // Determine if session validation is needed
+  // In restricted environments, always validate except for the unauthorized page
   const needsSessionValidation =
-    isAuthRequired || isRestrictedEnv || sessionCookie;
+    isAuthRequired || 
+    (isRestrictedEnv && pathname !== UNAUTHORIZED_ROUTE) || 
+    sessionCookie;
 
   // Skip validation for public routes in non-restricted environments without a session
   if (!needsSessionValidation && isPublicRoute) {
@@ -85,10 +92,10 @@ export async function middleware(req: NextRequest) {
 
 function redirectToUnauthorized(req: NextRequest) {
   const redirectResponse = NextResponse.redirect(
-    new URL('/unauthorized', req.url)
+    new URL(UNAUTHORIZED_ROUTE, req.url)
   );
-  if (req.cookies.has('otr-user')) {
-    redirectResponse.cookies.delete('otr-user');
+  if (req.cookies.has(LEGACY_COOKIE_NAME)) {
+    redirectResponse.cookies.delete(LEGACY_COOKIE_NAME);
   }
   return redirectResponse;
 }
