@@ -28,17 +28,20 @@ export async function middleware(req: NextRequest) {
   }
 
   // Check route types - check public routes first to handle more specific paths
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathname === route || pathname.startsWith(route + '/')
-  );
-  
-  // Only check auth required if not already determined to be public
-  const isAuthRequired = !isPublicRoute && authRequiredRoutes.some((route) =>
-    pathname === route || pathname.startsWith(route + '/')
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
+  // Only check auth required if not already determined to be public
+  const isAuthRequired =
+    !isPublicRoute &&
+    authRequiredRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + '/')
+    );
+
   // Determine if session validation is needed
-  const needsSessionValidation = isAuthRequired || isRestrictedEnv || sessionCookie;
+  const needsSessionValidation =
+    isAuthRequired || isRestrictedEnv || sessionCookie;
 
   // Skip validation for public routes in non-restricted environments without a session
   if (!needsSessionValidation && isPublicRoute) {
