@@ -21,6 +21,7 @@ import { cookies } from 'next/headers';
 import { withRequestCache } from '@/lib/utils/request-cache';
 
 export const SESSION_COOKIE_NAME = 'otr-session';
+// @deprecated - No longer used, keeping for backward compatibility during migration
 export const USER_INFO_COOKIE_NAME = 'otr-user';
 
 const config: IOtrApiWrapperConfiguration = {
@@ -73,27 +74,12 @@ export async function fetchSessionData(): Promise<UserDTO | null> {
 }
 
 /**
- * Fetch session and store in cookie (for use in Server Actions/Route Handlers only)
+ * Fetch session from API (for use in Server Actions/Route Handlers only)
  * @returns User data, or null if fetch failed
  */
 export async function fetchSession(): Promise<UserDTO | null> {
-  const cookieManager = await cookies();
-
   try {
     const result = await fetchSessionData();
-
-    if (result) {
-      // Two weeks in seconds
-      const expirationSeconds = 1209600000;
-
-      cookieManager.set(USER_INFO_COOKIE_NAME, JSON.stringify(result), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        expires: new Date(Date.now() + expirationSeconds),
-      });
-    }
-
     return result;
   } catch (error) {
     console.error('Failed to fetch session:', error);
@@ -116,48 +102,40 @@ export async function fetchSessionCached(): Promise<UserDTO | null> {
 }
 
 /**
- * Read user session cookie
- * @returns User data or null if not found
+ * Get the current user session by checking the session cookie and fetching from API
+ * Uses caching to prevent duplicate API calls during the same request cycle
+ * @returns User data or null if not authenticated
  */
 export async function getSession(): Promise<UserDTO | null> {
   const cookieManager = await cookies();
-  const userInfoCookie = cookieManager.get(USER_INFO_COOKIE_NAME);
   const sessionCookie = cookieManager.get(SESSION_COOKIE_NAME);
 
-  // If we have user info cached, return it
-  if (userInfoCookie?.value) {
-    try {
-      return JSON.parse(userInfoCookie.value) as UserDTO;
-    } catch (error) {
-      console.error('Failed to parse user info cookie:', error);
-      // Don't try to clear cookie here - this function is called from other components.
-      return null;
-    }
+  // No session cookie means not authenticated
+  if (!sessionCookie?.value) {
+    return null;
   }
 
-  // If we have a session cookie but no user info cookie, try to fetch the session
-  // This handles the case where users access the site via external links
-  if (sessionCookie?.value && !userInfoCookie?.value) {
-    try {
-      return await fetchSessionData();
-    } catch (error) {
-      console.error(
-        'Failed to fetch session when user info cookie missing:',
-        error
-      );
-      return null;
-    }
-  }
-
-  // No session cookie available
-  return null;
+  // We have a session cookie, fetch the user data from the API with caching
+  return withRequestCache(
+    'get-session',
+    async () => {
+      try {
+        return await fetchSessionData();
+      } catch (error) {
+        console.error('Failed to fetch session data:', error);
+        return null;
+      }
+    },
+    5000 // 5 second cache for session data
+  );
 }
 
 /**
- * Delete session and user info cookies
+ * Delete the session cookie
  */
 export async function clearSession() {
   const cookieManager = await cookies();
   cookieManager.delete(SESSION_COOKIE_NAME);
+  // Also clear any legacy otr-user cookies during migration period
   cookieManager.delete(USER_INFO_COOKIE_NAME);
 }

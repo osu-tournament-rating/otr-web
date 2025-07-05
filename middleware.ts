@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getSession,
-  SESSION_COOKIE_NAME,
-  USER_INFO_COOKIE_NAME,
-} from './lib/api/server';
+import { getSession, SESSION_COOKIE_NAME } from './lib/api/server';
 
 const publicRoutes = [
   '/',
@@ -18,41 +14,61 @@ export async function middleware(req: NextRequest) {
 
   const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
-  const userInfoCookie = req.cookies.get(USER_INFO_COOKIE_NAME);
 
-  // If we have a session cookie, try to get session (handles both cached and fresh sessions)
+  // Clean up legacy otr-user cookies if present
+  const response = NextResponse.next();
+  if (req.cookies.has('otr-user')) {
+    response.cookies.delete('otr-user');
+  }
+
+  // If we have a session cookie, validate it by fetching user data
   if (sessionCookie) {
     try {
       const session = await getSession();
       if (session) {
         // Check whitelist requirement in restricted environment
         if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
-          return NextResponse.redirect(new URL('/unauthorized', req.url));
+          const redirectResponse = NextResponse.redirect(
+            new URL('/unauthorized', req.url)
+          );
+          if (req.cookies.has('otr-user')) {
+            redirectResponse.cookies.delete('otr-user');
+          }
+          return redirectResponse;
         }
-        return NextResponse.next();
+        return response;
       }
+      // Session cookie exists but is invalid - fall through to redirect logic
     } catch (error) {
-      console.error('Middleware session check error:', error);
+      console.error('Middleware session validation error:', error);
+      // Fall through to redirect logic
     }
   }
 
   // In restricted environments, reject users without valid sessions
   if (isRestrictedEnv) {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
+    const redirectResponse = NextResponse.redirect(
+      new URL('/unauthorized', req.url)
+    );
+    if (req.cookies.has('otr-user')) {
+      redirectResponse.cookies.delete('otr-user');
+    }
+    return redirectResponse;
   }
 
   // Skip middleware for public routes in non-restricted environments
   if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Session is being established, proceed (only in non-restricted environment)
-  if (sessionCookie && !userInfoCookie) {
-    return NextResponse.next();
+    return response;
   }
 
   // No valid session found, redirect to unauthorized
-  return NextResponse.redirect(new URL('/unauthorized', req.url));
+  const redirectResponse = NextResponse.redirect(
+    new URL('/unauthorized', req.url)
+  );
+  if (req.cookies.has('otr-user')) {
+    redirectResponse.cookies.delete('otr-user');
+  }
+  return redirectResponse;
 }
 
 export const config = {
