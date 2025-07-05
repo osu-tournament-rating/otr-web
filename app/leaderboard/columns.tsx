@@ -54,7 +54,6 @@ export const columns = [
   columnHelper.accessor('player.osuId', {
     header: 'Player',
     cell: ({ getValue, row }) => {
-
       return (
         <div className="ml-1.5 flex min-w-[150px] flex-row items-center gap-3">
           <Image
