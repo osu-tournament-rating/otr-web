@@ -88,20 +88,6 @@ export async function fetchSession(): Promise<UserDTO | null> {
 }
 
 /**
- * Fetch session with caching (for non-critical operations)
- * @returns User data, or null if fetch failed
- */
-export async function fetchSessionCached(): Promise<UserDTO | null> {
-  return withRequestCache(
-    'fetch-session',
-    async () => {
-      return await fetchSession();
-    },
-    3000
-  ); // 3 second cache to prevent rapid duplicate calls
-}
-
-/**
  * Get the current user session by checking the session cookie and fetching from API
  * Uses caching to prevent duplicate API calls during the same request cycle
  * @returns User data or null if not authenticated
@@ -116,18 +102,14 @@ export async function getSession(): Promise<UserDTO | null> {
   }
 
   // We have a session cookie, fetch the user data from the API with caching
-  return withRequestCache(
-    'get-session',
-    async () => {
-      try {
-        return await fetchSessionData();
-      } catch (error) {
-        console.error('Failed to fetch session data:', error);
-        return null;
-      }
-    },
-    5000 // 5 second cache for session data
-  );
+  return withRequestCache(`get-session-${sessionCookie.value}`, async () => {
+    try {
+      return await fetchSessionData();
+    } catch (error) {
+      console.error('Failed to fetch session data:', error);
+      return null;
+    }
+  });
 }
 
 /**
