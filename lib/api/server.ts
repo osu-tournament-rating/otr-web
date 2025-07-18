@@ -29,11 +29,14 @@ const config: IOtrApiWrapperConfiguration = {
   postConfigureClientMethod: (instance) => {
     instance.interceptors.request.use(
       async (config) => {
+        const apiHeaderKey = 'X-Api-Key';
+        const apiHeaderValue = process.env.API_KEY;
         const authCookie = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
 
         // Always attach session cookie if it exists
         if (authCookie) {
           config.headers['Cookie'] = `${SESSION_COOKIE_NAME}=${authCookie}`;
+          config.headers[apiHeaderKey] = apiHeaderValue;
         }
 
         return config;
