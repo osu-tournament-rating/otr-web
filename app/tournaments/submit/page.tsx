@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Submit a tournament to be included in the rating system',
 };
 
-export default function TournamentSubmissionPage() {
+export default async function TournamentSubmissionPage() {
   return (
     <div className="mx-auto flex w-full flex-col items-center justify-center gap-3">
       <Card className="flex w-full flex-col items-center justify-center gap-4">
