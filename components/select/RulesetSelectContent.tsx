@@ -3,7 +3,7 @@ import { SelectContent, SelectItem } from '../ui/select';
 import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 
 export default function RulesetSelectContent({
-  maniaOther = false,
+  maniaOther = true,
 }: {
   maniaOther?: boolean;
 }) {
@@ -11,7 +11,7 @@ export default function RulesetSelectContent({
     <SelectContent>
       {Object.entries(RulesetEnumHelper.metadata).map(([k, { text }]) => {
         if (Number(k) === Ruleset.ManiaOther && !maniaOther) {
-          return;
+          return null;
         }
 
         return (
