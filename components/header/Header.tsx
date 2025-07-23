@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
         title: 'Submit',
         href: '/tournaments/submit',
         icon: Upload,
-        roles: [Roles.Submit],
+        roles: [Roles.Submit, Roles.Admin],
         requiresSession: true,
       },
     ],
@@ -284,11 +284,11 @@ function NavigationItem({
           <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
           {dropdown.map(
             ({ title, href, icon: Icon, roles, requiresSession }) => {
-              const isHidden = requiresSession
-                ? !session
-                : roles &&
+              const isHidden =
+                (requiresSession && !session) ||
+                (roles &&
                   roles.length > 0 &&
-                  !roles.some((role) => session?.scopes?.includes(role));
+                  !roles.some((role) => session?.scopes?.includes(role)));
 
               return (
                 <NavLink

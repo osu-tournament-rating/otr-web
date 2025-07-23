@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, SESSION_COOKIE_NAME } from './lib/api/server';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 
 // Constants
 const UNAUTHORIZED_ROUTE = '/unauthorized';
@@ -19,6 +20,12 @@ const publicRoutes = [
 ];
 
 const authRequiredRoutes = ['/tournaments/submit', '/tools/filter'];
+
+// Define routes that require specific roles
+const roleRequiredRoutes: Record<string, string[]> = {
+  '/tournaments/submit': [Roles.Submit, Roles.Admin],
+  // Note: /tools/filter only requires authentication, not specific roles
+};
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -68,6 +75,18 @@ export async function middleware(req: NextRequest) {
         // Check whitelist requirement in restricted environment
         if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
           return redirectToUnauthorized(req);
+        }
+
+        // Check role requirements for specific routes
+        const requiredRoles = roleRequiredRoutes[pathname];
+        if (requiredRoles) {
+          const hasRequiredRole = requiredRoles.some((role) =>
+            session.scopes?.includes(role)
+          );
+
+          if (!hasRequiredRole) {
+            return redirectToUnauthorized(req);
+          }
         }
 
         return response;
