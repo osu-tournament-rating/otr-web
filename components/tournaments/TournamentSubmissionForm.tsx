@@ -34,6 +34,16 @@ import { Checkbox } from '../ui/checkbox';
 import { MultipleSelect } from '../select/multiple-select';
 import { TournamentRejectionReasonEnumHelper } from '@/lib/enums';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 
 type TournamentSubmissionFormValues = zType.infer<
   typeof tournamentSubmissionFormSchema
@@ -77,6 +87,8 @@ export default function TournamentSubmissionForm() {
   });
 
   const [rejectOnSubmit, setRejectOnSubmit] = useState(false);
+  const [showBeatmapWarning, setShowBeatmapWarning] = useState(false);
+  const [beatmapWarningConfirmed, setBeatmapWarningConfirmed] = useState(false);
 
   async function onSubmit(values: TournamentSubmissionFormValues) {
     if (
@@ -86,6 +98,12 @@ export default function TournamentSubmissionForm() {
       form.setError('rejectionReason', {
         message: 'Rejection reason must be selected when rejecting on submit',
       });
+      return;
+    }
+
+    // Check if beatmaps are missing and user hasn't confirmed
+    if (values.beatmapIds.length === 0 && !beatmapWarningConfirmed) {
+      setShowBeatmapWarning(true);
       return;
     }
 
@@ -112,6 +130,7 @@ export default function TournamentSubmissionForm() {
       }
 
       form.reset();
+      setBeatmapWarningConfirmed(false); // Reset confirmation state
       toast.success(
         <div className="flex flex-col gap-2">
           <span>Tournament submitted successfully</span>
@@ -414,6 +433,45 @@ export default function TournamentSubmissionForm() {
           </Button>
         </form>
       </Form>
+
+      <AlertDialog
+        open={showBeatmapWarning}
+        onOpenChange={setShowBeatmapWarning}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No beatmaps provided</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are submitting a tournament without any beatmap links. This is
+              strongly discouraged.
+              <br />
+              <br />
+              Are you sure you want to continue without providing beatmap links?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowBeatmapWarning(false);
+                setBeatmapWarningConfirmed(false);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                setShowBeatmapWarning(false);
+                setBeatmapWarningConfirmed(true);
+                // Resubmit the form after confirmation
+                form.handleSubmit(onSubmit)();
+              }}
+            >
+              Continue without beatmaps
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
