@@ -48,7 +48,7 @@ export default function ScoreCard({
         {/* Top row */}
         <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
-          <div className="team-flex-row flex h-full w-fit items-center justify-start gap-2">
+          <div className="team-flex-row flex h-full min-w-0 items-center justify-start gap-2">
             <VerificationBadge
               verificationStatus={score.verificationStatus}
               rejectionReason={score.rejectionReason}
@@ -80,8 +80,11 @@ export default function ScoreCard({
                 className="flex-shrink-0"
               />
             )}
-            <Link href={`/players/${player?.id}?ruleset=${score.ruleset}`}>
-              <span className="font-bold text-neutral-800 dark:text-neutral-200">
+            <Link
+              href={`/players/${player?.id}?ruleset=${score.ruleset}`}
+              className="min-w-0 flex-shrink"
+            >
+              <span className="block truncate font-bold text-neutral-800 dark:text-neutral-200">
                 {player?.username}
               </span>
             </Link>
