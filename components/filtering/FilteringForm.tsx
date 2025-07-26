@@ -426,7 +426,7 @@ export default function FilteringForm({
                           <SelectValue placeholder="Select a ruleset" />
                         </SelectTrigger>
                       </FormControl>
-                      <RulesetSelectContent />
+                      <RulesetSelectContent maniaOther={false} />
                     </Select>
                     <FormMessage />
                   </FormItem>
