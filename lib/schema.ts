@@ -225,7 +225,6 @@ export const tournamentSubmissionFormSchema = z.object({
     },
     z
       .array(z.number().int().positive().max(20_000_000))
-      .min(1, 'At least one valid beatmap link is required')
       .refine(
         (val) => val.every((id) => id > 0),
         'All beatmap links must be valid osu! beatmap IDs or URLs'
