@@ -2,6 +2,7 @@ import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
 
 export type ChartDataPoint = {
   formattedAxisDate: string;
+  timestampValue: number;
 } & RatingAdjustmentDTO;
 
 /**

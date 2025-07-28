@@ -16,13 +16,12 @@ import Link from 'next/link';
 import ProfileRoleBadge from './ProfileRoleBadge';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
+import { useToggle } from '@uidotdev/usehooks';
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from '../ui/collapsible';
-import { SheetClose } from '../ui/sheet';
 import { useSession } from '@/lib/hooks/useSession';
 import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 import { logout } from '@/lib/actions/auth';
@@ -36,7 +35,6 @@ export default function ProfileCard() {
   const session = useSession();
   const { isLoading } = useContext(SessionContext);
   const path = useAuthRedirectPath();
-  const isMobile = useMediaQuery('only screen and (max-width : 768px)');
 
   const handleLogout = () => {
     logout(path);
@@ -54,11 +52,16 @@ export default function ProfileCard() {
     return <LoginButton />;
   }
 
-  if (isMobile) {
-    return (
-      <Collapsible open={isOpen} onOpenChange={toggleIsOpen}>
+  return (
+    <>
+      {/* Mobile version - visible on small screens */}
+      <Collapsible
+        open={isOpen}
+        onOpenChange={toggleIsOpen}
+        className="md:hidden"
+      >
         <CollapsibleTrigger asChild>
-          <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
+          <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md">
             <div className="absolute inset-0 z-0 opacity-20">
               <div className="absolute inset-0 backdrop-blur-md" />
               <Image
@@ -99,25 +102,13 @@ export default function ProfileCard() {
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SheetClose asChild>
-            <Link
-              href={`/players/${session.player.id}`}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-            >
-              <User className="size-4" />
-              <span>My Profile</span>
-            </Link>
-          </SheetClose>
-
-          {/* <SheetClose asChild>
-            <Link
-              href="/settings"
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-            >
-              <Settings className="size-4" />
-              <span>Settings</span>
-            </Link>
-          </SheetClose> */}
+          <Link
+            href={`/players/${session.player.id}`}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+          >
+            <User className="size-4" />
+            <span>My Profile</span>
+          </Link>
 
           <button
             className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
@@ -128,79 +119,74 @@ export default function ProfileCard() {
           </button>
         </CollapsibleContent>
       </Collapsible>
-    );
-  }
 
-  return (
-    <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
-      <DropdownMenuTrigger asChild>
-        {/* Profile picture */}
-        <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="cursor-pointer focus:outline-none"
-        >
-          <UserAvatar user={session} />
-        </motion.div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
-        {/* Player card */}
-        <DropdownMenuLabel className="relative overflow-hidden">
-          <div className="absolute inset-0 z-0 opacity-20">
-            <div className="absolute inset-0 backdrop-blur-md" />
-            <Image
-              src={'/decorations/decoration-2.svg'}
-              alt="background image"
-              width={300}
-              height={200}
-              className="size-full object-cover"
-            />
-          </div>
-          <div className="relative z-10 flex flex-col items-center py-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm leading-none">
-                <span className="font-bold">
-                  {session.player.username ?? 'Username'}
-                </span>
-              </p>
-              {session.player.country && (
-                <CountryFlag
-                  country={session.player.country}
-                  width={16}
-                  height={11}
-                  className="flex-shrink-0"
+      {/* Desktop version - visible on medium screens and up */}
+      <div className="hidden md:block">
+        <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
+          <DropdownMenuTrigger asChild>
+            {/* Profile picture */}
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="cursor-pointer focus:outline-none"
+            >
+              <UserAvatar user={session} />
+            </motion.div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
+            {/* Player card */}
+            <DropdownMenuLabel className="relative overflow-hidden">
+              <div className="absolute inset-0 z-0 opacity-20">
+                <div className="absolute inset-0 backdrop-blur-md" />
+                <Image
+                  src={'/decorations/decoration-2.svg'}
+                  alt="background image"
+                  width={300}
+                  height={200}
+                  className="size-full object-cover"
                 />
-              )}
-              {session.scopes && <ProfileRoleBadge scopes={session.scopes} />}
-            </div>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {/* Player page link */}
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href={`/players/${session.player.id}`}>
-            <User className="mr-2 size-4" />
-            <span>My Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        {/* Settings */}
-        {/* <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href="/settings">
-            <Settings className="mr-2 size-4" />
-            <span>Settings</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator /> */}
-        {/* Log out */}
-        <DropdownMenuItem
-          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
-          onClick={handleLogout}
-        >
-          <LogOut className="mr-2 size-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              </div>
+              <div className="relative z-10 flex flex-col items-center py-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm leading-none">
+                    <span className="font-bold">
+                      {session.player.username ?? 'Username'}
+                    </span>
+                  </p>
+                  {session.player.country && (
+                    <CountryFlag
+                      country={session.player.country}
+                      width={16}
+                      height={11}
+                      className="flex-shrink-0"
+                    />
+                  )}
+                  {session.scopes && (
+                    <ProfileRoleBadge scopes={session.scopes} />
+                  )}
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {/* Player page link */}
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href={`/players/${session.player.id}`}>
+                <User className="mr-2 size-4" />
+                <span>My Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            {/* Log out */}
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 size-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 }
 
