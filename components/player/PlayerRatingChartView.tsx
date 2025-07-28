@@ -57,7 +57,7 @@ interface ChartDataPoint extends RatingAdjustmentDTO {
 const getChartColors = (theme?: string): ChartColors => ({
   rating: '#3b82f6',
   volatility: '#8b5cf6',
-  grid: theme === 'dark' ? '#374151' : '#e5e7eb',
+  grid: theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
   text: theme === 'dark' ? '#d1d5db' : '#4b5563',
   background: theme === 'dark' ? '#1f2937' : '#f9fafb',
 });
@@ -295,7 +295,11 @@ export default function PlayerRatingChartView({
     >
       <ResponsiveContainer>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke={chartColors.grid}
+            vertical={false}
+          />
           <XAxis
             type="number"
             dataKey="timestampValue"
