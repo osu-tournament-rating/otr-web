@@ -22,7 +22,6 @@ import { ChartContainer } from '../ui/chart';
 
 const CHART_CONSTANTS = {
   MIN_DATA_POINTS: 2,
-  Y_AXIS_PADDING: 0.1,
   Y_AXIS_TARGET_TICKS: 5,
   X_AXIS_SHORT_RANGE_MONTHS: 14,
   X_AXIS_TARGET_TICKS: 6,
@@ -30,7 +29,7 @@ const CHART_CONSTANTS = {
   ACTIVE_DOT_RADIUS: 6,
   LINE_WIDTH: 2,
   Y_AXIS_WIDTH: 45,
-  DEFAULT_MARGIN: { top: 20, right: 50, left: 5, bottom: 5 },
+  Y_PADDING_MAGNITUDE: 5,
 } as const;
 
 interface ChartColors {
@@ -77,7 +76,10 @@ const calculateTotalMonths = (startDate: Date, endDate: Date): number => {
  * Rounds to common intervals like 1, 2, 2.5, 5, 10, 20, 25, 50, 100, etc.
  */
 const calculateReadableTickInterval = (roughInterval: number): number => {
-  const magnitude = Math.pow(10, Math.floor(Math.log10(roughInterval)));
+  const magnitude = Math.pow(
+    CHART_CONSTANTS.Y_PADDING_MAGNITUDE,
+    Math.floor(Math.log10(roughInterval))
+  );
   const normalizedValue = roughInterval / magnitude;
 
   let readableInterval: number;
@@ -96,8 +98,7 @@ const calculateReadableTickInterval = (roughInterval: number): number => {
  */
 const calculateReadableYAxisBounds = (
   data: ChartDataPoint[],
-  activeTab: 'rating' | 'volatility',
-  padding: number = CHART_CONSTANTS.Y_AXIS_PADDING
+  activeTab: 'rating' | 'volatility'
 ): { domain: [number, number]; ticks: number[] } => {
   // Extract all values for the selected metric (rating or volatility)
   const metricValues = data.map((dataPoint) => dataPoint[`${activeTab}After`]);
@@ -105,21 +106,16 @@ const calculateReadableYAxisBounds = (
   const maxValue = Math.max(...metricValues);
   const valueRange = maxValue - minValue;
 
-  // Add padding to the range for visual breathing room
-  const paddedRange = valueRange * (1 + padding * 2);
-  const paddedMinValue = minValue - valueRange * padding;
-  const paddedMaxValue = maxValue + valueRange * padding;
-
   // Calculate readable interval
   const targetTickCount = CHART_CONSTANTS.Y_AXIS_TARGET_TICKS;
-  const roughInterval = paddedRange / (targetTickCount - 1);
+  const roughInterval = valueRange / (targetTickCount - 1);
   const readableInterval = calculateReadableTickInterval(roughInterval);
 
   // Calculate readable bounds that align with the tick interval
   const readableMinBound =
-    Math.floor(paddedMinValue / readableInterval) * readableInterval;
+    Math.floor(minValue / readableInterval) * readableInterval;
   const readableMaxBound =
-    Math.ceil(paddedMaxValue / readableInterval) * readableInterval;
+    Math.ceil(maxValue / readableInterval) * readableInterval;
 
   // Generate evenly spaced tick values
   const tickValues: number[] = [];
@@ -298,7 +294,7 @@ export default function PlayerRatingChartView({
       className="max-h-[375px] min-h-[300px] w-full"
     >
       <ResponsiveContainer>
-        <LineChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
           <XAxis
             type="number"
