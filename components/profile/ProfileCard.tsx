@@ -22,7 +22,6 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '../ui/collapsible';
-import { SheetClose } from '../ui/sheet';
 import { useSession } from '@/lib/hooks/useSession';
 import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 import { logout } from '@/lib/actions/auth';
@@ -103,15 +102,13 @@ export default function ProfileCard() {
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SheetClose asChild>
-            <Link
-              href={`/players/${session.player.id}`}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-            >
-              <User className="size-4" />
-              <span>My Profile</span>
-            </Link>
-          </SheetClose>
+          <Link
+            href={`/players/${session.player.id}`}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+          >
+            <User className="size-4" />
+            <span>My Profile</span>
+          </Link>
 
           <button
             className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
