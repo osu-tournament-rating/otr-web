@@ -1,4 +1,4 @@
-import { format, startOfMonth, addMonths, isBefore } from 'date-fns';
+import { format } from 'date-fns';
 import Link from 'next/link';
 import {
   LineChart,
@@ -23,9 +23,7 @@ import { ChartContainer } from '../ui/chart';
 const CHART_CONSTANTS = {
   MIN_DATA_POINTS: 2,
   Y_AXIS_TARGET_TICKS: 5,
-  X_AXIS_SHORT_RANGE_MONTHS: 14,
   X_AXIS_TARGET_TICKS: 6,
-  MONTHS_FOR_SHORT_DATE_FORMAT: 12,
   ACTIVE_DOT_RADIUS: 6,
   LINE_WIDTH: 2,
   Y_AXIS_WIDTH: 45,
@@ -61,15 +59,6 @@ const getChartColors = (theme?: string): ChartColors => ({
   text: theme === 'dark' ? '#d1d5db' : '#4b5563',
   background: theme === 'dark' ? '#1f2937' : '#f9fafb',
 });
-
-/**
- * Calculates the total number of months between two dates.
- */
-const calculateTotalMonths = (startDate: Date, endDate: Date): number => {
-  const yearDifference = endDate.getFullYear() - startDate.getFullYear();
-  const monthDifference = endDate.getMonth() - startDate.getMonth();
-  return yearDifference * 12 + monthDifference;
-};
 
 /**
  * Calculates a human-readable interval for axis ticks based on the rough interval.
@@ -138,40 +127,21 @@ const calculateReadableYAxisBounds = (
  * @returns An array of timestamps for the ticks.
  */
 /**
- * Generates X-axis tick marks that adapt to the time range of the data.
- * For short ranges, shows monthly ticks; for longer ranges, shows evenly spaced ticks.
+ * Generates evenly distributed X-axis tick marks across the time range.
+ * Ensures consistent spacing regardless of data distribution.
  */
 const generateAdaptiveTicks = (minTime: number, maxTime: number): number[] => {
-  const startDate = new Date(minTime);
-  const endDate = new Date(maxTime);
-  const totalMonths = calculateTotalMonths(startDate, endDate);
+  const targetTickCount = CHART_CONSTANTS.X_AXIS_TARGET_TICKS;
+  const timeRange = maxTime - minTime;
 
-  const tickMarks: number[] = [minTime];
-  let currentTickDate: Date;
-
-  if (totalMonths <= CHART_CONSTANTS.X_AXIS_SHORT_RANGE_MONTHS) {
-    // For short ranges, show monthly ticks
-    currentTickDate = addMonths(startOfMonth(startDate), 1);
-    while (isBefore(currentTickDate, endDate)) {
-      tickMarks.push(currentTickDate.getTime());
-      currentTickDate = addMonths(currentTickDate, 1);
-    }
-  } else {
-    // For longer ranges, calculate evenly spaced ticks
-    const targetTickCount = CHART_CONSTANTS.X_AXIS_TARGET_TICKS;
-    const monthsPerTick = Math.max(
-      1,
-      Math.round(totalMonths / (targetTickCount - 1))
-    );
-    currentTickDate = addMonths(startOfMonth(startDate), monthsPerTick);
-    while (isBefore(currentTickDate, endDate)) {
-      tickMarks.push(currentTickDate.getTime());
-      currentTickDate = addMonths(currentTickDate, monthsPerTick);
-    }
+  // Generate evenly spaced ticks
+  const tickMarks: number[] = [];
+  for (let i = 0; i < targetTickCount; i++) {
+    const tickTime = minTime + (timeRange * i) / (targetTickCount - 1);
+    tickMarks.push(Math.round(tickTime));
   }
 
-  tickMarks.push(maxTime);
-  return [...new Set(tickMarks)];
+  return tickMarks;
 };
 
 export default function PlayerRatingChartView({
@@ -222,19 +192,21 @@ export default function PlayerRatingChartView({
 
   /**
    * Formats X-axis tick labels based on the time range.
-   * Uses shorter format (MMM 'yy) for longer ranges, detailed format (MMM d, 'yy) for shorter ranges.
+   * Uses adaptive formatting to ensure readability across different time spans.
    */
   const formatXAxisTick = (tickTimestamp: number) => {
     const tickDate = new Date(tickTimestamp);
-    const totalMonths = calculateTotalMonths(
-      new Date(minTime),
-      new Date(maxTime)
-    );
+    const timeRange = maxTime - minTime;
+    const dayRange = timeRange / (1000 * 60 * 60 * 24); // Convert to days
 
-    if (totalMonths > CHART_CONSTANTS.MONTHS_FOR_SHORT_DATE_FORMAT) {
-      return format(tickDate, "MMM ''yy");
+    // Use different formats based on the total time range
+    if (dayRange <= 365) {
+      // Up to a year: show month, day and year
+      return format(tickDate, 'MMM d, yyyy');
+    } else {
+      // More than a year: show month and year
+      return format(tickDate, 'MMM yyyy');
     }
-    return format(tickDate, "MMM d, ''yy");
   };
 
   /**
