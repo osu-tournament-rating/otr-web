@@ -38,7 +38,7 @@ export default function ResetAutomatedChecksButton({
     try {
       await rerunAutomatedChecks({
         id: tournament.id,
-        force: forceReset,
+        overrideVerifiedState: forceReset,
       });
       toast.success('Automated checks reset successfully');
       setIsOpen(false);
