@@ -379,7 +379,7 @@ export const MatchWarningFlagsEnumHelper: IBitwiseEnumHelper<MatchWarningFlags> 
           'The match has exactly 4 or 5 Pre-Verified or Verified games',
       },
       [MatchWarningFlags.UnexpectedBeatmapsFound]: {
-        text: 'Unexpected beatmaps found',
+        text: 'Unpooled beatmap found beyond first two games',
         description:
           'The match has one or more games where a beatmap that was not pooled was played outside of the first two games',
       },
