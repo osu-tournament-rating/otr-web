@@ -36,7 +36,6 @@ import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
 import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
-  ScoreProcessingStatusEnumHelper,
   RulesetEnumHelper,
   TeamEnumHelper,
   ModsEnumHelper,
@@ -146,7 +145,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     try {
       const patchedScore = await update({
         id: score.id,
-        body: createPatchOperations(score, values),
+        body: createPatchOperations(score, values as GameScoreDTO),
       });
 
       toast.success('Saved score updates');
@@ -175,7 +174,7 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
   }
 
   async function handleSubmit(values: z.infer<typeof scoreEditFormSchema>) {
-    // Check if any score-related fields were modified (excluding verification/processing status)
+    // Check if any score-related fields were modified (excluding verification)
     const scoreFields = [
       'score',
       'accuracy',
@@ -533,29 +532,6 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
                           </SelectTrigger>
                         </FormControl>
                         <VerificationStatusSelectContent />
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="processingStatus"
-                  render={({ field: { value, onChange } }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Processing Status</FormLabel>
-                      <Select
-                        disabled
-                        onValueChange={onChange}
-                        value={value.toString()}
-                      >
-                        <FormControl className="w-full">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SimpleSelectContent
-                          enumHelper={ScoreProcessingStatusEnumHelper}
-                        />
                       </Select>
                     </FormItem>
                   )}

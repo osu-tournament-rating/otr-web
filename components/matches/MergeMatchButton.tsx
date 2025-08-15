@@ -28,10 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { get, merge } from '@/lib/actions/matches';
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import {
-  MatchProcessingStatusEnumHelper,
-  RulesetEnumHelper,
-} from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enums';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 
@@ -154,10 +151,6 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     return dateTime ? new Date(dateTime).toLocaleString() : 'N/A';
   };
 
-  const getProcessingStatusText = (status: number): string => {
-    return MatchProcessingStatusEnumHelper.getMetadata(status).text;
-  };
-
   const renderTargetMatchInfo = (targetMatch: MatchDTO, index: number) => (
     <div key={targetMatch.id} className="space-y-1 rounded border p-3 text-sm">
       <p>
@@ -194,10 +187,6 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
       <p>
         <strong>End Time:</strong>{' '}
         {formatDateTime(targetMatch.endTime?.toString())}
-      </p>
-      <p>
-        <strong>Processing Status:</strong>{' '}
-        {getProcessingStatusText(targetMatch.processingStatus)}
       </p>
       <div className="flex items-center gap-2 text-sm">
         <strong>Verification Status:</strong>

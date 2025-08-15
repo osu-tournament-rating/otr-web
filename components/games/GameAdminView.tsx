@@ -34,7 +34,6 @@ import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
 import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
-  GameProcessingStatusEnumHelper,
   GameWarningFlagsEnumHelper,
   getEnumFlags,
   ModsEnumHelper,
@@ -104,7 +103,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
     try {
       const patchedGame = await update({
         id: game.id,
-        body: createPatchOperations(game, values),
+        body: createPatchOperations(game, values as GameDTO),
       });
 
       form.reset(patchedGame);
@@ -333,29 +332,6 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                         </SelectTrigger>
                       </FormControl>
                       <VerificationStatusSelectContent />
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="processingStatus"
-                render={({ field: { value, onChange } }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Processing Status</FormLabel>
-                    <Select
-                      disabled
-                      onValueChange={onChange}
-                      value={value.toString()}
-                    >
-                      <FormControl className="w-full">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SimpleSelectContent
-                        enumHelper={GameProcessingStatusEnumHelper}
-                      />
                     </Select>
                   </FormItem>
                 )}

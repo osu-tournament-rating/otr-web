@@ -38,7 +38,6 @@ import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
-import TournamentProcessingStatusSelectContent from '../select/TournamentProcessingStatusSelectContent';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
@@ -90,7 +89,7 @@ export default function TournamentAdminView({
     try {
       const patchedTournament = await update({
         id: tournament.id,
-        body: createPatchOperations(tournament, values),
+        body: createPatchOperations(tournament, values as TournamentCompactDTO),
       });
       form.reset(patchedTournament);
       saveToast();
@@ -297,27 +296,6 @@ export default function TournamentAdminView({
                         </SelectTrigger>
                       </FormControl>
                       <VerificationStatusSelectContent />
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="processingStatus"
-                render={({ field: { value, onChange } }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Processing Status</FormLabel>
-                    <Select
-                      disabled
-                      onValueChange={onChange}
-                      value={value.toString()}
-                    >
-                      <FormControl className="w-full">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <TournamentProcessingStatusSelectContent />
                     </Select>
                   </FormItem>
                 )}
