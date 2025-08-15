@@ -2,7 +2,6 @@
 
 import {
   getEnumFlags,
-  MatchProcessingStatusEnumHelper,
   MatchWarningFlagsEnumHelper,
   MatchRejectionReasonEnumHelper,
 } from '@/lib/enums';
@@ -83,7 +82,6 @@ export default function MatchAdminView({
     name: match.name,
     verificationStatus: match.verificationStatus,
     rejectionReason: match.rejectionReason,
-    processingStatus: match.processingStatus,
     warningFlags: match.warningFlags,
     startTime: match.startTime,
     endTime: match.endTime,
@@ -106,7 +104,7 @@ export default function MatchAdminView({
     try {
       await update({
         id: match.id,
-        body: createPatchOperations(match, values),
+        body: createPatchOperations(match, values as MatchCompactDTO),
       });
 
       saveToast();
@@ -232,29 +230,6 @@ export default function MatchAdminView({
                         </SelectTrigger>
                       </FormControl>
                       <VerificationStatusSelectContent />
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="processingStatus"
-                render={({ field: { value, onChange } }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Processing Status</FormLabel>
-                    <Select
-                      disabled
-                      onValueChange={onChange}
-                      value={value.toString()}
-                    >
-                      <FormControl className="w-full">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SimpleSelectContent
-                        enumHelper={MatchProcessingStatusEnumHelper}
-                      />
                     </Select>
                   </FormItem>
                 )}
