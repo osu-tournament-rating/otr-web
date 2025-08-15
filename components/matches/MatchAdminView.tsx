@@ -39,7 +39,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import SimpleSelectContent from '../select/SimpleSelectContent';
 import { Input } from '../ui/input';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 
