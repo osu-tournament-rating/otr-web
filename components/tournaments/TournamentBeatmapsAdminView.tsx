@@ -146,7 +146,7 @@ export default function TournamentBeatmapsAdminView({
   }));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Admin action bar */}
       <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
         <div className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export default function TournamentBeatmapsAdminView({
           <span className="text-sm text-muted-foreground">
             {selectedBeatmapIds.size > 0
               ? `${selectedBeatmapIds.size} selected`
-              : 'Select beatmaps'}
+              : 'Select all'}
           </span>
         </div>
 
@@ -244,7 +244,8 @@ export default function TournamentBeatmapsAdminView({
                 <DialogTitle>Add Beatmaps</DialogTitle>
                 <DialogDescription>
                   Enter osu! beatmap IDs to add to the tournament pool. You can
-                  enter multiple IDs separated by commas or new lines.
+                  enter multiple IDs separated by commas or new lines.{' '}
+                  <strong>Duplicates are safely ignored.</strong>
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -269,12 +270,12 @@ export default function TournamentBeatmapsAdminView({
                   <Button onClick={handleAddBeatmaps} disabled={isAdding}>
                     {isAdding ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Adding...
                       </>
                     ) : (
                       <>
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus className="h-4 w-4" />
                         Add Beatmaps
                       </>
                     )}
