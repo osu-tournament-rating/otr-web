@@ -25,12 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import TournamentBeatmapsView from './TournamentBeatmapsView';
 import TournamentBeatmapsViewWithCheckboxes from './TournamentBeatmapsViewWithCheckboxes';
 
@@ -362,36 +357,28 @@ export default function TournamentBeatmapsAdminView({
             </DialogContent>
           </Dialog>
 
-          {/* Spacer to push the eye button to the right */}
-          <div className="flex-1" />
-
           {/* Show deleted toggle - far right with just icon */}
           {beatmaps.some(isDeletedBeatmap) && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowDeleted(!showDeleted)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {showDeleted ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {showDeleted
-                      ? `Hide deleted beatmaps`
-                      : `Show ${beatmaps.filter(isDeletedBeatmap).length} deleted beatmap${beatmaps.filter(isDeletedBeatmap).length === 1 ? '' : 's'}`}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <SimpleTooltip
+              content={
+                showDeleted
+                  ? `Hide deleted beatmaps`
+                  : `Show ${beatmaps.filter(isDeletedBeatmap).length} deleted beatmap${beatmaps.filter(isDeletedBeatmap).length === 1 ? '' : 's'}`
+              }
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDeleted(!showDeleted)}
+                className="h-8 w-8 p-0"
+              >
+                {showDeleted ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </SimpleTooltip>
           )}
         </div>
       </div>
