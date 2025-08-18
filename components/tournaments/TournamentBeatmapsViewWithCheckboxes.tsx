@@ -21,7 +21,7 @@ import BeatmapBackground from '../games/BeatmapBackground';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface TournamentBeatmapsViewWithCheckboxesProps {
-  beatmaps: (BeatmapDTO & { isSelected: boolean })[];
+  beatmaps: (BeatmapDTO & { isSelected: boolean; isDeleted?: boolean })[];
   tournamentGames?: GameDTO[];
   onSelectBeatmap: (beatmapId: number, checked: boolean) => void;
 }
@@ -59,93 +59,87 @@ export default function TournamentBeatmapsViewWithCheckboxes({
   };
 
   const sortedBeatmaps = useMemo(() => {
-    return [...beatmaps]
-      .filter((beatmap) => {
-        const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
-        const title = beatmap.beatmapset?.title || 'Unknown Title';
-        return !(artist === 'Unknown Artist' && title === 'Unknown Title');
-      })
-      .sort((a, b) => {
-        let aValue: string | number;
-        let bValue: string | number;
+    return [...beatmaps].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
 
-        switch (sortField) {
-          case 'title':
-            aValue = a.beatmapset?.title?.toLowerCase() || '';
-            bValue = b.beatmapset?.title?.toLowerCase() || '';
-            break;
-          case 'difficulty':
-            aValue = a.diffName?.toLowerCase() || '';
-            bValue = b.diffName?.toLowerCase() || '';
-            break;
-          case 'sr':
-            aValue = a.sr;
-            bValue = b.sr;
-            break;
-          case 'length':
-            aValue = a.totalLength;
-            bValue = b.totalLength;
-            break;
-          case 'bpm':
-            aValue = a.bpm || 0;
-            bValue = b.bpm || 0;
-            break;
-          case 'cs':
-            aValue = a.cs || 0;
-            bValue = b.cs || 0;
-            break;
-          case 'ar':
-            aValue = a.ar || 0;
-            bValue = b.ar || 0;
-            break;
-          case 'od':
-            aValue = a.od || 0;
-            bValue = b.od || 0;
-            break;
-          case 'hp':
-            aValue = a.hp || 0;
-            bValue = b.hp || 0;
-            break;
-          case 'mod':
-            {
-              const aModData = getMostCommonModForBeatmap(
-                a.osuId,
-                tournamentGames
-              );
-              const bModData = getMostCommonModForBeatmap(
-                b.osuId,
-                tournamentGames
-              );
-              aValue = aModData?.mod ?? -1;
-              bValue = bModData?.mod ?? -1;
-            }
-            break;
-          case 'gameCount':
-            {
-              const aModData = getMostCommonModForBeatmap(
-                a.osuId,
-                tournamentGames
-              );
-              const bModData = getMostCommonModForBeatmap(
-                b.osuId,
-                tournamentGames
-              );
-              aValue = aModData?.gameCount ?? 0;
-              bValue = bModData?.gameCount ?? 0;
-            }
-            break;
-          case 'creator':
-            aValue = a.beatmapset?.creator?.username?.toLowerCase() || '';
-            bValue = b.beatmapset?.creator?.username?.toLowerCase() || '';
-            break;
-          default:
-            return 0;
-        }
+      switch (sortField) {
+        case 'title':
+          aValue = a.beatmapset?.title?.toLowerCase() || '';
+          bValue = b.beatmapset?.title?.toLowerCase() || '';
+          break;
+        case 'difficulty':
+          aValue = a.diffName?.toLowerCase() || '';
+          bValue = b.diffName?.toLowerCase() || '';
+          break;
+        case 'sr':
+          aValue = a.sr;
+          bValue = b.sr;
+          break;
+        case 'length':
+          aValue = a.totalLength;
+          bValue = b.totalLength;
+          break;
+        case 'bpm':
+          aValue = a.bpm || 0;
+          bValue = b.bpm || 0;
+          break;
+        case 'cs':
+          aValue = a.cs || 0;
+          bValue = b.cs || 0;
+          break;
+        case 'ar':
+          aValue = a.ar || 0;
+          bValue = b.ar || 0;
+          break;
+        case 'od':
+          aValue = a.od || 0;
+          bValue = b.od || 0;
+          break;
+        case 'hp':
+          aValue = a.hp || 0;
+          bValue = b.hp || 0;
+          break;
+        case 'mod':
+          {
+            const aModData = getMostCommonModForBeatmap(
+              a.osuId,
+              tournamentGames
+            );
+            const bModData = getMostCommonModForBeatmap(
+              b.osuId,
+              tournamentGames
+            );
+            aValue = aModData?.mod ?? -1;
+            bValue = bModData?.mod ?? -1;
+          }
+          break;
+        case 'gameCount':
+          {
+            const aModData = getMostCommonModForBeatmap(
+              a.osuId,
+              tournamentGames
+            );
+            const bModData = getMostCommonModForBeatmap(
+              b.osuId,
+              tournamentGames
+            );
+            aValue = aModData?.gameCount ?? 0;
+            bValue = bModData?.gameCount ?? 0;
+          }
+          break;
+        case 'creator':
+          aValue = a.beatmapset?.creator?.username?.toLowerCase() || '';
+          bValue = b.beatmapset?.creator?.username?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
 
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
   }, [beatmaps, sortField, sortDirection, tournamentGames]);
 
   const SortButton = ({
@@ -279,7 +273,11 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                 return (
                   <tr
                     key={beatmap.id}
-                    className="group transition-colors hover:bg-muted/30"
+                    className={`group transition-colors ${
+                      beatmap.isDeleted
+                        ? 'bg-destructive/5 hover:bg-destructive/10'
+                        : 'hover:bg-muted/30'
+                    }`}
                   >
                     {/* Checkbox */}
                     <td className="px-2 py-2 text-center">
