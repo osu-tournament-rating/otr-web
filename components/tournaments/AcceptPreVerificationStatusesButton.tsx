@@ -1,11 +1,7 @@
 'use client';
 
 import { acceptPreVerificationStatuses } from '@/lib/actions/tournaments';
-import {
-  TournamentCompactDTO,
-  VerificationStatus,
-  TournamentProcessingStatus,
-} from '@osu-tournament-rating/otr-api-client';
+import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -34,23 +30,6 @@ export default function AcceptPreVerificationStatusesButton({
 }: AcceptPreVerificationStatusesButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  // Only show button for tournaments that are awaiting verification
-  // and have pre-verification statuses (either the tournament itself or its children)
-  if (
-    tournament.processingStatus !== TournamentProcessingStatus.NeedsVerification
-  ) {
-    return null;
-  }
-
-  // Additional check: only show if tournament itself has pre-verification status
-  // (The API endpoint will handle children with pre-verification statuses even if the tournament doesn't)
-  if (
-    tournament.verificationStatus !== VerificationStatus.PreVerified &&
-    tournament.verificationStatus !== VerificationStatus.PreRejected
-  ) {
-    return null;
-  }
 
   const handleAccept = async () => {
     setIsLoading(true);

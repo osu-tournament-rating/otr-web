@@ -122,7 +122,7 @@ export default function TournamentTopPerformers({
 
                 <div className="hidden text-right md:block">
                   <div className="font-medium">
-                    {stats.gamesPlayed.toFixed()}
+                    {(stats.gamesPlayed / stats.matchesPlayed).toFixed(1)}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Avg. Games

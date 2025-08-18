@@ -1,16 +1,13 @@
 import {
-  GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
   Mods,
   Ruleset,
   ScoreGrade,
-  ScoreProcessingStatus,
   ScoreRejectionReason,
   ScoringType,
   Team,
   TeamType,
-  TournamentProcessingStatus,
   TournamentRejectionReason,
   VerificationStatus,
   TournamentQuerySortType,
@@ -65,7 +62,6 @@ export const tournamentEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
   startTime: z.coerce.date().optional(),
   endTime: z.coerce.date().optional(),
 });
@@ -84,9 +80,6 @@ export const tournamentListFilterSchema = z.object({
   dateMax: z.coerce.date().optional(),
   verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
-  processingStatus: numericEnumValueSchema(
-    TournamentProcessingStatus
-  ).optional(),
   submittedBy: z.coerce.number().optional(),
   verifiedBy: z.coerce.number().optional(),
   lobbySize: z.coerce.number().min(1).max(8).optional(),
@@ -100,7 +93,6 @@ export const matchEditFormSchema = z.object({
   name: z.string().min(1),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(MatchRejectionReason),
-  processingStatus: numericEnumValueSchema(TournamentProcessingStatus),
   warningFlags: bitwiseEnumValueSchema(MatchWarningFlags),
   startTime: z.coerce.date().optional(),
   endTime: z.coerce.date().optional(),
@@ -114,7 +106,6 @@ export const gameEditFormSchema = z.object({
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   warningFlags: bitwiseEnumValueSchema(GameWarningFlags),
   rejectionReason: bitwiseEnumValueSchema(GameRejectionReason),
-  processingStatus: numericEnumValueSchema(GameProcessingStatus),
   isFreeMod: z.boolean(),
   startTime: z.coerce.date().optional(),
   endTime: z.coerce.date().optional(),
@@ -136,7 +127,6 @@ export const scoreEditFormSchema = z.object({
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(ScoreRejectionReason),
-  processingStatus: numericEnumValueSchema(ScoreProcessingStatus),
   team: numericEnumValueSchema(Team),
 });
 

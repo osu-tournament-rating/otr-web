@@ -1,22 +1,18 @@
 import {
   AdminNoteRouteTarget,
   FilteringFailReason,
-  GameProcessingStatus,
   GameRejectionReason,
   GameWarningFlags,
-  MatchProcessingStatus,
   MatchRejectionReason,
   MatchWarningFlags,
   Mods,
   RatingAdjustmentType,
   Ruleset,
   ScoreGrade,
-  ScoreProcessingStatus,
   ScoreRejectionReason,
   ScoringType,
   Team,
   TeamType,
-  TournamentProcessingStatus,
   TournamentRejectionReason,
   VerificationStatus,
 } from '@osu-tournament-rating/otr-api-client';
@@ -286,40 +282,6 @@ export const RatingAdjustmentTypeEnumhelper: IEnumHelper<RatingAdjustmentType> =
     },
   };
 
-export const TournamentProcessingStatusEnumHelper: IEnumHelper<TournamentProcessingStatus> =
-  {
-    ...defaultEnumHelper(),
-
-    metadata: {
-      [TournamentProcessingStatus.NeedsApproval]: {
-        text: 'Awaiting Approval',
-        description:
-          'Tournament is awaiting approval from a verifier before processing begins',
-      },
-      [TournamentProcessingStatus.NeedsMatchData]: {
-        text: 'Awaiting Match Data',
-        description: 'Tournament is awaiting data collection from the osu! API',
-      },
-      [TournamentProcessingStatus.NeedsAutomationChecks]: {
-        text: 'Awaiting Automated Checks',
-        description:
-          'Tournament is awaiting the completion of automated checks',
-      },
-      [TournamentProcessingStatus.NeedsVerification]: {
-        text: 'Awaiting Verification',
-        description: 'Tournament is awaiting review from a verifier',
-      },
-      [TournamentProcessingStatus.NeedsStatCalculation]: {
-        text: 'Awaiting Stat Calculation',
-        description: 'Tournament is awaiting statistics calculation',
-      },
-      [TournamentProcessingStatus.Done]: {
-        text: 'Processing Completed',
-        description: 'Tournament has completed processing',
-      },
-    },
-  };
-
 export const TournamentRejectionReasonEnumHelper: IBitwiseEnumHelper<TournamentRejectionReason> =
   {
     ...defaultBitwiseEnumHelper(TournamentRejectionReason),
@@ -351,38 +313,6 @@ export const TournamentRejectionReasonEnumHelper: IBitwiseEnumHelper<TournamentR
       },
       [TournamentRejectionReason.IncompleteData]: {
         text: 'Incomplete Data',
-        description: 'placeholder',
-      },
-    },
-  };
-
-export const MatchProcessingStatusEnumHelper: IEnumHelper<MatchProcessingStatus> =
-  {
-    ...defaultEnumHelper(),
-
-    metadata: {
-      [MatchProcessingStatus.NeedsData]: {
-        text: 'Awaiting osu! API Data',
-        description: 'placeholder',
-      },
-      [MatchProcessingStatus.NeedsAutomationChecks]: {
-        text: 'Awaiting Automated Checks',
-        description: 'placeholder',
-      },
-      [MatchProcessingStatus.NeedsVerification]: {
-        text: 'Awaiting Verification',
-        description: 'placeholder',
-      },
-      [MatchProcessingStatus.NeedsStatCalculation]: {
-        text: 'Awaiting Stat Calculation',
-        description: 'placeholder',
-      },
-      [MatchProcessingStatus.NeedsRatingProcessorData]: {
-        text: 'Awaiting Ratings Processor Run',
-        description: 'placeholder',
-      },
-      [MatchProcessingStatus.Done]: {
-        text: 'Processing Complete',
         description: 'placeholder',
       },
     },
@@ -449,7 +379,7 @@ export const MatchWarningFlagsEnumHelper: IBitwiseEnumHelper<MatchWarningFlags> 
           'The match has exactly 4 or 5 Pre-Verified or Verified games',
       },
       [MatchWarningFlags.UnexpectedBeatmapsFound]: {
-        text: 'Unexpected beatmaps found',
+        text: 'Unpooled beatmap found beyond first two games',
         description:
           'The match has one or more games where a beatmap that was not pooled was played outside of the first two games',
       },
@@ -457,30 +387,6 @@ export const MatchWarningFlagsEnumHelper: IBitwiseEnumHelper<MatchWarningFlags> 
         text: 'Overlapping rosters found',
         description:
           "The match's roster features one or more players on more than one roster. Only one player per roster is allowed.",
-      },
-    },
-  };
-
-export const GameProcessingStatusEnumHelper: IEnumHelper<GameProcessingStatus> =
-  {
-    ...defaultEnumHelper(),
-
-    metadata: {
-      [GameProcessingStatus.NeedsAutomationChecks]: {
-        text: 'Awaiting Automated Checks',
-        description: 'placeholder',
-      },
-      [GameProcessingStatus.NeedsVerification]: {
-        text: 'Awaiting Verification',
-        description: 'placeholder',
-      },
-      [GameProcessingStatus.NeedsStatCalculation]: {
-        text: 'Awaiting Stat Calculation',
-        description: 'placeholder',
-      },
-      [GameProcessingStatus.Done]: {
-        text: 'Processing Complete',
-        description: 'placeholder',
       },
     },
   };
@@ -555,26 +461,6 @@ export const GameWarningFlagsEnumHelper: IBitwiseEnumHelper<GameWarningFlags> =
         text: 'Beatmap Only Used Once',
         description:
           'The tournament does not have a submitted mappool and the map was only played once throughout',
-      },
-    },
-  };
-
-export const ScoreProcessingStatusEnumHelper: IEnumHelper<ScoreProcessingStatus> =
-  {
-    ...defaultEnumHelper(),
-
-    metadata: {
-      [ScoreProcessingStatus.NeedsAutomationChecks]: {
-        text: 'Awaiting Automated Checks',
-        description: 'placeholder',
-      },
-      [ScoreProcessingStatus.NeedsVerification]: {
-        text: 'Awaiting Verification',
-        description: 'placeholder',
-      },
-      [ScoreProcessingStatus.Done]: {
-        text: 'Processing Complete',
-        description: 'placeholder',
       },
     },
   };
