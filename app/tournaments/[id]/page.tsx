@@ -31,7 +31,7 @@ import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import TournamentBeatmapsView from '@/components/tournaments/TournamentBeatmapsView';
+import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
 import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
@@ -341,7 +341,9 @@ export default async function Page({ params }: PageProps) {
                 {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>
             </div>
-            <TournamentBeatmapsView
+            <TournamentBeatmapsAdminView
+              tournamentId={tournament.id}
+              tournamentName={tournament.name}
               beatmaps={beatmaps}
               tournamentGames={tournamentGames}
             />
