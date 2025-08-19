@@ -5,7 +5,7 @@ import {
   GameDTO,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,27 @@ interface TournamentBeatmapsAdminViewProps {
   tournamentGames?: GameDTO[];
 }
 
+// Constants
+const UNKNOWN_ARTIST = 'Unknown Artist';
+const UNKNOWN_TITLE = 'Unknown Title';
+const UNKNOWN_DIFFICULTY = 'Unknown Difficulty';
+
+// Helper functions
+const isDeletedBeatmap = (beatmap: BeatmapDTO): boolean => {
+  const artist = beatmap.beatmapset?.artist || UNKNOWN_ARTIST;
+  const title = beatmap.beatmapset?.title || UNKNOWN_TITLE;
+  return artist === UNKNOWN_ARTIST && title === UNKNOWN_TITLE;
+};
+
+const parseBeatmapIds = (input: string): number[] => {
+  return input
+    .split(/[,\n]+/)
+    .map((id) => id.trim())
+    .filter((id) => id)
+    .map((id) => parseInt(id, 10))
+    .filter((id) => !isNaN(id));
+};
+
 export default function TournamentBeatmapsAdminView({
   tournamentId,
   tournamentName,
@@ -57,27 +78,57 @@ export default function TournamentBeatmapsAdminView({
 
   const isAdmin = session?.scopes?.includes(Roles.Admin) ?? false;
 
-  const handleSelectBeatmap = (beatmapId: number, checked: boolean) => {
-    setSelectedBeatmapIds((prev) => {
-      const newSet = new Set(prev);
+  // Memoized filtered beatmaps
+  const filteredBeatmaps = useMemo(
+    () =>
+      showDeleted ? beatmaps : beatmaps.filter((b) => !isDeletedBeatmap(b)),
+    [showDeleted, beatmaps]
+  );
+
+  // Memoized beatmaps with checkbox state
+  const beatmapsWithSelection = useMemo(
+    () =>
+      filteredBeatmaps.map((beatmap) => ({
+        ...beatmap,
+        isSelected: selectedBeatmapIds.has(beatmap.id),
+        isDeleted: isDeletedBeatmap(beatmap),
+      })),
+    [filteredBeatmaps, selectedBeatmapIds]
+  );
+
+  // Count of deleted beatmaps
+  const deletedBeatmapsCount = useMemo(
+    () => beatmaps.filter(isDeletedBeatmap).length,
+    [beatmaps]
+  );
+
+  const handleSelectBeatmap = useCallback(
+    (beatmapId: number, checked: boolean) => {
+      setSelectedBeatmapIds((prev) => {
+        const newSet = new Set(prev);
+        if (checked) {
+          newSet.add(beatmapId);
+        } else {
+          newSet.delete(beatmapId);
+        }
+        return newSet;
+      });
+    },
+    []
+  );
+
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
       if (checked) {
-        newSet.add(beatmapId);
+        setSelectedBeatmapIds(new Set(filteredBeatmaps.map((b) => b.id)));
       } else {
-        newSet.delete(beatmapId);
+        setSelectedBeatmapIds(new Set());
       }
-      return newSet;
-    });
-  };
+    },
+    [filteredBeatmaps]
+  );
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedBeatmapIds(new Set(filteredBeatmaps.map((b) => b.id)));
-    } else {
-      setSelectedBeatmapIds(new Set());
-    }
-  };
-
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = useCallback(async () => {
     if (selectedBeatmapIds.size === 0) return;
 
     setIsDeleting(true);
@@ -86,10 +137,9 @@ export default function TournamentBeatmapsAdminView({
         tournamentId,
         Array.from(selectedBeatmapIds)
       );
+      const count = selectedBeatmapIds.size;
       toast.success(
-        `Successfully removed ${selectedBeatmapIds.size} beatmap${
-          selectedBeatmapIds.size === 1 ? '' : 's'
-        }`
+        `Successfully removed ${count} beatmap${count === 1 ? '' : 's'}`
       );
       setSelectedBeatmapIds(new Set());
       setIsDeleteDialogOpen(false);
@@ -100,15 +150,10 @@ export default function TournamentBeatmapsAdminView({
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [selectedBeatmapIds, tournamentId, router]);
 
-  const handleAddBeatmaps = async () => {
-    const ids = beatmapIdsToAdd
-      .split(/[,\n]+/)
-      .map((id) => id.trim())
-      .filter((id) => id)
-      .map((id) => parseInt(id, 10))
-      .filter((id) => !isNaN(id));
+  const handleAddBeatmaps = useCallback(async () => {
+    const ids = parseBeatmapIds(beatmapIdsToAdd);
 
     if (ids.length === 0) {
       toast.error('Please enter valid beatmap IDs');
@@ -130,7 +175,7 @@ export default function TournamentBeatmapsAdminView({
     } finally {
       setIsAdding(false);
     }
-  };
+  }, [beatmapIdsToAdd, tournamentId, router]);
 
   if (!isAdmin) {
     return (
@@ -140,24 +185,6 @@ export default function TournamentBeatmapsAdminView({
       />
     );
   }
-
-  // Filter beatmaps based on showDeleted state
-  const isDeletedBeatmap = (beatmap: BeatmapDTO) => {
-    const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
-    const title = beatmap.beatmapset?.title || 'Unknown Title';
-    return artist === 'Unknown Artist' && title === 'Unknown Title';
-  };
-
-  const filteredBeatmaps = showDeleted
-    ? beatmaps
-    : beatmaps.filter((b) => !isDeletedBeatmap(b));
-
-  // Create beatmaps with checkbox state
-  const beatmapsWithSelection = filteredBeatmaps.map((beatmap) => ({
-    ...beatmap,
-    isSelected: selectedBeatmapIds.has(beatmap.id),
-    isDeleted: isDeletedBeatmap(beatmap),
-  }));
 
   return (
     <div className="space-y-2">
@@ -218,14 +245,11 @@ export default function TournamentBeatmapsAdminView({
                         );
                         if (!beatmap) return null;
                         const artist =
-                          beatmap.beatmapset?.artist || 'Unknown Artist';
+                          beatmap.beatmapset?.artist || UNKNOWN_ARTIST;
                         const title =
-                          beatmap.beatmapset?.title || 'Unknown Title';
-                        const version =
-                          beatmap.diffName || 'Unknown Difficulty';
-                        const isDeleted =
-                          artist === 'Unknown Artist' &&
-                          title === 'Unknown Title';
+                          beatmap.beatmapset?.title || UNKNOWN_TITLE;
+                        const version = beatmap.diffName || UNKNOWN_DIFFICULTY;
+                        const isDeleted = isDeletedBeatmap(beatmap);
 
                         return (
                           <div
@@ -358,12 +382,12 @@ export default function TournamentBeatmapsAdminView({
           </Dialog>
 
           {/* Show deleted toggle - far right with just icon */}
-          {beatmaps.some(isDeletedBeatmap) && (
+          {deletedBeatmapsCount > 0 && (
             <SimpleTooltip
               content={
                 showDeleted
                   ? `Hide deleted beatmaps`
-                  : `Show ${beatmaps.filter(isDeletedBeatmap).length} deleted beatmap${beatmaps.filter(isDeletedBeatmap).length === 1 ? '' : 's'}`
+                  : `Show ${deletedBeatmapsCount} deleted beatmap${deletedBeatmapsCount === 1 ? '' : 's'}`
               }
             >
               <Button
