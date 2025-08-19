@@ -1,6 +1,9 @@
 'use client';
 
-import { BeatmapDTO, GameDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  BeatmapDTO,
+  GameCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import {
   Music,
   Star,
@@ -28,7 +31,7 @@ interface ExtendedBeatmapDTO extends BeatmapDTO {
 
 interface TournamentBeatmapsViewWithCheckboxesProps {
   beatmaps: ExtendedBeatmapDTO[];
-  tournamentGames?: GameDTO[];
+  tournamentGames?: GameCompactDTO[];
   onSelectBeatmap: (beatmapId: number, checked: boolean) => void;
 }
 

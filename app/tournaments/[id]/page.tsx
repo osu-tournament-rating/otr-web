@@ -290,9 +290,9 @@ export default async function Page({ params }: PageProps) {
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = (await getBeatmaps((await params).id)) ?? [];
 
-  // Note: GameCompactDTO doesn't include beatmap and mods properties needed for mod calculation
-  // This functionality would require fetching full game data
-  const tournamentGames: never[] = [];
+  // Extract all games from all matches for beatmap analysis
+  const tournamentGames =
+    tournament.matches?.flatMap((match) => match.games ?? []) ?? [];
 
   // Calculate hidden beatmaps count
   const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {

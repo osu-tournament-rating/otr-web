@@ -103,7 +103,7 @@ export function getModColor(mods: Mods) {
  */
 export function getMostCommonModForBeatmap(
   beatmapOsuId: number,
-  tournamentGames: Array<{ beatmap: { osuId: number } | null; mods: Mods }>
+  tournamentGames: Array<{ beatmap?: { osuId: number } | null; mods: Mods }>
 ): { mod: Mods; gameCount: number } | null {
   const beatmapGames = tournamentGames.filter(
     (game) => game.beatmap?.osuId === beatmapOsuId
