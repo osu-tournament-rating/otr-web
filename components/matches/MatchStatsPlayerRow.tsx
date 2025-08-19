@@ -26,6 +26,9 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
 
   const ratingChangeIcon = useMemo(() => {
     if (player.ratingDelta === null) return null;
+    // Check if rating change rounds to 0.0
+    const roundedDelta = Math.round(player.ratingDelta * 10) / 10;
+    if (roundedDelta === 0) return <Minus className="h-3.5 w-3.5" />;
     if (player.ratingDelta > 0) return <TrendingUp className="h-3.5 w-3.5" />;
     if (player.ratingDelta < 0) return <TrendingDown className="h-3.5 w-3.5" />;
     return <Minus className="h-3.5 w-3.5" />;
@@ -100,9 +103,15 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
         <div
           className={cn(
             'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold',
-            player.ratingDelta && player.ratingDelta > 0 && 'bg-green-500/10',
-            player.ratingDelta && player.ratingDelta < 0 && 'bg-red-500/10',
-            player.ratingDelta === 0 && 'bg-yellow-500/10',
+            player.ratingDelta !== null &&
+              Math.round(player.ratingDelta * 10) / 10 > 0 &&
+              'bg-green-500/10',
+            player.ratingDelta !== null &&
+              Math.round(player.ratingDelta * 10) / 10 < 0 &&
+              'bg-red-500/10',
+            player.ratingDelta !== null &&
+              Math.round(player.ratingDelta * 10) / 10 === 0 &&
+              'bg-gray-500/10',
             getRatingChangeColor(player.ratingDelta)
           )}
         >

@@ -222,7 +222,7 @@ export function calculateHighlightStats(
 
     highlights.push({
       id: 'average-tr',
-      label: 'Average TR',
+      label: 'Average Rating',
       value: `${averageRating.toFixed(0)} TR`,
       icon: 'Swords',
       color: 'amber',
@@ -252,8 +252,9 @@ export function formatScore(score: number): string {
 export function getRatingChangeColor(delta: number | null): string {
   if (delta === null) return 'text-muted-foreground';
 
-  const absDelta = Math.abs(delta);
-  if (absDelta === 0) return 'text-yellow-500';
+  // Check if rounds to 0.0
+  const roundedDelta = Math.round(delta * 10) / 10;
+  if (roundedDelta === 0) return 'text-gray-500';
 
   if (delta > 0) {
     return delta > 10 ? 'text-green-600' : 'text-green-500';

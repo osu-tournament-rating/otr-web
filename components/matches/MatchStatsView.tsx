@@ -175,7 +175,7 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
         <Table role="table" aria-label="Player performance statistics">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="min-w-[200px] md:min-w-[220px]">
+              <TableHead className="min-w-[200px] md:min-w-[180px]">
                 Player
               </TableHead>
               {!is1v1Match && (
