@@ -11,12 +11,12 @@ import {
   Trophy,
   Swords,
   LucideIcon,
-  Star,
-  Award,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HighlightStat, HighlightColor } from './MatchStatsUtils';
 import TierIcon from '@/components/icons/TierIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 
 const AVATAR_SIZE = {
   WIDTH: 24,
@@ -117,13 +117,6 @@ export default function MatchStatsHighlightCard({
       role="article"
       aria-label={ariaLabel}
     >
-      {/* Achievement indicator */}
-      {isAchievement && (
-        <div className="absolute top-2 right-2">
-          <Star className="h-3.5 w-3.5 fill-yellow-500/20 text-yellow-500/60" />
-        </div>
-      )}
-
       <div className="flex h-full flex-col">
         {/* Header with icon and label */}
         <div className="mb-2 flex items-start justify-between">
@@ -139,9 +132,16 @@ export default function MatchStatsHighlightCard({
             >
               <Icon className={cn('h-4 w-4', iconColorStyles[stat.color])} />
             </div>
-            <h3 className="text-xs font-medium text-muted-foreground/80">
-              {stat.label}
-            </h3>
+            <div className="flex items-center gap-1">
+              <h3 className="text-xs font-medium text-muted-foreground/80">
+                {stat.label}
+              </h3>
+              {stat.helpText && (
+                <SimpleTooltip content={stat.helpText}>
+                  <HelpCircle className="h-3 w-3 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
+                </SimpleTooltip>
+              )}
+            </div>
           </div>
         </div>
 

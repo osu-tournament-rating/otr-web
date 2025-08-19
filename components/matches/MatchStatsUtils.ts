@@ -37,6 +37,7 @@ export interface HighlightStat {
   tierIcon?: HighlightTierIcon;
   isSpecial?: boolean;
   metric?: string;
+  helpText?: string;
 }
 
 export type TeamColor = 'red' | 'blue';
@@ -183,6 +184,9 @@ export function calculateHighlightStats(
         sublabel: isTied ? 'Draw' : isRedWinner ? 'Red wins' : 'Blue wins',
         icon: 'Swords',
         color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
+        helpText: isTied
+          ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
+          : undefined,
       });
     } else {
       // Head-to-head or FFA - show winner vs loser score
@@ -196,6 +200,9 @@ export function calculateHighlightStats(
         icon: 'Swords',
         color: 'purple',
         player: winner ? createHighlightPlayer(winner) : undefined,
+        helpText: isTied
+          ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
+          : undefined,
       });
     }
   } else {
@@ -228,6 +235,10 @@ export function calculateHighlightStats(
             : blueScore > redScore
               ? 'blue'
               : 'purple',
+        helpText:
+          redScore === blueScore
+            ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
+            : undefined,
       });
     } else if (players.length === 2) {
       // 1v1 match - show head-to-head score
@@ -236,12 +247,21 @@ export function calculateHighlightStats(
         id: 'match-score',
         label: 'Match Result',
         value: `${player1.gamesWon} - ${player2.gamesWon}`,
-        sublabel: player1.won ? player1.username : player2.username,
+        sublabel:
+          player1.gamesWon === player2.gamesWon
+            ? 'Draw'
+            : player1.won
+              ? player1.username
+              : player2.username,
         icon: 'Swords',
         color: 'purple',
         player: player1.won
           ? createHighlightPlayer(player1)
           : createHighlightPlayer(player2),
+        helpText:
+          player1.gamesWon === player2.gamesWon
+            ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
+            : undefined,
       });
     } else {
       // Free-for-all or other format - show total games played
