@@ -161,15 +161,12 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 h-7 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent"
+          className="-ml-3 h-7 px-1 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent sm:px-2"
           onClick={() => handleSort(column)}
           aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
           aria-pressed={isActive}
         >
-          <span className="hidden sm:inline">{children}</span>
-          <span className="sm:hidden">
-            {typeof children === 'string' ? children.split(' ')[0] : children}
-          </span>
+          <span className="truncate">{children}</span>
           {sortIcon}
         </Button>
       );
@@ -247,45 +244,61 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
           <Table role="table" aria-label="Player performance statistics">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[160px] sm:min-w-[200px] md:min-w-[180px]">
+                {/* Player column - always visible */}
+                <TableHead className="min-w-[140px] sm:min-w-[180px]">
                   Player
                 </TableHead>
+
+                {/* W-L column - visible in non-1v1 matches */}
                 {!is1v1Match && (
-                  <TableHead className="w-[60px] sm:w-[70px]">
+                  <TableHead className="w-[50px] text-center sm:w-[60px]">
                     <SimpleTooltip content="Points won/lost this match">
                       <span aria-label="Wins and losses">W-L</span>
                     </SimpleTooltip>
                   </TableHead>
                 )}
-                <TableHead className="w-[70px] sm:w-[80px] md:w-[100px]">
+
+                {/* Rating columns - always visible with responsive labels */}
+                <TableHead className="w-[60px] text-right sm:w-[70px]">
                   <SortButton column="ratingBefore">
                     <span className="hidden sm:inline">Before</span>
                     <span className="sm:hidden">Pre</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[70px] sm:w-[80px] md:w-[100px]">
+                <TableHead className="w-[60px] text-right sm:w-[70px]">
                   <SortButton column="ratingAfter">
                     <span className="hidden sm:inline">After</span>
                     <span className="sm:hidden">Post</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[80px] sm:w-[90px] md:w-[100px]">
+                <TableHead className="w-[70px] text-right sm:w-[80px]">
                   <SortButton column="ratingDelta">
                     <span className="hidden sm:inline">Change</span>
-                    <span className="sm:hidden">Δ</span>
+                    <span className="sm:hidden">+/-</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden md:table-cell">
+
+                {/* Performance metrics - hidden on mobile, visible on md+ */}
+                <TableHead className="hidden text-right md:table-cell md:w-[80px]">
                   <SortButton column="averageScore">Score</SortButton>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <SortButton column="averageAccuracy">Accuracy</SortButton>
+                <TableHead className="hidden text-right md:table-cell md:w-[70px]">
+                  <SortButton column="averageAccuracy">
+                    <span className="hidden lg:inline">Accuracy</span>
+                    <span className="lg:hidden">Acc</span>
+                  </SortButton>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <SortButton column="averageMisses">Misses</SortButton>
+                <TableHead className="hidden text-right md:table-cell md:w-[60px]">
+                  <SortButton column="averageMisses">
+                    <span className="hidden lg:inline">Misses</span>
+                    <span className="lg:hidden">Miss</span>
+                  </SortButton>
                 </TableHead>
-                <TableHead className="hidden xl:table-cell">
-                  <SortButton column="averagePlacement">Placement</SortButton>
+                <TableHead className="hidden text-right md:table-cell md:w-[70px]">
+                  <SortButton column="averagePlacement">
+                    <span className="hidden lg:inline">Placement</span>
+                    <span className="lg:hidden">Pos</span>
+                  </SortButton>
                 </TableHead>
               </TableRow>
             </TableHeader>

@@ -98,7 +98,12 @@ export function processMatchStatistics(
 
   const ratingAdjustmentMap = new Map<number, RatingAdjustmentDTO>();
 
-  if (stats.ratingAdjustments?.length === stats.playerMatchStats.length) {
+  // Map rating adjustments to players by matching array indices
+  // The API guarantees rating adjustments are in the same order as playerMatchStats
+  if (
+    stats.ratingAdjustments &&
+    stats.ratingAdjustments.length === stats.playerMatchStats.length
+  ) {
     stats.playerMatchStats.forEach((playerStats, index) => {
       const adjustment = stats.ratingAdjustments[index];
       if (adjustment) {
