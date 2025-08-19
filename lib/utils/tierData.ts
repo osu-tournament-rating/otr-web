@@ -198,3 +198,50 @@ export const tierData: TierDataType[] = [
     displayName: 'Elite GM',
   },
 ];
+
+/**
+ * Get tier and subtier from a rating value
+ */
+export function getTierFromRating(rating: number): {
+  tier: TierName;
+  subTier: number | undefined;
+} {
+  // Sort tierData by baseRating in descending order to find the highest tier the rating qualifies for
+  const sortedTiers = [...tierData].sort((a, b) => b.baseRating - a.baseRating);
+
+  // Find the appropriate tier
+  const tierIndex = sortedTiers.findIndex((t) => rating >= t.baseRating);
+
+  if (tierIndex === -1) {
+    // Below Bronze
+    return { tier: 'Bronze', subTier: 3 };
+  }
+
+  const currentTier = sortedTiers[tierIndex];
+
+  // Elite Grandmaster has no subtiers
+  if (currentTier.tier === 'Elite Grandmaster') {
+    return { tier: 'Elite Grandmaster', subTier: undefined };
+  }
+
+  // Calculate the subtier (1, 2, or 3)
+  // Get the next tier's base rating
+  const nextTierIndex = tierIndex - 1;
+  const nextTierRating =
+    nextTierIndex >= 0 ? sortedTiers[nextTierIndex].baseRating : rating + 300;
+
+  const tierRange = nextTierRating - currentTier.baseRating;
+  const ratingInTier = rating - currentTier.baseRating;
+  const subTierSize = tierRange / 3;
+
+  let subTier: number;
+  if (ratingInTier < subTierSize) {
+    subTier = 3;
+  } else if (ratingInTier < subTierSize * 2) {
+    subTier = 2;
+  } else {
+    subTier = 1;
+  }
+
+  return { tier: currentTier.tier, subTier };
+}
