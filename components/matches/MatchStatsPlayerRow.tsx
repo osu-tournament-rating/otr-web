@@ -49,7 +49,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
         player.won && 'bg-green-500/5 hover:bg-green-500/10'
       )}
     >
-      <TableCell className="sticky left-0 z-10 py-2">
+      <TableCell className="py-2">
         <Link
           href={`/players/${player.osuId}`}
           className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
@@ -68,8 +68,10 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
               <User className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{player.username}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium">
+              {player.username}
+            </span>
             {player.team && <div className="mt-0.5">{teamBadge}</div>}
           </div>
         </Link>

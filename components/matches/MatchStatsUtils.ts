@@ -121,7 +121,7 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'accuracy',
     label: 'Accuracy Aficionado',
-    value: `${topAccuracy.averageAccuracy.toFixed(2)}%`,
+    value: `${topAccuracy.averageAccuracy.toFixed(2)}% avg`,
     sublabel: topAccuracy.username,
     icon: 'Crosshair',
     color: 'blue',
@@ -138,7 +138,7 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'top-scorer',
     label: 'Top Scorer',
-    value: formatScore(topScorer.averageScore),
+    value: formatScore(topScorer.averageScore) + ' avg',
     sublabel: topScorer.username,
     icon: 'Trophy',
     color: 'purple',
@@ -161,7 +161,7 @@ export function calculateHighlightStats(
 
     highlights.push({
       id: 'perma-lobbied',
-      label: 'Perma Lobbied',
+      label: 'Mainstay',
       value: `${mostGames.gamesPlayed} games`,
       sublabel: `${mostGames.username} (${winRate}% WR)`,
       icon: 'Medal',
