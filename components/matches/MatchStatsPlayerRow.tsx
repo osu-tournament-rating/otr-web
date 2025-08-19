@@ -11,6 +11,17 @@ import {
   getRatingChangeColor,
 } from './MatchStatsUtils';
 
+const AVATAR_SIZE = {
+  WIDTH: 28,
+  HEIGHT: 28,
+} as const;
+
+const RATING_PRECISION = {
+  DISPLAY: 0,
+  DELTA: 1,
+  COMPARISON: 10,
+} as const;
+
 interface MatchStatsPlayerRowProps {
   player: ProcessedPlayerStats;
   showPerformanceMetrics?: boolean;
@@ -26,8 +37,11 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
 
   const ratingChangeIcon = useMemo(() => {
     if (player.ratingDelta === null) return null;
-    // Check if rating change rounds to 0.0
-    const roundedDelta = Math.round(player.ratingDelta * 10) / 10;
+
+    const roundedDelta =
+      Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
+      RATING_PRECISION.COMPARISON;
+
     if (roundedDelta === 0) return <Minus className="h-3.5 w-3.5" />;
     if (player.ratingDelta > 0) return <TrendingUp className="h-3.5 w-3.5" />;
     if (player.ratingDelta < 0) return <TrendingDown className="h-3.5 w-3.5" />;
@@ -61,8 +75,8 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
             <Image
               src={player.avatarUrl}
               alt={player.username}
-              width={28}
-              height={28}
+              width={AVATAR_SIZE.WIDTH}
+              height={AVATAR_SIZE.HEIGHT}
               className="rounded-full ring-1 ring-border/10"
               onError={() => setImageError(true)}
             />
@@ -94,23 +108,29 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
         </TableCell>
       )}
       <TableCell className="py-2 text-sm text-muted-foreground">
-        {player.ratingBefore?.toFixed(0) ?? '-'}
+        {player.ratingBefore?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2 text-sm font-medium">
-        {player.ratingAfter?.toFixed(0) ?? '-'}
+        {player.ratingAfter?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2">
         <div
           className={cn(
             'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold',
             player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * 10) / 10 > 0 &&
+              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
+                RATING_PRECISION.COMPARISON >
+                0 &&
               'bg-green-500/10',
             player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * 10) / 10 < 0 &&
+              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
+                RATING_PRECISION.COMPARISON <
+                0 &&
               'bg-red-500/10',
             player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * 10) / 10 === 0 &&
+              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
+                RATING_PRECISION.COMPARISON ===
+                0 &&
               'bg-gray-500/10',
             getRatingChangeColor(player.ratingDelta)
           )}
@@ -118,7 +138,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
           {ratingChangeIcon}
           <span>
             {player.ratingDelta !== null && player.ratingDelta > 0 && '+'}
-            {player.ratingDelta?.toFixed(1) ?? '-'}
+            {player.ratingDelta?.toFixed(RATING_PRECISION.DELTA) ?? '-'}
           </span>
         </div>
       </TableCell>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
@@ -13,8 +13,24 @@ import {
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HighlightStat } from './MatchStatsUtils';
+import { HighlightStat, HighlightColor } from './MatchStatsUtils';
 import TierIcon from '@/components/icons/TierIcon';
+
+const AVATAR_SIZE = {
+  WIDTH: 18,
+  HEIGHT: 18,
+} as const;
+
+const TIER_ICON_SIZE = {
+  WIDTH: 16,
+  HEIGHT: 16,
+} as const;
+
+const STATS_WITH_STATUS_DOT = [
+  'biggest-gain',
+  'top-scorer',
+  'accuracy',
+] as const;
 
 const iconMap: Record<string, LucideIcon> = {
   Zap,
@@ -26,7 +42,7 @@ const iconMap: Record<string, LucideIcon> = {
   Swords,
 };
 
-const colorStyles = {
+const colorStyles: Record<HighlightColor, string> = {
   blue: 'border-blue-500/20 bg-blue-500/5 hover:border-blue-500/40 hover:bg-blue-500/10',
   red: 'border-red-500/20 bg-red-500/5 hover:border-red-500/40 hover:bg-red-500/10',
   purple:
@@ -37,25 +53,34 @@ const colorStyles = {
     'border-green-500/20 bg-green-500/5 hover:border-green-500/40 hover:bg-green-500/10',
   amber:
     'border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 hover:bg-amber-500/10',
-};
+} as const;
 
-const iconColorStyles = {
+const iconColorStyles: Record<HighlightColor, string> = {
   blue: 'text-blue-500',
   red: 'text-red-500',
   purple: 'text-purple-500',
   orange: 'text-orange-500',
   green: 'text-green-500',
   amber: 'text-amber-500',
-};
+} as const;
 
-const iconBgStyles = {
+const iconBgStyles: Record<HighlightColor, string> = {
   blue: 'bg-blue-500/10',
   red: 'bg-red-500/10',
   purple: 'bg-purple-500/10',
   orange: 'bg-orange-500/10',
   green: 'bg-green-500/10',
   amber: 'bg-amber-500/10',
-};
+} as const;
+
+const statusDotColors: Record<HighlightColor, string> = {
+  blue: 'bg-blue-500',
+  red: 'bg-red-500',
+  purple: 'bg-purple-500',
+  orange: 'bg-orange-500',
+  green: 'bg-green-500',
+  amber: 'bg-amber-500',
+} as const;
 
 interface MatchStatsHighlightCardProps {
   stat: HighlightStat;
@@ -66,6 +91,20 @@ export default function MatchStatsHighlightCard({
 }: MatchStatsHighlightCardProps) {
   const Icon = iconMap[stat.icon] || TrendingUp;
   const [imageError, setImageError] = useState(false);
+
+  const shouldShowStatusDot = useMemo(
+    () =>
+      STATS_WITH_STATUS_DOT.includes(
+        stat.id as (typeof STATS_WITH_STATUS_DOT)[number]
+      ),
+    [stat.id]
+  );
+
+  const ariaLabel = useMemo(
+    () =>
+      `${stat.label}: ${stat.value}${stat.sublabel ? ` - ${stat.sublabel}` : ''}`,
+    [stat.label, stat.value, stat.sublabel]
+  );
 
   return (
     <Card
@@ -78,10 +117,9 @@ export default function MatchStatsHighlightCard({
         colorStyles[stat.color]
       )}
       role="article"
-      aria-label={`${stat.label}: ${stat.value}${stat.sublabel ? ` - ${stat.sublabel}` : ''}`}
+      aria-label={ariaLabel}
     >
       <div className="flex h-full flex-col lg:flex-row lg:items-start lg:gap-2">
-        {/* Icon Badge */}
         <div className="mb-2 flex-shrink-0 lg:mb-0">
           <div
             className={cn(
@@ -102,29 +140,25 @@ export default function MatchStatsHighlightCard({
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col justify-between">
           <div>
-            {/* Label */}
             <p className="text-[10px] font-medium tracking-wide text-muted-foreground/70 uppercase sm:text-[11px] lg:text-[11px]">
               {stat.label}
             </p>
 
-            {/* Value */}
             <p className="mt-0.5 text-base font-bold tracking-tight text-foreground sm:text-lg lg:text-base xl:text-lg">
               {stat.value}
             </p>
           </div>
 
-          {/* Player Info / Tier Info / Sublabel */}
           <div className="mt-1 lg:mt-0.5">
             {stat.tierIcon && (
               <div className="flex items-center gap-1.5">
                 <TierIcon
                   tier={stat.tierIcon.tier}
                   subTier={stat.tierIcon.subTier}
-                  width={16}
-                  height={16}
+                  width={TIER_ICON_SIZE.WIDTH}
+                  height={TIER_ICON_SIZE.HEIGHT}
                   className="flex-shrink-0 transition-opacity group-hover:opacity-90"
                 />
                 <span className="text-[10px] font-medium text-muted-foreground sm:text-[11px] lg:text-[10px]">
@@ -145,35 +179,27 @@ export default function MatchStatsHighlightCard({
                     <Image
                       src={stat.player.avatarUrl}
                       alt={stat.player.username}
-                      width={18}
-                      height={18}
+                      width={AVATAR_SIZE.WIDTH}
+                      height={AVATAR_SIZE.HEIGHT}
                       className="rounded-full ring-1 ring-border/20 transition-transform duration-200 group-hover/player:scale-110"
                       onError={() => setImageError(true)}
                     />
                   ) : (
-                    <div className="h-[18px] w-[18px] rounded-full bg-muted ring-1 ring-border/20" />
+                    <div
+                      className="h-[18px] w-[18px] rounded-full bg-muted ring-1 ring-border/20"
+                      role="img"
+                      aria-label={`${stat.player.username} avatar placeholder`}
+                    />
                   )}
-                  {/* Status dot - only show for certain stats */}
-                  {(stat.id === 'biggest-gain' ||
-                    stat.id === 'top-scorer' ||
-                    stat.id === 'accuracy') && (
+                  {shouldShowStatusDot && (
                     <div
                       className={cn(
                         'absolute -right-0.5 -bottom-0.5',
                         'h-1.5 w-1.5 rounded-full',
                         'ring-1 ring-background',
-                        stat.color === 'green'
-                          ? 'bg-green-500'
-                          : stat.color === 'blue'
-                            ? 'bg-blue-500'
-                            : stat.color === 'purple'
-                              ? 'bg-purple-500'
-                              : stat.color === 'red'
-                                ? 'bg-red-500'
-                                : stat.color === 'orange'
-                                  ? 'bg-orange-500'
-                                  : 'bg-amber-500'
+                        statusDotColors[stat.color]
                       )}
+                      aria-hidden="true"
                     />
                   )}
                 </div>

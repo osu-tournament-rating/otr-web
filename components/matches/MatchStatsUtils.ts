@@ -6,30 +6,44 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { TierName, getTierFromRating } from '@/lib/utils/tierData';
 
+export type HighlightColor =
+  | 'blue'
+  | 'red'
+  | 'purple'
+  | 'orange'
+  | 'green'
+  | 'amber';
+
+export interface HighlightPlayer {
+  id: number;
+  username: string;
+  avatarUrl: string;
+}
+
+export interface HighlightTierIcon {
+  tier: TierName;
+  subTier: number | undefined;
+}
+
 export interface HighlightStat {
   id: string;
   label: string;
   value: string;
   sublabel?: string;
   icon: string;
-  color: 'blue' | 'red' | 'purple' | 'orange' | 'green' | 'amber';
-  player?: {
-    id: number;
-    username: string;
-    avatarUrl: string;
-  };
-  tierIcon?: {
-    tier: TierName;
-    subTier: number | undefined;
-  };
+  color: HighlightColor;
+  player?: HighlightPlayer;
+  tierIcon?: HighlightTierIcon;
 }
+
+export type TeamColor = 'red' | 'blue';
 
 export interface ProcessedPlayerStats {
   playerId: number;
   username: string;
   osuId: number;
   avatarUrl: string;
-  team?: 'red' | 'blue';
+  team?: TeamColor;
   won: boolean;
   gamesWon: number;
   gamesLost: number;
@@ -45,6 +59,27 @@ export interface ProcessedPlayerStats {
   averageMisses: number;
   averagePlacement: number;
 }
+
+const SCORE_THRESHOLDS = {
+  MILLION: 1_000_000,
+  HUNDRED_K: 100_000,
+  TEN_K: 10_000,
+  THOUSAND: 1_000,
+} as const;
+
+const RATING_THRESHOLDS = {
+  HIGH_GAIN: 10,
+  HIGH_LOSS: -10,
+  EXTREME: 30,
+  MODERATE: 15,
+} as const;
+
+const PRECISION = {
+  RATING_DECIMAL: 1,
+  ACCURACY_DECIMAL: 2,
+  MISSES_DECIMAL: 1,
+  PLACEMENT_DECIMAL: 1,
+} as const;
 
 export function processMatchStatistics(
   stats: MatchStatisticsDTO,
@@ -105,6 +140,14 @@ export function processMatchStatistics(
   return processed;
 }
 
+function createHighlightPlayer(player: ProcessedPlayerStats): HighlightPlayer {
+  return {
+    id: player.playerId,
+    username: player.username,
+    avatarUrl: player.avatarUrl,
+  };
+}
+
 export function calculateHighlightStats(
   players: ProcessedPlayerStats[]
 ): HighlightStat[] {
@@ -121,15 +164,11 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'accuracy',
     label: 'Accuracy Aficionado',
-    value: `${topAccuracy.averageAccuracy.toFixed(2)}% avg`,
+    value: `${topAccuracy.averageAccuracy.toFixed(PRECISION.ACCURACY_DECIMAL)}% avg`,
     sublabel: topAccuracy.username,
     icon: 'Crosshair',
     color: 'blue',
-    player: {
-      id: topAccuracy.playerId,
-      username: topAccuracy.username,
-      avatarUrl: topAccuracy.avatarUrl,
-    },
+    player: createHighlightPlayer(topAccuracy),
   });
   const topScorer = players.reduce((prev, curr) =>
     curr.averageScore > prev.averageScore ? curr : prev
@@ -142,11 +181,7 @@ export function calculateHighlightStats(
     sublabel: topScorer.username,
     icon: 'Trophy',
     color: 'purple',
-    player: {
-      id: topScorer.playerId,
-      username: topScorer.username,
-      avatarUrl: topScorer.avatarUrl,
-    },
+    player: createHighlightPlayer(topScorer),
   });
 
   if (players.length > 2) {
@@ -166,11 +201,7 @@ export function calculateHighlightStats(
       sublabel: `${mostGames.username} (${winRate}% WR)`,
       icon: 'Medal',
       color: 'red',
-      player: {
-        id: mostGames.playerId,
-        username: mostGames.username,
-        avatarUrl: mostGames.avatarUrl,
-      },
+      player: createHighlightPlayer(mostGames),
     });
   }
   const leastMisses = players.reduce((prev, curr) =>
@@ -180,41 +211,38 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'consistency',
     label: 'Consistency King',
-    value: `${leastMisses.averageMisses.toFixed(1)} avg misses`,
+    value: `${leastMisses.averageMisses.toFixed(PRECISION.MISSES_DECIMAL)} avg misses`,
     sublabel: leastMisses.username,
     icon: 'Shield',
     color: 'orange',
-    player: {
-      id: leastMisses.playerId,
-      username: leastMisses.username,
-      avatarUrl: leastMisses.avatarUrl,
-    },
+    player: createHighlightPlayer(leastMisses),
   });
-  const validRatings = players.filter((p) => p.ratingDelta !== null);
+  const validRatings = players.filter(
+    (p): p is ProcessedPlayerStats & { ratingDelta: number } =>
+      p.ratingDelta !== null
+  );
   if (validRatings.length > 0) {
     const biggestGain = validRatings.reduce((prev, curr) =>
-      curr.ratingDelta! > prev.ratingDelta! ? curr : prev
+      curr.ratingDelta > prev.ratingDelta ? curr : prev
     );
 
     highlights.push({
       id: 'biggest-gain',
       label: 'Biggest Gain',
-      value: `${biggestGain.ratingDelta! > 0 ? '+' : ''}${biggestGain.ratingDelta!.toFixed(0)} TR`,
+      value: `${biggestGain.ratingDelta > 0 ? '+' : ''}${biggestGain.ratingDelta.toFixed(0)} TR`,
       sublabel: biggestGain.username,
       icon: 'TrendingUp',
       color: 'green',
-      player: {
-        id: biggestGain.playerId,
-        username: biggestGain.username,
-        avatarUrl: biggestGain.avatarUrl,
-      },
+      player: createHighlightPlayer(biggestGain),
     });
   }
 
-  // Calculate average TR
-  const playersWithRatings = players.filter((p) => p.ratingAfter !== null);
+  const playersWithRatings = players.filter(
+    (p): p is ProcessedPlayerStats & { ratingAfter: number } =>
+      p.ratingAfter !== null
+  );
   if (playersWithRatings.length > 0) {
-    const ratings = playersWithRatings.map((p) => p.ratingAfter!);
+    const ratings = playersWithRatings.map((p) => p.ratingAfter);
     const averageRating =
       ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
 
@@ -237,14 +265,17 @@ export function calculateHighlightStats(
 }
 
 export function formatScore(score: number): string {
-  if (score >= 1_000_000) {
-    return `${(score / 1_000_000).toFixed(1)}M`;
-  } else if (score >= 100_000) {
-    return `${Math.floor(score / 1_000)}K`;
-  } else if (score >= 10_000) {
-    return `${(score / 1_000).toFixed(0)}K`;
-  } else if (score >= 1_000) {
-    return `${(score / 1_000).toFixed(1)}K`;
+  if (score >= SCORE_THRESHOLDS.MILLION) {
+    return `${(score / SCORE_THRESHOLDS.MILLION).toFixed(1)}M`;
+  }
+  if (score >= SCORE_THRESHOLDS.HUNDRED_K) {
+    return `${Math.floor(score / SCORE_THRESHOLDS.THOUSAND)}K`;
+  }
+  if (score >= SCORE_THRESHOLDS.TEN_K) {
+    return `${(score / SCORE_THRESHOLDS.THOUSAND).toFixed(0)}K`;
+  }
+  if (score >= SCORE_THRESHOLDS.THOUSAND) {
+    return `${(score / SCORE_THRESHOLDS.THOUSAND).toFixed(1)}K`;
   }
   return Math.floor(score).toLocaleString();
 }
@@ -252,24 +283,26 @@ export function formatScore(score: number): string {
 export function getRatingChangeColor(delta: number | null): string {
   if (delta === null) return 'text-muted-foreground';
 
-  // Check if rounds to 0.0
   const roundedDelta = Math.round(delta * 10) / 10;
   if (roundedDelta === 0) return 'text-gray-500';
 
   if (delta > 0) {
-    return delta > 10 ? 'text-green-600' : 'text-green-500';
-  } else {
-    return delta < -10 ? 'text-red-600' : 'text-red-500';
+    return delta > RATING_THRESHOLDS.HIGH_GAIN
+      ? 'text-green-600'
+      : 'text-green-500';
   }
+  return delta < RATING_THRESHOLDS.HIGH_LOSS ? 'text-red-600' : 'text-red-500';
 }
+
+export type RatingIntensity = 'low' | 'medium' | 'high';
 
 export function getRatingChangeIntensity(
   delta: number | null
-): 'low' | 'medium' | 'high' {
+): RatingIntensity {
   if (delta === null) return 'low';
 
   const abs = Math.abs(delta);
-  if (abs > 30) return 'high';
-  if (abs > 15) return 'medium';
+  if (abs > RATING_THRESHOLDS.EXTREME) return 'high';
+  if (abs > RATING_THRESHOLDS.MODERATE) return 'medium';
   return 'low';
 }

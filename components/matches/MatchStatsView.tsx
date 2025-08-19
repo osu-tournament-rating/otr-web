@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import {
   Table,
@@ -33,20 +33,54 @@ import SimpleTooltip from '@/components/simple-tooltip';
 const UI_CONSTANTS = {
   DEFAULT_SORT_KEY: 'ratingDelta' as const,
   DEFAULT_SORT_DIRECTION: 'desc' as const,
+  GRID_LAYOUTS: {
+    FOUR_CARDS: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2',
+    SIX_CARDS: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
+    DEFAULT: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
+  },
 } as const;
 
 type SortKey = keyof ProcessedPlayerStats;
+type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
   stats: MatchStatisticsDTO;
   match: MatchDTO;
 }
 
+const StatsProcessingCard = React.memo(() => (
+  <Card className="relative overflow-hidden bg-card/50 p-6 md:p-8">
+    <div className="flex flex-col items-center justify-center gap-4 py-8 md:py-12">
+      <div className="relative">
+        <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
+          <BarChart3 className="h-7 w-7 text-primary" />
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-3 text-center">
+        <h3 className="text-xl font-semibold">Statistics Processing</h3>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Match statistics are being calculated. This typically takes a few
+          minutes. Check back soon for detailed performance insights.
+        </p>
+
+        <div className="mt-2 flex items-center gap-1.5">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-0" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-150" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-300" />
+        </div>
+      </div>
+    </div>
+  </Card>
+));
+StatsProcessingCard.displayName = 'StatsProcessingCard';
+
 export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>(
     UI_CONSTANTS.DEFAULT_SORT_KEY
   );
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
     UI_CONSTANTS.DEFAULT_SORT_DIRECTION
   );
 
@@ -83,74 +117,56 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
     });
   }, [processedPlayers, sortKey, sortDirection]);
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDirection('desc');
-    }
-  };
+  const handleSort = useCallback(
+    (key: SortKey) => {
+      if (sortKey === key) {
+        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortKey(key);
+        setSortDirection('desc');
+      }
+    },
+    [sortKey]
+  );
 
   const SortButton = React.memo(
-    ({ column, children }: { column: SortKey; children: React.ReactNode }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-7 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent"
-        onClick={() => handleSort(column)}
-        aria-label={`Sort by ${children} ${sortKey === column ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
-        aria-pressed={sortKey === column}
-      >
-        <span className="hidden sm:inline">{children}</span>
-        <span className="sm:hidden">
-          {typeof children === 'string' ? children.split(' ')[0] : children}
-        </span>
-        {sortKey === column ? (
-          sortDirection === 'asc' ? (
-            <ArrowUp className="ml-1 h-3 w-3" />
-          ) : (
-            <ArrowDown className="ml-1 h-3 w-3" />
-          )
+    ({ column, children }: { column: SortKey; children: React.ReactNode }) => {
+      const isActive = sortKey === column;
+      const sortIcon = useMemo(() => {
+        if (!isActive)
+          return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
+        return sortDirection === 'asc' ? (
+          <ArrowUp className="ml-1 h-3 w-3" />
         ) : (
-          <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
-        )}
-      </Button>
-    )
+          <ArrowDown className="ml-1 h-3 w-3" />
+        );
+      }, [isActive]);
+
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-7 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent"
+          onClick={() => handleSort(column)}
+          aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
+          aria-pressed={isActive}
+        >
+          <span className="hidden sm:inline">{children}</span>
+          <span className="sm:hidden">
+            {typeof children === 'string' ? children.split(' ')[0] : children}
+          </span>
+          {sortIcon}
+        </Button>
+      );
+    }
   );
   SortButton.displayName = 'SortButton';
 
   const isTeamMatch = processedPlayers.some((p) => p.team !== undefined);
   const is1v1Match = processedPlayers.length === 2;
+
   if (!hasCompleteStats) {
-    return (
-      <Card className="relative overflow-hidden bg-card/50 p-6 md:p-8">
-        <div className="flex flex-col items-center justify-center gap-4 py-8 md:py-12">
-          {/* Animated icon container */}
-          <div className="relative">
-            <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
-              <BarChart3 className="h-7 w-7 text-primary" />
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-3 text-center">
-            <h3 className="text-xl font-semibold">Statistics Processing</h3>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Match statistics are being calculated. This typically takes a few
-              minutes. Check back soon for detailed performance insights.
-            </p>
-
-            {/* Progress indicator */}
-            <div className="mt-2 flex items-center gap-1.5">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-0" />
-              <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-150" />
-              <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-300" />
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
+    return <StatsProcessingCard />;
   }
 
   return (
@@ -175,15 +191,14 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
         </div>
       </div>
 
-      {/* Responsive grid with mobile-first approach */}
       <div className="mb-3 lg:mb-3.5">
         <div
           className={`grid gap-2 lg:gap-1.5 ${
             highlightStats.length === 4
-              ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2'
+              ? UI_CONSTANTS.GRID_LAYOUTS.FOUR_CARDS
               : highlightStats.length === 6
-                ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3'
-                : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3'
+                ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
+                : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
           }`}
         >
           {highlightStats.map((stat) => (
@@ -249,7 +264,7 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedPlayers.map((player, index) => (
+              {sortedPlayers.map((player) => (
                 <MatchStatsPlayerRow
                   key={player.playerId}
                   player={player}
