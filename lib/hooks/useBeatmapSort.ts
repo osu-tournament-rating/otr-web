@@ -8,6 +8,7 @@ import {
 import { getMostCommonModForBeatmap } from '@/lib/utils/mods';
 
 export type SortField =
+  | 'osuId'
   | 'title'
   | 'difficulty'
   | 'sr'
@@ -43,6 +44,8 @@ const getSortValue = (
   tournamentGames: GameCompactDTO[] = []
 ): string | number => {
   switch (field) {
+    case 'osuId':
+      return beatmap.osuId;
     case 'title':
       return beatmap.beatmapset?.title?.toLowerCase() || '';
     case 'difficulty':

@@ -28,6 +28,7 @@ interface TournamentBeatmapsViewProps {
 }
 
 type SortField =
+  | 'osuId'
   | 'title'
   | 'difficulty'
   | 'sr'
@@ -70,6 +71,10 @@ export default function TournamentBeatmapsView({
         let bValue: string | number;
 
         switch (sortField) {
+          case 'osuId':
+            aValue = a.osuId;
+            bValue = b.osuId;
+            break;
           case 'title':
             aValue = a.beatmapset?.title?.toLowerCase() || '';
             bValue = b.beatmapset?.title?.toLowerCase() || '';
@@ -157,7 +162,7 @@ export default function TournamentBeatmapsView({
   }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 transition-colors hover:text-foreground"
+      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
     >
       {children}
       {sortField === field &&
@@ -192,13 +197,18 @@ export default function TournamentBeatmapsView({
             {/* Header */}
             <thead className="border-b bg-muted/50">
               <tr>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton field="osuId">
+                    <span className="whitespace-nowrap">osu! ID</span>
+                  </SortButton>
+                </th>
+                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
                   <SortButton field="title">Beatmap</SortButton>
                 </th>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
                   <SortButton field="difficulty">Difficulty</SortButton>
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
                       <SortButton field="sr">
@@ -207,7 +217,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
                       <SortButton field="length">
@@ -216,7 +226,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[8%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
                       <SortButton field="bpm">
@@ -245,12 +255,12 @@ export default function TournamentBeatmapsView({
                     <SortButton field="hp">HP</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Most Common Mod">
                     <SortButton field="mod">Mod</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Number of Games">
                     <div className="flex justify-center">
                       <SortButton field="gameCount">
@@ -259,7 +269,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SortButton field="creator">Creator</SortButton>
                 </th>
               </tr>
@@ -278,6 +288,18 @@ export default function TournamentBeatmapsView({
                     key={beatmap.id}
                     className="group transition-colors hover:bg-muted/30"
                   >
+                    {/* osu! ID */}
+                    <td className="px-2 py-2 text-center">
+                      <Link
+                        href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        {beatmap.osuId}
+                      </Link>
+                    </td>
+
                     {/* Beatmap Info */}
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-2">

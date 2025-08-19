@@ -36,19 +36,20 @@ interface TournamentBeatmapsViewWithCheckboxesProps {
 }
 
 const COLUMN_WIDTHS = {
-  checkbox: 'w-[5%]',
-  beatmap: 'w-[10%]',
-  difficulty: 'w-[10%]',
-  sr: 'w-[8%]',
-  length: 'w-[8%]',
-  bpm: 'w-[8%]',
+  checkbox: 'w-[4%]',
+  osuId: 'w-[6%]',
+  beatmap: 'w-[9%]',
+  difficulty: 'w-[9%]',
+  sr: 'w-[7%]',
+  length: 'w-[7%]',
+  bpm: 'w-[7%]',
   cs: 'w-[3%]',
   ar: 'w-[3%]',
   od: 'w-[3%]',
   hp: 'w-[3%]',
-  mod: 'w-[5%]',
-  gameCount: 'w-[5%]',
-  creator: 'w-[7%]',
+  mod: 'w-[4%]',
+  gameCount: 'w-[4%]',
+  creator: 'w-[6%]',
 } as const;
 
 const SortButton = memo(
@@ -67,7 +68,7 @@ const SortButton = memo(
   }) => (
     <button
       onClick={() => onClick(field)}
-      className="flex items-center gap-1 transition-colors hover:text-foreground"
+      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
     >
       {children}
       {sortField === field &&
@@ -113,6 +114,18 @@ const BeatmapRow = memo(
             onCheckedChange={handleCheckboxChange}
             aria-label={`Select ${beatmap.beatmapset?.title || 'beatmap'}`}
           />
+        </td>
+
+        {/* osu! ID */}
+        <td className="px-2 py-2 text-center">
+          <Link
+            href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground transition-colors hover:text-primary"
+          >
+            {beatmap.osuId}
+          </Link>
         </td>
 
         {/* Beatmap Info */}
@@ -278,6 +291,18 @@ export default function TournamentBeatmapsViewWithCheckboxes({
               <tr>
                 <th className={`${COLUMN_WIDTHS.checkbox} px-2 py-2`}>
                   {/* Checkbox column header - empty */}
+                </th>
+                <th
+                  className={`${COLUMN_WIDTHS.osuId} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                >
+                  <SortButton
+                    field="osuId"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onClick={handleSort}
+                  >
+                    <span className="whitespace-nowrap">osu! ID</span>
+                  </SortButton>
                 </th>
                 <th
                   className={`${COLUMN_WIDTHS.beatmap} px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground`}
