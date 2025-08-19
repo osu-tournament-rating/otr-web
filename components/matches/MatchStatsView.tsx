@@ -27,9 +27,10 @@ const UI_CONSTANTS = {
   DEFAULT_SORT_KEY: 'ratingDelta' as const,
   DEFAULT_SORT_DIRECTION: 'desc' as const,
   GRID_LAYOUTS: {
-    FOUR_CARDS: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2',
-    SIX_CARDS: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
-    DEFAULT: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
+    FOUR_CARDS: 'grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4',
+    FIVE_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5',
+    SIX_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6',
+    DEFAULT: 'grid-cols-2 md:grid-cols-3',
   },
 } as const;
 
@@ -178,46 +179,46 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
   }
 
   return (
-    <Card className="p-4 md:p-5 lg:p-5">
-      <div className="mb-3 flex items-center justify-between lg:mb-3.5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-9 lg:w-9">
-            <BarChart3 className="h-4 w-4 text-primary lg:h-4.5 lg:w-4.5" />
+    <Card className="p-5 md:p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold sm:text-lg">
-              Match Statistics
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Performance insights & player metrics
+            <h3 className="text-lg font-semibold">Match Performance</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Player statistics and achievements
             </p>
           </div>
         </div>
         {averageRatingInfo && (
-          <SimpleTooltip content="Average rating of the lobby">
-            <div className="ml-2 flex shrink-0 items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/70">
+          <SimpleTooltip content="Average rating of all players in this match">
+            <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
               <TierIcon
                 tier={averageRatingInfo.tier}
                 subTier={averageRatingInfo.subTier}
-                width={18}
-                height={18}
+                width={20}
+                height={20}
               />
-              <span className="text-sm font-medium">
-                {averageRatingInfo.rating}TR
+              <span className="text-sm font-semibold text-foreground">
+                {averageRatingInfo.rating} TR
               </span>
             </div>
           </SimpleTooltip>
         )}
       </div>
 
-      <div className="mb-3 lg:mb-3.5">
+      <div className="mb-5">
         <div
-          className={`grid gap-2 lg:gap-1.5 ${
+          className={`grid gap-3 ${
             highlightStats.length === 4
               ? UI_CONSTANTS.GRID_LAYOUTS.FOUR_CARDS
-              : highlightStats.length === 6
-                ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
-                : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
+              : highlightStats.length === 5
+                ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
+                : highlightStats.length === 6
+                  ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
+                  : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
           }`}
         >
           {highlightStats.map((stat) => (

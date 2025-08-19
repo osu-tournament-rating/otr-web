@@ -35,6 +35,8 @@ export interface HighlightStat {
   color: HighlightColor;
   player?: HighlightPlayer;
   tierIcon?: HighlightTierIcon;
+  isSpecial?: boolean;
+  metric?: string;
 }
 
 export type TeamColor = 'red' | 'blue';
@@ -176,13 +178,9 @@ export function calculateHighlightStats(
 
       highlights.push({
         id: 'match-score',
-        label: 'Match Score',
+        label: 'Match Result',
         value: `${redScore} - ${blueScore}`,
-        sublabel: isTied
-          ? 'Draw'
-          : isRedWinner
-            ? 'Red Team Wins'
-            : 'Blue Team Wins',
+        sublabel: isTied ? 'Draw' : isRedWinner ? 'Red wins' : 'Blue wins',
         icon: 'Swords',
         color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
       });
@@ -192,10 +190,8 @@ export function calculateHighlightStats(
 
       highlights.push({
         id: 'match-score',
-        label: 'Match Score',
-        value: isTied
-          ? `${winnerScore} - ${loserScore}`
-          : `${winnerScore} - ${loserScore}`,
+        label: 'Match Result',
+        value: `${winnerScore} - ${loserScore}`,
         sublabel: isTied ? 'Draw' : winner?.username,
         icon: 'Swords',
         color: 'purple',
@@ -217,13 +213,13 @@ export function calculateHighlightStats(
 
       highlights.push({
         id: 'match-score',
-        label: 'Match Score',
+        label: 'Match Result',
         value: `${redScore} - ${blueScore}`,
         sublabel:
           redScore > blueScore
-            ? 'Red Team Wins'
+            ? 'Red wins'
             : blueScore > redScore
-              ? 'Blue Team Wins'
+              ? 'Blue wins'
               : 'Draw',
         icon: 'Swords',
         color:
@@ -238,7 +234,7 @@ export function calculateHighlightStats(
       const [player1, player2] = players;
       highlights.push({
         id: 'match-score',
-        label: 'Match Score',
+        label: 'Match Result',
         value: `${player1.gamesWon} - ${player2.gamesWon}`,
         sublabel: player1.won ? player1.username : player2.username,
         icon: 'Swords',
@@ -255,8 +251,8 @@ export function calculateHighlightStats(
       highlights.push({
         id: 'match-score',
         label: 'Match Summary',
-        value: `${totalGames} games`,
-        sublabel: winner ? `${winner.username} wins` : undefined,
+        value: `${totalGames} maps`,
+        sublabel: winner ? winner.username : 'Free for all',
         icon: 'Trophy',
         color: 'amber',
         player: winner ? createHighlightPlayer(winner) : undefined,
@@ -270,12 +266,14 @@ export function calculateHighlightStats(
 
   highlights.push({
     id: 'accuracy',
-    label: 'Accuracy Aficionado',
-    value: `${topAccuracy.averageAccuracy.toFixed(PRECISION.ACCURACY_DECIMAL)}% avg`,
+    label: 'Top Accuracy',
+    value: `${topAccuracy.averageAccuracy.toFixed(PRECISION.ACCURACY_DECIMAL)}%`,
     sublabel: topAccuracy.username,
     icon: 'Crosshair',
     color: 'blue',
     player: createHighlightPlayer(topAccuracy),
+    isSpecial: topAccuracy.averageAccuracy >= 95,
+    metric: 'avg',
   });
   const topScorer = players.reduce((prev, curr) =>
     curr.averageScore > prev.averageScore ? curr : prev
@@ -283,12 +281,14 @@ export function calculateHighlightStats(
 
   highlights.push({
     id: 'top-scorer',
-    label: 'Top Scorer',
-    value: formatScore(topScorer.averageScore) + ' avg',
+    label: 'Highest Score',
+    value: formatScore(topScorer.averageScore),
     sublabel: topScorer.username,
     icon: 'Trophy',
     color: 'purple',
     player: createHighlightPlayer(topScorer),
+    isSpecial: true,
+    metric: 'avg',
   });
 
   if (players.length > 2) {
@@ -303,12 +303,14 @@ export function calculateHighlightStats(
 
     highlights.push({
       id: 'perma-lobbied',
-      label: 'Mainstay',
-      value: `${mostGames.gamesPlayed} games`,
-      sublabel: `${mostGames.username} (${winRate}% WR)`,
+      label: 'Most Played',
+      value: `${mostGames.gamesPlayed}`,
+      sublabel: `${mostGames.username} • ${winRate}% WR`,
       icon: 'Medal',
       color: 'red',
       player: createHighlightPlayer(mostGames),
+      isSpecial: mostGames.gamesPlayed >= 10,
+      metric: 'maps',
     });
   }
   const leastMisses = players.reduce((prev, curr) =>
@@ -318,11 +320,13 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'consistency',
     label: 'Most Consistent',
-    value: `${leastMisses.averageMisses.toFixed(PRECISION.MISSES_DECIMAL)} avg misses`,
+    value: `${leastMisses.averageMisses.toFixed(PRECISION.MISSES_DECIMAL)}`,
     sublabel: leastMisses.username,
     icon: 'Shield',
     color: 'orange',
     player: createHighlightPlayer(leastMisses),
+    isSpecial: leastMisses.averageMisses <= 5,
+    metric: 'misses',
   });
   const validRatings = players.filter(
     (p): p is ProcessedPlayerStats & { ratingDelta: number } =>
@@ -335,12 +339,14 @@ export function calculateHighlightStats(
 
     highlights.push({
       id: 'biggest-gain',
-      label: 'Biggest Gain',
-      value: `${biggestGain.ratingDelta > 0 ? '+' : ''}${biggestGain.ratingDelta.toFixed(0)} TR`,
+      label: 'Top Performance',
+      value: `${biggestGain.ratingDelta > 0 ? '+' : ''}${biggestGain.ratingDelta.toFixed(0)}`,
       sublabel: biggestGain.username,
       icon: 'TrendingUp',
       color: 'green',
       player: createHighlightPlayer(biggestGain),
+      isSpecial: biggestGain.ratingDelta >= 20,
+      metric: 'TR',
     });
   }
 
