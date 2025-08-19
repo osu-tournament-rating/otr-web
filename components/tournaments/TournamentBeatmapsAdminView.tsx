@@ -51,8 +51,19 @@ const parseBeatmapIds = (input: string): number[] => {
     .split(/[,\n]+/)
     .map((id) => id.trim())
     .filter((id) => id)
-    .map((id) => parseInt(id, 10))
-    .filter((id) => !isNaN(id));
+    .map((id) => {
+      const str = id.trim();
+      // Parse beatmap URLs or direct IDs
+      const match = str.match(
+        /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
+      );
+      const numericId = match
+        ? Number(match[1] || match[2] || match[3])
+        : parseInt(str, 10);
+      // Return 0 for invalid IDs (which will be filtered out)
+      return isNaN(numericId) || numericId > 20_000_000 ? 0 : numericId;
+    })
+    .filter((id) => id > 0); // Only keep valid positive IDs
 };
 
 export default function TournamentBeatmapsAdminView({
@@ -148,10 +159,54 @@ export default function TournamentBeatmapsAdminView({
   }, [selectedBeatmapIds, tournamentId, router]);
 
   const handleAddBeatmaps = useCallback(async () => {
+    // Parse the input to extract raw values for validation
+    const rawValues = beatmapIdsToAdd
+      .split(/[,\n]+/)
+      .map((id) => id.trim())
+      .filter((id) => id);
+
+    if (rawValues.length === 0) {
+      toast.error('Please enter beatmap IDs or URLs');
+      return;
+    }
+
+    // Check for invalid IDs (non-numeric or exceeding max value)
+    const invalidIds = rawValues.filter((value) => {
+      const str = value.trim();
+      // Check if it's a URL or direct ID
+      const match = str.match(
+        /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/
+      );
+
+      if (!match) {
+        // Try to parse as a plain number
+        const num = parseInt(str, 10);
+        return isNaN(num) || num <= 0 || num > 20_000_000;
+      }
+
+      const numericId = Number(match[1] || match[2] || match[3]);
+      return numericId <= 0 || numericId > 20_000_000;
+    });
+
+    if (invalidIds.length > 0) {
+      const errorMessage =
+        invalidIds.length === 1
+          ? `Invalid beatmap ID: "${invalidIds[0]}". IDs must be positive integers not exceeding 20,000,000.`
+          : `Invalid beatmap IDs found: ${invalidIds
+              .slice(0, 3)
+              .map((id) => `"${id}"`)
+              .join(
+                ', '
+              )}${invalidIds.length > 3 ? ` and ${invalidIds.length - 3} more` : ''}. IDs must be positive integers not exceeding 20,000,000.`;
+
+      toast.error(errorMessage);
+      return;
+    }
+
     const ids = parseBeatmapIds(beatmapIdsToAdd);
 
     if (ids.length === 0) {
-      toast.error('Please enter valid beatmap IDs');
+      toast.error('No valid beatmap IDs could be parsed from the input');
       return;
     }
 
@@ -334,14 +389,30 @@ export default function TournamentBeatmapsAdminView({
               <DialogHeader>
                 <DialogTitle>Add Beatmaps</DialogTitle>
                 <DialogDescription>
-                  Enter osu! beatmap IDs to add to the tournament pool. You can
-                  enter multiple IDs separated by commas or new lines.{' '}
-                  <strong>Duplicates are safely ignored.</strong>
+                  Enter osu! beatmap IDs or URLs to add to the tournament pool.
+                  You can enter multiple values separated by commas or new
+                  lines.{' '}
+                  <strong>
+                    Duplicates are safely ignored/merged into existing pool.
+                  </strong>
+                  <br />
+                  <br />
+                  <span className="text-sm">
+                    Accepted formats:
+                    <ul className="mt-1 list-inside list-disc">
+                      <li>Direct beatmap ID (e.g., 1234567)</li>
+                      <li>Beatmap URL (e.g., https://osu.ppy.sh/b/1234567)</li>
+                      <li>
+                        Beatmapset URL (e.g.,
+                        https://osu.ppy.sh/beatmapsets/123#osu/456)
+                      </li>
+                    </ul>
+                  </span>
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Enter beatmap IDs (e.g., 1234567, 2345678)"
+                  placeholder={`Enter beatmap IDs or URLs`}
                   value={beatmapIdsToAdd}
                   onChange={(e) => setBeatmapIdsToAdd(e.target.value)}
                   rows={5}
