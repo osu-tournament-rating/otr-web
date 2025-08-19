@@ -259,19 +259,19 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
                 )}
 
                 {/* Rating columns - always visible with responsive labels */}
-                <TableHead className="w-[60px] text-right sm:w-[70px]">
+                <TableHead className="w-[60px] text-center sm:w-[70px]">
                   <SortButton column="ratingBefore">
                     <span className="hidden sm:inline">Before</span>
                     <span className="sm:hidden">Pre</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[60px] text-right sm:w-[70px]">
+                <TableHead className="w-[60px] text-center sm:w-[70px]">
                   <SortButton column="ratingAfter">
                     <span className="hidden sm:inline">After</span>
                     <span className="sm:hidden">Post</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[70px] text-right sm:w-[80px]">
+                <TableHead className="w-[70px] text-center sm:w-[80px]">
                   <SortButton column="ratingDelta">
                     <span className="hidden sm:inline">Change</span>
                     <span className="sm:hidden">+/-</span>
@@ -279,22 +279,22 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
                 </TableHead>
 
                 {/* Performance metrics - hidden on mobile, visible on md+ */}
-                <TableHead className="hidden text-right md:table-cell md:w-[80px]">
+                <TableHead className="hidden text-center md:table-cell md:w-[80px]">
                   <SortButton column="averageScore">Score</SortButton>
                 </TableHead>
-                <TableHead className="hidden text-right md:table-cell md:w-[70px]">
+                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
                   <SortButton column="averageAccuracy">
                     <span className="hidden lg:inline">Accuracy</span>
                     <span className="lg:hidden">Acc</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden text-right md:table-cell md:w-[60px]">
+                <TableHead className="hidden text-center md:table-cell md:w-[60px]">
                   <SortButton column="averageMisses">
                     <span className="hidden lg:inline">Misses</span>
                     <span className="lg:hidden">Miss</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden text-right md:table-cell md:w-[70px]">
+                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
                   <SortButton column="averagePlacement">
                     <span className="hidden lg:inline">Placement</span>
                     <span className="lg:hidden">Pos</span>

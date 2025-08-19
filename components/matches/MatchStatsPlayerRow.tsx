@@ -111,16 +111,16 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
       )}
 
       {/* Rating columns */}
-      <TableCell className="py-2 text-right text-xs text-muted-foreground sm:text-sm">
+      <TableCell className="py-2 text-center text-xs text-muted-foreground sm:text-sm">
         {player.ratingBefore?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
-      <TableCell className="py-2 text-right text-xs font-medium sm:text-sm">
+      <TableCell className="py-2 text-center text-xs font-medium sm:text-sm">
         {player.ratingAfter?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
-      <TableCell className="py-2 text-right">
+      <TableCell className="py-2 text-center">
         <div
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 text-xs font-semibold sm:gap-1 sm:px-1.5',
+            'inline-flex items-center justify-center gap-0.5 rounded-md px-1 py-0.5 text-xs font-semibold sm:gap-1 sm:px-1.5',
             player.ratingDelta !== null &&
               Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
                 RATING_PRECISION.COMPARISON >
@@ -149,16 +149,16 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
       {/* Performance metrics - consistent breakpoints matching headers */}
       {showPerformanceMetrics && (
         <>
-          <TableCell className="hidden py-2 text-right text-sm md:table-cell">
+          <TableCell className="hidden py-2 text-center text-sm md:table-cell">
             {formatScore(player.averageScore)}
           </TableCell>
-          <TableCell className="hidden py-2 text-right text-sm md:table-cell">
+          <TableCell className="hidden py-2 text-center text-sm md:table-cell">
             {player.averageAccuracy.toFixed(2)}%
           </TableCell>
-          <TableCell className="hidden py-2 text-right text-sm md:table-cell">
+          <TableCell className="hidden py-2 text-center text-sm md:table-cell">
             {player.averageMisses.toFixed(1)}
           </TableCell>
-          <TableCell className="hidden py-2 text-right text-sm md:table-cell">
+          <TableCell className="hidden py-2 text-center text-sm md:table-cell">
             {player.averagePlacement.toFixed(1)}
           </TableCell>
         </>
