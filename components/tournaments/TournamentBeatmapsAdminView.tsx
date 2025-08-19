@@ -36,12 +36,10 @@ interface TournamentBeatmapsAdminViewProps {
   tournamentGames?: GameDTO[];
 }
 
-// Constants
 const UNKNOWN_ARTIST = 'Unknown Artist';
 const UNKNOWN_TITLE = 'Unknown Title';
 const UNKNOWN_DIFFICULTY = 'Unknown Difficulty';
 
-// Helper functions
 const isDeletedBeatmap = (beatmap: BeatmapDTO): boolean => {
   const artist = beatmap.beatmapset?.artist || UNKNOWN_ARTIST;
   const title = beatmap.beatmapset?.title || UNKNOWN_TITLE;
@@ -78,14 +76,12 @@ export default function TournamentBeatmapsAdminView({
 
   const isAdmin = session?.scopes?.includes(Roles.Admin) ?? false;
 
-  // Memoized filtered beatmaps
   const filteredBeatmaps = useMemo(
     () =>
       showDeleted ? beatmaps : beatmaps.filter((b) => !isDeletedBeatmap(b)),
     [showDeleted, beatmaps]
   );
 
-  // Memoized beatmaps with checkbox state
   const beatmapsWithSelection = useMemo(
     () =>
       filteredBeatmaps.map((beatmap) => ({
@@ -96,7 +92,6 @@ export default function TournamentBeatmapsAdminView({
     [filteredBeatmaps, selectedBeatmapIds]
   );
 
-  // Count of deleted beatmaps
   const deletedBeatmapsCount = useMemo(
     () => beatmaps.filter(isDeletedBeatmap).length,
     [beatmaps]

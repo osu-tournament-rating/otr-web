@@ -32,7 +32,6 @@ interface TournamentBeatmapsViewWithCheckboxesProps {
   onSelectBeatmap: (beatmapId: number, checked: boolean) => void;
 }
 
-// Table column width constants
 const COLUMN_WIDTHS = {
   checkbox: 'w-[5%]',
   beatmap: 'w-[10%]',
@@ -49,7 +48,6 @@ const COLUMN_WIDTHS = {
   creator: 'w-[7%]',
 } as const;
 
-// Memoized SortButton component
 const SortButton = memo(
   ({
     field,
@@ -80,7 +78,6 @@ const SortButton = memo(
 );
 SortButton.displayName = 'SortButton';
 
-// Memoized BeatmapRow component for better performance
 const BeatmapRow = memo(
   ({
     beatmap,
