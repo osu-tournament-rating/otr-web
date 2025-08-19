@@ -210,7 +210,7 @@ export function calculateHighlightStats(
 
   highlights.push({
     id: 'consistency',
-    label: 'Consistency King',
+    label: 'Most Consistent',
     value: `${leastMisses.averageMisses.toFixed(PRECISION.MISSES_DECIMAL)} avg misses`,
     sublabel: leastMisses.username,
     icon: 'Shield',

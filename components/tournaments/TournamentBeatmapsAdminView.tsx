@@ -2,7 +2,7 @@
 
 import {
   BeatmapDTO,
-  GameDTO,
+  GameCompactDTO,
   Roles,
 } from '@osu-tournament-rating/otr-api-client';
 import { useState, useCallback, useMemo } from 'react';
@@ -33,7 +33,7 @@ interface TournamentBeatmapsAdminViewProps {
   tournamentId: number;
   tournamentName: string;
   beatmaps: BeatmapDTO[];
-  tournamentGames?: GameDTO[];
+  tournamentGames?: GameCompactDTO[];
 }
 
 const UNKNOWN_ARTIST = 'Unknown Artist';

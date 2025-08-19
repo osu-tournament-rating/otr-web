@@ -1,6 +1,9 @@
 'use client';
 
-import { BeatmapDTO, GameDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  BeatmapDTO,
+  GameCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import {
   Music,
   Star,
@@ -21,7 +24,7 @@ import BeatmapBackground from '../games/BeatmapBackground';
 
 interface TournamentBeatmapsViewProps {
   beatmaps: BeatmapDTO[];
-  tournamentGames?: GameDTO[];
+  tournamentGames?: GameCompactDTO[];
 }
 
 type SortField =

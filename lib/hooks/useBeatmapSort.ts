@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { BeatmapDTO, GameDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  BeatmapDTO,
+  GameCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import { getMostCommonModForBeatmap } from '@/lib/utils/mods';
 
 export type SortField =
@@ -22,7 +25,7 @@ export type SortDirection = 'asc' | 'desc';
 
 interface UseBeatmapSortOptions<T extends BeatmapDTO> {
   beatmaps: T[];
-  tournamentGames?: GameDTO[];
+  tournamentGames?: GameCompactDTO[];
   initialSort?: SortField;
   initialDirection?: SortDirection;
 }
@@ -37,7 +40,7 @@ interface UseBeatmapSortReturn<T extends BeatmapDTO> {
 const getSortValue = (
   beatmap: BeatmapDTO,
   field: SortField,
-  tournamentGames: GameDTO[] = []
+  tournamentGames: GameCompactDTO[] = []
 ): string | number => {
   switch (field) {
     case 'title':
