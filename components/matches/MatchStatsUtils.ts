@@ -1,5 +1,5 @@
 import {
-  MatchStatisticsDTO,
+  MatchDTO,
   PlayerMatchStatsDTO,
   RatingAdjustmentDTO,
   PlayerCompactDTO,
@@ -83,13 +83,13 @@ const PRECISION = {
 } as const;
 
 export function processMatchStatistics(
-  stats: MatchStatisticsDTO,
+  match: MatchDTO,
   players: PlayerCompactDTO[]
 ): ProcessedPlayerStats[] {
   if (
-    !stats?.playerMatchStats ||
-    !Array.isArray(stats.playerMatchStats) ||
-    stats.playerMatchStats.length === 0
+    !match?.playerMatchStats ||
+    !Array.isArray(match.playerMatchStats) ||
+    match.playerMatchStats.length === 0
   ) {
     return [];
   }
@@ -100,12 +100,14 @@ export function processMatchStatistics(
 
   // Map rating adjustments to players by matching array indices
   // The API guarantees rating adjustments are in the same order as playerMatchStats
+  // TODO: Once the API client is regenerated with playerId field, update this to use
+  // adjustment.playerId for more robust matching instead of relying on array order
   if (
-    stats.ratingAdjustments &&
-    stats.ratingAdjustments.length === stats.playerMatchStats.length
+    match.ratingAdjustments &&
+    match.ratingAdjustments.length === match.playerMatchStats.length
   ) {
-    stats.playerMatchStats.forEach((playerStats, index) => {
-      const adjustment = stats.ratingAdjustments[index];
+    match.playerMatchStats.forEach((playerStats, index) => {
+      const adjustment = match.ratingAdjustments?.[index];
       if (adjustment) {
         ratingAdjustmentMap.set(playerStats.playerId, adjustment);
       }
@@ -114,7 +116,7 @@ export function processMatchStatistics(
 
   const processed: ProcessedPlayerStats[] = [];
 
-  stats.playerMatchStats.forEach((playerStats: PlayerMatchStatsDTO) => {
+  match.playerMatchStats.forEach((playerStats: PlayerMatchStatsDTO) => {
     const playerId = playerStats.playerId;
     const playerInfo = playerMap.get(playerId);
     const ratingAdjustment = ratingAdjustmentMap.get(playerId);

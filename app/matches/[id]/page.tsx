@@ -2,7 +2,7 @@ import GameCard from '@/components/games/GameCard';
 import MatchCard from '@/components/matches/MatchCard';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { get, getStats } from '@/lib/actions/matches';
+import { get } from '@/lib/actions/matches';
 import { Metadata } from 'next';
 import MatchStatsView from '@/components/matches/MatchStatsView';
 import { Gamepad2, BarChart3 } from 'lucide-react';
@@ -21,7 +21,6 @@ export async function generateMetadata({
 export default async function Page({ params }: PageProps) {
   const matchId = (await params).id;
   const match = await get({ id: matchId });
-  const stats = await getStats(matchId);
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;
   const gameCount = match.games?.length ?? 0;
@@ -73,15 +72,7 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="stats" className="mt-4">
           {isVerified ? (
-            stats ? (
-              <MatchStatsView stats={stats} match={match} />
-            ) : (
-              <Card className="p-6 font-sans">
-                <div className="flex h-32 items-center justify-center text-muted-foreground">
-                  No statistics available for this match
-                </div>
-              </Card>
-            )
+            <MatchStatsView match={match} />
           ) : (
             <Card className="p-6 font-sans">
               <div className="flex flex-col items-center justify-center gap-4 py-8">

@@ -11,10 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
-import {
-  MatchStatisticsDTO,
-  MatchDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
 import {
@@ -40,7 +37,6 @@ type SortKey = keyof ProcessedPlayerStats;
 type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
-  stats: MatchStatisticsDTO;
   match: MatchDTO;
 }
 
@@ -72,7 +68,7 @@ const StatsProcessingCard = React.memo(() => (
 ));
 StatsProcessingCard.displayName = 'StatsProcessingCard';
 
-export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
+export default function MatchStatsView({ match }: MatchStatsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>(
     UI_CONSTANTS.DEFAULT_SORT_KEY
   );
@@ -81,20 +77,20 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
   );
 
   const hasCompleteStats =
-    stats &&
-    stats.playerMatchStats &&
-    Array.isArray(stats.playerMatchStats) &&
-    stats.playerMatchStats.length > 0;
+    match &&
+    match.playerMatchStats &&
+    Array.isArray(match.playerMatchStats) &&
+    match.playerMatchStats.length > 0;
   const processedPlayers = useMemo(
     () =>
       hasCompleteStats
-        ? processMatchStatistics(stats, match.players ?? [])
+        ? processMatchStatistics(match, match.players ?? [])
         : [],
-    [stats, match.players, hasCompleteStats]
+    [match, hasCompleteStats]
   );
   const highlightStats = useMemo(
-    () => calculateHighlightStats(processedPlayers, match.matchWinRecord),
-    [processedPlayers, match.matchWinRecord]
+    () => calculateHighlightStats(processedPlayers, match.winRecord),
+    [processedPlayers, match.winRecord]
   );
 
   // Calculate average rating for the pill
