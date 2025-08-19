@@ -26,8 +26,8 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
   const uniquePlayersCount = uniquePlayerIds.size;
 
   return (
-    <Card className="mx-4 border-0 bg-secondary px-0.5 py-2 lg:px-0">
-      <div className="relative mx-2 flex h-32 flex-col overflow-hidden rounded-xl">
+    <Card className="border-0 bg-secondary p-2">
+      <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
         {/* Background collage */}
         <div className="absolute inset-0 z-1 flex overflow-hidden blur-xs">
           {hasGames ? (
