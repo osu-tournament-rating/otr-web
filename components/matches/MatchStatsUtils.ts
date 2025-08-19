@@ -3,8 +3,9 @@ import {
   PlayerMatchStatsDTO,
   RatingAdjustmentDTO,
   PlayerCompactDTO,
+  MatchWinRecordDTO,
 } from '@osu-tournament-rating/otr-api-client';
-import { TierName, getTierFromRating } from '@/lib/utils/tierData';
+import { TierName } from '@/lib/utils/tierData';
 
 export type HighlightColor =
   | 'blue'
@@ -149,12 +150,120 @@ function createHighlightPlayer(player: ProcessedPlayerStats): HighlightPlayer {
 }
 
 export function calculateHighlightStats(
-  players: ProcessedPlayerStats[]
+  players: ProcessedPlayerStats[],
+  matchWinRecord?: MatchWinRecordDTO
 ): HighlightStat[] {
   const highlights: HighlightStat[] = [];
 
   if (players.length === 0) {
     return highlights;
+  }
+
+  // Calculate total match score using matchWinRecord if available, otherwise use player stats
+  if (matchWinRecord) {
+    // Use the actual match scoreline from the win record
+    const winnerScore = matchWinRecord.winnerPoints;
+    const loserScore = matchWinRecord.loserPoints;
+
+    // Determine which team won based on winnerTeam (1=Red, 2=Blue) or if it's a tie
+    const isRedWinner = matchWinRecord.winnerTeam === 1;
+    const isBlueWinner = matchWinRecord.winnerTeam === 2;
+    const isTied = matchWinRecord.isTied;
+
+    // Format score based on team colors or head-to-head
+    if (isRedWinner || isBlueWinner) {
+      // Team match - show in team color order
+      const redScore = isRedWinner ? winnerScore : loserScore;
+      const blueScore = isBlueWinner ? winnerScore : loserScore;
+
+      highlights.push({
+        id: 'match-score',
+        label: 'Match Score',
+        value: `${redScore} - ${blueScore}`,
+        sublabel: isTied
+          ? 'Draw'
+          : isRedWinner
+            ? 'Red Team Wins'
+            : 'Blue Team Wins',
+        icon: 'Swords',
+        color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
+      });
+    } else {
+      // Head-to-head or FFA - show winner vs loser score
+      const winner = players.find((p) => p.won);
+
+      highlights.push({
+        id: 'match-score',
+        label: 'Match Score',
+        value: isTied
+          ? `${winnerScore} - ${loserScore}`
+          : `${winnerScore} - ${loserScore}`,
+        sublabel: isTied ? 'Draw' : winner?.username,
+        icon: 'Swords',
+        color: 'purple',
+        player: winner ? createHighlightPlayer(winner) : undefined,
+      });
+    }
+  } else {
+    // Fallback to calculating from player stats if no win record available
+    const hasTeams = players.some((p) => p.team !== undefined);
+
+    if (hasTeams) {
+      // Calculate team scores by looking at the first player from each team
+      // In team matches, all players on a team have the same W-L record
+      const redPlayer = players.find((p) => p.team === ('red' as TeamColor));
+      const bluePlayer = players.find((p) => p.team === ('blue' as TeamColor));
+
+      const redScore = redPlayer?.gamesWon ?? 0;
+      const blueScore = bluePlayer?.gamesWon ?? 0;
+
+      highlights.push({
+        id: 'match-score',
+        label: 'Match Score',
+        value: `${redScore} - ${blueScore}`,
+        sublabel:
+          redScore > blueScore
+            ? 'Red Team Wins'
+            : blueScore > redScore
+              ? 'Blue Team Wins'
+              : 'Draw',
+        icon: 'Swords',
+        color:
+          redScore > blueScore
+            ? 'red'
+            : blueScore > redScore
+              ? 'blue'
+              : 'purple',
+      });
+    } else if (players.length === 2) {
+      // 1v1 match - show head-to-head score
+      const [player1, player2] = players;
+      highlights.push({
+        id: 'match-score',
+        label: 'Match Score',
+        value: `${player1.gamesWon} - ${player2.gamesWon}`,
+        sublabel: player1.won ? player1.username : player2.username,
+        icon: 'Swords',
+        color: 'purple',
+        player: player1.won
+          ? createHighlightPlayer(player1)
+          : createHighlightPlayer(player2),
+      });
+    } else {
+      // Free-for-all or other format - show total games played
+      const totalGames = Math.max(...players.map((p) => p.gamesPlayed));
+      const winner = players.find((p) => p.won);
+
+      highlights.push({
+        id: 'match-score',
+        label: 'Match Summary',
+        value: `${totalGames} games`,
+        sublabel: winner ? `${winner.username} wins` : undefined,
+        icon: 'Trophy',
+        color: 'amber',
+        player: winner ? createHighlightPlayer(winner) : undefined,
+      });
+    }
   }
 
   const topAccuracy = players.reduce((prev, curr) =>
@@ -234,30 +343,6 @@ export function calculateHighlightStats(
       icon: 'TrendingUp',
       color: 'green',
       player: createHighlightPlayer(biggestGain),
-    });
-  }
-
-  const playersWithRatings = players.filter(
-    (p): p is ProcessedPlayerStats & { ratingAfter: number } =>
-      p.ratingAfter !== null
-  );
-  if (playersWithRatings.length > 0) {
-    const ratings = playersWithRatings.map((p) => p.ratingAfter);
-    const averageRating =
-      ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-
-    const tierInfo = getTierFromRating(averageRating);
-
-    highlights.push({
-      id: 'average-tr',
-      label: 'Average Rating',
-      value: `${averageRating.toFixed(0)} TR`,
-      icon: 'Swords',
-      color: 'amber',
-      tierIcon: {
-        tier: tierInfo.tier,
-        subTier: tierInfo.subTier,
-      },
     });
   }
 

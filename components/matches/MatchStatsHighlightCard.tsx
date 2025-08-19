@@ -22,8 +22,8 @@ const AVATAR_SIZE = {
 } as const;
 
 const TIER_ICON_SIZE = {
-  WIDTH: 16,
-  HEIGHT: 16,
+  WIDTH: 18,
+  HEIGHT: 18,
 } as const;
 
 const STATS_WITH_STATUS_DOT = [
@@ -119,7 +119,6 @@ export default function MatchStatsHighlightCard({
       role="article"
       aria-label={ariaLabel}
     >
-      {/* Unified layout for all cards */}
       <div className="flex h-full flex-col">
         {/* Top row with icon and title */}
         <div className="mb-3 flex items-center justify-between">
@@ -141,7 +140,7 @@ export default function MatchStatsHighlightCard({
             />
           </div>
 
-          {/* Title in top-right for all cards */}
+          {/* Title in top-right */}
           <p className="text-right text-[10px] font-medium tracking-wide text-muted-foreground/70 uppercase sm:text-[11px] lg:text-[11px]">
             {stat.label}
           </p>
@@ -153,7 +152,7 @@ export default function MatchStatsHighlightCard({
             {stat.value}
           </p>
 
-          <div className="mt-1.5">
+          <div>
             {stat.tierIcon && (
               <div className="flex items-center gap-1.5">
                 <TierIcon

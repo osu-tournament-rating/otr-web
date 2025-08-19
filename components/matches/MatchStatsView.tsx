@@ -10,13 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  BarChart3,
-  Users,
-} from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
 import {
   MatchStatisticsDTO,
   MatchDTO,
@@ -29,6 +23,8 @@ import {
   ProcessedPlayerStats,
 } from './MatchStatsUtils';
 import SimpleTooltip from '@/components/simple-tooltip';
+import TierIcon from '@/components/icons/TierIcon';
+import { getTierFromRating } from '@/lib/utils/tierData';
 
 const UI_CONSTANTS = {
   DEFAULT_SORT_KEY: 'ratingDelta' as const,
@@ -97,9 +93,28 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
     [stats, match.players, hasCompleteStats]
   );
   const highlightStats = useMemo(
-    () => calculateHighlightStats(processedPlayers),
-    [processedPlayers]
+    () => calculateHighlightStats(processedPlayers, match.matchWinRecord),
+    [processedPlayers, match.matchWinRecord]
   );
+
+  // Calculate average rating for the pill
+  const averageRatingInfo = useMemo(() => {
+    const playersWithRatings = processedPlayers.filter(
+      (p) => p.ratingAfter !== null
+    );
+    if (playersWithRatings.length === 0) return null;
+
+    const ratings = playersWithRatings.map((p) => p.ratingAfter as number);
+    const averageRating =
+      ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+    const tierInfo = getTierFromRating(averageRating);
+
+    return {
+      rating: Math.round(averageRating),
+      tier: tierInfo.tier,
+      subTier: tierInfo.subTier,
+    };
+  }, [processedPlayers]);
   const sortedPlayers = useMemo(() => {
     return [...processedPlayers].sort((a, b) => {
       const aVal = a[sortKey];
@@ -171,24 +186,35 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
 
   return (
     <Card className="p-4 md:p-5 lg:p-5">
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:mb-3.5">
+      <div className="mb-3 flex items-center justify-between lg:mb-3.5">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 lg:h-9 lg:w-9">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 lg:h-9 lg:w-9">
             <BarChart3 className="h-4 w-4 text-primary lg:h-4.5 lg:w-4.5" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold">Match Statistics</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-semibold sm:text-lg">
+              Match Statistics
+            </h3>
             <p className="text-xs text-muted-foreground">
               Performance insights & player metrics
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-0.5 text-sm text-muted-foreground">
-          <Users className="h-3 w-3" />
-          <span className="text-xs font-medium">
-            {processedPlayers.length} players
-          </span>
-        </div>
+        {averageRatingInfo && (
+          <SimpleTooltip content="Average rating of the lobby">
+            <div className="ml-2 flex shrink-0 items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/70">
+              <TierIcon
+                tier={averageRatingInfo.tier}
+                subTier={averageRatingInfo.subTier}
+                width={18}
+                height={18}
+              />
+              <span className="text-sm font-medium">
+                {averageRatingInfo.rating}TR
+              </span>
+            </div>
+          </SimpleTooltip>
+        )}
       </div>
 
       <div className="mb-3 lg:mb-3.5">
@@ -213,7 +239,7 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
               Player Performance
             </h4>
             <span className="text-xs text-muted-foreground">
-              Click headers to sort
+              Average performance statistics
             </span>
           </div>
         </div>
@@ -250,13 +276,13 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
                   </SortButton>
                 </TableHead>
                 <TableHead className="hidden md:table-cell">
-                  <SortButton column="averageScore">Avg Score</SortButton>
+                  <SortButton column="averageScore">Score</SortButton>
                 </TableHead>
                 <TableHead className="hidden lg:table-cell">
                   <SortButton column="averageAccuracy">Accuracy</SortButton>
                 </TableHead>
                 <TableHead className="hidden lg:table-cell">
-                  <SortButton column="averageMisses">Avg Misses</SortButton>
+                  <SortButton column="averageMisses">Misses</SortButton>
                 </TableHead>
                 <TableHead className="hidden xl:table-cell">
                   <SortButton column="averagePlacement">Placement</SortButton>
