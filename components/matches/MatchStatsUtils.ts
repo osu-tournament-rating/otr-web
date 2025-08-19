@@ -98,19 +98,10 @@ export function processMatchStatistics(
 
   const ratingAdjustmentMap = new Map<number, RatingAdjustmentDTO>();
 
-  // Map rating adjustments to players by matching array indices
-  // The API guarantees rating adjustments are in the same order as playerMatchStats
-  // TODO: Once the API client is regenerated with playerId field, update this to use
-  // adjustment.playerId for more robust matching instead of relying on array order
-  if (
-    match.ratingAdjustments &&
-    match.ratingAdjustments.length === match.playerMatchStats.length
-  ) {
-    match.playerMatchStats.forEach((playerStats, index) => {
-      const adjustment = match.ratingAdjustments?.[index];
-      if (adjustment) {
-        ratingAdjustmentMap.set(playerStats.playerId, adjustment);
-      }
+  // Map rating adjustments to players using the playerId field
+  if (match.ratingAdjustments && match.ratingAdjustments.length > 0) {
+    match.ratingAdjustments.forEach((adjustment) => {
+      ratingAdjustmentMap.set(adjustment.playerId, adjustment);
     });
   }
 
