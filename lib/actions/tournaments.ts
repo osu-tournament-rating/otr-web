@@ -96,3 +96,11 @@ export async function getBeatmaps(id: number) {
 export async function deleteBeatmaps(id: number) {
   await tournaments.deleteBeatmaps({ id });
 }
+
+export async function insertBeatmaps(id: number, beatmapIds: number[]) {
+  await tournaments.insertBeatmaps({ id, body: beatmapIds });
+}
+
+export async function deleteSpecificBeatmaps(id: number, beatmapIds: number[]) {
+  await tournaments.deleteBeatmaps({ id, body: beatmapIds });
+}
