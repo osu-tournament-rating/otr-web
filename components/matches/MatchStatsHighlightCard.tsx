@@ -119,8 +119,10 @@ export default function MatchStatsHighlightCard({
       role="article"
       aria-label={ariaLabel}
     >
-      <div className="flex h-full flex-col lg:flex-row lg:items-start lg:gap-2">
-        <div className="mb-2 flex-shrink-0 lg:mb-0">
+      {/* Unified layout for all cards */}
+      <div className="flex h-full flex-col">
+        {/* Top row with icon and title */}
+        <div className="mb-3 flex items-center justify-between">
           <div
             className={cn(
               'inline-flex items-center justify-center',
@@ -138,20 +140,20 @@ export default function MatchStatsHighlightCard({
               )}
             />
           </div>
+
+          {/* Title in top-right for all cards */}
+          <p className="text-right text-[10px] font-medium tracking-wide text-muted-foreground/70 uppercase sm:text-[11px] lg:text-[11px]">
+            {stat.label}
+          </p>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col justify-between">
-          <div>
-            <p className="text-[10px] font-medium tracking-wide text-muted-foreground/70 uppercase sm:text-[11px] lg:text-[11px]">
-              {stat.label}
-            </p>
+        {/* Value and additional info */}
+        <div className="flex flex-1 flex-col justify-center">
+          <p className="text-base font-bold tracking-tight text-foreground sm:text-lg lg:text-base xl:text-lg">
+            {stat.value}
+          </p>
 
-            <p className="mt-0.5 text-base font-bold tracking-tight text-foreground sm:text-lg lg:text-base xl:text-lg">
-              {stat.value}
-            </p>
-          </div>
-
-          <div className="mt-1 lg:mt-0.5">
+          <div className="mt-1.5">
             {stat.tierIcon && (
               <div className="flex items-center gap-1.5">
                 <TierIcon
