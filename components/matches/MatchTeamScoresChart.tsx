@@ -285,6 +285,7 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
       });
   }, [games]);
 
+  // y-axis tick generation: 5 ticks, rounded to nearest 5k of domain
   const { domain, ticks } = useMemo(() => {
     if (chartData.length === 0)
       return { domain: [0, 100000], ticks: [0, 25000, 50000, 75000, 100000] };
@@ -311,10 +312,7 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
     const domainMin = Math.max(0, roundToNearest5k(minScore - 5000, true));
     const domainMax = roundToNearest5k(maxScore + 5000, false);
 
-    // Calculate interval for exactly 5 ticks
     const interval = (domainMax - domainMin) / 4;
-
-    // Generate exactly 5 ticks
     const ticks = Array.from({ length: 5 }, (_, i) => domainMin + interval * i);
 
     return { domain: [domainMin, domainMax], ticks };
