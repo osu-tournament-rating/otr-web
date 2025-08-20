@@ -7,20 +7,16 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip as RechartsTooltip,
   ReferenceLine,
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
+import { ChartTooltip } from '@/components/ui/chart';
 import { Card } from '@/components/ui/card';
-import { GameDTO, Team } from '@osu-tournament-rating/otr-api-client';
+import { GameDTO, Team, Mods } from '@osu-tournament-rating/otr-api-client';
 import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModsEnumHelper } from '@/lib/enums';
 
 interface ScoreGapChartProps {
   games: GameDTO[] | undefined;
@@ -39,59 +35,25 @@ interface ChartDataPoint {
   mods: string;
 }
 
-const CHART_CONFIG = {
-  red: {
-    label: 'Red Team',
-    color: '#ef4444',
-  },
-  blue: {
-    label: 'Blue Team',
-    color: '#3b82f6',
-  },
-  tie: {
-    label: 'Tied',
-    color: '#6b7280',
-  },
+const CHART_COLORS = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  tie: '#6b7280',
 } as const;
 
 const CHART_CONSTANTS = {
   BAR_RADIUS: 4,
-  MAX_BAR_SIZE: 60,
-  Y_AXIS_WIDTH: 60,
-  DEFAULT_MARGIN: { top: 20, right: 20, bottom: 30, left: 20 },
 } as const;
 
 function formatMods(mods: number): string {
-  // Convert mod bitflags to readable string
-  const modMap: Record<number, string> = {
-    0: 'NM',
-    1: 'NF',
-    2: 'EZ',
-    4: 'TD',
-    8: 'HD',
-    16: 'HR',
-    32: 'SD',
-    64: 'DT',
-    128: 'RX',
-    256: 'HT',
-    512: 'NC',
-    1024: 'FL',
-    2048: 'AT',
-    4096: 'SO',
-    8192: 'AP',
-    16384: 'PF',
-  };
+  if (mods === 0 || mods === Mods.None) return 'NM';
 
-  if (mods === 0) return 'NM';
+  const modFlags = ModsEnumHelper.getFlags(mods as Mods);
+  const modTexts = modFlags
+    .map((flag) => ModsEnumHelper.metadata[flag].text)
+    .filter((text) => text);
 
-  const activeMods: string[] = [];
-  Object.entries(modMap).forEach(([bit, name]) => {
-    if (mods & parseInt(bit)) {
-      activeMods.push(name);
-    }
-  });
-
-  return activeMods.join(' ');
+  return modTexts.length > 0 ? modTexts.join(' ') : 'NM';
 }
 
 function calculateYAxisDomain(data: ChartDataPoint[]): [number, number] {
@@ -106,7 +68,14 @@ function calculateYAxisDomain(data: ChartDataPoint[]): [number, number] {
   return [-rounded, rounded];
 }
 
-function CustomTooltip({ active, payload }: any) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: ChartDataPoint;
+  }>;
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload[0]) return null;
 
   const data = payload[0].payload as ChartDataPoint;
@@ -226,8 +195,8 @@ export default function MatchScoreGapChart({ games }: ScoreGapChartProps) {
   const yDomain = calculateYAxisDomain(chartData);
 
   return (
-    <Card className="p-5 md:p-6">
-      <div className="mb-5 flex items-center gap-3">
+    <Card className="p-4 sm:p-5 md:p-6">
+      <div className="mb-4 flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <BarChart3 className="h-5 w-5 text-primary" />
         </div>
@@ -239,74 +208,80 @@ export default function MatchScoreGapChart({ games }: ScoreGapChartProps) {
         </div>
       </div>
 
-      <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
-        <BarChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            className="stroke-muted/30"
-            vertical={false}
-          />
-          <XAxis
-            dataKey="mapNumber"
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => `${value}`}
-            label={{
-              value: 'Map',
-              position: 'insideBottom',
-              offset: -5,
-              style: { fontSize: 12, fill: 'var(--foreground)' },
-            }}
-          />
-          <YAxis
-            domain={yDomain}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => {
-              const absValue = Math.abs(value);
-              if (absValue >= 1000000) {
-                return `${(value / 1000000).toFixed(1)}M`;
-              } else if (absValue >= 1000) {
-                return `${(value / 1000).toFixed(0)}k`;
-              }
-              return value.toString();
-            }}
-            width={CHART_CONSTANTS.Y_AXIS_WIDTH}
-            label={{
-              value: 'Score Difference',
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontSize: 12, fill: 'var(--foreground)' },
-            }}
-          />
-          <ReferenceLine
-            y={0}
-            stroke="var(--foreground)"
-            strokeWidth={1}
-            strokeOpacity={0.3}
-          />
-          <ChartTooltip
-            content={<CustomTooltip />}
-            cursor={{ fill: 'transparent' }}
-          />
-          <Bar
-            dataKey="scoreDifference"
-            radius={CHART_CONSTANTS.BAR_RADIUS}
-            maxBarSize={CHART_CONSTANTS.MAX_BAR_SIZE}
+      <div className="h-[200px] w-full sm:h-[250px] md:h-[300px] lg:h-[350px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            margin={{ top: 10, right: 5, bottom: 25, left: 5 }}
           >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={
-                  entry.winner === 'red'
-                    ? CHART_CONFIG.red.color
-                    : entry.winner === 'blue'
-                      ? CHART_CONFIG.blue.color
-                      : CHART_CONFIG.tie.color
+            <CartesianGrid
+              strokeDasharray="3 3"
+              className="stroke-muted/30"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="mapNumber"
+              tick={{ fontSize: 10 }}
+              tickFormatter={(value) => `${value}`}
+              interval={0}
+              label={{
+                value: 'Map',
+                position: 'insideBottom',
+                offset: -5,
+                style: { fontSize: 10, fill: 'var(--foreground)' },
+              }}
+            />
+            <YAxis
+              domain={yDomain}
+              tick={{ fontSize: 10 }}
+              tickFormatter={(value) => {
+                const absValue = Math.abs(value);
+                if (absValue >= 1000000) {
+                  return `${(value / 1000000).toFixed(1)}M`;
+                } else if (absValue >= 1000) {
+                  return `${(value / 1000).toFixed(0)}k`;
                 }
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ChartContainer>
+                return value.toString();
+              }}
+              width={40}
+              label={{
+                value: 'Gap',
+                angle: -90,
+                position: 'insideLeft',
+                style: { fontSize: 10, fill: 'var(--foreground)' },
+              }}
+            />
+            <ReferenceLine
+              y={0}
+              stroke="var(--foreground)"
+              strokeWidth={1}
+              strokeOpacity={0.3}
+            />
+            <ChartTooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: 'transparent' }}
+            />
+            <Bar
+              dataKey="scoreDifference"
+              radius={CHART_CONSTANTS.BAR_RADIUS}
+              maxBarSize={30}
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={
+                    entry.winner === 'red'
+                      ? CHART_COLORS.red
+                      : entry.winner === 'blue'
+                        ? CHART_COLORS.blue
+                        : CHART_COLORS.tie
+                  }
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
 
       <div className="mt-4 flex items-center justify-center gap-6 text-xs">
         <div className="flex items-center gap-1.5">

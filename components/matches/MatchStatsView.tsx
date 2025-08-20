@@ -239,10 +239,10 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         <div className="border-b bg-muted/30 px-4 py-3.5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold tracking-wide">
-              Player Performance
+              Match Performance
             </h4>
             <span className="text-xs text-muted-foreground">
-              Average performance statistics
+              Non-rating values are averaged
             </span>
           </div>
         </div>
