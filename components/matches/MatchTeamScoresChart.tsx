@@ -239,7 +239,6 @@ function CustomDot(props: CustomDotProps) {
       fill={payload.winner === 'red' ? '#ef4444' : '#3b82f6'}
       stroke="#fff"
       strokeWidth={2}
-      className="animate-pulse"
     />
   );
 }
