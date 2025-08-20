@@ -171,113 +171,21 @@ export function calculateHighlightStats(
     const isBlueWinner = matchWinRecord.winnerTeam === Team.Blue;
     const isTied = matchWinRecord.isTied;
 
-    // Format score based on team colors or head-to-head
-    if (isRedWinner || isBlueWinner) {
-      // Team match - show in team color order
-      const redScore = isRedWinner ? winnerScore : loserScore;
-      const blueScore = isBlueWinner ? winnerScore : loserScore;
+    // Team match - show in team color order
+    const redScore = isRedWinner ? winnerScore : loserScore;
+    const blueScore = isBlueWinner ? winnerScore : loserScore;
 
-      highlights.push({
-        id: 'match-score',
-        label: 'Match Result',
-        value: `${redScore} - ${blueScore}`,
-        sublabel: isTied ? 'Draw' : isRedWinner ? 'Red wins' : 'Blue wins',
-        icon: 'Swords',
-        color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
-        helpText: isTied
-          ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
-          : undefined,
-      });
-    } else {
-      // Head-to-head or FFA - show winner vs loser score
-      const winner = players.find((p) => p.won);
-
-      highlights.push({
-        id: 'match-score',
-        label: 'Match Result',
-        value: `${winnerScore} - ${loserScore}`,
-        sublabel: isTied ? 'Draw' : winner?.username,
-        icon: 'Swords',
-        color: 'purple',
-        player: winner ? createHighlightPlayer(winner) : undefined,
-        helpText: isTied
-          ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
-          : undefined,
-      });
-    }
-  } else {
-    // Fallback to calculating from player stats if no win record available
-    const hasTeams = players.some((p) => p.team !== undefined);
-
-    if (hasTeams) {
-      // Calculate team scores by looking at the first player from each team
-      // In team matches, all players on a team have the same W-L record
-      const redPlayer = players.find((p) => p.team === ('red' as TeamColor));
-      const bluePlayer = players.find((p) => p.team === ('blue' as TeamColor));
-
-      const redScore = redPlayer?.gamesWon ?? 0;
-      const blueScore = bluePlayer?.gamesWon ?? 0;
-
-      highlights.push({
-        id: 'match-score',
-        label: 'Match Result',
-        value: `${redScore} - ${blueScore}`,
-        sublabel:
-          redScore > blueScore
-            ? 'Red wins'
-            : blueScore > redScore
-              ? 'Blue wins'
-              : 'Draw',
-        icon: 'Swords',
-        color:
-          redScore > blueScore
-            ? 'red'
-            : blueScore > redScore
-              ? 'blue'
-              : 'purple',
-        helpText:
-          redScore === blueScore
-            ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
-            : undefined,
-      });
-    } else if (players.length === 2) {
-      // 1v1 match - show head-to-head score
-      const [player1, player2] = players;
-      highlights.push({
-        id: 'match-score',
-        label: 'Match Result',
-        value: `${player1.gamesWon} - ${player2.gamesWon}`,
-        sublabel:
-          player1.gamesWon === player2.gamesWon
-            ? 'Draw'
-            : player1.won
-              ? player1.username
-              : player2.username,
-        icon: 'Swords',
-        color: 'purple',
-        player: player1.won
-          ? createHighlightPlayer(player1)
-          : createHighlightPlayer(player2),
-        helpText:
-          player1.gamesWon === player2.gamesWon
-            ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
-            : undefined,
-      });
-    } else {
-      // Free-for-all or other format - show total games played
-      const totalGames = Math.max(...players.map((p) => p.gamesPlayed));
-      const winner = players.find((p) => p.won);
-
-      highlights.push({
-        id: 'match-score',
-        label: 'Match Summary',
-        value: `${totalGames} maps`,
-        sublabel: winner ? winner.username : 'Free for all',
-        icon: 'Trophy',
-        color: 'amber',
-        player: winner ? createHighlightPlayer(winner) : undefined,
-      });
-    }
+    highlights.push({
+      id: 'match-score',
+      label: 'Match Result',
+      value: `${redScore} - ${blueScore}`,
+      sublabel: isTied ? 'Draw' : isRedWinner ? 'Red wins' : 'Blue wins',
+      icon: 'Swords',
+      color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
+      helpText: isTied
+        ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
+        : undefined,
+    });
   }
 
   const topAccuracy = players.reduce((prev, curr) =>

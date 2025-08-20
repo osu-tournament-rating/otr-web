@@ -290,8 +290,8 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
   }
 
   return (
-    <Card className="p-4 sm:p-5 md:p-6">
-      <div className="mb-4 flex items-center gap-3">
+    <Card className="p-4 pb-0">
+      <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <LineChartIcon className="h-5 w-5 text-primary" />
         </div>
@@ -311,17 +311,6 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
           data={chartData}
           margin={{ top: 10, right: 10, left: 0, bottom: 30 }}
         >
-          <defs>
-            <linearGradient id="redGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-
           <CartesianGrid
             strokeDasharray="3 3"
             className="stroke-muted/30"
@@ -385,22 +374,6 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
           />
         </LineChart>
       </ChartContainer>
-
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-red-500" />
-            <span className="font-medium">Red Team</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-blue-500" />
-            <span className="font-medium">Blue Team</span>
-          </div>
-        </div>
-      </div>
     </Card>
   );
 }

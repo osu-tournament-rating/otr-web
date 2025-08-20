@@ -35,7 +35,7 @@ const UI_CONSTANTS = {
   },
 } as const;
 
-type SortKey = keyof ProcessedPlayerStats;
+type SortKey = keyof ProcessedPlayerStats | 'netWins';
 type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
@@ -115,8 +115,17 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
   }, [processedPlayers]);
   const sortedPlayers = useMemo(() => {
     return [...processedPlayers].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      let aVal: string | number | boolean | null | undefined;
+      let bVal: string | number | boolean | null | undefined;
+
+      // Special handling for netWins (W-L column)
+      if (sortKey === 'netWins') {
+        aVal = a.gamesWon - a.gamesLost;
+        bVal = b.gamesWon - b.gamesLost;
+      } else {
+        aVal = a[sortKey as keyof ProcessedPlayerStats];
+        bVal = b[sortKey as keyof ProcessedPlayerStats];
+      }
 
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return sortDirection === 'asc' ? -1 : 1;
@@ -181,16 +190,13 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
 
   return (
     <Card className="p-5 md:p-6">
-      <div className="mb-5 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold">Match Performance</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Player statistics and achievements
-            </p>
           </div>
         </div>
         {averageRatingInfo && (
@@ -210,29 +216,23 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         )}
       </div>
 
-      <div className="mb-5">
-        <div
-          className={`grid gap-3 ${
-            highlightStats.length === 4
-              ? UI_CONSTANTS.GRID_LAYOUTS.FOUR_CARDS
-              : highlightStats.length === 5
-                ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
-                : highlightStats.length === 6
-                  ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
-                  : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
-          }`}
-        >
-          {highlightStats.map((stat) => (
-            <MatchStatsHighlightCard key={stat.id} stat={stat} />
-          ))}
-        </div>
+      <div
+        className={`grid gap-3 ${
+          highlightStats.length === 5
+            ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
+            : highlightStats.length === 6
+              ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
+              : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
+        }`}
+      >
+        {highlightStats.map((stat) => (
+          <MatchStatsHighlightCard key={stat.id} stat={stat} />
+        ))}
       </div>
 
       {/* Team scores chart */}
       {match.games && match.games.length > 0 && (
-        <div className="mb-5">
-          <MatchTeamScoresChart games={match.games} />
-        </div>
+        <MatchTeamScoresChart games={match.games} />
       )}
 
       <div className="overflow-hidden rounded-xl border bg-card/50">
@@ -251,16 +251,18 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {/* Player column - always visible */}
-                <TableHead className="min-w-[140px] sm:min-w-[180px]">
+                <TableHead className="max-w-[160px] min-w-[160px] pl-5">
                   <SortButton column="username">Player</SortButton>
                 </TableHead>
 
                 {/* W-L column - visible in non-1v1 matches */}
                 {!is1v1Match && (
-                  <TableHead className="w-[50px] text-center sm:w-[60px]">
-                    <SimpleTooltip content="Points won/lost this match">
-                      <span aria-label="Wins and losses">W-L</span>
-                    </SimpleTooltip>
+                  <TableHead className="w-[70px] text-center sm:w-[80px]">
+                    <SortButton column="netWins">
+                      <SimpleTooltip content="Points won/lost this match">
+                        <span aria-label="Wins and losses">W-L</span>
+                      </SimpleTooltip>
+                    </SortButton>
                   </TableHead>
                 )}
 

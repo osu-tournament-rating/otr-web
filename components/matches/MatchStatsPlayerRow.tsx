@@ -67,7 +67,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
       )}
     >
       {/* Player column */}
-      <TableCell className="py-2">
+      <TableCell className="w-[140px] max-w-[160px] py-2">
         <Link
           href={`/players/${player.osuId}`}
           className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5"
