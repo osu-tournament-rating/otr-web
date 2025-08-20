@@ -36,13 +36,3 @@ export async function deletePlayerScores(matchId: number, playerId: number) {
   });
   return result;
 }
-
-export async function getStats(id: number) {
-  try {
-    const { result } = await matches.getStatistics({ id });
-    return result;
-  } catch (error) {
-    console.error('Failed to fetch match statistics:', error);
-    return null;
-  }
-}

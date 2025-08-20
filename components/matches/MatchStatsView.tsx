@@ -10,33 +10,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  BarChart3,
-  Users,
-} from 'lucide-react';
-import {
-  MatchStatisticsDTO,
-  MatchDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
+import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
+import MatchTeamScoresChart from './MatchTeamScoresChart';
 import {
   processMatchStatistics,
   calculateHighlightStats,
   ProcessedPlayerStats,
 } from './MatchStatsUtils';
 import SimpleTooltip from '@/components/simple-tooltip';
+import TierIcon from '@/components/icons/TierIcon';
+import { getTierFromRating } from '@/lib/utils/tierData';
 
 const UI_CONSTANTS = {
   DEFAULT_SORT_KEY: 'ratingDelta' as const,
   DEFAULT_SORT_DIRECTION: 'desc' as const,
   GRID_LAYOUTS: {
-    FOUR_CARDS: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2',
-    SIX_CARDS: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
-    DEFAULT: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3',
+    FOUR_CARDS: 'grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4',
+    FIVE_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5',
+    SIX_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6',
+    DEFAULT: 'grid-cols-2 md:grid-cols-3',
   },
 } as const;
 
@@ -44,7 +39,6 @@ type SortKey = keyof ProcessedPlayerStats;
 type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
-  stats: MatchStatisticsDTO;
   match: MatchDTO;
 }
 
@@ -76,7 +70,7 @@ const StatsProcessingCard = React.memo(() => (
 ));
 StatsProcessingCard.displayName = 'StatsProcessingCard';
 
-export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
+export default function MatchStatsView({ match }: MatchStatsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>(
     UI_CONSTANTS.DEFAULT_SORT_KEY
   );
@@ -85,21 +79,40 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
   );
 
   const hasCompleteStats =
-    stats &&
-    stats.playerMatchStats &&
-    Array.isArray(stats.playerMatchStats) &&
-    stats.playerMatchStats.length > 0;
+    match &&
+    match.playerMatchStats &&
+    Array.isArray(match.playerMatchStats) &&
+    match.playerMatchStats.length > 0;
   const processedPlayers = useMemo(
     () =>
       hasCompleteStats
-        ? processMatchStatistics(stats, match.players ?? [])
+        ? processMatchStatistics(match, match.players ?? [])
         : [],
-    [stats, match.players, hasCompleteStats]
+    [match, hasCompleteStats]
   );
   const highlightStats = useMemo(
-    () => calculateHighlightStats(processedPlayers),
-    [processedPlayers]
+    () => calculateHighlightStats(processedPlayers, match.winRecord),
+    [processedPlayers, match.winRecord]
   );
+
+  // Calculate average rating for the pill
+  const averageRatingInfo = useMemo(() => {
+    const playersWithRatings = processedPlayers.filter(
+      (p) => p.ratingAfter !== null
+    );
+    if (playersWithRatings.length === 0) return null;
+
+    const ratings = playersWithRatings.map((p) => p.ratingAfter as number);
+    const averageRating =
+      ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+    const tierInfo = getTierFromRating(averageRating);
+
+    return {
+      rating: Math.round(averageRating),
+      tier: tierInfo.tier,
+      subTier: tierInfo.subTier,
+    };
+  }, [processedPlayers]);
   const sortedPlayers = useMemo(() => {
     return [...processedPlayers].sort((a, b) => {
       const aVal = a[sortKey];
@@ -146,15 +159,12 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 h-7 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent"
+          className="-ml-3 h-7 px-1 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent sm:px-2"
           onClick={() => handleSort(column)}
           aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
           aria-pressed={isActive}
         >
-          <span className="hidden sm:inline">{children}</span>
-          <span className="sm:hidden">
-            {typeof children === 'string' ? children.split(' ')[0] : children}
-          </span>
+          <span className="truncate">{children}</span>
           {sortIcon}
         </Button>
       );
@@ -170,35 +180,46 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
   }
 
   return (
-    <Card className="p-4 md:p-5 lg:p-5">
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:mb-3.5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 lg:h-9 lg:w-9">
-            <BarChart3 className="h-4 w-4 text-primary lg:h-4.5 lg:w-4.5" />
+    <Card className="p-5 md:p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold">Match Statistics</h3>
-            <p className="text-xs text-muted-foreground">
-              Performance insights & player metrics
+          <div className="min-w-0 flex-1">
+            <h3 className="text-lg font-semibold">Match Performance</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Player statistics and achievements
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-0.5 text-sm text-muted-foreground">
-          <Users className="h-3 w-3" />
-          <span className="text-xs font-medium">
-            {processedPlayers.length} players
-          </span>
-        </div>
+        {averageRatingInfo && (
+          <SimpleTooltip content="Average rating of players in this match">
+            <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
+              <TierIcon
+                tier={averageRatingInfo.tier}
+                subTier={averageRatingInfo.subTier}
+                width={20}
+                height={20}
+              />
+              <span className="text-sm font-semibold text-foreground">
+                {averageRatingInfo.rating} TR
+              </span>
+            </div>
+          </SimpleTooltip>
+        )}
       </div>
 
-      <div className="mb-3 lg:mb-3.5">
+      <div className="mb-5">
         <div
-          className={`grid gap-2 lg:gap-1.5 ${
+          className={`grid gap-3 ${
             highlightStats.length === 4
               ? UI_CONSTANTS.GRID_LAYOUTS.FOUR_CARDS
-              : highlightStats.length === 6
-                ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
-                : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
+              : highlightStats.length === 5
+                ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
+                : highlightStats.length === 6
+                  ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
+                  : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
           }`}
         >
           {highlightStats.map((stat) => (
@@ -206,14 +227,22 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
           ))}
         </div>
       </div>
+
+      {/* Team scores chart */}
+      {match.games && match.games.length > 0 && (
+        <div className="mb-5">
+          <MatchTeamScoresChart games={match.games} />
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border bg-card/50">
         <div className="border-b bg-muted/30 px-4 py-3.5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold tracking-wide">
-              Player Performance
+              Player Statistics
             </h4>
             <span className="text-xs text-muted-foreground">
-              Click headers to sort
+              Non-rating values are averaged
             </span>
           </div>
         </div>
@@ -221,45 +250,61 @@ export default function MatchStatsView({ stats, match }: MatchStatsViewProps) {
           <Table role="table" aria-label="Player performance statistics">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[160px] sm:min-w-[200px] md:min-w-[180px]">
+                {/* Player column - always visible */}
+                <TableHead className="min-w-[140px] sm:min-w-[180px]">
                   Player
                 </TableHead>
+
+                {/* W-L column - visible in non-1v1 matches */}
                 {!is1v1Match && (
-                  <TableHead className="w-[60px] sm:w-[70px]">
+                  <TableHead className="w-[50px] text-center sm:w-[60px]">
                     <SimpleTooltip content="Points won/lost this match">
                       <span aria-label="Wins and losses">W-L</span>
                     </SimpleTooltip>
                   </TableHead>
                 )}
-                <TableHead className="w-[70px] sm:w-[80px] md:w-[100px]">
+
+                {/* Rating columns - always visible with responsive labels */}
+                <TableHead className="w-[60px] text-center sm:w-[70px]">
                   <SortButton column="ratingBefore">
                     <span className="hidden sm:inline">Before</span>
                     <span className="sm:hidden">Pre</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[70px] sm:w-[80px] md:w-[100px]">
+                <TableHead className="w-[60px] text-center sm:w-[70px]">
                   <SortButton column="ratingAfter">
                     <span className="hidden sm:inline">After</span>
                     <span className="sm:hidden">Post</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[80px] sm:w-[90px] md:w-[100px]">
+                <TableHead className="w-[70px] text-center sm:w-[80px]">
                   <SortButton column="ratingDelta">
                     <span className="hidden sm:inline">Change</span>
-                    <span className="sm:hidden">Δ</span>
+                    <span className="sm:hidden">+/-</span>
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <SortButton column="averageScore">Avg Score</SortButton>
+
+                {/* Performance metrics - hidden on mobile, visible on md+ */}
+                <TableHead className="hidden text-center md:table-cell md:w-[80px]">
+                  <SortButton column="averageScore">Score</SortButton>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <SortButton column="averageAccuracy">Accuracy</SortButton>
+                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
+                  <SortButton column="averageAccuracy">
+                    <span className="hidden lg:inline">Accuracy</span>
+                    <span className="lg:hidden">Acc</span>
+                  </SortButton>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <SortButton column="averageMisses">Avg Misses</SortButton>
+                <TableHead className="hidden text-center md:table-cell md:w-[60px]">
+                  <SortButton column="averageMisses">
+                    <span className="hidden lg:inline">Misses</span>
+                    <span className="lg:hidden">Miss</span>
+                  </SortButton>
                 </TableHead>
-                <TableHead className="hidden xl:table-cell">
-                  <SortButton column="averagePlacement">Placement</SortButton>
+                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
+                  <SortButton column="averagePlacement">
+                    <span className="hidden lg:inline">Placement</span>
+                    <span className="lg:hidden">Pos</span>
+                  </SortButton>
                 </TableHead>
               </TableRow>
             </TableHeader>
