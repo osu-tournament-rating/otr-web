@@ -4,6 +4,7 @@ import {
   RatingAdjustmentDTO,
   PlayerCompactDTO,
   MatchWinRecordDTO,
+  Team,
 } from '@osu-tournament-rating/otr-api-client';
 import { TierName } from '@/lib/utils/tierData';
 
@@ -166,9 +167,8 @@ export function calculateHighlightStats(
     const winnerScore = matchWinRecord.winnerPoints;
     const loserScore = matchWinRecord.loserPoints;
 
-    // Determine which team won based on winnerTeam (1=Red, 2=Blue) or if it's a tie
-    const isRedWinner = matchWinRecord.winnerTeam === 1;
-    const isBlueWinner = matchWinRecord.winnerTeam === 2;
+    const isRedWinner = matchWinRecord.winnerTeam === Team.Red;
+    const isBlueWinner = matchWinRecord.winnerTeam === Team.Blue;
     const isTied = matchWinRecord.isTied;
 
     // Format score based on team colors or head-to-head
