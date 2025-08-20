@@ -285,6 +285,41 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
       });
   }, [games]);
 
+  const { domain, ticks } = useMemo(() => {
+    if (chartData.length === 0)
+      return { domain: [0, 100000], ticks: [0, 25000, 50000, 75000, 100000] };
+
+    // Find min and max values across all scores
+    let minScore = Infinity;
+    let maxScore = -Infinity;
+
+    chartData.forEach((point) => {
+      minScore = Math.min(minScore, point.redScore, point.blueScore);
+      maxScore = Math.max(maxScore, point.redScore, point.blueScore);
+    });
+
+    // Round to nearest 5000
+    const roundToNearest5k = (value: number, roundDown: boolean) => {
+      const factor = 5000;
+      if (roundDown) {
+        return Math.floor(value / factor) * factor;
+      }
+      return Math.ceil(value / factor) * factor;
+    };
+
+    // Calculate domain with padding
+    const domainMin = Math.max(0, roundToNearest5k(minScore - 5000, true));
+    const domainMax = roundToNearest5k(maxScore + 5000, false);
+
+    // Calculate interval for exactly 5 ticks
+    const interval = (domainMax - domainMin) / 4;
+
+    // Generate exactly 5 ticks
+    const ticks = Array.from({ length: 5 }, (_, i) => domainMin + interval * i);
+
+    return { domain: [domainMin, domainMax], ticks };
+  }, [chartData]);
+
   if (!games || games.length === 0) {
     return null;
   }
@@ -330,6 +365,8 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
           />
 
           <YAxis
+            domain={domain}
+            ticks={ticks}
             tick={{ fontSize: 10 }}
             tickFormatter={(value) => {
               if (value >= 1000000) {
@@ -339,7 +376,6 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
               }
               return value.toString();
             }}
-            width={45}
             label={{
               value: 'Score',
               angle: -90,
