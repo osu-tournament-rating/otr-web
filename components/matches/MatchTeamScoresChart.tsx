@@ -290,11 +290,6 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
     return null;
   }
 
-  const maxScore = Math.max(
-    ...chartData.flatMap((d) => [d.redScore, d.blueScore])
-  );
-  const yAxisMax = Math.ceil(maxScore / 100000) * 100000;
-
   return (
     <Card className="p-4 sm:p-5 md:p-6">
       <div className="mb-4 flex items-center gap-3">
@@ -347,7 +342,6 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
           />
 
           <YAxis
-            domain={[0, yAxisMax]}
             tick={{ fontSize: 10 }}
             tickFormatter={(value) => {
               if (value >= 1000000) {
