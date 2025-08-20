@@ -181,16 +181,13 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
 
   return (
     <Card className="p-5 md:p-6">
-      <div className="mb-5 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold">Match Performance</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Player statistics and achievements
-            </p>
           </div>
         </div>
         {averageRatingInfo && (
@@ -210,29 +207,23 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         )}
       </div>
 
-      <div className="mb-5">
-        <div
-          className={`grid gap-3 ${
-            highlightStats.length === 4
-              ? UI_CONSTANTS.GRID_LAYOUTS.FOUR_CARDS
-              : highlightStats.length === 5
-                ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
-                : highlightStats.length === 6
-                  ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
-                  : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
-          }`}
-        >
-          {highlightStats.map((stat) => (
-            <MatchStatsHighlightCard key={stat.id} stat={stat} />
-          ))}
-        </div>
+      <div
+        className={`grid gap-3 ${
+          highlightStats.length === 5
+            ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
+            : highlightStats.length === 6
+              ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
+              : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
+        }`}
+      >
+        {highlightStats.map((stat) => (
+          <MatchStatsHighlightCard key={stat.id} stat={stat} />
+        ))}
       </div>
 
       {/* Team scores chart */}
       {match.games && match.games.length > 0 && (
-        <div className="mb-5">
-          <MatchTeamScoresChart games={match.games} />
-        </div>
+        <MatchTeamScoresChart games={match.games} />
       )}
 
       <div className="overflow-hidden rounded-xl border bg-card/50">

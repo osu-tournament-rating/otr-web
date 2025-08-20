@@ -122,7 +122,7 @@ export default function MatchStatsHighlightCard({
 
         {/* Value and player info */}
         <div className="flex flex-1 flex-col justify-center">
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex items-baseline gap-1.5">
               <p className="text-2xl font-bold tracking-tight text-foreground">
                 {stat.value}
@@ -134,7 +134,8 @@ export default function MatchStatsHighlightCard({
               )}
             </div>
 
-            <div>
+            {/* Secondary info container with consistent height */}
+            <div className="flex min-h-[24px] items-center">
               {stat.tierIcon && (
                 <div className="flex items-center gap-1.5">
                   <TierIcon
