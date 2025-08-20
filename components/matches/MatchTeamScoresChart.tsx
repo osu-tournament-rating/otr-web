@@ -1,25 +1,13 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-  Dot,
-  Legend,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartTooltip, ChartContainer } from '@/components/ui/chart';
 import { Card } from '@/components/ui/card';
 import { GameDTO, Team, Mods } from '@osu-tournament-rating/otr-api-client';
-import { LineChart as LineChartIcon, Trophy, Users } from 'lucide-react';
+import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModsEnumHelper } from '@/lib/enums';
-import { CHART_CONSTANTS } from '@/lib/utils/chart';
 
 interface TeamScoresChartProps {
   games: GameDTO[] | undefined;
@@ -73,7 +61,7 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   const data = payload[0].payload as ChartDataPoint;
@@ -228,8 +216,17 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
-function CustomDot(props: any) {
+interface CustomDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: ChartDataPoint;
+}
+
+function CustomDot(props: CustomDotProps) {
   const { cx, cy, payload } = props;
+
+  if (!payload || !cx || !cy) return null;
+
   const isWinner = payload.winner === 'red' || payload.winner === 'blue';
 
   if (!isWinner) return null;

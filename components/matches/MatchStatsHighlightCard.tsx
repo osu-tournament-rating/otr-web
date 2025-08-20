@@ -28,8 +28,6 @@ const TIER_ICON_SIZE = {
   HEIGHT: 20,
 } as const;
 
-const ACHIEVEMENT_STATS = ['biggest-gain', 'top-scorer', 'accuracy'] as const;
-
 const iconMap: Record<string, LucideIcon> = {
   Zap,
   Crosshair,
@@ -67,15 +65,6 @@ const iconBgStyles: Record<HighlightColor, string> = {
   amber: 'bg-amber-500/15 dark:bg-amber-400/20',
 } as const;
 
-const accentColors: Record<HighlightColor, string> = {
-  blue: 'text-blue-500 dark:text-blue-400',
-  red: 'text-red-500 dark:text-red-400',
-  purple: 'text-purple-500 dark:text-purple-400',
-  orange: 'text-orange-500 dark:text-orange-400',
-  green: 'text-green-500 dark:text-green-400',
-  amber: 'text-amber-500 dark:text-amber-400',
-} as const;
-
 interface MatchStatsHighlightCardProps {
   stat: HighlightStat;
 }
@@ -85,14 +74,6 @@ export default function MatchStatsHighlightCard({
 }: MatchStatsHighlightCardProps) {
   const Icon = iconMap[stat.icon] || TrendingUp;
   const [imageError, setImageError] = useState(false);
-
-  const isAchievement = useMemo(
-    () =>
-      ACHIEVEMENT_STATS.includes(
-        stat.id as (typeof ACHIEVEMENT_STATS)[number]
-      ) || stat.isSpecial,
-    [stat.id, stat.isSpecial]
-  );
 
   const ariaLabel = useMemo(
     () =>
