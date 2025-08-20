@@ -35,7 +35,7 @@ const UI_CONSTANTS = {
   },
 } as const;
 
-type SortKey = keyof ProcessedPlayerStats;
+type SortKey = keyof ProcessedPlayerStats | 'netWins';
 type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
@@ -115,8 +115,17 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
   }, [processedPlayers]);
   const sortedPlayers = useMemo(() => {
     return [...processedPlayers].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      let aVal: string | number | boolean | null | undefined;
+      let bVal: string | number | boolean | null | undefined;
+
+      // Special handling for netWins (W-L column)
+      if (sortKey === 'netWins') {
+        aVal = a.gamesWon - a.gamesLost;
+        bVal = b.gamesWon - b.gamesLost;
+      } else {
+        aVal = a[sortKey as keyof ProcessedPlayerStats];
+        bVal = b[sortKey as keyof ProcessedPlayerStats];
+      }
 
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return sortDirection === 'asc' ? -1 : 1;
@@ -242,16 +251,18 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {/* Player column - always visible */}
-                <TableHead className="min-w-[140px] sm:min-w-[180px]">
+                <TableHead className="max-w-[160px] min-w-[160px] pl-5">
                   <SortButton column="username">Player</SortButton>
                 </TableHead>
 
                 {/* W-L column - visible in non-1v1 matches */}
                 {!is1v1Match && (
-                  <TableHead className="w-[50px] text-center sm:w-[60px]">
-                    <SimpleTooltip content="Points won/lost this match">
-                      <span aria-label="Wins and losses">W-L</span>
-                    </SimpleTooltip>
+                  <TableHead className="w-[70px] text-center sm:w-[80px]">
+                    <SortButton column="netWins">
+                      <SimpleTooltip content="Points won/lost this match">
+                        <span aria-label="Wins and losses">W-L</span>
+                      </SimpleTooltip>
+                    </SortButton>
                   </TableHead>
                 )}
 
