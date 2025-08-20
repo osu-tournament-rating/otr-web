@@ -41,43 +41,43 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const colorStyles: Record<HighlightColor, string> = {
-  blue: 'border-border/50 bg-blue-500/[0.02] hover:border-blue-500/20 hover:bg-blue-500/[0.05]',
-  red: 'border-border/50 bg-red-500/[0.02] hover:border-red-500/20 hover:bg-red-500/[0.05]',
+  blue: 'border-blue-500/30 bg-blue-500/[0.08] hover:border-blue-500/50 hover:bg-blue-500/[0.12] hover:shadow-blue-500/10',
+  red: 'border-red-500/30 bg-red-500/[0.08] hover:border-red-500/50 hover:bg-red-500/[0.12] hover:shadow-red-500/10',
   purple:
-    'border-border/50 bg-purple-500/[0.02] hover:border-purple-500/20 hover:bg-purple-500/[0.05]',
+    'border-purple-500/30 bg-purple-500/[0.08] hover:border-purple-500/50 hover:bg-purple-500/[0.12] hover:shadow-purple-500/10',
   orange:
-    'border-border/50 bg-orange-500/[0.02] hover:border-orange-500/20 hover:bg-orange-500/[0.05]',
+    'border-orange-500/30 bg-orange-500/[0.08] hover:border-orange-500/50 hover:bg-orange-500/[0.12] hover:shadow-orange-500/10',
   green:
-    'border-border/50 bg-green-500/[0.02] hover:border-green-500/20 hover:bg-green-500/[0.05]',
+    'border-green-500/30 bg-green-500/[0.08] hover:border-green-500/50 hover:bg-green-500/[0.12] hover:shadow-green-500/10',
   amber:
-    'border-border/50 bg-amber-500/[0.02] hover:border-amber-500/20 hover:bg-amber-500/[0.05]',
+    'border-amber-500/30 bg-amber-500/[0.08] hover:border-amber-500/50 hover:bg-amber-500/[0.12] hover:shadow-amber-500/10',
 } as const;
 
 const iconColorStyles: Record<HighlightColor, string> = {
-  blue: 'text-blue-600 dark:text-blue-400',
-  red: 'text-red-600 dark:text-red-400',
-  purple: 'text-purple-600 dark:text-purple-400',
-  orange: 'text-orange-600 dark:text-orange-400',
-  green: 'text-green-600 dark:text-green-400',
-  amber: 'text-amber-600 dark:text-amber-400',
+  blue: 'text-blue-500 dark:text-blue-400',
+  red: 'text-red-500 dark:text-red-400',
+  purple: 'text-purple-500 dark:text-purple-400',
+  orange: 'text-orange-500 dark:text-orange-400',
+  green: 'text-green-500 dark:text-green-400',
+  amber: 'text-amber-500 dark:text-amber-400',
 } as const;
 
 const iconBgStyles: Record<HighlightColor, string> = {
-  blue: 'bg-blue-500/8 dark:bg-blue-400/10',
-  red: 'bg-red-500/8 dark:bg-red-400/10',
-  purple: 'bg-purple-500/8 dark:bg-purple-400/10',
-  orange: 'bg-orange-500/8 dark:bg-orange-400/10',
-  green: 'bg-green-500/8 dark:bg-green-400/10',
-  amber: 'bg-amber-500/8 dark:bg-amber-400/10',
+  blue: 'bg-blue-500/15 dark:bg-blue-400/20',
+  red: 'bg-red-500/15 dark:bg-red-400/20',
+  purple: 'bg-purple-500/15 dark:bg-purple-400/20',
+  orange: 'bg-orange-500/15 dark:bg-orange-400/20',
+  green: 'bg-green-500/15 dark:bg-green-400/20',
+  amber: 'bg-amber-500/15 dark:bg-amber-400/20',
 } as const;
 
 const accentColors: Record<HighlightColor, string> = {
-  blue: 'text-blue-600 dark:text-blue-400',
-  red: 'text-red-600 dark:text-red-400',
-  purple: 'text-purple-600 dark:text-purple-400',
-  orange: 'text-orange-600 dark:text-orange-400',
-  green: 'text-green-600 dark:text-green-400',
-  amber: 'text-amber-600 dark:text-amber-400',
+  blue: 'text-blue-500 dark:text-blue-400',
+  red: 'text-red-500 dark:text-red-400',
+  purple: 'text-purple-500 dark:text-purple-400',
+  orange: 'text-orange-500 dark:text-orange-400',
+  green: 'text-green-500 dark:text-green-400',
+  amber: 'text-amber-500 dark:text-amber-400',
 } as const;
 
 interface MatchStatsHighlightCardProps {
@@ -107,11 +107,12 @@ export default function MatchStatsHighlightCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden rounded-xl border-2 transition-all duration-200',
+        'group relative overflow-hidden rounded-xl border-2 transition-all duration-300',
         'p-4',
-        'hover:-translate-y-0.5 hover:shadow-lg',
-        'active:scale-[0.99]',
+        'hover:-translate-y-1 hover:shadow-xl',
+        'active:scale-[0.98]',
         'h-full min-h-[115px]',
+        'backdrop-blur-sm',
         colorStyles[stat.color]
       )}
       role="article"

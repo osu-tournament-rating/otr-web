@@ -14,6 +14,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
+import MatchScoreGapChart from './MatchScoreGapChart';
 import {
   processMatchStatistics,
   calculateHighlightStats,
@@ -226,6 +227,14 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
           ))}
         </div>
       </div>
+
+      {/* Score gap chart */}
+      {match.games && match.games.length > 0 && (
+        <div className="mb-5">
+          <MatchScoreGapChart games={match.games} />
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border bg-card/50">
         <div className="border-b bg-muted/30 px-4 py-3.5">
           <div className="flex items-center justify-between">
