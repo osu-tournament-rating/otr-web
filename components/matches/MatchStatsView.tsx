@@ -193,7 +193,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
           </div>
         </div>
         {averageRatingInfo && (
-          <SimpleTooltip content="Average rating of all players in this match">
+          <SimpleTooltip content="Average rating of players in this match">
             <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
               <TierIcon
                 tier={averageRatingInfo.tier}

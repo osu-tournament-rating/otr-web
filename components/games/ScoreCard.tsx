@@ -17,6 +17,7 @@ import CountryFlag from '../shared/CountryFlag';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import { useSession } from '@/lib/hooks/useSession';
+import Image from 'next/image';
 
 export default function ScoreCard({
   score,
@@ -102,9 +103,13 @@ export default function ScoreCard({
               )}
               mods={score.mods}
             />
-            <span className="text-neutral-800 dark:text-neutral-200">
-              {ScoreGradeEnumHelper.getMetadata(score.grade).text}
-            </span>
+            <Image
+              src={`/icons/grades/${ScoreGradeEnumHelper.getMetadata(score.grade).text}.svg`}
+              alt={`Grade ${ScoreGradeEnumHelper.getMetadata(score.grade).text}`}
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
             <span
               className={cn(
                 'text-lg text-(--score-text-color)',
