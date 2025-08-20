@@ -41,16 +41,12 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const colorStyles: Record<HighlightColor, string> = {
-  blue: 'border-blue-500/30 bg-blue-500/[0.08] hover:border-blue-500/50 hover:bg-blue-500/[0.12] hover:shadow-blue-500/10',
-  red: 'border-red-500/30 bg-red-500/[0.08] hover:border-red-500/50 hover:bg-red-500/[0.12] hover:shadow-red-500/10',
-  purple:
-    'border-purple-500/30 bg-purple-500/[0.08] hover:border-purple-500/50 hover:bg-purple-500/[0.12] hover:shadow-purple-500/10',
-  orange:
-    'border-orange-500/30 bg-orange-500/[0.08] hover:border-orange-500/50 hover:bg-orange-500/[0.12] hover:shadow-orange-500/10',
-  green:
-    'border-green-500/30 bg-green-500/[0.08] hover:border-green-500/50 hover:bg-green-500/[0.12] hover:shadow-green-500/10',
-  amber:
-    'border-amber-500/30 bg-amber-500/[0.08] hover:border-amber-500/50 hover:bg-amber-500/[0.12] hover:shadow-amber-500/10',
+  blue: 'border-blue-500/30 bg-blue-500/[0.08]',
+  red: 'border-red-500/30 bg-red-500/[0.08]',
+  purple: 'border-purple-500/30 bg-purple-500/[0.08]',
+  orange: 'border-orange-500/30 bg-orange-500/[0.08]',
+  green: 'border-green-500/30 bg-green-500/[0.08]',
+  amber: 'border-amber-500/30 bg-amber-500/[0.08]',
 } as const;
 
 const iconColorStyles: Record<HighlightColor, string> = {
@@ -107,10 +103,8 @@ export default function MatchStatsHighlightCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden rounded-xl border-2 transition-all duration-300',
+        'group relative overflow-hidden rounded-xl border-2',
         'p-4',
-        'hover:-translate-y-1 hover:shadow-xl',
-        'active:scale-[0.98]',
         'h-full min-h-[115px]',
         'backdrop-blur-sm',
         colorStyles[stat.color]
@@ -126,8 +120,7 @@ export default function MatchStatsHighlightCard({
               className={cn(
                 'flex items-center justify-center',
                 'h-8 w-8 rounded-lg',
-                iconBgStyles[stat.color],
-                'transition-transform duration-200 group-hover:scale-110'
+                iconBgStyles[stat.color]
               )}
               aria-hidden="true"
             >
@@ -168,7 +161,7 @@ export default function MatchStatsHighlightCard({
                     subTier={stat.tierIcon.subTier}
                     width={TIER_ICON_SIZE.WIDTH}
                     height={TIER_ICON_SIZE.HEIGHT}
-                    className="flex-shrink-0 transition-opacity group-hover:opacity-90"
+                    className="flex-shrink-0"
                   />
                   <span className="text-[10px] font-medium text-muted-foreground sm:text-[11px] lg:text-[10px]">
                     {stat.tierIcon.tier}

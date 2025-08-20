@@ -14,7 +14,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
 import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
-import MatchScoreGapChart from './MatchScoreGapChart';
+import MatchTeamScoresChart from './MatchTeamScoresChart';
 import {
   processMatchStatistics,
   calculateHighlightStats,
@@ -228,10 +228,10 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         </div>
       </div>
 
-      {/* Score gap chart */}
+      {/* Team scores chart */}
       {match.games && match.games.length > 0 && (
         <div className="mb-5">
-          <MatchScoreGapChart games={match.games} />
+          <MatchTeamScoresChart games={match.games} />
         </div>
       )}
 
@@ -239,7 +239,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         <div className="border-b bg-muted/30 px-4 py-3.5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold tracking-wide">
-              Match Performance
+              Player Statistics
             </h4>
             <span className="text-xs text-muted-foreground">
               Non-rating values are averaged
