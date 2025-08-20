@@ -141,8 +141,18 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
         >
           <span className="hidden sm:inline">{ratingChangeIcon}</span>
           <span>
-            {player.ratingDelta !== null && player.ratingDelta > 0 && '+'}
-            {player.ratingDelta?.toFixed(RATING_PRECISION.DELTA) ?? '-'}
+            {player.ratingDelta !== null ? (
+              Math.abs(player.ratingDelta) < 0.05 ? (
+                '0.0'
+              ) : (
+                <>
+                  {player.ratingDelta > 0 && '+'}
+                  {player.ratingDelta.toFixed(RATING_PRECISION.DELTA)}
+                </>
+              )
+            ) : (
+              '-'
+            )}
           </span>
         </div>
       </TableCell>
