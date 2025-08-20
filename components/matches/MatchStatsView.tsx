@@ -252,7 +252,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
               <TableRow className="hover:bg-transparent">
                 {/* Player column - always visible */}
                 <TableHead className="min-w-[140px] sm:min-w-[180px]">
-                  Player
+                  <SortButton column="username">Player</SortButton>
                 </TableHead>
 
                 {/* W-L column - visible in non-1v1 matches */}
