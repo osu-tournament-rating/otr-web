@@ -1,9 +1,8 @@
 'use client';
 
-import * as React from 'react';
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-
 import { cn } from '@/lib/utils';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import * as React from 'react';
 
 function TooltipProvider({
   delayDuration = 0,
@@ -19,9 +18,42 @@ function TooltipProvider({
 }
 
 function Tooltip({
+  children,
+  useTouch = false,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
+}: React.ComponentProps<typeof TooltipPrimitive.Root> & {
+  useTouch?: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  const handleTouch = (event: React.TouchEvent | React.MouseEvent) => {
+    event.persist();
+    setOpen(true);
+  };
+
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root
+        data-slot="tooltip"
+        open={open}
+        onOpenChange={setOpen}
+        {...props}
+      >
+        {React.Children.map(children, (child) => {
+          if (React.isValidElement(child) && useTouch) {
+            return React.cloneElement(
+              child as React.ReactElement<React.HTMLAttributes<HTMLElement>>,
+              {
+                onTouchStart: handleTouch,
+                onMouseDown: handleTouch,
+              }
+            );
+          }
+          return child;
+        })}
+      </TooltipPrimitive.Root>
+    </TooltipProvider>
+  );
 }
 
 function TooltipTrigger({
@@ -42,13 +74,13 @@ function TooltipContent({
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
-          'animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 z-50 w-fit rounded-md bg-secondary px-3 py-1.5 text-xs text-balance text-secondary-foreground',
+          'animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit rounded-md bg-accent px-3 py-1.5 text-xs text-balance text-accent-foreground',
           className
         )}
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-secondary fill-secondary" />
+        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-accent fill-accent" />
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   );

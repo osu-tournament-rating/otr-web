@@ -1,4 +1,7 @@
-import { PlayerCompactDTO } from '@osu-tournament-rating/otr-api-client';
+import {
+  PlayerCompactDTO,
+  Ruleset,
+} from '@osu-tournament-rating/otr-api-client';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
@@ -7,9 +10,10 @@ import { Card } from '../ui/card';
 
 interface PlayerCardProps {
   player: PlayerCompactDTO;
+  ruleset: Ruleset;
 }
 
-export default function PlayerCard({ player }: PlayerCardProps) {
+export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
   return (
     <Card className="flex flex-row flex-wrap justify-between border-none bg-popover p-4">
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
@@ -34,7 +38,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
           </Link>
         </div>
       </div>
-      <PlayerRulesetSelector />
+      <PlayerRulesetSelector defaultRuleset={ruleset} />
     </Card>
   );
 }

@@ -200,7 +200,7 @@ export default function PlayerRatingChart({
             theme={theme}
           />
         </TabsContent>
-        <TabsContent value="table">
+        <TabsContent value="table" className="max-h-[300px] overflow-y-scroll">
           <PlayerRatingChartTable data={filteredData} activeTab={activeTab} />
         </TabsContent>
       </Tabs>

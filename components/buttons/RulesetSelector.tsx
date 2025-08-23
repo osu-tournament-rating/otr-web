@@ -6,22 +6,31 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { RulesetEnumHelper } from '@/lib/enums';
 
-export default function PlayerRulesetSelector() {
+export default function PlayerRulesetSelector({
+  defaultRuleset,
+}: {
+  defaultRuleset: Ruleset;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Initialize from URL or default to Osu
+  // Initialize from URL
+  // fallback to defaultRuleset or Osu
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(
-    Number(searchParams.get('ruleset') || Ruleset.Osu) as Ruleset
+    Number(
+      searchParams.get('ruleset') || defaultRuleset || Ruleset.Osu
+    ) as Ruleset
   );
+
+  console.log(defaultRuleset, selectedRuleset);
 
   // Sync state with URL changes (e.g. when navigating from search results)
   useEffect(() => {
     const rulesetFromUrl = Number(
-      searchParams.get('ruleset') || Ruleset.Osu
+      searchParams.get('ruleset') || defaultRuleset || Ruleset.Osu
     ) as Ruleset;
     setSelectedRuleset(rulesetFromUrl);
-  }, [searchParams]);
+  }, [searchParams, defaultRuleset]);
 
   const handleRulesetChange = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);
