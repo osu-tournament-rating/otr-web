@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Tools',
-    href: '#',
+    href: '/tools/filter',
     roles: [],
     dropdown: [
       {
@@ -208,11 +208,13 @@ function SubnavTrigger({
   dropdown,
   children,
   hasDropdown,
+  isMobile,
 }: {
   dropdown: boolean;
   active: boolean;
   children: React.ReactNode;
   hasDropdown: boolean;
+  isMobile: boolean;
 }) {
   if (!dropdown) {
     return children;
@@ -226,7 +228,9 @@ function SubnavTrigger({
         active && 'bg-accent md:bg-transparent'
       )}
       onClick={
-        hasDropdown ? (e: React.MouseEvent) => e.preventDefault() : undefined
+        hasDropdown && !isMobile
+          ? (e: React.MouseEvent) => e.preventDefault()
+          : undefined
       }
     >
       {children}
@@ -262,11 +266,11 @@ function NavigationItem({
         active={isActive}
         dropdown={hasDropdown}
         hasDropdown={hasDropdown}
+        isMobile={isMobile}
       >
         <NavLink
           isMobile={isMobile}
-          href={hasDropdown ? '#' : href}
-          onClick={hasDropdown ? (e) => e.preventDefault() : undefined}
+          href={href}
           className={cn(
             'bg-transparent hover:bg-transparent',
             !hasDropdown &&
