@@ -146,17 +146,17 @@ export default function Header() {
             >
               {/* Required for screen reader */}
               <DialogTitle hidden />
-
               <div className="flex flex-col space-y-6">
-                <ClientOnly>
-                  <ProfileCard />
-                </ClientOnly>
-                <Separator className="bg-muted" />
                 <nav className="flex flex-col space-y-1">
                   <NavigationMenu
                     viewport={false}
                     className="contents justify-start"
                   >
+                    <ClientOnly>
+                      <ProfileCard />
+                    </ClientOnly>
+                    <Separator />
+                    <span className="py-2" />
                     <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
                       {navItems.map((item) => (
                         <NavigationItem isMobile key={item.title} {...item} />
