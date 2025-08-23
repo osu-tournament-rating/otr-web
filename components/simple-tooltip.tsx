@@ -9,7 +9,7 @@ export default function SimpleTooltip({
   children: ReactNode;
 }) {
   return (
-    <Tooltip>
+    <Tooltip useTouch={true}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>{content}</TooltipContent>
     </Tooltip>
