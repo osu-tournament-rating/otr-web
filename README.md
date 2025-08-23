@@ -2,4 +2,4 @@
 
 # o!TR Web
 
-[![CodeFactor](https://www.codefactor.io/repository/github/osu-tournament-rating/otr-web/badge)](https://www.codefactor.io/repository/github/osu-tournament-rating/otr-web)
+Get started with development by reading [this page](https://docs.otr.stagec.xyz/Applications/Web/Getting-Started) of our documentation.
