@@ -37,7 +37,7 @@ export default function PlayerRatingStatsCard({
 }: PlayerRatingStatsCardProps) {
   return (
     <Card className="p-6 font-sans">
-      <PlayerCard player={rating.player} />
+      <PlayerCard player={rating.player} ruleset={rating.ruleset} />
       <div className="flex flex-col gap-4">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
