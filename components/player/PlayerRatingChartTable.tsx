@@ -5,7 +5,6 @@ import {
 } from '@osu-tournament-rating/otr-api-client';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
 import { formattedDate } from './PlayerRatingChartTooltip';
-import { ScrollArea } from '../ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -40,88 +39,84 @@ export default function PlayerRatingChartTable({
   activeTab,
 }: PlayerRatingChartTableProps) {
   return (
-    <ScrollArea className="relative h-[350px] rounded">
-      <div className="min-w-[600px]">
-        <Table>
-          <TableHeader className="sticky top-0 bg-popover">
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">
-                {activeTab === 'rating' ? 'Rating' : 'Volatility'}
-              </TableHead>
-              <TableHead className="text-right">Change</TableHead>
-              <TableHead>Match</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortData(data, true).map((point, index) => (
-              <TableRow key={index} className="hover:bg-muted">
-                <TableCell>{formattedDate(point.timestamp)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(
-                        point.adjustmentType,
-                        point.ratingDelta
-                      )}`}
-                    />
-                    {
-                      RatingAdjustmentTypeEnumhelper.getMetadata(
-                        point.adjustmentType
-                      ).text
-                    }
-                  </div>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {activeTab === 'rating'
-                    ? point.ratingAfter.toFixed(0)
-                    : point.volatilityAfter.toFixed(2)}
-                </TableCell>
-                {activeTab === 'rating' ? (
-                  <TableCell
-                    className={`text-right font-medium ${
-                      point.ratingDelta > 0
-                        ? 'text-success'
-                        : point.ratingDelta < 0
-                          ? 'text-destructive'
-                          : ''
-                    }`}
-                  >
-                    {point.ratingDelta > 0 ? '+' : ''}
-                    {point.ratingDelta.toFixed(2)}
-                  </TableCell>
-                ) : (
-                  <TableCell
-                    className={`text-right font-medium ${
-                      point.volatilityDelta < 0
-                        ? 'text-success'
-                        : point.volatilityDelta > 0
-                          ? 'text-destructive'
-                          : ''
-                    }`}
-                  >
-                    {point.volatilityDelta > 0 ? '+' : ''}
-                    {point.volatilityDelta.toFixed(2)}
-                  </TableCell>
-                )}
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {point.match?.id && point.match?.name ? (
-                    <Link
-                      href={`/matches/${point.match.id}`}
-                      className="hover:text-primary hover:underline"
-                    >
-                      {point.match.name}
-                    </Link>
-                  ) : (
-                    '-'
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </ScrollArea>
+    <Table>
+      <TableHeader className="bg-popover">
+        <TableRow>
+          <TableHead>Date</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead className="text-right">
+            {activeTab === 'rating' ? 'Rating' : 'Volatility'}
+          </TableHead>
+          <TableHead className="text-right">Change</TableHead>
+          <TableHead>Match</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody className="max-h-[300px]">
+        {sortData(data, true).map((point, index) => (
+          <TableRow key={index} className="hover:bg-muted">
+            <TableCell>{formattedDate(point.timestamp)}</TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(
+                    point.adjustmentType,
+                    point.ratingDelta
+                  )}`}
+                />
+                {
+                  RatingAdjustmentTypeEnumhelper.getMetadata(
+                    point.adjustmentType
+                  ).text
+                }
+              </div>
+            </TableCell>
+            <TableCell className="text-right font-medium">
+              {activeTab === 'rating'
+                ? point.ratingAfter.toFixed(0)
+                : point.volatilityAfter.toFixed(2)}
+            </TableCell>
+            {activeTab === 'rating' ? (
+              <TableCell
+                className={`text-right font-medium ${
+                  point.ratingDelta > 0
+                    ? 'text-success'
+                    : point.ratingDelta < 0
+                      ? 'text-destructive'
+                      : ''
+                }`}
+              >
+                {point.ratingDelta > 0 ? '+' : ''}
+                {point.ratingDelta.toFixed(2)}
+              </TableCell>
+            ) : (
+              <TableCell
+                className={`text-right font-medium ${
+                  point.volatilityDelta < 0
+                    ? 'text-success'
+                    : point.volatilityDelta > 0
+                      ? 'text-destructive'
+                      : ''
+                }`}
+              >
+                {point.volatilityDelta > 0 ? '+' : ''}
+                {point.volatilityDelta.toFixed(2)}
+              </TableCell>
+            )}
+            <TableCell className="max-w-[300px] truncate overflow-y-clip text-muted-foreground">
+              {point.match?.id && point.match?.name ? (
+                <Link
+                  href={`/matches/${point.match.id}`}
+                  className="hover:text-primary hover:underline"
+                >
+                  {point.match.name}
+                </Link>
+              ) : (
+                '-'
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
