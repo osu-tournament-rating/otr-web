@@ -46,6 +46,7 @@ import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
 import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client';
+import RefetchMatchDataButton from './RefetchMatchDataButton';
 
 interface TournamentAdminViewProps {
   tournament: TournamentCompactDTO;
@@ -317,11 +318,9 @@ export default function TournamentAdminView({
                 >
                   Clear
                 </Button>
-                {/* Reset automated checks */}
                 <ResetAutomatedChecksButton tournament={tournament} />
-                {/* Delete pooled beatmaps */}
+                <RefetchMatchDataButton tournament={tournament} />
                 <DeleteTournamentBeatmapsButton tournament={tournament} />
-                {/* Delete tournament */}
                 <DeleteButton
                   entityType="tournament"
                   entityId={tournament.id}
