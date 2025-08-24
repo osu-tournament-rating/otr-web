@@ -104,3 +104,8 @@ export async function insertBeatmaps(id: number, beatmapIds: number[]) {
 export async function deleteSpecificBeatmaps(id: number, beatmapIds: number[]) {
   await tournaments.deleteBeatmaps({ id, body: beatmapIds });
 }
+
+export async function refetchMatchData(id: number) {
+  const { result } = await tournaments.fetchMatchData({ id });
+  return result;
+}
