@@ -29,8 +29,13 @@ import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 import { SessionContext } from '@/components/session-provider';
 import { useContext } from 'react';
 import CountryFlag from '../shared/CountryFlag';
+import { SheetClose } from '../ui/sheet';
 
-export default function ProfileCard() {
+export default function ProfileCard({
+  isMobileNav = false,
+}: {
+  isMobileNav?: boolean;
+}) {
   const [isOpen, toggleIsOpen] = useToggle();
   const session = useSession();
   const { isLoading } = useContext(SessionContext);
@@ -98,13 +103,25 @@ export default function ProfileCard() {
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <Link
-            href={`/players/${session.player.id}`}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-          >
-            <User className="size-4" />
-            <span>My Profile</span>
-          </Link>
+          {isMobileNav ? (
+            <SheetClose asChild>
+              <Link
+                href={`/players/${session.player.id}`}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+              >
+                <User className="size-4" />
+                <span>My Profile</span>
+              </Link>
+            </SheetClose>
+          ) : (
+            <Link
+              href={`/players/${session.player.id}`}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            >
+              <User className="size-4" />
+              <span>My Profile</span>
+            </Link>
+          )}
 
           {/* <SheetClose asChild>
             <Link
