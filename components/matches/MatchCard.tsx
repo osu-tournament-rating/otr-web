@@ -120,9 +120,9 @@ export default function MatchCard({ match }: { match: MatchDTO }) {
                 </Link>
               </span>
               <Link href={`/matches/${match.id}`}>
-                <span className="truncate text-sm font-bold text-white drop-shadow-sm transition-colors hover:text-white/80 sm:text-xl">
+                <p className="truncate text-sm font-bold text-white drop-shadow-sm transition-colors hover:text-white/80 sm:text-xl">
                   {match.name}
-                </span>
+                </p>
               </Link>
             </div>
             <div className="flex min-w-1/8 flex-col items-end justify-end gap-1">
