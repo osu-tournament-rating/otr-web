@@ -201,7 +201,7 @@ export default function TournamentVerificationChart({
                   />
                 }
               />
-              <Bar dataKey="count" layout="vertical" radius={5} maxBarSize={60}>
+              <Bar dataKey="count" radius={5} maxBarSize={60}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}

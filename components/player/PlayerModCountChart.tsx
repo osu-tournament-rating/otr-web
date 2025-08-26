@@ -157,7 +157,7 @@ export default function PlayerModCountChart({
               dataKey="count"
               nameKey="label"
               label={({ name, percent }) =>
-                `${name} (${formatPercentage(percent * 100, 1)})`
+                `${name} (${formatPercentage((percent ?? 0) * 100, 1)})`
               }
             >
               <Label content={renderCenterLabel} />

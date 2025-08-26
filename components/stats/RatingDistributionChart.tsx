@@ -47,16 +47,19 @@ type ChartDataItem = {
   cumulativePercentage?: number;
 };
 
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) {
+function CustomTooltip(props: TooltipProps<number, string>) {
+  const { active, payload, label } = props as TooltipProps<number, string> & {
+    payload?: any[];
+    label?: string;
+  };
+
   if (!active || !payload?.length) return null;
 
   const data = payload[0].payload as ChartDataItem;
-  const barData = payload.find((p) => p.dataKey === 'count');
-  const lineData = payload.find((p) => p.dataKey === 'cumulativePercentage');
+  const barData = payload.find((p: any) => p.dataKey === 'count');
+  const lineData = payload.find(
+    (p: any) => p.dataKey === 'cumulativePercentage'
+  );
 
   return (
     <div className="rounded-lg border bg-background p-2 shadow-sm">
