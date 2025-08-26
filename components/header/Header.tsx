@@ -227,9 +227,16 @@ function SubnavTrigger({
         'group inline-flex h-9 w-full items-center justify-between px-2 transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
         active && 'bg-accent md:bg-transparent'
       )}
-      onClick={
+      onPointerDown={
         hasDropdown && !isMobile
-          ? (e: React.MouseEvent) => e.preventDefault()
+          ? (e: React.PointerEvent) => {
+              // Allow touch/stylus events to proceed normally
+              if (e.pointerType !== 'mouse') {
+                return;
+              }
+              // Only prevent default for mouse events
+              e.preventDefault();
+            }
           : undefined
       }
     >
