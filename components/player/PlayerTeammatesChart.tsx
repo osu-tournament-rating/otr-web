@@ -39,14 +39,13 @@ export default function PlayerTeammatesChart({
     },
   };
 
-  // Process teammates data - we'll show different amounts on mobile vs desktop
-  const chartDataDesktop = useMemo(() => {
+  // Process teammates data
+  const chartData = useMemo(() => {
     if (!teammates || teammates.length === 0) {
-      return [];
+      return { desktop: [], mobile: [] };
     }
 
-    return teammates
-      .slice(0, 10)
+    const processedData = teammates
       .map((teammate) => ({
         username: teammate.player.username,
         frequency: teammate.frequency,
@@ -54,25 +53,14 @@ export default function PlayerTeammatesChart({
         avatarUrl: `https://a.ppy.sh/${teammate.player.osuId}`,
       }))
       .sort((a, b) => b.frequency - a.frequency);
+
+    return {
+      desktop: processedData.slice(0, 10),
+      mobile: processedData.slice(0, 7),
+    };
   }, [teammates]);
 
-  const chartDataMobile = useMemo(() => {
-    if (!teammates || teammates.length === 0) {
-      return [];
-    }
-
-    return teammates
-      .slice(0, 7)
-      .map((teammate) => ({
-        username: teammate.player.username,
-        frequency: teammate.frequency,
-        osuId: teammate.player.osuId,
-        avatarUrl: `https://a.ppy.sh/${teammate.player.osuId}`,
-      }))
-      .sort((a, b) => b.frequency - a.frequency);
-  }, [teammates]);
-
-  if (chartDataDesktop.length === 0) {
+  if (chartData.desktop.length === 0) {
     return (
       <Card className={className}>
         <CardHeader className="items-center">
@@ -159,12 +147,12 @@ export default function PlayerTeammatesChart({
         <div className="hidden md:block">
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
             <BarChart
-              data={chartDataDesktop}
+              data={chartData.desktop}
               margin={{ top: 20, right: 0, left: -30, bottom: 0 }}
             >
               <XAxis
                 dataKey="username"
-                tick={createCustomXAxisTick(chartDataDesktop)}
+                tick={createCustomXAxisTick(chartData.desktop)}
                 interval={0}
                 height={50}
               />
@@ -176,8 +164,8 @@ export default function PlayerTeammatesChart({
                 radius={[4, 4, 0, 0]}
                 barSize={30}
                 onClick={(data) => {
-                  const chartData = data.payload as ChartDataEntry;
-                  router.push(`/players/${chartData.osuId}`);
+                  const entry = data.payload as ChartDataEntry;
+                  router.push(`/players/${entry.osuId}`);
                 }}
                 style={{ cursor: 'pointer' }}
               />
@@ -188,12 +176,12 @@ export default function PlayerTeammatesChart({
         <div className="block md:hidden">
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
             <BarChart
-              data={chartDataMobile}
+              data={chartData.mobile}
               margin={{ top: 20, right: 0, left: -30, bottom: 0 }}
             >
               <XAxis
                 dataKey="username"
-                tick={createCustomXAxisTick(chartDataMobile)}
+                tick={createCustomXAxisTick(chartData.mobile)}
                 interval={0}
                 height={50}
               />
@@ -205,8 +193,8 @@ export default function PlayerTeammatesChart({
                 radius={[4, 4, 0, 0]}
                 barSize={30}
                 onClick={(data) => {
-                  const chartData = data.payload as ChartDataEntry;
-                  router.push(`/players/${chartData.osuId}`);
+                  const entry = data.payload as ChartDataEntry;
+                  router.push(`/players/${entry.osuId}`);
                 }}
                 style={{ cursor: 'pointer' }}
               />
