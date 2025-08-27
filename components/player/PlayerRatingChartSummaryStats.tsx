@@ -1,8 +1,10 @@
-import { TrendingUp, TrendingDown, Award } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
 import TRText from '../rating/TRText';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import StatCard from '../shared/StatCard';
+import TierIcon from '../icons/TierIcon';
+import { getTierFromRating } from '@/lib/utils/tierData';
 
 interface PlayerRatingChartSummaryStatsProps {
   data: RatingAdjustmentDTO[];
@@ -20,10 +22,12 @@ export default function PlayerRatingChartSummaryStats({
   const initialRating = sortedData[0]?.ratingAfter || 0;
   const totalChange = currentRating - initialRating;
 
+  const { tier, subTier } = getTierFromRating(highestRating ?? 0);
+
   return (
     <div className="flex flex-wrap gap-2">
       <StatCard
-        icon={<Award className="h-6 w-6" />}
+        icon={<TierIcon tier={tier} subTier={subTier} width={28} height={28} />}
         label="Peak Rating"
         value={
           <span className="flex items-baseline gap-1">
