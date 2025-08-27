@@ -11,6 +11,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { formatUTCDateFull } from '@/lib/utils/date';
 
 export type MatchRow = {
   id: number;
@@ -197,7 +198,7 @@ export const columns = [
     },
     cell: ({ getValue }) => (
       <span className="hidden md:inline">
-        {new Date(getValue()).toLocaleString()}
+        {formatUTCDateFull(new Date(getValue()))}
       </span>
     ),
     sortingFn: (rowA, rowB) => {
