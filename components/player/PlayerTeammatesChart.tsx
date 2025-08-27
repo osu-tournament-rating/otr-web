@@ -62,7 +62,7 @@ export default function PlayerTeammatesChart({
     }
 
     return teammates
-      .slice(0, 5)
+      .slice(0, 7)
       .map((teammate) => ({
         username: teammate.player.username,
         frequency: teammate.frequency,
@@ -76,7 +76,7 @@ export default function PlayerTeammatesChart({
     return (
       <Card className={className}>
         <CardHeader className="items-center">
-          <CardTitle>Top Teammates</CardTitle>
+          <CardTitle>Frequent Teammates</CardTitle>
           <CardDescription>No teammate data available</CardDescription>
         </CardHeader>
       </Card>
@@ -151,7 +151,7 @@ export default function PlayerTeammatesChart({
   return (
     <Card className={className}>
       <CardHeader className="items-center">
-        <CardTitle>Top Teammates</CardTitle>
+        <CardTitle>Frequent Teammates</CardTitle>
         <CardDescription>Most frequently played with teammates</CardDescription>
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">

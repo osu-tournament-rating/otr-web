@@ -62,7 +62,7 @@ export default function PlayerOpponentsChart({
     }
 
     return opponents
-      .slice(0, 5)
+      .slice(0, 7)
       .map((opponent) => ({
         username: opponent.player.username,
         frequency: opponent.frequency,
@@ -76,7 +76,7 @@ export default function PlayerOpponentsChart({
     return (
       <Card className={className}>
         <CardHeader className="items-center">
-          <CardTitle>Top Opponents</CardTitle>
+          <CardTitle>Frequent Opponents</CardTitle>
           <CardDescription>No opponent data available</CardDescription>
         </CardHeader>
       </Card>
@@ -151,7 +151,7 @@ export default function PlayerOpponentsChart({
   return (
     <Card className={className}>
       <CardHeader className="items-center">
-        <CardTitle>Top Opponents</CardTitle>
+        <CardTitle>Frequent Opponents</CardTitle>
         <CardDescription>
           Most frequently played against opponents
         </CardDescription>
@@ -174,7 +174,7 @@ export default function PlayerOpponentsChart({
               <ChartTooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="frequency"
-                fill="oklch(0.69 0.2 23.91)"
+                fill="var(--chart-2)"
                 radius={[4, 4, 0, 0]}
                 barSize={30}
                 onClick={(data) => {
