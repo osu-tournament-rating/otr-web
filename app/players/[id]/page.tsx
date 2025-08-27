@@ -1,8 +1,10 @@
 import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
+import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
+import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import { Card } from '@/components/ui/card';
 import { getStatsCached } from '@/lib/actions/players';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
@@ -105,17 +107,35 @@ export default async function PlayerPage(props: PageProps) {
               )[0].ratingAfter
             }
           />
-          {/* Display mod statistics if available */}
-          {modStatsData && (
-            <div className="flex flex-col gap-4 md:flex-row md:gap-2">
-              <PlayerModStatsChart
-                className="w-full md:w-80 md:flex-none lg:flex-1"
-                modStats={modStatsData}
-              />
-              <PlayerModCountChart
-                className="w-full md:flex-1"
-                modStats={modStatsData}
-              />
+          {/* Display all statistics charts in a responsive grid */}
+          {(modStatsData ||
+            playerData.frequentTeammates ||
+            playerData.frequentOpponents) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-2">
+              {modStatsData && (
+                <>
+                  <PlayerModStatsChart
+                    className="w-full"
+                    modStats={modStatsData}
+                  />
+                  <PlayerModCountChart
+                    className="w-full"
+                    modStats={modStatsData}
+                  />
+                </>
+              )}
+              {playerData.frequentTeammates && (
+                <PlayerTeammatesChart
+                  className="w-full"
+                  teammates={playerData.frequentTeammates}
+                />
+              )}
+              {playerData.frequentOpponents && (
+                <PlayerOpponentsChart
+                  className="w-full"
+                  opponents={playerData.frequentOpponents}
+                />
+              )}
             </div>
           )}
         </>
