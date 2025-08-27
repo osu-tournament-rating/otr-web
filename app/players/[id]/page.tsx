@@ -13,7 +13,7 @@ import {
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -74,6 +74,31 @@ export default async function PlayerPage(props: PageProps) {
   // Handle case where player data might not be found
   if (!playerData) {
     return notFound();
+  }
+
+  // Redirect to o!TR ID if the current URL uses a different search key
+  if (
+    playerData.playerInfo.id &&
+    playerData.playerInfo.id.toString() !== decodedId
+  ) {
+    // Build query string from search params
+    const queryString = new URLSearchParams(
+      Object.entries(searchParams).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = Array.isArray(value) ? value[0] : value;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    ).toString();
+
+    const redirectUrl = `/players/${playerData.playerInfo.id}${
+      queryString ? `?${queryString}` : ''
+    }`;
+
+    redirect(redirectUrl);
   }
 
   // Get the current ruleset from search params or default to Osu
