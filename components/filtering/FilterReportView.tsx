@@ -195,9 +195,9 @@ export function FilterReportView() {
                   })}
                 </p>
               </div>
-              <div className="flex gap-4 rounded-lg bg-muted/50 p-3">
-                <div className="px-2 text-center">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+              <div className="flex gap-3 rounded-lg bg-muted/50 p-3 sm:gap-4">
+                <div className="flex-1 text-center sm:flex-initial sm:px-2">
+                  <p className="text-xl font-bold text-green-600 sm:text-2xl dark:text-green-500">
                     {results.playersPassed}
                   </p>
                   <p className="text-xs tracking-wider text-muted-foreground uppercase">
@@ -205,8 +205,8 @@ export function FilterReportView() {
                   </p>
                 </div>
                 <div className="h-auto w-px bg-border" />
-                <div className="px-2 text-center">
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-500">
+                <div className="flex-1 text-center sm:flex-initial sm:px-2">
+                  <p className="text-xl font-bold text-red-600 sm:text-2xl dark:text-red-500">
                     {results.playersFailed}
                   </p>
                   <p className="text-xs tracking-wider text-muted-foreground uppercase">
@@ -234,8 +234,8 @@ export function FilterReportView() {
                     checked
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg bg-muted/30 p-4 text-sm md:grid-cols-3 lg:grid-cols-4">
-                  <div>
+                <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/30 p-4 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="sm:col-span-2 md:col-span-1">
                     <span className="text-xs text-muted-foreground">
                       Ruleset
                     </span>

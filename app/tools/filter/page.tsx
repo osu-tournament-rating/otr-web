@@ -12,15 +12,15 @@ export default function FilteringPage() {
     useState<FilteringResultDTO | null>(null);
 
   return (
-    <div className="container mx-auto flex w-full flex-col items-center justify-center gap-3">
+    <div className="container mx-auto flex flex-col gap-4 px-4 md:gap-2 md:px-0">
       <BetaWarningBanner />
-      <Card className="flex w-full flex-col items-center justify-center gap-4">
-        <div className="flex flex-row items-center gap-2 text-xl font-bold text-primary md:text-2xl">
-          <Filter className="size-9" />
+      <Card className="flex flex-col items-center justify-center gap-3 px-4 py-6 sm:gap-4 sm:px-6">
+        <div className="flex flex-row items-center gap-2 text-lg font-bold text-primary sm:text-xl md:text-2xl">
+          <Filter className="size-7 sm:size-8 md:size-9" />
           Tournament Registrant Filtering
         </div>
         <div className="flex flex-col items-center text-center">
-          <span className="text-md flex text-muted-foreground">
+          <span className="text-sm text-muted-foreground sm:text-base">
             Filter your tournament registrants based on rating and other
             eligibility criteria.
           </span>

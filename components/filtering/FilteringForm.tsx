@@ -211,10 +211,12 @@ type FormSectionProps = {
 };
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
-  <div className="space-y-6">
-    <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
+  <div className="space-y-4 sm:space-y-6">
+    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
       {icon}
-      <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
+        {title}
+      </h3>
     </div>
     {children}
   </div>
@@ -227,6 +229,7 @@ interface NumberInputProps {
   tooltip: string;
   placeholder?: string;
   isInteger?: boolean;
+  className?: string;
 }
 
 function NumberInput({
@@ -236,13 +239,14 @@ function NumberInput({
   tooltip,
   placeholder,
   isInteger = false,
+  className,
 }: NumberInputProps) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={className}>
           <LabelWithTooltip label={label} tooltip={tooltip} />
           <FormControl>
             <Input
@@ -399,7 +403,7 @@ export default function FilteringForm({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="mx-2 space-y-8 lg:mx-8"
+            className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
           >
             <FormSection
               icon={<Settings className="size-6 text-primary" />}
@@ -433,7 +437,7 @@ export default function FilteringForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-start">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <NumberInput
                   control={form.control}
                   name="minRating"
@@ -454,10 +458,11 @@ export default function FilteringForm({
                   label="Maximum Peak Rating"
                   tooltip="Players whose all-time peak rating exceeds this value will be filtered out"
                   placeholder="2500"
+                  className="sm:col-span-2 lg:col-span-1"
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <NumberInput
                   control={form.control}
                   name="tournamentsPlayed"
@@ -476,7 +481,7 @@ export default function FilteringForm({
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <NumberInput
                   control={form.control}
                   name="matchesPlayed"
@@ -522,11 +527,11 @@ export default function FilteringForm({
               />
             </FormSection>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+                className="flex-1 rounded-md bg-primary text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
               >
                 {isLoading ? (
                   <LoaderCircle className="animate-spin" />
@@ -552,7 +557,7 @@ export default function FilteringForm({
                   initialValuesRef.current = form.getValues();
                 }}
                 disabled={isLoading}
-                className="rounded-md px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-xl"
+                className="rounded-md px-6 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-xl sm:px-8 sm:py-6 sm:text-lg"
               >
                 Reset
               </Button>
