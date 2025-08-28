@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { PlayerFrequencyDTO } from '@osu-tournament-rating/otr-api-client';
 import { ChartConfig, ChartContainer, ChartTooltip } from '../ui/chart';
@@ -88,7 +88,11 @@ export default function PlayerFrequencyChart({
   chartColor,
 }: PlayerFrequencyChartProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const [transparentAvatars, setTransparentAvatars] = useState<Set<number>>(
+    new Set()
+  );
 
   // Default values based on type
   const defaultTitle =
@@ -143,6 +147,41 @@ export default function PlayerFrequencyChart({
     setImageErrors((prev) => new Set(prev).add(osuId));
   }, []);
 
+  // Handle transparent avatar detection
+  const handleImageLoad = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>, osuId: number) => {
+      const img = event.currentTarget;
+
+      // Create a canvas to check if image is transparent
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+
+      // Sample multiple points to check for transparency
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      let isTransparent = true;
+
+      // Check if the image has any non-transparent pixels
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] > 10) {
+          // Alpha channel threshold
+          isTransparent = false;
+          break;
+        }
+      }
+
+      if (isTransparent) {
+        setTransparentAvatars((prev) => new Set(prev).add(osuId));
+      }
+    },
+    []
+  );
+
   // Memoized function to create custom X axis tick with accessibility improvements
   const createCustomXAxisTick = useCallback(
     (tickData: ChartDataEntry[]) => {
@@ -164,6 +203,8 @@ export default function PlayerFrequencyChart({
         }
 
         const hasImageError = imageErrors.has(player.osuId);
+        const isTransparent = transparentAvatars.has(player.osuId);
+        const shouldUseFallback = hasImageError || isTransparent;
         const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TICK;
 
         return (
@@ -176,27 +217,33 @@ export default function PlayerFrequencyChart({
             >
               <button
                 type="button"
-                onClick={() => router.push(`/players/${player.osuId}`)}
+                onClick={() => {
+                  const ruleset = searchParams.get('ruleset');
+                  const url = ruleset
+                    ? `/players/${player.osuId}?ruleset=${ruleset}`
+                    : `/players/${player.osuId}`;
+                  router.push(url);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    router.push(`/players/${player.osuId}`);
+                    const ruleset = searchParams.get('ruleset');
+                    const url = ruleset
+                      ? `/players/${player.osuId}?ruleset=${ruleset}`
+                      : `/players/${player.osuId}`;
+                    router.push(url);
                   }
                 }}
-                className="cursor-pointer rounded-full focus:ring-2 focus:ring-primary focus:outline-none"
+                className="cursor-pointer rounded-full outline-none focus:outline-none"
                 aria-label={`View ${player.username}'s profile`}
                 title={player.username}
               >
-                {hasImageError ? (
+                {shouldUseFallback ? (
                   <div
-                    className="flex items-center justify-center rounded-full bg-muted"
+                    className="rounded-full bg-accent"
                     style={{ width: avatarSize, height: avatarSize }}
                     aria-label={`${player.username} avatar`}
-                  >
-                    <span className="text-xs font-semibold">
-                      {player.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                  />
                 ) : (
                   <Image
                     src={player.avatarUrl}
@@ -205,6 +252,7 @@ export default function PlayerFrequencyChart({
                     height={avatarSize}
                     className="rounded-full"
                     style={{ imageRendering: 'crisp-edges' }}
+                    onLoad={(e) => handleImageLoad(e, player.osuId)}
                     onError={() => handleImageError(player.osuId)}
                   />
                 )}
@@ -216,7 +264,14 @@ export default function PlayerFrequencyChart({
       TickComponent.displayName = 'CustomXAxisTick';
       return TickComponent;
     },
-    [router, imageErrors, handleImageError]
+    [
+      router,
+      searchParams,
+      imageErrors,
+      transparentAvatars,
+      handleImageError,
+      handleImageLoad,
+    ]
   );
 
   // Custom tooltip component with error handling
@@ -237,21 +292,19 @@ export default function PlayerFrequencyChart({
       }
 
       const hasImageError = imageErrors.has(data.osuId);
+      const isTransparent = transparentAvatars.has(data.osuId);
+      const shouldUseFallback = hasImageError || isTransparent;
       const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
 
       return (
         <div className="rounded-lg border bg-background p-3 shadow-lg">
           <div className="flex items-center gap-3">
-            {hasImageError ? (
+            {shouldUseFallback ? (
               <div
-                className="flex items-center justify-center rounded-full bg-muted"
+                className="rounded-full bg-accent"
                 style={{ width: avatarSize, height: avatarSize }}
                 aria-label={`${data.username} avatar`}
-              >
-                <span className="text-sm font-semibold">
-                  {data.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              />
             ) : (
               <Image
                 src={data.avatarUrl}
@@ -260,6 +313,7 @@ export default function PlayerFrequencyChart({
                 height={avatarSize}
                 className="rounded-full"
                 style={{ imageRendering: 'crisp-edges' }}
+                onLoad={(e) => handleImageLoad(e, data.osuId)}
                 onError={() => handleImageError(data.osuId)}
               />
             )}
@@ -273,7 +327,7 @@ export default function PlayerFrequencyChart({
         </div>
       );
     },
-    [imageErrors, handleImageError]
+    [imageErrors, transparentAvatars, handleImageError, handleImageLoad]
   );
 
   if (chartData.desktop.length === 0) {
