@@ -71,7 +71,6 @@ export default function PlayerOpponentsChart({
     );
   }
 
-  // Custom X-axis tick component to render profile pictures only
   const createCustomXAxisTick = (data: ChartDataEntry[]) => {
     const TickComponent = (props: {
       x?: number;
@@ -86,14 +85,19 @@ export default function PlayerOpponentsChart({
       return (
         <g transform={`translate(${x},${y})`}>
           <foreignObject x={-16} y={5} width={32} height={32}>
-            <Image
-              src={player.avatarUrl}
-              alt={player.username}
-              width={32}
-              height={32}
-              className="rounded-full"
-              style={{ imageRendering: 'crisp-edges' }}
-            />
+            <div
+              onClick={() => router.push(`/players/${player.osuId}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <Image
+                src={player.avatarUrl}
+                alt={player.username}
+                width={32}
+                height={32}
+                className="rounded-full"
+                style={{ imageRendering: 'crisp-edges' }}
+              />
+            </div>
           </foreignObject>
         </g>
       );
@@ -158,18 +162,17 @@ export default function PlayerOpponentsChart({
                 interval={0}
                 height={50}
               />
-              <YAxis />
+              <YAxis
+                domain={[0, 'dataMax']}
+                tickFormatter={(value: number) => value.toString()}
+                allowDecimals={false}
+              />
               <ChartTooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="frequency"
                 fill="var(--chart-2)"
                 radius={[4, 4, 0, 0]}
                 barSize={30}
-                onClick={(data) => {
-                  const entry = data.payload as ChartDataEntry;
-                  router.push(`/players/${entry.osuId}`);
-                }}
-                style={{ cursor: 'pointer' }}
               />
             </BarChart>
           </ChartContainer>
@@ -187,18 +190,16 @@ export default function PlayerOpponentsChart({
                 interval={0}
                 height={50}
               />
-              <YAxis />
+              <YAxis
+                allowDecimals={false}
+                tickFormatter={(value: number) => value.toString()}
+              />
               <ChartTooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="frequency"
                 fill="var(--chart-2)"
                 radius={[4, 4, 0, 0]}
                 barSize={30}
-                onClick={(data) => {
-                  const entry = data.payload as ChartDataEntry;
-                  router.push(`/players/${entry.osuId}`);
-                }}
-                style={{ cursor: 'pointer' }}
               />
             </BarChart>
           </ChartContainer>
