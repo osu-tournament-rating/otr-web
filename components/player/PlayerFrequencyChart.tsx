@@ -60,9 +60,10 @@ function isValidPlayerFrequency(item: unknown): item is PlayerFrequencyDTO {
     typeof item === 'object' &&
     'player' in item &&
     'frequency' in item &&
-    typeof (item as any).player === 'object' &&
-    'username' in (item as any).player &&
-    'osuId' in (item as any).player
+    typeof (item as { player: unknown }).player === 'object' &&
+    (item as { player: unknown }).player !== null &&
+    'username' in (item as { player: object }).player &&
+    'osuId' in (item as { player: object }).player
   );
 }
 
