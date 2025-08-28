@@ -37,7 +37,7 @@ export default function TierIcon({
       ? 'Elite Grandmaster'
       : `${tier}${subTier ?? ''}`;
 
-  const Icon = () => (
+  const imageElement = (
     <Image
       src={`/icons/tiers/${fileName}.svg`}
       alt={tier + subTier?.toString()}
@@ -46,7 +46,7 @@ export default function TierIcon({
   );
 
   if (!tooltip) {
-    return <Icon />;
+    return imageElement;
   }
 
   const tooltipContent = getTierString(tier, subTier);
@@ -56,9 +56,5 @@ export default function TierIcon({
     subTier = undefined;
   }
 
-  return (
-    <SimpleTooltip content={tooltipContent}>
-      <Icon />
-    </SimpleTooltip>
-  );
+  return <SimpleTooltip content={tooltipContent}>{imageElement}</SimpleTooltip>;
 }
