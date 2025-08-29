@@ -27,7 +27,15 @@ export default function PlayerRatingChartSummaryStats({
   return (
     <div className="flex flex-wrap gap-2">
       <StatCard
-        icon={<TierIcon tier={tier} subTier={subTier} width={28} height={28} />}
+        icon={
+          <TierIcon
+            tier={tier}
+            subTier={subTier}
+            width={28}
+            height={28}
+            tooltip
+          />
+        }
         label="Peak Rating"
         value={
           <span className="flex items-baseline gap-1">

@@ -57,10 +57,12 @@ type FormSectionProps = {
 };
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
-  <div className="space-y-6">
-    <div className="mb-4 flex items-center gap-3 rounded-md border-b border-border p-3 pb-3">
+  <div className="space-y-4 sm:space-y-6">
+    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
       {icon}
-      <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
+        {title}
+      </h3>
     </div>
     {children}
   </div>
@@ -153,18 +155,18 @@ export default function TournamentSubmissionForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="mx-2 space-y-8 lg:mx-8"
+          className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
         >
           <FormSection
             icon={<Trophy className="size-6 text-primary" />}
             title="Information"
           >
-            <div className="flex flex-col items-start gap-4 md:flex-row">
+            <div className="flex flex-col gap-4 sm:flex-row">
               <FormField
                 control={form.control}
                 name="abbreviation"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="w-full sm:flex-1">
                     <LabelWithTooltip
                       label="Abbreviation"
                       tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)"
@@ -184,7 +186,7 @@ export default function TournamentSubmissionForm() {
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="w-full sm:flex-1">
                     <LabelWithTooltip
                       label="Name"
                       tooltip="Full tournament name (e.g. osu! World Cup 2024)"
@@ -230,12 +232,12 @@ export default function TournamentSubmissionForm() {
             />
           </FormSection>
 
-          <div className="mt-6 grid grid-cols-1 items-start gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <FormField
               control={form.control}
               name="ruleset"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2 lg:col-span-1">
                   <LabelWithTooltip
                     label="Ruleset"
                     tooltip="Game mode the tournament is played in"
@@ -422,7 +424,7 @@ export default function TournamentSubmissionForm() {
 
           <Button
             type="submit"
-            className="w-full rounded-md bg-primary py-6 text-lg font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+            className="w-full rounded-md bg-primary py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? (

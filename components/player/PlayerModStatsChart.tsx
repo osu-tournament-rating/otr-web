@@ -161,7 +161,7 @@ export default function PlayerModStatsChart({
               interval={0}
             />
             <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={30} />
+            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={26} />
           </BarChart>
         </ChartContainer>
       </CardContent>

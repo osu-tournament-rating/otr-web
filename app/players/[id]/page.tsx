@@ -1,8 +1,10 @@
 import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
+import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
+import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import { Card } from '@/components/ui/card';
 import { getStatsCached } from '@/lib/actions/players';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
@@ -11,7 +13,7 @@ import {
   Ruleset,
 } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -74,6 +76,31 @@ export default async function PlayerPage(props: PageProps) {
     return notFound();
   }
 
+  // Redirect to o!TR ID if the current URL uses a different search key
+  if (
+    playerData.playerInfo.id &&
+    playerData.playerInfo.id.toString() !== decodedId
+  ) {
+    // Build query string from search params
+    const queryString = new URLSearchParams(
+      Object.entries(searchParams).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = Array.isArray(value) ? value[0] : value;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    ).toString();
+
+    const redirectUrl = `/players/${playerData.playerInfo.id}${
+      queryString ? `?${queryString}` : ''
+    }`;
+
+    redirect(redirectUrl);
+  }
+
   // Get the current ruleset from search params or default to Osu
   const currentRuleset = searchParams.ruleset
     ? (Number(searchParams.ruleset) as Ruleset)
@@ -105,17 +132,35 @@ export default async function PlayerPage(props: PageProps) {
               )[0].ratingAfter
             }
           />
-          {/* Display mod statistics if available */}
-          {modStatsData && (
-            <div className="flex flex-col gap-4 md:flex-row md:gap-2">
-              <PlayerModStatsChart
-                className="w-full md:w-80 md:flex-none lg:flex-1"
-                modStats={modStatsData}
-              />
-              <PlayerModCountChart
-                className="w-full md:flex-1"
-                modStats={modStatsData}
-              />
+          {/* Display all statistics charts in a responsive grid */}
+          {(modStatsData ||
+            playerData.frequentTeammates ||
+            playerData.frequentOpponents) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-2">
+              {modStatsData && (
+                <>
+                  <PlayerModStatsChart
+                    className="w-full"
+                    modStats={modStatsData}
+                  />
+                  <PlayerModCountChart
+                    className="w-full"
+                    modStats={modStatsData}
+                  />
+                </>
+              )}
+              {playerData.frequentTeammates && (
+                <PlayerTeammatesChart
+                  className="w-full"
+                  teammates={playerData.frequentTeammates}
+                />
+              )}
+              {playerData.frequentOpponents && (
+                <PlayerOpponentsChart
+                  className="w-full"
+                  opponents={playerData.frequentOpponents}
+                />
+              )}
             </div>
           )}
         </>

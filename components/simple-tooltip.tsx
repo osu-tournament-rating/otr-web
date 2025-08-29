@@ -1,17 +1,29 @@
 import { ReactNode } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+interface SimpleTooltipProps {
+  content: ReactNode;
+  children: ReactNode;
+  side?: 'top' | 'right' | 'bottom' | 'left';
+  align?: 'start' | 'center' | 'end';
+}
 
 export default function SimpleTooltip({
   content,
   children,
-}: {
-  content: ReactNode;
-  children: ReactNode;
-}) {
+  side = 'top',
+  align = 'center',
+}: SimpleTooltipProps) {
   return (
-    <Tooltip useTouch={true}>
+    <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent>{content}</TooltipContent>
+      <TooltipContent side={side} align={align}>
+        {content}
+      </TooltipContent>
     </Tooltip>
   );
 }

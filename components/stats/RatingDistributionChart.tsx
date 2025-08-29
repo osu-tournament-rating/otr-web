@@ -47,11 +47,18 @@ type ChartDataItem = {
   cumulativePercentage?: number;
 };
 
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) {
+interface ExtendedTooltipProps extends TooltipProps<number, string> {
+  payload?: Array<{
+    dataKey: string;
+    value: number;
+    payload: ChartDataItem;
+  }>;
+  label?: string;
+}
+
+function CustomTooltip(props: ExtendedTooltipProps) {
+  const { active, payload, label } = props;
+
   if (!active || !payload?.length) return null;
 
   const data = payload[0].payload as ChartDataItem;
