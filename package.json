@@ -2,9 +2,6 @@
   "name": "otr-web",
   "version": "0.1.0",
   "private": true,
-  "overrides": {
-    "react-is": "^19.1.0"
-  },
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",

@@ -2,4 +2,4 @@
 
 # o!TR Web
 
-Get started with development by reading [this page](https://docs.otr.stagec.xyz/Applications/Web/Getting-Started) of our documentation.
+Check out our [development guide](https://docs.otr.stagec.xyz/Development/Development-Guide) to get started with local development.
