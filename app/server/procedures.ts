@@ -1,7 +1,7 @@
 import { ORPCError, os } from '@orpc/server';
-import { db } from '@/app/db';
+import { db } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import * as schema from '@/drizzle/schema';
+import * as schema from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 

@@ -32,9 +32,6 @@ import {
   beatmapAttributes,
   oAuthClientAdminNote,
   userRestrictions,
-  authUsers,
-  authAccounts,
-  authSessions,
   joinBeatmapCreators,
   joinPooledBeatmaps,
 } from './schema';
@@ -445,25 +442,6 @@ export const userRestrictionsRelations = relations(
     }),
   })
 );
-
-export const authAccountsRelations = relations(authAccounts, ({ one }) => ({
-  authUser: one(authUsers, {
-    fields: [authAccounts.userId],
-    references: [authUsers.id],
-  }),
-}));
-
-export const authUsersRelations = relations(authUsers, ({ many }) => ({
-  authAccounts: many(authAccounts),
-  authSessions: many(authSessions),
-}));
-
-export const authSessionsRelations = relations(authSessions, ({ one }) => ({
-  authUser: one(authUsers, {
-    fields: [authSessions.userId],
-    references: [authUsers.id],
-  }),
-}));
 
 export const joinBeatmapCreatorsRelations = relations(
   joinBeatmapCreators,

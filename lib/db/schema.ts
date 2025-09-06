@@ -11,7 +11,6 @@ import {
   boolean,
   doublePrecision,
   text,
-  unique,
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -1541,81 +1540,6 @@ export const userRestrictions = pgTable(
       foreignColumns: [users.id],
       name: 'fk_user_restrictions_users_user_id',
     }).onDelete('cascade'),
-  ]
-);
-
-export const authVerifications = pgTable('auth_verifications', {
-  id: text().primaryKey().notNull(),
-  identifier: text().notNull(),
-  value: text().notNull(),
-  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
-  createdAt: timestamp('created_at', { mode: 'string' }),
-  updatedAt: timestamp('updated_at', { mode: 'string' }),
-});
-
-export const authUsers = pgTable(
-  'auth_users',
-  {
-    id: text().primaryKey().notNull(),
-    name: text().notNull(),
-    email: text().notNull(),
-    emailVerified: boolean('email_verified').notNull(),
-    image: text(),
-    createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
-  },
-  (table) => [unique('auth_users_email_unique').on(table.email)]
-);
-
-export const authAccounts = pgTable(
-  'auth_accounts',
-  {
-    id: text().primaryKey().notNull(),
-    accountId: text('account_id').notNull(),
-    providerId: text('provider_id').notNull(),
-    userId: text('user_id').notNull(),
-    accessToken: text('access_token'),
-    refreshToken: text('refresh_token'),
-    idToken: text('id_token'),
-    accessTokenExpiresAt: timestamp('access_token_expires_at', {
-      mode: 'string',
-    }),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
-      mode: 'string',
-    }),
-    scope: text(),
-    password: text(),
-    createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [authUsers.id],
-      name: 'auth_accounts_user_id_auth_users_id_fk',
-    }).onDelete('cascade'),
-  ]
-);
-
-export const authSessions = pgTable(
-  'auth_sessions',
-  {
-    id: text().primaryKey().notNull(),
-    expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
-    token: text().notNull(),
-    createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
-    ipAddress: text('ip_address'),
-    userAgent: text('user_agent'),
-    userId: text('user_id').notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [authUsers.id],
-      name: 'auth_sessions_user_id_auth_users_id_fk',
-    }).onDelete('cascade'),
-    unique('auth_sessions_token_unique').on(table.token),
   ]
 );
 
