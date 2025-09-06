@@ -24,16 +24,14 @@ export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
 export const beatmapsets = pgTable(
   'beatmapsets',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'beatmapsets_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'beatmapsets_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     creatorId: integer('creator_id'),
@@ -73,16 +71,14 @@ export const beatmapsets = pgTable(
 export const filterReports = pgTable(
   'filter_reports',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'filter_reports_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'filter_reports_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     userId: integer('user_id').notNull(),
     ruleset: integer().notNull(),
     minRating: integer('min_rating'),
@@ -114,16 +110,14 @@ export const filterReports = pgTable(
 export const gameAudits = pgTable(
   'game_audits',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_audits_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_audits_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -166,16 +160,14 @@ export const gameAudits = pgTable(
 export const gameRosters = pgTable(
   'game_rosters',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_rosters_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_rosters_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     roster: integer().array().notNull(),
     team: integer().notNull(),
     score: integer().notNull(),
@@ -209,16 +201,14 @@ export const gameRosters = pgTable(
 export const gameScores = pgTable(
   'game_scores',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_scores_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_scores_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     score: integer().notNull(),
     placement: integer().notNull(),
     maxCombo: integer('max_combo').notNull(),
@@ -273,16 +263,14 @@ export const gameScores = pgTable(
 export const gameScoreAudits = pgTable(
   'game_score_audits',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_score_audits_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_score_audits_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -325,16 +313,14 @@ export const gameScoreAudits = pgTable(
 export const beatmaps = pgTable(
   'beatmaps',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'beatmaps_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'beatmaps_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     ruleset: integer().notNull(),
@@ -380,16 +366,14 @@ export const beatmaps = pgTable(
 export const filterReportPlayers = pgTable(
   'filter_report_players',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'filter_report_players_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'filter_report_players_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     filterReportId: integer('filter_report_id').notNull(),
     playerId: integer('player_id').notNull(),
     isSuccess: boolean('is_success').notNull(),
@@ -432,16 +416,14 @@ export const filterReportPlayers = pgTable(
 export const games = pgTable(
   'games',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'games_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'games_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     ruleset: integer().notNull(),
@@ -498,16 +480,14 @@ export const games = pgTable(
 export const gameAdminNotes = pgTable(
   'game_admin_notes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_admin_notes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -541,16 +521,14 @@ export const gameAdminNotes = pgTable(
 export const gameScoreAdminNotes = pgTable(
   'game_score_admin_notes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'game_score_admin_notes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'game_score_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -593,16 +571,14 @@ export const logs = pgTable('logs', {
 export const matchAudits = pgTable(
   'match_audits',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'match_audits_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'match_audits_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -645,16 +621,14 @@ export const matchAudits = pgTable(
 export const matchRosters = pgTable(
   'match_rosters',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'match_rosters_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'match_rosters_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     roster: integer().array().notNull(),
     team: integer().notNull(),
     score: integer().notNull(),
@@ -688,16 +662,14 @@ export const matchRosters = pgTable(
 export const matchAdminNotes = pgTable(
   'match_admin_notes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'match_admin_notes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'match_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -731,16 +703,14 @@ export const matchAdminNotes = pgTable(
 export const matches = pgTable(
   'matches',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'matches_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'matches_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     name: varchar({ length: 512 }).default('').notNull(),
@@ -796,16 +766,14 @@ export const matches = pgTable(
 export const playerAdminNotes = pgTable(
   'player_admin_notes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_admin_notes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -839,16 +807,14 @@ export const playerAdminNotes = pgTable(
 export const playerHighestRanks = pgTable(
   'player_highest_ranks',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_highest_ranks_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_highest_ranks_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     ruleset: integer().notNull(),
     globalRank: integer('global_rank').notNull(),
     globalRankDate: timestamp('global_rank_date', {
@@ -891,16 +857,14 @@ export const playerHighestRanks = pgTable(
 export const playerOsuRulesetData = pgTable(
   'player_osu_ruleset_data',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_osu_ruleset_data_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_osu_ruleset_data_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     ruleset: integer().notNull(),
     pp: doublePrecision().notNull(),
     globalRank: integer('global_rank'),
@@ -940,16 +904,14 @@ export const playerOsuRulesetData = pgTable(
 export const ratingAdjustments = pgTable(
   'rating_adjustments',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'rating_adjustments_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'rating_adjustments_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     adjustmentType: integer('adjustment_type').notNull(),
     ruleset: integer().notNull(),
     timestamp: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
@@ -1004,16 +966,14 @@ export const ratingAdjustments = pgTable(
 export const players = pgTable(
   'players',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'players_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'players_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     username: varchar({ length: 32 }).default('').notNull(),
@@ -1051,16 +1011,14 @@ export const players = pgTable(
 export const oAuthClients = pgTable(
   'o_auth_clients',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'o_auth_clients_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'o_auth_clients_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     secret: varchar({ length: 128 }).notNull(),
     scopes: text().array().notNull(),
     rateLimitOverride: integer('rate_limit_override'),
@@ -1086,16 +1044,14 @@ export const oAuthClients = pgTable(
 export const playerMatchStats = pgTable(
   'player_match_stats',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_match_stats_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_match_stats_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     matchCost: doublePrecision('match_cost').notNull(),
     averageScore: doublePrecision('average_score').notNull(),
     averagePlacement: doublePrecision('average_placement').notNull(),
@@ -1148,16 +1104,14 @@ export const playerMatchStats = pgTable(
 export const playerRatings = pgTable(
   'player_ratings',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_ratings_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_ratings_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     ruleset: integer().notNull(),
     rating: doublePrecision().notNull(),
     volatility: doublePrecision().notNull(),
@@ -1203,16 +1157,14 @@ export const playerRatings = pgTable(
 export const playerTournamentStats = pgTable(
   'player_tournament_stats',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'player_tournament_stats_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'player_tournament_stats_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     averageRatingDelta: doublePrecision('average_rating_delta').notNull(),
     averageMatchCost: doublePrecision('average_match_cost').notNull(),
     averageScore: integer('average_score').notNull(),
@@ -1258,16 +1210,14 @@ export const playerTournamentStats = pgTable(
 export const tournamentAdminNotes = pgTable(
   'tournament_admin_notes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'tournament_admin_notes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'tournament_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -1301,16 +1251,14 @@ export const tournamentAdminNotes = pgTable(
 export const tournamentAudits = pgTable(
   'tournament_audits',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'tournament_audits_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'tournament_audits_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -1353,16 +1301,14 @@ export const tournamentAudits = pgTable(
 export const tournaments = pgTable(
   'tournaments',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'tournaments_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'tournaments_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     name: varchar({ length: 512 }).notNull(),
     abbreviation: varchar({ length: 32 }).notNull(),
     forumUrl: varchar('forum_url', { length: 255 }).notNull(),
@@ -1414,16 +1360,14 @@ export const tournaments = pgTable(
 export const userSettings = pgTable(
   'user_settings',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'user_settings_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'user_settings_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),
     defaultRulesetIsControlled: boolean('default_ruleset_is_controlled')
       .default(false)
@@ -1450,16 +1394,14 @@ export const userSettings = pgTable(
 export const beatmapAttributes = pgTable(
   'beatmap_attributes',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'beatmap_attributes_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'beatmap_attributes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     mods: integer().notNull(),
     sr: doublePrecision().notNull(),
     beatmapId: integer('beatmap_id').notNull(),
@@ -1484,16 +1426,14 @@ export const beatmapAttributes = pgTable(
 export const users = pgTable(
   'users',
   {
-    id: integer()
-      .primaryKey()
-      .generatedByDefaultAsIdentity({
-        name: 'users_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedByDefaultAsIdentity({
+      name: 'users_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     lastLogin: timestamp('last_login', {
       withTimezone: true,
       mode: 'string',
@@ -1521,16 +1461,14 @@ export const users = pgTable(
 export const oAuthClientAdminNote = pgTable(
   'o_auth_client_admin_note',
   {
-    id: integer()
-      .primaryKey()
-      .generatedAlwaysAsIdentity({
-        name: 'o_auth_client_admin_note_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'o_auth_client_admin_note_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -1555,16 +1493,14 @@ export const oAuthClientAdminNote = pgTable(
 export const userRestrictions = pgTable(
   'user_restrictions',
   {
-    id: integer()
-      .primaryKey()
-      .generatedByDefaultAsIdentity({
-        name: 'user_restrictions_id_seq',
-        startWith: 1,
-        increment: 1,
-        minValue: 1,
-        maxValue: 2147483647,
-        cache: 1,
-      }),
+    id: integer().primaryKey().generatedByDefaultAsIdentity({
+      name: 'user_restrictions_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
     userId: integer('user_id').notNull(),
     featureScope: varchar('feature_scope', { length: 100 }).notNull(),
     reason: varchar({ length: 500 }).notNull(),
