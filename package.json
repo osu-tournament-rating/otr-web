@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:turbo": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "npx prettier . --write --ignore-unknown",
+    "dev": "bun run next dev",
+    "dev:turbo": "bun run next dev --turbopack",
+    "build": "bun run next build",
+    "start": "bun run next start",
+    "lint": "bun run next lint",
+    "format": "bun run prettier . --write --ignore-unknown",
     "prepare": "husky"
   },
   "dependencies": {
