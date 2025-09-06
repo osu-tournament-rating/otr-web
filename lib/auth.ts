@@ -11,6 +11,13 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // 1 day
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      // Allow linking accounts even when osu! doesn't return an email
+      allowDifferentEmails: true,
+    },
+  },
   plugins: [
     genericOAuth({
       config: [
@@ -35,12 +42,15 @@ export const auth = betterAuth({
 
             const user = await response.json();
 
+            // osu! OAuth2 doesn't return email addresses
+            // We use a non-routable domain (.invalid) as a placeholder
+            // The actual user identification is done via the osu! user ID
             return {
               id: user.id.toString(),
-              email: user.email || `${user.id}@osu.local`,
+              email: user.email || `fake-mail-placeholder-${user.id}`,
               name: user.username,
               image: user.avatar_url,
-              emailVerified: false,
+              emailVerified: false, // Always false since osu! doesn't provide emails
             };
           },
         },
