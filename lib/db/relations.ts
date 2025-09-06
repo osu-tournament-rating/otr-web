@@ -31,7 +31,6 @@ import {
   userSettings,
   beatmapAttributes,
   oAuthClientAdminNote,
-  userRestrictions,
   joinBeatmapCreators,
   joinPooledBeatmaps,
 } from './schema';
@@ -94,12 +93,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
     fields: [users.playerId],
     references: [players.id],
-  }),
-  userRestrictions_createdByUserId: many(userRestrictions, {
-    relationName: 'userRestrictions_createdByUserId_users_id',
-  }),
-  userRestrictions_userId: many(userRestrictions, {
-    relationName: 'userRestrictions_userId_users_id',
   }),
 }));
 
@@ -423,22 +416,6 @@ export const oAuthClientAdminNoteRelations = relations(
     oAuthClient: one(oAuthClients, {
       fields: [oAuthClientAdminNote.referenceId],
       references: [oAuthClients.id],
-    }),
-  })
-);
-
-export const userRestrictionsRelations = relations(
-  userRestrictions,
-  ({ one }) => ({
-    user_createdByUserId: one(users, {
-      fields: [userRestrictions.createdByUserId],
-      references: [users.id],
-      relationName: 'userRestrictions_createdByUserId_users_id',
-    }),
-    user_userId: one(users, {
-      fields: [userRestrictions.userId],
-      references: [users.id],
-      relationName: 'userRestrictions_userId_users_id',
     }),
   })
 );

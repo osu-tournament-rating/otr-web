@@ -20,6 +20,71 @@ export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
   productVersion: varchar('product_version', { length: 32 }).notNull(),
 });
 
+export const auth_users = pgTable('auth_users', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').default(false).notNull(),
+  image: text('image'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  role: text('role'),
+  banned: boolean('banned').default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires'),
+});
+
+export const auth_sessions = pgTable('auth_sessions', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at').notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id')
+    .notNull()
+    .references(() => auth_users.id, { onDelete: 'cascade' }),
+  impersonatedBy: text('impersonated_by'),
+});
+
+export const auth_accounts = pgTable('auth_accounts', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => auth_users.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at'),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const auth_verifications = pgTable('auth_verifications', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
 export const beatmapsets = pgTable(
   'beatmapsets',
   {
@@ -1485,60 +1550,6 @@ export const oAuthClientAdminNote = pgTable(
       columns: [table.referenceId],
       foreignColumns: [oAuthClients.id],
       name: 'fk_o_auth_client_admin_note_o_auth_clients_reference_id',
-    }).onDelete('cascade'),
-  ]
-);
-
-export const userRestrictions = pgTable(
-  'user_restrictions',
-  {
-    id: integer().primaryKey().generatedByDefaultAsIdentity({
-      name: 'user_restrictions_id_seq',
-      startWith: 1,
-      increment: 1,
-      minValue: 1,
-      maxValue: 2147483647,
-      cache: 1,
-    }),
-    userId: integer('user_id').notNull(),
-    featureScope: varchar('feature_scope', { length: 100 }).notNull(),
-    reason: varchar({ length: 500 }).notNull(),
-    isActive: boolean('is_active').default(true).notNull(),
-    expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }),
-    createdByUserId: integer('created_by_user_id').notNull(),
-    created: timestamp({ withTimezone: true, mode: 'string' })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updated: timestamp({ withTimezone: true, mode: 'string' }),
-  },
-  (table) => [
-    index('IX_UserRestrictions_ExpiresAt').using(
-      'btree',
-      table.expiresAt.asc().nullsLast().op('timestamptz_ops')
-    ),
-    index('IX_UserRestrictions_IsActive').using(
-      'btree',
-      table.isActive.asc().nullsLast().op('bool_ops')
-    ),
-    index('IX_UserRestrictions_UserId_FeatureScope_IsActive').using(
-      'btree',
-      table.userId.asc().nullsLast().op('text_ops'),
-      table.featureScope.asc().nullsLast().op('int4_ops'),
-      table.isActive.asc().nullsLast().op('bool_ops')
-    ),
-    index('ix_user_restrictions_created_by_user_id').using(
-      'btree',
-      table.createdByUserId.asc().nullsLast().op('int4_ops')
-    ),
-    foreignKey({
-      columns: [table.createdByUserId],
-      foreignColumns: [users.id],
-      name: 'fk_user_restrictions_users_created_by_user_id',
-    }).onDelete('restrict'),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [users.id],
-      name: 'fk_user_restrictions_users_user_id',
     }).onDelete('cascade'),
   ]
 );

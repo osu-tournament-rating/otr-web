@@ -3,21 +3,39 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin as adminPlugin, genericOAuth } from 'better-auth/plugins';
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
+import { nextCookies } from 'better-auth/next-js';
+import * as schema from '@/lib/db/schema';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
+    usePlural: true,
+    schema: {
+      ...schema,
+      user: schema.auth_users,
+      account: schema.auth_accounts,
+      verification: schema.auth_verifications,
+      session: schema.auth_sessions,
+    },
   }),
   session: {
+    modelName: 'auth_session',
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // 1 day
   },
   account: {
+    modelName: 'auth_account',
     accountLinking: {
       enabled: true,
       // Allow linking accounts even when osu! doesn't return an email
       allowDifferentEmails: true,
     },
+  },
+  user: {
+    modelName: 'auth_user',
+  },
+  verification: {
+    modelName: 'auth_verification',
   },
   plugins: [
     adminPlugin({
@@ -66,5 +84,6 @@ export const auth = betterAuth({
         },
       ],
     }),
+    nextCookies(), // must be the last plugin
   ],
 });

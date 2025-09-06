@@ -1,10 +1,11 @@
 'use client';
 
 import { Button } from '../ui/button';
-import { login } from '@/lib/actions/auth';
+import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
+import { toast } from 'sonner';
 
 export default function LoginButton() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -13,9 +14,18 @@ export default function LoginButton() {
   return (
     <Button
       className="cursor-pointer"
-      onClick={() => {
+      onClick={async () => {
         setIsLoggingIn(true);
-        login(path);
+        const { error } = await authClient.signIn.oauth2({
+          providerId: 'osu',
+          callbackURL: path,
+        });
+
+        if (error) {
+          toast.error('Error occurred: ' + error.message);
+          setIsLoggingIn(false);
+          return;
+        }
       }}
     >
       {isLoggingIn ? <Loader2 className="animate-spin" /> : 'Login'}

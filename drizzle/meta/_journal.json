@@ -8,6 +8,13 @@
       "when": 1757124796144,
       "tag": "0000_brave_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757192714309,
+      "tag": "0001_tense_proteus",
+      "breakpoints": true
     }
   ]
 }
