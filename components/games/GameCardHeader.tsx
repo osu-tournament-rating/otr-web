@@ -20,7 +20,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg */}
       <BeatmapBackground
-        beatmapsetId={game.beatmap.beatmapset?.osuId}
+        beatmapsetId={game.beatmap?.beatmapset?.osuId}
         alt="beatmap cover"
       />
 
@@ -67,7 +67,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
                 <Link
-                  href={`https://osu.ppy.sh/b/${game.beatmap.osuId}`}
+                  href={`https://osu.ppy.sh/b/${game.beatmap?.osuId ?? 0}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="View beatmap on osu! website"
@@ -90,15 +90,17 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
               <span className="font-semibold text-white">
-                {game.beatmap.beatmapset?.creator?.username}
+                {game.beatmap?.beatmapset?.creator?.username ?? 'Unknown user'}
               </span>
               <span>• Map by</span>
               <span className="font-semibold text-white">
-                {game.beatmap.creators.map((c) => c.username).join(', ')}
+                {game.beatmap?.creators.map((c) => c.username).join(', ') ??
+                  'Unknown creator'}
               </span>
             </span>
             <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
-              {game.beatmap.beatmapset?.title} [{game.beatmap.diffName}]
+              {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'}{' '}
+              {game.beatmap && `[${game.beatmap.diffName}]`}
             </span>
           </div>
           <ModIconset
