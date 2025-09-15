@@ -1,6 +1,7 @@
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod';
-import { router } from '@/app/server/router';
+import { router } from '@/app/server/oRPC/router';
+import { UserSchema } from '@/lib/orpc/schema/user';
 
 const generator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
@@ -9,7 +10,7 @@ const generator = new OpenAPIGenerator({
 export async function GET() {
   const spec = await generator.generate(router, {
     info: {
-      title: 'OTR API',
+      title: 'o!TR API',
       version: '1.0.0',
       description: 'osu! Tournament Rating API',
     },
@@ -28,7 +29,16 @@ export async function GET() {
         name: 'authenticated',
         description: 'Endpoints that require authentication',
       },
+      {
+        name: 'admin',
+        description: 'May be used by admins only'
+      }
     ],
+    commonSchemas: {
+      User: {
+        schema: UserSchema,
+      }
+    }
   });
 
   return Response.json(spec);

@@ -2,7 +2,7 @@ import { ORPCError, os } from '@orpc/server';
 import { db } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/lib/db/schema';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth/auth';
 import { z } from 'zod';
 
 // Base procedure with context
@@ -19,17 +19,6 @@ const withDatabase = base.middleware(async ({ next }) => {
 
 // Auth middleware using better-auth
 const withAuth = base.middleware(async ({ context, next }) => {
-  // Get session from better-auth
-  const sessionToken = context.headers
-    .get('authorization')
-    ?.replace('Bearer ', '');
-
-  if (!sessionToken) {
-    throw new ORPCError('UNAUTHORIZED', {
-      message: 'No session token provided',
-    });
-  }
-
   // Validate session with better-auth
   const session = await auth.api.getSession({ headers: context.headers });
 
@@ -50,6 +39,32 @@ const withAuth = base.middleware(async ({ context, next }) => {
 // Reusable procedure bases
 export const publicProcedure = base.use(withDatabase);
 export const protectedProcedure = base.use(withDatabase).use(withAuth);
+
+export const getUser = protectedProcedure
+  .input(
+    z.object({
+      id: z.number().int().positive(),
+    })
+  )
+  .route({
+    summary: 'Get a user',
+    tags: ['authenticated'],
+  })
+  .handler(async ({ input, context }) => {
+    const user = await context.db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, input.id))
+      .limit(1);
+
+    if (!user[0]) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'User not found',
+      });
+    }
+
+    return user[0];
+  });
 
 // Example procedure
 export const getPlayer = publicProcedure

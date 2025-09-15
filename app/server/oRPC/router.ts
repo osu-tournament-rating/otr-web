@@ -10,9 +10,9 @@ const base = os.$context<InitialContext>();
 
 export const router = base.router({
   // Player endpoints
-  player: {
-    get: procedures.getPlayer,
-  },
+  user: {
+    get: getUser
+  }
 });
 
 export type Router = typeof router;

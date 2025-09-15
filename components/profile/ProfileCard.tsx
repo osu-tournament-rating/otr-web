@@ -22,7 +22,6 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '../ui/collapsible';
-import { useSession } from '@/lib/hooks/useSession';
 import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 import { logout } from '@/lib/actions/auth';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
@@ -30,6 +29,8 @@ import { SessionContext } from '@/components/session-provider';
 import { useContext } from 'react';
 import CountryFlag from '../shared/CountryFlag';
 import { SheetClose } from '../ui/sheet';
+import { authClient } from '@/lib/auth/auth-client';
+import { Session } from 'better-auth';
 
 export default function ProfileCard({
   isMobileNav = false,
@@ -37,7 +38,7 @@ export default function ProfileCard({
   isMobileNav?: boolean;
 }) {
   const [isOpen, toggleIsOpen] = useToggle();
-  const session = useSession();
+  const session = authClient.useSession();
   const { isLoading } = useContext(SessionContext);
   const path = useAuthRedirectPath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
@@ -218,7 +219,7 @@ export default function ProfileCard({
   );
 }
 
-function UserAvatar({ user }: { user: UserDTO }) {
+function UserAvatar({ user }: { user: Session }) {
   return (
     <Avatar className="size-9 transition-all hover:border-primary/80">
       <AvatarImage

@@ -1,5 +1,5 @@
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { router } from '@/app/server/router';
+import { router } from '@/app/server/oRPC/router';
 
 const handler = new OpenAPIHandler(router);
 

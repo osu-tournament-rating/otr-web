@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '../ui/button';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
@@ -26,6 +26,8 @@ export default function LoginButton() {
           setIsLoggingIn(false);
           return;
         }
+
+        setIsLoggingIn(false);
       }}
     >
       {isLoggingIn ? <Loader2 className="animate-spin" /> : 'Login'}

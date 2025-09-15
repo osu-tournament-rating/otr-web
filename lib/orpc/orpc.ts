@@ -1,4 +1,4 @@
-import { router } from '@/app/server/router';
+import { router } from '@/app/server/oRPC/router';
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import { RouterClient } from '@orpc/server';
@@ -15,4 +15,4 @@ const link = new RPCLink({
   },
 });
 
-export const client: RouterClient<typeof router> = createORPCClient(link);
+export const orpc: RouterClient<typeof router> = createORPCClient(link);

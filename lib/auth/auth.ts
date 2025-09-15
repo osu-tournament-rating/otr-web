@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin as adminPlugin, genericOAuth } from 'better-auth/plugins';
-import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
+import { ac, admin, superadmin, ADMIN_ROLES } from '../auth-roles';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@/lib/db/schema';
 
