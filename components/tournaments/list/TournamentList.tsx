@@ -1,43 +1,62 @@
 'use client';
 
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Fetcher } from 'swr';
 import { useEffect, useRef } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
-import { TournamentsListRequestParams } from '@osu-tournament-rating/otr-api-client';
-import { TournamentListFilter } from '@/lib/types';
-import TournamentCard from '../TournamentCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getTournamentsList } from '@/lib/actions/tournaments';
 import Link from 'next/link';
+
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TournamentListFilter } from '@/lib/types';
+import { orpc } from '@/lib/orpc/orpc';
+import {
+  TournamentListItem,
+  TournamentListRequest,
+} from '@/lib/orpc/schema/tournament';
+
+import TournamentCard from '../TournamentCard';
 
 const pageSize = 30;
 
-const fetcher = (): Fetcher<
-  TournamentCompactDTO[],
-  TournamentsListRequestParams
-> => {
-  return async (params) => await getTournamentsList(params);
+const toDateParam = (value?: Date | string) =>
+  value ? (value instanceof Date ? value.toISOString() : value) : undefined;
+
+const serializeFilter = (
+  filter: TournamentListFilter,
+  page: number
+): TournamentListRequest => ({
+  page,
+  pageSize,
+  verified: filter.verified,
+  ruleset: filter.ruleset,
+  searchQuery: filter.searchQuery?.trim()
+    ? filter.searchQuery.trim()
+    : undefined,
+  dateMin: toDateParam(filter.dateMin),
+  dateMax: toDateParam(filter.dateMax),
+  verificationStatus: filter.verificationStatus,
+  rejectionReason: filter.rejectionReason,
+  submittedBy: filter.submittedBy,
+  verifiedBy: filter.verifiedBy,
+  lobbySize: filter.lobbySize,
+  sort: filter.sort,
+  descending: filter.descending,
+});
+
+const fetcher = (): Fetcher<TournamentListItem[], TournamentListRequest> => {
+  return async (params) => await orpc.tournaments.list(params);
 };
 
 const getKey = (
   filter: TournamentListFilter
-): SWRInfiniteKeyLoader<
-  TournamentCompactDTO[],
-  TournamentsListRequestParams | null
-> => {
+): SWRInfiniteKeyLoader<TournamentListItem[], TournamentListRequest | null> => {
   return (index, previous) => {
-    if (previous && !previous.length) {
+    if (previous && previous.length === 0) {
       return null;
     }
 
-    return {
-      ...filter,
-      page: index + 1,
-      pageSize,
-    };
+    return serializeFilter(filter, index + 1);
   };
 };
 

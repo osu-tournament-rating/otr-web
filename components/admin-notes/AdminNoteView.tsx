@@ -34,12 +34,15 @@ import { Textarea } from '../ui/textarea';
 import { z } from 'zod';
 import AdminNotesList from './AdminNoteList';
 import { useSession } from '@/lib/hooks/useSession';
+import { TournamentAdminNote } from '@/lib/orpc/schema/tournament';
+
+type AdminNote = AdminNoteDTO | TournamentAdminNote;
 
 interface AdminNoteViewProps {
   /**
    * Admin notes
    */
-  notes: AdminNoteDTO[];
+  notes: AdminNote[];
 
   /**
    * Type of parent entity

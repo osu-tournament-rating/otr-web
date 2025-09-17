@@ -2,7 +2,6 @@
 
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import {
-  GameDTO,
   MatchWarningFlags,
   VerificationStatus,
   MatchRejectionReason,
@@ -12,6 +11,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatUTCDateFull } from '@/lib/utils/date';
+import { TournamentMatchGame } from '@/lib/orpc/schema/tournament';
 
 export type MatchRow = {
   id: number;
@@ -23,7 +23,7 @@ export type MatchRow = {
   };
   startDate: string;
   games: Pick<
-    GameDTO,
+    TournamentMatchGame,
     'verificationStatus' | 'warningFlags' | 'startTime' | 'rejectionReason'
   >[];
 };
@@ -150,10 +150,11 @@ export const columns = [
     cell: ({ getValue }) => {
       const games = getValue();
       // Sort games by start time before rendering pips
-      const sortedGames = [...games].sort(
-        (a, b) =>
-          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
+      const sortedGames = [...games].sort((a, b) => {
+        const startA = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const startB = b.startTime ? new Date(b.startTime).getTime() : 0;
+        return startA - startB;
+      });
       return (
         <div className="hidden max-w-[200px] flex-wrap gap-1 md:flex">
           {sortedGames.map((game, index) => (

@@ -1,17 +1,25 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import {
-  AdminNoteRouteTarget,
-  TournamentDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
+import { Users, Target, Calendar } from 'lucide-react';
+
+import {
+  TournamentAdminNote,
+  TournamentDetail,
+  TournamentListItem,
+} from '@/lib/orpc/schema/tournament';
+
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import RulesetIcon from '../icons/RulesetIcon';
 import { Card } from '../ui/card';
 import TournamentAdminView from './TournamentAdminView';
-import RulesetIcon from '../icons/RulesetIcon';
-import { Users, Target, Calendar } from 'lucide-react';
+
+type TournamentCardData =
+  | (TournamentListItem & { adminNotes?: TournamentAdminNote[] })
+  | TournamentDetail;
 
 function formatRankRangeDisplay(rankRange: number): string {
   if (rankRange === 1) return 'Open';
@@ -24,7 +32,7 @@ export default function TournamentCard({
   displayStatusText = false,
   allowAdminView = false,
 }: {
-  tournament: TournamentDTO;
+  tournament: TournamentCardData;
 
   /** If the title links to the tournament's page */
   titleIsLink?: boolean;
@@ -39,6 +47,9 @@ export default function TournamentCard({
     ? new Date(tournament.startTime)
     : null;
   const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
+  const adminNotes = tournament.adminNotes ?? [];
+  const canShowAdminControls =
+    allowAdminView && 'playerTournamentStats' in tournament;
 
   const cardContent = (
     <div className="flex flex-col gap-3">
@@ -56,12 +67,14 @@ export default function TournamentCard({
           {allowAdminView && (
             <div className="flex gap-2">
               <AdminNoteView
-                notes={tournament.adminNotes ?? []}
+                notes={adminNotes}
                 entity={AdminNoteRouteTarget.Tournament}
                 entityId={tournament.id}
                 entityDisplayName={tournament.name}
               />
-              <TournamentAdminView tournament={tournament} />
+              {canShowAdminControls && (
+                <TournamentAdminView tournament={tournament} />
+              )}
             </div>
           )}
         </div>

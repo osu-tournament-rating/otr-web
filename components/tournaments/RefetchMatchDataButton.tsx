@@ -1,7 +1,6 @@
 'use client';
 
 import { refetchMatchData } from '@/lib/actions/tournaments';
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { DatabaseBackup, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -22,7 +21,10 @@ import {
 } from '@/components/ui/tooltip';
 
 interface RefetchMatchDataButtonProps {
-  tournament: TournamentCompactDTO;
+  tournament: {
+    id: number;
+    name: string;
+  };
 }
 
 export default function RefetchMatchDataButton({

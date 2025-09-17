@@ -2,16 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Award, User } from 'lucide-react';
-import {
-  PlayerTournamentStatsBaseDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TRText from '../rating/TRText';
+import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
 interface TournamentTopPerformersProps {
-  playerStats: PlayerTournamentStatsBaseDTO[];
+  playerStats: TournamentPlayerStats[];
   className?: string;
   ruleset: Ruleset;
 }

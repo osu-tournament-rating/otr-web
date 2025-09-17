@@ -1,13 +1,13 @@
 'use client';
 
-import {
-  PlayerTournamentStatsBaseDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+
+import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
+
 import TournamentTopPerformers from './TournamentTopPerformers';
 
 interface TournamentPlayerStatsDashboardProps {
-  playerStats: PlayerTournamentStatsBaseDTO[];
+  playerStats: TournamentPlayerStats[];
   className?: string;
   ruleset: Ruleset;
 }

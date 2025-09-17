@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  BeatmapDTO,
-  GameCompactDTO,
-  Roles,
-} from '@osu-tournament-rating/otr-api-client';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
@@ -28,19 +24,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import SimpleTooltip from '@/components/simple-tooltip';
 import TournamentBeatmapsView from './TournamentBeatmapsView';
 import TournamentBeatmapsViewWithCheckboxes from './TournamentBeatmapsViewWithCheckboxes';
+import {
+  TournamentBeatmap,
+  TournamentMatchGame,
+} from '@/lib/orpc/schema/tournament';
 
 interface TournamentBeatmapsAdminViewProps {
   tournamentId: number;
   tournamentName: string;
-  beatmaps: BeatmapDTO[];
-  tournamentGames?: GameCompactDTO[];
+  beatmaps: TournamentBeatmap[];
+  tournamentGames?: TournamentMatchGame[];
 }
 
 const UNKNOWN_ARTIST = 'Unknown Artist';
 const UNKNOWN_TITLE = 'Unknown Title';
 const UNKNOWN_DIFFICULTY = 'Unknown Difficulty';
 
-const isDeletedBeatmap = (beatmap: BeatmapDTO): boolean => {
+const isDeletedBeatmap = (beatmap: TournamentBeatmap): boolean => {
   const artist = beatmap.beatmapset?.artist || UNKNOWN_ARTIST;
   const title = beatmap.beatmapset?.title || UNKNOWN_TITLE;
   return artist === UNKNOWN_ARTIST && title === UNKNOWN_TITLE;

@@ -3,6 +3,10 @@ import { os } from '@orpc/server';
 import { getLeaderboard } from './procedures/leaderboardProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
+import {
+  getTournament,
+  listTournaments,
+} from './procedures/tournamentsProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -22,6 +26,10 @@ export const router = base.router({
   },
   search: {
     query: searchEntities,
+  },
+  tournaments: {
+    list: listTournaments,
+    get: getTournament,
   },
 });
 

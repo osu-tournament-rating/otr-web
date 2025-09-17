@@ -1,9 +1,12 @@
-import { get, getBeatmaps } from '@/lib/actions/tournaments';
+import { orpc } from '@/lib/orpc/orpc';
 import {
-  MatchCompactDTO,
-  TournamentDTO,
   VerificationStatus,
+  AdminNoteRouteTarget,
 } from '@osu-tournament-rating/otr-api-client';
+import {
+  TournamentDetail,
+  TournamentMatch,
+} from '@/lib/orpc/schema/tournament';
 import type { Metadata } from 'next';
 import { MatchRow, columns } from './columns';
 import TournamentDataTable from './data-table';
@@ -27,7 +30,6 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { RulesetEnumHelper } from '@/lib/enums';
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
@@ -43,12 +45,13 @@ type PageProps = { params: Promise<{ id: number }> };
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const tournament = await get({ id: (await params).id });
+  const { id } = await params;
+  const tournament = await orpc.tournaments.get({ id });
 
   return { title: tournament.name };
 }
 
-function generateTableData(matches: MatchCompactDTO[]): MatchRow[] {
+function generateTableData(matches: TournamentMatch[]): MatchRow[] {
   // Sort matches by start time descending
   const sortedMatches = [...matches].sort((a, b) => {
     const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
@@ -94,7 +97,7 @@ function formatRankRangeDisplay(rankRange: number): string {
   return formatRankRange(rankRange);
 }
 
-function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
+function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
   const startDate = tournament.startTime
     ? new Date(tournament.startTime)
     : null;
@@ -198,10 +201,10 @@ function TournamentHeader({ tournament }: { tournament: TournamentDTO }) {
   );
 }
 
-function TournamentStatsCard({ tournament }: { tournament: TournamentDTO }) {
+function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   const matches = tournament.matches ?? [];
   const totalGames = matches.reduce(
-    (sum: number, match: MatchCompactDTO) => sum + (match.games?.length ?? 0),
+    (sum: number, match: TournamentMatch) => sum + (match.games?.length ?? 0),
     0
   );
   // Use tournament player stats to get the total number of players
@@ -286,9 +289,10 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDTO }) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const tournament = await get({ id: (await params).id });
+  const { id } = await params;
+  const tournament = await orpc.tournaments.get({ id });
   const tableData = generateTableData(tournament.matches ?? []);
-  const beatmaps = (await getBeatmaps((await params).id)) ?? [];
+  const beatmaps = tournament.pooledBeatmaps ?? [];
 
   // Extract all games from all matches for beatmap analysis
   const tournamentGames =

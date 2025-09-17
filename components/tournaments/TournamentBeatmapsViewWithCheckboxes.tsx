@@ -1,9 +1,9 @@
 'use client';
 
 import {
-  BeatmapDTO,
-  GameCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
+  TournamentBeatmap,
+  TournamentMatchGame,
+} from '@/lib/orpc/schema/tournament';
 import {
   Music,
   Star,
@@ -24,14 +24,14 @@ import BeatmapBackground from '../games/BeatmapBackground';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useBeatmapSort, type SortField } from '@/lib/hooks/useBeatmapSort';
 
-interface ExtendedBeatmapDTO extends BeatmapDTO {
+interface ExtendedBeatmapDTO extends TournamentBeatmap {
   isSelected: boolean;
   isDeleted?: boolean;
 }
 
 interface TournamentBeatmapsViewWithCheckboxesProps {
   beatmaps: ExtendedBeatmapDTO[];
-  tournamentGames?: GameCompactDTO[];
+  tournamentGames?: TournamentMatchGame[];
   onSelectBeatmap: (beatmapId: number, checked: boolean) => void;
 }
 

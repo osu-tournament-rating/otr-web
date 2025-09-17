@@ -1,10 +1,6 @@
 'use client';
 
 import {
-  BeatmapDTO,
-  GameCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import {
   Music,
   Star,
   Clock,
@@ -21,10 +17,14 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import SingleModIcon from '@/components/icons/SingleModIcon';
 import { useState, useMemo } from 'react';
 import BeatmapBackground from '../games/BeatmapBackground';
+import {
+  TournamentBeatmap,
+  TournamentMatchGame,
+} from '@/lib/orpc/schema/tournament';
 
 interface TournamentBeatmapsViewProps {
-  beatmaps: BeatmapDTO[];
-  tournamentGames?: GameCompactDTO[];
+  beatmaps: TournamentBeatmap[];
+  tournamentGames?: TournamentMatchGame[];
 }
 
 type SortField =

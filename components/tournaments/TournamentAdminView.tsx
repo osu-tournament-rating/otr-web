@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useMemo } from 'react';
+
 import { useSession } from '@/lib/hooks/useSession';
 import { update } from '@/lib/actions/tournaments';
 import { tournamentEditFormSchema } from '@/lib/schema';
@@ -7,14 +9,13 @@ import { cn } from '@/lib/utils';
 import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Roles,
-  TournamentCompactDTO,
-} from '@osu-tournament-rating/otr-api-client';
+import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2 } from 'lucide-react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+
+import { TournamentDetail } from '@/lib/orpc/schema/tournament';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -49,8 +50,23 @@ import { TournamentRejectionReason } from '@osu-tournament-rating/otr-api-client
 import RefetchMatchDataButton from './RefetchMatchDataButton';
 
 interface TournamentAdminViewProps {
-  tournament: TournamentCompactDTO;
+  tournament: TournamentDetail;
 }
+
+const mapTournamentToFormValues = (
+  tournament: TournamentDetail
+): z.infer<typeof tournamentEditFormSchema> => ({
+  name: tournament.name,
+  abbreviation: tournament.abbreviation,
+  forumUrl: tournament.forumUrl,
+  rankRangeLowerBound: tournament.rankRangeLowerBound,
+  lobbySize: tournament.lobbySize,
+  ruleset: tournament.ruleset,
+  verificationStatus: tournament.verificationStatus,
+  rejectionReason: tournament.rejectionReason,
+  startTime: tournament.startTime ? new Date(tournament.startTime) : undefined,
+  endTime: tournament.endTime ? new Date(tournament.endTime) : undefined,
+});
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -74,11 +90,19 @@ export default function TournamentAdminView({
 }: TournamentAdminViewProps) {
   const session = useSession();
   const router = useRouter();
+  const formDefaults = useMemo(
+    () => mapTournamentToFormValues(tournament),
+    [tournament]
+  );
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
     resolver: zodResolver(tournamentEditFormSchema),
-    defaultValues: tournament,
+    defaultValues: formDefaults,
     mode: 'all',
   });
+
+  useEffect(() => {
+    form.reset(formDefaults);
+  }, [formDefaults, form]);
 
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
@@ -88,11 +112,11 @@ export default function TournamentAdminView({
     values: z.infer<typeof tournamentEditFormSchema>
   ) => {
     try {
-      const patchedTournament = await update({
+      await update({
         id: tournament.id,
-        body: createPatchOperations(tournament, values as TournamentCompactDTO),
+        body: createPatchOperations(formDefaults, values),
       });
-      form.reset(patchedTournament);
+      form.reset(values);
       saveToast();
       router.refresh();
     } catch {

@@ -1,7 +1,6 @@
 'use client';
 
 import { rerunAutomatedChecks } from '@/lib/actions/tournaments';
-import { TournamentCompactDTO } from '@osu-tournament-rating/otr-api-client';
 import { Loader2, RefreshCcwDotIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -23,7 +22,10 @@ import {
 } from '@/components/ui/tooltip';
 
 interface ResetAutomatedChecksButtonProps {
-  tournament: TournamentCompactDTO;
+  tournament: {
+    id: number;
+    name: string;
+  };
 }
 
 export default function ResetAutomatedChecksButton({

@@ -26,12 +26,15 @@ import { format } from 'date-fns';
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { useSession } from '@/lib/hooks/useSession';
 import { useRouter } from 'next/navigation';
+import { TournamentAdminNote } from '@/lib/orpc/schema/tournament';
+
+type AdminNote = AdminNoteDTO | TournamentAdminNote;
 
 export default function AdminNoteListItem({
   note,
   entity,
 }: {
-  note: AdminNoteDTO;
+  note: AdminNote;
   entity: AdminNoteRouteTarget;
 }) {
   const session = useSession();
