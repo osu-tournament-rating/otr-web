@@ -1,7 +1,7 @@
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import { RPCHandler } from '@orpc/server/fetch';
 import { router } from '@/app/server/oRPC/router';
 
-const handler = new OpenAPIHandler(router);
+const handler = new RPCHandler(router);
 
 async function handleRequest(request: Request) {
   const { response } = await handler.handle(request, {

@@ -1,6 +1,6 @@
 import { os } from '@orpc/server';
 
-import { getCurrentUser, getUser } from './procedures';
+import { getCurrentUser, getLeaderboard, getUser } from './procedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -16,6 +16,9 @@ export const router = base.router({
   },
   users: {
     me: getCurrentUser,
+  },
+  leaderboard: {
+    list: getLeaderboard,
   },
 });
 

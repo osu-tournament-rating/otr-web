@@ -1,4 +1,4 @@
-import { leaderboards } from '@/lib/api/server';
+import { orpc } from '@/lib/orpc/orpc';
 import { LeaderboardDataTable } from './data-table';
 import { columns } from './columns';
 import {
@@ -25,34 +25,34 @@ export const metadata: Metadata = {
 };
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  return await leaderboards.get({
+  const response = await orpc.leaderboard.list({
+    page: params.page,
     ruleset: params.ruleset,
-    bronze: params.tiers?.includes('bronze'),
-    silver: params.tiers?.includes('silver'),
-    gold: params.tiers?.includes('gold'),
-    platinum: params.tiers?.includes('platinum'),
-    emerald: params.tiers?.includes('emerald'),
-    diamond: params.tiers?.includes('diamond'),
-    master: params.tiers?.includes('master'),
-    grandmaster: params.tiers?.includes('grandmaster'),
-    eliteGrandmaster: params.tiers?.includes('eliteGrandmaster'),
-    ...params,
+    country: params.country?.trim() ? params.country.trim() : undefined,
+    minOsuRank: params.minOsuRank,
+    maxOsuRank: params.maxOsuRank,
+    minRating: params.minRating,
+    maxRating: params.maxRating,
+    minMatches: params.minMatches,
+    maxMatches: params.maxMatches,
+    minWinRate: (params.minWinRate ?? 0) / 100,
+    maxWinRate: (params.maxWinRate ?? 100) / 100,
+    tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
   });
+
+  console.log('[leaderboard] getData response', response);
+
+  return response;
 }
 
 export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
-  const page = filter.page ?? 1;
+  const data = await getData(filter);
 
-  const data = await getData({
-    ...filter,
-    minWinRate: (filter.minWinRate ?? 0) / 100,
-    maxWinRate: (filter.maxWinRate ?? 100) / 100,
-  });
-
-  const totalPages = data.result.pages;
+  const totalPages = data.pages;
+  const page = data.page ?? filter.page ?? 1;
 
   // Helper to create query string with existing params
   const createUri = (navPage: number): string => {
@@ -138,11 +138,7 @@ export default async function Page(props: {
             </div>
           </CardHeader>
           <CardContent>
-            <LeaderboardDataTable
-              // @ts-expect-error: `columns` is safe to use here without strict type checking
-              columns={columns}
-              data={data.result.leaderboard}
-            />
+            <LeaderboardDataTable columns={columns} data={data.leaderboard} />
           </CardContent>
         </Card>
       )}
