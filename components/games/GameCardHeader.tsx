@@ -20,7 +20,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg */}
       <BeatmapBackground
-        beatmapsetId={game.beatmap.beatmapset?.osuId}
+        beatmapsetId={game.beatmap?.beatmapset?.osuId}
         alt="beatmap cover"
       />
 
@@ -67,7 +67,7 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
                 <Link
-                  href={`https://osu.ppy.sh/b/${game.beatmap.osuId}`}
+                  href={`https://osu.ppy.sh/b/${game.beatmap?.osuId ?? 0}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="View beatmap on osu! website"
