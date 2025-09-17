@@ -31,14 +31,14 @@ export async function GET() {
       },
       {
         name: 'admin',
-        description: 'May be used by admins only'
-      }
+        description: 'May be used by admins only',
+      },
     ],
     commonSchemas: {
       User: {
         schema: UserSchema,
-      }
-    }
+      },
+    },
   });
 
   return Response.json(spec);

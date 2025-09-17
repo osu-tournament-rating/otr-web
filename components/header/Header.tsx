@@ -30,7 +30,10 @@ import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
 import { Roles } from '@osu-tournament-rating/otr-api-client';
-import { useSession } from '@/lib/hooks/useSession';
+import {
+  useCurrentUserProfile,
+  type CurrentUserProfile,
+} from '@/lib/hooks/useCurrentUserProfile';
 
 type NavItem = {
   title: string;
@@ -99,7 +102,7 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const session = useSession();
+  const { session, profile, isSessionPending } = useCurrentUserProfile();
 
   return (
     <>
@@ -120,7 +123,12 @@ export default function Header() {
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList className="gap-1">
               {navItems.map((item) => (
-                <NavigationItem key={item.title} {...item} />
+                <NavigationItem
+                  key={item.title}
+                  {...item}
+                  scopes={profile?.scopes ?? []}
+                  hasSession={Boolean(session)}
+                />
               ))}
             </NavigationMenuList>
           </NavigationMenu>
@@ -159,7 +167,13 @@ export default function Header() {
                     <span className="py-2" />
                     <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
                       {navItems.map((item) => (
-                        <NavigationItem isMobile key={item.title} {...item} />
+                        <NavigationItem
+                          isMobile
+                          key={item.title}
+                          {...item}
+                          scopes={profile?.scopes ?? []}
+                          hasSession={Boolean(session)}
+                        />
                       ))}
                     </NavigationMenuList>
                   </NavigationMenu>
@@ -172,7 +186,7 @@ export default function Header() {
 
       {/* Sign-in banner */}
       <ClientOnly>
-        {!session && (
+        {!session && !isSessionPending && (
           <div className="w-full bg-accent/50 py-1 text-center">
             <p className="font-mono text-xs text-muted-foreground">
               Some features are not available while signed out.
@@ -249,14 +263,21 @@ function SubnavTrigger({
   );
 }
 
+type NavigationItemProps = NavItem & {
+  isMobile?: boolean;
+  scopes: CurrentUserProfile['scopes'];
+  hasSession: boolean;
+};
+
 function NavigationItem({
   title,
   href,
   dropdown,
   roles,
   isMobile = false,
-}: NavItem & { isMobile?: boolean }) {
-  const session = useSession();
+  scopes,
+  hasSession,
+}: NavigationItemProps) {
   const pathname = usePathname();
   const hasDropdown = !!dropdown;
   const isActive = hasDropdown
@@ -264,8 +285,7 @@ function NavigationItem({
     : pathname.startsWith(href);
 
   const isVisible =
-    roles?.length === 0 ||
-    roles?.some((role) => session?.scopes?.includes(role));
+    roles?.length === 0 || roles?.some((role) => scopes.includes(role));
 
   return (
     <NavigationMenuItem className={cn('w-full', !isVisible && 'hidden')}>
@@ -307,10 +327,10 @@ function NavigationItem({
           {dropdown.map(
             ({ title, href, icon: Icon, roles, requiresSession }) => {
               const isHidden =
-                (requiresSession && !session) ||
+                (requiresSession && !hasSession) ||
                 (roles &&
                   roles.length > 0 &&
-                  !roles.some((role) => session?.scopes?.includes(role)));
+                  !roles.some((role) => scopes.includes(role)));
 
               return (
                 <NavLink

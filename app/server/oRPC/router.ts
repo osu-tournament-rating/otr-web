@@ -1,6 +1,6 @@
 import { os } from '@orpc/server';
 
-import { getUser } from './procedures';
+import { getCurrentUser, getUser } from './procedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -13,7 +13,8 @@ export const router = base.router({
   // Player endpoints
   user: {
     get: getUser,
-  }
+    current: getCurrentUser,
+  },
 });
 
 export type Router = typeof router;

@@ -1,10 +1,15 @@
 import { db } from '@/lib/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin as adminPlugin, genericOAuth } from 'better-auth/plugins';
-import { ac, admin, superadmin, ADMIN_ROLES } from '../auth-roles';
+import {
+  admin as adminPlugin,
+  customSession,
+  genericOAuth,
+} from 'better-auth/plugins';
+import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@/lib/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -84,6 +89,30 @@ export const auth = betterAuth({
         },
       ],
     }),
+    customSession(async ({ user, session }) => {
+      const account = await db.query.auth_accounts.findFirst({
+        where: and(
+          eq(schema.auth_accounts.userId, user.id),
+          eq(schema.auth_accounts.providerId, 'osu')
+        ),
+      });
+
+      const parsedOsuId = account ? Number(account.accountId) : null;
+      const osuId =
+        typeof parsedOsuId === 'number' && !Number.isNaN(parsedOsuId)
+          ? parsedOsuId
+          : null;
+
+      return {
+        user: {
+          ...user,
+          osuId,
+        },
+        session,
+      };
+    }),
     nextCookies(), // must be the last plugin
   ],
 });
+
+export type AppSession = typeof auth.$Infer.Session;
