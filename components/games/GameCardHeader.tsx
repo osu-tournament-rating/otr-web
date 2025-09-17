@@ -90,15 +90,15 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
               <span className="font-semibold text-white">
-                {game.beatmap.beatmapset?.creator?.username}
+                {game.beatmap?.beatmapset?.creator?.username}
               </span>
               <span>• Map by</span>
               <span className="font-semibold text-white">
-                {game.beatmap.creators.map((c) => c.username).join(', ')}
+                {game.beatmap?.creators.map((c) => c.username).join(', ')}
               </span>
             </span>
             <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
-              {game.beatmap.beatmapset?.title} [{game.beatmap.diffName}]
+              {game.beatmap?.beatmapset?.title} [{game.beatmap?.diffName}]
             </span>
           </div>
           <ModIconset

@@ -28,7 +28,7 @@ bunx tsc --noEmit     # Type check without emitting
 
 ## Code Style & Conventions
 
-- **TypeScript**: strict mode; prefer interfaces, discriminated unions, and return types derived from Zod; avoid enums (use maps/constants)
+- **TypeScript**: strict mode; prefer interfaces, discriminated unions, and return types derived from Zod; avoid enums (use maps/constants). Never use useEffect or other react hooks unless absolutely necessary. A justification comment must be written in this case. Follow NextJS best practices for data fetching.
 - **Components**: functional components only, default exports, lowercase-dash directories; keep server components default and add `"use client"` only with justification
 - **Imports**: use `@/` absolute paths; group React/Next → external libs → internal modules; remove unused imports
 - **Naming**: descriptive booleans (isLoading, hasError), PascalCase components, camelCase helpers; follow existing async naming patterns
