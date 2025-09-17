@@ -13,7 +13,7 @@ import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { protectedProcedure } from './base';
 
-const DEFAULT_RESULT_LIMIT = 10;
+const DEFAULT_RESULT_LIMIT = 5;
 const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
 
 const escapeLikePattern = (value: string) =>
