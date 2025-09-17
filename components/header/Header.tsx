@@ -30,10 +30,7 @@ import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
 import { Roles } from '@osu-tournament-rating/otr-api-client';
-import {
-  useCurrentUserProfile,
-  type CurrentUserProfile,
-} from '@/lib/hooks/useCurrentUserProfile';
+import { useSession as useAuthSession } from '@/lib/auth/auth-client';
 
 type NavItem = {
   title: string;
@@ -102,7 +99,9 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { session, profile, isSessionPending } = useCurrentUserProfile();
+  const sessionResult = useAuthSession();
+  const { data: session, isPending: isSessionPending } = sessionResult;
+  const scopes = session?.dbUser?.scopes ?? [];
 
   return (
     <>
@@ -126,7 +125,7 @@ export default function Header() {
                 <NavigationItem
                   key={item.title}
                   {...item}
-                  scopes={profile?.scopes ?? []}
+                  scopes={scopes}
                   hasSession={Boolean(session)}
                 />
               ))}
@@ -171,7 +170,7 @@ export default function Header() {
                           isMobile
                           key={item.title}
                           {...item}
-                          scopes={profile?.scopes ?? []}
+                          scopes={scopes}
                           hasSession={Boolean(session)}
                         />
                       ))}
@@ -265,7 +264,7 @@ function SubnavTrigger({
 
 type NavigationItemProps = NavItem & {
   isMobile?: boolean;
-  scopes: CurrentUserProfile['scopes'];
+  scopes: string[];
   hasSession: boolean;
 };
 

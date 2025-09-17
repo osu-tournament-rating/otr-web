@@ -27,18 +27,17 @@ import LoginButton from '@/components/buttons/LoginButton';
 import { SheetClose } from '@/components/ui/sheet';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 import { cn } from '@/lib/utils';
-import { signOut } from '@/lib/auth/auth-client';
-import {
-  useCurrentUserProfile,
-  type CurrentUserProfile as CurrentUser,
-} from '@/lib/hooks/useCurrentUserProfile';
+import { signOut, useSession as useAuthSession } from '@/lib/auth/auth-client';
 
 type ProfileCardProps = {
   isMobileNav?: boolean;
 };
 
+type SessionData = ReturnType<typeof useAuthSession>['data'];
+type DbPlayer = NonNullable<NonNullable<SessionData>['dbPlayer']>;
+
 type UserAvatarProps = {
-  player: CurrentUser['player'];
+  player: DbPlayer;
 };
 
 export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
@@ -46,9 +45,12 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const router = useRouter();
   const path = useAuthRedirectPath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
-  const { session, profile, isLoading } = useCurrentUserProfile();
-
-  console.log(session, profile);
+  const sessionResult = useAuthSession();
+  const { data: session, isPending: isSessionPending } = sessionResult;
+  const error = (sessionResult as { error?: unknown }).error ?? null;
+  const dbPlayer = session?.dbPlayer ?? null;
+  const scopes = session?.dbUser?.scopes ?? [];
+  const isLoading = Boolean(isSessionPending);
 
   const handleLogout = async () => {
     await signOut({
@@ -68,11 +70,11 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
     );
   }
 
-  if (!session || !profile) {
+  if (!session || !dbPlayer || error) {
     return <LoginButton />;
   }
 
-  const { player, scopes } = profile;
+  const player = dbPlayer;
 
   if (isMobile) {
     return (

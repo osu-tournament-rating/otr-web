@@ -11,9 +11,12 @@ const base = os.$context<{
 }>();
 
 // Database middleware - manages DB connection lifecycle
-const withDatabase = base.middleware(async ({ next }) => {
+const withDatabase = base.middleware(async ({ context, next }) => {
   return next({
-    context: { db },
+    context: {
+      ...context,
+      db,
+    },
   });
 });
 
@@ -30,8 +33,8 @@ const withAuth = base.middleware(async ({ context, next }) => {
 
   return next({
     context: {
+      ...context,
       session,
-      userId: session.user.id,
     },
   });
 });

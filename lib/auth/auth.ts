@@ -103,12 +103,26 @@ export const auth = betterAuth({
           ? parsedOsuId
           : null;
 
+      const dbPlayer = osuId
+        ? await db.query.players.findFirst({
+            where: eq(schema.players.osuId, osuId),
+          })
+        : null;
+
+      const dbUser = dbPlayer
+        ? await db.query.users.findFirst({
+            where: eq(schema.users.playerId, dbPlayer.id),
+          })
+        : null;
+
       return {
         user: {
           ...user,
           osuId,
         },
         session,
+        dbPlayer,
+        dbUser,
       };
     }),
     nextCookies(), // must be the last plugin
