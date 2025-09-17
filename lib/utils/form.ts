@@ -32,6 +32,19 @@ function isValidDateString(str: string): boolean {
 /**
  * Check if two values represent the same date/time, handling timezone differences
  */
+function toDate(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'string' && isValidDateString(value)) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
+}
+
 function areDatesEqual(orig: unknown, patched: unknown): boolean {
   if (
     orig === null ||
@@ -42,19 +55,27 @@ function areDatesEqual(orig: unknown, patched: unknown): boolean {
     return orig === patched;
   }
 
-  // Only attempt date parsing for strings that look like valid dates
-  if (
-    typeof orig === 'string' &&
-    typeof patched === 'string' &&
-    isValidDateString(orig) &&
-    isValidDateString(patched)
-  ) {
-    return new Date(orig).getTime() === new Date(patched).getTime();
+  const origDate = toDate(orig);
+  const patchedDate = toDate(patched);
+
+  if (origDate && patchedDate) {
+    return origDate.getTime() === patchedDate.getTime();
   }
 
   // Not dates, use regular comparison
   return orig === patched;
 }
+
+const normalizeValue = (value: unknown) => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return value;
+};
+
+const isSkippableObject = (value: unknown) =>
+  value !== null && typeof value === 'object' && !(value instanceof Date);
 
 /**
  * Generate JSON Patch Replace {@link Operation}s by comparing two objects
@@ -67,15 +88,18 @@ export function createPatchOperations<T extends object>(
   return Array.from(new Set([...Object.keys(orig), ...Object.keys(patched)]))
     .filter(
       (k) =>
-        typeof orig[k as keyof T] !== 'object' &&
         patched[k as keyof T] !== undefined &&
         !excludeFields.includes(k as keyof T) &&
-        !areDatesEqual(orig[k as keyof T], patched[k as keyof T])
+        !isSkippableObject(orig[k as keyof T]) &&
+        !isSkippableObject(patched[k as keyof T]) &&
+        !areDatesEqual(orig[k as keyof T], patched[k as keyof T]) &&
+        normalizeValue(orig[k as keyof T]) !==
+          normalizeValue(patched[k as keyof T])
     )
     .map<Operation>((k) => ({
       operationType: OperationType.Replace,
       op: 'replace',
       path: `/${k}`,
-      value: patched[k as keyof T],
+      value: normalizeValue(patched[k as keyof T]),
     }));
 }
