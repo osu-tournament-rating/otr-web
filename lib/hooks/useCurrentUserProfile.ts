@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { authClient } from '@/lib/auth/auth-client';
 import { orpc } from '@/lib/orpc/orpc';
 
-type CurrentUserProfile = Awaited<ReturnType<typeof orpc.user.current>>;
+type CurrentUserProfile = Awaited<ReturnType<typeof orpc.users.me>>;
 
 type SessionData = ReturnType<typeof authClient.useSession>['data'];
 
@@ -36,8 +36,8 @@ export function useCurrentUserProfile(): UseCurrentUserProfile {
     let isActive = true;
     setIsProfileLoading(true);
 
-    orpc.user
-      .current()
+    orpc.users
+      .me()
       .then((result) => {
         if (isActive) {
           setProfile(result);

@@ -48,6 +48,8 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
   const { session, profile, isLoading } = useCurrentUserProfile();
 
+  console.log(session, profile);
+
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {

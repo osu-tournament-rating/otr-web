@@ -13,7 +13,9 @@ export const router = base.router({
   // Player endpoints
   user: {
     get: getUser,
-    current: getCurrentUser,
+  },
+  users: {
+    me: getCurrentUser,
   },
 });
 
