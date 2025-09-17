@@ -31,6 +31,7 @@ import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
 import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { useSession as useAuthSession } from '@/lib/auth/auth-client';
+import { useSession } from '@/lib/hooks/useSession';
 
 type NavItem = {
   title: string;
@@ -99,9 +100,10 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const sessionResult = useAuthSession();
-  const { data: session, isPending: isSessionPending } = sessionResult;
-  const scopes = session?.dbUser?.scopes ?? [];
+  const { isPending: isSessionPending } = useAuthSession();
+  const currentUser = useSession();
+  const scopes = currentUser?.scopes ?? [];
+  const hasSession = Boolean(currentUser);
 
   return (
     <>
@@ -126,7 +128,7 @@ export default function Header() {
                   key={item.title}
                   {...item}
                   scopes={scopes}
-                  hasSession={Boolean(session)}
+                  hasSession={hasSession}
                 />
               ))}
             </NavigationMenuList>
@@ -171,7 +173,7 @@ export default function Header() {
                           key={item.title}
                           {...item}
                           scopes={scopes}
-                          hasSession={Boolean(session)}
+                          hasSession={hasSession}
                         />
                       ))}
                     </NavigationMenuList>
@@ -185,7 +187,7 @@ export default function Header() {
 
       {/* Sign-in banner */}
       <ClientOnly>
-        {!session && !isSessionPending && (
+        {!currentUser && !isSessionPending && (
           <div className="w-full bg-accent/50 py-1 text-center">
             <p className="font-mono text-xs text-muted-foreground">
               Some features are not available while signed out.

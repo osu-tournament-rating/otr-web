@@ -1,21 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { TournamentSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
+import { useContext } from 'react';
+import { Users } from 'lucide-react';
+
+import type { TournamentSearchResult } from '@/lib/orpc/schema/search';
+import { RulesetEnumHelper } from '@/lib/enums';
 import { highlightMatch } from '@/lib/utils/search';
+import VerificationBadge from '../badges/VerificationBadge';
 import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
-import { RulesetEnumHelper } from '@/lib/enums';
-import { useContext } from 'react';
-import { SearchDialogContext } from './SearchDialog';
 import { Card } from '../ui/card';
-import { Users } from 'lucide-react';
-import VerificationBadge from '../badges/VerificationBadge';
+import { SearchDialogContext } from './SearchDialog';
 
 export default function TournamentSearchResult({
   data,
 }: {
-  data: TournamentSearchResultDTO;
+  data: TournamentSearchResult;
 }) {
   const { query, closeDialog } = useContext(SearchDialogContext);
 

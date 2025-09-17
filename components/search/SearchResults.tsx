@@ -1,6 +1,6 @@
 'use client';
 
-import { SearchResponseCollectionDTO } from '@osu-tournament-rating/otr-api-client';
+import type { SearchResponse } from '@/lib/orpc/schema/search';
 import { ScrollArea } from '../ui/scroll-area';
 import { Swords, User, Trophy } from 'lucide-react';
 import PlayerSearchResult from './PlayerSearchResult';
@@ -26,7 +26,7 @@ function SectionHeader({ icon, title }: SectionHeaderProps) {
 export default function SearchResults({
   data,
 }: {
-  data: SearchResponseCollectionDTO | undefined;
+  data: SearchResponse | undefined;
 }) {
   if (!data) {
     return null;

@@ -1,23 +1,25 @@
 'use client';
+
 import Link from 'next/link';
-import { PlayerSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
-import TierIcon from '../icons/TierIcon';
-import { highlightMatch } from '@/lib/utils/search';
 import { useContext } from 'react';
-import { SearchDialogContext } from './SearchDialog';
 import { Globe, User } from 'lucide-react';
-import { TierName } from '@/lib/utils/tierData';
-import { Card } from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import TRText from '../rating/TRText';
-import RulesetIcon from '../icons/RulesetIcon';
+
 import { RulesetEnumHelper } from '@/lib/enums';
+import type { PlayerSearchResult } from '@/lib/orpc/schema/search';
+import { highlightMatch } from '@/lib/utils/search';
+import { TierName } from '@/lib/utils/tierData';
+import RulesetIcon from '../icons/RulesetIcon';
+import TierIcon from '../icons/TierIcon';
 import SimpleTooltip from '../simple-tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Card } from '../ui/card';
+import TRText from '../rating/TRText';
+import { SearchDialogContext } from './SearchDialog';
 
 export default function PlayerSearchResult({
   data,
 }: {
-  data: PlayerSearchResultDTO;
+  data: PlayerSearchResult;
 }) {
   const { query, closeDialog } = useContext(SearchDialogContext);
 
@@ -54,7 +56,7 @@ export default function PlayerSearchResult({
             <div className="flex items-center gap-1.5 sm:gap-2">
               <TierIcon
                 tier={data.tierProgress.currentTier as TierName}
-                subTier={data.tierProgress.currentSubTier}
+                subTier={data.tierProgress.currentSubTier ?? undefined}
                 width={20}
                 height={20}
                 className="flex-shrink-0 sm:h-5 sm:w-5"

@@ -1,18 +1,19 @@
 'use client';
 
 import useSWR from 'swr';
-import { getSearch } from '../actions/search';
+
+import { orpc } from '@/lib/orpc/orpc';
+import type { SearchResponse } from '@/lib/orpc/schema/search';
 
 export function useSearch(query: string) {
-  return useSWR(
-    // ['search', query] is a key, shared globally
+  return useSWR<SearchResponse | undefined, Error, [string, string]>(
     ['search', query],
-    async ([, searchQuery]) => {
+    async ([, searchQuery]: [string, string]) => {
       if (!searchQuery || searchQuery.trim() === '') {
         return undefined;
       }
 
-      const result = await getSearch({
+      const result = await orpc.search.query({
         searchKey: searchQuery,
       });
 

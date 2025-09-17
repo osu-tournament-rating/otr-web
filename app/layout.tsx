@@ -6,9 +6,10 @@ import React from 'react';
 import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
-import { getSessionFromHeaders } from '@/lib/api/server';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/auth';
+import { mapAppSessionToUser } from '@/lib/auth/session-utils';
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +25,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const headersList = await headers();
-  const session = await getSessionFromHeaders(headersList);
+  const appSession = await auth.api.getSession({ headers: headersList });
+  const session = mapAppSessionToUser(appSession);
 
   return (
     <html lang="en" suppressHydrationWarning>

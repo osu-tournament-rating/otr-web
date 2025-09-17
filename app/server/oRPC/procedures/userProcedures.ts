@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@/lib/db/schema';
+import { CurrentUserSchema } from '@/lib/orpc/schema/user';
 
 import { protectedProcedure } from './base';
 
@@ -36,6 +37,7 @@ export const getUser = protectedProcedure
   });
 
 export const getCurrentUser = protectedProcedure
+  .output(CurrentUserSchema)
   .route({
     summary: 'Get the authenticated user',
     tags: ['authenticated'],
@@ -64,7 +66,7 @@ export const getCurrentUser = protectedProcedure
       where: eq(schema.users.playerId, player.id),
     });
 
-    return {
+    return CurrentUserSchema.parse({
       player: {
         id: player.id,
         username: player.username,
@@ -73,5 +75,5 @@ export const getCurrentUser = protectedProcedure
       },
       scopes: user?.scopes ?? [],
       userId: user?.id ?? null,
-    };
+    });
   });

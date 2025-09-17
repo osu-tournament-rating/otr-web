@@ -63,3 +63,51 @@ bunx tsc --noEmit     # Type check without emitting
 - **ORPC**: define entity procedures under `app/server/oRPC/procedures/*`, expose them through `app/server/oRPC/router.ts`, colocate schemas under `lib/orpc/schema`, and type-share clients via generated typings
 - **Auth**: reuse helpers from `lib/auth/auth.ts`; respect existing session/token patterns
 - **Environment**: rely on `env.d.ts` definitions; never hardcode secrets—pull from `process.env`
+
+## Project Structure
+
+- **Routing**: `app/rpc/[[...rest]]/route.ts` mounts the oRPC router with `RPCHandler`, forwarding `request.headers` into the context; keep any new middleware-compatible context fields declared via `os.$context` in `app/server/oRPC/procedures/base.ts`.
+- **API spec**: `app/api/openapi.json/route.ts` generates OpenAPI output using `@orpc/openapi` + `@orpc/zod`. When adding procedures, register schemas in `lib/orpc/schema/*` and ensure the generator has access to shared types.
+- **Client access**: `lib/orpc/orpc.ts` creates the typed client via `createORPCClient` and dynamically resolves the base URL (server vs client). Server components, e.g. `app/leaderboard/page.tsx`, call this directly; avoid creating ad-hoc fetch clients.
+- **Legacy wrappers**: `lib/api` and `lib/actions` still proxy `@osu-tournament-rating/otr-api-client`. Treat these as legacy surfaces—prefer threading DB → oRPC → RSC when touching related flows.
+- **Session wiring**: `app/layout.tsx` reads headers, calls `getSessionFromHeaders`, and passes the result into the legacy `components/session-provider.tsx`. Update or replace that provider as new auth-aware vertical slices land.
+
+## oRPC Implementation Notes
+
+- **Context & middleware**: `os.$context` in `app/server/oRPC/procedures/base.ts` declares `headers` as the initial context. `publicProcedure` attaches the shared `db` instance; `protectedProcedure` chains Better Auth session resolution and throws `ORPCError('UNAUTHORIZED')` when absent. Mirror this pattern for additional middleware (timing, logging, etc.) per oRPC docs.
+- **Handlers**: Procedures typically call `context.db.query.*` for relational access (leveraging Drizzle's Queries API) and throw typed `ORPCError`s for failure states. Keep inputs and outputs typed with Zod schemas stored in `lib/orpc/schema`.
+- **Registration**: New procedures must be exported from their module, added to `app/server/oRPC/router.ts`, and then become available to the `orpc` client. Any new namespaces should match the router shape to preserve inferred types.
+- **OpenAPI**: If a procedure should appear in the generated spec, provide `.route({ summary, tags, path })` metadata and ensure referenced schemas are part of `commonSchemas` when needed.
+
+## Database & Drizzle
+
+- **Single entry point**: `lib/db/index.ts` instantiates Drizzle with the Node Postgres driver and imports both `schema` and `relations`. Always access the database through `context.db` inside procedures or server actions to avoid duplicate pools.
+- **Schema updates**: Add tables/columns in `lib/db/schema.ts` and mirror relations in `lib/db/relations.ts`. Run `bunx drizzle-kit generate` to emit SQL under `drizzle/`, then apply via your preferred workflow (`drizzle-kit push` or SQL execution).
+- **Queries**: Favor the relations API (`db.query.*.findMany/findFirst`) for nested lookups and readable filters, falling back to SQL builders (`db.select().from(...)`, `sql```) for complex aggregates as seen in `leaderboardProcedures.ts`.
+- **Testing**: When adjusting schema-backed logic, extend or create focused tests against the relevant utilities or procedures to protect query expectations.
+
+## Authentication & Sessions
+
+- **Better Auth setup**: `lib/auth/auth.ts` configures Better Auth with the Drizzle adapter (`provider: 'pg'`, `usePlural: true`) and maps the generated tables (`auth_users`, `auth_sessions`, etc.) from `lib/db/schema`. Plugins include `admin`, `genericOAuth` (osu! provider), `customSession`, and `nextCookies`—keep new plugins ordered before cookies per Better Auth guidance.
+- **Custom session envelope**: The `customSession` plugin enriches sessions with `dbPlayer` and `dbUser` lookups and parses the numeric `osuId`. Reuse this shape via the exported `AppSession` type when needing strongly typed session data.
+- **Server access**: `auth.api.getSession({ headers })` inside `protectedProcedure` enforces authentication. Prefer this instead of reaching for cookies directly.
+- **Client access**: `lib/auth/auth-client.ts` initializes `authClient` with the same base URL and exposes `signIn`, `signOut`, and `useSession`. Client components such as `components/buttons/LoginButton.tsx` call these helpers—avoid duplicating OAuth flow code.
+
+## Legacy Surfaces & Migration Notes
+
+- **Middleware**: `middleware.ts` still validates sessions through the legacy API (`getSession`), manages whitelist scopes, and cleans up old cookies. Changes to auth flows should update both the middleware and the Better Auth-backed procedures to stay consistent during migration.
+- **Session provider**: `components/session-provider.tsx` relies on `UserDTO` from the deprecated API. Plan to replace it with a Better Auth + oRPC powered context before removing the legacy client.
+- **Server helpers**: `lib/api/server.ts` and the server `lib/actions/*` files wrap legacy endpoints. When modifying these areas, consider introducing oRPC procedures that replicate required functionality, then phase out the wrappers.
+- **Documentation**: Call out migration touchpoints in PR descriptions and add TODOs where both legacy and new flows must coexist temporarily.
+
+## Environment & Secrets
+
+- Defined in `env.d.ts`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, optional `API_KEY`, `IS_RESTRICTED_ENV`, plus deprecated `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_APP_BASE_URL` for legacy clients.
+- Set `NEXT_PUBLIC_APP_BASE_URL` (or rely on runtime origin) so the oRPC client and Better Auth client resolve correct URLs in SSR and CSR contexts.
+- Never commit `.env`; reference `env.d.ts` for required values and update it when adding new configuration.
+
+## Utilities & Patterns
+
+- **Request caching**: `lib/utils/request-cache.ts` provides a simple in-memory dedupe for server-side calls (`withRequestCache`). Use or extend it rather than rolling your own memoization in middleware/layouts.
+- **Shared schemas**: `lib/schema.ts` hosts Zod schemas that still depend on the legacy API enums. Note any refactors to align these schemas with Drizzle-backed data before removing the dependency.
+- **UI primitives**: Components lean on shadcn/Radix and Tailwind utilities in `components/ui/*`; reuse these building blocks for new UI instead of importing directly from third-party libs.

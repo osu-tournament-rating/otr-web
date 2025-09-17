@@ -1,6 +1,7 @@
 import { os } from '@orpc/server';
 
 import { getLeaderboard } from './procedures/leaderboardProcedures';
+import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
 
 export interface InitialContext {
@@ -18,6 +19,9 @@ export const router = base.router({
   },
   leaderboard: {
     list: getLeaderboard,
+  },
+  search: {
+    query: searchEntities,
   },
 });
 

@@ -1,16 +1,17 @@
 'use client';
 import Link from 'next/link';
-import { MatchSearchResultDTO } from '@osu-tournament-rating/otr-api-client';
-import { highlightMatch } from '@/lib/utils/search';
 import { useContext } from 'react';
-import { SearchDialogContext } from './SearchDialog';
-import { Card } from '../ui/card';
 import { Swords } from 'lucide-react';
+
+import type { MatchSearchResult } from '@/lib/orpc/schema/search';
+import { highlightMatch } from '@/lib/utils/search';
+import { Card } from '../ui/card';
+import { SearchDialogContext } from './SearchDialog';
 
 export default function MatchSearchResult({
   data,
 }: {
-  data: MatchSearchResultDTO;
+  data: MatchSearchResult;
 }) {
   const { query, closeDialog } = useContext(SearchDialogContext);
 

@@ -40,7 +40,7 @@ export default function AdminNoteListItem({
   // Restrict edit/delete functionality to the user who created the note
   const showModificationButtons =
     session?.scopes?.includes(Roles.Admin) &&
-    note.adminUser.id === Number(session?.id ?? -1);
+    note.adminUser.id === (session?.userId ?? -1);
   const [editedNote, setEditedNote] = useState(note.note);
 
   const handleDelete = async () => {

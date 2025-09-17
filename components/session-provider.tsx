@@ -1,11 +1,12 @@
 'use client';
 
-import { UserDTO } from '@osu-tournament-rating/otr-api-client';
 import React, { createContext, useEffect, useState, ReactNode } from 'react';
 
+import type { SessionUser } from '@/lib/auth/session-utils';
+
 interface SessionContextType {
-  user: UserDTO | null;
-  refreshSession: (newUser: UserDTO | null) => void;
+  user: SessionUser | null;
+  refreshSession: (newUser: SessionUser | null) => void;
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
 }
@@ -21,7 +22,7 @@ export default function SessionProvider({
   user,
   children,
 }: {
-  user: UserDTO | null;
+  user: SessionUser | null;
   children: ReactNode;
 }) {
   const [currentUser, setCurrentUser] = useState(user);
@@ -32,7 +33,7 @@ export default function SessionProvider({
     setIsLoading(false);
   }, [user]);
 
-  const refreshSession = (newUser: UserDTO | null) => {
+  const refreshSession = (newUser: SessionUser | null) => {
     setCurrentUser(newUser);
     setIsLoading(false);
   };
