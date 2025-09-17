@@ -51,19 +51,21 @@ export const getUser = protectedProcedure
     tags: ['authenticated'],
   })
   .handler(async ({ input, context }) => {
-    const user = await context.db
-      .select()
-      .from(schema.users)
-      .where(eq(schema.users.id, input.id))
-      .limit(1);
+    const user = await context.db.query.users.findFirst({
+      where: eq(schema.users.id, input.id),
+      with: {
+        userSettings: true,
+        player: true,
+      },
+    });
 
-    if (!user[0]) {
+    if (!user) {
       throw new ORPCError('NOT_FOUND', {
         message: 'User not found',
       });
     }
 
-    return user[0];
+    return user;
   });
 
 // Example procedure
