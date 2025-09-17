@@ -1,4 +1,7 @@
-import { PlayersGetStatsRequestParams } from '@osu-tournament-rating/otr-api-client';
+import {
+  PlayersGetStatsRequestParams,
+  TournamentCompactDTO,
+} from '@osu-tournament-rating/otr-api-client';
 import { players } from '../api/server';
 import { cache } from 'react';
 
@@ -19,6 +22,20 @@ export const getStatsCached = cache(
       dateMin,
       dateMax,
       ruleset,
+    });
+    return result;
+  }
+);
+
+/**
+ * Get all tournaments a player has participated in, with caching.
+ * Uses React's cache() function to prevent duplicate API calls within the same request.
+ * Returns the most recent tournaments first.
+ */
+export const getPlayerTournamentsCached = cache(
+  async (playerId: number): Promise<TournamentCompactDTO[]> => {
+    const { result } = await players.getTournaments({
+      key: playerId.toString(),
     });
     return result;
   }

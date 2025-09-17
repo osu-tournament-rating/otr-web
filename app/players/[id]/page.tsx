@@ -5,12 +5,17 @@ import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
+import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
-import { getStatsCached } from '@/lib/actions/players';
+import {
+  getStatsCached,
+  getPlayerTournamentsCached,
+} from '@/lib/actions/players';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
+  TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -114,6 +119,11 @@ export default async function PlayerPage(props: PageProps) {
         100.0
   );
 
+  // Fetch tournaments data for the player if they have an ID
+  const tournaments = playerData.playerInfo.id
+    ? await getPlayerTournamentsCached(playerData.playerInfo.id)
+    : [];
+
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
@@ -163,6 +173,11 @@ export default async function PlayerPage(props: PageProps) {
               )}
             </div>
           )}
+          {/* Player tournaments list */}
+          <PlayerTournamentsList
+            tournaments={tournaments}
+            ruleset={currentRuleset}
+          />
         </>
       ) : (
         // No ruleset data
