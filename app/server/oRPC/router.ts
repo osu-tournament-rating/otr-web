@@ -1,16 +1,15 @@
 import { os } from '@orpc/server';
 
-import { getCurrentUser, getLeaderboard, getUser } from './procedures';
+import { getLeaderboard } from './procedures/leaderboardProcedures';
+import { getCurrentUser, getUser } from './procedures/userProcedures';
 
 export interface InitialContext {
   headers: Headers;
 }
 
-// Create base with initial context
 const base = os.$context<InitialContext>();
 
 export const router = base.router({
-  // Player endpoints
   user: {
     get: getUser,
   },
