@@ -15,7 +15,6 @@ import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import {
   PlayerDashboardStatsDTO,
   Ruleset,
-  TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -177,6 +176,7 @@ export default async function PlayerPage(props: PageProps) {
           <PlayerTournamentsList
             tournaments={tournaments}
             ruleset={currentRuleset}
+            adjustments={playerData.rating.adjustments}
           />
         </>
       ) : (

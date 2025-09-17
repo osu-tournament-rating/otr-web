@@ -1,24 +1,26 @@
 'use client';
 
 import {
+  RatingAdjustmentDTO,
   Ruleset,
   TournamentCompactDTO,
 } from '@osu-tournament-rating/otr-api-client';
-import TournamentCard from '../tournaments/TournamentCard';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronDown, ChevronUp, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { useState } from 'react';
+import PlayerTournamentCard from './PlayerTournamentCard';
 
 interface PlayerTournamentsListProps {
   tournaments: TournamentCompactDTO[];
   ruleset: Ruleset;
+  adjustments: RatingAdjustmentDTO[];
 }
 
 export default function PlayerTournamentsList({
   tournaments,
   ruleset,
+  adjustments,
 }: PlayerTournamentsListProps) {
   const [showAll, setShowAll] = useState(false);
 
@@ -48,9 +50,11 @@ export default function PlayerTournamentsList({
       </CardHeader>
       <CardContent className="flex flex-col space-y-4">
         {displayedTournaments.map((tournament) => (
-          <Link key={tournament.id} href={`/tournaments/${tournament.id}`}>
-            <TournamentCard tournament={tournament} displayStatusText />
-          </Link>
+          <PlayerTournamentCard
+            key={tournament.id}
+            tournament={tournament}
+            adjustments={adjustments}
+          />
         ))}
         {filteredTournaments.length > 3 && !showAll && (
           <Button
