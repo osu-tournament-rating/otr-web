@@ -49,6 +49,7 @@ export const getUser = protectedProcedure
   .route({
     summary: 'Get a user',
     tags: ['authenticated'],
+    path: '/users/{id}'
   })
   .handler(async ({ input, context }) => {
     const user = await context.db.query.users.findFirst({
