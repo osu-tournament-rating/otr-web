@@ -3,13 +3,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  ProcessedPlayerStats,
-  formatScore,
-  getRatingChangeColor,
-} from './MatchStatsUtils';
+import { ProcessedPlayerStats, formatScore } from './MatchStatsUtils';
+import RatingDelta from '@/components/rating/RatingDelta';
 
 const AVATAR_SIZE = {
   WIDTH: 28,
@@ -18,8 +15,6 @@ const AVATAR_SIZE = {
 
 const RATING_PRECISION = {
   DISPLAY: 0,
-  DELTA: 1,
-  COMPARISON: 10,
 } as const;
 
 interface MatchStatsPlayerRowProps {
@@ -34,19 +29,6 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
   showWLColumn = true,
 }: MatchStatsPlayerRowProps) {
   const [imageError, setImageError] = useState(false);
-
-  const ratingChangeIcon = useMemo(() => {
-    if (player.ratingDelta === null) return null;
-
-    const roundedDelta =
-      Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-      RATING_PRECISION.COMPARISON;
-
-    if (roundedDelta === 0) return <Minus className="h-3.5 w-3.5" />;
-    if (player.ratingDelta > 0) return <TrendingUp className="h-3.5 w-3.5" />;
-    if (player.ratingDelta < 0) return <TrendingDown className="h-3.5 w-3.5" />;
-    return <Minus className="h-3.5 w-3.5" />;
-  }, [player.ratingDelta]);
 
   const teamBadge = useMemo(() => {
     if (!player.team) return null;
@@ -118,43 +100,11 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
         {player.ratingAfter?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2 text-center">
-        <div
-          className={cn(
-            'inline-flex items-center justify-center gap-0.5 rounded-md px-1 py-0.5 text-xs font-semibold sm:gap-1 sm:px-1.5',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON >
-                0 &&
-              'bg-green-500/10',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON <
-                0 &&
-              'bg-red-500/10',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON ===
-                0 &&
-              'bg-gray-500/10',
-            getRatingChangeColor(player.ratingDelta)
-          )}
-        >
-          <span className="hidden sm:inline">{ratingChangeIcon}</span>
-          <span>
-            {player.ratingDelta !== null ? (
-              Math.abs(player.ratingDelta) < 0.05 ? (
-                '0.0'
-              ) : (
-                <>
-                  {player.ratingDelta > 0 && '+'}
-                  {player.ratingDelta.toFixed(RATING_PRECISION.DELTA)}
-                </>
-              )
-            ) : (
-              '-'
-            )}
-          </span>
-        </div>
+        {player.ratingDelta !== null ? (
+          <RatingDelta delta={player.ratingDelta} />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
       </TableCell>
       {/* Performance metrics - consistent breakpoints matching headers */}
       {showPerformanceMetrics && (
