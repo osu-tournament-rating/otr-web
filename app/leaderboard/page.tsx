@@ -40,8 +40,6 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
   });
 
-  console.log('[leaderboard] getData response', response);
-
   return response;
 }
 

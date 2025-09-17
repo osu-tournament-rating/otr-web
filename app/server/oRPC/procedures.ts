@@ -201,13 +201,6 @@ export const getLeaderboard = publicProcedure
       );
       const ruleset = input.ruleset ?? 0;
 
-      console.log('[orpc] leaderboard.list start', {
-        input,
-        page,
-        pageSize,
-        ruleset,
-      });
-
       const tournamentsPlayedExpr = sql<number>`
         COALESCE(COUNT(DISTINCT ${schema.tournaments.id})::int, 0)
       `.as('tournamentsPlayed');
@@ -410,13 +403,6 @@ export const getLeaderboard = publicProcedure
       const currentPage = Math.min(page, pages);
       const offset = Math.max(0, (currentPage - 1) * pageSize);
 
-      console.log('[orpc] leaderboard.list pagination', {
-        total,
-        pages,
-        currentPage,
-        offset,
-      });
-
       const baseRowsQuery = context.db
         .with(leaderboardBase)
         .select({
@@ -444,11 +430,6 @@ export const getLeaderboard = publicProcedure
         .limit(pageSize)
         .offset(offset);
 
-      console.log('[orpc] leaderboard.list rows', {
-        rowCount: leaderboardRows.length,
-        firstRow: leaderboardRows[0],
-      });
-
       const leaderboard = leaderboardRows.map((row) => {
         const rating = Number(row.rating ?? 0);
         const { tierKey, tierProgress } = buildTierProgress(rating);
@@ -474,11 +455,6 @@ export const getLeaderboard = publicProcedure
           tier: tierKey,
           tierProgress,
         };
-      });
-
-      console.log('[orpc] leaderboard.list leaderboard', {
-        leaderboardCount: leaderboard.length,
-        sample: leaderboard[0],
       });
 
       return LeaderboardResponseSchema.parse({

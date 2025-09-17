@@ -4,7 +4,11 @@ import { RPCLink } from '@orpc/client/fetch';
 import { RouterClient } from '@orpc/server';
 
 const link = new RPCLink({
-  url: `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/rpc`,
+  url: `${
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'http://localhost:3000')
+  }/rpc`,
   headers: async () => {
     if (typeof window !== 'undefined') {
       return {};
