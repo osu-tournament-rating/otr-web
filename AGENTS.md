@@ -12,7 +12,7 @@ bunx tsc --noEmit     # Type check without emitting
 
 ## Architecture Transition
 
-- **Current state**: migrating from a frontend-for-backend split to a monolithic Next.js app powered by oRPC for typed RPC calls and Drizzle ORM for data access
+- **Current state**: migrating from a frontend-for-backend split to a monolithic Next.js app powered by oRPC for typed RPC calls and Drizzle ORM for data access. All new features MUST ignore the @osu-tournament-rating/otr-api-client package.
 - **Legacy services**: older endpoints may still exist; prefer replacing them with shared oRPC procedures when touching related flows
 - **Data layer**: move ad-hoc fetches into Drizzle models under `lib/db`, expose via oRPC, and consume through server components first
 - **Incremental migration**: ship vertical slices that thread DB → oRPC → RSC; leave adapter layers or feature flags when parity with legacy APIs isn’t ready
@@ -60,6 +60,6 @@ bunx tsc --noEmit     # Type check without emitting
 ## Tooling Tips
 
 - **Database**: use Drizzle migrations (`bunx drizzle-kit generate`) and keep `schema.ts` + `relations.ts` aligned
-- **ORPC**: define procedures in `app/server/oRPC/procedures.ts`, expose them through `app/server/oRPC/router.ts`, colocate schemas under `lib/orpc/schema`, and type-share clients via generated typings
+- **ORPC**: define entity procedures under `app/server/oRPC/procedures/*`, expose them through `app/server/oRPC/router.ts`, colocate schemas under `lib/orpc/schema`, and type-share clients via generated typings
 - **Auth**: reuse helpers from `lib/auth/auth.ts`; respect existing session/token patterns
 - **Environment**: rely on `env.d.ts` definitions; never hardcode secrets—pull from `process.env`
