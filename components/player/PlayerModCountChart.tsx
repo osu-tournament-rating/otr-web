@@ -1,7 +1,7 @@
 'use client';
 
 import { ModsEnumHelper } from '@/lib/enums';
-import { PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
+import type { PlayerModStats } from '@/lib/orpc/schema/playerDashboard';
 import {
   ChartConfig,
   ChartContainer,
@@ -28,7 +28,7 @@ interface ProcessedEntry {
 }
 
 interface PlayerModCountChartProps {
-  modStats: PlayerModStatsDTO[];
+  modStats: PlayerModStats[];
   className?: string;
 }
 

@@ -1,14 +1,14 @@
 'use client';
 
 import { getTierString, TierName } from '@/lib/utils/tierData';
-import { PlayerRatingStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import TierIcon from '../icons/TierIcon';
 import TRText from '../rating/TRText';
 import { Progress } from '../ui/progress';
 import SimpleTooltip from '../simple-tooltip';
+import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
 
 interface TierProgressProps {
-  tierProgress: PlayerRatingStatsDTO['tierProgress'];
+  tierProgress: PlayerRatingStats['tierProgress'];
 }
 
 export default function PlayerTierProgress({

@@ -8,10 +8,6 @@ import PlayerRatingChartOptions, {
 } from './PlayerRatingChartOptions';
 import SimpleTooltip from '@/components/simple-tooltip';
 import {
-  RatingAdjustmentDTO,
-  RatingAdjustmentType,
-} from '@osu-tournament-rating/otr-api-client';
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -25,9 +21,11 @@ import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { RatingAdjustmentType } from '@/lib/osu/enums';
 
 interface PlayerRatingChartProps {
-  adjustments: RatingAdjustmentDTO[];
+  adjustments: PlayerRatingAdjustment[];
   highestRating: number | undefined;
 }
 
@@ -74,7 +72,7 @@ export default function PlayerRatingChart({
   }, [adjustments, showDecay]);
 
   const dailyData = useMemo(() => {
-    const dailyMap = new Map<string, RatingAdjustmentDTO>();
+    const dailyMap = new Map<string, PlayerRatingAdjustment>();
 
     sortData(filteredData, true).forEach((point) => {
       const dateKey = new Date(point.timestamp).toISOString().split('T')[0];

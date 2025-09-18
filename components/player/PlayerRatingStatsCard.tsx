@@ -1,7 +1,3 @@
-import {
-  PlayerRatingStatsDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
 import { Card } from '@/components/ui/card';
 import TierIcon from '@/components/icons/TierIcon';
 import {
@@ -19,6 +15,8 @@ import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
 import CountryFlag from '@/components/shared/CountryFlag';
 import Link from 'next/link';
+import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
+import { Ruleset } from '@/lib/osu/enums';
 
 function formatPercentage(value: number | undefined | null): string {
   if (value === undefined || value === null) return 'N/A';
@@ -27,7 +25,7 @@ function formatPercentage(value: number | undefined | null): string {
 }
 
 interface PlayerRatingStatsCardProps {
-  rating: PlayerRatingStatsDTO;
+  rating: PlayerRatingStats;
   currentRuleset: Ruleset;
 }
 
@@ -48,7 +46,7 @@ export default function PlayerRatingStatsCard({
               <span className="text-nowrap">
                 {getTierString(
                   rating.tierProgress.currentTier as TierName,
-                  rating.tierProgress.currentSubTier
+                  rating.tierProgress.currentSubTier ?? undefined
                 )}
               </span>
             }
@@ -56,7 +54,7 @@ export default function PlayerRatingStatsCard({
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
                 <TierIcon
                   tier={(rating.tierProgress.currentTier as TierName) || ''}
-                  subTier={rating.tierProgress?.currentSubTier}
+                  subTier={rating.tierProgress.currentSubTier ?? undefined}
                   tooltip
                   width={32}
                   height={32}

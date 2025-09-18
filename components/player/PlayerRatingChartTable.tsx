@@ -1,8 +1,4 @@
 import Link from 'next/link';
-import {
-  RatingAdjustmentDTO,
-  RatingAdjustmentType,
-} from '@osu-tournament-rating/otr-api-client';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
 import { formattedDate } from './PlayerRatingChartTooltip';
 import {
@@ -14,9 +10,11 @@ import {
   TableRow,
 } from '../ui/table';
 import { sortData } from '@/lib/utils/playerRatingChart';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { RatingAdjustmentType } from '@/lib/osu/enums';
 
 interface PlayerRatingChartTableProps {
-  data: RatingAdjustmentDTO[];
+  data: PlayerRatingAdjustment[];
   activeTab: 'rating' | 'volatility';
 }
 

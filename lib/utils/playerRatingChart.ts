@@ -1,9 +1,9 @@
-import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
 
 export type ChartDataPoint = {
   formattedAxisDate: string;
   timestampValue: number;
-} & RatingAdjustmentDTO;
+} & PlayerRatingAdjustment;
 
 /**
  * Sorts rating adjustments by timestamp in descending order
@@ -12,9 +12,9 @@ export type ChartDataPoint = {
  * @returns The sorted data
  */
 export function sortData(
-  data: RatingAdjustmentDTO[],
+  data: PlayerRatingAdjustment[],
   descending: boolean
-): RatingAdjustmentDTO[] {
+): PlayerRatingAdjustment[] {
   return [...data].sort((a, b) =>
     descending
       ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()

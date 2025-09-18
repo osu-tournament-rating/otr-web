@@ -1,13 +1,13 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
 import TRText from '../rating/TRText';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import StatCard from '../shared/StatCard';
 import TierIcon from '../icons/TierIcon';
 import { getTierFromRating } from '@/lib/utils/tierData';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
 
 interface PlayerRatingChartSummaryStatsProps {
-  data: RatingAdjustmentDTO[];
+  data: PlayerRatingAdjustment[];
   highestRating: number | undefined;
 }
 

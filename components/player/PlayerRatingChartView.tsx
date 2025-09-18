@@ -12,13 +12,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import {
-  RatingAdjustmentDTO,
-  RatingAdjustmentType,
-} from '@osu-tournament-rating/otr-api-client';
 import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { capitalize } from '@/lib/utils';
 import { ChartContainer } from '../ui/chart';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { RatingAdjustmentType } from '@/lib/osu/enums';
 
 const CHART_CONSTANTS = {
   MIN_DATA_POINTS: 2,
@@ -39,13 +37,13 @@ interface ChartColors {
 }
 
 interface PlayerRatingChartViewProps {
-  data: RatingAdjustmentDTO[];
+  data: PlayerRatingAdjustment[];
   activeTab: 'rating' | 'volatility';
   highestRating: number | undefined;
   theme?: string;
 }
 
-interface ChartDataPoint extends RatingAdjustmentDTO {
+interface ChartDataPoint extends PlayerRatingAdjustment {
   timestampValue: number;
 }
 

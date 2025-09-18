@@ -1,11 +1,11 @@
 'use client';
 
-import { PlayerFrequencyDTO } from '@osu-tournament-rating/otr-api-client';
 import PlayerFrequencyChart from './PlayerFrequencyChart';
+import type { PlayerFrequency } from '@/lib/orpc/schema/playerDashboard';
 
 interface PlayerTeammatesChartProps {
   className?: string;
-  teammates: PlayerFrequencyDTO[];
+  teammates: PlayerFrequency[];
 }
 
 export default function PlayerTeammatesChart({

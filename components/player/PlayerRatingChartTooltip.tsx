@@ -1,7 +1,7 @@
-import { RatingAdjustmentDTO } from '@osu-tournament-rating/otr-api-client';
 import TRText from '../rating/TRText';
 import { format } from 'date-fns';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
 
 export function formattedDate(date: Date | string) {
   return format(new Date(date), 'MMM d, yyyy');
@@ -9,7 +9,7 @@ export function formattedDate(date: Date | string) {
 
 interface PlayerRatingChartTooltipProps {
   active?: boolean;
-  payload?: Array<{ payload: RatingAdjustmentDTO }>;
+  payload?: Array<{ payload: PlayerRatingAdjustment }>;
   activeTab: string;
 }
 

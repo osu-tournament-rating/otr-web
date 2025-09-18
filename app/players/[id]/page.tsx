@@ -6,12 +6,10 @@ import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import { Card } from '@/components/ui/card';
-import { getStatsCached } from '@/lib/actions/players';
+import { getPlayerDashboardStatsCached } from '@/lib/actions/players';
+import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
+import { Ruleset } from '@/lib/osu/enums';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
-import {
-  PlayerDashboardStatsDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 
@@ -41,7 +39,7 @@ export async function generateMetadata({
 async function getPlayerData(
   key: string,
   searchParams: { [key: string]: string | string[] | undefined }
-): Promise<PlayerDashboardStatsDTO | undefined> {
+): Promise<PlayerDashboardStats | undefined> {
   const decodedKey = decodeURIComponent(key);
 
   const dateMin = searchParams.dateMin
@@ -56,8 +54,12 @@ async function getPlayerData(
     : undefined;
 
   try {
-    const result = await getStatsCached(decodedKey, dateMin, dateMax, ruleset);
-    return result;
+    return await getPlayerDashboardStatsCached(
+      decodedKey,
+      dateMin,
+      dateMax,
+      ruleset
+    );
   } catch (error) {
     console.error('Failed to fetch player data:', error);
     return undefined;
@@ -114,6 +116,13 @@ export default async function PlayerPage(props: PageProps) {
         100.0
   );
 
+  const chartHighestRating = playerData.rating?.adjustments?.length
+    ? playerData.rating.adjustments.reduce(
+        (max, adjustment) => Math.max(max, adjustment.ratingAfter),
+        playerData.rating.adjustments[0].ratingAfter
+      )
+    : (playerData.matchStats?.highestRating ?? undefined);
+
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
@@ -125,12 +134,7 @@ export default async function PlayerPage(props: PageProps) {
           />
           <PlayerRatingChart
             adjustments={playerData.rating.adjustments}
-            highestRating={
-              playerData.matchStats?.highestRating &&
-              playerData.rating.adjustments.sort(
-                (a, b) => b.ratingAfter - a.ratingAfter
-              )[0].ratingAfter
-            }
+            highestRating={chartHighestRating ?? undefined}
           />
           {/* Display all statistics charts in a responsive grid */}
           {(modStatsData ||

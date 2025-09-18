@@ -1,5 +1,3 @@
-import { z } from 'zod/v4';
-
 import { tournamentAdminNoteSelectSchema, userSelectSchema } from './base';
 import { PlayerSchema } from './player';
 

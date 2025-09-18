@@ -1,7 +1,5 @@
-import {
-  PlayerCompactDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
+import type { PlayerCompact } from '@/lib/orpc/schema/playerDashboard';
+import { Ruleset } from '@/lib/osu/enums';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
@@ -9,7 +7,7 @@ import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
 
 interface PlayerCardProps {
-  player: PlayerCompactDTO;
+  player: PlayerCompact;
   ruleset: Ruleset;
 }
 

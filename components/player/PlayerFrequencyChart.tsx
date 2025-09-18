@@ -3,7 +3,6 @@
 import { useMemo, useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { PlayerFrequencyDTO } from '@osu-tournament-rating/otr-api-client';
 import { ChartConfig, ChartContainer, ChartTooltip } from '../ui/chart';
 import {
   Card,
@@ -45,7 +44,7 @@ type ChartType = 'teammates' | 'opponents';
 
 interface PlayerFrequencyChartProps {
   className?: string;
-  data: PlayerFrequencyDTO[];
+  data: PlayerFrequency[];
   type: ChartType;
   title?: string;
   description?: string;
@@ -53,8 +52,8 @@ interface PlayerFrequencyChartProps {
   chartColor?: string;
 }
 
-// Type guard for PlayerFrequencyDTO
-function isValidPlayerFrequency(item: unknown): item is PlayerFrequencyDTO {
+// Type guard for PlayerFrequency
+function isValidPlayerFrequency(item: unknown): item is PlayerFrequency {
   return (
     item !== null &&
     typeof item === 'object' &&
@@ -411,3 +410,4 @@ export default function PlayerFrequencyChart({
     </Card>
   );
 }
+import type { PlayerFrequency } from '@/lib/orpc/schema/playerDashboard';

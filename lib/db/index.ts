@@ -6,3 +6,5 @@ import './relations';
 export const db = drizzle(process.env.DATABASE_URL!, {
   schema,
 });
+
+export type DatabaseClient = typeof db;

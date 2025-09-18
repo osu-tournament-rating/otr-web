@@ -2,6 +2,10 @@ import { os } from '@orpc/server';
 
 import { getLeaderboard } from './procedures/leaderboardProcedures';
 import { getMatch } from './procedures/matchesProcedures';
+import {
+  getPlayer,
+  getPlayerDashboardStats,
+} from './procedures/playerProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
 import {
@@ -43,6 +47,10 @@ export const router = base.router({
   },
   matches: {
     get: getMatch,
+  },
+  players: {
+    get: getPlayer,
+    dashboard: getPlayerDashboardStats,
   },
   tournaments: {
     list: listTournaments,

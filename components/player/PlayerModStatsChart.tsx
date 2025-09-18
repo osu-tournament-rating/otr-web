@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { Mods, PlayerModStatsDTO } from '@osu-tournament-rating/otr-api-client';
 import { ModsEnumHelper } from '@/lib/enums';
 import { getModColor, normalizedScore } from '@/lib/utils/mods';
 import {
@@ -22,6 +21,8 @@ import { InfoIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { formatChartNumber } from '@/lib/utils/chart';
+import type { PlayerModStats } from '@/lib/orpc/schema/playerDashboard';
+import { Mods } from '@/lib/osu/enums';
 
 interface ChartDataEntry {
   label: string;
@@ -32,7 +33,7 @@ interface ChartDataEntry {
 
 interface PlayerModStatsChartProps {
   className?: string;
-  modStats: PlayerModStatsDTO[];
+  modStats: PlayerModStats[];
 }
 
 export default function PlayerModStatsChart({
