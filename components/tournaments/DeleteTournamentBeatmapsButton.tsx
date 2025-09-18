@@ -1,6 +1,5 @@
 'use client';
 
-import { deleteBeatmaps } from '@/lib/actions/tournaments';
 import { Loader2, Music } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { orpc } from '@/lib/orpc/orpc';
 
 interface DeleteTournamentBeatmapsButtonProps {
   tournament: {
@@ -36,7 +36,7 @@ export default function DeleteTournamentBeatmapsButton({
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await deleteBeatmaps(tournament.id);
+      await orpc.tournaments.admin.deleteBeatmaps({ id: tournament.id });
       toast.success('Pooled beatmaps deleted successfully');
       setIsOpen(false);
       window.location.reload();

@@ -1,6 +1,5 @@
 'use client';
 
-import { acceptPreVerificationStatuses } from '@/lib/actions/tournaments';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { orpc } from '@/lib/orpc/orpc';
 
 interface AcceptPreVerificationStatusesButtonProps {
   tournament: {
@@ -36,7 +36,7 @@ export default function AcceptPreVerificationStatusesButton({
   const handleAccept = async () => {
     setIsLoading(true);
     try {
-      await acceptPreVerificationStatuses({
+      await orpc.tournaments.admin.acceptPreVerificationStatuses({
         id: tournament.id,
       });
       toast.success('Pre-verification statuses accepted successfully');

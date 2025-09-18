@@ -1,6 +1,5 @@
 'use client';
 
-import { rerunAutomatedChecks } from '@/lib/actions/tournaments';
 import { Loader2, RefreshCcwDotIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { orpc } from '@/lib/orpc/orpc';
 
 interface ResetAutomatedChecksButtonProps {
   tournament: {
@@ -38,7 +38,7 @@ export default function ResetAutomatedChecksButton({
   const handleReset = async () => {
     setIsLoading(true);
     try {
-      await rerunAutomatedChecks({
+      await orpc.tournaments.admin.resetAutomatedChecks({
         id: tournament.id,
         overrideVerifiedState: forceReset,
       });

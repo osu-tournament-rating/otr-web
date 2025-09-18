@@ -1,6 +1,5 @@
 'use client';
 
-import { refetchMatchData } from '@/lib/actions/tournaments';
 import { DatabaseBackup, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { orpc } from '@/lib/orpc/orpc';
 
 interface RefetchMatchDataButtonProps {
   tournament: {
@@ -36,8 +36,15 @@ export default function RefetchMatchDataButton({
   const handleReset = async () => {
     setIsLoading(true);
     try {
-      await refetchMatchData(tournament.id);
-      toast.success('Queued match data for refetch');
+      const result = await orpc.tournaments.admin.refetchMatchData({
+        id: tournament.id,
+      });
+      // TODO: RabbitMQ message?
+      toast.success(
+        result.matchesUpdated > 0
+          ? `Queued ${result.matchesUpdated} matches for refetch`
+          : 'Queued match data for refetch'
+      );
       setIsOpen(false);
     } catch {
       toast.error('Failed to queue match data for refetch');

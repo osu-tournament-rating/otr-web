@@ -15,14 +15,13 @@ import {
   sql,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { z } from 'zod';
-
 import * as schema from '@/lib/db/schema';
 import {
   TournamentDetailSchema,
   TournamentListItemSchema,
   TournamentListRequestSchema,
   TournamentListResponseSchema,
+  TournamentIdInputSchema,
 } from '@/lib/orpc/schema/tournament';
 
 import { publicProcedure } from './base';
@@ -232,12 +231,8 @@ export const listTournaments = publicProcedure
     }
   });
 
-const TournamentIdSchema = z.object({
-  id: z.number().int().positive(),
-});
-
 export const getTournament = publicProcedure
-  .input(TournamentIdSchema)
+  .input(TournamentIdInputSchema)
   .output(TournamentDetailSchema)
   .route({
     summary: 'Get tournament details',

@@ -7,6 +7,14 @@ import {
   getTournament,
   listTournaments,
 } from './procedures/tournamentsProcedures';
+import {
+  acceptTournamentPreVerificationStatuses,
+  deleteTournamentAdmin,
+  deleteTournamentBeatmapsAdmin,
+  refetchTournamentMatchData,
+  resetTournamentAutomatedChecks,
+  updateTournamentAdmin,
+} from './procedures/tournaments/adminProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -30,6 +38,14 @@ export const router = base.router({
   tournaments: {
     list: listTournaments,
     get: getTournament,
+    admin: {
+      update: updateTournamentAdmin,
+      resetAutomatedChecks: resetTournamentAutomatedChecks,
+      acceptPreVerificationStatuses: acceptTournamentPreVerificationStatuses,
+      delete: deleteTournamentAdmin,
+      deleteBeatmaps: deleteTournamentBeatmapsAdmin,
+      refetchMatchData: refetchTournamentMatchData,
+    },
   },
 });
 

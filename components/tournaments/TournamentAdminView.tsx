@@ -1,21 +1,21 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { useSession } from '@/lib/hooks/useSession';
-import { update } from '@/lib/actions/tournaments';
-import { tournamentEditFormSchema } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { createPatchOperations } from '@/lib/utils/form';
-import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { EditIcon, Loader2 } from 'lucide-react';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
 
+import { hasAdminScope } from '@/lib/auth/roles';
+import { useSession } from '@/lib/hooks/useSession';
+import { orpc } from '@/lib/orpc/orpc';
+import type { VerificationStatusValue } from '@/lib/orpc/schema/tournament';
 import { TournamentDetail } from '@/lib/orpc/schema/tournament';
+import { tournamentEditFormSchema } from '@/lib/schema';
+import { cn } from '@/lib/utils';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -104,7 +104,7 @@ export default function TournamentAdminView({
     form.reset(formDefaults);
   }, [formDefaults, form]);
 
-  if (!session?.scopes?.includes(Roles.Admin)) {
+  if (!hasAdminScope(session?.scopes ?? [])) {
     return null;
   }
 
@@ -112,9 +112,19 @@ export default function TournamentAdminView({
     values: z.infer<typeof tournamentEditFormSchema>
   ) => {
     try {
-      await update({
+      await orpc.tournaments.admin.update({
         id: tournament.id,
-        body: createPatchOperations(formDefaults, values),
+        name: values.name,
+        abbreviation: values.abbreviation,
+        forumUrl: values.forumUrl,
+        rankRangeLowerBound: values.rankRangeLowerBound,
+        ruleset: values.ruleset,
+        lobbySize: values.lobbySize,
+        verificationStatus:
+          values.verificationStatus as VerificationStatusValue,
+        rejectionReason: values.rejectionReason,
+        startTime: values.startTime ? values.startTime.toISOString() : null,
+        endTime: values.endTime ? values.endTime.toISOString() : null,
       });
       form.reset(values);
       saveToast();

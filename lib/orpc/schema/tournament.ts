@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+export const VerificationStatusSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+]);
+
+export type VerificationStatusValue = z.infer<typeof VerificationStatusSchema>;
+
 export const TournamentListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(30),
@@ -186,6 +196,63 @@ export const TournamentDetailSchema = z
     playerTournamentStats: value.playerTournamentStats ?? [],
     pooledBeatmaps: value.pooledBeatmaps ?? [],
   }));
+
+export const TournamentAdminUpdateInputSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  abbreviation: z.string().min(1),
+  forumUrl: z
+    .string()
+    .url()
+    .refine(
+      (value) =>
+        value.startsWith('https://osu.ppy.sh/community/forums/topics/') ||
+        value.startsWith('https://osu.ppy.sh/wiki/en/Tournaments/'),
+      {
+        message:
+          'Forum URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"',
+      }
+    ),
+  rankRangeLowerBound: z.number().int().min(1),
+  ruleset: z.number().int().min(0),
+  lobbySize: z.number().int().min(1).max(8),
+  verificationStatus: VerificationStatusSchema,
+  rejectionReason: z.number().int().min(0),
+  startTime: z.string().datetime().nullable(),
+  endTime: z.string().datetime().nullable(),
+});
+
+export const TournamentIdInputSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+export const TournamentResetAutomatedChecksInputSchema =
+  TournamentIdInputSchema.extend({
+    overrideVerifiedState: z.boolean().optional().default(false),
+  });
+
+export const TournamentAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export const TournamentRefetchMatchDataResponseSchema = z.object({
+  success: z.boolean(),
+  matchesUpdated: z.number().int().nonnegative(),
+});
+
+export type TournamentAdminUpdateInput = z.infer<
+  typeof TournamentAdminUpdateInputSchema
+>;
+export type TournamentAdminMutationResponse = z.infer<
+  typeof TournamentAdminMutationResponseSchema
+>;
+export type TournamentResetAutomatedChecksInput = z.infer<
+  typeof TournamentResetAutomatedChecksInputSchema
+>;
+export type TournamentIdInput = z.infer<typeof TournamentIdInputSchema>;
+export type TournamentRefetchMatchDataResponse = z.infer<
+  typeof TournamentRefetchMatchDataResponseSchema
+>;
 
 export type TournamentListRequest = z.infer<typeof TournamentListRequestSchema>;
 export type TournamentListItem = z.infer<typeof TournamentListItemSchema>;

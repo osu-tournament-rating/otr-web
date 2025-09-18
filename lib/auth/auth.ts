@@ -49,7 +49,7 @@ export const auth = betterAuth({
         admin,
         superadmin,
       },
-      adminRoles: ADMIN_ROLES,
+      adminRoles: [...ADMIN_ROLES],
       defaultRole: 'user',
     }),
     genericOAuth({

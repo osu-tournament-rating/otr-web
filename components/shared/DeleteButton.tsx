@@ -1,12 +1,8 @@
 'use client';
 
-import { deleteTournament } from '@/lib/actions/tournaments';
-import { deleteMatch } from '@/lib/actions/matches';
-import { deleteGame } from '@/lib/actions/games';
-import { deleteScore } from '@/lib/actions/scores';
-import { Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +18,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { deleteGame } from '@/lib/actions/games';
+import { deleteMatch } from '@/lib/actions/matches';
+import { deleteScore } from '@/lib/actions/scores';
+import { orpc } from '@/lib/orpc/orpc';
 
 type EntityType = 'tournament' | 'match' | 'game' | 'score';
 
@@ -32,8 +32,8 @@ interface DeleteButtonProps {
   onDeleted?: () => void;
 }
 
-const deleteActions = {
-  tournament: deleteTournament,
+const deleteActions: Record<EntityType, (id: number) => Promise<unknown>> = {
+  tournament: async (id: number) => orpc.tournaments.admin.delete({ id }),
   match: deleteMatch,
   game: deleteGame,
   score: deleteScore,

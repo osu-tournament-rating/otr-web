@@ -1,5 +1,9 @@
 import { createAccessControl } from 'better-auth/plugins/access';
 
+import { APP_ROLES } from './roles';
+
+export { ADMIN_ROLES } from './roles';
+
 // Define permissions for various resources
 export const statements = {
   user: ['create', 'read', 'update', 'delete', 'ban', 'unban', 'impersonate'],
@@ -37,16 +41,10 @@ export const superadmin = ac.newRole({
 });
 
 // Role constants for use throughout the application
-export const ROLES = {
-  ADMIN: 'admin',
-  SUPERADMIN: 'superadmin',
-} as const;
+export const ROLES = APP_ROLES;
 
 // Type for roles
-export type Role = (typeof ROLES)[keyof typeof ROLES];
+export type Role = (typeof APP_ROLES)[keyof typeof APP_ROLES];
 
 // Array of all available roles
-export const ALL_ROLES = Object.values(ROLES);
-
-// Admin roles that have elevated privileges
-export const ADMIN_ROLES = [ROLES.ADMIN, ROLES.SUPERADMIN];
+export const ALL_ROLES = Object.values(APP_ROLES);
