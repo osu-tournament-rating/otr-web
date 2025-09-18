@@ -208,19 +208,18 @@ export const listTournaments = publicProcedure
 
       return rows.map((row) =>
         TournamentListItemSchema.parse({
-          id: Number(row.id),
+          id: row.id,
           created: row.created,
           name: row.name,
           abbreviation: row.abbreviation,
           forumUrl: row.forumUrl,
           rankRangeLowerBound: row.rankRangeLowerBound,
-          // TODO: Remove these number casts, they are already numbers.
-          ruleset: Number(row.ruleset),
-          lobbySize: Number(row.lobbySize),
+          ruleset: row.ruleset,
+          lobbySize: row.lobbySize,
           startTime: row.startTime ?? null,
           endTime: row.endTime ?? null,
-          verificationStatus: Number(row.verificationStatus),
-          rejectionReason: Number(row.rejectionReason),
+          verificationStatus: row.verificationStatus,
+          rejectionReason: row.rejectionReason,
         })
       );
     } catch (error) {
@@ -341,11 +340,11 @@ export const getTournament = publicProcedure
       >();
 
       for (const creator of beatmapCreatorsRows) {
-        const beatmapId = Number(creator.beatmapId);
+        const beatmapId = creator.beatmapId;
         const current = creatorsByBeatmapId.get(beatmapId) ?? [];
         current.push({
-          id: Number(creator.playerId),
-          osuId: Number(creator.osuId),
+          id: creator.playerId,
+          osuId: creator.osuId,
           username: creator.username,
           country: creator.country ?? null,
         });
@@ -400,25 +399,26 @@ export const getTournament = publicProcedure
       }
 
       const normalizedMatches = matchRows.map((match) => ({
-        id: Number(match.id),
+        id: match.id,
         name: match.name,
         startTime: match.startTime ?? null,
         endTime: match.endTime ?? null,
-        verificationStatus: Number(match.verificationStatus),
-        rejectionReason: Number(match.rejectionReason),
-        warningFlags: Number(match.warningFlags),
+        verificationStatus: match.verificationStatus,
+        rejectionReason: match.rejectionReason,
+        warningFlags: match.warningFlags,
         games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
-          id: Number(game.id),
+          id: game.id,
           startTime: game.startTime ?? null,
-          verificationStatus: Number(game.verificationStatus),
-          rejectionReason: Number(game.rejectionReason),
-          warningFlags: Number(game.warningFlags),
-          mods: Number(game.mods),
-          beatmap: game.beatmapOsuId
-            ? {
-                osuId: Number(game.beatmapOsuId),
-              }
-            : null,
+          verificationStatus: game.verificationStatus,
+          rejectionReason: game.rejectionReason,
+          warningFlags: game.warningFlags,
+          mods: game.mods,
+          beatmap:
+            game.beatmapOsuId != null
+              ? {
+                  osuId: game.beatmapOsuId,
+                }
+              : null,
         })),
       }));
 
@@ -448,34 +448,34 @@ export const getTournament = publicProcedure
         .orderBy(desc(schema.tournamentAdminNotes.created));
 
       const adminNotes = adminNotesRows.map((note) => {
-        if (note.userId && note.playerId) {
+        const base = {
+          id: note.id,
+          referenceId: note.referenceId,
+          note: note.note,
+          created: note.created,
+          updated: note.updated ?? null,
+        };
+
+        if (note.userId != null && note.playerId != null) {
           return {
-            id: Number(note.id),
-            referenceId: Number(note.referenceId),
-            note: note.note,
-            created: note.created,
-            updated: note.updated ?? null,
+            ...base,
             adminUser: {
-              id: Number(note.userId),
+              id: note.userId,
               lastLogin: note.userLastLogin ?? null,
               player: {
-                id: Number(note.playerId),
-                osuId: Number(note.playerOsuId),
+                id: note.playerId,
+                osuId: note.playerOsuId ?? -1,
                 username: note.playerUsername,
                 country: note.playerCountry ?? null,
-                defaultRuleset: Number(note.playerDefaultRuleset),
-                userId: Number(note.userId),
+                defaultRuleset: note.playerDefaultRuleset ?? 0,
+                userId: note.userId,
               },
             },
           };
         }
 
         return {
-          id: Number(note.id),
-          referenceId: Number(note.referenceId),
-          note: note.note,
-          created: note.created,
-          updated: note.updated ?? null,
+          ...base,
           adminUser: {
             id: -1,
             lastLogin: null,
@@ -523,27 +523,27 @@ export const getTournament = publicProcedure
         .orderBy(desc(schema.playerTournamentStats.averageMatchCost));
 
       const playerStats = playerStatsRows.map((stat) => ({
-        id: Number(stat.id),
-        playerId: Number(stat.playerId),
-        tournamentId: Number(stat.tournamentId),
-        matchesPlayed: Number(stat.matchesPlayed),
-        matchesWon: Number(stat.matchesWon),
-        matchesLost: Number(stat.matchesLost),
-        gamesPlayed: Number(stat.gamesPlayed),
-        gamesWon: Number(stat.gamesWon),
-        gamesLost: Number(stat.gamesLost),
-        averageMatchCost: Number(stat.averageMatchCost),
-        averageRatingDelta: Number(stat.averageRatingDelta),
-        averageScore: Number(stat.averageScore),
-        averagePlacement: Number(stat.averagePlacement),
-        averageAccuracy: Number(stat.averageAccuracy),
-        teammateIds: (stat.teammateIds ?? []).map((id) => Number(id)),
-        matchWinRate: Number(stat.matchWinRate),
+        id: stat.id,
+        playerId: stat.playerId,
+        tournamentId: stat.tournamentId,
+        matchesPlayed: stat.matchesPlayed,
+        matchesWon: stat.matchesWon,
+        matchesLost: stat.matchesLost,
+        gamesPlayed: stat.gamesPlayed,
+        gamesWon: stat.gamesWon,
+        gamesLost: stat.gamesLost,
+        averageMatchCost: stat.averageMatchCost,
+        averageRatingDelta: stat.averageRatingDelta,
+        averageScore: stat.averageScore,
+        averagePlacement: stat.averagePlacement,
+        averageAccuracy: stat.averageAccuracy,
+        teammateIds: stat.teammateIds ?? [],
+        matchWinRate: stat.matchWinRate,
         player:
-          stat.statsPlayerId !== null && stat.statsPlayerId !== undefined
+          stat.statsPlayerId != null
             ? {
-                id: Number(stat.statsPlayerId),
-                osuId: Number(stat.statsPlayerOsuId),
+                id: stat.statsPlayerId,
+                osuId: stat.statsPlayerOsuId ?? -1,
                 username: stat.statsPlayerUsername,
                 country: stat.statsPlayerCountry ?? null,
               }
@@ -556,78 +556,52 @@ export const getTournament = publicProcedure
       }));
 
       const pooledBeatmaps = pooledBeatmapRows.map((beatmap) => {
-        const beatmapsetCreatorPlayerId = beatmap.beatmapsetCreatorPlayerId;
         const beatmapsetCreator =
-          beatmapsetCreatorPlayerId === null ||
-          beatmapsetCreatorPlayerId === undefined
+          beatmap.beatmapsetCreatorPlayerId == null
             ? null
             : {
-                id: Number(beatmapsetCreatorPlayerId),
-                osuId:
-                  beatmap.beatmapsetCreatorOsuId === null ||
-                  beatmap.beatmapsetCreatorOsuId === undefined
-                    ? -1
-                    : Number(beatmap.beatmapsetCreatorOsuId),
+                id: beatmap.beatmapsetCreatorPlayerId,
+                osuId: beatmap.beatmapsetCreatorOsuId ?? -1,
                 username: beatmap.beatmapsetCreatorUsername ?? 'Unknown',
                 country: beatmap.beatmapsetCreatorCountry ?? null,
               };
 
-        const beatmapsetId = beatmap.beatmapsetDbId;
         const beatmapset =
-          beatmapsetId === null || beatmapsetId === undefined
+          beatmap.beatmapsetDbId == null
             ? null
             : {
-                id: Number(beatmapsetId),
-                osuId:
-                  beatmap.beatmapsetOsuId === null ||
-                  beatmap.beatmapsetOsuId === undefined
-                    ? 0
-                    : Number(beatmap.beatmapsetOsuId),
+                id: beatmap.beatmapsetDbId,
+                osuId: beatmap.beatmapsetOsuId ?? 0,
                 artist: beatmap.beatmapsetArtist ?? 'Unknown Artist',
                 title: beatmap.beatmapsetTitle ?? 'Unknown Title',
-                rankedStatus:
-                  beatmap.beatmapsetRankedStatus === null ||
-                  beatmap.beatmapsetRankedStatus === undefined
-                    ? 0
-                    : Number(beatmap.beatmapsetRankedStatus),
+                rankedStatus: beatmap.beatmapsetRankedStatus ?? 0,
                 rankedDate: beatmap.beatmapsetRankedDate ?? null,
                 submittedDate: beatmap.beatmapsetSubmittedDate ?? null,
-                creatorId:
-                  beatmap.beatmapsetCreatorId === null ||
-                  beatmap.beatmapsetCreatorId === undefined
-                    ? null
-                    : Number(beatmap.beatmapsetCreatorId),
+                creatorId: beatmap.beatmapsetCreatorId ?? null,
                 creator: beatmapsetCreator,
               };
 
-        const creators =
-          creatorsByBeatmapId.get(Number(beatmap.beatmapId)) ?? [];
+        const creators = creatorsByBeatmapId.get(beatmap.beatmapId) ?? [];
 
         return {
-          id: Number(beatmap.beatmapId),
-          osuId: Number(beatmap.osuId),
-          ruleset: Number(beatmap.ruleset),
-          rankedStatus: Number(beatmap.rankedStatus),
+          id: beatmap.beatmapId,
+          osuId: beatmap.osuId,
+          ruleset: beatmap.ruleset,
+          rankedStatus: beatmap.rankedStatus,
           diffName: beatmap.diffName,
-          totalLength: Number(beatmap.totalLength),
-          drainLength: Number(beatmap.drainLength),
-          bpm: Number(beatmap.bpm),
-          countCircle: Number(beatmap.countCircle),
-          countSlider: Number(beatmap.countSlider),
-          countSpinner: Number(beatmap.countSpinner),
-          cs: Number(beatmap.cs),
-          hp: Number(beatmap.hp),
-          od: Number(beatmap.od),
-          ar: Number(beatmap.ar),
-          sr: Number(beatmap.sr),
-          maxCombo:
-            beatmap.maxCombo === null || beatmap.maxCombo === undefined
-              ? null
-              : Number(beatmap.maxCombo),
-          beatmapsetId:
-            beatmap.beatmapsetId === null || beatmap.beatmapsetId === undefined
-              ? null
-              : Number(beatmap.beatmapsetId),
+          totalLength: beatmap.totalLength,
+          drainLength: beatmap.drainLength,
+          bpm: beatmap.bpm,
+          countCircle: beatmap.countCircle,
+          countSlider: beatmap.countSlider,
+          countSpinner: beatmap.countSpinner,
+          cs: beatmap.cs,
+          hp: beatmap.hp,
+          od: beatmap.od,
+          ar: beatmap.ar,
+          sr: beatmap.sr,
+          maxCombo: beatmap.maxCombo ?? null,
+          beatmapsetId: beatmap.beatmapsetId ?? null,
           beatmapset,
           attributes: [],
           creators,
@@ -635,17 +609,17 @@ export const getTournament = publicProcedure
       });
 
       return TournamentDetailSchema.parse({
-        id: Number(tournament.id),
+        id: tournament.id,
         name: tournament.name,
         abbreviation: tournament.abbreviation,
         forumUrl: tournament.forumUrl,
-        rankRangeLowerBound: Number(tournament.rankRangeLowerBound),
-        ruleset: Number(tournament.ruleset),
-        lobbySize: Number(tournament.lobbySize),
+        rankRangeLowerBound: tournament.rankRangeLowerBound,
+        ruleset: tournament.ruleset,
+        lobbySize: tournament.lobbySize,
         startTime: tournament.startTime ?? null,
         endTime: tournament.endTime ?? null,
-        verificationStatus: Number(tournament.verificationStatus),
-        rejectionReason: Number(tournament.rejectionReason),
+        verificationStatus: tournament.verificationStatus,
+        rejectionReason: tournament.rejectionReason,
         matches: normalizedMatches,
         adminNotes,
         playerTournamentStats: playerStats,
