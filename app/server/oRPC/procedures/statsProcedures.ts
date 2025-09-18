@@ -1,4 +1,4 @@
-import { sql, eq } from 'drizzle-orm';
+import { sql, eq, and, or, isNotNull } from 'drizzle-orm';
 
 import * as schema from '@/lib/db/schema';
 import { publicProcedure } from './base';
@@ -30,19 +30,6 @@ const createZeroRecord = <T extends readonly string[]>(
 ): Record<T[number], number> =>
   Object.fromEntries(keys.map((key) => [key, 0])) as Record<T[number], number>;
 
-const parseYear = (value: string | null): number | null => {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.getUTCFullYear();
-};
-
 export const getPlatformStats = publicProcedure
   .output(PlatformStatsSchema)
   .route({
@@ -52,7 +39,6 @@ export const getPlatformStats = publicProcedure
   })
   .handler(async ({ context }) => {
     try {
-      console.info('[stats] Fetching platform stats');
       const bucketExpression =
         sql<number>`FLOOR(${schema.playerRatings.rating} / ${RATING_BUCKET_SIZE})::int * ${RATING_BUCKET_SIZE}`.as(
           'bucket'
@@ -66,46 +52,69 @@ export const getPlatformStats = publicProcedure
         .from(schema.playerRatings)
         .as('rating_buckets');
 
-      const [verificationRows, verifiedTournamentRows, ratingRows] =
-        await Promise.all([
-          context.db
-            .select({
-              verificationStatus: schema.tournaments.verificationStatus,
-              count: sql<number>`COUNT(*)`,
-            })
-            .from(schema.tournaments)
-            .groupBy(schema.tournaments.verificationStatus),
-          context.db
-            .select({
-              startTime: schema.tournaments.startTime,
-              endTime: schema.tournaments.endTime,
-              created: schema.tournaments.created,
-              ruleset: schema.tournaments.ruleset,
-              lobbySize: schema.tournaments.lobbySize,
-            })
-            .from(schema.tournaments)
-            .where(
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              )
-            ),
-          context.db
-            .select({
-              ruleset: ratingBuckets.ruleset,
-              bucket: ratingBuckets.bucket,
-              count: sql<number>`COUNT(*)`,
-            })
-            .from(ratingBuckets)
-            .groupBy(ratingBuckets.ruleset, ratingBuckets.bucket),
-        ]);
-
-      console.info('[stats] Verification rows count', verificationRows.length);
-      console.info(
-        '[stats] Verified tournament rows count',
-        verifiedTournamentRows.length
+      const verifiedTournamentFilter = eq(
+        schema.tournaments.verificationStatus,
+        VerificationStatus.Verified
       );
-      console.info('[stats] Rating rows count', ratingRows.length);
+
+      const yearExpression = sql<number>`DATE_PART('year', COALESCE(${schema.tournaments.startTime}, ${schema.tournaments.endTime}, ${schema.tournaments.created}))::int`;
+
+      const [
+        verificationRows,
+        verifiedByYearRows,
+        verifiedByRulesetRows,
+        verifiedByLobbySizeRows,
+        ratingRows,
+      ] = await Promise.all([
+        context.db
+          .select({
+            verificationStatus: schema.tournaments.verificationStatus,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(schema.tournaments)
+          .groupBy(schema.tournaments.verificationStatus),
+        context.db
+          .select({
+            year: yearExpression,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(schema.tournaments)
+          .where(
+            and(
+              verifiedTournamentFilter,
+              or(
+                isNotNull(schema.tournaments.startTime),
+                isNotNull(schema.tournaments.endTime),
+                isNotNull(schema.tournaments.created)
+              )
+            )
+          )
+          .groupBy(yearExpression),
+        context.db
+          .select({
+            ruleset: schema.tournaments.ruleset,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(schema.tournaments)
+          .where(verifiedTournamentFilter)
+          .groupBy(schema.tournaments.ruleset),
+        context.db
+          .select({
+            lobbySize: schema.tournaments.lobbySize,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(schema.tournaments)
+          .where(verifiedTournamentFilter)
+          .groupBy(schema.tournaments.lobbySize),
+        context.db
+          .select({
+            ruleset: ratingBuckets.ruleset,
+            bucket: ratingBuckets.bucket,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(ratingBuckets)
+          .groupBy(ratingBuckets.ruleset, ratingBuckets.bucket),
+      ]);
 
       const countByVerificationStatus = createZeroRecord(
         verificationStatusKeys
@@ -122,46 +131,39 @@ export const getPlatformStats = publicProcedure
 
         const statusKey = `${row.verificationStatus}` as VerificationStatusKey;
         if (!verificationStatusKeys.includes(statusKey)) {
-          console.warn(
-            '[stats] Unknown verification status encountered',
-            row.verificationStatus
-          );
           continue;
         }
 
-        countByVerificationStatus[statusKey] = toNumber(row.count);
-        totalCount += toNumber(row.count);
+        const count = toNumber(row.count);
+        countByVerificationStatus[statusKey] = count;
+        totalCount += count;
       }
 
       const verifiedByRuleset = createZeroRecord(rulesetKeys);
       const verifiedByYear: Record<string, number> = {};
       const verifiedByLobbySize: Record<string, number> = {};
 
-      for (const tournament of verifiedTournamentRows) {
-        const year =
-          parseYear(tournament.startTime) ??
-          parseYear(tournament.endTime) ??
-          parseYear(tournament.created);
-
-        if (year) {
-          const key = `${year}`;
-          verifiedByYear[key] = (verifiedByYear[key] ?? 0) + 1;
+      for (const row of verifiedByYearRows) {
+        const year = toNumber(row.year);
+        if (!Number.isNaN(year)) {
+          verifiedByYear[`${year}`] = toNumber(row.count);
         }
+      }
 
-        const rulesetKey = `${tournament.ruleset}` as RulesetKey;
+      for (const row of verifiedByRulesetRows) {
+        const rulesetKey = `${row.ruleset}` as RulesetKey;
         if (rulesetKeys.includes(rulesetKey)) {
-          verifiedByRuleset[rulesetKey] =
-            (verifiedByRuleset[rulesetKey] ?? 0) + 1;
-        } else {
-          console.warn(
-            '[stats] Unknown tournament ruleset',
-            tournament.ruleset
-          );
+          verifiedByRuleset[rulesetKey] = toNumber(row.count);
+        }
+      }
+
+      for (const row of verifiedByLobbySizeRows) {
+        if (row.lobbySize === null || row.lobbySize === undefined) {
+          continue;
         }
 
-        const lobbyKey = `${tournament.lobbySize}`;
-        verifiedByLobbySize[lobbyKey] =
-          (verifiedByLobbySize[lobbyKey] ?? 0) + 1;
+        const lobbyKey = `${toNumber(row.lobbySize)}`;
+        verifiedByLobbySize[lobbyKey] = toNumber(row.count);
       }
 
       const ratingsByRuleset = Object.fromEntries(
@@ -169,26 +171,15 @@ export const getPlatformStats = publicProcedure
       ) as Record<RulesetKey, Record<string, number>>;
 
       for (const row of ratingRows) {
-        if (row.ruleset === null || row.ruleset === undefined) {
-          console.warn('[stats] Rating row missing ruleset', row);
-          continue;
-        }
-
         const rulesetKey = `${row.ruleset}` as RulesetKey;
         if (!rulesetKeys.includes(rulesetKey)) {
-          console.warn('[stats] Rating row has unknown ruleset', row.ruleset);
           continue;
         }
 
         const bucketKey = `${toNumber(row.bucket)}`;
-
-        let record = ratingsByRuleset[rulesetKey];
-        if (!record) {
-          record = {};
-          ratingsByRuleset[rulesetKey] = record;
-        }
-
+        const record = ratingsByRuleset[rulesetKey] ?? {};
         record[bucketKey] = toNumber(row.count);
+        ratingsByRuleset[rulesetKey] = record;
       }
 
       const sortedVerifiedByYear = Object.fromEntries(
@@ -202,18 +193,6 @@ export const getPlatformStats = publicProcedure
           ([sizeA], [sizeB]) => Number(sizeA) - Number(sizeB)
         )
       );
-
-      console.info('[stats] Returning stats payload summary', {
-        totalCount,
-        verificationKeys: Object.keys(countByVerificationStatus),
-        verifiedByYearKeys: Object.keys(sortedVerifiedByYear).length,
-        rulesetBuckets: Object.fromEntries(
-          Object.entries(ratingsByRuleset).map(([key, value]) => [
-            key,
-            Object.keys(value).length,
-          ])
-        ),
-      });
 
       return {
         tournamentStats: {
@@ -231,7 +210,7 @@ export const getPlatformStats = publicProcedure
         },
       };
     } catch (error) {
-      console.error('[stats] Failed to compute platform stats', error);
+      console.error('Failed to compute platform stats', error);
       throw error;
     }
   });
