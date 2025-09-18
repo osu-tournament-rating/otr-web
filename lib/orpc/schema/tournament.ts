@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import {
+  BeatmapAttributeSchema,
+  BeatmapSchema,
+  BeatmapsetCompactSchema,
+} from './beatmap';
+import { GameSchema, MatchSchema } from './match';
+import { PlayerSchema } from './player';
+
 export const VerificationStatusSchema = z.union([
   z.literal(0),
   z.literal(1),
@@ -44,14 +52,8 @@ export const TournamentListItemSchema = z.object({
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
 
-// TODO: Replace with standard PlayerSchema
-const AdminNotePlayerSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  country: z.string().nullable(),
-  defaultRuleset: z.number().int(),
-  userId: z.number().int().nullable().optional(),
+const AdminNotePlayerSchema = PlayerSchema.extend({
+  userId: z.number().int().nullable(),
 });
 
 const AdminNoteUserSchema = z.object({
@@ -69,40 +71,9 @@ export const TournamentAdminNoteSchema = z.object({
   adminUser: AdminNoteUserSchema,
 });
 
-// TODO: Use common GameSchema instead
-export const TournamentMatchGameSchema = z.object({
-  id: z.number().int(),
-  startTime: z.string().nullable(),
-  verificationStatus: z.number().int(),
-  rejectionReason: z.number().int(),
-  warningFlags: z.number().int(),
-  mods: z.number().int(),
-  beatmap: z
-    .object({
-      osuId: z.number().int(),
-    })
-    .nullable(),
-});
+export const TournamentMatchGameSchema = GameSchema;
 
-// TODO: Use common MatchSchema instead
-export const TournamentMatchSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  startTime: z.string().nullable(),
-  endTime: z.string().nullable(),
-  verificationStatus: z.number().int(),
-  rejectionReason: z.number().int(),
-  warningFlags: z.number().int(),
-  games: TournamentMatchGameSchema.array(),
-});
-
-// TODO: Use common PlayerSchema instead
-const TournamentPlayerSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  country: z.string().nullable(),
-});
+export const TournamentMatchSchema = MatchSchema;
 
 export const TournamentPlayerStatsSchema = z.object({
   id: z.number().int(),
@@ -121,54 +92,13 @@ export const TournamentPlayerStatsSchema = z.object({
   averageAccuracy: z.number(),
   teammateIds: z.array(z.number().int()),
   matchWinRate: z.number(),
-  player: TournamentPlayerSchema,
+  player: PlayerSchema,
 });
 
-// TODO: Use common PlayerSchema
-const BeatmapsetCreatorSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  country: z.string().nullable(),
-});
-
-// TODO: Refactor BeatmapsetSchema
-export const BeatmapsetCompactSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  artist: z.string(),
-  title: z.string(),
-  rankedStatus: z.number().int(),
-  rankedDate: z.string().nullable(),
-  submittedDate: z.string().nullable(),
-  creatorId: z.number().int().nullable(),
-  creator: BeatmapsetCreatorSchema.nullable(),
-});
-
-export const TournamentBeatmapSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  ruleset: z.number().int(),
-  rankedStatus: z.number().int(),
-  diffName: z.string(),
-  totalLength: z.number().int(),
-  drainLength: z.number().int(),
-  bpm: z.number(),
-  countCircle: z.number().int(),
-  countSlider: z.number().int(),
-  countSpinner: z.number().int(),
-  cs: z.number(),
-  hp: z.number(),
-  od: z.number(),
-  ar: z.number(),
-  sr: z.number(),
-  maxCombo: z.number().int().nullable(),
-  beatmapsetId: z.number().int().nullable(),
-  beatmapset: BeatmapsetCompactSchema.nullable(),
-  // TODO: Replace unknown with zod schema for beatmap attributes
-  attributes: z.array(z.unknown()).default([]),
-  // TODO: Replace TournamentPlayerSchema with a basic PlayerSchema
-  creators: z.array(TournamentPlayerSchema).default([]),
+export const TournamentBeatmapSchema = BeatmapSchema.extend({
+  beatmapset: BeatmapsetCompactSchema.nullable().optional(),
+  attributes: z.array(BeatmapAttributeSchema).default([]),
+  creators: z.array(PlayerSchema).default([]),
 });
 
 export const TournamentDetailSchema = z

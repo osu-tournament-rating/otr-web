@@ -273,6 +273,7 @@ export const getTournament = publicProcedure
           sr: schema.beatmaps.sr,
           maxCombo: schema.beatmaps.maxCombo,
           beatmapsetId: schema.beatmaps.beatmapsetId,
+          dataFetchStatus: schema.beatmaps.dataFetchStatus,
           beatmapsetDbId: schema.beatmapsets.id,
           beatmapsetOsuId: schema.beatmapsets.osuId,
           beatmapsetArtist: schema.beatmapsets.artist,
@@ -285,6 +286,10 @@ export const getTournament = publicProcedure
           beatmapsetCreatorOsuId: beatmapsetCreator.osuId,
           beatmapsetCreatorUsername: beatmapsetCreator.username,
           beatmapsetCreatorCountry: beatmapsetCreator.country,
+          beatmapsetCreatorDefaultRuleset: beatmapsetCreator.defaultRuleset,
+          beatmapsetCreatorOsuLastFetch: beatmapsetCreator.osuLastFetch,
+          beatmapsetCreatorOsuTrackLastFetch:
+            beatmapsetCreator.osuTrackLastFetch,
         })
         .from(schema.joinPooledBeatmaps)
         .innerJoin(
@@ -313,6 +318,9 @@ export const getTournament = publicProcedure
               osuId: schema.players.osuId,
               username: schema.players.username,
               country: schema.players.country,
+              defaultRuleset: schema.players.defaultRuleset,
+              osuLastFetch: schema.players.osuLastFetch,
+              osuTrackLastFetch: schema.players.osuTrackLastFetch,
             })
             .from(schema.joinBeatmapCreators)
             .innerJoin(
@@ -330,7 +338,10 @@ export const getTournament = publicProcedure
           id: number;
           osuId: number;
           username: string;
-          country: string | null;
+          country: string;
+          defaultRuleset: number;
+          osuLastFetch: string;
+          osuTrackLastFetch: string;
         }[]
       >();
 
@@ -341,7 +352,10 @@ export const getTournament = publicProcedure
           id: creator.playerId,
           osuId: creator.osuId,
           username: creator.username,
-          country: creator.country ?? null,
+          country: creator.country,
+          defaultRuleset: creator.defaultRuleset,
+          osuLastFetch: creator.osuLastFetch,
+          osuTrackLastFetch: creator.osuTrackLastFetch,
         });
         creatorsByBeatmapId.set(beatmapId, current);
       }
@@ -349,12 +363,17 @@ export const getTournament = publicProcedure
       const matchRows = await context.db
         .select({
           id: schema.matches.id,
+          osuId: schema.matches.osuId,
+          tournamentId: schema.matches.tournamentId,
           name: schema.matches.name,
           startTime: schema.matches.startTime,
           endTime: schema.matches.endTime,
           verificationStatus: schema.matches.verificationStatus,
           rejectionReason: schema.matches.rejectionReason,
           warningFlags: schema.matches.warningFlags,
+          submittedByUserId: schema.matches.submittedByUserId,
+          verifiedByUserId: schema.matches.verifiedByUserId,
+          dataFetchStatus: schema.matches.dataFetchStatus,
         })
         .from(schema.matches)
         .where(eq(schema.matches.tournamentId, tournament.id))
@@ -366,13 +385,38 @@ export const getTournament = publicProcedure
         ? await context.db
             .select({
               id: schema.games.id,
+              osuId: schema.games.osuId,
               matchId: schema.games.matchId,
+              beatmapId: schema.games.beatmapId,
+              ruleset: schema.games.ruleset,
+              scoringType: schema.games.scoringType,
+              teamType: schema.games.teamType,
               startTime: schema.games.startTime,
+              endTime: schema.games.endTime,
               verificationStatus: schema.games.verificationStatus,
               rejectionReason: schema.games.rejectionReason,
               warningFlags: schema.games.warningFlags,
               mods: schema.games.mods,
+              playMode: schema.games.playMode,
+              beatmapDbId: schema.beatmaps.id,
               beatmapOsuId: schema.beatmaps.osuId,
+              beatmapRuleset: schema.beatmaps.ruleset,
+              beatmapRankedStatus: schema.beatmaps.rankedStatus,
+              beatmapDiffName: schema.beatmaps.diffName,
+              beatmapTotalLength: schema.beatmaps.totalLength,
+              beatmapDrainLength: schema.beatmaps.drainLength,
+              beatmapBpm: schema.beatmaps.bpm,
+              beatmapCountCircle: schema.beatmaps.countCircle,
+              beatmapCountSlider: schema.beatmaps.countSlider,
+              beatmapCountSpinner: schema.beatmaps.countSpinner,
+              beatmapCs: schema.beatmaps.cs,
+              beatmapHp: schema.beatmaps.hp,
+              beatmapOd: schema.beatmaps.od,
+              beatmapAr: schema.beatmaps.ar,
+              beatmapSr: schema.beatmaps.sr,
+              beatmapMaxCombo: schema.beatmaps.maxCombo,
+              beatmapBeatmapsetId: schema.beatmaps.beatmapsetId,
+              beatmapDataFetchStatus: schema.beatmaps.dataFetchStatus,
             })
             .from(schema.games)
             .leftJoin(
@@ -395,23 +439,54 @@ export const getTournament = publicProcedure
 
       const normalizedMatches = matchRows.map((match) => ({
         id: match.id,
+        osuId: match.osuId,
+        tournamentId: match.tournamentId,
         name: match.name,
         startTime: match.startTime ?? null,
         endTime: match.endTime ?? null,
         verificationStatus: match.verificationStatus,
         rejectionReason: match.rejectionReason,
         warningFlags: match.warningFlags,
+        submittedByUserId: match.submittedByUserId ?? null,
+        verifiedByUserId: match.verifiedByUserId ?? null,
+        dataFetchStatus: match.dataFetchStatus,
         games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
           id: game.id,
+          osuId: game.osuId,
+          matchId: game.matchId,
+          beatmapId: game.beatmapId ?? null,
+          ruleset: game.ruleset,
+          scoringType: game.scoringType,
+          teamType: game.teamType,
           startTime: game.startTime ?? null,
+          endTime: game.endTime ?? null,
           verificationStatus: game.verificationStatus,
           rejectionReason: game.rejectionReason,
           warningFlags: game.warningFlags,
           mods: game.mods,
+          playMode: game.playMode,
           beatmap:
-            game.beatmapOsuId != null
+            game.beatmapDbId != null && game.beatmapOsuId != null
               ? {
+                  id: game.beatmapDbId,
                   osuId: game.beatmapOsuId,
+                  ruleset: game.beatmapRuleset ?? 0,
+                  rankedStatus: game.beatmapRankedStatus ?? 0,
+                  diffName: game.beatmapDiffName ?? 'Unknown difficulty',
+                  totalLength: game.beatmapTotalLength ?? 0,
+                  drainLength: game.beatmapDrainLength ?? 0,
+                  bpm: game.beatmapBpm ?? 0,
+                  countCircle: game.beatmapCountCircle ?? 0,
+                  countSlider: game.beatmapCountSlider ?? 0,
+                  countSpinner: game.beatmapCountSpinner ?? 0,
+                  cs: game.beatmapCs ?? 0,
+                  hp: game.beatmapHp ?? 0,
+                  od: game.beatmapOd ?? 0,
+                  ar: game.beatmapAr ?? 0,
+                  sr: game.beatmapSr ?? 0,
+                  maxCombo: game.beatmapMaxCombo ?? null,
+                  beatmapsetId: game.beatmapBeatmapsetId ?? null,
+                  dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
                 }
               : null,
         })),
@@ -432,6 +507,8 @@ export const getTournament = publicProcedure
           playerUsername: schema.players.username,
           playerCountry: schema.players.country,
           playerDefaultRuleset: schema.players.defaultRuleset,
+          playerOsuLastFetch: schema.players.osuLastFetch,
+          playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
         })
         .from(schema.tournamentAdminNotes)
         .leftJoin(
@@ -461,8 +538,10 @@ export const getTournament = publicProcedure
                 id: note.playerId,
                 osuId: note.playerOsuId ?? -1,
                 username: note.playerUsername,
-                country: note.playerCountry ?? null,
+                country: note.playerCountry,
                 defaultRuleset: note.playerDefaultRuleset ?? 0,
+                osuLastFetch: note.playerOsuLastFetch,
+                osuTrackLastFetch: note.playerOsuTrackLastFetch,
                 userId: note.userId,
               },
             },
@@ -478,8 +557,10 @@ export const getTournament = publicProcedure
               id: -1,
               osuId: -1,
               username: 'Unknown',
-              country: null,
+              country: '',
               defaultRuleset: 0,
+              osuLastFetch: '2007-09-17 00:00:00',
+              osuTrackLastFetch: '2007-09-17 00:00:00',
               userId: null,
             },
           },
@@ -508,6 +589,9 @@ export const getTournament = publicProcedure
           statsPlayerOsuId: schema.players.osuId,
           statsPlayerUsername: schema.players.username,
           statsPlayerCountry: schema.players.country,
+          statsPlayerDefaultRuleset: schema.players.defaultRuleset,
+          statsPlayerOsuLastFetch: schema.players.osuLastFetch,
+          statsPlayerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
         })
         .from(schema.playerTournamentStats)
         .leftJoin(
@@ -540,13 +624,19 @@ export const getTournament = publicProcedure
                 id: stat.statsPlayerId,
                 osuId: stat.statsPlayerOsuId ?? -1,
                 username: stat.statsPlayerUsername,
-                country: stat.statsPlayerCountry ?? null,
+                country: stat.statsPlayerCountry,
+                defaultRuleset: stat.statsPlayerDefaultRuleset ?? 0,
+                osuLastFetch: stat.statsPlayerOsuLastFetch,
+                osuTrackLastFetch: stat.statsPlayerOsuTrackLastFetch,
               }
             : {
                 id: -1,
                 osuId: -1,
                 username: 'Unknown',
-                country: null,
+                country: '',
+                defaultRuleset: 0,
+                osuLastFetch: '2007-09-17 00:00:00',
+                osuTrackLastFetch: '2007-09-17 00:00:00',
               },
       }));
 
@@ -558,7 +648,14 @@ export const getTournament = publicProcedure
                 id: beatmap.beatmapsetCreatorPlayerId,
                 osuId: beatmap.beatmapsetCreatorOsuId ?? -1,
                 username: beatmap.beatmapsetCreatorUsername ?? 'Unknown',
-                country: beatmap.beatmapsetCreatorCountry ?? null,
+                country: beatmap.beatmapsetCreatorCountry,
+                defaultRuleset: beatmap.beatmapsetCreatorDefaultRuleset ?? 0,
+                osuLastFetch:
+                  beatmap.beatmapsetCreatorOsuLastFetch ??
+                  '2007-09-17 00:00:00',
+                osuTrackLastFetch:
+                  beatmap.beatmapsetCreatorOsuTrackLastFetch ??
+                  '2007-09-17 00:00:00',
               };
 
         const beatmapset =
@@ -576,7 +673,17 @@ export const getTournament = publicProcedure
                 creator: beatmapsetCreator,
               };
 
-        const creators = creatorsByBeatmapId.get(beatmap.beatmapId) ?? [];
+        const creators = (creatorsByBeatmapId.get(beatmap.beatmapId) ?? []).map(
+          (creator) => ({
+            id: creator.id,
+            osuId: creator.osuId,
+            username: creator.username,
+            country: creator.country,
+            defaultRuleset: creator.defaultRuleset ?? 0,
+            osuLastFetch: creator.osuLastFetch,
+            osuTrackLastFetch: creator.osuTrackLastFetch,
+          })
+        );
 
         return {
           id: beatmap.beatmapId,
@@ -597,6 +704,7 @@ export const getTournament = publicProcedure
           sr: beatmap.sr,
           maxCombo: beatmap.maxCombo ?? null,
           beatmapsetId: beatmap.beatmapsetId ?? null,
+          dataFetchStatus: beatmap.dataFetchStatus ?? 0,
           beatmapset,
           attributes: [],
           creators,
