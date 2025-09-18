@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
+import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Table,
@@ -9,20 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
-import { MatchDTO } from '@osu-tournament-rating/otr-api-client';
+import SimpleTooltip from '@/components/simple-tooltip';
+import TierIcon from '@/components/icons/TierIcon';
+import { MatchDetail } from '@/lib/orpc/schema/match';
+import { getTierFromRating } from '@/lib/utils/tierData';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
 import MatchTeamScoresChart from './MatchTeamScoresChart';
 import {
-  processMatchStatistics,
   calculateHighlightStats,
   ProcessedPlayerStats,
+  processMatchStatistics,
 } from './MatchStatsUtils';
-import SimpleTooltip from '@/components/simple-tooltip';
-import TierIcon from '@/components/icons/TierIcon';
-import { getTierFromRating } from '@/lib/utils/tierData';
 
 const UI_CONSTANTS = {
   DEFAULT_SORT_KEY: 'ratingDelta' as const,
@@ -39,7 +40,7 @@ type SortKey = keyof ProcessedPlayerStats | 'netWins';
 type SortDirection = 'asc' | 'desc';
 
 interface MatchStatsViewProps {
-  match: MatchDTO;
+  match: MatchDetail;
 }
 
 const StatsProcessingCard = React.memo(() => (

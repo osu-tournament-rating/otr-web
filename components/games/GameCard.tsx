@@ -1,16 +1,12 @@
-import {
-  GameDTO,
-  GameScoreDTO,
-  PlayerCompactDTO,
-  Team,
-} from '@osu-tournament-rating/otr-api-client';
 import GameCardHeader from './GameCardHeader';
 import ScoreCard from './ScoreCard';
 import { TeamEnumHelper } from '@/lib/enums';
+import { Game, GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
+import { Team } from '@/lib/osu/enums';
 
 type ScoreMapItem = {
   /** Player score */
-  score: GameScoreDTO;
+  score: GameScore;
 
   /**
    * If the score "won" it's "matchup"
@@ -19,14 +15,14 @@ type ScoreMapItem = {
   won?: boolean;
 };
 
-type ScoreMap = { [key in Team]?: ScoreMapItem[] };
+type ScoreMap = Partial<Record<Team, ScoreMapItem[]>>;
 
 export default function GameCard({
   game,
   players = [],
 }: {
-  game: GameDTO;
-  players: PlayerCompactDTO[];
+  game: Game;
+  players: MatchPlayer[];
 }) {
   const scoreMap: ScoreMap = {};
 
@@ -34,15 +30,16 @@ export default function GameCard({
   game.scores
     .sort((a, b) => b.score - a.score)
     .forEach((s) => {
-      if (!(s.team in scoreMap)) {
-        scoreMap[s.team] = [];
+      const teamKey = s.team as Team;
+      if (!scoreMap[teamKey]) {
+        scoreMap[teamKey] = [];
       }
 
-      scoreMap[s.team]?.push({ score: s });
+      scoreMap[teamKey]!.push({ score: s });
     });
 
   // To determine "winning matchups" we don't want to look at teamless scores
-  const teamMaps = Object.entries(scoreMap).map(([, scores]) => scores);
+  const teamMaps = Object.values(scoreMap).filter(Boolean) as ScoreMapItem[][];
 
   const nScores = teamMaps.reduce(
     (max, cur) => (cur.length > max.length ? cur : max),

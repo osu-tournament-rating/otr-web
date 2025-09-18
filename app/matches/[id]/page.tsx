@@ -1,26 +1,38 @@
+import { Metadata } from 'next';
+import { z } from 'zod';
+import { Gamepad2, BarChart3 } from 'lucide-react';
+
 import GameCard from '@/components/games/GameCard';
 import MatchCard from '@/components/matches/MatchCard';
+import MatchStatsView from '@/components/matches/MatchStatsView';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { get } from '@/lib/actions/matches';
-import { Metadata } from 'next';
-import MatchStatsView from '@/components/matches/MatchStatsView';
-import { Gamepad2, BarChart3 } from 'lucide-react';
-import { VerificationStatus } from '@osu-tournament-rating/otr-api-client';
+import { orpc } from '@/lib/orpc/orpc';
+import { MatchDetail } from '@/lib/orpc/schema/match';
+import { VerificationStatus } from '@/lib/osu/enums';
 
 type PageProps = { params: Promise<{ id: number }> };
+
+const matchPageParamsSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+async function fetchMatchById(id: number): Promise<MatchDetail> {
+  return orpc.matches.get({ id });
+}
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const match = await get({ id: (await params).id });
+  const { id } = matchPageParamsSchema.parse(await params);
+  const match = await fetchMatchById(id);
 
   return { title: match.name };
 }
 
 export default async function Page({ params }: PageProps) {
-  const matchId = (await params).id;
-  const match = await get({ id: matchId });
+  const { id } = matchPageParamsSchema.parse(await params);
+  const match = await fetchMatchById(id);
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;
   const gameCount = match.games?.length ?? 0;
@@ -46,12 +58,16 @@ export default async function Page({ params }: PageProps) {
             </div>
             {gameCount > 0 ? (
               <div className="space-y-4">
-                {(match.games ?? [])
-                  .sort(
-                    (a, b) =>
-                      new Date(a.startTime).getTime() -
-                      new Date(b.startTime).getTime()
-                  )
+                {[...(match.games ?? [])]
+                  .sort((a, b) => {
+                    const aTime = a.startTime
+                      ? new Date(a.startTime).getTime()
+                      : 0;
+                    const bTime = b.startTime
+                      ? new Date(b.startTime).getTime()
+                      : 0;
+                    return aTime - bTime;
+                  })
                   .map((game) => (
                     <GameCard
                       key={game.id}

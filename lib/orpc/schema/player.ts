@@ -8,6 +8,7 @@ export const PlayerSchema = z.object({
   defaultRuleset: z.number().int(),
   osuLastFetch: z.string(),
   osuTrackLastFetch: z.string(),
+  userId: z.number().int().nullable().optional(),
 });
 
 export type Player = z.infer<typeof PlayerSchema>;

@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import type { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import {
   Form,
   FormControl,
@@ -9,17 +10,18 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Game } from '@/lib/orpc/schema/match';
 import {
-  GameDTO,
-  GameWarningFlags,
   GameRejectionReason,
+  GameWarningFlags,
   Mods,
   Roles,
-} from '@osu-tournament-rating/otr-api-client';
-import { EditIcon, Loader2 } from 'lucide-react';
+} from '@/lib/osu/enums';
 import { useSession } from '@/lib/hooks/useSession';
+import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { EditIcon, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -34,19 +36,18 @@ import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import VerificationStatusSelectContent from '@/components/select/VerificationStatusSelectContent';
 import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
+  GameRejectionReasonEnumHelper,
   GameWarningFlagsEnumHelper,
-  getEnumFlags,
   ModsEnumHelper,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
-  GameRejectionReasonEnumHelper,
+  getEnumFlags,
 } from '@/lib/enums';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { update } from '@/lib/actions/games';
 import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import DeleteButton from '../shared/DeleteButton';
-import { useRouter } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
 import MergeGameButton from './MergeGameButton';
@@ -85,10 +86,24 @@ const gameRejectionReasonOptions = Object.entries(
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-export default function GameAdminView({ game }: { game: GameDTO }) {
+export default function GameAdminView({ game }: { game: Game }) {
+  const legacyGameForAdmin = game as unknown as GameDTO;
+  const defaultValues: z.infer<typeof gameEditFormSchema> = {
+    ruleset: game.ruleset,
+    mods: game.mods,
+    verificationStatus: game.verificationStatus,
+    rejectionReason: game.rejectionReason,
+    scoringType: game.scoringType,
+    teamType: game.teamType,
+    warningFlags: game.warningFlags,
+    isFreeMod: game.isFreeMod,
+    startTime: game.startTime ? new Date(game.startTime) : undefined,
+    endTime: game.endTime ? new Date(game.endTime) : undefined,
+  };
+
   const form = useForm<z.infer<typeof gameEditFormSchema>>({
     resolver: zodResolver(gameEditFormSchema),
-    defaultValues: game,
+    defaultValues,
     mode: 'all',
   });
 
@@ -103,7 +118,10 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
     try {
       const patchedGame = await update({
         id: game.id,
-        body: createPatchOperations(game, values as GameDTO),
+        body: createPatchOperations(legacyGameForAdmin, {
+          ...legacyGameForAdmin,
+          ...values,
+        } as GameDTO),
       });
 
       form.reset(patchedGame);
@@ -355,7 +373,7 @@ export default function GameAdminView({ game }: { game: GameDTO }) {
                 </Button>
 
                 {/* Merge game */}
-                <MergeGameButton game={game} />
+                <MergeGameButton game={legacyGameForAdmin} />
 
                 {/* Delete game */}
                 <DeleteButton

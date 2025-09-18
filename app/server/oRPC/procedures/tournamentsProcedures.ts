@@ -27,6 +27,7 @@ import {
 import { fetchTournamentAdminNotes } from './tournaments/utils/adminNotes';
 
 import { publicProcedure } from './base';
+import { Mods } from '@/lib/osu/enums';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
@@ -467,6 +468,11 @@ export const getTournament = publicProcedure
           warningFlags: game.warningFlags,
           mods: game.mods,
           playMode: game.playMode,
+          // TODO: This is actually an incorrect calculation.
+          // We should create a set of rules which determines this,
+          // i.e. mods set at the game level = generally no freemod allowed.
+          // Need to investigate.
+          isFreeMod: (game.mods & Mods.FreeModAllowed) === Mods.FreeModAllowed,
           beatmap:
             game.beatmapDbId != null && game.beatmapOsuId != null
               ? {

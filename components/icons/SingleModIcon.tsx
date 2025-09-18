@@ -1,7 +1,8 @@
-import { ModsEnumHelper } from '@/lib/enums';
-import { cn } from '@/lib/utils';
-import { Mods } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
+
+import { ModsEnumHelper } from '@/lib/enums';
+import { Mods } from '@/lib/osu/enums';
+import { cn } from '@/lib/utils';
 
 export default function SingleModIcon({
   mods,

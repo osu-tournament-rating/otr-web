@@ -1,11 +1,11 @@
 import {
-  MatchDTO,
-  PlayerMatchStatsDTO,
-  RatingAdjustmentDTO,
-  PlayerCompactDTO,
-  MatchWinRecordDTO,
-  Team,
-} from '@osu-tournament-rating/otr-api-client';
+  MatchDetail,
+  MatchPlayer,
+  MatchWinRecord,
+  PlayerMatchStats,
+  RatingAdjustment,
+} from '@/lib/orpc/schema/match';
+import { Team } from '@/lib/osu/enums';
 import { TierName } from '@/lib/utils/tierData';
 
 export type HighlightColor =
@@ -87,8 +87,8 @@ const PRECISION = {
 } as const;
 
 export function processMatchStatistics(
-  match: MatchDTO,
-  players: PlayerCompactDTO[]
+  match: MatchDetail,
+  players: MatchPlayer[]
 ): ProcessedPlayerStats[] {
   if (
     !match?.playerMatchStats ||
@@ -100,7 +100,7 @@ export function processMatchStatistics(
 
   const playerMap = new Map(players.map((p) => [p.id, p]));
 
-  const ratingAdjustmentMap = new Map<number, RatingAdjustmentDTO>();
+  const ratingAdjustmentMap = new Map<number, RatingAdjustment>();
 
   // Map rating adjustments to players using the playerId field
   if (match.ratingAdjustments && match.ratingAdjustments.length > 0) {
@@ -111,7 +111,7 @@ export function processMatchStatistics(
 
   const processed: ProcessedPlayerStats[] = [];
 
-  match.playerMatchStats.forEach((playerStats: PlayerMatchStatsDTO) => {
+  match.playerMatchStats.forEach((playerStats: PlayerMatchStats) => {
     const playerId = playerStats.playerId;
     const playerInfo = playerMap.get(playerId);
     const ratingAdjustment = ratingAdjustmentMap.get(playerId);
@@ -153,7 +153,7 @@ function createHighlightPlayer(player: ProcessedPlayerStats): HighlightPlayer {
 
 export function calculateHighlightStats(
   players: ProcessedPlayerStats[],
-  matchWinRecord?: MatchWinRecordDTO
+  matchWinRecord?: MatchWinRecord | null
 ): HighlightStat[] {
   const highlights: HighlightStat[] = [];
 

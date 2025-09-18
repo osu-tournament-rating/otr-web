@@ -15,7 +15,7 @@ import {
   TeamType,
   TournamentRejectionReason,
   VerificationStatus,
-} from '@osu-tournament-rating/otr-api-client';
+} from '@/lib/osu/enums';
 
 /** Basic enum metadata */
 export type EnumMetadata = {

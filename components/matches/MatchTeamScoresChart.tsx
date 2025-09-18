@@ -4,13 +4,15 @@ import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartTooltip, ChartContainer } from '@/components/ui/chart';
 import { Card } from '@/components/ui/card';
-import { GameDTO, Team, Mods } from '@osu-tournament-rating/otr-api-client';
 import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+import { Game } from '@/lib/orpc/schema/match';
+import { Mods, Team } from '@/lib/osu/enums';
 import { ModsEnumHelper } from '@/lib/enums';
+import { cn } from '@/lib/utils';
 
 interface TeamScoresChartProps {
-  games: GameDTO[] | undefined;
+  games: Game[] | undefined;
 }
 
 interface ChartDataPoint {
@@ -250,39 +252,42 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
     let cumulativeRed = 0;
     let cumulativeBlue = 0;
 
-    return games
-      .filter((game) => game.rosters && game.rosters.length >= 2)
-      .map((game, index) => {
-        const redRoster = game.rosters.find((r) => r.team === Team.Red);
-        const blueRoster = game.rosters.find((r) => r.team === Team.Blue);
+    const getTeamScore = (team: Team) => (game: Game) =>
+      game.scores
+        .filter((score) => score.team === team)
+        .reduce((total, score) => total + score.score, 0);
 
-        const redScore = redRoster?.score || 0;
-        const blueScore = blueRoster?.score || 0;
-        const scoreDifference = redScore - blueScore;
+    const redScoreForGame = getTeamScore(Team.Red);
+    const blueScoreForGame = getTeamScore(Team.Blue);
 
-        cumulativeRed += redScore;
-        cumulativeBlue += blueScore;
+    return games.map((game, index) => {
+      const redScore = redScoreForGame(game);
+      const blueScore = blueScoreForGame(game);
+      const scoreDifference = redScore - blueScore;
 
-        let winner: 'red' | 'blue' | 'tie' = 'tie';
-        if (scoreDifference > 0) winner = 'red';
-        else if (scoreDifference < 0) winner = 'blue';
+      cumulativeRed += redScore;
+      cumulativeBlue += blueScore;
 
-        return {
-          mapNumber: index + 1,
-          mapLabel: `${index + 1}`,
-          redScore,
-          blueScore,
-          winner,
-          beatmapTitle: game.beatmap?.beatmapset?.title || 'Unknown',
-          beatmapArtist: game.beatmap?.beatmapset?.artist || 'Unknown',
-          beatmapDifficulty: game.beatmap?.diffName || 'Unknown',
-          beatmapId: game.beatmap?.osuId || 0,
-          mods: formatMods(game.mods || 0),
-          scoreDifference,
-          cumulativeRedScore: cumulativeRed,
-          cumulativeBlueScore: cumulativeBlue,
-        } as ChartDataPoint;
-      });
+      let winner: 'red' | 'blue' | 'tie' = 'tie';
+      if (scoreDifference > 0) winner = 'red';
+      else if (scoreDifference < 0) winner = 'blue';
+
+      return {
+        mapNumber: index + 1,
+        mapLabel: `${index + 1}`,
+        redScore,
+        blueScore,
+        winner,
+        beatmapTitle: game.beatmap?.beatmapset?.title || 'Unknown',
+        beatmapArtist: game.beatmap?.beatmapset?.artist || 'Unknown',
+        beatmapDifficulty: game.beatmap?.diffName || 'Unknown',
+        beatmapId: game.beatmap?.osuId || 0,
+        mods: formatMods(game.mods || 0),
+        scoreDifference,
+        cumulativeRedScore: cumulativeRed,
+        cumulativeBlueScore: cumulativeBlue,
+      } as ChartDataPoint;
+    });
   }, [games]);
 
   // y-axis tick generation: 5 ticks, rounded to nearest 5k of domain

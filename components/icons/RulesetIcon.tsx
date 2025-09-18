@@ -6,7 +6,8 @@ import Mania from '@/public/icons/rulesets/mania.svg';
 import Mania4k from '@/public/icons/rulesets/mania4k.svg';
 import Mania7k from '@/public/icons/rulesets/mania7k.svg';
 import { FC, SVGProps } from 'react';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+
+import { Ruleset } from '@/lib/osu/enums';
 import { cn } from '@/lib/utils';
 
 const iconMap = {

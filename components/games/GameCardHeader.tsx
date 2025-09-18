@@ -1,21 +1,23 @@
-import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
-import {
-  AdminNoteRouteTarget,
-  GameDTO,
-} from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
-import BeatmapBackground from './BeatmapBackground';
 import { ExternalLink } from 'lucide-react';
-import RulesetIcon from '../icons/RulesetIcon';
-import ModIconset from '../icons/ModIconset';
+
+import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
+import { Game } from '@/lib/orpc/schema/match';
+import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import BeatmapBackground from './BeatmapBackground';
 import FormattedDate from '../dates/FormattedDate';
-import GameAdminView from './GameAdminView';
+import ModIconset from '../icons/ModIconset';
+import RulesetIcon from '../icons/RulesetIcon';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import GameAdminView from './GameAdminView';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
 
-export default function GameCardHeader({ game }: { game: GameDTO }) {
+export default function GameCardHeader({ game }: { game: Game }) {
+  const startTime = game.startTime ? new Date(game.startTime) : null;
+  const endTime = game.endTime ? new Date(game.endTime) : null;
+
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       {/* Beatmap bg */}
@@ -52,12 +54,17 @@ export default function GameCardHeader({ game }: { game: GameDTO }) {
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <span className="flex gap-1 text-xs text-white/80 sm:text-sm">
-              <FormattedDate date={new Date(game.startTime)} format="short" />
-              -
-              <FormattedDate
-                date={new Date(game.endTime ?? new Date())}
-                format="short"
-              />
+              {startTime ? (
+                <FormattedDate date={startTime} format="short" />
+              ) : (
+                'Unknown'
+              )}
+              <span aria-hidden="true">-</span>
+              {endTime ? (
+                <FormattedDate date={endTime} format="short" />
+              ) : (
+                'Unknown'
+              )}
             </span>
             <SimpleTooltip content="View beatmap on osu!">
               <Button

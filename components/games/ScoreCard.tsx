@@ -1,41 +1,40 @@
 'use client';
 
-import {
-  GameScoreDTO,
-  PlayerCompactDTO,
-  Team,
-  AdminNoteRouteTarget,
-  Roles,
-} from '@osu-tournament-rating/otr-api-client';
-import { ScoreGradeEnumHelper } from '@/lib/enums';
-import ModIconset from '../icons/ModIconset';
-import { cn } from '@/lib/utils';
-import VerificationBadge from '../badges/VerificationBadge';
-import Link from 'next/link';
-import ScoreTeamColorBar from './ScoreTeamColorBar';
-import CountryFlag from '../shared/CountryFlag';
-import AdminNoteView from '../admin-notes/AdminNoteView';
-import ScoreAdminView from '../scores/ScoreAdminView';
-import { useSession } from '@/lib/hooks/useSession';
 import Image from 'next/image';
+import type { GameScoreDTO } from '@osu-tournament-rating/otr-api-client';
+import Link from 'next/link';
+
+import { ScoreGradeEnumHelper } from '@/lib/enums';
+import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
+import { AdminNoteRouteTarget, Roles, Team } from '@/lib/osu/enums';
+import { useSession } from '@/lib/hooks/useSession';
+import { cn } from '@/lib/utils';
+import AdminNoteView from '../admin-notes/AdminNoteView';
+import VerificationBadge from '../badges/VerificationBadge';
+import CountryFlag from '../shared/CountryFlag';
+import ScoreAdminView from '../scores/ScoreAdminView';
+import ModIconset from '../icons/ModIconset';
+import ScoreTeamColorBar from './ScoreTeamColorBar';
 
 export default function ScoreCard({
   score,
   player,
   won = false,
 }: {
-  score: GameScoreDTO;
-  player?: PlayerCompactDTO;
+  score: GameScore;
+  player?: MatchPlayer;
   won?: boolean;
 }) {
   const session = useSession();
   const isAdmin = session?.scopes?.includes(Roles.Admin);
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
+  const legacyScoreForAdmin = score as unknown as GameScoreDTO;
+  const scoreTeam = score.team as Team;
 
   return (
     <div
-      data-team={Team[score.team]}
+      data-team={Team[scoreTeam]}
       className="team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white **:z-10 dark:border-neutral-700 dark:bg-neutral-800"
     >
       {/* Background team color overlay */}
@@ -67,7 +66,7 @@ export default function ScoreCard({
                 </div>
                 {isAdmin && (
                   <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
-                    <ScoreAdminView score={score} />
+                    <ScoreAdminView score={legacyScoreForAdmin} />
                   </div>
                 )}
               </div>

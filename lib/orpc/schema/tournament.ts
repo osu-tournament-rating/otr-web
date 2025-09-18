@@ -5,6 +5,7 @@ import {
   BeatmapSchema,
   BeatmapsetCompactSchema,
 } from './beatmap';
+import { AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
 
@@ -52,24 +53,7 @@ export const TournamentListItemSchema = z.object({
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
 
-const AdminNotePlayerSchema = PlayerSchema.extend({
-  userId: z.number().int().nullable(),
-});
-
-const AdminNoteUserSchema = z.object({
-  id: z.number().int(),
-  lastLogin: z.string().nullable().optional(),
-  player: AdminNotePlayerSchema,
-});
-
-export const TournamentAdminNoteSchema = z.object({
-  id: z.number().int(),
-  referenceId: z.number().int(),
-  note: z.string(),
-  created: z.string(),
-  updated: z.string().nullable(),
-  adminUser: AdminNoteUserSchema,
-});
+export const TournamentAdminNoteSchema = AdminNoteSchema;
 
 const AdminNoteContentSchema = z.string().trim().min(1);
 
