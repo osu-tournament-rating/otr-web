@@ -1,5 +1,4 @@
 import {
-  AdminNotesWrapper,
   GameScoresWrapper,
   GamesWrapper,
   LeaderboardsWrapper,
@@ -30,7 +29,6 @@ const config: IOtrApiWrapperConfiguration = {
 };
 
 export const auth = new AuthWrapper(config);
-export const adminNotes = new AdminNotesWrapper(config);
 export const games = new GamesWrapper(config);
 export const leaderboards = new LeaderboardsWrapper(config);
 export const matches = new MatchesWrapper(config);

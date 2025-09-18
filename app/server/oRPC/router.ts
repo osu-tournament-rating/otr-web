@@ -15,6 +15,11 @@ import {
   resetTournamentAutomatedChecks,
   updateTournamentAdmin,
 } from './procedures/tournaments/adminProcedures';
+import {
+  createTournamentAdminNote,
+  deleteTournamentAdminNote,
+  updateTournamentAdminNote,
+} from './procedures/tournaments/adminNotesProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -38,6 +43,11 @@ export const router = base.router({
   tournaments: {
     list: listTournaments,
     get: getTournament,
+    adminNotes: {
+      create: createTournamentAdminNote,
+      update: updateTournamentAdminNote,
+      delete: deleteTournamentAdminNote,
+    },
     admin: {
       update: updateTournamentAdmin,
       resetAutomatedChecks: resetTournamentAutomatedChecks,

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  AdminNoteDTO,
-  AdminNoteRouteTarget,
-  Roles,
-} from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import { Loader2, StickyNote } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,9 +15,10 @@ import {
 } from '../ui/dialog';
 import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
 import { adminNoteFormSchema } from '@/lib/schema';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { orpc } from '@/lib/orpc/orpc';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createNote } from '@/lib/actions/admin-notes';
 import { toast } from 'sonner';
 import {
   Form,
@@ -34,9 +31,7 @@ import { Textarea } from '../ui/textarea';
 import { z } from 'zod';
 import AdminNotesList from './AdminNoteList';
 import { useSession } from '@/lib/hooks/useSession';
-import { TournamentAdminNote } from '@/lib/orpc/schema/tournament';
-
-type AdminNote = AdminNoteDTO | TournamentAdminNote;
+import { AdminNote } from './types';
 
 interface AdminNoteViewProps {
   /**
@@ -69,6 +64,10 @@ export default function AdminNoteView({
   const session = useSession();
   const router = useRouter();
 
+  const isAdmin = hasAdminScope(session?.scopes ?? []);
+  const isTournamentEntity = entity === AdminNoteRouteTarget.Tournament;
+  const canMutate = isAdmin && isTournamentEntity;
+
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
     defaultValues: {
@@ -77,9 +76,9 @@ export default function AdminNoteView({
   });
 
   const [showNotification, setShowNotification] = useState(true);
-  const notify = !!notes.length;
+  const notify = notes.length > 0;
 
-  if (!session?.scopes?.includes(Roles.Admin) && !notify) {
+  if (!isAdmin && !notify) {
     return null;
   }
 
@@ -87,11 +86,15 @@ export default function AdminNoteView({
   entityDisplayName ??= `${entityMetadata.text} ${entityId}`;
 
   async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
+    if (!canMutate) {
+      toast.error('Admin notes for this entity are not yet available.');
+      return;
+    }
+
     try {
-      await createNote({
-        entityId: entityId,
-        entity: entity,
-        body: data.note,
+      await orpc.tournaments.adminNotes.create({
+        tournamentId: entityId,
+        note: data.note,
       });
 
       form.reset();
@@ -133,7 +136,7 @@ export default function AdminNoteView({
         </DialogHeader>
 
         {/* New note creation form */}
-        {session?.scopes?.includes(Roles.Admin) && (
+        {canMutate && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               <FormField

@@ -59,7 +59,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { createNote } from '@/lib/actions/admin-notes';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import AdminNotesList from '../admin-notes/AdminNoteList';
@@ -151,13 +150,9 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
       toast.success('Saved score updates');
 
       if (adminNote !== '') {
-        await createNote({
-          entityId: score.id,
-          entity: AdminNoteRouteTarget.GameScore,
-          body: adminNote,
-        });
-
-        toast.success(`Saved admin note for score ${score.id}`);
+        toast.info(
+          'Score admin notes are not yet available in the new system.'
+        );
       }
 
       // Reset forms

@@ -24,6 +24,8 @@ import {
   TournamentIdInputSchema,
 } from '@/lib/orpc/schema/tournament';
 
+import { fetchTournamentAdminNotes } from './tournaments/utils/adminNotes';
+
 import { publicProcedure } from './base';
 
 const DEFAULT_PAGE_SIZE = 30;
@@ -492,80 +494,10 @@ export const getTournament = publicProcedure
         })),
       }));
 
-      const adminNotesRows = await context.db
-        .select({
-          id: schema.tournamentAdminNotes.id,
-          referenceId: schema.tournamentAdminNotes.referenceId,
-          note: schema.tournamentAdminNotes.note,
-          created: schema.tournamentAdminNotes.created,
-          updated: schema.tournamentAdminNotes.updated,
-          userId: schema.users.id,
-          userLastLogin: schema.users.lastLogin,
-          userPlayerId: schema.users.playerId,
-          playerId: schema.players.id,
-          playerOsuId: schema.players.osuId,
-          playerUsername: schema.players.username,
-          playerCountry: schema.players.country,
-          playerDefaultRuleset: schema.players.defaultRuleset,
-          playerOsuLastFetch: schema.players.osuLastFetch,
-          playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
-        })
-        .from(schema.tournamentAdminNotes)
-        .leftJoin(
-          schema.users,
-          eq(schema.users.id, schema.tournamentAdminNotes.adminUserId)
-        )
-        .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
-        .where(eq(schema.tournamentAdminNotes.referenceId, tournament.id))
-        .orderBy(desc(schema.tournamentAdminNotes.created));
-
-      const adminNotes = adminNotesRows.map((note) => {
-        const base = {
-          id: note.id,
-          referenceId: note.referenceId,
-          note: note.note,
-          created: note.created,
-          updated: note.updated ?? null,
-        };
-
-        if (note.userId != null && note.playerId != null) {
-          return {
-            ...base,
-            adminUser: {
-              id: note.userId,
-              lastLogin: note.userLastLogin ?? null,
-              player: {
-                id: note.playerId,
-                osuId: note.playerOsuId ?? -1,
-                username: note.playerUsername,
-                country: note.playerCountry,
-                defaultRuleset: note.playerDefaultRuleset ?? 0,
-                osuLastFetch: note.playerOsuLastFetch,
-                osuTrackLastFetch: note.playerOsuTrackLastFetch,
-                userId: note.userId,
-              },
-            },
-          };
-        }
-
-        return {
-          ...base,
-          adminUser: {
-            id: -1,
-            lastLogin: null,
-            player: {
-              id: -1,
-              osuId: -1,
-              username: 'Unknown',
-              country: '',
-              defaultRuleset: 0,
-              osuLastFetch: '2007-09-17 00:00:00',
-              osuTrackLastFetch: '2007-09-17 00:00:00',
-              userId: null,
-            },
-          },
-        };
-      });
+      const adminNotes = await fetchTournamentAdminNotes(
+        context.db,
+        tournament.id
+      );
 
       const playerStatsRows = await context.db
         .select({

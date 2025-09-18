@@ -1,14 +1,9 @@
 'use client';
 
-import {
-  AdminNoteDTO,
-  AdminNoteRouteTarget,
-} from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AdminNoteListItem from './AdminNoteListItem';
-import { TournamentAdminNote } from '@/lib/orpc/schema/tournament';
-
-type AdminNote = AdminNoteDTO | TournamentAdminNote;
+import { AdminNote } from './types';
 
 export default function AdminNotesList({
   entity,

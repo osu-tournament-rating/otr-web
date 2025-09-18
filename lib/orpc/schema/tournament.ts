@@ -71,6 +71,22 @@ export const TournamentAdminNoteSchema = z.object({
   adminUser: AdminNoteUserSchema,
 });
 
+const AdminNoteContentSchema = z.string().trim().min(1);
+
+export const TournamentAdminNoteCreateInputSchema = z.object({
+  tournamentId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const TournamentAdminNoteUpdateInputSchema = z.object({
+  noteId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const TournamentAdminNoteDeleteInputSchema = z.object({
+  noteId: z.number().int().positive(),
+});
+
 export const TournamentMatchGameSchema = GameSchema;
 
 export const TournamentMatchSchema = MatchSchema;
@@ -187,6 +203,15 @@ export type TournamentRefetchMatchDataResponse = z.infer<
 export type TournamentListRequest = z.infer<typeof TournamentListRequestSchema>;
 export type TournamentListItem = z.infer<typeof TournamentListItemSchema>;
 export type TournamentAdminNote = z.infer<typeof TournamentAdminNoteSchema>;
+export type TournamentAdminNoteCreateInput = z.infer<
+  typeof TournamentAdminNoteCreateInputSchema
+>;
+export type TournamentAdminNoteUpdateInput = z.infer<
+  typeof TournamentAdminNoteUpdateInputSchema
+>;
+export type TournamentAdminNoteDeleteInput = z.infer<
+  typeof TournamentAdminNoteDeleteInputSchema
+>;
 export type TournamentMatchGame = z.infer<typeof TournamentMatchGameSchema>;
 export type TournamentMatch = z.infer<typeof TournamentMatchSchema>;
 export type TournamentPlayerStats = z.infer<typeof TournamentPlayerStatsSchema>;
