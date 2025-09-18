@@ -26,6 +26,7 @@ import {
   deleteTournamentAdminNote,
   updateTournamentAdminNote,
 } from './procedures/tournaments/adminNotesProcedures';
+import { getPlatformStats } from './procedures/statsProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -52,6 +53,9 @@ export const router = base.router({
   players: {
     get: getPlayer,
     dashboard: getPlayerDashboardStats,
+  },
+  stats: {
+    platform: getPlatformStats,
   },
   tournaments: {
     list: listTournaments,

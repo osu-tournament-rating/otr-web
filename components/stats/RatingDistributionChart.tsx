@@ -13,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import TierIcon from '@/components/icons/TierIcon';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { RulesetEnumHelper } from '@/lib/enums';
 import RulesetIcon from '../icons/RulesetIcon';

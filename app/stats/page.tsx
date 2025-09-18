@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import StatsPageContent from '@/components/stats/StatsPageContent';
-import { getPlatformStats } from '@/lib/actions/platform-stats';
+import { orpc } from '@/lib/orpc/orpc';
 
 export const metadata: Metadata = {
   title: 'Platform Statistics | o!TR',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function StatsPage() {
   try {
-    const stats = await getPlatformStats();
+    const stats = await orpc.stats.platform();
 
     if (!stats) {
       return notFound();

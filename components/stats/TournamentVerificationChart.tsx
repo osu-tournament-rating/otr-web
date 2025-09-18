@@ -23,10 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
-import {
-  CountByVerificationStatus,
-  VerificationStatus,
-} from '@osu-tournament-rating/otr-api-client';
+import { VerificationStatus } from '@/lib/osu/enums';
+import { VerificationStatusKey } from '@/lib/orpc/schema/stats';
 import {
   CHART_CONSTANTS,
   formatChartNumber,
@@ -34,7 +32,7 @@ import {
 } from '@/lib/utils/chart';
 
 interface TournamentVerificationChartProps {
-  verificationCounts: CountByVerificationStatus;
+  verificationCounts: Partial<Record<VerificationStatusKey, number>>;
   className?: string;
 }
 
@@ -86,30 +84,34 @@ export default function TournamentVerificationChart({
   const chartData = useMemo(() => {
     if (!verificationCounts) return [];
 
-    const counts = verificationCounts as unknown as Record<string, number>;
+    const getCountForStatus = (status: VerificationStatus): number =>
+      verificationCounts[String(status) as VerificationStatusKey] ?? 0;
 
-    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const total = Object.values(verificationCounts).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     if (total === 0) return [];
 
     const dataEntries = [
       {
         key: 'Verified',
-        value: counts[VerificationStatus.Verified.toString()] || 0,
+        value: getCountForStatus(VerificationStatus.Verified),
       },
       {
         key: 'Awaiting Review',
         value:
-          (counts[VerificationStatus.PreRejected.toString()] || 0) +
-          (counts[VerificationStatus.PreVerified.toString()] || 0),
+          getCountForStatus(VerificationStatus.PreRejected) +
+          getCountForStatus(VerificationStatus.PreVerified),
       },
       {
         key: 'Rejected',
-        value: counts[VerificationStatus.Rejected.toString()] || 0,
+        value: getCountForStatus(VerificationStatus.Rejected),
       },
       {
         key: 'Pending',
-        value: counts[VerificationStatus.None.toString()] || 0,
+        value: getCountForStatus(VerificationStatus.None),
       },
     ];
 

@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { Gamepad2 } from 'lucide-react';
 import { useMemo } from 'react';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import { RulesetEnumHelper } from '@/lib/enums';
 import RulesetIcon from '../icons/RulesetIcon';
 import {

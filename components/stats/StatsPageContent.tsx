@@ -1,8 +1,8 @@
-import { PlatformStats } from '@/lib/actions/platform-stats';
+import { PlatformStats } from '@/lib/orpc/schema/stats';
 import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
 import RatingDistributionChart from './RatingDistributionChart';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import TournamentsByYearChart from './TournamentsByYearChart';
 import TournamentsByRulesetChart from './TournamentsByRulesetChart';
 import TournamentsByLobbySizeChart from './TournamentsByLobbySizeChart';
@@ -33,26 +33,10 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
           verificationCounts={tournamentStats.countByVerificationStatus}
           className="w-full"
         />
-        <TournamentsByYearChart
-          data={
-            tournamentStats.verifiedByYear as unknown as Record<string, number>
-          }
-        />
-        <TournamentsByRulesetChart
-          data={
-            tournamentStats.verifiedByRuleset as unknown as Record<
-              string,
-              number
-            >
-          }
-        />
+        <TournamentsByYearChart data={tournamentStats.verifiedByYear} />
+        <TournamentsByRulesetChart data={tournamentStats.verifiedByRuleset} />
         <TournamentsByLobbySizeChart
-          data={
-            tournamentStats.verifiedByLobbySize as unknown as Record<
-              string,
-              number
-            >
-          }
+          data={tournamentStats.verifiedByLobbySize}
         />
       </div>
 
