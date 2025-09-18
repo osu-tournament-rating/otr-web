@@ -9,10 +9,12 @@ import {
   eq,
   gte,
   ilike,
+  inArray,
   lte,
   or,
   sql,
 } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 
 import * as schema from '@/lib/db/schema';
@@ -247,170 +249,6 @@ export const getTournament = publicProcedure
     try {
       const tournament = await context.db.query.tournaments.findFirst({
         where: eq(schema.tournaments.id, input.id),
-        with: {
-          matches: {
-            columns: {
-              id: schema.matches.id,
-              name: schema.matches.name,
-              startTime: schema.matches.startTime,
-              endTime: schema.matches.endTime,
-              verificationStatus: schema.matches.verificationStatus,
-              rejectionReason: schema.matches.rejectionReason,
-              warningFlags: schema.matches.warningFlags,
-            },
-            orderBy: [desc(schema.matches.startTime), desc(schema.matches.id)],
-            with: {
-              games: {
-                columns: {
-                  id: schema.games.id,
-                  startTime: schema.games.startTime,
-                  verificationStatus: schema.games.verificationStatus,
-                  rejectionReason: schema.games.rejectionReason,
-                  warningFlags: schema.games.warningFlags,
-                  mods: schema.games.mods,
-                },
-                orderBy: [asc(schema.games.startTime), asc(schema.games.id)],
-                with: {
-                  beatmap: {
-                    columns: {
-                      osuId: schema.beatmaps.osuId,
-                      // TODO: Include all beatmap information.
-                      // the Beatmaps tab on the tournaments page
-                      // should be pre-loaded.
-                    },
-                  },
-                },
-              },
-            },
-          },
-          tournamentAdminNotes: {
-            columns: {
-              id: schema.tournamentAdminNotes.id,
-              referenceId: schema.tournamentAdminNotes.referenceId,
-              note: schema.tournamentAdminNotes.note,
-              created: schema.tournamentAdminNotes.created,
-              updated: schema.tournamentAdminNotes.updated,
-            },
-            orderBy: [desc(schema.tournamentAdminNotes.created)],
-            with: {
-              user: {
-                columns: {
-                  id: schema.users.id,
-                  playerId: schema.users.playerId,
-                  lastLogin: schema.users.lastLogin,
-                },
-                with: {
-                  player: {
-                    columns: {
-                      id: schema.players.id,
-                      osuId: schema.players.osuId,
-                      username: schema.players.username,
-                      country: schema.players.country,
-                      defaultRuleset: schema.players.defaultRuleset,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          playerTournamentStats: {
-            columns: {
-              id: schema.playerTournamentStats.id,
-              playerId: schema.playerTournamentStats.playerId,
-              tournamentId: schema.playerTournamentStats.tournamentId,
-              matchesPlayed: schema.playerTournamentStats.matchesPlayed,
-              matchesWon: schema.playerTournamentStats.matchesWon,
-              matchesLost: schema.playerTournamentStats.matchesLost,
-              gamesPlayed: schema.playerTournamentStats.gamesPlayed,
-              gamesWon: schema.playerTournamentStats.gamesWon,
-              gamesLost: schema.playerTournamentStats.gamesLost,
-              averageMatchCost: schema.playerTournamentStats.averageMatchCost,
-              averageRatingDelta:
-                schema.playerTournamentStats.averageRatingDelta,
-              averageScore: schema.playerTournamentStats.averageScore,
-              averagePlacement: schema.playerTournamentStats.averagePlacement,
-              averageAccuracy: schema.playerTournamentStats.averageAccuracy,
-              teammateIds: schema.playerTournamentStats.teammateIds,
-              matchWinRate: schema.playerTournamentStats.matchWinRate,
-            },
-            orderBy: [desc(schema.playerTournamentStats.averageMatchCost)],
-            with: {
-              player: {
-                columns: {
-                  id: schema.players.id,
-                  osuId: schema.players.osuId,
-                  username: schema.players.username,
-                  country: schema.players.country,
-                },
-              },
-            },
-          },
-          joinPooledBeatmaps: {
-            with: {
-              beatmap: {
-                columns: {
-                  id: schema.beatmaps.id,
-                  osuId: schema.beatmaps.osuId,
-                  ruleset: schema.beatmaps.ruleset,
-                  rankedStatus: schema.beatmaps.rankedStatus,
-                  diffName: schema.beatmaps.diffName,
-                  totalLength: schema.beatmaps.totalLength,
-                  drainLength: schema.beatmaps.drainLength,
-                  bpm: schema.beatmaps.bpm,
-                  countCircle: schema.beatmaps.countCircle,
-                  countSlider: schema.beatmaps.countSlider,
-                  countSpinner: schema.beatmaps.countSpinner,
-                  cs: schema.beatmaps.cs,
-                  hp: schema.beatmaps.hp,
-                  od: schema.beatmaps.od,
-                  ar: schema.beatmaps.ar,
-                  sr: schema.beatmaps.sr,
-                  maxCombo: schema.beatmaps.maxCombo,
-                  beatmapsetId: schema.beatmaps.beatmapsetId,
-                },
-                with: {
-                  beatmapset: {
-                    columns: {
-                      id: schema.beatmapsets.id,
-                      osuId: schema.beatmapsets.osuId,
-                      artist: schema.beatmapsets.artist,
-                      title: schema.beatmapsets.title,
-                      rankedStatus: schema.beatmapsets.rankedStatus,
-                      rankedDate: schema.beatmapsets.rankedDate,
-                      submittedDate: schema.beatmapsets.submittedDate,
-                      creatorId: schema.beatmapsets.creatorId,
-                    },
-                    with: {
-                      player: {
-                        columns: {
-                          id: schema.players.id,
-                          osuId: schema.players.osuId,
-                          username: schema.players.username,
-                          country: schema.players.country,
-                        },
-                      },
-                    },
-                  },
-                  joinBeatmapCreators: {
-                    columns: {
-                      creatorsId: schema.joinBeatmapCreators.creatorsId,
-                    },
-                    with: {
-                      player: {
-                        columns: {
-                          id: schema.players.id,
-                          osuId: schema.players.osuId,
-                          username: schema.players.username,
-                          country: schema.players.country,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
       });
 
       if (!tournament) {
@@ -419,129 +257,149 @@ export const getTournament = publicProcedure
         });
       }
 
-      type RawGame = {
-        id: unknown;
-        startTime?: string | null;
-        endTime?: string | null;
-        verificationStatus: unknown;
-        rejectionReason: unknown;
-        warningFlags: unknown;
-        mods: unknown;
-        beatmap?: { osuId: unknown } | null;
-      };
+      const beatmapsetCreator = alias(schema.players, 'beatmapsetCreator');
 
-      type RawMatch = {
-        id: unknown;
-        name: string;
-        startTime?: string | null;
-        endTime?: string | null;
-        verificationStatus: unknown;
-        rejectionReason: unknown;
-        warningFlags: unknown;
-        games?: RawGame[];
-      };
+      const pooledBeatmapRows = await context.db
+        .select({
+          beatmapId: schema.beatmaps.id,
+          osuId: schema.beatmaps.osuId,
+          ruleset: schema.beatmaps.ruleset,
+          rankedStatus: schema.beatmaps.rankedStatus,
+          diffName: schema.beatmaps.diffName,
+          totalLength: schema.beatmaps.totalLength,
+          drainLength: schema.beatmaps.drainLength,
+          bpm: schema.beatmaps.bpm,
+          countCircle: schema.beatmaps.countCircle,
+          countSlider: schema.beatmaps.countSlider,
+          countSpinner: schema.beatmaps.countSpinner,
+          cs: schema.beatmaps.cs,
+          hp: schema.beatmaps.hp,
+          od: schema.beatmaps.od,
+          ar: schema.beatmaps.ar,
+          sr: schema.beatmaps.sr,
+          maxCombo: schema.beatmaps.maxCombo,
+          beatmapsetId: schema.beatmaps.beatmapsetId,
+          beatmapsetDbId: schema.beatmapsets.id,
+          beatmapsetOsuId: schema.beatmapsets.osuId,
+          beatmapsetArtist: schema.beatmapsets.artist,
+          beatmapsetTitle: schema.beatmapsets.title,
+          beatmapsetRankedStatus: schema.beatmapsets.rankedStatus,
+          beatmapsetRankedDate: schema.beatmapsets.rankedDate,
+          beatmapsetSubmittedDate: schema.beatmapsets.submittedDate,
+          beatmapsetCreatorId: schema.beatmapsets.creatorId,
+          beatmapsetCreatorPlayerId: beatmapsetCreator.id,
+          beatmapsetCreatorOsuId: beatmapsetCreator.osuId,
+          beatmapsetCreatorUsername: beatmapsetCreator.username,
+          beatmapsetCreatorCountry: beatmapsetCreator.country,
+        })
+        .from(schema.joinPooledBeatmaps)
+        .innerJoin(
+          schema.beatmaps,
+          eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
+        )
+        .leftJoin(
+          schema.beatmapsets,
+          eq(schema.beatmapsets.id, schema.beatmaps.beatmapsetId)
+        )
+        .leftJoin(
+          beatmapsetCreator,
+          eq(beatmapsetCreator.id, schema.beatmapsets.creatorId)
+        )
+        .where(
+          eq(schema.joinPooledBeatmaps.tournamentsPooledInId, tournament.id)
+        );
 
-      type RawAdminNote = {
-        id: unknown;
-        referenceId: unknown;
-        note: string;
-        created: string;
-        updated?: string | null;
-        user?: {
-          id: unknown;
-          lastLogin?: string | null;
-          player?: {
-            id: unknown;
-            osuId: unknown;
-            username: string;
-            country?: string | null;
-            defaultRuleset: unknown;
-          };
-        };
-      };
+      const beatmapIds = pooledBeatmapRows.map((row) => row.beatmapId);
 
-      type RawPlayerStat = {
-        id: unknown;
-        playerId: unknown;
-        tournamentId: unknown;
-        matchesPlayed: unknown;
-        matchesWon: unknown;
-        matchesLost: unknown;
-        gamesPlayed: unknown;
-        gamesWon: unknown;
-        gamesLost: unknown;
-        averageMatchCost: unknown;
-        averageRatingDelta: unknown;
-        averageScore: unknown;
-        averagePlacement: unknown;
-        averageAccuracy: unknown;
-        teammateIds?: unknown[];
-        matchWinRate: unknown;
-        player?: {
-          id: unknown;
-          osuId: unknown;
+      const beatmapCreatorsRows = beatmapIds.length
+        ? await context.db
+            .select({
+              beatmapId: schema.joinBeatmapCreators.createdBeatmapsId,
+              playerId: schema.players.id,
+              osuId: schema.players.osuId,
+              username: schema.players.username,
+              country: schema.players.country,
+            })
+            .from(schema.joinBeatmapCreators)
+            .innerJoin(
+              schema.players,
+              eq(schema.players.id, schema.joinBeatmapCreators.creatorsId)
+            )
+            .where(
+              inArray(schema.joinBeatmapCreators.createdBeatmapsId, beatmapIds)
+            )
+        : [];
+
+      const creatorsByBeatmapId = new Map<
+        number,
+        {
+          id: number;
+          osuId: number;
           username: string;
-          country?: string | null;
-        };
-      };
+          country: string | null;
+        }[]
+      >();
 
-      type RawJoinPooledBeatmap = {
-        beatmap?: {
-          id: unknown;
-          osuId: unknown;
-          ruleset: unknown;
-          rankedStatus: unknown;
-          diffName: string;
-          totalLength: unknown;
-          drainLength: unknown;
-          bpm: unknown;
-          countCircle: unknown;
-          countSlider: unknown;
-          countSpinner: unknown;
-          cs: unknown;
-          hp: unknown;
-          od: unknown;
-          ar: unknown;
-          sr: unknown;
-          maxCombo?: unknown;
-          beatmapsetId?: unknown;
-          beatmapset?: {
-            id: unknown;
-            osuId: unknown;
-            artist: string;
-            title: string;
-            rankedStatus: unknown;
-            rankedDate?: string | null;
-            submittedDate?: string | null;
-            creatorId?: unknown;
-            player?: {
-              id: unknown;
-              osuId: unknown;
-              username: string;
-              country?: string | null;
-            };
-          };
-          joinBeatmapCreators?: {
-            player?: {
-              id: unknown;
-              osuId: unknown;
-              username: string;
-              country?: string | null;
-            };
-          }[];
-        };
-      };
+      for (const creator of beatmapCreatorsRows) {
+        const beatmapId = Number(creator.beatmapId);
+        const current = creatorsByBeatmapId.get(beatmapId) ?? [];
+        current.push({
+          id: Number(creator.playerId),
+          osuId: Number(creator.osuId),
+          username: creator.username,
+          country: creator.country ?? null,
+        });
+        creatorsByBeatmapId.set(beatmapId, current);
+      }
 
-      type RawTournament = {
-        matches?: RawMatch[];
-        tournamentAdminNotes?: RawAdminNote[];
-        playerTournamentStats?: RawPlayerStat[];
-        joinPooledBeatmaps?: RawJoinPooledBeatmap[];
-      };
+      const matchRows = await context.db
+        .select({
+          id: schema.matches.id,
+          name: schema.matches.name,
+          startTime: schema.matches.startTime,
+          endTime: schema.matches.endTime,
+          verificationStatus: schema.matches.verificationStatus,
+          rejectionReason: schema.matches.rejectionReason,
+          warningFlags: schema.matches.warningFlags,
+        })
+        .from(schema.matches)
+        .where(eq(schema.matches.tournamentId, tournament.id))
+        .orderBy(desc(schema.matches.startTime), desc(schema.matches.id));
 
-      const rawTournament = tournament as RawTournament;
+      const matchIds = matchRows.map((match) => match.id);
 
-      const matches = (rawTournament.matches ?? []).map((match) => ({
+      const gameRows = matchIds.length
+        ? await context.db
+            .select({
+              id: schema.games.id,
+              matchId: schema.games.matchId,
+              startTime: schema.games.startTime,
+              verificationStatus: schema.games.verificationStatus,
+              rejectionReason: schema.games.rejectionReason,
+              warningFlags: schema.games.warningFlags,
+              mods: schema.games.mods,
+              beatmapOsuId: schema.beatmaps.osuId,
+            })
+            .from(schema.games)
+            .leftJoin(
+              schema.beatmaps,
+              eq(schema.beatmaps.id, schema.games.beatmapId)
+            )
+            .where(inArray(schema.games.matchId, matchIds))
+            .orderBy(asc(schema.games.startTime), asc(schema.games.id))
+        : [];
+
+      type GameRow = (typeof gameRows)[number];
+
+      const gamesByMatchId = new Map<number, GameRow[]>();
+
+      for (const game of gameRows) {
+        const items = gamesByMatchId.get(game.matchId) ?? [];
+        items.push(game);
+        gamesByMatchId.set(game.matchId, items);
+      }
+
+      const normalizedMatches = matchRows.map((match) => ({
         id: Number(match.id),
         name: match.name,
         startTime: match.startTime ?? null,
@@ -549,86 +407,145 @@ export const getTournament = publicProcedure
         verificationStatus: Number(match.verificationStatus),
         rejectionReason: Number(match.rejectionReason),
         warningFlags: Number(match.warningFlags),
-        games: (match.games ?? []).map((game) => ({
+        games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
           id: Number(game.id),
           startTime: game.startTime ?? null,
           verificationStatus: Number(game.verificationStatus),
           rejectionReason: Number(game.rejectionReason),
           warningFlags: Number(game.warningFlags),
           mods: Number(game.mods),
-          beatmap: game.beatmap
+          beatmap: game.beatmapOsuId
             ? {
-                osuId: Number(game.beatmap.osuId),
+                osuId: Number(game.beatmapOsuId),
               }
             : null,
         })),
       }));
 
-      const adminNotes = (rawTournament.tournamentAdminNotes ?? []).map(
-        (note) => {
-          const user = note.user;
-          const player = user?.player;
+      const adminNotesRows = await context.db
+        .select({
+          id: schema.tournamentAdminNotes.id,
+          referenceId: schema.tournamentAdminNotes.referenceId,
+          note: schema.tournamentAdminNotes.note,
+          created: schema.tournamentAdminNotes.created,
+          updated: schema.tournamentAdminNotes.updated,
+          userId: schema.users.id,
+          userLastLogin: schema.users.lastLogin,
+          userPlayerId: schema.users.playerId,
+          playerId: schema.players.id,
+          playerOsuId: schema.players.osuId,
+          playerUsername: schema.players.username,
+          playerCountry: schema.players.country,
+          playerDefaultRuleset: schema.players.defaultRuleset,
+        })
+        .from(schema.tournamentAdminNotes)
+        .leftJoin(
+          schema.users,
+          eq(schema.users.id, schema.tournamentAdminNotes.adminUserId)
+        )
+        .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
+        .where(eq(schema.tournamentAdminNotes.referenceId, tournament.id))
+        .orderBy(desc(schema.tournamentAdminNotes.created));
 
+      const adminNotes = adminNotesRows.map((note) => {
+        if (note.userId && note.playerId) {
           return {
             id: Number(note.id),
             referenceId: Number(note.referenceId),
             note: note.note,
             created: note.created,
             updated: note.updated ?? null,
-            adminUser:
-              user && player
-                ? {
-                    id: Number(user.id),
-                    lastLogin: user.lastLogin ?? null,
-                    player: {
-                      id: Number(player.id),
-                      osuId: Number(player.osuId),
-                      username: player.username,
-                      country: player.country ?? null,
-                      defaultRuleset: Number(player.defaultRuleset),
-                      userId: Number(user.id),
-                    },
-                  }
-                : {
-                    id: -1,
-                    lastLogin: null,
-                    player: {
-                      id: -1,
-                      osuId: -1,
-                      username: 'Unknown',
-                      country: null,
-                      defaultRuleset: 0,
-                      userId: null,
-                    },
-                  },
+            adminUser: {
+              id: Number(note.userId),
+              lastLogin: note.userLastLogin ?? null,
+              player: {
+                id: Number(note.playerId),
+                osuId: Number(note.playerOsuId),
+                username: note.playerUsername,
+                country: note.playerCountry ?? null,
+                defaultRuleset: Number(note.playerDefaultRuleset),
+                userId: Number(note.userId),
+              },
+            },
           };
         }
-      );
 
-      const playerStats = (rawTournament.playerTournamentStats ?? []).map(
-        (stat) => ({
-          id: Number(stat.id),
-          playerId: Number(stat.playerId),
-          tournamentId: Number(stat.tournamentId),
-          matchesPlayed: Number(stat.matchesPlayed),
-          matchesWon: Number(stat.matchesWon),
-          matchesLost: Number(stat.matchesLost),
-          gamesPlayed: Number(stat.gamesPlayed),
-          gamesWon: Number(stat.gamesWon),
-          gamesLost: Number(stat.gamesLost),
-          averageMatchCost: Number(stat.averageMatchCost),
-          averageRatingDelta: Number(stat.averageRatingDelta),
-          averageScore: Number(stat.averageScore),
-          averagePlacement: Number(stat.averagePlacement),
-          averageAccuracy: Number(stat.averageAccuracy),
-          teammateIds: (stat.teammateIds ?? []).map((id) => Number(id)),
-          matchWinRate: Number(stat.matchWinRate),
-          player: stat.player
+        return {
+          id: Number(note.id),
+          referenceId: Number(note.referenceId),
+          note: note.note,
+          created: note.created,
+          updated: note.updated ?? null,
+          adminUser: {
+            id: -1,
+            lastLogin: null,
+            player: {
+              id: -1,
+              osuId: -1,
+              username: 'Unknown',
+              country: null,
+              defaultRuleset: 0,
+              userId: null,
+            },
+          },
+        };
+      });
+
+      const playerStatsRows = await context.db
+        .select({
+          id: schema.playerTournamentStats.id,
+          playerId: schema.playerTournamentStats.playerId,
+          tournamentId: schema.playerTournamentStats.tournamentId,
+          matchesPlayed: schema.playerTournamentStats.matchesPlayed,
+          matchesWon: schema.playerTournamentStats.matchesWon,
+          matchesLost: schema.playerTournamentStats.matchesLost,
+          gamesPlayed: schema.playerTournamentStats.gamesPlayed,
+          gamesWon: schema.playerTournamentStats.gamesWon,
+          gamesLost: schema.playerTournamentStats.gamesLost,
+          averageMatchCost: schema.playerTournamentStats.averageMatchCost,
+          averageRatingDelta: schema.playerTournamentStats.averageRatingDelta,
+          averageScore: schema.playerTournamentStats.averageScore,
+          averagePlacement: schema.playerTournamentStats.averagePlacement,
+          averageAccuracy: schema.playerTournamentStats.averageAccuracy,
+          teammateIds: schema.playerTournamentStats.teammateIds,
+          matchWinRate: schema.playerTournamentStats.matchWinRate,
+          statsPlayerId: schema.players.id,
+          statsPlayerOsuId: schema.players.osuId,
+          statsPlayerUsername: schema.players.username,
+          statsPlayerCountry: schema.players.country,
+        })
+        .from(schema.playerTournamentStats)
+        .leftJoin(
+          schema.players,
+          eq(schema.players.id, schema.playerTournamentStats.playerId)
+        )
+        .where(eq(schema.playerTournamentStats.tournamentId, tournament.id))
+        .orderBy(desc(schema.playerTournamentStats.averageMatchCost));
+
+      const playerStats = playerStatsRows.map((stat) => ({
+        id: Number(stat.id),
+        playerId: Number(stat.playerId),
+        tournamentId: Number(stat.tournamentId),
+        matchesPlayed: Number(stat.matchesPlayed),
+        matchesWon: Number(stat.matchesWon),
+        matchesLost: Number(stat.matchesLost),
+        gamesPlayed: Number(stat.gamesPlayed),
+        gamesWon: Number(stat.gamesWon),
+        gamesLost: Number(stat.gamesLost),
+        averageMatchCost: Number(stat.averageMatchCost),
+        averageRatingDelta: Number(stat.averageRatingDelta),
+        averageScore: Number(stat.averageScore),
+        averagePlacement: Number(stat.averagePlacement),
+        averageAccuracy: Number(stat.averageAccuracy),
+        teammateIds: (stat.teammateIds ?? []).map((id) => Number(id)),
+        matchWinRate: Number(stat.matchWinRate),
+        player:
+          stat.statsPlayerId !== null && stat.statsPlayerId !== undefined
             ? {
-                id: Number(stat.player.id),
-                osuId: Number(stat.player.osuId),
-                username: stat.player.username,
-                country: stat.player.country ?? null,
+                id: Number(stat.statsPlayerId),
+                osuId: Number(stat.statsPlayerOsuId),
+                username: stat.statsPlayerUsername,
+                country: stat.statsPlayerCountry ?? null,
               }
             : {
                 id: -1,
@@ -636,80 +553,86 @@ export const getTournament = publicProcedure
                 username: 'Unknown',
                 country: null,
               },
-        })
-      );
+      }));
 
-      const pooledBeatmaps = (rawTournament.joinPooledBeatmaps ?? [])
-        .map((join) => join.beatmap)
-        .filter((beatmap): beatmap is NonNullable<typeof beatmap> => !!beatmap)
-        .map((beatmap) => {
-          const beatmapset = beatmap.beatmapset;
-          const beatmapsetPlayer = beatmapset?.player ?? null;
+      const pooledBeatmaps = pooledBeatmapRows.map((beatmap) => {
+        const beatmapsetCreatorPlayerId = beatmap.beatmapsetCreatorPlayerId;
+        const beatmapsetCreator =
+          beatmapsetCreatorPlayerId === null ||
+          beatmapsetCreatorPlayerId === undefined
+            ? null
+            : {
+                id: Number(beatmapsetCreatorPlayerId),
+                osuId:
+                  beatmap.beatmapsetCreatorOsuId === null ||
+                  beatmap.beatmapsetCreatorOsuId === undefined
+                    ? -1
+                    : Number(beatmap.beatmapsetCreatorOsuId),
+                username: beatmap.beatmapsetCreatorUsername ?? 'Unknown',
+                country: beatmap.beatmapsetCreatorCountry ?? null,
+              };
 
-          return {
-            id: Number(beatmap.id),
-            osuId: Number(beatmap.osuId),
-            ruleset: Number(beatmap.ruleset),
-            rankedStatus: Number(beatmap.rankedStatus),
-            diffName: beatmap.diffName,
-            totalLength: Number(beatmap.totalLength),
-            drainLength: Number(beatmap.drainLength),
-            bpm: Number(beatmap.bpm),
-            countCircle: Number(beatmap.countCircle),
-            countSlider: Number(beatmap.countSlider),
-            countSpinner: Number(beatmap.countSpinner),
-            cs: Number(beatmap.cs),
-            hp: Number(beatmap.hp),
-            od: Number(beatmap.od),
-            ar: Number(beatmap.ar),
-            sr: Number(beatmap.sr),
-            maxCombo:
-              beatmap.maxCombo === null || beatmap.maxCombo === undefined
-                ? null
-                : Number(beatmap.maxCombo),
-            beatmapsetId:
-              beatmap.beatmapsetId === null ||
-              beatmap.beatmapsetId === undefined
-                ? null
-                : Number(beatmap.beatmapsetId),
-            beatmapset: beatmapset
-              ? {
-                  id: Number(beatmapset.id),
-                  osuId: Number(beatmapset.osuId),
-                  artist: beatmapset.artist,
-                  title: beatmapset.title,
-                  rankedStatus: Number(beatmapset.rankedStatus),
-                  rankedDate: beatmapset.rankedDate ?? null,
-                  submittedDate: beatmapset.submittedDate ?? null,
-                  creatorId:
-                    beatmapset.creatorId === null ||
-                    beatmapset.creatorId === undefined
-                      ? null
-                      : Number(beatmapset.creatorId),
-                  creator: beatmapsetPlayer
-                    ? {
-                        id: Number(beatmapsetPlayer.id),
-                        osuId: Number(beatmapsetPlayer.osuId),
-                        username: beatmapsetPlayer.username,
-                        country: beatmapsetPlayer.country ?? null,
-                      }
-                    : null,
-                }
-              : null,
-            attributes: [],
-            creators: (beatmap.joinBeatmapCreators ?? [])
-              .map((creator) => creator.player ?? null)
-              .filter(
-                (player): player is NonNullable<typeof player> => !!player
-              )
-              .map((player) => ({
-                id: Number(player.id),
-                osuId: Number(player.osuId),
-                username: player.username,
-                country: player.country ?? null,
-              })),
-          };
-        });
+        const beatmapsetId = beatmap.beatmapsetDbId;
+        const beatmapset =
+          beatmapsetId === null || beatmapsetId === undefined
+            ? null
+            : {
+                id: Number(beatmapsetId),
+                osuId:
+                  beatmap.beatmapsetOsuId === null ||
+                  beatmap.beatmapsetOsuId === undefined
+                    ? 0
+                    : Number(beatmap.beatmapsetOsuId),
+                artist: beatmap.beatmapsetArtist ?? 'Unknown Artist',
+                title: beatmap.beatmapsetTitle ?? 'Unknown Title',
+                rankedStatus:
+                  beatmap.beatmapsetRankedStatus === null ||
+                  beatmap.beatmapsetRankedStatus === undefined
+                    ? 0
+                    : Number(beatmap.beatmapsetRankedStatus),
+                rankedDate: beatmap.beatmapsetRankedDate ?? null,
+                submittedDate: beatmap.beatmapsetSubmittedDate ?? null,
+                creatorId:
+                  beatmap.beatmapsetCreatorId === null ||
+                  beatmap.beatmapsetCreatorId === undefined
+                    ? null
+                    : Number(beatmap.beatmapsetCreatorId),
+                creator: beatmapsetCreator,
+              };
+
+        const creators =
+          creatorsByBeatmapId.get(Number(beatmap.beatmapId)) ?? [];
+
+        return {
+          id: Number(beatmap.beatmapId),
+          osuId: Number(beatmap.osuId),
+          ruleset: Number(beatmap.ruleset),
+          rankedStatus: Number(beatmap.rankedStatus),
+          diffName: beatmap.diffName,
+          totalLength: Number(beatmap.totalLength),
+          drainLength: Number(beatmap.drainLength),
+          bpm: Number(beatmap.bpm),
+          countCircle: Number(beatmap.countCircle),
+          countSlider: Number(beatmap.countSlider),
+          countSpinner: Number(beatmap.countSpinner),
+          cs: Number(beatmap.cs),
+          hp: Number(beatmap.hp),
+          od: Number(beatmap.od),
+          ar: Number(beatmap.ar),
+          sr: Number(beatmap.sr),
+          maxCombo:
+            beatmap.maxCombo === null || beatmap.maxCombo === undefined
+              ? null
+              : Number(beatmap.maxCombo),
+          beatmapsetId:
+            beatmap.beatmapsetId === null || beatmap.beatmapsetId === undefined
+              ? null
+              : Number(beatmap.beatmapsetId),
+          beatmapset,
+          attributes: [],
+          creators,
+        };
+      });
 
       return TournamentDetailSchema.parse({
         id: Number(tournament.id),
@@ -723,7 +646,7 @@ export const getTournament = publicProcedure
         endTime: tournament.endTime ?? null,
         verificationStatus: Number(tournament.verificationStatus),
         rejectionReason: Number(tournament.rejectionReason),
-        matches,
+        matches: normalizedMatches,
         adminNotes,
         playerTournamentStats: playerStats,
         pooledBeatmaps,

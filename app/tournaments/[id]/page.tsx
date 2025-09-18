@@ -8,6 +8,7 @@ import {
   TournamentMatch,
 } from '@/lib/orpc/schema/tournament';
 import type { Metadata } from 'next';
+import { z } from 'zod';
 import { MatchRow, columns } from './columns';
 import TournamentDataTable from './data-table';
 import { Card } from '@/components/ui/card';
@@ -40,12 +41,16 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
 // import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 
-type PageProps = { params: Promise<{ id: number }> };
+type PageProps = { params: Promise<{ id: string }> };
+
+const tournamentPageParamsSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = tournamentPageParamsSchema.parse(await params);
   const tournament = await orpc.tournaments.get({ id });
 
   return { title: tournament.name };
@@ -289,7 +294,7 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = tournamentPageParamsSchema.parse(await params);
   const tournament = await orpc.tournaments.get({ id });
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = tournament.pooledBeatmaps ?? [];
