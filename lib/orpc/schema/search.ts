@@ -1,37 +1,62 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
-import { TierProgressSchema } from '@/lib/orpc/schema/leaderboard';
+import {
+  matchSelectSchema,
+  playerRatingSelectSchema,
+  playerSelectSchema,
+  tournamentSelectSchema,
+} from './base';
+import { TierProgressSchema } from './leaderboard';
 
 export const SearchRequestSchema = z.object({
   searchKey: z.string().trim().min(1).max(100),
 });
 
-export const PlayerSearchResultSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  rating: z.number().nullable(),
-  ruleset: z.number().int().nullable(),
-  globalRank: z.number().int().nullable(),
-  tierProgress: TierProgressSchema.nullable(),
+export const PlayerSearchResultSchema = playerSelectSchema
+  .pick({
+    id: true,
+    osuId: true,
+    username: true,
+  })
+  .extend({
+    rating: playerRatingSelectSchema.shape.rating.nullable(),
+    ruleset: playerRatingSelectSchema.shape.ruleset.nullable(),
+    globalRank: playerRatingSelectSchema.shape.globalRank.nullable(),
+    tierProgress: TierProgressSchema.nullable(),
+  });
+
+const tournamentSearchBaseSchema = tournamentSelectSchema.pick({
+  id: true,
+  name: true,
+  ruleset: true,
+  verificationStatus: true,
+  rejectionReason: true,
+  lobbySize: true,
+  abbreviation: true,
 });
 
-export const TournamentSearchResultSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  ruleset: z.number().int(),
-  verificationStatus: z.number().int(),
-  rejectionReason: z.number().int(),
-  lobbySize: z.number().int(),
-  abbreviation: z.string().nullable(),
+export const TournamentSearchResultSchema = tournamentSearchBaseSchema
+  .omit({
+    abbreviation: true,
+  })
+  .extend({
+    abbreviation: tournamentSearchBaseSchema.shape.abbreviation.nullable(),
+  });
+
+const matchSearchBaseSchema = matchSelectSchema.pick({
+  id: true,
+  osuId: true,
+  name: true,
 });
 
-export const MatchSearchResultSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int().nullable(),
-  name: z.string(),
-  tournamentName: z.string(),
-});
+export const MatchSearchResultSchema = matchSearchBaseSchema
+  .omit({
+    osuId: true,
+  })
+  .extend({
+    osuId: matchSearchBaseSchema.shape.osuId.nullable(),
+    tournamentName: z.string(),
+  });
 
 export const SearchResponseSchema = z.object({
   players: PlayerSearchResultSchema.array(),

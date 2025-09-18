@@ -1,13 +1,9 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
-export const PlayerSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  country: z.string(),
-  defaultRuleset: z.number().int(),
-  osuLastFetch: z.string(),
-  osuTrackLastFetch: z.string(),
+import { playerSelectSchema } from './base';
+import { CreatedUpdatedOmit } from './constants';
+
+export const PlayerSchema = playerSelectSchema.omit(CreatedUpdatedOmit).extend({
   userId: z.number().int().nullable().optional(),
 });
 

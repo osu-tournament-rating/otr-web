@@ -1,8 +1,8 @@
 import { users } from '@/lib/db/schema';
 import { createSelectSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
-import { CreatedUpdatedOmit } from './common';
+import { CreatedUpdatedOmit } from './constants';
 
 export const UserSchema = createSelectSchema(users).omit(CreatedUpdatedOmit);
 

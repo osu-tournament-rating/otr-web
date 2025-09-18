@@ -61,6 +61,7 @@ bunx tsc --noEmit     # Type check without emitting
 
 - **Database**: use Drizzle migrations (`bunx drizzle-kit generate`) and keep `schema.ts` + `relations.ts` aligned
 - **ORPC**: define entity procedures under `app/server/oRPC/procedures/*`, expose them through `app/server/oRPC/router.ts`, colocate schemas under `lib/orpc/schema`, and type-share clients via generated typings
+- **ORPC schemas**: derive Zod shapes directly from `lib/db/schema.ts` using `createSelectSchema`/`createInsertSchema` in `lib/orpc/schema/base.ts`, then compose variants with `.pick()`, `.omit()`, `.extend()`, or `.merge()` and handle fallbacks via top-level transforms after parsing
 - **Auth**: reuse helpers from `lib/auth/auth.ts`; respect existing session/token patterns
 - **Environment**: rely on `env.d.ts` definitions; never hardcode secrets—pull from `process.env`
 

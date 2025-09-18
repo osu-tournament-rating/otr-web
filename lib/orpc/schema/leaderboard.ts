@@ -1,4 +1,6 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
+
+import { playerRatingSelectSchema, playerSelectSchema } from './base';
 
 export const leaderboardTierKeys = [
   'bronze',
@@ -26,21 +28,24 @@ export const TierProgressSchema = z.object({
   majorTierFillPercentage: z.number().min(0).max(1).nullable(),
 });
 
-export const LeaderboardPlayerSchema = z.object({
-  id: z.number().int(),
-  osuId: z.number().int(),
-  username: z.string(),
-  country: z.string(),
+export const LeaderboardPlayerSchema = playerSelectSchema.pick({
+  id: true,
+  osuId: true,
+  username: true,
+  country: true,
 });
 
-export const LeaderboardEntrySchema = z.object({
+const leaderboardRatingBaseSchema = playerRatingSelectSchema.pick({
+  ruleset: true,
+  rating: true,
+  volatility: true,
+  percentile: true,
+  globalRank: true,
+  countryRank: true,
+});
+
+export const LeaderboardEntrySchema = leaderboardRatingBaseSchema.extend({
   player: LeaderboardPlayerSchema,
-  ruleset: z.number().int(),
-  rating: z.number(),
-  volatility: z.number(),
-  percentile: z.number(),
-  globalRank: z.number().int(),
-  countryRank: z.number().int(),
   tournamentsPlayed: z.number().int().nonnegative(),
   matchesPlayed: z.number().int().nonnegative(),
   winRate: z.number().min(0).max(1),

@@ -661,6 +661,8 @@ export const getTournament = publicProcedure
         endTime: tournament.endTime ?? null,
         verificationStatus: tournament.verificationStatus,
         rejectionReason: tournament.rejectionReason,
+        submittedByUserId: tournament.submittedByUserId ?? null,
+        verifiedByUserId: tournament.verifiedByUserId ?? null,
         matches: normalizedMatches,
         adminNotes,
         playerTournamentStats: playerStats,

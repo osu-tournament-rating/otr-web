@@ -1,10 +1,11 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import {
-  BeatmapAttributeSchema,
-  BeatmapSchema,
-  BeatmapsetCompactSchema,
-} from './beatmap';
+  playerTournamentStatsSelectSchema,
+  tournamentSelectSchema,
+} from './base';
+import { BeatmapAttributeSchema, BeatmapSchema } from './beatmap';
+import { CreatedUpdatedOmit } from './constants';
 import { AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
@@ -36,19 +37,19 @@ export const TournamentListRequestSchema = z.object({
   descending: z.boolean().optional(),
 });
 
-export const TournamentListItemSchema = z.object({
-  id: z.number().int(),
-  created: z.string(),
-  name: z.string(),
-  abbreviation: z.string(),
-  forumUrl: z.string(),
-  rankRangeLowerBound: z.number().int(),
-  ruleset: z.number().int(),
-  lobbySize: z.number().int(),
-  startTime: z.string().nullable(),
-  endTime: z.string().nullable(),
-  verificationStatus: z.number().int(),
-  rejectionReason: z.number().int(),
+export const TournamentListItemSchema = tournamentSelectSchema.pick({
+  id: true,
+  created: true,
+  name: true,
+  abbreviation: true,
+  forumUrl: true,
+  rankRangeLowerBound: true,
+  ruleset: true,
+  lobbySize: true,
+  startTime: true,
+  endTime: true,
+  verificationStatus: true,
+  rejectionReason: true,
 });
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
@@ -75,57 +76,37 @@ export const TournamentMatchGameSchema = GameSchema;
 
 export const TournamentMatchSchema = MatchSchema;
 
-export const TournamentPlayerStatsSchema = z.object({
-  id: z.number().int(),
-  playerId: z.number().int(),
-  tournamentId: z.number().int(),
-  matchesPlayed: z.number().int(),
-  matchesWon: z.number().int(),
-  matchesLost: z.number().int(),
-  gamesPlayed: z.number().int(),
-  gamesWon: z.number().int(),
-  gamesLost: z.number().int(),
-  averageMatchCost: z.number(),
-  averageRatingDelta: z.number(),
-  averageScore: z.number().int(),
-  averagePlacement: z.number(),
-  averageAccuracy: z.number(),
-  teammateIds: z.array(z.number().int()),
-  matchWinRate: z.number(),
-  player: PlayerSchema,
-});
+export const TournamentPlayerStatsSchema = playerTournamentStatsSelectSchema
+  .omit({
+    created: true,
+  })
+  .extend({
+    player: PlayerSchema,
+  });
 
 export const TournamentBeatmapSchema = BeatmapSchema.extend({
-  beatmapset: BeatmapsetCompactSchema.nullable().optional(),
-  attributes: z.array(BeatmapAttributeSchema).default([]),
-  creators: z.array(PlayerSchema).default([]),
+  attributes: z.array(BeatmapAttributeSchema),
+  creators: z.array(PlayerSchema),
 });
 
-export const TournamentDetailSchema = z
-  .object({
-    id: z.number().int(),
-    name: z.string(),
-    abbreviation: z.string(),
-    forumUrl: z.string(),
-    rankRangeLowerBound: z.number().int(),
-    ruleset: z.number().int(),
-    lobbySize: z.number().int(),
-    startTime: z.string().nullable(),
-    endTime: z.string().nullable(),
-    verificationStatus: z.number().int(),
-    rejectionReason: z.number().int(),
-    matches: TournamentMatchSchema.array(),
-    adminNotes: TournamentAdminNoteSchema.array(),
-    playerTournamentStats: TournamentPlayerStatsSchema.array(),
-    pooledBeatmaps: TournamentBeatmapSchema.array(),
-  })
-  .transform((value) => ({
+const tournamentDetailBaseSchema = tournamentSelectSchema
+  .omit(CreatedUpdatedOmit)
+  .extend({
+    matches: z.array(MatchSchema),
+    adminNotes: z.array(TournamentAdminNoteSchema),
+    playerTournamentStats: z.array(TournamentPlayerStatsSchema),
+    pooledBeatmaps: z.array(TournamentBeatmapSchema),
+  });
+
+export const TournamentDetailSchema = tournamentDetailBaseSchema.transform(
+  (value) => ({
     ...value,
     matches: value.matches ?? [],
     adminNotes: value.adminNotes ?? [],
     playerTournamentStats: value.playerTournamentStats ?? [],
     pooledBeatmaps: value.pooledBeatmaps ?? [],
-  }));
+  })
+);
 
 export const TournamentAdminUpdateInputSchema = z.object({
   id: z.number().int().positive(),

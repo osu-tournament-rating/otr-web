@@ -1,23 +1,25 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
+import { tournamentAdminNoteSelectSchema, userSelectSchema } from './base';
 import { PlayerSchema } from './player';
 
-export const CreatedUpdatedOmit = {
-  created: true,
-  updated: true,
-} as const;
+const adminNoteUserBaseSchema = userSelectSchema.pick({
+  id: true,
+  lastLogin: true,
+});
 
-export const AdminNoteUserSchema = z.object({
-  id: z.number().int(),
-  lastLogin: z.string().nullable(),
+export const AdminNoteUserSchema = adminNoteUserBaseSchema.extend({
   player: PlayerSchema,
 });
 
-export const AdminNoteSchema = z.object({
-  id: z.number().int(),
-  referenceId: z.number().int(),
-  note: z.string(),
-  created: z.string(),
-  updated: z.string().nullable(),
+const adminNoteBaseSchema = tournamentAdminNoteSelectSchema.pick({
+  id: true,
+  referenceId: true,
+  note: true,
+  created: true,
+  updated: true,
+});
+
+export const AdminNoteSchema = adminNoteBaseSchema.extend({
   adminUser: AdminNoteUserSchema,
 });
