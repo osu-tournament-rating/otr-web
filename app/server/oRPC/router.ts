@@ -12,6 +12,7 @@ import {
   getTournament,
   listTournaments,
 } from './procedures/tournamentsProcedures';
+import { submitTournament } from './procedures/tournaments/tournamentSubmissionProcedure';
 import {
   acceptTournamentPreVerificationStatuses,
   deleteTournamentAdmin,
@@ -55,6 +56,7 @@ export const router = base.router({
   tournaments: {
     list: listTournaments,
     get: getTournament,
+    submit: submitTournament,
     adminNotes: {
       create: createTournamentAdminNote,
       update: updateTournamentAdminNote,

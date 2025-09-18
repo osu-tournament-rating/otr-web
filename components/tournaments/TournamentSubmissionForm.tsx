@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trophy, Database, LoaderCircle, LinkIcon } from 'lucide-react';
 import LabelWithTooltip from '../ui/LabelWithTooltip';
-import type { z as zType } from 'zod';
 import { useState } from 'react';
 import {
   Form,
@@ -15,20 +14,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { tournamentSubmissionFormSchema } from '@/lib/schema';
+import {
+  tournamentSubmissionFormSchema,
+  type TournamentSubmissionFormValues,
+} from '@/lib/orpc/schema/tournamentSubmission';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
 import RulesetSelectContent from '../select/RulesetSelectContent';
 import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import { submit } from '@/lib/actions/tournaments';
-import { isValidationProblemDetails } from '@/lib/api/shared';
-import {
-  TournamentSubmissionDTO,
-  Roles,
-  TournamentRejectionReason,
-} from '@osu-tournament-rating/otr-api-client';
+import { orpc } from '@/lib/orpc/orpc';
 import { useSession } from '@/lib/hooks/useSession';
 import { Checkbox } from '../ui/checkbox';
 import { MultipleSelect } from '../select/multiple-select';
@@ -44,10 +40,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-
-type TournamentSubmissionFormValues = zType.infer<
-  typeof tournamentSubmissionFormSchema
->;
+import { TournamentRejectionReason } from '@/lib/osu/enums';
+import { hasAdminScope } from '@/lib/auth/roles';
 
 // Form section component for better organization
 type FormSectionProps = {
@@ -70,7 +64,7 @@ const FormSection = ({ icon, title, children }: FormSectionProps) => (
 
 export default function TournamentSubmissionForm() {
   const session = useSession();
-  const isAdmin = session?.scopes?.includes(Roles.Admin);
+  const isAdmin = hasAdminScope(session?.scopes ?? []);
 
   const form = useForm<TournamentSubmissionFormValues>({
     resolver: zodResolver(tournamentSubmissionFormSchema),
@@ -81,7 +75,7 @@ export default function TournamentSubmissionForm() {
       ruleset: undefined,
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
-      rejectionReason: 0,
+      rejectionReason: TournamentRejectionReason.None,
       ids: [],
       beatmapIds: [],
     },
@@ -110,26 +104,7 @@ export default function TournamentSubmissionForm() {
     }
 
     try {
-      const result = await submit({
-        body: {
-          ...values,
-          ids: values.ids.map((match) => parseInt(match.toString())),
-          beatmapIds: values.beatmapIds.map((beatmap) =>
-            parseInt(beatmap.toString())
-          ),
-        },
-      });
-
-      if (isValidationProblemDetails<TournamentSubmissionDTO>(result)) {
-        if (result.errors) {
-          for (const [k, v] of Object.entries(result.errors)) {
-            form.setError(k as keyof TournamentSubmissionFormValues, {
-              message: v.join(', '),
-            });
-          }
-          return;
-        }
-      }
+      const result = await orpc.tournaments.submit(values);
 
       form.reset();
       setBeatmapWarningConfirmed(false); // Reset confirmation state
@@ -145,8 +120,9 @@ export default function TournamentSubmissionForm() {
           </Link>
         </div>
       );
-    } catch {
-      toast.error('An unknown error occurred during submission');
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      toast.error(errorMessage);
     }
   }
 
@@ -476,4 +452,38 @@ export default function TournamentSubmissionForm() {
       </AlertDialog>
     </Card>
   );
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const maybeMessage =
+      typeof (error as { message?: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : undefined;
+
+    const causeMessage = (() => {
+      const cause = (error as { cause?: unknown }).cause;
+      if (cause && typeof cause === 'object') {
+        const message = (cause as { message?: unknown }).message;
+        if (typeof message === 'string') {
+          return message;
+        }
+      }
+      return undefined;
+    })();
+
+    if (causeMessage) {
+      return causeMessage;
+    }
+
+    if (maybeMessage) {
+      return maybeMessage;
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return 'Failed to submit tournament. Please try again.';
 }
