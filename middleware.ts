@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, SESSION_COOKIE_NAME } from './lib/api/server';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
+import { getCookieCache, getSessionCookie } from 'better-auth/cookies';
+import type { AppSession } from '@/lib/auth/auth';
+import { ADMIN_ROLES } from '@/lib/auth/roles';
+
+type MiddlewareSession = AppSession & {
+  dbUser?: {
+    scopes?: string[] | null;
+  } | null;
+};
 
 // Constants
 const UNAUTHORIZED_ROUTE = '/unauthorized';
@@ -22,15 +29,34 @@ const publicRoutes = [
 const authRequiredRoutes = ['/tournaments/submit', '/tools/filter'];
 
 // Define routes that require specific roles
-const roleRequiredRoutes: Record<string, string[]> = {
-  '/tournaments/submit': [Roles.Submit, Roles.Admin],
+const SUBMITTER_SCOPES = ['submit', ...ADMIN_ROLES] as const;
+
+const roleRequiredRoutes: Record<string, readonly string[]> = {
+  '/tournaments/submit': SUBMITTER_SCOPES,
   // Note: /tools/filter only requires authentication, not specific roles
+};
+
+const WHITELIST_SCOPE = 'whitelist';
+
+const matchesRoute = (pathname: string, route: string) =>
+  pathname === route || pathname.startsWith(`${route}/`);
+
+const findRequiredScopes = (
+  pathname: string
+): readonly string[] | undefined => {
+  for (const [route, scopes] of Object.entries(roleRequiredRoutes)) {
+    if (matchesRoute(pathname, route)) {
+      return scopes;
+    }
+  }
+
+  return undefined;
 };
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isRestrictedEnv = process.env.IS_RESTRICTED_ENV === 'true';
-  const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
+  const sessionCookie = getSessionCookie(req);
 
   // Clean up legacy otr-user cookies if present
   const response = NextResponse.next();
@@ -39,16 +65,14 @@ export async function middleware(req: NextRequest) {
   }
 
   // Check route types - check public routes first to handle more specific paths
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + '/')
+  const isPublicRoute = publicRoutes.some((route) =>
+    matchesRoute(pathname, route)
   );
 
   // Only check auth required if not already determined to be public
   const isAuthRequired =
     !isPublicRoute &&
-    authRequiredRoutes.some(
-      (route) => pathname === route || pathname.startsWith(route + '/')
-    );
+    authRequiredRoutes.some((route) => matchesRoute(pathname, route));
 
   // Determine if session validation is needed
   // In restricted environments, always validate except for the unauthorized page
@@ -65,43 +89,45 @@ export async function middleware(req: NextRequest) {
   // Validate session when needed
   if (needsSessionValidation) {
     try {
-      const session = await getSession();
+      const session = (await getCookieCache(req, {
+        secret: process.env.BETTER_AUTH_SECRET,
+      })) as MiddlewareSession | null;
 
-      if (session) {
-        // Pass session data through headers to avoid duplicate API calls
-        response.headers.set('x-session-data', JSON.stringify(session));
-        response.headers.set('x-session-validated', 'true');
-
-        // Check whitelist requirement in restricted environment
-        if (isRestrictedEnv && !session.scopes?.includes('whitelist')) {
+      if (!session) {
+        if (isAuthRequired || isRestrictedEnv) {
           return redirectToUnauthorized(req);
-        }
-
-        // Check role requirements for specific routes
-        const requiredRoles = roleRequiredRoutes[pathname];
-        if (requiredRoles) {
-          const hasRequiredRole = requiredRoles.some((role) =>
-            session.scopes?.includes(role)
-          );
-
-          if (!hasRequiredRole) {
-            return redirectToUnauthorized(req);
-          }
         }
 
         return response;
       }
 
-      // No valid session - redirect if auth required or restricted env
-      if (isAuthRequired || isRestrictedEnv) {
+      const scopes = session.dbUser?.scopes ?? [];
+
+      // Check whitelist requirement in restricted environment
+      if (isRestrictedEnv && !scopes.includes(WHITELIST_SCOPE)) {
         return redirectToUnauthorized(req);
       }
+
+      // Check role requirements for specific routes
+      const requiredScopes = findRequiredScopes(pathname);
+      if (requiredScopes) {
+        const hasRequiredRole = requiredScopes.some((scope) =>
+          scopes.includes(scope)
+        );
+
+        if (!hasRequiredRole) {
+          return redirectToUnauthorized(req);
+        }
+      }
+
+      return response;
     } catch (error) {
       console.error('Middleware session validation error:', error);
       // Redirect on error if auth required or restricted env
       if (isAuthRequired || isRestrictedEnv) {
         return redirectToUnauthorized(req);
       }
+      return response;
     }
   }
 
