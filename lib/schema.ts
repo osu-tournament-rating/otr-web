@@ -9,11 +9,13 @@ import {
   Team,
   TeamType,
   TournamentRejectionReason,
-  VerificationStatus,
   TournamentQuerySortType,
-  MatchWarningFlags,
-  MatchRejectionReason,
 } from '@osu-tournament-rating/otr-api-client';
+import {
+  MatchRejectionReason,
+  MatchWarningFlags,
+  VerificationStatus,
+} from '@/lib/osu/enums';
 import { EnumLike, z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';

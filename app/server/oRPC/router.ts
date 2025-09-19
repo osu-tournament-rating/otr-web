@@ -2,6 +2,7 @@ import { os } from '@orpc/server';
 
 import { getLeaderboard } from './procedures/leaderboardProcedures';
 import { getMatch } from './procedures/matchesProcedures';
+import { updateMatchAdmin } from './procedures/matches/adminProcedures';
 import {
   getPlayer,
   getPlayerDashboardStats,
@@ -62,6 +63,9 @@ export const router = base.router({
   },
   matches: {
     get: getMatch,
+    admin: {
+      update: updateMatchAdmin,
+    },
     adminNotes: {
       create: createMatchAdminNote,
       update: updateMatchAdminNote,

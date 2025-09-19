@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import React, { Fragment } from 'react';
 import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
-import type { MatchDTO } from '@osu-tournament-rating/otr-api-client';
 
 import { AdminNoteRouteTarget } from '@/lib/osu/enums';
 import { MatchDetail } from '@/lib/orpc/schema/match';
@@ -18,9 +17,6 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
   const games = match.games ?? [];
   const hasGames = games.length > 0;
   const displayGames = hasGames ? games.slice(0, 15) : [];
-
-  const legacyMatchForAdmin = match as unknown as MatchDTO;
-
   // Calculate unique players count
   const uniquePlayerIds = new Set(
     games.flatMap((game) => game.scores.map((score) => score.playerId))
@@ -107,7 +103,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entityId={match.id}
                 entityDisplayName={match.name}
               />
-              <MatchAdminView match={legacyMatchForAdmin} />
+              <MatchAdminView match={match} />
             </div>
           </div>
 

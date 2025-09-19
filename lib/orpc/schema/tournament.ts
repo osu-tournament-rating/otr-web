@@ -5,20 +5,11 @@ import {
   tournamentSelectSchema,
 } from './base';
 import { BeatmapAttributeSchema, BeatmapSchema } from './beatmap';
-import { CreatedUpdatedOmit } from './constants';
+import { CreatedUpdatedOmit, VerificationStatusSchema } from './constants';
+import type { VerificationStatusValue } from './constants';
 import { AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
-
-export const VerificationStatusSchema = z.union([
-  z.literal(0),
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-]);
-
-export type VerificationStatusValue = z.infer<typeof VerificationStatusSchema>;
 
 export const TournamentListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
@@ -164,6 +155,7 @@ export type TournamentIdInput = z.infer<typeof TournamentIdInputSchema>;
 export type TournamentRefetchMatchDataResponse = z.infer<
   typeof TournamentRefetchMatchDataResponseSchema
 >;
+export type { VerificationStatusValue };
 
 export type TournamentListRequest = z.infer<typeof TournamentListRequestSchema>;
 export type TournamentListItem = z.infer<typeof TournamentListItemSchema>;

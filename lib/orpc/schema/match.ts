@@ -10,7 +10,7 @@ import {
   tournamentSelectSchema,
 } from './base';
 import { BeatmapSchema } from './beatmap';
-import { CreatedUpdatedOmit } from './constants';
+import { CreatedUpdatedOmit, VerificationStatusSchema } from './constants';
 import { AdminNoteSchema } from './common';
 import { PlayerSchema } from './player';
 
@@ -153,6 +153,22 @@ export const MatchIdInputSchema = z.object({
   id: z.number().int().positive(),
 });
 
+const BitmaskEnumValueSchema = z.number().int().min(0);
+
+export const MatchAdminUpdateInputSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  verificationStatus: VerificationStatusSchema,
+  rejectionReason: BitmaskEnumValueSchema,
+  warningFlags: BitmaskEnumValueSchema,
+  startTime: z.string().datetime().nullable(),
+  endTime: z.string().datetime().nullable(),
+});
+
+export const MatchAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+});
+
 export const MatchAdminNoteCreateInputSchema = z.object({
   matchId: z.number().int().positive(),
   note: AdminNoteContentSchema,
@@ -206,6 +222,10 @@ export type RatingAdjustment = z.infer<typeof RatingAdjustmentSchema>;
 export type MatchWinRecord = z.infer<typeof MatchWinRecordSchema>;
 export type Match = z.infer<typeof MatchSchema>;
 export type MatchDetail = z.infer<typeof MatchDetailSchema>;
+export type MatchAdminUpdateInput = z.infer<typeof MatchAdminUpdateInputSchema>;
+export type MatchAdminMutationResponse = z.infer<
+  typeof MatchAdminMutationResponseSchema
+>;
 export type MatchAdminNoteCreateInput = z.infer<
   typeof MatchAdminNoteCreateInputSchema
 >;

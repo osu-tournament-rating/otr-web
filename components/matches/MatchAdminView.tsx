@@ -8,18 +8,10 @@ import {
 import { matchEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  MatchCompactDTO,
-  MatchDTO,
-  MatchWarningFlags,
-  MatchRejectionReason,
-  Roles,
-} from '@osu-tournament-rating/otr-api-client';
 import { ControllerFieldState, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
-import { update } from '@/lib/actions/matches';
-import { createPatchOperations } from '@/lib/utils/form';
+import { orpc } from '@/lib/orpc/orpc';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +36,10 @@ import VerificationStatusSelectContent from '../select/VerificationStatusSelectC
 
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { MatchRejectionReason, MatchWarningFlags } from '@/lib/osu/enums';
+import type { MatchDetail } from '@/lib/orpc/schema/match';
+import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import MergeMatchButton from './MergeMatchButton';
@@ -72,18 +68,25 @@ const matchRejectionReasonOptions = Object.entries(
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-export default function MatchAdminView({
-  match,
-}: {
-  match: MatchCompactDTO | MatchDTO;
-}) {
+type EditableMatch = Pick<
+  MatchDetail,
+  | 'id'
+  | 'name'
+  | 'verificationStatus'
+  | 'rejectionReason'
+  | 'warningFlags'
+  | 'startTime'
+  | 'endTime'
+>;
+
+export default function MatchAdminView({ match }: { match: EditableMatch }) {
   const defaultValues = {
     name: match.name,
-    verificationStatus: match.verificationStatus,
-    rejectionReason: match.rejectionReason,
-    warningFlags: match.warningFlags,
-    startTime: match.startTime,
-    endTime: match.endTime,
+    verificationStatus: match.verificationStatus ?? 0,
+    rejectionReason: match.rejectionReason ?? 0,
+    warningFlags: match.warningFlags ?? 0,
+    startTime: match.startTime ? new Date(match.startTime) : undefined,
+    endTime: match.endTime ? new Date(match.endTime) : undefined,
   };
 
   const form = useForm<z.infer<typeof matchEditFormSchema>>({
@@ -95,15 +98,33 @@ export default function MatchAdminView({
   const session = useSession();
   const router = useRouter();
 
-  if (!session?.scopes?.includes(Roles.Admin)) {
+  const isAdmin = hasAdminScope(session?.scopes ?? []);
+
+  if (!isAdmin) {
     return null;
   }
 
   async function onSubmit(values: z.infer<typeof matchEditFormSchema>) {
     try {
-      await update({
+      const startTimeInput =
+        values.startTime ??
+        (match.startTime ? new Date(match.startTime) : null);
+      const endTimeInput =
+        values.endTime ?? (match.endTime ? new Date(match.endTime) : null);
+      const verificationStatus =
+        values.verificationStatus as VerificationStatusValue;
+
+      const toNullableISOString = (value: Date | null | undefined) =>
+        value instanceof Date ? value.toISOString() : null;
+
+      await orpc.matches.admin.update({
         id: match.id,
-        body: createPatchOperations(match, values as MatchCompactDTO),
+        name: values.name,
+        verificationStatus,
+        rejectionReason: values.rejectionReason,
+        warningFlags: values.warningFlags,
+        startTime: toNullableISOString(startTimeInput),
+        endTime: toNullableISOString(endTimeInput),
       });
 
       saveToast();
