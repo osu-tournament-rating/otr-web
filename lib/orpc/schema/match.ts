@@ -154,6 +154,7 @@ export const MatchIdInputSchema = z.object({
 });
 
 const BitmaskEnumValueSchema = z.number().int().min(0);
+const NonNegativeIntSchema = z.number().int().min(0);
 
 export const MatchAdminUpdateInputSchema = z.object({
   id: z.number().int().positive(),
@@ -166,6 +167,47 @@ export const MatchAdminUpdateInputSchema = z.object({
 });
 
 export const MatchAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export const GameAdminUpdateInputSchema = z.object({
+  id: z.number().int().positive(),
+  ruleset: NonNegativeIntSchema,
+  scoringType: NonNegativeIntSchema,
+  teamType: NonNegativeIntSchema,
+  mods: BitmaskEnumValueSchema,
+  verificationStatus: VerificationStatusSchema,
+  rejectionReason: BitmaskEnumValueSchema,
+  warningFlags: BitmaskEnumValueSchema,
+  startTime: z.string().datetime().nullable(),
+  endTime: z.string().datetime().nullable(),
+});
+
+export const GameAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export const GameScoreAdminUpdateInputSchema = z.object({
+  id: z.number().int().positive(),
+  score: NonNegativeIntSchema,
+  placement: NonNegativeIntSchema,
+  maxCombo: NonNegativeIntSchema,
+  count50: NonNegativeIntSchema,
+  count100: NonNegativeIntSchema,
+  count300: NonNegativeIntSchema,
+  countMiss: NonNegativeIntSchema,
+  countKatu: NonNegativeIntSchema,
+  countGeki: NonNegativeIntSchema,
+  accuracy: z.number().min(0),
+  grade: NonNegativeIntSchema,
+  mods: BitmaskEnumValueSchema,
+  ruleset: NonNegativeIntSchema,
+  verificationStatus: VerificationStatusSchema,
+  rejectionReason: BitmaskEnumValueSchema,
+  team: NonNegativeIntSchema,
+});
+
+export const GameScoreAdminMutationResponseSchema = z.object({
   success: z.boolean(),
 });
 
@@ -235,6 +277,10 @@ export type MatchAdminNoteUpdateInput = z.infer<
 export type MatchAdminNoteDeleteInput = z.infer<
   typeof MatchAdminNoteDeleteInputSchema
 >;
+export type GameAdminUpdateInput = z.infer<typeof GameAdminUpdateInputSchema>;
+export type GameAdminMutationResponse = z.infer<
+  typeof GameAdminMutationResponseSchema
+>;
 export type GameAdminNoteCreateInput = z.infer<
   typeof GameAdminNoteCreateInputSchema
 >;
@@ -243,6 +289,12 @@ export type GameAdminNoteUpdateInput = z.infer<
 >;
 export type GameAdminNoteDeleteInput = z.infer<
   typeof GameAdminNoteDeleteInputSchema
+>;
+export type GameScoreAdminUpdateInput = z.infer<
+  typeof GameScoreAdminUpdateInputSchema
+>;
+export type GameScoreAdminMutationResponse = z.infer<
+  typeof GameScoreAdminMutationResponseSchema
 >;
 export type GameScoreAdminNoteCreateInput = z.infer<
   typeof GameScoreAdminNoteCreateInputSchema

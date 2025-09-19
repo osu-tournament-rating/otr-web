@@ -13,11 +13,9 @@ import { Input } from '@/components/ui/input';
 import { scoreEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { GameScoreDTO } from '@osu-tournament-rating/otr-api-client';
 import {
   AdminNoteRouteTarget,
   Mods,
-  Roles,
   ScoreRejectionReason,
 } from '@/lib/osu/enums';
 import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
@@ -43,9 +41,7 @@ import {
   ScoreRejectionReasonEnumHelper,
   getEnumFlags,
 } from '@/lib/enums';
-import { update } from '@/lib/actions/scores';
 import { deletePlayerScores } from '@/lib/actions/matches';
-import { createPatchOperations } from '@/lib/utils/form';
 import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useState } from 'react';
@@ -68,6 +64,9 @@ import { useParams } from 'next/navigation';
 import SimpleTooltip from '../simple-tooltip';
 import { getAdminNoteMutations } from '../admin-notes/adminNoteMutations';
 import type { GameScore } from '@/lib/orpc/schema/match';
+import { orpc } from '@/lib/orpc/orpc';
+import { hasAdminScope } from '@/lib/auth/roles';
+import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -120,7 +119,9 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
     AdminNoteRouteTarget.GameScore
   );
 
-  if (!session?.scopes?.includes(Roles.Admin)) {
+  const isAdmin = hasAdminScope(session?.scopes ?? []);
+
+  if (!isAdmin) {
     return null;
   }
 
@@ -147,12 +148,27 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
   async function submitScorePatch(values: z.infer<typeof scoreEditFormSchema>) {
     try {
-      const patchedScore = await update({
+      const verificationStatus =
+        values.verificationStatus as VerificationStatusValue;
+
+      await orpc.scores.admin.update({
         id: score.id,
-        body: createPatchOperations(
-          score as unknown as GameScoreDTO,
-          values as GameScoreDTO
-        ),
+        score: values.score,
+        placement: values.placement,
+        maxCombo: values.maxCombo,
+        count50: values.count50,
+        count100: values.count100,
+        count300: values.count300,
+        countMiss: values.countMiss,
+        countKatu: values.countKatu,
+        countGeki: values.countGeki,
+        accuracy: values.accuracy,
+        grade: values.grade,
+        mods: values.mods,
+        ruleset: values.ruleset,
+        verificationStatus,
+        rejectionReason: values.rejectionReason,
+        team: values.team,
       });
 
       const noteContent = adminNote.trim();
@@ -180,7 +196,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
       );
 
       // Reset forms
-      form.reset(patchedScore);
+      form.reset(values);
       setAdminNote('');
 
       router.refresh();

@@ -11,12 +11,7 @@ import {
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/schema';
 import { Game } from '@/lib/orpc/schema/match';
-import {
-  GameRejectionReason,
-  GameWarningFlags,
-  Mods,
-  Roles,
-} from '@/lib/osu/enums';
+import { GameRejectionReason, GameWarningFlags, Mods } from '@/lib/osu/enums';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,9 +39,10 @@ import {
   getEnumFlags,
 } from '@/lib/enums';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
-import { update } from '@/lib/actions/games';
-import { createPatchOperations } from '@/lib/utils/form';
+import { orpc } from '@/lib/orpc/orpc';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+import { hasAdminScope } from '@/lib/auth/roles';
+import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
@@ -87,7 +83,6 @@ const gameRejectionReasonOptions = Object.entries(
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
 export default function GameAdminView({ game }: { game: Game }) {
-  const legacyGameForAdmin = game as unknown as GameDTO;
   const defaultValues: z.infer<typeof gameEditFormSchema> = {
     ruleset: game.ruleset,
     mods: game.mods,
@@ -110,21 +105,46 @@ export default function GameAdminView({ game }: { game: Game }) {
   const session = useSession();
   const router = useRouter();
 
-  if (!session?.scopes?.includes(Roles.Admin)) {
+  const isAdmin = hasAdminScope(session?.scopes ?? []);
+
+  if (!isAdmin) {
     return null;
   }
 
   async function onSubmit(values: z.infer<typeof gameEditFormSchema>) {
     try {
-      const patchedGame = await update({
+      const verificationStatus =
+        values.verificationStatus as VerificationStatusValue;
+      const startTimeIso = values.startTime
+        ? values.startTime.toISOString()
+        : (game.startTime ?? null);
+      const endTimeIso = values.endTime
+        ? values.endTime.toISOString()
+        : (game.endTime ?? null);
+
+      await orpc.games.admin.update({
         id: game.id,
-        body: createPatchOperations(legacyGameForAdmin, {
-          ...legacyGameForAdmin,
-          ...values,
-        } as GameDTO),
+        ruleset: values.ruleset,
+        scoringType: values.scoringType,
+        teamType: values.teamType,
+        mods: values.mods,
+        verificationStatus,
+        rejectionReason: values.rejectionReason,
+        warningFlags: values.warningFlags,
+        startTime: startTimeIso,
+        endTime: endTimeIso,
       });
 
-      form.reset(patchedGame);
+      const nextStartTime =
+        values.startTime ?? (startTimeIso ? new Date(startTimeIso) : undefined);
+      const nextEndTime =
+        values.endTime ?? (endTimeIso ? new Date(endTimeIso) : undefined);
+
+      form.reset({
+        ...values,
+        startTime: nextStartTime,
+        endTime: nextEndTime,
+      });
       saveToast();
       router.refresh();
     } catch {
@@ -373,7 +393,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 </Button>
 
                 {/* Merge game */}
-                <MergeGameButton game={legacyGameForAdmin} />
+                <MergeGameButton game={game as unknown as GameDTO} />
 
                 {/* Delete game */}
                 <DeleteButton
