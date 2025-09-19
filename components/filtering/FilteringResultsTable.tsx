@@ -1,17 +1,6 @@
 'use client';
 
-import {
-  FilteringResultDTO,
-  PlayerFilteringResultDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { useState, useMemo } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -20,18 +9,29 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { useState, useMemo } from 'react';
 import { CheckCircle2, XCircle, ListFilter, Download } from 'lucide-react';
+import {
+  FilteringResult,
+  PlayerFilteringResult,
+} from '@/lib/orpc/schema/filtering';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import FailureReasonsBadges from './FailureReasonsBadges';
 import PlayerCell from './PlayerCell';
 import StatusIcon from './StatusIcon';
 import { SortableHeader, NumericCell } from './tableHelpers';
 
 interface FilteringResultsTableProps {
-  results: FilteringResultDTO;
+  results: FilteringResult;
   onDownloadCSV: () => void;
   hideCard?: boolean;
 }
@@ -45,7 +45,7 @@ export default function FilteringResultsTable({
     { id: 'isSuccess', desc: false },
   ]);
 
-  const columns: ColumnDef<PlayerFilteringResultDTO>[] = useMemo(
+  const columns: ColumnDef<PlayerFilteringResult>[] = useMemo(
     () => [
       {
         accessorKey: 'isSuccess',
@@ -60,7 +60,9 @@ export default function FilteringResultsTable({
           <div className="text-center text-sm font-semibold">Failures</div>
         ),
         cell: ({ row }) => (
-          <FailureReasonsBadges failureReason={row.original.failureReason} />
+          <FailureReasonsBadges
+            failureReason={row.original.failureReason ?? undefined}
+          />
         ),
         enableSorting: false,
       },

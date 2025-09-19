@@ -1,10 +1,20 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Settings, LoaderCircle, Users } from 'lucide-react';
-import LabelWithTooltip from '../ui/LabelWithTooltip';
 import { useState, useEffect, useRef } from 'react';
+import { Settings, LoaderCircle, Users } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, Control, FieldPath } from 'react-hook-form';
+import { toast } from 'sonner';
+import { orpc } from '@/lib/orpc/orpc';
+import { Ruleset } from '@/lib/osu/enums';
+import {
+  FilteringResult,
+  PlayerFilteringResult,
+} from '@/lib/orpc/schema/filtering';
+import LabelWithTooltip from '@/components/ui/LabelWithTooltip';
+import RulesetSelectContent from '@/components/select/RulesetSelectContent';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -12,20 +22,10 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Control, FieldPath } from 'react-hook-form';
-import { toast } from 'sonner';
-import RulesetSelectContent from '../select/RulesetSelectContent';
-import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import { filterPlayers } from '@/lib/actions/filtering';
-import { z } from 'zod';
-import {
-  FilteringResultDTO,
-  PlayerFilteringResultDTO,
-  Ruleset,
-} from '@osu-tournament-rating/otr-api-client';
 import { getFailureReasons } from './FailureReasonsBadges';
 import FilteringResultsTable from './FilteringResultsTable';
 import { downloadCSV } from '@/lib/utils/csv';
@@ -266,8 +266,8 @@ function NumberInput({
 }
 
 interface FilteringFormProps {
-  onFilteringComplete: (results: FilteringResultDTO) => void;
-  filteringResults: FilteringResultDTO | null;
+  onFilteringComplete: (results: FilteringResult) => void;
+  filteringResults: FilteringResult | null;
 }
 
 export default function FilteringForm({
@@ -335,7 +335,7 @@ export default function FilteringForm({
         .filter((id) => id.trim() !== '')
         .map((id) => parseInt(id.trim()));
 
-      const result = await filterPlayers({
+      const result = await orpc.filtering.filter({
         ruleset: values.ruleset as Ruleset,
         minRating: values.minRating,
         maxRating: values.maxRating,
@@ -347,10 +347,8 @@ export default function FilteringForm({
         osuPlayerIds,
       });
 
-      if (result.data) {
-        onFilteringComplete(result.data);
-        toast.success(`Filtered ${osuPlayerIds.length} players successfully`);
-      }
+      onFilteringComplete(result);
+      toast.success(`Filtered ${osuPlayerIds.length} players successfully`);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -377,17 +375,25 @@ export default function FilteringForm({
       'Failure Reasons',
     ];
     const rows = filteringResults.filteringResults.map(
-      (result: PlayerFilteringResultDTO) => {
-        const failureReasons = getFailureReasons(result.failureReason);
+      (result: PlayerFilteringResult) => {
+        const failureReasons = getFailureReasons(
+          result.failureReason ?? undefined
+        );
         return [
           result.osuId?.toString() || '',
           result.username || 'Unknown',
           result.playerId?.toString() || 'N/A',
           result.isSuccess ? 'Passed' : 'Failed',
-          result.currentRating?.toFixed(0) || 'N/A',
-          result.peakRating?.toFixed(0) || 'N/A',
-          result.tournamentsPlayed?.toString() || 'N/A',
-          result.matchesPlayed?.toString() || 'N/A',
+          result.currentRating != null
+            ? result.currentRating.toFixed(0)
+            : 'N/A',
+          result.peakRating != null ? result.peakRating.toFixed(0) : 'N/A',
+          result.tournamentsPlayed != null
+            ? result.tournamentsPlayed.toString()
+            : 'N/A',
+          result.matchesPlayed != null
+            ? result.matchesPlayed.toString()
+            : 'N/A',
           failureReasons.join(', '),
         ];
       }

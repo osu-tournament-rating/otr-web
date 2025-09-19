@@ -1,15 +1,15 @@
 'use client';
 
+import { useState } from 'react';
+import { Filter } from 'lucide-react';
 import FilteringForm from '@/components/filtering/FilteringForm';
 import { BetaWarningBanner } from '@/components/filtering/BetaWarningBanner';
 import { Card } from '@/components/ui/card';
-import { Filter } from 'lucide-react';
-import { useState } from 'react';
-import { FilteringResultDTO } from '@osu-tournament-rating/otr-api-client';
+import { FilteringResult } from '@/lib/orpc/schema/filtering';
 
 export default function FilteringPage() {
   const [filteringResults, setFilteringResults] =
-    useState<FilteringResultDTO | null>(null);
+    useState<FilteringResult | null>(null);
 
   return (
     <div className="container mx-auto flex flex-col gap-4 px-4 md:gap-2 md:px-0">

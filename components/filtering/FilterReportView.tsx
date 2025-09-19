@@ -1,17 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
-import { getFilterReport } from '@/lib/actions/filtering';
-import type {
-  FilteringResultDTO,
-  FilterReportDTO,
-} from '@osu-tournament-rating/otr-api-client';
-import { RulesetEnumHelper } from '@/lib/enums';
-import { toast } from 'sonner';
 import {
   Loader2,
   Search,
@@ -19,12 +8,15 @@ import {
   ClipboardCheck,
   Filter,
 } from 'lucide-react';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import { downloadCSV } from '@/lib/utils/csv';
-import { getFailureReasons } from './FailureReasonsBadges';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -33,6 +25,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { FilterReport, FilteringResult } from '@/lib/orpc/schema/filtering';
+import { orpc } from '@/lib/orpc/orpc';
+import { RulesetEnumHelper } from '@/lib/enums';
+import { downloadCSV } from '@/lib/utils/csv';
+import { getFailureReasons } from './FailureReasonsBadges';
 
 const filterReportSchema = z.object({
   reportId: z
@@ -49,8 +46,8 @@ type FilterReportForm = z.infer<typeof filterReportSchema>;
 
 export function FilterReportView() {
   const [isLoading, setIsLoading] = useState(false);
-  const [report, setReport] = useState<FilterReportDTO | null>(null);
-  const [results, setResults] = useState<FilteringResultDTO | null>(null);
+  const [report, setReport] = useState<FilterReport | null>(null);
+  const [results, setResults] = useState<FilteringResult | null>(null);
 
   const form = useForm<FilterReportForm>({
     resolver: zodResolver(filterReportSchema),
@@ -65,19 +62,15 @@ export function FilterReportView() {
     setResults(null);
 
     try {
-      const { data: report } = await getFilterReport(
-        parseInt(data.reportId, 10)
-      );
+      const report = await orpc.filtering.report({
+        id: parseInt(data.reportId, 10),
+      });
 
-      if (report) {
-        setReport(report);
-        if (report.response) {
-          setResults(report.response);
-        } else {
-          toast.error('Filter report exists but contains no results data');
-        }
+      setReport(report);
+      if (report.response) {
+        setResults(report.response);
       } else {
-        toast.error('Filter report not found');
+        toast.error('Filter report exists but contains no results data');
       }
     } catch {
       toast.error('Failed to load filter report. Please try again.');
@@ -102,17 +95,17 @@ export function FilterReportView() {
     ];
 
     const rows = results.filteringResults.map((player) => [
-      player.osuId.toString(),
+      player.osuId?.toString() || 'N/A',
       player.username || 'N/A',
       player.playerId?.toString() || 'N/A',
       player.isSuccess ? 'Passed' : 'Failed',
-      player.currentRating?.toFixed(2) || 'N/A',
-      player.peakRating?.toFixed(2) || 'N/A',
-      player.tournamentsPlayed?.toString() || 'N/A',
-      player.matchesPlayed?.toString() || 'N/A',
-      player.failureReason
-        ? getFailureReasons(player.failureReason).join(', ')
-        : '',
+      player.currentRating != null ? player.currentRating.toFixed(2) : 'N/A',
+      player.peakRating != null ? player.peakRating.toFixed(2) : 'N/A',
+      player.tournamentsPlayed != null
+        ? player.tournamentsPlayed.toString()
+        : 'N/A',
+      player.matchesPlayed != null ? player.matchesPlayed.toString() : 'N/A',
+      getFailureReasons(player.failureReason ?? undefined).join(', '),
     ]);
 
     downloadCSV(

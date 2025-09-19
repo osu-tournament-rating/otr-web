@@ -27,6 +27,10 @@ import {
   updateTournamentAdminNote,
 } from './procedures/tournaments/adminNotesProcedures';
 import { getPlatformStats } from './procedures/statsProcedures';
+import {
+  filterRegistrants,
+  getFilterReport,
+} from './procedures/filteringProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -56,6 +60,10 @@ export const router = base.router({
   },
   stats: {
     platform: getPlatformStats,
+  },
+  filtering: {
+    filter: filterRegistrants,
+    report: getFilterReport,
   },
   tournaments: {
     list: listTournaments,

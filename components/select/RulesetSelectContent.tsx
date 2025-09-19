@@ -1,6 +1,6 @@
 import { RulesetEnumHelper } from '@/lib/enums';
+import { Ruleset } from '@/lib/osu/enums';
 import { SelectContent, SelectItem } from '../ui/select';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
 
 export default function RulesetSelectContent({
   maniaOther = true,

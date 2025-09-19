@@ -26,6 +26,12 @@ export const playerTournamentStatsSelectSchema = createSelectSchema(
 export const ratingAdjustmentSelectSchema = createSelectSchema(
   schema.ratingAdjustments
 );
+export const filterReportSelectSchema = createSelectSchema(
+  schema.filterReports
+);
+export const filterReportPlayerSelectSchema = createSelectSchema(
+  schema.filterReportPlayers
+);
 
 export const tournamentSelectSchema = createSelectSchema(schema.tournaments);
 export const tournamentAdminNoteSelectSchema = createSelectSchema(

@@ -1,4 +1,4 @@
-import { FilteringFailReason } from '@osu-tournament-rating/otr-api-client';
+import { FilteringFailReason } from '@/lib/osu/enums';
 import { FilteringFailReasonEnumHelper } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
 import {

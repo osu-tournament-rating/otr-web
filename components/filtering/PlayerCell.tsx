@@ -1,9 +1,9 @@
-import { PlayerFilteringResultDTO } from '@osu-tournament-rating/otr-api-client';
 import Image from 'next/image';
 import Link from 'next/link';
+import { PlayerFilteringResult } from '@/lib/orpc/schema/filtering';
 
 interface PlayerCellProps {
-  result: PlayerFilteringResultDTO | null | undefined;
+  result: PlayerFilteringResult | null | undefined;
 }
 
 export default function PlayerCell({ result }: PlayerCellProps) {
