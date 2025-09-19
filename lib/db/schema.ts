@@ -20,22 +20,29 @@ export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
   productVersion: varchar('product_version', { length: 32 }).notNull(),
 });
 
-export const auth_users = pgTable('auth_users', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').default(false).notNull(),
-  image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-  role: text('role'),
-  banned: boolean('banned').default(false),
-  banReason: text('ban_reason'),
-  banExpires: timestamp('ban_expires'),
-});
+export const auth_users = pgTable(
+  'auth_users',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: text('image'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    role: text('role'),
+    banned: boolean('banned').default(false),
+    banReason: text('ban_reason'),
+    banExpires: timestamp('ban_expires'),
+    playerId: integer('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+  },
+  (table) => [uniqueIndex('auth_users_player_id_key').on(table.playerId)]
+);
 
 export const auth_sessions = pgTable('auth_sessions', {
   id: text('id').primaryKey(),
@@ -1052,9 +1059,7 @@ export const players = pgTable(
     osuTrackLastFetch: timestamp('osu_track_last_fetch', {
       withTimezone: true,
       mode: 'string',
-    })
-      .default('2007-09-17 00:00:00')
-      .notNull(),
+    }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

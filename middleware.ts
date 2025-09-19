@@ -102,6 +102,7 @@ export async function middleware(req: NextRequest) {
       }
 
       const scopes = session.dbUser?.scopes ?? [];
+      const sessionRole = session.user?.role ?? null;
 
       // Check whitelist requirement in restricted environment
       if (isRestrictedEnv && !scopes.includes(WHITELIST_SCOPE)) {
@@ -111,11 +112,15 @@ export async function middleware(req: NextRequest) {
       // Check role requirements for specific routes
       const requiredScopes = findRequiredScopes(pathname);
       if (requiredScopes) {
-        const hasRequiredRole = requiredScopes.some((scope) =>
-          scopes.includes(scope)
-        );
+        const fulfillsRequirement = requiredScopes.some((scope) => {
+          if (scope === 'admin') {
+            return sessionRole === 'admin';
+          }
 
-        if (!hasRequiredRole) {
+          return scopes.includes(scope);
+        });
+
+        if (!fulfillsRequirement) {
           return redirectToUnauthorized(req);
         }
       }

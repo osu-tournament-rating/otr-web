@@ -358,7 +358,7 @@ export const getTournament = publicProcedure
           country: creator.country,
           defaultRuleset: creator.defaultRuleset,
           osuLastFetch: creator.osuLastFetch,
-          osuTrackLastFetch: creator.osuTrackLastFetch,
+          osuTrackLastFetch: creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
         });
         creatorsByBeatmapId.set(beatmapId, current);
       }
@@ -565,7 +565,8 @@ export const getTournament = publicProcedure
                 country: stat.statsPlayerCountry,
                 defaultRuleset: stat.statsPlayerDefaultRuleset ?? 0,
                 osuLastFetch: stat.statsPlayerOsuLastFetch,
-                osuTrackLastFetch: stat.statsPlayerOsuTrackLastFetch,
+                osuTrackLastFetch:
+                  stat.statsPlayerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
               }
             : {
                 id: -1,
@@ -619,7 +620,8 @@ export const getTournament = publicProcedure
             country: creator.country,
             defaultRuleset: creator.defaultRuleset ?? 0,
             osuLastFetch: creator.osuLastFetch,
-            osuTrackLastFetch: creator.osuTrackLastFetch,
+            osuTrackLastFetch:
+              creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
           })
         );
 

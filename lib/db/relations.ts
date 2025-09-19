@@ -1,5 +1,8 @@
 import { relations } from 'drizzle-orm/relations';
 import {
+  auth_accounts,
+  auth_sessions,
+  auth_users,
   players,
   beatmapsets,
   users,
@@ -43,6 +46,15 @@ export const beatmapsetsRelations = relations(beatmapsets, ({ one, many }) => ({
   beatmaps: many(beatmaps),
 }));
 
+export const authUsersRelations = relations(auth_users, ({ one, many }) => ({
+  player: one(players, {
+    fields: [auth_users.playerId],
+    references: [players.id],
+  }),
+  accounts: many(auth_accounts),
+  sessions: many(auth_sessions),
+}));
+
 export const playersRelations = relations(players, ({ many }) => ({
   beatmapsets: many(beatmapsets),
   gameScores: many(gameScores),
@@ -56,6 +68,7 @@ export const playersRelations = relations(players, ({ many }) => ({
   playerTournamentStats: many(playerTournamentStats),
   users: many(users),
   joinBeatmapCreators: many(joinBeatmapCreators),
+  authUsers: many(auth_users),
 }));
 
 export const filterReportsRelations = relations(

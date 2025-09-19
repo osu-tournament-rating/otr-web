@@ -15,6 +15,13 @@
       "when": 1757192714309,
       "tag": "0001_tense_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758322785173,
+      "tag": "0002_naive_chat",
+      "breakpoints": true
     }
   ]
 }
