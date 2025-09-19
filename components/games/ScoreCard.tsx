@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import type { GameScoreDTO } from '@osu-tournament-rating/otr-api-client';
 import Link from 'next/link';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
@@ -29,7 +28,6 @@ export default function ScoreCard({
   const isAdmin = session?.scopes?.includes(Roles.Admin);
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
-  const legacyScoreForAdmin = score as unknown as GameScoreDTO;
   const scoreTeam = score.team as Team;
 
   return (
@@ -66,7 +64,7 @@ export default function ScoreCard({
                 </div>
                 {isAdmin && (
                   <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
-                    <ScoreAdminView score={legacyScoreForAdmin} />
+                    <ScoreAdminView score={score} />
                   </div>
                 )}
               </div>

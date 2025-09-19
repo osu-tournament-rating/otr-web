@@ -1,8 +1,5 @@
 import { orpc } from '@/lib/orpc/orpc';
-import {
-  VerificationStatus,
-  AdminNoteRouteTarget,
-} from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget, VerificationStatus } from '@/lib/osu/enums';
 import {
   TournamentDetail,
   TournamentMatch,

@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@/lib/osu/enums';
 import { PencilLineIcon, Trash } from 'lucide-react';
 import { iconButtonStyle } from '../buttons/IconButton';
 import { useState } from 'react';
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { orpc } from '@/lib/orpc/orpc';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -24,6 +23,7 @@ import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { useSession } from '@/lib/hooks/useSession';
 import { useRouter } from 'next/navigation';
 import { AdminNote } from './types';
+import { getAdminNoteMutations } from './adminNoteMutations';
 
 export default function AdminNoteListItem({
   note,
@@ -36,24 +36,22 @@ export default function AdminNoteListItem({
   const router = useRouter();
 
   const isAdmin = hasAdminScope(session?.scopes ?? []);
-  const isTournamentEntity = entity === AdminNoteRouteTarget.Tournament;
+  const noteMutations = getAdminNoteMutations(entity);
   const isNoteCreator = note.adminUser.id === (session?.userId ?? -1);
 
   // Restrict edit/delete functionality to admin users working on their own notes
   const showModificationButtons =
-    isTournamentEntity && isAdmin && isNoteCreator;
+    noteMutations != null && isAdmin && isNoteCreator;
   const [editedNote, setEditedNote] = useState(note.note);
 
   const handleDelete = async () => {
-    if (!isTournamentEntity) {
+    if (!noteMutations) {
       toast.error('Deleting notes for this entity is not available yet.');
       return;
     }
 
     try {
-      await orpc.tournaments.adminNotes.delete({
-        noteId: note.id,
-      });
+      await noteMutations.delete(note.id);
       toast.success('Note deleted successfully');
       router.refresh();
     } catch {
@@ -62,16 +60,13 @@ export default function AdminNoteListItem({
   };
 
   const handleEdit = async () => {
-    if (!isTournamentEntity) {
+    if (!noteMutations) {
       toast.error('Editing notes for this entity is not available yet.');
       return;
     }
 
     try {
-      await orpc.tournaments.adminNotes.update({
-        noteId: note.id,
-        note: editedNote,
-      });
+      await noteMutations.update(note.id, editedNote);
       toast.success('Note updated successfully');
       router.refresh();
     } catch {

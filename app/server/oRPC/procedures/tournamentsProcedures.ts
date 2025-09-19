@@ -24,7 +24,7 @@ import {
   TournamentIdInputSchema,
 } from '@/lib/orpc/schema/tournament';
 
-import { fetchTournamentAdminNotes } from './tournaments/utils/adminNotes';
+import { fetchTournamentAdminNotes } from './adminNotesProcedures';
 
 import { publicProcedure } from './base';
 import { Mods } from '@/lib/osu/enums';

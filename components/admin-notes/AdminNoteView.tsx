@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@/lib/osu/enums';
 import { Loader2, StickyNote } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,6 @@ import {
 import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { orpc } from '@/lib/orpc/orpc';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -32,6 +31,7 @@ import { z } from 'zod';
 import AdminNotesList from './AdminNoteList';
 import { useSession } from '@/lib/hooks/useSession';
 import { AdminNote } from './types';
+import { getAdminNoteMutations } from './adminNoteMutations';
 
 interface AdminNoteViewProps {
   /**
@@ -65,8 +65,8 @@ export default function AdminNoteView({
   const router = useRouter();
 
   const isAdmin = hasAdminScope(session?.scopes ?? []);
-  const isTournamentEntity = entity === AdminNoteRouteTarget.Tournament;
-  const canMutate = isAdmin && isTournamentEntity;
+  const noteMutations = getAdminNoteMutations(entity);
+  const canMutate = isAdmin && noteMutations != null;
 
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
     resolver: zodResolver(adminNoteFormSchema),
@@ -86,16 +86,13 @@ export default function AdminNoteView({
   entityDisplayName ??= `${entityMetadata.text} ${entityId}`;
 
   async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
-    if (!canMutate) {
+    if (!canMutate || !noteMutations) {
       toast.error('Admin notes for this entity are not yet available.');
       return;
     }
 
     try {
-      await orpc.tournaments.adminNotes.create({
-        tournamentId: entityId,
-        note: data.note,
-      });
+      await noteMutations.create(entityId, data.note);
 
       form.reset();
       toast.success(`Created admin note for ${entityDisplayName}`);

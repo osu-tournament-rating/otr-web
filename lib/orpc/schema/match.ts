@@ -14,6 +14,8 @@ import { CreatedUpdatedOmit } from './constants';
 import { AdminNoteSchema } from './common';
 import { PlayerSchema } from './player';
 
+const AdminNoteContentSchema = z.string().trim().min(1);
+
 const matchTournamentBaseSchema = tournamentSelectSchema.pick({
   id: true,
   name: true,
@@ -151,6 +153,48 @@ export const MatchIdInputSchema = z.object({
   id: z.number().int().positive(),
 });
 
+export const MatchAdminNoteCreateInputSchema = z.object({
+  matchId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const MatchAdminNoteUpdateInputSchema = z.object({
+  noteId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const MatchAdminNoteDeleteInputSchema = z.object({
+  noteId: z.number().int().positive(),
+});
+
+export const GameAdminNoteCreateInputSchema = z.object({
+  gameId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const GameAdminNoteUpdateInputSchema = z.object({
+  noteId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const GameAdminNoteDeleteInputSchema = z.object({
+  noteId: z.number().int().positive(),
+});
+
+export const GameScoreAdminNoteCreateInputSchema = z.object({
+  scoreId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const GameScoreAdminNoteUpdateInputSchema = z.object({
+  noteId: z.number().int().positive(),
+  note: AdminNoteContentSchema,
+});
+
+export const GameScoreAdminNoteDeleteInputSchema = z.object({
+  noteId: z.number().int().positive(),
+});
+
 export type MatchTournament = z.infer<typeof MatchTournamentSchema>;
 export type MatchPlayer = z.infer<typeof MatchPlayerSchema>;
 export type MatchBeatmap = z.infer<typeof MatchBeatmapSchema>;
@@ -162,3 +206,30 @@ export type RatingAdjustment = z.infer<typeof RatingAdjustmentSchema>;
 export type MatchWinRecord = z.infer<typeof MatchWinRecordSchema>;
 export type Match = z.infer<typeof MatchSchema>;
 export type MatchDetail = z.infer<typeof MatchDetailSchema>;
+export type MatchAdminNoteCreateInput = z.infer<
+  typeof MatchAdminNoteCreateInputSchema
+>;
+export type MatchAdminNoteUpdateInput = z.infer<
+  typeof MatchAdminNoteUpdateInputSchema
+>;
+export type MatchAdminNoteDeleteInput = z.infer<
+  typeof MatchAdminNoteDeleteInputSchema
+>;
+export type GameAdminNoteCreateInput = z.infer<
+  typeof GameAdminNoteCreateInputSchema
+>;
+export type GameAdminNoteUpdateInput = z.infer<
+  typeof GameAdminNoteUpdateInputSchema
+>;
+export type GameAdminNoteDeleteInput = z.infer<
+  typeof GameAdminNoteDeleteInputSchema
+>;
+export type GameScoreAdminNoteCreateInput = z.infer<
+  typeof GameScoreAdminNoteCreateInputSchema
+>;
+export type GameScoreAdminNoteUpdateInput = z.infer<
+  typeof GameScoreAdminNoteUpdateInputSchema
+>;
+export type GameScoreAdminNoteDeleteInput = z.infer<
+  typeof GameScoreAdminNoteDeleteInputSchema
+>;

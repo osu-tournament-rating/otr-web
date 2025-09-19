@@ -22,10 +22,19 @@ import {
   updateTournamentAdmin,
 } from './procedures/tournaments/adminProcedures';
 import {
+  createGameAdminNote,
+  createMatchAdminNote,
+  createScoreAdminNote,
   createTournamentAdminNote,
+  deleteGameAdminNote,
+  deleteMatchAdminNote,
+  deleteScoreAdminNote,
   deleteTournamentAdminNote,
+  updateGameAdminNote,
+  updateMatchAdminNote,
+  updateScoreAdminNote,
   updateTournamentAdminNote,
-} from './procedures/tournaments/adminNotesProcedures';
+} from './procedures/adminNotesProcedures';
 import { getPlatformStats } from './procedures/statsProcedures';
 import {
   filterRegistrants,
@@ -53,6 +62,25 @@ export const router = base.router({
   },
   matches: {
     get: getMatch,
+    adminNotes: {
+      create: createMatchAdminNote,
+      update: updateMatchAdminNote,
+      delete: deleteMatchAdminNote,
+    },
+  },
+  games: {
+    adminNotes: {
+      create: createGameAdminNote,
+      update: updateGameAdminNote,
+      delete: deleteGameAdminNote,
+    },
+  },
+  scores: {
+    adminNotes: {
+      create: createScoreAdminNote,
+      update: updateScoreAdminNote,
+      delete: deleteScoreAdminNote,
+    },
   },
   players: {
     get: getPlayer,

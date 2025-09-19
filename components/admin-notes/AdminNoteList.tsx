@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@/lib/osu/enums';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AdminNoteListItem from './AdminNoteListItem';
 import { AdminNote } from './types';

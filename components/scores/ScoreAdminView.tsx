@@ -13,13 +13,13 @@ import { Input } from '@/components/ui/input';
 import { scoreEditFormSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { GameScoreDTO } from '@osu-tournament-rating/otr-api-client';
 import {
-  Roles,
-  GameScoreDTO,
-  Mods,
-  ScoreRejectionReason,
   AdminNoteRouteTarget,
-} from '@osu-tournament-rating/otr-api-client';
+  Mods,
+  Roles,
+  ScoreRejectionReason,
+} from '@/lib/osu/enums';
 import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';
@@ -66,6 +66,8 @@ import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import SimpleTooltip from '../simple-tooltip';
+import { getAdminNoteMutations } from '../admin-notes/adminNoteMutations';
+import type { GameScore } from '@/lib/orpc/schema/match';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -94,7 +96,7 @@ const scoreRejectionReasonOptions = Object.entries(
   }))
   .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
 
-export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
+export default function ScoreAdminView({ score }: { score: GameScore }) {
   const form = useForm<z.infer<typeof scoreEditFormSchema>>({
     resolver: zodResolver(scoreEditFormSchema),
     defaultValues: score,
@@ -114,6 +116,9 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
 
   const router = useRouter();
   const matchId = params?.id ? Number(params.id) : null;
+  const scoreNoteMutations = getAdminNoteMutations(
+    AdminNoteRouteTarget.GameScore
+  );
 
   if (!session?.scopes?.includes(Roles.Admin)) {
     return null;
@@ -144,16 +149,35 @@ export default function ScoreAdminView({ score }: { score: GameScoreDTO }) {
     try {
       const patchedScore = await update({
         id: score.id,
-        body: createPatchOperations(score, values as GameScoreDTO),
+        body: createPatchOperations(
+          score as unknown as GameScoreDTO,
+          values as GameScoreDTO
+        ),
       });
 
-      toast.success('Saved score updates');
+      const noteContent = adminNote.trim();
+      let adminNoteCreated = false;
 
-      if (adminNote !== '') {
-        toast.info(
-          'Score admin notes are not yet available in the new system.'
-        );
+      if (noteContent) {
+        if (!scoreNoteMutations) {
+          toast.error(
+            'Score updated, but admin note support is unavailable for this entity.'
+          );
+        } else {
+          try {
+            await scoreNoteMutations.create(score.id, noteContent);
+            adminNoteCreated = true;
+          } catch {
+            toast.error('Score updated, but failed to create the admin note.');
+          }
+        }
       }
+
+      toast.success(
+        adminNoteCreated
+          ? 'Saved score updates and admin note'
+          : 'Saved score updates'
+      );
 
       // Reset forms
       form.reset(patchedScore);

@@ -1,7 +1,7 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { AdminNoteRouteTarget } from '@osu-tournament-rating/otr-api-client';
+import { AdminNoteRouteTarget } from '@/lib/osu/enums';
 import Link from 'next/link';
 import { Users, Target, Calendar } from 'lucide-react';
 
