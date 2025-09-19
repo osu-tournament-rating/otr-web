@@ -34,9 +34,6 @@ const isDatabaseError = (error: unknown): error is DatabaseError =>
 const NAME_AND_ABBREVIATION_CONFLICT_MESSAGE =
   'A tournament with this name and abbreviation already exists. Please double-check before submitting.';
 
-const FORUM_URL_CONFLICT_MESSAGE =
-  'A tournament with this forum URL already exists. Please double-check before submitting.';
-
 export const submitTournament = protectedProcedure
   .input(TournamentSubmissionInputSchema)
   .output(TournamentSubmissionResponseSchema)
@@ -77,17 +74,6 @@ export const submitTournament = protectedProcedure
         if (existingWithNameAndAbbreviation) {
           throw new ORPCError('CONFLICT', {
             message: NAME_AND_ABBREVIATION_CONFLICT_MESSAGE,
-          });
-        }
-
-        const existingWithForumUrl = await tx.query.tournaments.findFirst({
-          columns: { id: true },
-          where: eq(schema.tournaments.forumUrl, input.forumUrl),
-        });
-
-        if (existingWithForumUrl) {
-          throw new ORPCError('CONFLICT', {
-            message: FORUM_URL_CONFLICT_MESSAGE,
           });
         }
 
@@ -216,12 +202,6 @@ export const submitTournament = protectedProcedure
         ) {
           throw new ORPCError('CONFLICT', {
             message: NAME_AND_ABBREVIATION_CONFLICT_MESSAGE,
-          });
-        }
-
-        if (detail.includes('(forum_url)')) {
-          throw new ORPCError('CONFLICT', {
-            message: FORUM_URL_CONFLICT_MESSAGE,
           });
         }
 
