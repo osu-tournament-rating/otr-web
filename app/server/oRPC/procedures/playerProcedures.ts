@@ -12,6 +12,7 @@ import {
   type PlayerFrequency,
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerSchema } from '@/lib/orpc/schema/player';
 import { Ruleset } from '@/lib/osu/enums';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
@@ -23,6 +24,7 @@ export const getPlayer = publicProcedure
       id: z.number().int().positive(),
     })
   )
+  .output(PlayerSchema)
   .handler(async ({ input, context }) => {
     const player = await context.db
       .select()
@@ -36,7 +38,7 @@ export const getPlayer = publicProcedure
       });
     }
 
-    return player[0];
+    return PlayerSchema.parse(player[0]);
   });
 type PlayerRow = typeof schema.players.$inferSelect;
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
