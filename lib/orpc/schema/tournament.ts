@@ -128,6 +128,37 @@ export const TournamentIdInputSchema = z.object({
   id: z.number().int().positive(),
 });
 
+const BeatmapOsuIdSchema = z.number().int().min(1).max(20_000_000);
+
+const BeatmapIdSchema = z.number().int().positive();
+
+export const TournamentBeatmapAdminMutationInputSchema = z
+  .object({
+    tournamentId: z.number().int().positive(),
+    addBeatmapOsuIds: z.array(BeatmapOsuIdSchema).default([]),
+    removeBeatmapIds: z.array(BeatmapIdSchema).default([]),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.addBeatmapOsuIds.length > 0 ||
+      value.removeBeatmapIds.length > 0
+    ) {
+      return;
+    }
+
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'At least one beatmap ID must be provided',
+      path: ['addBeatmapOsuIds'],
+    });
+  });
+
+export const TournamentBeatmapAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+  addedCount: z.number().int().nonnegative(),
+  skippedCount: z.number().int().nonnegative(),
+});
+
 export const TournamentResetAutomatedChecksInputSchema =
   TournamentIdInputSchema.extend({
     overrideVerifiedState: z.boolean().optional().default(false),
@@ -147,6 +178,12 @@ export type TournamentAdminUpdateInput = z.infer<
 >;
 export type TournamentAdminMutationResponse = z.infer<
   typeof TournamentAdminMutationResponseSchema
+>;
+export type TournamentBeatmapAdminMutationInput = z.infer<
+  typeof TournamentBeatmapAdminMutationInputSchema
+>;
+export type TournamentBeatmapAdminMutationResponse = z.infer<
+  typeof TournamentBeatmapAdminMutationResponseSchema
 >;
 export type TournamentResetAutomatedChecksInput = z.infer<
   typeof TournamentResetAutomatedChecksInputSchema

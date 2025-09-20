@@ -1,15 +1,12 @@
 'use client';
 
-import { Roles } from '@osu-tournament-rating/otr-api-client';
 import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/lib/hooks/useSession';
-import {
-  insertBeatmaps,
-  deleteSpecificBeatmaps,
-} from '@/lib/actions/tournaments';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { orpc } from '@/lib/orpc/orpc';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -85,7 +82,7 @@ export default function TournamentBeatmapsAdminView({
   const [beatmapIdsToAdd, setBeatmapIdsToAdd] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
 
-  const isAdmin = session?.scopes?.includes(Roles.Admin) ?? false;
+  const isAdmin = hasAdminScope(session?.scopes);
 
   const filteredBeatmaps = useMemo(
     () =>
@@ -139,11 +136,15 @@ export default function TournamentBeatmapsAdminView({
 
     setIsDeleting(true);
     try {
-      await deleteSpecificBeatmaps(
+      const beatmapIds = Array.from(selectedBeatmapIds);
+
+      await orpc.tournaments.admin.manageBeatmaps({
         tournamentId,
-        Array.from(selectedBeatmapIds)
-      );
-      const count = selectedBeatmapIds.size;
+        addBeatmapOsuIds: [],
+        removeBeatmapIds: beatmapIds,
+      });
+
+      const count = beatmapIds.length;
       toast.success(
         `Successfully removed ${count} beatmap${count === 1 ? '' : 's'}`
       );
@@ -204,18 +205,44 @@ export default function TournamentBeatmapsAdminView({
     }
 
     const ids = parseBeatmapIds(beatmapIdsToAdd);
+    const uniqueIds = Array.from(new Set(ids));
 
-    if (ids.length === 0) {
+    if (uniqueIds.length === 0) {
       toast.error('No valid beatmap IDs could be parsed from the input');
       return;
     }
 
     setIsAdding(true);
     try {
-      await insertBeatmaps(tournamentId, ids);
-      toast.success(
-        `Successfully added ${ids.length} beatmap${ids.length === 1 ? '' : 's'}`
-      );
+      const result = await orpc.tournaments.admin.manageBeatmaps({
+        tournamentId,
+        addBeatmapOsuIds: uniqueIds,
+        removeBeatmapIds: [],
+      });
+
+      const { addedCount, skippedCount } = result;
+
+      if (addedCount === 0 && skippedCount > 0) {
+        toast.success(
+          `No new beatmaps were added. Skipped ${skippedCount} already pooled beatmap${
+            skippedCount === 1 ? '' : 's'
+          }.`
+        );
+      } else {
+        const parts = [
+          `Added ${addedCount} beatmap${addedCount === 1 ? '' : 's'}.`,
+        ];
+
+        if (skippedCount > 0) {
+          parts.push(
+            `Skipped ${skippedCount} beatmap${
+              skippedCount === 1 ? '' : 's'
+            } already pooled.`
+          );
+        }
+
+        toast.success(parts.join(' '));
+      }
       setBeatmapIdsToAdd('');
       setIsAddDialogOpen(false);
       router.refresh();

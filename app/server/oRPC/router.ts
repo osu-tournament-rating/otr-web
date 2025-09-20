@@ -24,6 +24,7 @@ import {
   resetTournamentAutomatedChecks,
   updateTournamentAdmin,
 } from './procedures/tournaments/adminProcedures';
+import { manageTournamentBeatmapsAdmin } from './procedures/tournaments/beatmapAdminProcedures';
 import {
   createGameAdminNote,
   createMatchAdminNote,
@@ -119,6 +120,7 @@ export const router = base.router({
       resetAutomatedChecks: resetTournamentAutomatedChecks,
       acceptPreVerificationStatuses: acceptTournamentPreVerificationStatuses,
       delete: deleteTournamentAdmin,
+      manageBeatmaps: manageTournamentBeatmapsAdmin,
       deleteBeatmaps: deleteTournamentBeatmapsAdmin,
       refetchMatchData: refetchTournamentMatchData,
     },
