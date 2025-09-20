@@ -1,12 +1,5 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-
-import * as schema from './schema';
-import * as relations from './relations';
-
-const dbSchema = {
-  ...schema,
-  ...relations,
-};
+import { dbSchema } from '@otr/core/db';
 
 export const db = drizzle(process.env.DATABASE_URL!, {
   schema: dbSchema,

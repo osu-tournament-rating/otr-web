@@ -17,6 +17,11 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@otr/core": ["packages/otr-core/src/index.ts"],
+      "@otr/core/*": ["packages/otr-core/src/*"]
+    }
   }
 }

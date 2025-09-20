@@ -6,5 +6,8 @@
     "dev": "echo \"TODO: implement worker dev server\"",
     "build": "echo \"TODO\"",
     "start": "echo \"TODO\""
+  },
+  "dependencies": {
+    "@otr/core": "workspace:*"
   }
 }
