@@ -262,15 +262,13 @@ export const auth = betterAuth({
               return null;
             }
 
-            // osu! OAuth2 doesn't return email addresses
-            // We use a non-routable domain (.invalid) as a placeholder
-            // The actual user identification is done via the osu! user ID
+            // osu! OAuth2 doesn't return email addresses, so we use a placeholder
             return {
               id: profile.id.toString(),
               email: `placeholder-${profile.id}`,
               name: profile.username,
               image: profile.avatar_url,
-              emailVerified: false, // Always false since osu! doesn't provide emails
+              emailVerified: false,
             };
           },
         },
