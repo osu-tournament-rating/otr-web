@@ -1,0 +1,10 @@
+{
+  "name": "data-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"TODO: implement worker dev server\"",
+    "build": "echo \"TODO\"",
+    "start": "echo \"TODO\""
+  }
+}

@@ -5,8 +5,11 @@ set -e
 # Ensure the hook runs from the repository root
 cd "$(dirname "$0")/.."
 
-echo "Running TypeScript type check..."
-npx tsc --noEmit
+echo "Running TypeScript type check for apps/web..."
+npx tsc --noEmit -p apps/web/tsconfig.json
+
+echo "Running TypeScript type check for apps/data-worker..."
+npx tsc --noEmit -p apps/data-worker/tsconfig.json
 
 staged_files="$(git diff --cached --name-only --diff-filter=ACM)"
 
