@@ -41,6 +41,7 @@ import { MatchRejectionReason, MatchWarningFlags } from '@/lib/osu/enums';
 import type { MatchDetail } from '@/lib/orpc/schema/match';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
+import MergeMatchButton from './MergeMatchButton';
 import { useRouter } from 'next/navigation';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
@@ -271,6 +272,9 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                 >
                   Reset
                 </Button>
+
+                {/* Merge match */}
+                <MergeMatchButton match={{ id: match.id, name: match.name }} />
 
                 {/* Delete match */}
                 <DeleteButton

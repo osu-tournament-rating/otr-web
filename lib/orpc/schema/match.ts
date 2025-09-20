@@ -171,6 +171,17 @@ export const MatchAdminMutationResponseSchema = z.object({
   success: z.boolean(),
 });
 
+export const MatchAdminMergeInputSchema = z.object({
+  id: PositiveIntSchema,
+  childMatchIds: z.array(PositiveIntSchema).min(1),
+});
+
+export const MatchAdminMergeResponseSchema = z.object({
+  success: z.boolean(),
+  mergedMatchCount: NonNegativeIntSchema,
+  rehomedGameCount: NonNegativeIntSchema,
+});
+
 export const GameAdminUpdateInputSchema = z.object({
   id: PositiveIntSchema,
   ruleset: NonNegativeIntSchema,
@@ -186,6 +197,31 @@ export const GameAdminUpdateInputSchema = z.object({
 
 export const GameAdminMutationResponseSchema = z.object({
   success: z.boolean(),
+});
+
+export const GameAdminMergeInputSchema = z.object({
+  id: PositiveIntSchema,
+  childGameIds: z.array(PositiveIntSchema).min(1),
+});
+
+export const GameAdminMergeResponseSchema = z.object({
+  success: z.boolean(),
+  mergedGameCount: NonNegativeIntSchema,
+  movedScoreCount: NonNegativeIntSchema,
+});
+
+export const GameAdminLookupInputSchema = z.object({
+  ids: z.array(PositiveIntSchema).min(1),
+});
+
+export const GameAdminPreviewSchema = z.object({
+  id: PositiveIntSchema,
+  matchId: PositiveIntSchema,
+  beatmapOsuId: NonNegativeIntSchema.nullable(),
+  beatmapTitle: z.string().nullable(),
+  beatmapDifficulty: z.string().nullable(),
+  scoresCount: NonNegativeIntSchema,
+  startTime: z.string().datetime().nullable(),
 });
 
 export const GameScoreAdminUpdateInputSchema = z.object({
@@ -289,6 +325,10 @@ export type MatchAdminUpdateInput = z.infer<typeof MatchAdminUpdateInputSchema>;
 export type MatchAdminMutationResponse = z.infer<
   typeof MatchAdminMutationResponseSchema
 >;
+export type MatchAdminMergeInput = z.infer<typeof MatchAdminMergeInputSchema>;
+export type MatchAdminMergeResponse = z.infer<
+  typeof MatchAdminMergeResponseSchema
+>;
 export type MatchAdminDeleteInput = z.infer<typeof MatchAdminDeleteInputSchema>;
 export type MatchAdminDeletePlayerScoresInput = z.infer<
   typeof MatchAdminDeletePlayerScoresInputSchema
@@ -309,6 +349,12 @@ export type GameAdminUpdateInput = z.infer<typeof GameAdminUpdateInputSchema>;
 export type GameAdminMutationResponse = z.infer<
   typeof GameAdminMutationResponseSchema
 >;
+export type GameAdminMergeInput = z.infer<typeof GameAdminMergeInputSchema>;
+export type GameAdminMergeResponse = z.infer<
+  typeof GameAdminMergeResponseSchema
+>;
+export type GameAdminLookupInput = z.infer<typeof GameAdminLookupInputSchema>;
+export type GameAdminPreview = z.infer<typeof GameAdminPreviewSchema>;
 export type GameAdminDeleteInput = z.infer<typeof GameAdminDeleteInputSchema>;
 export type GameAdminNoteCreateInput = z.infer<
   typeof GameAdminNoteCreateInputSchema

@@ -43,6 +43,7 @@ import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { hasAdminScope } from '@/lib/auth/roles';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
+import MergeGameButton from './MergeGameButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
 
@@ -389,6 +390,9 @@ export default function GameAdminView({ game }: { game: Game }) {
                 >
                   Reset
                 </Button>
+
+                {/* Merge game */}
+                <MergeGameButton game={game} />
 
                 {/* Delete game */}
                 <DeleteButton

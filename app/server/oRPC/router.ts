@@ -4,11 +4,14 @@ import { getLeaderboard } from './procedures/leaderboardProcedures';
 import { getMatch } from './procedures/matchesProcedures';
 import {
   deleteGameAdmin,
+  lookupGamesAdmin,
+  mergeGameAdmin,
   updateGameAdmin,
 } from './procedures/games/adminProcedures';
 import {
   deleteMatchAdmin,
   deleteMatchPlayerScoresAdmin,
+  mergeMatchAdmin,
   updateMatchAdmin,
 } from './procedures/matches/adminProcedures';
 import {
@@ -80,6 +83,7 @@ export const router = base.router({
       update: updateMatchAdmin,
       delete: deleteMatchAdmin,
       deletePlayerScores: deleteMatchPlayerScoresAdmin,
+      merge: mergeMatchAdmin,
     },
     adminNotes: {
       create: createMatchAdminNote,
@@ -91,6 +95,8 @@ export const router = base.router({
     admin: {
       update: updateGameAdmin,
       delete: deleteGameAdmin,
+      merge: mergeGameAdmin,
+      lookup: lookupGamesAdmin,
     },
     adminNotes: {
       create: createGameAdminNote,
