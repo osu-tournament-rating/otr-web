@@ -1,8 +1,10 @@
 import { Ruleset } from '@/lib/osu/enums';
 import { z } from 'zod/v4';
 
-const FilteringCriteriaSchema = z.object({
-  ruleset: z.nativeEnum(Ruleset),
+const osuPlayerIdsSchema = z.array(z.number().int().positive());
+
+export const FilteringRequestSchema = z.object({
+  ruleset: z.enum(Ruleset),
   minRating: z.number().int().optional().nullable(),
   maxRating: z.number().int().optional().nullable(),
   peakRating: z.number().int().optional().nullable(),
@@ -10,10 +12,7 @@ const FilteringCriteriaSchema = z.object({
   maxTournamentsPlayed: z.number().int().optional().nullable(),
   matchesPlayed: z.number().int().optional().nullable(),
   maxMatchesPlayed: z.number().int().optional().nullable(),
-});
-
-export const FilteringRequestSchema = FilteringCriteriaSchema.extend({
-  osuPlayerIds: z.array(z.number().int().positive()).min(1).max(500),
+  osuPlayerIds: osuPlayerIdsSchema.min(1).max(5000),
 });
 
 export type FilteringRequest = z.infer<typeof FilteringRequestSchema>;
@@ -41,8 +40,8 @@ export const FilteringResultSchema = z.object({
 
 export type FilteringResult = z.infer<typeof FilteringResultSchema>;
 
-export const StoredFilteringRequestSchema = FilteringCriteriaSchema.extend({
-  osuPlayerIds: z.array(z.number().int().positive()),
+export const StoredFilteringRequestSchema = FilteringRequestSchema.extend({
+  osuPlayerIds: osuPlayerIdsSchema,
 });
 
 export type StoredFilteringRequest = z.infer<

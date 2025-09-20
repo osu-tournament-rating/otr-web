@@ -1,8 +1,8 @@
 import { ORPCError } from '@orpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import * as schema from '@/lib/db/schema';
+import type { DatabaseClient } from '@/lib/db';
 import { AdminNoteSchema } from '@/lib/orpc/schema/common';
 import {
   TournamentAdminMutationResponseSchema,
@@ -47,7 +47,7 @@ const FALLBACK_ADMIN_USER = {
   player: FALLBACK_PLAYER,
 };
 
-type DrizzleDatabase = NodePgDatabase<typeof schema>;
+type DrizzleDatabase = DatabaseClient;
 
 type AdminNote = ReturnType<(typeof AdminNoteSchema)['parse']>;
 
