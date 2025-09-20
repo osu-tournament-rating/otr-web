@@ -5,7 +5,6 @@ declare namespace NodeJS {
     /** Deprecated */
     NEXT_PUBLIC_APP_BASE_URL: string;
     DATABASE_URL: string;
-    IS_RESTRICTED_ENV?: string;
     API_KEY?: string;
     BETTER_AUTH_SECRET: string;
     BETTER_AUTH_URL: string;

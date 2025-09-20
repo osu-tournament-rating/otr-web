@@ -96,14 +96,14 @@ bunx tsc --noEmit     # Type check without emitting
 
 ## Legacy Surfaces & Migration Notes
 
-- **Middleware**: `middleware.ts` still validates sessions through the legacy API (`getSession`), manages whitelist scopes, and cleans up old cookies. Changes to auth flows should update both the middleware and the Better Auth-backed procedures to stay consistent during migration.
+- **Middleware**: `middleware.ts` now only performs legacy cookie cleanup. Handle any authentication or authorization requirements within the relevant route modules instead of relying on middleware.
 - **Session provider**: `components/session-provider.tsx` relies on `UserDTO` from the deprecated API. Plan to replace it with a Better Auth + oRPC powered context before removing the legacy client.
 - **Server helpers**: `lib/api/server.ts` and the server `lib/actions/*` files wrap legacy endpoints. When modifying these areas, consider introducing oRPC procedures that replicate required functionality, then phase out the wrappers.
 - **Documentation**: Call out migration touchpoints in PR descriptions and add TODOs where both legacy and new flows must coexist temporarily.
 
 ## Environment & Secrets
 
-- Defined in `env.d.ts`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, optional `API_KEY`, `IS_RESTRICTED_ENV`, plus deprecated `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_APP_BASE_URL` for legacy clients.
+- Defined in `env.d.ts`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, optional `API_KEY`, plus deprecated `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_APP_BASE_URL` for legacy clients.
 - Set `NEXT_PUBLIC_APP_BASE_URL` (or rely on runtime origin) so the oRPC client and Better Auth client resolve correct URLs in SSR and CSR contexts.
 - Never commit `.env`; reference `env.d.ts` for required values and update it when adding new configuration.
 
