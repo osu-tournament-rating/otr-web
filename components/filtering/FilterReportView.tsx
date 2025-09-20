@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { ORPCError } from '@orpc/client';
 import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +73,12 @@ export function FilterReportView() {
       } else {
         toast.error('Filter report exists but contains no results data');
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
+        toast.error('Filter report does not exist.');
+        return;
+      }
+
       toast.error('Failed to load filter report. Please try again.');
     } finally {
       setIsLoading(false);
