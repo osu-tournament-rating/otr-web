@@ -8,21 +8,22 @@ import SimpleTooltip from '../simple-tooltip';
 import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
 
 interface TierProgressProps {
-  tierProgress: PlayerRatingStats['tierProgress'];
+  rating: PlayerRatingStats;
 }
 
-export default function PlayerTierProgress({
-  tierProgress,
-}: TierProgressProps) {
+export default function PlayerTierProgress({ rating }: TierProgressProps) {
+  const { tierProgress } = rating;
+  const ratingNeeded = tierProgress.ratingForNextMajorTier - rating.rating;
+
   if (!tierProgress.nextMajorTier) return null;
 
   return (
-    <div className="rounded-lg bg-muted/50 p-4">
+    <div className="bg-muted/50 rounded-lg p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xl font-semibold">Tier Progress</span>
         <span className="text-muted-foreground">
-          <span className="font-semibold text-primary">
-            {tierProgress.ratingForNextMajorTier.toFixed()}
+          <span className="text-primary font-semibold">
+            {ratingNeeded.toFixed(0)}
           </span>
           <span className="inline-block w-[0.125em]" />
           <TRText className="text-xs" /> until{' '}
@@ -50,7 +51,7 @@ export default function PlayerTierProgress({
         <div className="flex flex-1 items-center gap-2">
           {[3, 2, 1].map((subtier) => (
             <div key={subtier} className="flex flex-1 flex-col">
-              <div className="mb-2 text-center font-medium text-muted-foreground">
+              <div className="text-muted-foreground mb-2 text-center font-medium">
                 {subtier === 3 ? 'III' : subtier === 2 ? 'II' : 'I'}
               </div>
               <Progress
@@ -62,7 +63,7 @@ export default function PlayerTierProgress({
                     100
                   )
                 )}
-                className="h-1 w-full bg-accent"
+                className="bg-accent h-1 w-full"
               />
             </div>
           ))}
