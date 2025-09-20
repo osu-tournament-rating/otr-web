@@ -29,7 +29,7 @@ export const TournamentListRequestSchema = z.object({
   submittedBy: z.number().int().optional(),
   verifiedBy: z.number().int().optional(),
   lobbySize: z.number().int().optional(),
-  sort: z.nativeEnum(TournamentQuerySortType).optional(),
+  sort: z.enum(TournamentQuerySortType).optional(),
   descending: z.boolean().optional(),
 });
 
@@ -150,18 +150,21 @@ export const TournamentBeatmapAdminMutationInputSchema = z
     addBeatmapOsuIds: z.array(BeatmapOsuIdSchema).default([]),
     removeBeatmapIds: z.array(BeatmapIdSchema).default([]),
   })
-  .superRefine((value, ctx) => {
-    if (
-      value.addBeatmapOsuIds.length > 0 ||
-      value.removeBeatmapIds.length > 0
-    ) {
+  .check((ctx) => {
+    const {
+      value: { addBeatmapOsuIds, removeBeatmapIds },
+      issues,
+    } = ctx;
+
+    if (addBeatmapOsuIds.length > 0 || removeBeatmapIds.length > 0) {
       return;
     }
 
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+    issues.push({
+      code: 'custom',
       message: 'At least one beatmap ID must be provided',
       path: ['addBeatmapOsuIds'],
+      input: addBeatmapOsuIds,
     });
   });
 

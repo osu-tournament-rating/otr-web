@@ -15,13 +15,13 @@ export const CreatedUpdatedOmit = {
   updated: true,
 } as const;
 
-export const RulesetSchema = z.nativeEnum(Ruleset);
-export const ScoringTypeSchema = z.nativeEnum(ScoringType);
-export const TeamTypeSchema = z.nativeEnum(TeamType);
-export const TeamSchema = z.nativeEnum(Team);
-export const ScoreGradeSchema = z.nativeEnum(ScoreGrade);
-export const RatingAdjustmentTypeSchema = z.nativeEnum(RatingAdjustmentType);
-export const VerificationStatusSchema = z.nativeEnum(VerificationStatus);
+export const RulesetSchema = z.enum(Ruleset);
+export const ScoringTypeSchema = z.enum(ScoringType);
+export const TeamTypeSchema = z.enum(TeamType);
+export const TeamSchema = z.enum(Team);
+export const ScoreGradeSchema = z.enum(ScoreGrade);
+export const RatingAdjustmentTypeSchema = z.enum(RatingAdjustmentType);
+export const VerificationStatusSchema = z.enum(VerificationStatus);
 
 export type RulesetValue = z.infer<typeof RulesetSchema>;
 export type ScoringTypeValue = z.infer<typeof ScoringTypeSchema>;

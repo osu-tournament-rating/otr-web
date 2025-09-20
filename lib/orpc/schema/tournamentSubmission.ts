@@ -61,21 +61,28 @@ const baseSubmissionSchema = z.object({
   beatmapIds: z.array(beatmapIdSchema).default([]),
 });
 
-export const TournamentSubmissionInputSchema = baseSubmissionSchema.superRefine(
-  (value, ctx) => {
-    if (!hasUniqueValues(value.ids)) {
-      ctx.addIssue({
+export const TournamentSubmissionInputSchema = baseSubmissionSchema.check(
+  (ctx) => {
+    const {
+      value: { ids, beatmapIds },
+      issues,
+    } = ctx;
+
+    if (!hasUniqueValues(ids)) {
+      issues.push({
         path: ['ids'],
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Duplicate match IDs are not allowed',
+        input: ids,
       });
     }
 
-    if (!hasUniqueValues(value.beatmapIds)) {
-      ctx.addIssue({
+    if (!hasUniqueValues(beatmapIds)) {
+      issues.push({
         path: ['beatmapIds'],
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Duplicate beatmap IDs are not allowed',
+        input: beatmapIds,
       });
     }
   }
@@ -160,23 +167,25 @@ export const tournamentSubmissionFormSchema = baseSubmissionSchema
     ids: parseMatchIds,
     beatmapIds: parseBeatmapIds,
   })
-  .superRefine((value, ctx) => {
-    const ids = value.ids as number[];
-    const beatmapIds = value.beatmapIds as number[];
+  .check((ctx) => {
+    const ids = ctx.value.ids as number[];
+    const beatmapIds = ctx.value.beatmapIds as number[];
 
     if (!hasUniqueValues(ids)) {
-      ctx.addIssue({
+      ctx.issues.push({
         path: ['ids'],
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Duplicate match IDs are not allowed',
+        input: ids,
       });
     }
 
     if (!hasUniqueValues(beatmapIds)) {
-      ctx.addIssue({
+      ctx.issues.push({
         path: ['beatmapIds'],
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Duplicate beatmap IDs are not allowed',
+        input: beatmapIds,
       });
     }
   });
