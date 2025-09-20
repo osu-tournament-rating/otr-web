@@ -1,5 +1,5 @@
 import { orpc } from '@/lib/orpc/orpc';
-import { AdminNoteRouteTarget, VerificationStatus } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget, VerificationStatus } from '@otr/core/osu';
 import {
   TournamentDetail,
   TournamentMatch,
@@ -120,7 +120,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {/* Abbreviation and admin actions */}
           <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="text-muted-foreground font-mono text-sm">
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">
@@ -139,7 +139,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
         <div className="flex flex-row items-center gap-2">
           {/* Tournament name */}
-          <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
+          <h1 className="text-xl font-bold leading-tight sm:text-2xl md:text-3xl">
             {tournament.name}
           </h1>
           <SimpleTooltip content="View tournament on osu! website">
@@ -162,7 +162,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
         </div>
 
         {/* Tournament metadata */}
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <div className="flex items-center gap-1.5">
             <RulesetIcon
               ruleset={tournament.ruleset}
@@ -243,7 +243,7 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   return (
     <Card className="p-6 font-sans">
       <div className="mb-4 flex items-center gap-2">
-        <BarChart3 className="h-6 w-6 text-primary" />
+        <BarChart3 className="text-primary h-6 w-6" />
         <h3 className="font-sans text-lg font-semibold">
           Tournament Statistics
         </h3>
@@ -324,9 +324,9 @@ export default async function Page({ params }: PageProps) {
         <TabsContent value="matches" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="mb-4 flex items-center gap-2">
-              <Swords className="h-6 w-6 text-primary" />
+              <Swords className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">Matches</h3>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 ({tableData.length})
               </span>
             </div>
@@ -338,11 +338,11 @@ export default async function Page({ params }: PageProps) {
         <TabsContent value="beatmaps" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="mb-4 flex items-center gap-2">
-              <Music className="h-6 w-6 text-primary" />
+              <Music className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">
                 Pooled Beatmaps
               </h3>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 ({visibleBeatmapsCount}
                 {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>

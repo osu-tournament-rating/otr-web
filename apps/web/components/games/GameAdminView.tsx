@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/schema';
 import { Game } from '@/lib/orpc/schema/match';
-import { GameRejectionReason, GameWarningFlags, Mods } from '@/lib/osu/enums';
+import { GameRejectionReason, GameWarningFlags, Mods } from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -243,7 +243,7 @@ export default function GameAdminView({ game }: { game: Game }) {
               control={form.control}
               name="isFreeMod"
               render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
                     {/* Disabled because this is a property set on the
                      DTO but isn't configurable or in the database */}

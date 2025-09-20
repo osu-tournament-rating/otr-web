@@ -3,7 +3,7 @@ import { and, asc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DatabaseClient } from '@/lib/db';
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   PlayerDashboardRequestSchema,
   PlayerDashboardStatsSchema,
@@ -13,7 +13,7 @@ import {
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
-import { RatingAdjustmentType, Ruleset } from '@/lib/osu/enums';
+import { RatingAdjustmentType, Ruleset } from '@otr/core/osu';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';

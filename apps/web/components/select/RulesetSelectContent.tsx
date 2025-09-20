@@ -1,5 +1,5 @@
 import { RulesetEnumHelper } from '@/lib/enums';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { SelectContent, SelectItem } from '../ui/select';
 
 export default function RulesetSelectContent({

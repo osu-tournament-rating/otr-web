@@ -15,7 +15,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   TournamentDetailSchema,
   TournamentListItemSchema,
@@ -34,7 +34,7 @@ import {
   TeamType,
   TournamentQuerySortType,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;

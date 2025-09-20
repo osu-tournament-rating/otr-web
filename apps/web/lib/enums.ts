@@ -16,7 +16,7 @@ import {
   TournamentQuerySortType,
   TournamentRejectionReason,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 
 /** Basic enum metadata */
 export type EnumMetadata = {

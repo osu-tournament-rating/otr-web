@@ -8,7 +8,7 @@ import {
   Team,
   TeamType,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 
 export const CreatedUpdatedOmit = {
   created: true,

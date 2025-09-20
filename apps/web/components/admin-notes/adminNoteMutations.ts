@@ -1,5 +1,5 @@
 import { orpc } from '@/lib/orpc/orpc';
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import type { TournamentAdminMutationResponse } from '@/lib/orpc/schema/tournament';
 
 import type { AdminNote } from './types';

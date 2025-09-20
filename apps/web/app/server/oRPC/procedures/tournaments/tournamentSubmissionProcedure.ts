@@ -1,8 +1,8 @@
 import { ORPCError } from '@orpc/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
-import { TournamentRejectionReason, VerificationStatus } from '@/lib/osu/enums';
-import * as schema from '@/lib/db/schema';
+import { TournamentRejectionReason, VerificationStatus } from '@otr/core/osu';
+import * as schema from '@otr/core/db/schema';
 import {
   TournamentSubmissionInputSchema,
   TournamentSubmissionResponseSchema,

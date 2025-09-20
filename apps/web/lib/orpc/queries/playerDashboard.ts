@@ -2,7 +2,7 @@ import { cache } from 'react';
 
 import { orpc } from '@/lib/orpc/orpc';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 export type PlayerDashboardRequest = {
   key: string;

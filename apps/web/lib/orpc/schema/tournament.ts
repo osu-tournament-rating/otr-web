@@ -14,7 +14,7 @@ import type { VerificationStatusValue } from './constants';
 import { AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
-import { TournamentQuerySortType } from '@/lib/osu/enums';
+import { TournamentQuerySortType } from '@otr/core/osu';
 
 export const TournamentListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),

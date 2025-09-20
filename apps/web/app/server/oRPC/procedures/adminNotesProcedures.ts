@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import type { DatabaseClient } from '@/lib/db';
 import { AdminNoteSchema } from '@/lib/orpc/schema/common';
 import {
@@ -24,7 +24,7 @@ import {
 
 import { protectedProcedure } from './base';
 import { ensureAdminSession } from './shared/adminGuard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 

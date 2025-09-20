@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 
-import { TournamentRejectionReason } from '@/lib/osu/enums';
+import { TournamentRejectionReason } from '@otr/core/osu';
 import { RulesetSchema } from './constants';
 
 const getEnumNumericValues = (enumObject: Record<string, unknown>): number[] =>

@@ -1,7 +1,7 @@
 'use client';
 
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 import SimpleTooltip from '../simple-tooltip';
 import { RulesetEnumHelper } from '@/lib/enums';

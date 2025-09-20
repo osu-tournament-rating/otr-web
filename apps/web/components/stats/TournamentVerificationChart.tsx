@@ -23,7 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
-import { VerificationStatus } from '@/lib/osu/enums';
+import { VerificationStatus } from '@otr/core/osu';
 import { VerificationStatusKey } from '@/lib/orpc/schema/stats';
 import {
   CHART_CONSTANTS,
@@ -143,7 +143,7 @@ export default function TournamentVerificationChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CheckCircle className="h-6 w-6 text-primary" />
+          <CheckCircle className="text-primary h-6 w-6" />
           Tournament Verification Status
         </CardTitle>
         <CardDescription>

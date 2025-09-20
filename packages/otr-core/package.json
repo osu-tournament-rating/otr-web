@@ -8,11 +8,10 @@
     ".": "./src/index.ts",
     "./db": "./src/db/index.ts",
     "./db/*": "./src/db/*",
-    "./osu": "./src/osu/index.ts",
+    "./osu": "./src/osu/enums.ts",
     "./osu/*": "./src/osu/*",
-    "./queues": "./src/queues/index.ts",
+    "./queues": "./src/queues/constants.ts",
     "./queues/*": "./src/queues/*",
-    "./messages": "./src/messages/index.ts",
     "./messages/*": "./src/messages/*"
   },
   "peerDependencies": {

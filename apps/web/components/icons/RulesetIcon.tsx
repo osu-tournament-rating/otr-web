@@ -7,7 +7,7 @@ import Mania4k from '@/public/icons/rulesets/mania4k.svg';
 import Mania7k from '@/public/icons/rulesets/mania7k.svg';
 import { FC, SVGProps } from 'react';
 
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 
 const iconMap = {

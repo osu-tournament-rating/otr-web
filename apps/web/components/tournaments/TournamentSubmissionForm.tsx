@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { TournamentRejectionReason } from '@/lib/osu/enums';
+import { TournamentRejectionReason } from '@otr/core/osu';
 import { hasAdminScope } from '@/lib/auth/roles';
 
 // Form section component for better organization
@@ -53,9 +53,9 @@ type FormSectionProps = {
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
   <div className="space-y-4 sm:space-y-6">
-    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
+    <div className="border-border flex items-center gap-2 rounded-md border-b pb-2 sm:gap-3 sm:pb-3">
       {icon}
-      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
+      <h3 className="text-foreground text-lg font-semibold sm:text-xl">
         {title}
       </h3>
     </div>
@@ -120,7 +120,7 @@ export default function TournamentSubmissionForm() {
             className="flex flex-row items-center gap-1"
             href={`/tournaments/${result.id}`}
           >
-            <LinkIcon className="size-4 text-primary" />
+            <LinkIcon className="text-primary size-4" />
             <span className="text-primary">Click to view</span>
           </Link>
         </div>
@@ -139,7 +139,7 @@ export default function TournamentSubmissionForm() {
           className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
         >
           <FormSection
-            icon={<Trophy className="size-6 text-primary" />}
+            icon={<Trophy className="text-primary size-6" />}
             title="Information"
           >
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -156,7 +156,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="OWC2024"
                         {...field}
-                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
                       />
                     </FormControl>
                     <FormMessage />
@@ -176,7 +176,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="osu! World Cup 2024"
                         {...field}
-                        className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
                       />
                     </FormControl>
                     <FormMessage />
@@ -198,7 +198,7 @@ export default function TournamentSubmissionForm() {
                     <Input
                       placeholder="https://osu.ppy.sh/community/forums/topics/..."
                       {...field}
-                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
                       onChange={(e) => {
                         // Strip query parameters before setting value
                         const url = e.target.value;
@@ -228,7 +228,7 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
                     </FormControl>
@@ -252,7 +252,7 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                     </FormControl>
@@ -276,7 +276,7 @@ export default function TournamentSubmissionForm() {
                       type="number"
                       min={1}
                       placeholder="Enter rank restriction"
-                      className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
                       {...field}
                       value={field.value || ''}
                       onChange={(e) => {
@@ -349,7 +349,7 @@ export default function TournamentSubmissionForm() {
           )}
 
           <FormSection
-            icon={<Database className="h-6 w-6 text-primary" />}
+            icon={<Database className="text-primary h-6 w-6" />}
             title="Data"
           >
             {/* Matches */}
@@ -373,7 +373,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="field-sizing-fixed min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="field-sizing-fixed border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
                     />
                   </FormControl>
                   <FormMessage />
@@ -402,7 +402,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="field-sizing-fixed min-h-32 border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                      className="field-sizing-fixed border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
                     />
                   </FormControl>
                   <FormMessage />
@@ -413,7 +413,7 @@ export default function TournamentSubmissionForm() {
 
           <Button
             type="submit"
-            className="w-full rounded-md bg-primary py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl sm:py-6 sm:text-lg"
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? (
@@ -450,7 +450,7 @@ export default function TournamentSubmissionForm() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white"
               onClick={() => {
                 setShowBeatmapWarning(false);
                 setBeatmapWarningConfirmed(true);

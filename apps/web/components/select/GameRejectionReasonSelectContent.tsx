@@ -1,6 +1,6 @@
 import { GameRejectionReasonEnumHelper } from '@/lib/enums';
 import { SelectContent, SelectItem } from '@/components/ui/select';
-import { GameRejectionReason } from '@/lib/osu/enums';
+import { GameRejectionReason } from '@otr/core/osu';
 
 export default function GameRejectionReasonSelectContent() {
   return (

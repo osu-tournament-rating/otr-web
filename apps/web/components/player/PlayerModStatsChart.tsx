@@ -22,7 +22,7 @@ import SimpleTooltip from '../simple-tooltip';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { formatChartNumber } from '@/lib/utils/chart';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerDashboard';
-import { Mods } from '@/lib/osu/enums';
+import { Mods } from '@otr/core/osu';
 
 interface ChartDataEntry {
   label: string;
@@ -135,7 +135,7 @@ export default function PlayerModStatsChart({
           {hasEasyMod && (
             <span className="flex items-center">
               <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
-                <InfoIcon className="h-5 w-5 text-muted-foreground" />
+                <InfoIcon className="text-muted-foreground h-5 w-5" />
               </SimpleTooltip>
             </span>
           )}

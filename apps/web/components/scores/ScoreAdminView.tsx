@@ -17,7 +17,7 @@ import {
   AdminNoteRouteTarget,
   Mods,
   ScoreRejectionReason,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
 import { ControllerFieldState, useForm } from 'react-hook-form';

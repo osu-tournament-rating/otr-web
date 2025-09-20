@@ -1,6 +1,6 @@
 'use client';
 
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
@@ -20,7 +20,7 @@ export default function TournamentPlayerStatsDashboard({
   if (!playerStats || playerStats.length === 0) {
     return (
       <div className={className}>
-        <p className="py-8 text-center text-muted-foreground">
+        <p className="text-muted-foreground py-8 text-center">
           No player statistics available for this tournament.
         </p>
       </div>

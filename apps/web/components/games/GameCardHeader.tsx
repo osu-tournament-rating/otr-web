@@ -3,7 +3,7 @@ import { ExternalLink } from 'lucide-react';
 
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
 import { Game } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import BeatmapBackground from './BeatmapBackground';
 import FormattedDate from '../dates/FormattedDate';
 import ModIconset from '../icons/ModIconset';
@@ -27,7 +27,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
       />
 
       {/* Enhanced overlay for better text contrast */}
-      <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
+      <div className="z-2 absolute inset-0 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
 
       {/* Game / beatmap info */}
       <div className="z-3 flex h-full w-full flex-col p-2 text-white">
@@ -93,7 +93,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
         </div>
         {/* Bottom row */}
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
-          <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
+          <div className="max-w-3/4 flex flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
               <span className="font-semibold text-white">
@@ -111,7 +111,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
           <ModIconset
             mods={game.mods}
             freemod={game.isFreeMod}
-            className="flex min-w-1/8 flex-row items-end justify-end"
+            className="min-w-1/8 flex flex-row items-end justify-end"
             iconClassName="max-h-8 sm:max-h-12"
           />
         </div>

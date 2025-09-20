@@ -13,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import TierIcon from '@/components/icons/TierIcon';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { RulesetEnumHelper } from '@/lib/enums';
 import RulesetIcon from '../icons/RulesetIcon';
@@ -66,7 +66,7 @@ function CustomTooltip(props: ExtendedTooltipProps) {
   const lineData = payload.find((p) => p.dataKey === 'cumulativePercentage');
 
   return (
-    <div className="rounded-lg border bg-background p-2 shadow-sm">
+    <div className="bg-background rounded-lg border p-2 shadow-sm">
       <div className="flex items-center gap-2">
         {data.tier && (
           <TierIcon
@@ -89,12 +89,12 @@ function CustomTooltip(props: ExtendedTooltipProps) {
         </div>
       </div>
       {barData && (
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Players: {formatChartNumber(barData.value as number)}
         </p>
       )}
       {lineData && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Cumulative: {formatPercentage(lineData.value as number, 1)}
         </p>
       )}
@@ -148,7 +148,7 @@ export default function RatingDistributionChart({
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
+            <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
             {rulesetInfo?.text} Rating Distribution
           </CardTitle>
         </CardHeader>
@@ -165,7 +165,7 @@ export default function RatingDistributionChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
+          <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
           {rulesetInfo?.text} Rating Distribution
         </CardTitle>
       </CardHeader>

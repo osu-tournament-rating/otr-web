@@ -1,6 +1,6 @@
 import { sql, eq, and, or, isNotNull } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import { publicProcedure } from './base';
 import {
   PlatformStatsSchema,
@@ -10,7 +10,7 @@ import {
   VerificationStatusKey,
 } from '@/lib/orpc/schema/stats';
 import { CHART_CONSTANTS } from '@/lib/utils/chart';
-import { VerificationStatus } from '@/lib/osu/enums';
+import { VerificationStatus } from '@otr/core/osu';
 
 const { BUCKET_SIZE: RATING_BUCKET_SIZE } = CHART_CONSTANTS;
 

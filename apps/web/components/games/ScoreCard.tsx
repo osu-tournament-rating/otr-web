@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget, Roles, Team } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget, Roles, Team } from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import AdminNoteView from '../admin-notes/AdminNoteView';
@@ -33,10 +33,10 @@ export default function ScoreCard({
   return (
     <div
       data-team={Team[scoreTeam]}
-      className="team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white **:z-10 dark:border-neutral-700 dark:bg-neutral-800"
+      className="team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
     >
       {/* Background team color overlay */}
-      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
+      <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />
 
       {/* Team color on the side of the card */}
       <ScoreTeamColorBar />
@@ -109,7 +109,7 @@ export default function ScoreCard({
             />
             <span
               className={cn(
-                'text-lg text-(--score-text-color)',
+                'text-(--score-text-color) text-lg',
                 won && 'font-bold'
               )}
             >

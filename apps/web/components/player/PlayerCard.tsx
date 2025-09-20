@@ -1,5 +1,5 @@
 import type { PlayerCompact } from '@/lib/orpc/schema/playerDashboard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';
 import { ExternalLink, User } from 'lucide-react';
@@ -13,9 +13,9 @@ interface PlayerCardProps {
 
 export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
   return (
-    <Card className="flex flex-row flex-wrap justify-between border-none bg-popover p-4">
+    <Card className="bg-popover flex flex-row flex-wrap justify-between border-none p-4">
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
-        <Avatar className="h-16 w-16 bg-accent transition-all hover:border-primary/80">
+        <Avatar className="bg-accent hover:border-primary/80 h-16 w-16 transition-all">
           <AvatarImage
             src={`https://a.ppy.sh/${player.osuId}`}
             alt={player.username}
@@ -32,7 +32,7 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
             aria-label="View profile on osu! website"
             className="flex translate-y-px items-center"
           >
-            <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
+            <ExternalLink className="text-muted-foreground/50 h-4 w-4" />
           </Link>
         </div>
       </div>

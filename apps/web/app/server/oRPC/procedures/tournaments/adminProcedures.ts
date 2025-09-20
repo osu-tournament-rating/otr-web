@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   TournamentAdminMutationResponseSchema,
   TournamentAdminUpdateInputSchema,
@@ -12,7 +12,7 @@ import {
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
-import { VerificationStatus } from '@/lib/osu/enums';
+import { VerificationStatus } from '@otr/core/osu';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 

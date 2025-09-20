@@ -6,7 +6,7 @@ import {
   FilteringFailReason,
   Ruleset,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 import { protectedProcedure } from './base';
 import {
   FilterReportSchema,
@@ -15,7 +15,7 @@ import {
   StoredFilteringRequestSchema,
   type PlayerFilteringResult,
 } from '@/lib/orpc/schema/filtering';
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 
 type FilterReportPlayerRow = typeof schema.filterReportPlayers.$inferSelect & {
   player: typeof schema.players.$inferSelect | null;

@@ -5,7 +5,7 @@ import {
   MatchWarningFlags,
   VerificationStatus,
   MatchRejectionReason,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -117,7 +117,7 @@ export const columns = [
           {getValue()}
         </Link>
         {/* Mobile-only additional info */}
-        <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground md:hidden">
+        <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
           <div className="flex items-center gap-2">
             <span>{new Date(row.original.startDate).toLocaleDateString()}</span>
             <span>•</span>

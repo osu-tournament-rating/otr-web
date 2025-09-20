@@ -1,4 +1,4 @@
-import { Mods } from '@/lib/osu/enums';
+import { Mods } from '@otr/core/osu';
 import { ModsEnumHelper } from '../enums';
 
 /** Mod multipliers (ScoreV2, common tournament mods) */

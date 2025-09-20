@@ -8,9 +8,9 @@ import {
 } from 'better-auth/plugins';
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
 import { nextCookies } from 'better-auth/next-js';
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { API as OsuApi } from 'osu-api-v2-js';
 import type { User } from 'osu-api-v2-js';
 

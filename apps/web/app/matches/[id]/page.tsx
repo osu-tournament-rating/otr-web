@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { orpc } from '@/lib/orpc/orpc';
 import { MatchDetail } from '@/lib/orpc/schema/match';
-import { VerificationStatus } from '@/lib/osu/enums';
+import { VerificationStatus } from '@otr/core/osu';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -50,9 +50,9 @@ export default async function Page({ params }: PageProps) {
         <TabsContent value="games" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="mb-4 flex items-center gap-2">
-              <Gamepad2 className="h-6 w-6 text-primary" />
+              <Gamepad2 className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">Games</h3>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 ({gameCount})
               </span>
             </div>
@@ -79,7 +79,7 @@ export default async function Page({ params }: PageProps) {
                   ))}
               </div>
             ) : (
-              <div className="flex h-32 items-center justify-center text-muted-foreground">
+              <div className="text-muted-foreground flex h-32 items-center justify-center">
                 No games recorded for this match
               </div>
             )}
@@ -92,12 +92,12 @@ export default async function Page({ params }: PageProps) {
           ) : (
             <Card className="p-6 font-sans">
               <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
+                <BarChart3 className="text-muted-foreground/50 h-12 w-12" />
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <p className="text-lg font-semibold text-muted-foreground">
+                  <p className="text-muted-foreground text-lg font-semibold">
                     Statistics Not Available
                   </p>
-                  <p className="max-w-md text-sm text-muted-foreground">
+                  <p className="text-muted-foreground max-w-md text-sm">
                     Match statistics are only available for verified matches.
                     This match is currently
                     {match.verificationStatus ===

@@ -2,7 +2,7 @@ import { PlatformStats } from '@/lib/orpc/schema/stats';
 import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
 import RatingDistributionChart from './RatingDistributionChart';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import TournamentsByYearChart from './TournamentsByYearChart';
 import TournamentsByRulesetChart from './TournamentsByRulesetChart';
 import TournamentsByLobbySizeChart from './TournamentsByLobbySizeChart';
@@ -19,7 +19,7 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <BarChart3 className="h-8 w-8 text-primary" />
+          <BarChart3 className="text-primary h-8 w-8" />
           <h1 className="text-3xl font-bold">Platform Statistics</h1>
         </div>
         <p className="text-muted-foreground">

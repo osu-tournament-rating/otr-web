@@ -2,7 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import { CurrentUserSchema } from '@/lib/orpc/schema/user';
 
 import { protectedProcedure } from './base';

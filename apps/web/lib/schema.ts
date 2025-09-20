@@ -13,7 +13,7 @@ import {
   TournamentQuerySortType,
   TournamentRejectionReason,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 import { EnumLike, z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';

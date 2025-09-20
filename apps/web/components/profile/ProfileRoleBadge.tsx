@@ -4,7 +4,7 @@ import { Badge, badgeVariants } from '@/components/ui/badge';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { useMemo } from 'react';
 import { VariantProps } from 'class-variance-authority';
-import { Roles } from '@/lib/osu/enums';
+import { Roles } from '@otr/core/osu';
 
 interface ProfileRoleBadgeProps {
   scopes: string[];

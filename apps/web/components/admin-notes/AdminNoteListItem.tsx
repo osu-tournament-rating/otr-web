@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import { PencilLineIcon, Trash } from 'lucide-react';
 import { iconButtonStyle } from '../buttons/IconButton';
 import { useState } from 'react';
@@ -78,11 +78,11 @@ export default function AdminNoteListItem({
     <div className="flex flex-col">
       <p className="text-foreground">{note.note}</p>
       <div className="flex items-end gap-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           By{' '}
           <Link
             href={`/players/${note.adminUser.player.id}`}
-            className="font-semibold text-primary"
+            className="text-primary font-semibold"
           >
             {note.adminUser.player.username}
           </Link>{' '}

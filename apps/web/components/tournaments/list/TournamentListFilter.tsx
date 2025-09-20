@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { useForm, Control } from 'react-hook-form';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Ruleset, TournamentQuerySortType } from '@/lib/osu/enums';
+import { Ruleset, TournamentQuerySortType } from '@otr/core/osu';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import RulesetIcon from '@/components/icons/RulesetIcon';
@@ -141,14 +141,14 @@ const SearchInput = ({
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Type to search for tournaments..."
               type="search"
-              className="h-12 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
+              className="border-border bg-card focus:border-primary h-12 rounded-lg border-2 pl-10 text-base"
               onKeyDown={onKeyDown}
             />
           </FormControl>
         </FormItem>
       )}
     />
-    <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-muted-foreground" />
+    <Search className="text-muted-foreground absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform" />
   </div>
 );
 

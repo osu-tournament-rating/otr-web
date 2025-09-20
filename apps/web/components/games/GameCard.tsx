@@ -2,7 +2,7 @@ import GameCardHeader from './GameCardHeader';
 import ScoreCard from './ScoreCard';
 import { TeamEnumHelper } from '@/lib/enums';
 import { Game, GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { Team } from '@/lib/osu/enums';
+import { Team } from '@otr/core/osu';
 
 type ScoreMapItem = {
   /** Player score */
@@ -115,7 +115,7 @@ export default function GameCard({
   }
 
   return (
-    <div className="flex flex-col space-y-2 rounded-xl bg-secondary p-3">
+    <div className="bg-secondary flex flex-col space-y-2 rounded-xl p-3">
       <GameCardHeader game={game} />
       {game.scores.length === 0 ? (
         <div className="rounded-md border p-4 text-center">

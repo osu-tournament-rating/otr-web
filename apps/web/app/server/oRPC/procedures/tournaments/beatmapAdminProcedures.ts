@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   TournamentBeatmapAdminMutationInputSchema,
   TournamentBeatmapAdminMutationResponseSchema,
@@ -9,7 +9,7 @@ import {
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 const PLACEHOLDER_DIFF_NAME = 'Pending fetch';
 const PLACEHOLDER_NUMBER = 0;

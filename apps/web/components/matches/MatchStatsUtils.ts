@@ -5,7 +5,7 @@ import {
   PlayerMatchStats,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
-import { Team } from '@/lib/osu/enums';
+import { Team } from '@otr/core/osu';
 import { TierName } from '@/lib/utils/tierData';
 
 export type HighlightColor =

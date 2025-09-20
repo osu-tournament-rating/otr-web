@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { RulesetEnumHelper } from '@/lib/enums';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { orpc } from '@/lib/orpc/orpc';
@@ -178,7 +178,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
         <p className="flex items-center gap-2">
           <strong>Ruleset:</strong>
           <SimpleTooltip content={rulesetLabel}>
-            <RulesetIcon ruleset={ruleset} className="h-4 w-4 fill-primary" />
+            <RulesetIcon ruleset={ruleset} className="fill-primary h-4 w-4" />
           </SimpleTooltip>
         </p>
         {childMatch.osuId && (
@@ -331,7 +331,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
                   )}
                 </Button>
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-destructive text-sm">{error}</p>}
             </div>
 
             {renderChildMatchesList()}

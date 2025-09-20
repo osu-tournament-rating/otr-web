@@ -1,6 +1,6 @@
 import { createSelectSchema } from 'drizzle-zod';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 
 export const playerSelectSchema = createSelectSchema(schema.players);
 

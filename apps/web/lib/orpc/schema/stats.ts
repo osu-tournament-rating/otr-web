@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Ruleset, VerificationStatus } from '@/lib/osu/enums';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 const verificationStatusKeyOptions = [
   `${VerificationStatus.None}`,

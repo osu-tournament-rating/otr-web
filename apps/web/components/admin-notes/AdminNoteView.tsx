@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import { Loader2, StickyNote } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -117,7 +117,7 @@ export default function AdminNoteView({
         >
           <StickyNote className="h-3 w-3 text-white/70 hover:text-white" />
           {showNotification && notify && (
-            <div className="absolute -top-1 -right-1 z-50">
+            <div className="absolute -right-1 -top-1 z-50">
               <div className="h-2 w-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
             </div>
           )}

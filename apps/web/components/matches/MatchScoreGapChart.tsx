@@ -16,7 +16,7 @@ import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { ChartTooltip } from '@/components/ui/chart';
 import { Card } from '@/components/ui/card';
 import { Game } from '@/lib/orpc/schema/match';
-import { Mods, Team } from '@/lib/osu/enums';
+import { Mods, Team } from '@otr/core/osu';
 import { ModsEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 
@@ -85,7 +85,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   const isBlueWin = data.winner === 'blue';
 
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-xl">
+    <div className="bg-background rounded-lg border p-3 shadow-xl">
       <div className="mb-2 flex items-center gap-2">
         <div
           className={cn(
@@ -103,7 +103,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         </div>
         <div>
           <p className="text-sm font-semibold">Map {data.mapNumber}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {data.winner === 'tie'
               ? 'Tied'
               : `${data.winner === 'red' ? 'Red' : 'Blue'} wins`}
@@ -113,7 +113,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
       <div className="space-y-1.5 border-t pt-2">
         <div className="text-xs">
-          <p className="font-medium text-foreground">
+          <p className="text-foreground font-medium">
             {data.beatmapArtist} - {data.beatmapTitle}
           </p>
           <p className="text-muted-foreground">[{data.beatmapDifficulty}]</p>
@@ -121,8 +121,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
         {data.mods !== 'NM' && (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">Mods:</span>
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium">
+            <span className="text-muted-foreground text-xs">Mods:</span>
+            <span className="bg-primary/10 rounded px-1.5 py-0.5 text-xs font-medium">
               {data.mods}
             </span>
           </div>
@@ -135,7 +135,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
               {data.redScore.toLocaleString()}
             </span>
           </div>
-          <span className="text-xs text-muted-foreground">vs</span>
+          <span className="text-muted-foreground text-xs">vs</span>
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-sm bg-blue-500" />
             <span className="text-xs font-medium">
@@ -202,12 +202,12 @@ export default function MatchScoreGapChart({ games }: ScoreGapChartProps) {
   return (
     <Card className="p-4 sm:p-5 md:p-6">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <BarChart3 className="h-5 w-5 text-primary" />
+        <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+          <BarChart3 className="text-primary h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold">Score Progression</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Team score differences across all maps
           </p>
         </div>

@@ -16,7 +16,7 @@ import PlayerTierProgress from './PlayerTierProgress';
 import CountryFlag from '@/components/shared/CountryFlag';
 import Link from 'next/link';
 import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 function formatPercentage(value: number | undefined | null): string {
   if (value === undefined || value === null) return 'N/A';

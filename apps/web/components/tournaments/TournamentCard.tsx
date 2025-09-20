@@ -1,7 +1,7 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import Link from 'next/link';
 import { Users, Target, Calendar } from 'lucide-react';
 
@@ -61,7 +61,7 @@ export default function TournamentCard({
           displayText={displayStatusText}
         />
         <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-          <span className="font-mono text-sm text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-sm">
             {tournament.abbreviation}
           </span>
           {allowAdminView && (
@@ -80,11 +80,11 @@ export default function TournamentCard({
         </div>
       </div>
 
-      <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
+      <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
         {tournament.name}
       </h2>
 
-      <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+      <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
         <div className="flex items-center gap-1.5">
           <RulesetIcon
             ruleset={tournament.ruleset}

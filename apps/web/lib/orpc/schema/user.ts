@@ -1,4 +1,4 @@
-import { users } from '@/lib/db/schema';
+import { users } from '@otr/core/db/schema';
 import { createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod/v4';
 

@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 import { ModsEnumHelper } from '@/lib/enums';
-import { Mods } from '@/lib/osu/enums';
+import { Mods } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 
 export default function SingleModIcon({

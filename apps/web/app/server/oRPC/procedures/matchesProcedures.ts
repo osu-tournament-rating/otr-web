@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { asc, desc, eq, inArray } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import { AdminNoteSchema, AdminNoteUserSchema } from '@/lib/orpc/schema/common';
 import {
   MatchDetailSchema,
@@ -18,7 +18,7 @@ import {
   Team,
   TeamType,
   VerificationStatus,
-} from '@/lib/osu/enums';
+} from '@otr/core/osu';
 
 import { publicProcedure } from './base';
 

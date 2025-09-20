@@ -11,7 +11,7 @@ import {
 } from '../ui/table';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
-import { RatingAdjustmentType } from '@/lib/osu/enums';
+import { RatingAdjustmentType } from '@otr/core/osu';
 
 interface PlayerRatingChartTableProps {
   data: PlayerRatingAdjustment[];
@@ -100,7 +100,7 @@ export default function PlayerRatingChartTable({
                 {point.volatilityDelta.toFixed(2)}
               </TableCell>
             )}
-            <TableCell className="max-w-[300px] truncate overflow-y-clip text-muted-foreground">
+            <TableCell className="text-muted-foreground max-w-[300px] overflow-y-clip truncate">
               {point.match?.id && point.match?.name ? (
                 <Link
                   href={`/matches/${point.match.id}`}

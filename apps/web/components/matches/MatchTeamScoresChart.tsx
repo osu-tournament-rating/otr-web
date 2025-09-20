@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
 
 import { Game } from '@/lib/orpc/schema/match';
-import { Mods, Team } from '@/lib/osu/enums';
+import { Mods, Team } from '@otr/core/osu';
 import { ModsEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 
@@ -72,9 +72,9 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   const isTie = data.winner === 'tie';
 
   return (
-    <div className="rounded-xl border border-border/50 bg-background/95 p-4 shadow-2xl backdrop-blur-sm">
+    <div className="border-border/50 bg-background/95 rounded-xl border p-4 shadow-2xl backdrop-blur-sm">
       {/* Header with map info */}
-      <div className="mb-3 border-b border-border/30 pb-3">
+      <div className="border-border/30 mb-3 border-b pb-3">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div
@@ -96,7 +96,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             </div>
             <div>
               <p className="text-sm font-semibold">Map {data.mapNumber}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {isTie
                   ? 'Tied'
                   : `${data.winner === 'red' ? 'Red' : 'Blue'} wins`}
@@ -104,8 +104,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             </div>
           </div>
           {data.mods !== 'NM' && (
-            <div className="rounded-md bg-primary/10 px-2 py-1">
-              <span className="text-xs font-medium text-primary">
+            <div className="bg-primary/10 rounded-md px-2 py-1">
+              <span className="text-primary text-xs font-medium">
                 {data.mods}
               </span>
             </div>
@@ -114,10 +114,10 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
         {/* Beatmap info */}
         <div className="mt-2">
-          <p className="text-xs font-medium text-foreground">
+          <p className="text-foreground text-xs font-medium">
             {data.beatmapArtist} - {data.beatmapTitle}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             [{data.beatmapDifficulty}]
           </p>
         </div>
@@ -127,7 +127,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <div className="space-y-3">
         {/* Map scores */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium">
             Map Scores
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -141,7 +141,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-red-500" />
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-medium">
                   Red
                 </span>
               </div>
@@ -159,7 +159,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-medium">
                   Blue
                 </span>
               </div>
@@ -171,8 +171,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         </div>
 
         {/* Score difference */}
-        <div className="rounded-lg bg-muted/30 p-2.5">
-          <p className="text-xs text-muted-foreground">Score Difference</p>
+        <div className="bg-muted/30 rounded-lg p-2.5">
+          <p className="text-muted-foreground text-xs">Score Difference</p>
           <p className="mt-0.5 text-sm font-semibold">
             {Math.abs(data.scoreDifference).toLocaleString()} points{' '}
             <span
@@ -193,8 +193,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         </div>
 
         {/* Cumulative scores */}
-        <div className="border-t border-border/30 pt-2.5">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">
+        <div className="border-border/30 border-t pt-2.5">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">
             Total Match Score
           </p>
           <div className="flex items-center justify-between gap-4">
@@ -204,7 +204,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
                 {data.cumulativeRedScore.toLocaleString()}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">vs</span>
+            <span className="text-muted-foreground text-xs">vs</span>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">
                 {data.cumulativeBlueScore.toLocaleString()}
@@ -330,12 +330,12 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
   return (
     <Card className="p-4 pb-0">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <LineChartIcon className="h-5 w-5 text-primary" />
+        <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+          <LineChartIcon className="text-primary h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold">Team Score Progression</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Red vs Blue team scores across all beatmaps
           </p>
         </div>

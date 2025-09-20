@@ -8,7 +8,7 @@ import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import { Card } from '@/components/ui/card';
 import { getPlayerDashboardStatsCached } from '@/lib/orpc/queries/playerDashboard';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';

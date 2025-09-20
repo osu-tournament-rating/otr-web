@@ -37,7 +37,7 @@ import VerificationStatusSelectContent from '../select/VerificationStatusSelectC
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { MatchRejectionReason, MatchWarningFlags } from '@/lib/osu/enums';
+import { MatchRejectionReason, MatchWarningFlags } from '@otr/core/osu';
 import type { MatchDetail } from '@/lib/orpc/schema/match';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';

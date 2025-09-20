@@ -46,7 +46,7 @@ import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatuses
 import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
-import { TournamentRejectionReason } from '@/lib/osu/enums';
+import { TournamentRejectionReason } from '@otr/core/osu';
 import RefetchMatchDataButton from './RefetchMatchDataButton';
 
 interface TournamentAdminViewProps {

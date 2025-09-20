@@ -1,4 +1,4 @@
-import { FilteringFailReason } from '@/lib/osu/enums';
+import { FilteringFailReason } from '@otr/core/osu';
 import { FilteringFailReasonEnumHelper } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,7 +20,7 @@ export default function FailureReasonsBadges({
     failureReason === null ||
     failureReason === FilteringFailReason.None
   ) {
-    return <div className="text-center text-muted-foreground">-</div>;
+    return <div className="text-muted-foreground text-center">-</div>;
   }
 
   const reasons = FilteringFailReasonEnumHelper.getMetadata(failureReason);

@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminNoteRouteTarget } from '@/lib/osu/enums';
+import { AdminNoteRouteTarget } from '@otr/core/osu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AdminNoteListItem from './AdminNoteListItem';
 import { AdminNote } from './types';

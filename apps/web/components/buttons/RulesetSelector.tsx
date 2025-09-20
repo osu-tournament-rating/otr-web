@@ -1,6 +1,6 @@
 'use client';
 
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { RulesetButton } from './RulesetButton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -44,7 +44,7 @@ export default function PlayerRulesetSelector({
   };
 
   return (
-    <div className="flex items-center gap-1 rounded fill-primary p-1">
+    <div className="fill-primary flex items-center gap-1 rounded p-1">
       {Object.entries(RulesetEnumHelper.metadata)
         .map(([rulesetKey]) => {
           const ruleset = Number(rulesetKey) as Ruleset;

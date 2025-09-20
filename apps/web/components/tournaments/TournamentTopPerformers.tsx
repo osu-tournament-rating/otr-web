@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Award, User } from 'lucide-react';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TRText from '../rating/TRText';
@@ -71,11 +71,11 @@ export default function TournamentTopPerformers({
           return (
             <div
               key={stats.player.id}
-              className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
+              className="hover:bg-muted/50 flex items-center gap-3 rounded-lg border p-3"
             >
               <div className="flex items-center gap-2">
                 {getPositionIcon(position)}
-                <span className="text-sm font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-sm font-medium">
                   #{position}
                 </span>
               </div>
@@ -104,7 +104,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {stats.averageMatchCost.toFixed(2)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     Match Cost
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {stats.averagePlacement.toFixed(1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     Avg. Placement
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {(stats.gamesPlayed / stats.matchesPlayed).toFixed(1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     Avg. Games
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export default function TournamentTopPerformers({
                     {trChange >= 0 ? '+' : ''}
                     {trChange.toFixed(1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     <TRText />
                   </div>
                 </div>

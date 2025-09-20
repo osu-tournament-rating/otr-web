@@ -1,4 +1,4 @@
-import { Ruleset, VerificationStatus } from '@/lib/osu/enums';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { RulesetEnumHelper, VerificationStatusEnumHelper } from '../enums';
 
 export function isEqualRuleset(ruleset: Ruleset, value: string): boolean {

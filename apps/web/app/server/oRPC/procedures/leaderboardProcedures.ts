@@ -1,13 +1,13 @@
 import { ORPCError } from '@orpc/server';
 import { SQL, and, eq, gte, lte, sql } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   LeaderboardRequestSchema,
   LeaderboardResponseSchema,
 } from '@/lib/orpc/schema/leaderboard';
 import { buildTierProgress, getTierBounds } from '@/lib/utils/tierProgress';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 
 import { publicProcedure } from './base';
 

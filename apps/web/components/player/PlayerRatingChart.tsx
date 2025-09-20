@@ -22,7 +22,7 @@ import { sortData } from '@/lib/utils/playerRatingChart';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
-import { RatingAdjustmentType } from '@/lib/osu/enums';
+import { RatingAdjustmentType } from '@otr/core/osu';
 
 interface PlayerRatingChartProps {
   adjustments: PlayerRatingAdjustment[];
@@ -129,10 +129,10 @@ export default function PlayerRatingChart({
     <Card className="p-6 font-sans">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <LineChartIcon className="h-6 w-6 text-primary" />
+          <LineChartIcon className="text-primary h-6 w-6" />
           <h3 className="font-sans text-lg font-semibold">Rating History</h3>
           <SimpleTooltip content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay.">
-            <Info className="h-4 w-4 text-muted-foreground" />
+            <Info className="text-muted-foreground h-4 w-4" />
           </SimpleTooltip>
         </div>
 

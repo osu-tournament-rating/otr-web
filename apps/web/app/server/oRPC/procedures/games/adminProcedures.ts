@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { eq, inArray, sql } from 'drizzle-orm';
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@otr/core/db/schema';
 import {
   GameAdminDeleteInputSchema,
   GameAdminLookupInputSchema,

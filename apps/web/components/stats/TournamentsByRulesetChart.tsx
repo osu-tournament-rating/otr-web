@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { Gamepad2 } from 'lucide-react';
 import { useMemo } from 'react';
-import { Ruleset } from '@/lib/osu/enums';
+import { Ruleset } from '@otr/core/osu';
 import { RulesetEnumHelper } from '@/lib/enums';
 import RulesetIcon from '../icons/RulesetIcon';
 import {
@@ -56,7 +56,7 @@ function CustomXAxisTick({ x, y, payload }: CustomXAxisTickProps) {
     <g transform={`translate(${x},${y})`}>
       <foreignObject x={-12} y={0} width={24} height={24}>
         <div title={rulesetInfo?.text}>
-          <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
+          <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
         </div>
       </foreignObject>
     </g>
@@ -99,9 +99,9 @@ export default function TournamentsByRulesetChart({
 
     const item = payload[0].payload as ChartDataItem;
     return (
-      <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <div className="bg-background rounded-lg border p-2 shadow-sm">
         <p className="font-bold">Ruleset: {item.name}</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Tournaments: {formatChartNumber(item.count)}
         </p>
       </div>
@@ -112,7 +112,7 @@ export default function TournamentsByRulesetChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Gamepad2 className="h-6 w-6 text-primary" />
+          <Gamepad2 className="text-primary h-6 w-6" />
           Tournaments by Ruleset
         </CardTitle>
         <CardDescription>Verified tournaments by ruleset</CardDescription>

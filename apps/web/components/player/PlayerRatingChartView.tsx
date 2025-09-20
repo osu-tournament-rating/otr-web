@@ -16,7 +16,7 @@ import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { capitalize } from '@/lib/utils';
 import { ChartContainer } from '../ui/chart';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
-import { RatingAdjustmentType } from '@/lib/osu/enums';
+import { RatingAdjustmentType } from '@otr/core/osu';
 
 const CHART_CONSTANTS = {
   MIN_DATA_POINTS: 2,
