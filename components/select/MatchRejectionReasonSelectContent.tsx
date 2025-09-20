@@ -1,6 +1,6 @@
 import { MatchRejectionReasonEnumHelper } from '@/lib/enums';
 import { SelectContent, SelectItem } from '@/components/ui/select';
-import { MatchRejectionReason } from '@osu-tournament-rating/otr-api-client';
+import { MatchRejectionReason } from '@/lib/osu/enums';
 
 export default function MatchRejectionReasonSelectContent() {
   return (

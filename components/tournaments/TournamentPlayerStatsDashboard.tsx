@@ -1,6 +1,6 @@
 'use client';
 
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 
 import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 

@@ -1,4 +1,4 @@
-import { Mods } from '@osu-tournament-rating/otr-api-client';
+import { Mods } from '@/lib/osu/enums';
 import { ModsEnumHelper } from '../enums';
 
 /** Mod multipliers (ScoreV2, common tournament mods) */

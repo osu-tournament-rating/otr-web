@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import type { GameDTO } from '@osu-tournament-rating/otr-api-client';
 import {
   Form,
   FormControl,
@@ -46,7 +45,6 @@ import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
-import MergeGameButton from './MergeGameButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -392,15 +390,12 @@ export default function GameAdminView({ game }: { game: Game }) {
                   Reset
                 </Button>
 
-                {/* Merge game */}
-                <MergeGameButton game={game as unknown as GameDTO} />
-
                 {/* Delete game */}
                 <DeleteButton
                   entityType="game"
                   entityId={game.id}
                   entityName={`Game ${game.id}`}
-                  onDeleted={() => window.location.reload()}
+                  onDeleted={() => router.refresh()}
                 />
               </div>
 

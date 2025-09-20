@@ -1,6 +1,6 @@
 'use client';
 
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import { RulesetButton } from './RulesetButton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';

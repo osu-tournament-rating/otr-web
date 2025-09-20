@@ -4,7 +4,7 @@ import { Badge, badgeVariants } from '@/components/ui/badge';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { useMemo } from 'react';
 import { VariantProps } from 'class-variance-authority';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
+import { Roles } from '@/lib/osu/enums';
 
 interface ProfileRoleBadgeProps {
   scopes: string[];

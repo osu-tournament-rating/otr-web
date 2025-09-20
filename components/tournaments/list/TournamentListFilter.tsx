@@ -11,10 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { useForm, Control } from 'react-hook-form';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import {
-  Ruleset,
-  TournamentQuerySortType,
-} from '@osu-tournament-rating/otr-api-client';
+import { Ruleset, TournamentQuerySortType } from '@/lib/osu/enums';
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import RulesetIcon from '@/components/icons/RulesetIcon';

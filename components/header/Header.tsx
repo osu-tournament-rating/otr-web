@@ -29,7 +29,7 @@ import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
 import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
-import { Roles } from '@osu-tournament-rating/otr-api-client';
+import { Roles } from '@/lib/osu/enums';
 import { useSession as useAuthSession } from '@/lib/auth/auth-client';
 import { useSession } from '@/lib/hooks/useSession';
 

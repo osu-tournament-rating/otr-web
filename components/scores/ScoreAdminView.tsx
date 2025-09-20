@@ -41,7 +41,6 @@ import {
   ScoreRejectionReasonEnumHelper,
   getEnumFlags,
 } from '@/lib/enums';
-import { deletePlayerScores } from '@/lib/actions/matches';
 import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useState } from 'react';
@@ -133,9 +132,13 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
     setIsDeleting(true);
     try {
-      const deletedCount = await deletePlayerScores(matchId, score.playerId);
+      const response = await orpc.matches.admin.deletePlayerScores({
+        matchId,
+        playerId: score.playerId,
+      });
+
       toast.success(
-        `Deleted ${deletedCount} scores for player ${score.playerId}`
+        `Deleted ${response.deletedCount} scores for player ${score.playerId}`
       );
       setShowDeletePlayerScoresDialog(false);
       router.refresh();
@@ -592,7 +595,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     entityType="score"
                     entityId={score.id}
                     entityName={`Score ${score.id}`}
-                    onDeleted={() => window.location.reload()}
+                    onDeleted={() => router.refresh()}
                   />
 
                   {/* Delete all player scores */}

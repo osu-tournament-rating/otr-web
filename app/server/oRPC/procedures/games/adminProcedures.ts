@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 
 import * as schema from '@/lib/db/schema';
 import {
+  GameAdminDeleteInputSchema,
   GameAdminMutationResponseSchema,
   GameAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
@@ -58,6 +59,32 @@ export const updateGameAdmin = protectedProcedure
         updated: NOW,
       })
       .where(eq(schema.games.id, input.id));
+
+    return { success: true } as const;
+  });
+
+export const deleteGameAdmin = protectedProcedure
+  .input(GameAdminDeleteInputSchema)
+  .output(GameAdminMutationResponseSchema)
+  .route({
+    // TODO: Remove 'Admin:' prefix for all admin route summaries
+    summary: 'Admin: delete game',
+    tags: ['admin'],
+    path: '/games/admin/delete',
+  })
+  .handler(async ({ input, context }) => {
+    ensureAdminSession(context.session);
+
+    const deleted = await context.db
+      .delete(schema.games)
+      .where(eq(schema.games.id, input.id))
+      .returning({ id: schema.games.id });
+
+    if (deleted.length === 0) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'Game not found',
+      });
+    }
 
     return { success: true } as const;
   });

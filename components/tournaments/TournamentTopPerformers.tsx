@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Award, User } from 'lucide-react';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TRText from '../rating/TRText';

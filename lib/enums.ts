@@ -13,6 +13,7 @@ import {
   ScoringType,
   Team,
   TeamType,
+  TournamentQuerySortType,
   TournamentRejectionReason,
   VerificationStatus,
 } from '@/lib/osu/enums';
@@ -185,6 +186,38 @@ export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
     },
   },
 };
+
+export const TournamentQuerySortTypeEnumHelper: IEnumHelper<TournamentQuerySortType> =
+  {
+    ...defaultEnumHelper(),
+
+    metadata: {
+      [TournamentQuerySortType.Id]: {
+        text: 'ID',
+        description: 'Sort by primary key (legacy submission order)',
+      },
+      [TournamentQuerySortType.StartTime]: {
+        text: 'Start Date',
+        description: 'Sort by the tournament start date',
+      },
+      [TournamentQuerySortType.EndTime]: {
+        text: 'End Date',
+        description: 'Sort by the tournament end date',
+      },
+      [TournamentQuerySortType.SearchQueryRelevance]: {
+        text: 'Search Relevance',
+        description: 'Sort by how closely tournaments match the search term',
+      },
+      [TournamentQuerySortType.SubmissionDate]: {
+        text: 'Submission Date',
+        description: 'Sort by when tournaments were submitted to o!TR',
+      },
+      [TournamentQuerySortType.LobbySize]: {
+        text: 'Lobby Size',
+        description: 'Sort by configured lobby size',
+      },
+    },
+  };
 
 export const AdminNoteRouteTargetEnumHelper: IEnumHelper<AdminNoteRouteTarget> =
   {

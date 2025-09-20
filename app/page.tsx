@@ -6,7 +6,7 @@ import {
   FeatureCardTitle,
 } from '@/components/home/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import { RulesetEnumHelper } from '@/lib/enums';
 import LinkCard from '@/components/home/LinkCard';
 

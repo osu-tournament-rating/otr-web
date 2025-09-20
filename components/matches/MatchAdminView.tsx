@@ -42,7 +42,6 @@ import type { MatchDetail } from '@/lib/orpc/schema/match';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
 import { useRouter } from 'next/navigation';
-import MergeMatchButton from './MergeMatchButton';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -77,6 +76,7 @@ type EditableMatch = Pick<
   | 'warningFlags'
   | 'startTime'
   | 'endTime'
+  | 'tournament'
 >;
 
 export default function MatchAdminView({ match }: { match: EditableMatch }) {
@@ -272,15 +272,19 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                   Reset
                 </Button>
 
-                {/* Merge match */}
-                <MergeMatchButton match={match} />
-
                 {/* Delete match */}
                 <DeleteButton
                   entityType="match"
                   entityId={match.id}
                   entityName={match.name}
-                  onDeleted={() => window.location.reload()}
+                  onDeleted={() => {
+                    const redirectTarget = match.tournament?.id
+                      ? `/tournaments/${match.tournament.id}`
+                      : '/tournaments';
+
+                    router.replace(redirectTarget);
+                    router.refresh();
+                  }}
                 />
               </div>
 

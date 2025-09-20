@@ -18,9 +18,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { deleteGame } from '@/lib/actions/games';
-import { deleteMatch } from '@/lib/actions/matches';
-import { deleteScore } from '@/lib/actions/scores';
 import { orpc } from '@/lib/orpc/orpc';
 
 type EntityType = 'tournament' | 'match' | 'game' | 'score';
@@ -34,9 +31,9 @@ interface DeleteButtonProps {
 
 const deleteActions: Record<EntityType, (id: number) => Promise<unknown>> = {
   tournament: async (id: number) => orpc.tournaments.admin.delete({ id }),
-  match: deleteMatch,
-  game: deleteGame,
-  score: deleteScore,
+  match: async (id: number) => orpc.matches.admin.delete({ id }),
+  game: async (id: number) => orpc.games.admin.delete({ id }),
+  score: async (id: number) => orpc.scores.admin.delete({ id }),
 };
 
 const entityLabels = {

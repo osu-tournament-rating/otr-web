@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerTournamentStatsBaseDTO } from '@osu-tournament-rating/otr-api-client';
+import type { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 import {
   Table,
   TableBody,
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface TournamentRatingsViewProps {
-  playerStats: PlayerTournamentStatsBaseDTO[];
+  playerStats: TournamentPlayerStats[];
 }
 
 const SortableHeader = ({
@@ -76,7 +76,7 @@ const RatingChangeCell = ({ value }: { value: number }) => {
 const PlayerCell = ({
   player,
 }: {
-  player: PlayerTournamentStatsBaseDTO['player'];
+  player: TournamentPlayerStats['player'];
 }) => (
   <div className="flex min-w-0 items-center gap-3">
     <Image
@@ -102,7 +102,7 @@ export default function TournamentRatingsView({
     { id: 'averageRatingDelta', desc: true },
   ]);
 
-  const columns: ColumnDef<PlayerTournamentStatsBaseDTO>[] = useMemo(
+  const columns: ColumnDef<TournamentPlayerStats>[] = useMemo(
     () => [
       {
         accessorKey: 'player',

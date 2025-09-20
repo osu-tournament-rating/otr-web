@@ -1,6 +1,6 @@
 import { ScoreRejectionReasonEnumHelper } from '@/lib/enums';
 import { SelectContent, SelectItem } from '@/components/ui/select';
-import { ScoreRejectionReason } from '@osu-tournament-rating/otr-api-client';
+import { ScoreRejectionReason } from '@/lib/osu/enums';
 
 export default function ScoreRejectionReasonSelectContent() {
   return (

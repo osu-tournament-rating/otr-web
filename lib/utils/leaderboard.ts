@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { leaderboardFilterSchema } from '../schema';
 import { setFlattenedParams } from './urlParams';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 
 export const leaderboardTierFilterValues = [
   'bronze',

@@ -1,7 +1,7 @@
 'use client';
 
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import { cn } from '@/lib/utils';
 import SimpleTooltip from '../simple-tooltip';
 import { RulesetEnumHelper } from '@/lib/enums';

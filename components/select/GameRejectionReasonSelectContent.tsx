@@ -1,6 +1,6 @@
 import { GameRejectionReasonEnumHelper } from '@/lib/enums';
 import { SelectContent, SelectItem } from '@/components/ui/select';
-import { GameRejectionReason } from '@osu-tournament-rating/otr-api-client';
+import { GameRejectionReason } from '@/lib/osu/enums';
 
 export default function GameRejectionReasonSelectContent() {
   return (

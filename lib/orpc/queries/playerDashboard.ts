@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { orpc } from '@/lib/orpc/orpc';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
 
-type PlayerDashboardRequest = {
+export type PlayerDashboardRequest = {
   key: string;
   dateMin?: Date;
   dateMax?: Date;

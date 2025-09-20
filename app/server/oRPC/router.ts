@@ -2,9 +2,19 @@ import { os } from '@orpc/server';
 
 import { getLeaderboard } from './procedures/leaderboardProcedures';
 import { getMatch } from './procedures/matchesProcedures';
-import { updateGameAdmin } from './procedures/games/adminProcedures';
-import { updateMatchAdmin } from './procedures/matches/adminProcedures';
-import { updateScoreAdmin } from './procedures/scores/adminProcedures';
+import {
+  deleteGameAdmin,
+  updateGameAdmin,
+} from './procedures/games/adminProcedures';
+import {
+  deleteMatchAdmin,
+  deleteMatchPlayerScoresAdmin,
+  updateMatchAdmin,
+} from './procedures/matches/adminProcedures';
+import {
+  deleteScoreAdmin,
+  updateScoreAdmin,
+} from './procedures/scores/adminProcedures';
 import {
   getPlayer,
   getPlayerDashboardStats,
@@ -68,6 +78,8 @@ export const router = base.router({
     get: getMatch,
     admin: {
       update: updateMatchAdmin,
+      delete: deleteMatchAdmin,
+      deletePlayerScores: deleteMatchPlayerScoresAdmin,
     },
     adminNotes: {
       create: createMatchAdminNote,
@@ -78,6 +90,7 @@ export const router = base.router({
   games: {
     admin: {
       update: updateGameAdmin,
+      delete: deleteGameAdmin,
     },
     adminNotes: {
       create: createGameAdminNote,
@@ -88,6 +101,7 @@ export const router = base.router({
   scores: {
     admin: {
       update: updateScoreAdmin,
+      delete: deleteScoreAdmin,
     },
     adminNotes: {
       create: createScoreAdminNote,

@@ -1,7 +1,21 @@
-import {
-  Operation,
-  OperationType,
-} from '@osu-tournament-rating/otr-api-client';
+export const OperationType = {
+  Add: 'add',
+  Remove: 'remove',
+  Replace: 'replace',
+} as const;
+
+export type OperationType = (typeof OperationType)[keyof typeof OperationType];
+
+export type Operation = {
+  op: OperationType;
+  path: string;
+  value?: unknown;
+  /**
+   * Non-standard field maintained for legacy compatibility. Consumers expect
+   * both the JSON Patch verb (`op`) and a camelCase variant.
+   */
+  operationType?: OperationType;
+};
 
 /**
  * Check if a string is intended to be parsed as a date

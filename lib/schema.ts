@@ -1,6 +1,8 @@
 import {
   GameRejectionReason,
   GameWarningFlags,
+  MatchRejectionReason,
+  MatchWarningFlags,
   Mods,
   Ruleset,
   ScoreGrade,
@@ -8,12 +10,8 @@ import {
   ScoringType,
   Team,
   TeamType,
-  TournamentRejectionReason,
   TournamentQuerySortType,
-} from '@osu-tournament-rating/otr-api-client';
-import {
-  MatchRejectionReason,
-  MatchWarningFlags,
+  TournamentRejectionReason,
   VerificationStatus,
 } from '@/lib/osu/enums';
 import { EnumLike, z } from 'zod';

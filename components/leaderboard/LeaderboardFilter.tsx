@@ -19,7 +19,7 @@ import {
   defaultLeaderboardFilterValues,
   leaderboardTierFilterValues,
 } from '@/lib/utils/leaderboard';
-import { Ruleset } from '@osu-tournament-rating/otr-api-client';
+import { Ruleset } from '@/lib/osu/enums';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { cn } from '@/lib/utils';
 

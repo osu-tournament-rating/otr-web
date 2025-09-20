@@ -1,7 +1,4 @@
-import {
-  Ruleset,
-  VerificationStatus,
-} from '@osu-tournament-rating/otr-api-client';
+import { Ruleset, VerificationStatus } from '@/lib/osu/enums';
 import { RulesetEnumHelper, VerificationStatusEnumHelper } from '../enums';
 
 export function isEqualRuleset(ruleset: Ruleset, value: string): boolean {

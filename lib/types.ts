@@ -1,6 +1,5 @@
-import { UserDTO } from '@osu-tournament-rating/otr-api-client';
-
 import type { TournamentListRequest } from '@/lib/orpc/schema/tournament';
+import type { SessionUser } from '@/lib/auth/session-utils';
 
 /** Types of items in the main structure */
 export type ApiItemType = 'tournament' | 'match' | 'game' | 'score';
@@ -32,5 +31,5 @@ export type PaginationParams = Pick<TournamentListRequest, 'page' | 'pageSize'>;
 /** Session data */
 export type Session = {
   /** Session user, if logged in */
-  user?: UserDTO;
+  user?: SessionUser;
 };

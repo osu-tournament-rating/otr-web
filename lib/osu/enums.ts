@@ -170,6 +170,16 @@ export enum TournamentRejectionReason {
   IncompleteData = 32,
 }
 
+export enum TournamentQuerySortType {
+  Id = 0,
+  StartTime = 1,
+  EndTime = 2,
+  // TODO: remove
+  SearchQueryRelevance = 3,
+  SubmissionDate = 4,
+  LobbySize = 5,
+}
+
 export enum VerificationStatus {
   None = 0,
   PreRejected = 1,

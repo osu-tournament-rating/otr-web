@@ -7,7 +7,7 @@ import {
   MatchRejectionReason,
   ScoreRejectionReason,
   TournamentRejectionReason,
-} from '@osu-tournament-rating/otr-api-client';
+} from '@/lib/osu/enums';
 import {
   CheckCircle2, // Verified
   Square, // PreVerified

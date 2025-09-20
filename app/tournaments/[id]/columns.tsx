@@ -5,7 +5,7 @@ import {
   MatchWarningFlags,
   VerificationStatus,
   MatchRejectionReason,
-} from '@osu-tournament-rating/otr-api-client';
+} from '@/lib/osu/enums';
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
