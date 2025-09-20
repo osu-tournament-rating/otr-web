@@ -9,6 +9,7 @@ import {
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { Ruleset } from '@/lib/osu/enums';
 
 const PLACEHOLDER_DIFF_NAME = 'Pending fetch';
 const PLACEHOLDER_NUMBER = 0;
@@ -17,7 +18,7 @@ type BeatmapInsert = typeof schema.beatmaps.$inferInsert;
 
 const createPlaceholderBeatmap = (
   osuId: number,
-  ruleset: number
+  ruleset: Ruleset
 ): BeatmapInsert => ({
   osuId,
   ruleset,
@@ -96,7 +97,7 @@ export const manageTournamentBeatmapsAdmin = protectedProcedure
 
         if (missingOsuIds.length > 0) {
           const placeholderRows = missingOsuIds.map((osuId) =>
-            createPlaceholderBeatmap(osuId, tournament.ruleset)
+            createPlaceholderBeatmap(osuId, tournament.ruleset as Ruleset)
           );
 
           if (placeholderRows.length > 0) {

@@ -5,7 +5,7 @@ import {
   beatmapSelectSchema,
   beatmapsetSelectSchema,
 } from './base';
-import { CreatedUpdatedOmit } from './constants';
+import { CreatedUpdatedOmit, RulesetSchema } from './constants';
 import { PlayerSchema } from './player';
 
 const beatmapsetBaseSchema = beatmapsetSelectSchema
@@ -26,6 +26,7 @@ export const BeatmapAttributeSchema = beatmapAttributeSelectSchema.pick({
 export const BeatmapSchema = beatmapSelectSchema
   .omit(CreatedUpdatedOmit)
   .extend({
+    ruleset: RulesetSchema,
     beatmapset: BeatmapsetCompactSchema.nullable().optional(),
   });
 

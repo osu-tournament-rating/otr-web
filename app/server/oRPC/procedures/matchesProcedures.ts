@@ -10,6 +10,15 @@ import {
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
+import {
+  RatingAdjustmentType,
+  Ruleset,
+  ScoringType,
+  ScoreGrade,
+  Team,
+  TeamType,
+  VerificationStatus,
+} from '@/lib/osu/enums';
 
 import { publicProcedure } from './base';
 
@@ -39,7 +48,7 @@ const FALLBACK_PLAYER = {
   osuId: -1,
   username: 'Unknown',
   country: '',
-  defaultRuleset: 0,
+  defaultRuleset: Ruleset.Osu,
   osuLastFetch: '2007-09-17 00:00:00',
   osuTrackLastFetch: '2007-09-17 00:00:00',
   userId: null as number | null,
@@ -74,7 +83,7 @@ function mapAdminNote(row: AdminNoteRow): AdminNote {
           osuId: row.playerOsuId ?? -1,
           username: row.playerUsername ?? 'Unknown',
           country: row.playerCountry ?? '',
-          defaultRuleset: row.playerDefaultRuleset ?? 0,
+          defaultRuleset: (row.playerDefaultRuleset ?? Ruleset.Osu) as Ruleset,
           osuLastFetch: row.playerOsuLastFetch ?? '2007-09-17 00:00:00',
           osuTrackLastFetch:
             row.playerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
@@ -102,7 +111,7 @@ function calculateAccuracy({
   countKatu,
   countGeki,
 }: {
-  ruleset: number;
+  ruleset: Ruleset;
   count50: number;
   count100: number;
   count300: number;
@@ -114,25 +123,27 @@ function calculateAccuracy({
     Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
 
   switch (ruleset) {
-    case 0: {
+    case Ruleset.Osu: {
       const total = count300 + count100 + count50 + countMiss;
       if (total === 0) return 0;
       const numerator = count300 * 300 + count100 * 100 + count50 * 50;
       return clamp((numerator / (total * 300)) * 100);
     }
-    case 1: {
+    case Ruleset.Taiko: {
       const total = count300 + count100 + countMiss;
       if (total === 0) return 0;
       const numerator = count300 + count100 * 0.5;
       return clamp((numerator / total) * 100);
     }
-    case 2: {
+    case Ruleset.Catch: {
       const caught = count300 + count100 + count50;
       const total = caught + countKatu + countMiss;
       if (total === 0) return 0;
       return clamp((caught / total) * 100);
     }
-    case 3:
+    case Ruleset.ManiaOther:
+    case Ruleset.Mania4k:
+    case Ruleset.Mania7k:
     default: {
       const total =
         count300 + countGeki + count100 + countKatu + count50 + countMiss;
@@ -593,7 +604,7 @@ export const getMatch = publicProcedure
           osuId: player.osuId,
           username: player.username,
           country: player.country,
-          defaultRuleset: player.defaultRuleset,
+          defaultRuleset: player.defaultRuleset as Ruleset,
           osuLastFetch: player.osuLastFetch,
           osuTrackLastFetch: player.osuTrackLastFetch,
           userId: player.userId ?? null,
@@ -607,7 +618,7 @@ export const getMatch = publicProcedure
           ? {
               id: game.beatmapDbId,
               osuId: game.beatmapOsuId ?? 0,
-              ruleset: game.beatmapRuleset ?? game.ruleset,
+              ruleset: (game.beatmapRuleset ?? game.ruleset) as Ruleset,
               rankedStatus: game.beatmapRankedStatus ?? 0,
               diffName: game.beatmapDiffName ?? 'Unknown difficulty',
               totalLength: game.beatmapTotalLength ?? 0,
@@ -644,7 +655,8 @@ export const getMatch = publicProcedure
                                 game.beatmapsetCreatorUsername ?? 'Unknown',
                               country: game.beatmapsetCreatorCountry ?? '',
                               defaultRuleset:
-                                game.beatmapsetCreatorDefaultRuleset ?? 0,
+                                (game.beatmapsetCreatorDefaultRuleset ??
+                                  Ruleset.Osu) as Ruleset,
                               osuLastFetch:
                                 game.beatmapsetCreatorOsuLastFetch ??
                                 '2007-09-17 00:00:00',
@@ -675,15 +687,15 @@ export const getMatch = publicProcedure
         countGeki: score.countGeki,
         pass: score.pass,
         perfect: score.perfect,
-        grade: score.grade,
+        grade: score.grade as ScoreGrade,
         mods: score.mods,
-        team: score.team,
-        ruleset: score.ruleset,
-        verificationStatus: score.verificationStatus,
+        team: score.team as Team,
+        ruleset: score.ruleset as Ruleset,
+        verificationStatus: score.verificationStatus as VerificationStatus,
         rejectionReason: score.rejectionReason,
         accuracy: Number(
           calculateAccuracy({
-            ruleset: score.ruleset,
+            ruleset: score.ruleset as Ruleset,
             count50: score.count50,
             count100: score.count100,
             count300: score.count300,
@@ -702,13 +714,13 @@ export const getMatch = publicProcedure
         osuId: game.osuId,
         matchId: game.matchId,
         beatmapId: game.beatmapId ?? null,
-        ruleset: game.ruleset,
-        scoringType: game.scoringType,
-        teamType: game.teamType,
+        ruleset: game.ruleset as Ruleset,
+        scoringType: game.scoringType as ScoringType,
+        teamType: game.teamType as TeamType,
         mods: game.mods,
         startTime: game.startTime ?? null,
         endTime: game.endTime ?? null,
-        verificationStatus: game.verificationStatus,
+        verificationStatus: game.verificationStatus as VerificationStatus,
         rejectionReason: game.rejectionReason,
         warningFlags: game.warningFlags,
         playMode: game.playMode,
@@ -742,8 +754,8 @@ export const getMatch = publicProcedure
     const ratingAdjustments = ratingAdjustmentsRows.map<RatingAdjustment>(
       (adjustment) => ({
         id: adjustment.id,
-        adjustmentType: adjustment.adjustmentType,
-        ruleset: adjustment.ruleset,
+        adjustmentType: adjustment.adjustmentType as RatingAdjustmentType,
+        ruleset: adjustment.ruleset as Ruleset,
         timestamp: adjustment.timestamp,
         ratingBefore: adjustment.ratingBefore,
         ratingAfter: adjustment.ratingAfter,
@@ -761,7 +773,7 @@ export const getMatch = publicProcedure
     const rosters = rosterRows.map((roster) => ({
       id: roster.id,
       roster: roster.roster ?? [],
-      team: roster.team,
+      team: roster.team as Team,
       score: roster.score,
     }));
 
@@ -783,7 +795,7 @@ export const getMatch = publicProcedure
       name: matchRow.name,
       startTime: matchRow.startTime ?? null,
       endTime: matchRow.endTime ?? null,
-      verificationStatus: matchRow.verificationStatus,
+      verificationStatus: matchRow.verificationStatus as VerificationStatus,
       rejectionReason: matchRow.rejectionReason,
       warningFlags: matchRow.warningFlags,
       submittedByUserId: matchRow.submittedByUserId ?? null,

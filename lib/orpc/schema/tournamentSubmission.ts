@@ -1,22 +1,12 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
-import { Ruleset, TournamentRejectionReason } from '@/lib/osu/enums';
+import { TournamentRejectionReason } from '@/lib/osu/enums';
+import { RulesetSchema } from './constants';
 
 const getEnumNumericValues = (enumObject: Record<string, unknown>): number[] =>
   Object.values(enumObject).filter(
     (value): value is number => typeof value === 'number'
   );
-
-const createNumericEnumSchema = (enumObject: Record<string, unknown>) => {
-  const values = getEnumNumericValues(enumObject);
-
-  return z
-    .number()
-    .int()
-    .refine((value) => values.includes(value), {
-      message: 'Invalid value',
-    });
-};
 
 const createBitwiseEnumSchema = (enumObject: Record<string, unknown>) => {
   const flags = getEnumNumericValues(enumObject);
@@ -54,7 +44,7 @@ const baseSubmissionSchema = z.object({
   name: z.string().min(1, 'Tournament name is required'),
   abbreviation: z.string().min(1, 'Tournament abbreviation is required'),
   forumUrl: forumUrlSchema,
-  ruleset: createNumericEnumSchema(Ruleset),
+  ruleset: RulesetSchema,
   rankRangeLowerBound: z
     .number()
     .int()
@@ -171,7 +161,10 @@ export const tournamentSubmissionFormSchema = baseSubmissionSchema
     beatmapIds: parseBeatmapIds,
   })
   .superRefine((value, ctx) => {
-    if (!hasUniqueValues(value.ids)) {
+    const ids = value.ids as number[];
+    const beatmapIds = value.beatmapIds as number[];
+
+    if (!hasUniqueValues(ids)) {
       ctx.addIssue({
         path: ['ids'],
         code: z.ZodIssueCode.custom,
@@ -179,7 +172,7 @@ export const tournamentSubmissionFormSchema = baseSubmissionSchema
       });
     }
 
-    if (!hasUniqueValues(value.beatmapIds)) {
+    if (!hasUniqueValues(beatmapIds)) {
       ctx.addIssue({
         path: ['beatmapIds'],
         code: z.ZodIssueCode.custom,

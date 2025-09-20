@@ -27,20 +27,17 @@ import {
 import { fetchTournamentAdminNotes } from './adminNotesProcedures';
 
 import { publicProcedure } from './base';
-import { Mods } from '@/lib/osu/enums';
+import {
+  Mods,
+  Ruleset,
+  ScoringType,
+  TeamType,
+  TournamentQuerySortType,
+  VerificationStatus,
+} from '@/lib/osu/enums';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
-const VERIFIED_STATUS = 4;
-const TOURNAMENT_SORT = {
-  ID: 0,
-  START_TIME: 1,
-  END_TIME: 2,
-  SEARCH_RELEVANCE: 3,
-  SUBMISSION_DATE: 4,
-  LOBBY_SIZE: 5,
-} as const;
-
 const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
 
 const escapeLikePattern = (value: string) =>
@@ -69,7 +66,7 @@ export const listTournaments = publicProcedure
 
       if (input.verified) {
         filters.push(
-          eq(schema.tournaments.verificationStatus, VERIFIED_STATUS)
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
         );
       }
 
@@ -128,7 +125,7 @@ export const listTournaments = publicProcedure
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-      const sortValue = input.sort ?? TOURNAMENT_SORT.END_TIME;
+      const sortValue = input.sort ?? TournamentQuerySortType.EndTime;
       const isDescending = input.descending ?? true;
       const orderBy: SQL<unknown>[] = [];
 
@@ -142,22 +139,22 @@ export const listTournaments = publicProcedure
           : undefined;
 
       switch (sortValue) {
-        case TOURNAMENT_SORT.ID:
+        case TournamentQuerySortType.Id:
           orderBy.push(direction(schema.tournaments.id));
           break;
-        case TOURNAMENT_SORT.START_TIME:
+        case TournamentQuerySortType.StartTime:
           orderBy.push(direction(schema.tournaments.startTime));
           break;
-        case TOURNAMENT_SORT.END_TIME:
+        case TournamentQuerySortType.EndTime:
           orderBy.push(direction(schema.tournaments.endTime));
           break;
-        case TOURNAMENT_SORT.LOBBY_SIZE:
+        case TournamentQuerySortType.LobbySize:
           orderBy.push(direction(schema.tournaments.lobbySize));
           break;
-        case TOURNAMENT_SORT.SUBMISSION_DATE:
+        case TournamentQuerySortType.SubmissionDate:
           orderBy.push(direction(schema.tournaments.created));
           break;
-        case TOURNAMENT_SORT.SEARCH_RELEVANCE:
+        case TournamentQuerySortType.SearchQueryRelevance:
           if (searchTerm && searchPattern && searchPrefixPattern) {
             orderBy.push(
               desc(
@@ -216,11 +213,11 @@ export const listTournaments = publicProcedure
           abbreviation: row.abbreviation,
           forumUrl: row.forumUrl,
           rankRangeLowerBound: row.rankRangeLowerBound,
-          ruleset: row.ruleset,
+          ruleset: row.ruleset as Ruleset,
           lobbySize: row.lobbySize,
           startTime: row.startTime ?? null,
           endTime: row.endTime ?? null,
-          verificationStatus: row.verificationStatus,
+          verificationStatus: row.verificationStatus as VerificationStatus,
           rejectionReason: row.rejectionReason,
         })
       );
@@ -342,7 +339,7 @@ export const getTournament = publicProcedure
           osuId: number;
           username: string;
           country: string;
-          defaultRuleset: number;
+          defaultRuleset: Ruleset;
           osuLastFetch: string;
           osuTrackLastFetch: string;
         }[]
@@ -356,7 +353,7 @@ export const getTournament = publicProcedure
           osuId: creator.osuId,
           username: creator.username,
           country: creator.country,
-          defaultRuleset: creator.defaultRuleset,
+          defaultRuleset: creator.defaultRuleset as Ruleset,
           osuLastFetch: creator.osuLastFetch,
           osuTrackLastFetch: creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
         });
@@ -447,7 +444,7 @@ export const getTournament = publicProcedure
         name: match.name,
         startTime: match.startTime ?? null,
         endTime: match.endTime ?? null,
-        verificationStatus: match.verificationStatus,
+        verificationStatus: match.verificationStatus as VerificationStatus,
         rejectionReason: match.rejectionReason,
         warningFlags: match.warningFlags,
         submittedByUserId: match.submittedByUserId ?? null,
@@ -458,12 +455,12 @@ export const getTournament = publicProcedure
           osuId: game.osuId,
           matchId: game.matchId,
           beatmapId: game.beatmapId ?? null,
-          ruleset: game.ruleset,
-          scoringType: game.scoringType,
-          teamType: game.teamType,
+          ruleset: game.ruleset as Ruleset,
+          scoringType: game.scoringType as ScoringType,
+          teamType: game.teamType as TeamType,
           startTime: game.startTime ?? null,
           endTime: game.endTime ?? null,
-          verificationStatus: game.verificationStatus,
+          verificationStatus: game.verificationStatus as VerificationStatus,
           rejectionReason: game.rejectionReason,
           warningFlags: game.warningFlags,
           mods: game.mods,
@@ -478,7 +475,7 @@ export const getTournament = publicProcedure
               ? {
                   id: game.beatmapDbId,
                   osuId: game.beatmapOsuId,
-                  ruleset: game.beatmapRuleset ?? 0,
+                  ruleset: (game.beatmapRuleset ?? game.ruleset) as Ruleset,
                   rankedStatus: game.beatmapRankedStatus ?? 0,
                   diffName: game.beatmapDiffName ?? 'Unknown difficulty',
                   totalLength: game.beatmapTotalLength ?? 0,
@@ -563,7 +560,8 @@ export const getTournament = publicProcedure
                 osuId: stat.statsPlayerOsuId ?? -1,
                 username: stat.statsPlayerUsername,
                 country: stat.statsPlayerCountry,
-                defaultRuleset: stat.statsPlayerDefaultRuleset ?? 0,
+                defaultRuleset: (stat.statsPlayerDefaultRuleset ??
+                  Ruleset.Osu) as Ruleset,
                 osuLastFetch: stat.statsPlayerOsuLastFetch,
                 osuTrackLastFetch:
                   stat.statsPlayerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
@@ -573,7 +571,7 @@ export const getTournament = publicProcedure
                 osuId: -1,
                 username: 'Unknown',
                 country: '',
-                defaultRuleset: 0,
+                defaultRuleset: Ruleset.Osu,
                 osuLastFetch: '2007-09-17 00:00:00',
                 osuTrackLastFetch: '2007-09-17 00:00:00',
               },
@@ -588,7 +586,8 @@ export const getTournament = publicProcedure
                 osuId: beatmap.beatmapsetCreatorOsuId ?? -1,
                 username: beatmap.beatmapsetCreatorUsername ?? 'Unknown',
                 country: beatmap.beatmapsetCreatorCountry,
-                defaultRuleset: beatmap.beatmapsetCreatorDefaultRuleset ?? 0,
+                defaultRuleset: (beatmap.beatmapsetCreatorDefaultRuleset ??
+                  Ruleset.Osu) as Ruleset,
                 osuLastFetch:
                   beatmap.beatmapsetCreatorOsuLastFetch ??
                   '2007-09-17 00:00:00',
@@ -618,7 +617,7 @@ export const getTournament = publicProcedure
             osuId: creator.osuId,
             username: creator.username,
             country: creator.country,
-            defaultRuleset: creator.defaultRuleset ?? 0,
+            defaultRuleset: (creator.defaultRuleset ?? Ruleset.Osu) as Ruleset,
             osuLastFetch: creator.osuLastFetch,
             osuTrackLastFetch:
               creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
@@ -628,7 +627,7 @@ export const getTournament = publicProcedure
         return {
           id: beatmap.beatmapId,
           osuId: beatmap.osuId,
-          ruleset: beatmap.ruleset,
+          ruleset: beatmap.ruleset as Ruleset,
           rankedStatus: beatmap.rankedStatus,
           diffName: beatmap.diffName,
           totalLength: beatmap.totalLength,
@@ -657,11 +656,11 @@ export const getTournament = publicProcedure
         abbreviation: tournament.abbreviation,
         forumUrl: tournament.forumUrl,
         rankRangeLowerBound: tournament.rankRangeLowerBound,
-        ruleset: tournament.ruleset,
+        ruleset: tournament.ruleset as Ruleset,
         lobbySize: tournament.lobbySize,
         startTime: tournament.startTime ?? null,
         endTime: tournament.endTime ?? null,
-        verificationStatus: tournament.verificationStatus,
+        verificationStatus: tournament.verificationStatus as VerificationStatus,
         rejectionReason: tournament.rejectionReason,
         submittedByUserId: tournament.submittedByUserId ?? null,
         verifiedByUserId: tournament.verifiedByUserId ?? null,

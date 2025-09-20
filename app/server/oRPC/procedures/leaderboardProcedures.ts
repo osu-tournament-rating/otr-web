@@ -7,6 +7,7 @@ import {
   LeaderboardResponseSchema,
 } from '@/lib/orpc/schema/leaderboard';
 import { buildTierProgress, getTierBounds } from '@/lib/utils/tierProgress';
+import { Ruleset } from '@/lib/osu/enums';
 
 import { publicProcedure } from './base';
 
@@ -28,7 +29,7 @@ export const getLeaderboard = publicProcedure
         1,
         Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
       );
-      const ruleset = input.ruleset ?? 0;
+      const ruleset = input.ruleset ?? Ruleset.Osu;
 
       const tournamentsPlayedExpr = sql<number>`
         COALESCE(COUNT(DISTINCT ${schema.tournaments.id})::int, 0)

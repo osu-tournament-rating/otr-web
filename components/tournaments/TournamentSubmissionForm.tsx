@@ -18,6 +18,7 @@ import {
   tournamentSubmissionFormSchema,
   type TournamentSubmissionFormValues,
 } from '@/lib/orpc/schema/tournamentSubmission';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -67,7 +68,9 @@ export default function TournamentSubmissionForm() {
   const isAdmin = hasAdminScope(session?.scopes ?? []);
 
   const form = useForm<TournamentSubmissionFormValues>({
-    resolver: zodResolver(tournamentSubmissionFormSchema),
+    resolver: zodResolver(
+      tournamentSubmissionFormSchema as unknown as z.ZodType<TournamentSubmissionFormValues>
+    ),
     defaultValues: {
       name: '',
       abbreviation: '',
@@ -87,6 +90,8 @@ export default function TournamentSubmissionForm() {
   const [beatmapWarningConfirmed, setBeatmapWarningConfirmed] = useState(false);
 
   async function onSubmit(values: TournamentSubmissionFormValues) {
+    const beatmapIds = values.beatmapIds as number[];
+
     if (
       rejectOnSubmit &&
       values.rejectionReason === TournamentRejectionReason.None
@@ -98,7 +103,7 @@ export default function TournamentSubmissionForm() {
     }
 
     // Check if beatmaps are missing and user hasn't confirmed
-    if (values.beatmapIds.length === 0 && !beatmapWarningConfirmed) {
+    if (beatmapIds.length === 0 && !beatmapWarningConfirmed) {
       setShowBeatmapWarning(true);
       return;
     }
@@ -360,7 +365,11 @@ export default function TournamentSubmissionForm() {
                   <FormControl>
                     <Textarea
                       placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
-                      value={field.value?.join('\n') || ''}
+                      value={
+                        Array.isArray(field.value)
+                          ? field.value.map(String).join('\n')
+                          : ''
+                      }
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
@@ -385,7 +394,11 @@ export default function TournamentSubmissionForm() {
                   <FormControl>
                     <Textarea
                       placeholder={`https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456`}
-                      value={field.value?.join('\n') || ''}
+                      value={
+                        Array.isArray(field.value)
+                          ? field.value.map(String).join('\n')
+                          : ''
+                      }
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }

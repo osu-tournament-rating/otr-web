@@ -10,7 +10,16 @@ import {
   tournamentSelectSchema,
 } from './base';
 import { BeatmapSchema } from './beatmap';
-import { CreatedUpdatedOmit, VerificationStatusSchema } from './constants';
+import {
+  CreatedUpdatedOmit,
+  RatingAdjustmentTypeSchema,
+  RulesetSchema,
+  ScoreGradeSchema,
+  ScoringTypeSchema,
+  TeamSchema,
+  TeamTypeSchema,
+  VerificationStatusSchema,
+} from './constants';
 import { AdminNoteSchema } from './common';
 import { PlayerSchema } from './player';
 
@@ -48,14 +57,22 @@ export const MatchBeatmapSchema = BeatmapSchema.extend({
   creators: value.creators ?? [],
 }));
 
-export const MatchRosterSchema = matchRosterSelectSchema.pick({
-  id: true,
-  roster: true,
-  team: true,
-  score: true,
-});
+export const MatchRosterSchema = matchRosterSelectSchema
+  .pick({
+    id: true,
+    roster: true,
+    team: true,
+    score: true,
+  })
+  .extend({
+    team: TeamSchema,
+  });
 
 const gameScoreBaseSchema = gameScoreSelectSchema.extend({
+  grade: ScoreGradeSchema,
+  team: TeamSchema,
+  ruleset: RulesetSchema,
+  verificationStatus: VerificationStatusSchema,
   accuracy: z.number(),
   adminNotes: z.array(AdminNoteSchema).optional(),
 });
@@ -66,6 +83,10 @@ export const GameScoreSchema = gameScoreBaseSchema.transform((value) => ({
 }));
 
 const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
+  ruleset: RulesetSchema,
+  scoringType: ScoringTypeSchema,
+  teamType: TeamTypeSchema,
+  verificationStatus: VerificationStatusSchema,
   isFreeMod: z.boolean(),
   beatmap: MatchBeatmapSchema.nullable(),
   adminNotes: z.array(AdminNoteSchema).optional(),
@@ -107,6 +128,8 @@ export const RatingAdjustmentSchema = ratingAdjustmentSelectSchema
     created: true,
   })
   .extend({
+    adjustmentType: RatingAdjustmentTypeSchema,
+    ruleset: RulesetSchema,
     ratingDelta: z.number(),
     volatilityDelta: z.number(),
   });
@@ -119,8 +142,8 @@ export const MatchWinRecordSchema = z
     winnerRoster: z.array(z.number().int()).nullable(),
     loserPoints: z.number().int(),
     winnerPoints: z.number().int(),
-    loserTeam: z.number().int().nullable(),
-    winnerTeam: z.number().int().nullable(),
+    loserTeam: TeamSchema.nullable(),
+    winnerTeam: TeamSchema.nullable(),
   })
   .nullable();
 
@@ -184,9 +207,9 @@ export const MatchAdminMergeResponseSchema = z.object({
 
 export const GameAdminUpdateInputSchema = z.object({
   id: PositiveIntSchema,
-  ruleset: NonNegativeIntSchema,
-  scoringType: NonNegativeIntSchema,
-  teamType: NonNegativeIntSchema,
+  ruleset: RulesetSchema,
+  scoringType: ScoringTypeSchema,
+  teamType: TeamTypeSchema,
   mods: BitmaskEnumValueSchema,
   verificationStatus: VerificationStatusSchema,
   rejectionReason: BitmaskEnumValueSchema,
@@ -236,12 +259,12 @@ export const GameScoreAdminUpdateInputSchema = z.object({
   countKatu: NonNegativeIntSchema,
   countGeki: NonNegativeIntSchema,
   accuracy: z.number().min(0),
-  grade: NonNegativeIntSchema,
+  grade: ScoreGradeSchema,
   mods: BitmaskEnumValueSchema,
-  ruleset: NonNegativeIntSchema,
+  ruleset: RulesetSchema,
   verificationStatus: VerificationStatusSchema,
   rejectionReason: BitmaskEnumValueSchema,
-  team: NonNegativeIntSchema,
+  team: TeamSchema,
 });
 
 export const GameScoreAdminMutationResponseSchema = z.object({

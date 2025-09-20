@@ -24,6 +24,7 @@ import {
 
 import { protectedProcedure } from './base';
 import { ensureAdminSession } from './shared/adminGuard';
+import { Ruleset } from '@/lib/osu/enums';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
@@ -35,7 +36,7 @@ const FALLBACK_PLAYER = {
   osuId: -1,
   username: 'Unknown',
   country: '',
-  defaultRuleset: 0,
+  defaultRuleset: Ruleset.Osu,
   osuLastFetch: '2007-09-17 00:00:00',
   osuTrackLastFetch: '2007-09-17 00:00:00',
   userId: null as number | null,
@@ -114,7 +115,7 @@ const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
           osuId: note.playerOsuId ?? -1,
           username: note.playerUsername ?? 'Unknown',
           country: note.playerCountry ?? '',
-          defaultRuleset: note.playerDefaultRuleset ?? 0,
+          defaultRuleset: (note.playerDefaultRuleset ?? Ruleset.Osu) as Ruleset,
           osuLastFetch: note.playerOsuLastFetch ?? '2007-09-17 00:00:00',
           osuTrackLastFetch:
             note.playerOsuTrackLastFetch ?? '2007-09-17 00:00:00',

@@ -6,6 +6,7 @@ import {
   playerSelectSchema,
   tournamentSelectSchema,
 } from './base';
+import { RulesetSchema, VerificationStatusSchema } from './constants';
 import { TierProgressSchema } from './leaderboard';
 
 export const SearchRequestSchema = z.object({
@@ -20,7 +21,7 @@ export const PlayerSearchResultSchema = playerSelectSchema
   })
   .extend({
     rating: playerRatingSelectSchema.shape.rating.nullable(),
-    ruleset: playerRatingSelectSchema.shape.ruleset.nullable(),
+    ruleset: RulesetSchema.nullable(),
     globalRank: playerRatingSelectSchema.shape.globalRank.nullable(),
     tierProgress: TierProgressSchema.nullable(),
   });
@@ -40,6 +41,8 @@ export const TournamentSearchResultSchema = tournamentSearchBaseSchema
     abbreviation: true,
   })
   .extend({
+    ruleset: RulesetSchema,
+    verificationStatus: VerificationStatusSchema,
     abbreviation: tournamentSearchBaseSchema.shape.abbreviation.nullable(),
   });
 

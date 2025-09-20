@@ -5,15 +5,20 @@ import {
   playerSelectSchema,
   ratingAdjustmentSelectSchema,
 } from './base';
+import { RatingAdjustmentTypeSchema, RulesetSchema } from './constants';
 import { TierProgressSchema } from './leaderboard';
 
-const playerCompactBaseSchema = playerSelectSchema.pick({
-  id: true,
-  osuId: true,
-  username: true,
-  country: true,
-  defaultRuleset: true,
-});
+const playerCompactBaseSchema = playerSelectSchema
+  .pick({
+    id: true,
+    osuId: true,
+    username: true,
+    country: true,
+    defaultRuleset: true,
+  })
+  .extend({
+    defaultRuleset: RulesetSchema,
+  });
 
 export const PlayerCompactSchema = playerCompactBaseSchema;
 
@@ -34,16 +39,20 @@ export const PlayerMatchReferenceSchema = z.object({
   tournamentId: z.number().int().positive().nullable(),
 });
 
-const ratingAdjustmentBaseSchema = ratingAdjustmentSelectSchema.pick({
-  playerId: true,
-  adjustmentType: true,
-  timestamp: true,
-  ratingBefore: true,
-  ratingAfter: true,
-  volatilityBefore: true,
-  volatilityAfter: true,
-  matchId: true,
-});
+const ratingAdjustmentBaseSchema = ratingAdjustmentSelectSchema
+  .pick({
+    playerId: true,
+    adjustmentType: true,
+    timestamp: true,
+    ratingBefore: true,
+    ratingAfter: true,
+    volatilityBefore: true,
+    volatilityAfter: true,
+    matchId: true,
+  })
+  .extend({
+    adjustmentType: RatingAdjustmentTypeSchema,
+  });
 
 export const PlayerRatingAdjustmentSchema = ratingAdjustmentBaseSchema.extend({
   ratingDelta: z.number(),
@@ -51,14 +60,18 @@ export const PlayerRatingAdjustmentSchema = ratingAdjustmentBaseSchema.extend({
   match: PlayerMatchReferenceSchema.nullable(),
 });
 
-const playerRatingBaseSchema = playerRatingSelectSchema.pick({
-  ruleset: true,
-  rating: true,
-  volatility: true,
-  percentile: true,
-  globalRank: true,
-  countryRank: true,
-});
+const playerRatingBaseSchema = playerRatingSelectSchema
+  .pick({
+    ruleset: true,
+    rating: true,
+    volatility: true,
+    percentile: true,
+    globalRank: true,
+    countryRank: true,
+  })
+  .extend({
+    ruleset: RulesetSchema,
+  });
 
 export const PlayerRatingStatsSchema = playerRatingBaseSchema.extend({
   player: PlayerCompactSchema,
@@ -94,7 +107,7 @@ export const AggregatePlayerMatchStatsSchema = z.object({
 
 export const PlayerDashboardStatsSchema = z.object({
   playerInfo: PlayerCompactSchema,
-  ruleset: z.number().int().nonnegative(),
+  ruleset: RulesetSchema,
   rating: PlayerRatingStatsSchema.nullable(),
   matchStats: AggregatePlayerMatchStatsSchema.nullable(),
   modStats: PlayerModStatsSchema.array(),
@@ -105,7 +118,7 @@ export const PlayerDashboardStatsSchema = z.object({
 
 export const PlayerDashboardRequestSchema = z.object({
   key: z.string().min(1),
-  ruleset: z.number().int().min(0).max(5).optional(),
+  ruleset: RulesetSchema.optional(),
   dateMin: z.string().optional(),
   dateMax: z.string().optional(),
 });

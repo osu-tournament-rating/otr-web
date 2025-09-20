@@ -10,6 +10,7 @@ import {
   TournamentSearchResultSchema,
 } from '@/lib/orpc/schema/search';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
+import { Ruleset, VerificationStatus } from '@/lib/osu/enums';
 
 import { protectedProcedure } from './base';
 
@@ -115,6 +116,10 @@ export const searchEntities = protectedProcedure
             ? null
             : Number(row.globalRank);
         const rulesetValue = row.ratingRuleset ?? row.defaultRuleset ?? null;
+        const ruleset =
+          rulesetValue === null || rulesetValue === undefined
+            ? null
+            : (rulesetValue as Ruleset);
         const tierProgress =
           rating !== null ? buildTierProgress(rating).tierProgress : null;
 
@@ -123,10 +128,7 @@ export const searchEntities = protectedProcedure
           osuId: Number(row.osuId),
           username: row.username,
           rating,
-          ruleset:
-            rulesetValue === null || rulesetValue === undefined
-              ? null
-              : Number(rulesetValue),
+          ruleset,
           globalRank,
           tierProgress,
         });
@@ -136,8 +138,8 @@ export const searchEntities = protectedProcedure
         TournamentSearchResultSchema.parse({
           id: Number(row.id),
           name: row.name,
-          ruleset: Number(row.ruleset),
-          verificationStatus: Number(row.verificationStatus),
+          ruleset: row.ruleset as Ruleset,
+          verificationStatus: row.verificationStatus as VerificationStatus,
           rejectionReason: Number(row.rejectionReason),
           lobbySize: Number(row.lobbySize),
           abbreviation: row.abbreviation ?? null,

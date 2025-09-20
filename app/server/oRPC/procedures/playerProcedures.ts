@@ -13,7 +13,7 @@ import {
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
-import { Ruleset } from '@/lib/osu/enums';
+import { RatingAdjustmentType, Ruleset } from '@/lib/osu/enums';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
@@ -44,7 +44,7 @@ type PlayerRow = typeof schema.players.$inferSelect;
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
 type PlayerMatchStatsRow = typeof schema.playerMatchStats.$inferSelect;
 
-const VALID_RULESETS = new Set<number>([
+const VALID_RULESETS = new Set<Ruleset>([
   Ruleset.Osu,
   Ruleset.Taiko,
   Ruleset.Catch,
@@ -337,16 +337,18 @@ export const getPlayerDashboardStats = publicProcedure
   .handler(async ({ input, context }) => {
     const player = await findPlayerByKey(context.db, input.key);
 
+    const playerDefaultRuleset = VALID_RULESETS.has(
+      player.defaultRuleset as Ruleset
+    )
+      ? (player.defaultRuleset as Ruleset)
+      : Ruleset.Osu;
+
     const resolvedRuleset = (() => {
       if (input.ruleset != null && VALID_RULESETS.has(input.ruleset)) {
         return input.ruleset;
       }
 
-      if (VALID_RULESETS.has(player.defaultRuleset)) {
-        return player.defaultRuleset;
-      }
-
-      return Ruleset.Osu;
+      return playerDefaultRuleset;
     })();
 
     const bounds = resolveDateBounds(input.dateMin, input.dateMax);
@@ -488,7 +490,7 @@ export const getPlayerDashboardStats = publicProcedure
           );
 
           return {
-            ruleset: ratingRow.ruleset,
+            ruleset: ratingRow.ruleset as Ruleset,
             rating: toNumber(ratingRow.rating),
             volatility: toNumber(ratingRow.volatility),
             percentile: toNumber(ratingRow.percentile),
@@ -499,7 +501,7 @@ export const getPlayerDashboardStats = publicProcedure
               osuId: player.osuId,
               username: player.username,
               country: player.country,
-              defaultRuleset: player.defaultRuleset,
+              defaultRuleset: playerDefaultRuleset,
             },
             tournamentsPlayed,
             matchesPlayed,
@@ -517,7 +519,7 @@ export const getPlayerDashboardStats = publicProcedure
         osuId: player.osuId,
         username: player.username,
         country: player.country,
-        defaultRuleset: player.defaultRuleset,
+        defaultRuleset: playerDefaultRuleset,
       },
       ruleset: resolvedRuleset,
       rating: ratingStats,
@@ -617,7 +619,7 @@ const mapRatingAdjustments = (
 ): PlayerRatingAdjustment[] =>
   rows.map((row) => ({
     playerId: row.playerId,
-    adjustmentType: row.adjustmentType,
+    adjustmentType: row.adjustmentType as RatingAdjustmentType,
     timestamp: row.timestamp,
     ratingBefore: row.ratingBefore,
     ratingAfter: row.ratingAfter,

@@ -1,10 +1,11 @@
-import { Ruleset } from '@/lib/osu/enums';
 import { z } from 'zod/v4';
+
+import { RulesetSchema } from './constants';
 
 const osuPlayerIdsSchema = z.array(z.number().int().positive());
 
 export const FilteringRequestSchema = z.object({
-  ruleset: z.enum(Ruleset),
+  ruleset: RulesetSchema,
   minRating: z.number().int().optional().nullable(),
   maxRating: z.number().int().optional().nullable(),
   peakRating: z.number().int().optional().nullable(),

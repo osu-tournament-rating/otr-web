@@ -170,7 +170,7 @@ const RulesetFilter = ({ control }: { control: Control<FilterFormData> }) => {
           <FormControl>
             <div className="flex w-full flex-wrap gap-2">
               {availableRulesets.map(([ruleset, { text }]) => {
-                const rulesetNumber = Number(ruleset);
+                const rulesetNumber = Number(ruleset) as Ruleset;
                 const isSelected = field.value === rulesetNumber;
 
                 return (

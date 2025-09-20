@@ -1,6 +1,7 @@
 import { z } from 'zod/v4';
 
 import { playerRatingSelectSchema, playerSelectSchema } from './base';
+import { RulesetSchema } from './constants';
 
 export const leaderboardTierKeys = [
   'bronze',
@@ -35,14 +36,18 @@ export const LeaderboardPlayerSchema = playerSelectSchema.pick({
   country: true,
 });
 
-const leaderboardRatingBaseSchema = playerRatingSelectSchema.pick({
-  ruleset: true,
-  rating: true,
-  volatility: true,
-  percentile: true,
-  globalRank: true,
-  countryRank: true,
-});
+const leaderboardRatingBaseSchema = playerRatingSelectSchema
+  .pick({
+    ruleset: true,
+    rating: true,
+    volatility: true,
+    percentile: true,
+    globalRank: true,
+    countryRank: true,
+  })
+  .extend({
+    ruleset: RulesetSchema,
+  });
 
 export const LeaderboardEntrySchema = leaderboardRatingBaseSchema.extend({
   player: LeaderboardPlayerSchema,
@@ -56,7 +61,7 @@ export const LeaderboardEntrySchema = leaderboardRatingBaseSchema.extend({
 export const LeaderboardRequestSchema = z.object({
   page: z.number().int().min(1).optional(),
   pageSize: z.number().int().min(1).max(100).optional(),
-  ruleset: z.number().int().min(0).optional(),
+  ruleset: RulesetSchema.optional(),
   country: z.string().trim().min(2).max(4).optional(),
   minOsuRank: z.number().int().min(1).optional(),
   maxOsuRank: z.number().int().min(1).optional(),
@@ -74,7 +79,7 @@ export const LeaderboardResponseSchema = z.object({
   pageSize: z.number().int().min(1),
   pages: z.number().int().min(0),
   total: z.number().int().nonnegative(),
-  ruleset: z.number().int().min(0),
+  ruleset: RulesetSchema,
   leaderboard: LeaderboardEntrySchema.array(),
 });
 

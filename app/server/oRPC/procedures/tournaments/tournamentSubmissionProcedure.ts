@@ -124,7 +124,7 @@ export const submitTournament = protectedProcedure
 
         const tournamentId = tournament.id;
 
-        const matchOsuIds = Array.from(new Set(input.ids));
+        const matchOsuIds = Array.from(new Set(input.ids)) as number[];
 
         const existingMatches = matchOsuIds.length
           ? await tx
@@ -180,7 +180,7 @@ export const submitTournament = protectedProcedure
           );
         }
 
-        const beatmapOsuIds = Array.from(new Set(input.beatmapIds));
+        const beatmapOsuIds = Array.from(new Set(input.beatmapIds)) as number[];
 
         if (beatmapOsuIds.length) {
           const beatmapRows = await tx

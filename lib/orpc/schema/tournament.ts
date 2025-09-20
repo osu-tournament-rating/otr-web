@@ -5,43 +5,53 @@ import {
   tournamentSelectSchema,
 } from './base';
 import { BeatmapAttributeSchema, BeatmapSchema } from './beatmap';
-import { CreatedUpdatedOmit, VerificationStatusSchema } from './constants';
+import {
+  CreatedUpdatedOmit,
+  RulesetSchema,
+  VerificationStatusSchema,
+} from './constants';
 import type { VerificationStatusValue } from './constants';
 import { AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
+import { TournamentQuerySortType } from '@/lib/osu/enums';
 
 export const TournamentListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(30),
   verified: z.boolean().optional(),
   searchQuery: z.string().trim().min(1).optional(),
-  ruleset: z.number().int().nonnegative().optional(),
+  ruleset: RulesetSchema.optional(),
   dateMin: z.string().optional(),
   dateMax: z.string().optional(),
-  verificationStatus: z.number().int().optional(),
+  verificationStatus: VerificationStatusSchema.optional(),
   rejectionReason: z.number().int().optional(),
   submittedBy: z.number().int().optional(),
   verifiedBy: z.number().int().optional(),
   lobbySize: z.number().int().optional(),
-  sort: z.number().int().optional(),
+  sort: z.nativeEnum(TournamentQuerySortType).optional(),
   descending: z.boolean().optional(),
 });
 
-export const TournamentListItemSchema = tournamentSelectSchema.pick({
-  id: true,
-  created: true,
-  name: true,
-  abbreviation: true,
-  forumUrl: true,
-  rankRangeLowerBound: true,
-  ruleset: true,
-  lobbySize: true,
-  startTime: true,
-  endTime: true,
-  verificationStatus: true,
-  rejectionReason: true,
-});
+export const TournamentListItemSchema = tournamentSelectSchema
+  .pick({
+    id: true,
+    created: true,
+    name: true,
+    abbreviation: true,
+    forumUrl: true,
+    rankRangeLowerBound: true,
+    ruleset: true,
+    lobbySize: true,
+    startTime: true,
+    endTime: true,
+    verificationStatus: true,
+    rejectionReason: true,
+  })
+  .extend({
+    ruleset: RulesetSchema,
+    verificationStatus: VerificationStatusSchema,
+  });
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
 
@@ -83,6 +93,8 @@ export const TournamentBeatmapSchema = BeatmapSchema.extend({
 const tournamentDetailBaseSchema = tournamentSelectSchema
   .omit(CreatedUpdatedOmit)
   .extend({
+    ruleset: RulesetSchema,
+    verificationStatus: VerificationStatusSchema,
     matches: z.array(MatchSchema),
     adminNotes: z.array(TournamentAdminNoteSchema),
     playerTournamentStats: z.array(TournamentPlayerStatsSchema),
@@ -116,7 +128,7 @@ export const TournamentAdminUpdateInputSchema = z.object({
       }
     ),
   rankRangeLowerBound: z.number().int().min(1),
-  ruleset: z.number().int().min(0),
+  ruleset: RulesetSchema,
   lobbySize: z.number().int().min(1).max(8),
   verificationStatus: VerificationStatusSchema,
   rejectionReason: z.number().int().min(0),

@@ -8,19 +8,11 @@ import {
   TournamentIdInputSchema,
   TournamentRefetchMatchDataResponseSchema,
   TournamentResetAutomatedChecksInputSchema,
-  VerificationStatusValue,
 } from '@/lib/orpc/schema/tournament';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
-
-const VerificationStatus = {
-  NONE: 0,
-  PRE_REJECTED: 1,
-  PRE_VERIFIED: 2,
-  REJECTED: 3,
-  VERIFIED: 4,
-} as const satisfies Record<string, VerificationStatusValue>;
+import { VerificationStatus } from '@/lib/osu/enums';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
@@ -47,8 +39,8 @@ export const updateTournamentAdmin = protectedProcedure
     }
 
     const shouldAssignReviewer =
-      input.verificationStatus === VerificationStatus.VERIFIED ||
-      input.verificationStatus === VerificationStatus.REJECTED;
+      input.verificationStatus === VerificationStatus.Verified ||
+      input.verificationStatus === VerificationStatus.Rejected;
 
     await context.db
       .update(schema.tournaments)
@@ -84,18 +76,18 @@ export const resetTournamentAutomatedChecks = protectedProcedure
 
     const statusesToReset = input.overrideVerifiedState
       ? [
-          VerificationStatus.PRE_REJECTED,
-          VerificationStatus.PRE_VERIFIED,
-          VerificationStatus.REJECTED,
-          VerificationStatus.VERIFIED,
+          VerificationStatus.PreRejected,
+          VerificationStatus.PreVerified,
+          VerificationStatus.Rejected,
+          VerificationStatus.Verified,
         ]
-      : [VerificationStatus.PRE_REJECTED, VerificationStatus.PRE_VERIFIED];
+      : [VerificationStatus.PreRejected, VerificationStatus.PreVerified];
 
     await context.db.transaction(async (tx) => {
       await tx
         .update(schema.tournaments)
         .set({
-          verificationStatus: VerificationStatus.NONE,
+          verificationStatus: VerificationStatus.None,
           rejectionReason: 0,
           verifiedByUserId: null,
           updated: NOW,
@@ -110,7 +102,7 @@ export const resetTournamentAutomatedChecks = protectedProcedure
       await tx
         .update(schema.matches)
         .set({
-          verificationStatus: VerificationStatus.NONE,
+          verificationStatus: VerificationStatus.None,
           rejectionReason: 0,
           warningFlags: 0,
           verifiedByUserId: null,
@@ -134,7 +126,7 @@ export const resetTournamentAutomatedChecks = protectedProcedure
         await tx
           .update(schema.games)
           .set({
-            verificationStatus: VerificationStatus.NONE,
+            verificationStatus: VerificationStatus.None,
             rejectionReason: 0,
             warningFlags: 0,
             updated: NOW,
@@ -157,7 +149,7 @@ export const resetTournamentAutomatedChecks = protectedProcedure
           await tx
             .update(schema.gameScores)
             .set({
-              verificationStatus: VerificationStatus.NONE,
+              verificationStatus: VerificationStatus.None,
               rejectionReason: 0,
               updated: NOW,
             })
@@ -189,7 +181,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
       await tx
         .update(schema.tournaments)
         .set({
-          verificationStatus: VerificationStatus.VERIFIED,
+          verificationStatus: VerificationStatus.Verified,
           rejectionReason: 0,
           verifiedByUserId: adminUserId,
           updated: NOW,
@@ -199,7 +191,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             eq(schema.tournaments.id, input.id),
             eq(
               schema.tournaments.verificationStatus,
-              VerificationStatus.PRE_VERIFIED
+              VerificationStatus.PreVerified
             )
           )
         );
@@ -207,7 +199,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
       await tx
         .update(schema.tournaments)
         .set({
-          verificationStatus: VerificationStatus.REJECTED,
+          verificationStatus: VerificationStatus.Rejected,
           verifiedByUserId: adminUserId,
           updated: NOW,
         })
@@ -216,7 +208,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             eq(schema.tournaments.id, input.id),
             eq(
               schema.tournaments.verificationStatus,
-              VerificationStatus.PRE_REJECTED
+              VerificationStatus.PreRejected
             )
           )
         );
@@ -224,7 +216,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
       await tx
         .update(schema.matches)
         .set({
-          verificationStatus: VerificationStatus.VERIFIED,
+          verificationStatus: VerificationStatus.Verified,
           verifiedByUserId: adminUserId,
           updated: NOW,
         })
@@ -233,7 +225,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             eq(schema.matches.tournamentId, input.id),
             eq(
               schema.matches.verificationStatus,
-              VerificationStatus.PRE_VERIFIED
+              VerificationStatus.PreVerified
             )
           )
         );
@@ -241,7 +233,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
       await tx
         .update(schema.matches)
         .set({
-          verificationStatus: VerificationStatus.REJECTED,
+          verificationStatus: VerificationStatus.Rejected,
           verifiedByUserId: adminUserId,
           updated: NOW,
         })
@@ -250,7 +242,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             eq(schema.matches.tournamentId, input.id),
             eq(
               schema.matches.verificationStatus,
-              VerificationStatus.PRE_REJECTED
+              VerificationStatus.PreRejected
             )
           )
         );
@@ -266,7 +258,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
         await tx
           .update(schema.games)
           .set({
-            verificationStatus: VerificationStatus.VERIFIED,
+            verificationStatus: VerificationStatus.Verified,
             updated: NOW,
           })
           .where(
@@ -274,7 +266,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
               inArray(schema.games.matchId, matchIds),
               eq(
                 schema.games.verificationStatus,
-                VerificationStatus.PRE_VERIFIED
+                VerificationStatus.PreVerified
               )
             )
           );
@@ -282,7 +274,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
         await tx
           .update(schema.games)
           .set({
-            verificationStatus: VerificationStatus.REJECTED,
+            verificationStatus: VerificationStatus.Rejected,
             updated: NOW,
           })
           .where(
@@ -290,7 +282,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
               inArray(schema.games.matchId, matchIds),
               eq(
                 schema.games.verificationStatus,
-                VerificationStatus.PRE_REJECTED
+                VerificationStatus.PreRejected
               )
             )
           );
@@ -306,7 +298,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
           await tx
             .update(schema.gameScores)
             .set({
-              verificationStatus: VerificationStatus.VERIFIED,
+              verificationStatus: VerificationStatus.Verified,
               updated: NOW,
             })
             .where(
@@ -314,7 +306,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
                 inArray(schema.gameScores.gameId, gameIds),
                 eq(
                   schema.gameScores.verificationStatus,
-                  VerificationStatus.PRE_VERIFIED
+                  VerificationStatus.PreVerified
                 )
               )
             );
@@ -322,7 +314,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
           await tx
             .update(schema.gameScores)
             .set({
-              verificationStatus: VerificationStatus.REJECTED,
+              verificationStatus: VerificationStatus.Rejected,
               updated: NOW,
             })
             .where(
@@ -330,7 +322,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
                 inArray(schema.gameScores.gameId, gameIds),
                 eq(
                   schema.gameScores.verificationStatus,
-                  VerificationStatus.PRE_REJECTED
+                  VerificationStatus.PreRejected
                 )
               )
             );

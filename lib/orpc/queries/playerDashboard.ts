@@ -2,12 +2,13 @@ import { cache } from 'react';
 
 import { orpc } from '@/lib/orpc/orpc';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
+import { Ruleset } from '@/lib/osu/enums';
 
 export type PlayerDashboardRequest = {
   key: string;
   dateMin?: Date;
   dateMax?: Date;
-  ruleset?: number;
+  ruleset?: Ruleset;
 };
 
 const toISOStringOrUndefined = (value?: Date) =>
@@ -28,6 +29,6 @@ export async function getPlayerDashboardStats({
 }
 
 export const getPlayerDashboardStatsCached = cache(
-  async (key: string, dateMin?: Date, dateMax?: Date, ruleset?: number) =>
+  async (key: string, dateMin?: Date, dateMax?: Date, ruleset?: Ruleset) =>
     getPlayerDashboardStats({ key, dateMin, dateMax, ruleset })
 );
