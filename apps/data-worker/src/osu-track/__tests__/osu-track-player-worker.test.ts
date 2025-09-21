@@ -86,7 +86,7 @@ describe('OsuTrackPlayerWorker', () => {
 
     const receivedUpdates: Array<{
       message: FetchPlayerOsuTrackMessage;
-      stats: number;
+      pp: number;
     }> = [];
 
     const worker = new OsuTrackPlayerWorker({
@@ -95,7 +95,7 @@ describe('OsuTrackPlayerWorker', () => {
       rateLimiter,
       logger: noopLogger,
       onUpdates: async ({ message, updates }) => {
-        receivedUpdates.push({ message, stats: updates[0]?.rank ?? -1 });
+        receivedUpdates.push({ message, pp: updates[0]?.pp ?? -1 });
       },
     });
 
@@ -131,7 +131,7 @@ describe('OsuTrackPlayerWorker', () => {
     expect(nacked).toBe(0);
     expect(receivedUpdates).toHaveLength(1);
     expect(receivedUpdates[0]?.message.osuPlayerId).toBe(7654321);
-    expect(receivedUpdates[0]?.stats).toBe(3456);
+    expect(receivedUpdates[0]?.pp).toBe(5123.45);
 
     await worker.stop();
   });
