@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 
+import { loadRootEnv } from '../../lib/env/load-root-env';
+
+loadRootEnv();
+
 const nextConfig: NextConfig = {
   webpack(config) {
     // @ts-expect-error Loose typing

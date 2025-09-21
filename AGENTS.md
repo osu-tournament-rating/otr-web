@@ -104,7 +104,7 @@ bunx tsc --noEmit     # Type check without emitting
 ## Environment & Secrets
 
 - Defined in `env.d.ts`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, optional `API_KEY`, plus deprecated `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_APP_BASE_URL` for legacy clients.
-- Set `NEXT_PUBLIC_APP_BASE_URL` (or rely on runtime origin) so the oRPC client and Better Auth client resolve correct URLs in SSR and CSR contexts.
+- Set `NEXT_PUBLIC_APP_BASE_URL` so the oRPC client and Better Auth client resolve correct URLs in SSR and CSR contexts.
 - Never commit `.env`; reference `env.d.ts` for required values and update it when adding new configuration.
 
 ## Utilities & Patterns

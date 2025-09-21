@@ -11,5 +11,8 @@
     "start:web": "bun run --filter web start",
     "lint:web": "bun run --filter web lint",
     "format:web": "bun run --filter web format"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
   }
 }

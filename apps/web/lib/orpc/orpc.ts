@@ -7,7 +7,7 @@ const link = new RPCLink({
   url: `${
     typeof window !== 'undefined'
       ? window.location.origin
-      : (process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'http://localhost:3000')
+      : process.env.NEXT_PUBLIC_APP_BASE_URL
   }/rpc`,
   headers: async () => {
     if (typeof window !== 'undefined') {
