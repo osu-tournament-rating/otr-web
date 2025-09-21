@@ -11,6 +11,7 @@
       "name": "data-worker",
       "dependencies": {
         "@otr/core": "workspace:*",
+        "osu-api-v2-js": "^2.1.1",
       },
     },
     "apps/web": {

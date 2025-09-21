@@ -249,8 +249,8 @@ export const auth = betterAuth({
       config: [
         {
           providerId: OSU_PROVIDER_ID,
-          clientId: process.env.OSU_CLIENT_ID,
-          clientSecret: process.env.OSU_CLIENT_SECRET,
+          clientId: process.env.WEB_OSU_CLIENT_ID,
+          clientSecret: process.env.WEB_OSU_CLIENT_SECRET,
           authorizationUrl: 'https://osu.ppy.sh/oauth/authorize',
           tokenUrl: 'https://osu.ppy.sh/oauth/token',
           userInfoUrl: OSU_PROFILE_URL,

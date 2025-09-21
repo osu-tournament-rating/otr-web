@@ -8,6 +8,7 @@
     "start": "echo \"TODO\""
   },
   "dependencies": {
-    "@otr/core": "workspace:*"
+    "@otr/core": "workspace:*",
+    "osu-api-v2-js": "^2.1.1"
   }
 }

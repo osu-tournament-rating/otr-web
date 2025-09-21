@@ -8,7 +8,7 @@ declare namespace NodeJS {
     API_KEY?: string;
     BETTER_AUTH_SECRET: string;
     BETTER_AUTH_URL: string;
-    OSU_CLIENT_ID: string;
-    OSU_CLIENT_SECRET: string;
+    WEB_OSU_CLIENT_ID: string;
+    WEB_OSU_CLIENT_SECRET: string;
   }
 }
