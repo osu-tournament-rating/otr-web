@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["bun-types"],
     "paths": {
       "@otr/core": ["../../packages/otr-core/src/index.ts"],
       "@otr/core/*": ["../../packages/otr-core/src/*"],
