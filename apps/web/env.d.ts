@@ -10,5 +10,6 @@ declare namespace NodeJS {
     BETTER_AUTH_URL: string;
     WEB_OSU_CLIENT_ID: string;
     WEB_OSU_CLIENT_SECRET: string;
+    DATA_WORKER_AMQP_URL: string;
   }
 }
