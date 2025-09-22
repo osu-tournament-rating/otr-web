@@ -21,6 +21,7 @@ import {
 import {
   getPlayer,
   getPlayerDashboardStats,
+  getPlayerTournaments,
 } from './procedures/playerProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
@@ -118,6 +119,7 @@ export const router = base.router({
   players: {
     get: getPlayer,
     dashboard: getPlayerDashboardStats,
+    tournaments: getPlayerTournaments,
   },
   stats: {
     platform: getPlatformStats,
