@@ -22,8 +22,6 @@ export default function PlayerRulesetSelector({
     ) as Ruleset
   );
 
-  console.log(defaultRuleset, selectedRuleset);
-
   // Sync state with URL changes (e.g. when navigating from search results)
   useEffect(() => {
     const rulesetFromUrl = Number(

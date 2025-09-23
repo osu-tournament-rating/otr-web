@@ -5,6 +5,10 @@ import { z } from 'zod';
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';
 import {
+  PlayerBeatmapsRequestSchema,
+  PlayerBeatmapStatsSchema,
+} from '@/lib/orpc/schema/playerBeatmaps';
+import {
   PlayerDashboardRequestSchema,
   PlayerDashboardStatsSchema,
   PlayerCompactSchema,
@@ -397,6 +401,109 @@ export const getPlayerTournaments = publicProcedure
         verificationStatus: row.verificationStatus as VerificationStatus,
         rejectionReason: row.rejectionReason,
       })
+    );
+  });
+
+export const getPlayerBeatmaps = publicProcedure
+  .input(PlayerBeatmapsRequestSchema)
+  .output(PlayerBeatmapStatsSchema.array())
+  .handler(async ({ input, context }) => {
+    const player = await findPlayerByKey(context.db, input.key);
+
+    const beatmapRows = await context.db
+      .select({
+        id: schema.beatmaps.id,
+        osuId: schema.beatmaps.osuId,
+        rankedStatus: schema.beatmaps.rankedStatus,
+        diffName: schema.beatmaps.diffName,
+        totalLength: schema.beatmaps.totalLength,
+        drainLength: schema.beatmaps.drainLength,
+        bpm: schema.beatmaps.bpm,
+        countCircle: schema.beatmaps.countCircle,
+        countSlider: schema.beatmaps.countSlider,
+        countSpinner: schema.beatmaps.countSpinner,
+        cs: schema.beatmaps.cs,
+        hp: schema.beatmaps.hp,
+        od: schema.beatmaps.od,
+        ar: schema.beatmaps.ar,
+        sr: schema.beatmaps.sr,
+        maxCombo: schema.beatmaps.maxCombo,
+        beatmapsetId: schema.beatmapsets.osuId,
+        ruleset: schema.beatmaps.ruleset,
+        artist: schema.beatmapsets.artist,
+        title: schema.beatmapsets.title,
+        tournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
+      })
+      .from(schema.beatmaps)
+      .leftJoin(
+        schema.beatmapsets,
+        eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+      )
+      .innerJoin(
+        schema.joinBeatmapCreators,
+        eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
+      )
+      .innerJoin(
+        schema.joinPooledBeatmaps,
+        eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
+      )
+      .where(
+        and(
+          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+        )
+      )
+      .groupBy(
+        schema.beatmaps.id,
+        schema.beatmaps.osuId,
+        schema.beatmaps.rankedStatus,
+        schema.beatmaps.diffName,
+        schema.beatmaps.totalLength,
+        schema.beatmaps.drainLength,
+        schema.beatmaps.bpm,
+        schema.beatmaps.countCircle,
+        schema.beatmaps.countSlider,
+        schema.beatmaps.countSpinner,
+        schema.beatmaps.cs,
+        schema.beatmaps.hp,
+        schema.beatmaps.od,
+        schema.beatmaps.ar,
+        schema.beatmaps.sr,
+        schema.beatmaps.maxCombo,
+        schema.beatmaps.ruleset,
+        schema.beatmapsets.osuId,
+        schema.beatmapsets.artist,
+        schema.beatmapsets.title
+      )
+      .orderBy(
+        desc(
+          sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`
+        )
+      );
+
+    return PlayerBeatmapStatsSchema.array().parse(
+      beatmapRows.map((row) => ({
+        id: row.id,
+        osuId: row.osuId,
+        diffName: row.diffName,
+        totalLength: row.totalLength,
+        drainLength: row.drainLength,
+        bpm: row.bpm,
+        countCircle: row.countCircle,
+        countSlider: row.countSlider,
+        countSpinner: row.countSpinner,
+        cs: row.cs,
+        hp: row.hp,
+        od: row.od,
+        ar: row.ar,
+        sr: row.sr,
+        maxCombo: row.maxCombo,
+        beatmapsetId: row.beatmapsetId,
+        ruleset: row.ruleset,
+        artist: row.artist ?? '',
+        title: row.title ?? '',
+        tournamentCount: Number(row.tournamentCount),
+      }))
     );
   });
 

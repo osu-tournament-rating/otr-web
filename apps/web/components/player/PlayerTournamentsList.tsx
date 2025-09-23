@@ -17,10 +17,12 @@ export default function PlayerTournamentsList({
   tournaments,
   adjustments,
 }: PlayerTournamentsListProps) {
-  const [showAll, setShowAll] = useState(false);
+  const NUM_INITIAL_DISPLAY = 3;
+  const NUM_LOAD_MORE = 100;
+  const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
 
-  // Get either all tournaments or just the most recent 3
-  const displayedTournaments = showAll ? tournaments : tournaments.slice(0, 3);
+  // Get tournaments up to the current display count
+  const displayedTournaments = tournaments.slice(0, displayCount);
 
   if (tournaments.length === 0) {
     return <NoResultsCard />;
@@ -44,13 +46,17 @@ export default function PlayerTournamentsList({
             adjustments={adjustments}
           />
         ))}
-        {tournaments.length > 3 && !showAll && (
+        {tournaments.length > displayCount && (
           <Button
             variant="outline"
             className="w-full justify-center"
-            onClick={() => setShowAll(true)}
+            onClick={() =>
+              setDisplayCount((prev) =>
+                Math.min(prev + NUM_LOAD_MORE, tournaments.length)
+              )
+            }
           >
-            Show More ({tournaments.length - 3} more)
+            Show More ({tournaments.length - displayCount} more)
           </Button>
         )}
       </CardContent>
@@ -70,9 +76,7 @@ function NoResultsCard() {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <h3 className="text-primary text-2xl font-bold">
-          No tournaments found
-        </h3>
+        <h3 className="text-xl font-semibold">No tournaments found</h3>
         <p className="text-muted-foreground">
           This player has not participated in any tournaments recently.
         </p>

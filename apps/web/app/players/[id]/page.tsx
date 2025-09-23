@@ -1,3 +1,4 @@
+import PlayerBeatmapsList from '@/components/player/PlayerBeatmapsList';
 import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
@@ -7,6 +8,7 @@ import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
+import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerDashboardStatsCached } from '@/lib/orpc/queries/playerDashboard';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
@@ -15,6 +17,7 @@ import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -83,6 +86,20 @@ async function getTournaments(
   }
 }
 
+async function getBeatmaps(
+  key: string,
+  ruleset?: Ruleset
+): Promise<PlayerBeatmapStats[]> {
+  const decodedKey = decodeURIComponent(key);
+
+  try {
+    return await getPlayerBeatmapsCached(decodedKey, ruleset);
+  } catch (error) {
+    console.error('Failed to fetch player beatmaps:', error);
+    return [];
+  }
+}
+
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -102,6 +119,9 @@ export default async function PlayerPage(props: PageProps) {
 
   // Get the list of tournaments that the player has participated in
   const playerTournaments = await getTournaments(decodedId, currentRuleset);
+
+  // Get the list of tournament beatmaps the player has mapped
+  const playerBeatmaps = await getBeatmaps(decodedId, currentRuleset);
 
   // Redirect to o!TR ID if the current URL uses a different search key
   if (
@@ -192,6 +212,8 @@ export default async function PlayerPage(props: PageProps) {
             tournaments={playerTournaments}
             adjustments={playerData.rating.adjustments}
           />
+          {/* Player beatmaps list */}
+          <PlayerBeatmapsList beatmaps={playerBeatmaps} />
         </>
       ) : (
         // No ruleset data
