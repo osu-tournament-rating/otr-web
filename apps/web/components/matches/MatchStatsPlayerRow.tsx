@@ -3,13 +3,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  ProcessedPlayerStats,
-  formatScore,
-  getRatingChangeColor,
-} from './MatchStatsUtils';
+import { ProcessedPlayerStats, formatScore } from './MatchStatsUtils';
+import RatingDelta from '@/components/rating/RatingDelta';
 
 const AVATAR_SIZE = {
   WIDTH: 28,
@@ -18,8 +15,6 @@ const AVATAR_SIZE = {
 
 const RATING_PRECISION = {
   DISPLAY: 0,
-  DELTA: 1,
-  COMPARISON: 10,
 } as const;
 
 interface MatchStatsPlayerRowProps {
@@ -35,19 +30,6 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
 }: MatchStatsPlayerRowProps) {
   const [imageError, setImageError] = useState(false);
 
-  const ratingChangeIcon = useMemo(() => {
-    if (player.ratingDelta === null) return null;
-
-    const roundedDelta =
-      Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-      RATING_PRECISION.COMPARISON;
-
-    if (roundedDelta === 0) return <Minus className="h-3.5 w-3.5" />;
-    if (player.ratingDelta > 0) return <TrendingUp className="h-3.5 w-3.5" />;
-    if (player.ratingDelta < 0) return <TrendingDown className="h-3.5 w-3.5" />;
-    return <Minus className="h-3.5 w-3.5" />;
-  }, [player.ratingDelta]);
-
   const teamBadge = useMemo(() => {
     if (!player.team) return null;
     return player.team === 'red' ? (
@@ -62,7 +44,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
   return (
     <TableRow
       className={cn(
-        'group transition-colors hover:bg-muted/50',
+        'hover:bg-muted/50 group transition-colors',
         player.won && 'bg-green-500/5 hover:bg-green-500/10'
       )}
     >
@@ -78,12 +60,12 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
               alt={player.username}
               width={AVATAR_SIZE.WIDTH}
               height={AVATAR_SIZE.HEIGHT}
-              className="rounded-full ring-1 ring-border/10"
+              className="ring-border/10 rounded-full ring-1"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-              <User className="h-4 w-4 text-muted-foreground" />
+            <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
+              <User className="text-muted-foreground h-4 w-4" />
             </div>
           )}
           <div className="flex min-w-0 flex-col">
@@ -102,7 +84,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
             aria-label={`${player.gamesWon} wins, ${player.gamesLost} losses`}
           >
             <span className="text-green-600">{player.gamesWon}</span>
-            <span className="px-0.5 text-muted-foreground" aria-hidden="true">
+            <span className="text-muted-foreground px-0.5" aria-hidden="true">
               -
             </span>
             <span className="text-red-600">{player.gamesLost}</span>
@@ -111,50 +93,18 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
       )}
 
       {/* Rating columns */}
-      <TableCell className="py-2 text-center text-xs text-muted-foreground sm:text-sm">
+      <TableCell className="text-muted-foreground py-2 text-center text-xs sm:text-sm">
         {player.ratingBefore?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2 text-center text-xs font-medium sm:text-sm">
         {player.ratingAfter?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2 text-center">
-        <div
-          className={cn(
-            'inline-flex items-center justify-center gap-0.5 rounded-md px-1 py-0.5 text-xs font-semibold sm:gap-1 sm:px-1.5',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON >
-                0 &&
-              'bg-green-500/10',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON <
-                0 &&
-              'bg-red-500/10',
-            player.ratingDelta !== null &&
-              Math.round(player.ratingDelta * RATING_PRECISION.COMPARISON) /
-                RATING_PRECISION.COMPARISON ===
-                0 &&
-              'bg-gray-500/10',
-            getRatingChangeColor(player.ratingDelta)
-          )}
-        >
-          <span className="hidden sm:inline">{ratingChangeIcon}</span>
-          <span>
-            {player.ratingDelta !== null ? (
-              Math.abs(player.ratingDelta) < 0.05 ? (
-                '0.0'
-              ) : (
-                <>
-                  {player.ratingDelta > 0 && '+'}
-                  {player.ratingDelta.toFixed(RATING_PRECISION.DELTA)}
-                </>
-              )
-            ) : (
-              '-'
-            )}
-          </span>
-        </div>
+        {player.ratingDelta !== null ? (
+          <RatingDelta delta={player.ratingDelta} />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
       </TableCell>
       {/* Performance metrics - consistent breakpoints matching headers */}
       {showPerformanceMetrics && (
