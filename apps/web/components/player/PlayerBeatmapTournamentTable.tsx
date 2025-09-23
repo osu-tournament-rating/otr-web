@@ -13,7 +13,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import { Users } from 'lucide-react';
+import { Target, Users } from 'lucide-react';
 
 interface PlayerBeatmapTournamentTableProps {
   tournaments: TournamentListItem[];
@@ -36,12 +36,8 @@ export default function PlayerBeatmapTournamentTable({
               <TableHead className="bg-muted/50 w-[40px]" />
               <TableHead className="bg-muted/50">Date Range</TableHead>
               <TableHead className="bg-muted/50">Tournament</TableHead>
-              <TableHead className="bg-muted/50 text-right">
-                Rank Range
-              </TableHead>
-              <TableHead className="bg-muted/50 text-right">
-                Team Size
-              </TableHead>
+              <TableHead className="bg-muted/50">Rank Range</TableHead>
+              <TableHead className="bg-muted/50">Team Size</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -82,11 +78,14 @@ export default function PlayerBeatmapTournamentTable({
                         {tournament.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-right text-sm">
-                      {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
+                    <TableCell className="text-muted-foreground text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Target className="h-4 w-4" />
+                        {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground w-[80px] whitespace-nowrap text-right text-sm">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <TableCell className="text-muted-foreground w-[80px] whitespace-nowrap text-sm">
+                      <div className="flex items-center gap-1.5">
                         <Users className="h-4 w-4" />
                         <span>
                           {tournament.lobbySize}v{tournament.lobbySize}

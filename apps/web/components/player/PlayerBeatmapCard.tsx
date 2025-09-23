@@ -34,6 +34,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
       <BeatmapBackground
         beatmapsetId={beatmap.beatmapsetId ?? undefined}
         alt={`Beatmap ${beatmap.osuId} background`}
+        className={cn(showTournaments && 'rounded-b-none')}
       />
 
       {/* Gradient overlay for better text contrast */}
