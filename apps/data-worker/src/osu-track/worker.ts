@@ -1,14 +1,18 @@
 import { type FetchPlayerOsuTrackMessage, QueueConstants } from '@otr/core';
 import type { UserStatUpdate } from '@otr/core';
+
 import { consoleLogger, type Logger } from '../logging/logger';
 import type { QueueConsumer } from '../queue/types';
 import type { RateLimiter } from './rate-limiter';
 import { OsuTrackClient } from './client';
 
 export interface OsuTrackPlayerWorkerEvents {
-  onUpdates?: (details: {
+  onPlayer?: (details: {
     message: FetchPlayerOsuTrackMessage;
-    updates: UserStatUpdate[];
+    results: Array<{
+      mode: number;
+      updates: UserStatUpdate[];
+    }>;
   }) => Promise<void> | void;
 }
 
@@ -34,28 +38,44 @@ export class OsuTrackPlayerWorker {
     this.client = options.client;
     this.rateLimiter = options.rateLimiter;
     this.logger = options.logger ?? defaultLogger;
-    this.events = { onUpdates: options.onUpdates };
+    this.events = { onPlayer: options.onPlayer };
   }
 
   async start() {
     await this.queue.start(async (message) => {
       const envelope = message.payload;
 
+      this.logger.info(
+        `osu!track queue received player ${envelope.osuPlayerId} (${envelope.correlationId})`
+      );
+
       try {
-        const updates = await this.rateLimiter.schedule(() =>
-          this.client.fetchUserStatsHistory({
-            osuPlayerId: envelope.osuPlayerId,
-          })
-        );
+        const results: Array<{ mode: number; updates: UserStatUpdate[] }> = [];
+        const modes = [0, 1, 2, 3];
 
-        this.logger.info('Fetched osu!track updates', {
-          osuPlayerId: envelope.osuPlayerId,
-          updateCount: updates.length,
-          queue: QueueConstants.osuTrack.players,
-        });
+        for (const mode of modes) {
+          const updates = await this.rateLimiter.schedule(() =>
+            this.client.fetchUserStatsHistory({
+              osuPlayerId: envelope.osuPlayerId,
+              mode,
+            })
+          );
 
-        await this.events.onUpdates?.({ message: envelope, updates });
+          this.logger.info(
+            `osu!track fetched ${updates.length} updates for player ${envelope.osuPlayerId} mode ${mode}`
+          );
+
+          results.push({ mode, updates });
+        }
+        await this.events.onPlayer?.({ message: envelope, results });
         await message.ack();
+
+        const summary = results
+          .map((entry) => `${entry.mode}:${entry.updates.length}`)
+          .join(',');
+        this.logger.info(
+          `osu!track acknowledged player ${envelope.osuPlayerId} (${envelope.correlationId}) modes ${summary}`
+        );
       } catch (error) {
         this.logger.error('Failed to process osu!track player fetch', {
           osuPlayerId: envelope.osuPlayerId,

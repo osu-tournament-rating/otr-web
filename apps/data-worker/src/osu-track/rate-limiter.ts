@@ -7,7 +7,7 @@ const sleep = (durationMs: number) =>
 
 /**
  * Simple fixed-interval rate limiter that enforces a minimum gap between
- * scheduled tasks. Suitable for low-volume API throttling such as osu!track.
+ * scheduled tasks. Suitable for low-volume API throttling.
  */
 export class FixedIntervalRateLimiter implements RateLimiter {
   private readonly intervalMs: number;

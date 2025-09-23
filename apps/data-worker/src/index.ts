@@ -1,18 +1,18 @@
 import { QueueConstants, type FetchPlayerOsuTrackMessage } from '@otr/core';
 
+import { db } from './db';
 import { dataWorkerEnv } from './env';
 import { consoleLogger } from './logging/logger';
 import { RabbitMqConsumer } from './queue/rabbitmq-consumer';
 import { FixedIntervalRateLimiter } from './osu-track/rate-limiter';
 import { OsuTrackClient } from './osu-track/client';
 import { OsuTrackPlayerWorker } from './osu-track/worker';
+import { processOsuTrackPlayerResults } from './osu-track/persistence';
 
 const logger = consoleLogger;
 
 const bootstrap = async () => {
-  const osuTrackClient = new OsuTrackClient({
-    baseUrl: dataWorkerEnv.osuTrackApiBaseUrl,
-  });
+  const osuTrackClient = new OsuTrackClient({});
 
   const queueConsumer = new RabbitMqConsumer<FetchPlayerOsuTrackMessage>({
     url: dataWorkerEnv.amqpUrl,
@@ -30,6 +30,14 @@ const bootstrap = async () => {
     client: osuTrackClient,
     rateLimiter,
     logger,
+    onPlayer: async ({ message, results }) => {
+      await processOsuTrackPlayerResults({
+        db,
+        logger,
+        osuPlayerId: message.osuPlayerId,
+        results,
+      });
+    },
   });
 
   logger.info('Starting osu!track player worker');

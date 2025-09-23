@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "dev:web": "bun run --filter web dev",
+    "dev:data-worker": "bun run --filter data-worker dev",
     "build:web": "bun run --filter web build",
     "start:web": "bun run --filter web start",
     "lint:web": "bun run --filter web lint",

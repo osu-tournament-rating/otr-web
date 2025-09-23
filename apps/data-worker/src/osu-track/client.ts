@@ -5,8 +5,9 @@ type FetchFunction = (
   init?: RequestInit
 ) => Promise<Response>;
 
+const OSU_TRACK_BASE_URL = 'https://osutrack-api.ameo.dev';
+
 export interface OsuTrackClientOptions {
-  baseUrl: string;
   fetchImpl?: FetchFunction;
   defaultMode?: number;
 }
@@ -73,12 +74,10 @@ const mapUserStatUpdate = (raw: RawUserStatUpdate): UserStatUpdate => ({
 });
 
 export class OsuTrackClient {
-  private readonly baseUrl: string;
   private readonly fetchImpl: FetchFunction;
   private readonly defaultMode: number;
 
   constructor(options: OsuTrackClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, '');
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.defaultMode = options.defaultMode ?? 0;
   }
@@ -87,7 +86,7 @@ export class OsuTrackClient {
     options: FetchUserStatsHistoryOptions
   ): Promise<UserStatUpdate[]> {
     const mode = options.mode ?? this.defaultMode;
-    const url = new URL(`${this.baseUrl}/stats_history`);
+    const url = new URL(`${OSU_TRACK_BASE_URL}/stats_history`);
     url.searchParams.set('user', String(options.osuPlayerId));
     url.searchParams.set('mode', String(mode));
 

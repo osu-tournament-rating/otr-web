@@ -38,9 +38,6 @@ export const dataWorkerEnv = {
   osuClientId,
   osuClientSecret: requireEnv('DATA_WORKER_OSU_CLIENT_SECRET'),
   osuTrackRequestsPerMinute,
-  osuTrackApiBaseUrl:
-    process.env.DATA_WORKER_OSUTRACK_API_BASE_URL ??
-    'https://osutrack-api.ameo.dev',
   amqpUrl: requireEnv('DATA_WORKER_AMQP_URL'),
 } as const;
 

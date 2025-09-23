@@ -83,7 +83,6 @@ describe('osu!track end-to-end', () => {
       });
     };
     const client = new OsuTrackClient({
-      baseUrl: 'https://osutrack.test',
       fetchImpl,
     });
 
@@ -95,26 +94,23 @@ describe('osu!track end-to-end', () => {
       processedResolve = resolve;
     });
 
-    let received: {
-      message: FetchPlayerOsuTrackMessage;
-      updateCount: number;
-      update: UserStatUpdate;
-    } | null = null;
+    let received:
+      | {
+          message: FetchPlayerOsuTrackMessage;
+          results: Array<{ mode: number; updates: UserStatUpdate[] }>;
+        }
+      | null = null;
 
     const worker = new OsuTrackPlayerWorker({
       queue,
       client,
       rateLimiter,
       logger: noopLogger,
-      onUpdates: async ({ message, updates }) => {
-        const first = updates[0];
-        received = first
-          ? {
-              message,
-              updateCount: updates.length,
-              update: first,
-            }
-          : null;
+      onPlayer: async ({ message, results: playerResults }) => {
+        received = {
+          message,
+          results: playerResults,
+        };
         processedResolve?.();
       },
     });
@@ -145,29 +141,34 @@ describe('osu!track end-to-end', () => {
       await queue.emit(message);
       await processed;
 
-      expect(requests).toHaveLength(1);
-      expect(requests[0]?.pathname).toBe('/stats_history');
-      expect(requests[0]?.searchParams.get('user')).toBe('19351718');
-      expect(requests[0]?.searchParams.get('mode')).toBe('0');
+      expect(requests).toHaveLength(4);
+      const requestedModes = requests.map((request) =>
+        request?.searchParams.get('mode')
+      );
+      expect(requestedModes).toEqual(['0', '1', '2', '3']);
 
       expect(acked).toBe(1);
       expect(nacked).toBe(0);
       expect(received).not.toBeNull();
-      expect(received!.updateCount).toBe(1);
-      expect(received!.update.playCount).toBe(300);
-      expect(received!.update.totalScore).toBe(2345678);
-      expect(received!.update.rankedScore).toBe(1234567);
-      expect(received!.update.rank).toBe(789);
-      expect(received!.update.accuracy).toBeCloseTo(97.5);
-      expect(received!.update.level).toBeCloseTo(99.12);
-      expect(received!.update.pp).toBeCloseTo(6543.21);
-      expect(received!.update.count300).toBe(42);
-      expect(received!.update.count100).toBe(10);
-      expect(received!.update.count50).toBe(2);
-      expect(received!.update.countSs).toBe(5);
-      expect(received!.update.countS).toBe(12);
-      expect(received!.update.countA).toBe(30);
-      expect(received!.update.timestamp.toISOString()).toBe(
+      expect(received!.results).toHaveLength(4);
+      const [first] = received!.results;
+      expect(first.mode).toBe(0);
+      expect(first.updates).toHaveLength(1);
+      const [firstUpdate] = first.updates;
+      expect(firstUpdate.playCount).toBe(300);
+      expect(firstUpdate.totalScore).toBe(2345678);
+      expect(firstUpdate.rankedScore).toBe(1234567);
+      expect(firstUpdate.rank).toBe(789);
+      expect(firstUpdate.accuracy).toBeCloseTo(97.5);
+      expect(firstUpdate.level).toBeCloseTo(99.12);
+      expect(firstUpdate.pp).toBeCloseTo(6543.21);
+      expect(firstUpdate.count300).toBe(42);
+      expect(firstUpdate.count100).toBe(10);
+      expect(firstUpdate.count50).toBe(2);
+      expect(firstUpdate.countSs).toBe(5);
+      expect(firstUpdate.countS).toBe(12);
+      expect(firstUpdate.countA).toBe(30);
+      expect(firstUpdate.timestamp.toISOString()).toBe(
         '2024-05-01T01:02:03.000Z'
       );
     } finally {
