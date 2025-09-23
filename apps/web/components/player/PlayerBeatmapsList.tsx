@@ -64,11 +64,13 @@ function NoResultsCard() {
           <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <h3 className="text-xl font-semibold">No beatmaps found</h3>
-        <p className="text-muted-foreground">
-          This player does not have any pooled beatmaps.
-        </p>
+      <CardContent className="flex flex-col space-y-4">
+        <Card className="w-full gap-2 p-6 text-center">
+          <h2 className="text-xl font-semibold">No Beatmaps Found</h2>
+          <p className="text-muted-foreground">
+            This player has no pooled beatmaps for the selected ruleset.
+          </p>
+        </Card>
       </CardContent>
     </Card>
   );

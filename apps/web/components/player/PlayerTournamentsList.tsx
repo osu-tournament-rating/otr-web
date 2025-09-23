@@ -75,11 +75,14 @@ function NoResultsCard() {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <h3 className="text-xl font-semibold">No tournaments found</h3>
-        <p className="text-muted-foreground">
-          This player has not participated in any tournaments recently.
-        </p>
+      <CardContent className="flex flex-col space-y-4">
+        <Card className="w-full gap-2 p-6 text-center">
+          <h2 className="text-xl font-semibold">No Tournaments Found</h2>
+          <p className="text-muted-foreground">
+            This player has not participated in any tournaments for the selected
+            ruleset.
+          </p>
+        </Card>
       </CardContent>
     </Card>
   );

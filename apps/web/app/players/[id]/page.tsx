@@ -166,7 +166,6 @@ export default async function PlayerPage(props: PageProps) {
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
-      {/* Always show the player card if there's no rating data */}
       {!playerData.rating && (
         <Card className="p-6 font-sans">
           <PlayerCard
@@ -224,15 +223,16 @@ export default async function PlayerPage(props: PageProps) {
               )}
             </div>
           )}
-          {/* Player tournaments list */}
-          <PlayerTournamentsList
-            tournaments={playerTournaments}
-            adjustments={playerData.rating.adjustments}
-          />
         </>
       )}
 
-      {/* Always show beatmaps list regardless of rating data */}
+      {/* Tournament history */}
+      <PlayerTournamentsList
+        tournaments={playerTournaments}
+        adjustments={playerData.rating?.adjustments ?? []}
+      />
+
+      {/* Pooled beatmaps */}
       <PlayerBeatmapsList beatmaps={playerBeatmaps} />
     </div>
   );
