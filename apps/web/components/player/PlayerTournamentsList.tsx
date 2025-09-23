@@ -1,19 +1,21 @@
 'use client';
 
-import TournamentCard from '../tournaments/TournamentCard';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
+import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import PlayerTournamentCard from './PlayerTournamentCard';
 
 interface PlayerTournamentsListProps {
   tournaments: TournamentListItem[];
+  adjustments: PlayerRatingAdjustment[];
 }
 
 export default function PlayerTournamentsList({
   tournaments,
+  adjustments,
 }: PlayerTournamentsListProps) {
   const [showAll, setShowAll] = useState(false);
 
@@ -36,9 +38,11 @@ export default function PlayerTournamentsList({
       </CardHeader>
       <CardContent className="flex flex-col space-y-4">
         {displayedTournaments.map((tournament) => (
-          <Link key={tournament.id} href={`/tournaments/${tournament.id}`}>
-            <TournamentCard tournament={tournament} displayStatusText />
-          </Link>
+          <PlayerTournamentCard
+            key={tournament.id}
+            tournament={tournament}
+            adjustments={adjustments}
+          />
         ))}
         {tournaments.length > 3 && !showAll && (
           <Button

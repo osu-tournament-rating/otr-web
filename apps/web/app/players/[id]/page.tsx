@@ -188,7 +188,10 @@ export default async function PlayerPage(props: PageProps) {
             </div>
           )}
           {/* Player tournaments list */}
-          <PlayerTournamentsList tournaments={playerTournaments} />
+          <PlayerTournamentsList
+            tournaments={playerTournaments}
+            adjustments={playerData.rating.adjustments}
+          />
         </>
       ) : (
         // No ruleset data
