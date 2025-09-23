@@ -8,7 +8,7 @@ import {
   Timer,
   Music,
   Star,
-  WavesLadder,
+  Trophy,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -46,12 +46,12 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
               /b/{beatmap.osuId}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-white/80">
+          <div className="flex items-center gap-1.5 text-sm text-white/90">
             <span>
               {beatmap.tournamentCount} tournament
               {beatmap.tournamentCount === 1 ? '' : 's'}
             </span>
-            <WavesLadder className="h-4 w-4 flex-shrink-0" />
+            <Trophy className="h-4 w-4 flex-shrink-0" />
           </div>
         </div>
 
@@ -102,7 +102,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
             className={cn(
               '-my-1 h-8 gap-2 px-3 text-sm',
               'hover:bg-accent hover:text-accent-foreground',
-              'border-input border',
+              'border-input text-foreground border',
               showTournaments && 'bg-accent text-accent-foreground'
             )}
           >
