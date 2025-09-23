@@ -1,3 +1,5 @@
+import { MessagePriority } from '../messages/values';
+
 type QueueMap = {
   automatedChecks: {
     tournaments: 'processing.checks.tournaments';
@@ -34,3 +36,7 @@ export const QueueConstants: QueueMap = {
 
 export type QueueGroup = keyof QueueMap;
 export type QueueName = QueueMap[QueueGroup][keyof QueueMap[QueueGroup]];
+
+export const QueuePriorityArguments = {
+  'x-max-priority': MessagePriority.High,
+} as const;

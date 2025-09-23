@@ -1,4 +1,4 @@
-import type { MessageEnvelope } from '@otr/core';
+import { type MessageEnvelope, QueuePriorityArguments } from '@otr/core';
 import { connect, type ConsumeMessage } from 'amqplib';
 import { consoleLogger, type Logger } from '../logging/logger';
 import type { QueueConsumer, QueueMessage, QueueMessageHandler } from './types';
@@ -32,7 +32,10 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
 
     const connection = await connect(this.options.url);
     const channel = await connection.createChannel();
-    await channel.assertQueue(this.options.queue, { durable: true });
+    await channel.assertQueue(this.options.queue, {
+      durable: true,
+      arguments: { ...QueuePriorityArguments },
+    });
     await channel.prefetch(this.options.prefetch ?? 1);
 
     const consumer = await channel.consume(
