@@ -1,16 +1,30 @@
+'use client';
+
 import { RulesetEnumHelper } from '@/lib/enums';
 import Link from 'next/link';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
-import { Timer, Music, Star, WavesLadder } from 'lucide-react';
+import {
+  Timer,
+  Music,
+  Star,
+  WavesLadder,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 import BeatmapBackground from '../games/BeatmapBackground';
+import { useState } from 'react';
+import { Button } from '../ui/button';
+import PlayerBeatmapTournamentTable from './PlayerBeatmapTournamentTable';
+import { cn } from '@/lib/utils';
 
 interface PlayerBeatmapCardProps {
   beatmap: PlayerBeatmapStats;
 }
 
 export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
+  const [showTournaments, setShowTournaments] = useState(false);
   const minutes = Math.floor(beatmap.totalLength / 60);
   const seconds = beatmap.totalLength % 60;
   const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -81,14 +95,44 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
               <span className="truncate">{beatmap.bpm.toFixed(0)} BPM</span>
             </div>
           </div>
+
+          <Button
+            onClick={() => setShowTournaments(!showTournaments)}
+            variant="outline"
+            className={cn(
+              '-my-1 h-8 gap-2 px-3 text-sm',
+              'hover:bg-accent hover:text-accent-foreground',
+              'border-input border',
+              showTournaments && 'bg-accent text-accent-foreground'
+            )}
+          >
+            {showTournaments ? 'Hide Tournaments' : 'Show Tournaments'}
+            {showTournaments ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <Card className="relative overflow-hidden p-0 font-sans">
-      {cardContent}
-    </Card>
+    <div className="flex flex-col">
+      <Card
+        className={cn(
+          'relative overflow-hidden p-0 font-sans',
+          showTournaments && 'rounded-b-none'
+        )}
+      >
+        {cardContent}
+      </Card>
+      {showTournaments && (
+        <Card className="rounded-t-none border-t-0 p-4 sm:p-6">
+          <PlayerBeatmapTournamentTable tournaments={beatmap.tournaments} />
+        </Card>
+      )}
+    </div>
   );
 }

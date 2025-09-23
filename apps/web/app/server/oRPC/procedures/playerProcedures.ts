@@ -410,7 +410,8 @@ export const getPlayerBeatmaps = publicProcedure
   .handler(async ({ input, context }) => {
     const player = await findPlayerByKey(context.db, input.key);
 
-    const beatmapRows = await context.db
+    // First get all beatmaps with their counts
+    const beatmapSummaryRows = await context.db
       .select({
         id: schema.beatmaps.id,
         osuId: schema.beatmaps.osuId,
@@ -481,8 +482,53 @@ export const getPlayerBeatmaps = publicProcedure
         )
       );
 
-    return PlayerBeatmapStatsSchema.array().parse(
-      beatmapRows.map((row) => ({
+    // Then get tournament details for each beatmap
+    const tournamentRows = await context.db
+      .select({
+        beatmapId: schema.beatmaps.id,
+        tournamentId: schema.tournaments.id,
+        tournamentCreated: schema.tournaments.created,
+        tournamentName: schema.tournaments.name,
+        tournamentAbbreviation: schema.tournaments.abbreviation,
+        tournamentForumUrl: schema.tournaments.forumUrl,
+        tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+        tournamentRuleset: schema.tournaments.ruleset,
+        tournamentLobbySize: schema.tournaments.lobbySize,
+        tournamentStartTime: schema.tournaments.startTime,
+        tournamentEndTime: schema.tournaments.endTime,
+        tournamentVerificationStatus: schema.tournaments.verificationStatus,
+        tournamentRejectionReason: schema.tournaments.rejectionReason,
+      })
+      .from(schema.beatmaps)
+      .innerJoin(
+        schema.joinBeatmapCreators,
+        eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
+      )
+      .innerJoin(
+        schema.joinPooledBeatmaps,
+        eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
+      )
+      .innerJoin(
+        schema.tournaments,
+        eq(
+          schema.tournaments.id,
+          schema.joinPooledBeatmaps.tournamentsPooledInId
+        )
+      )
+      .where(
+        and(
+          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+        )
+      )
+      .orderBy(desc(schema.tournaments.endTime));
+
+    // Group beatmaps and collect tournaments
+    const beatmapsMap = new Map<number, any>();
+
+    // Initialize map with beatmap info
+    for (const row of beatmapSummaryRows) {
+      beatmapsMap.set(row.id, {
         id: row.id,
         osuId: row.osuId,
         diffName: row.diffName,
@@ -503,8 +549,35 @@ export const getPlayerBeatmaps = publicProcedure
         artist: row.artist ?? '',
         title: row.title ?? '',
         tournamentCount: Number(row.tournamentCount),
-      }))
-    );
+        tournaments: [],
+      });
+    }
+
+    // Add tournament info to each beatmap
+    for (const row of tournamentRows) {
+      const beatmap = beatmapsMap.get(row.beatmapId);
+      if (beatmap) {
+        beatmap.tournaments.push({
+          id: row.tournamentId,
+          created: row.tournamentCreated,
+          name: row.tournamentName,
+          abbreviation: row.tournamentAbbreviation,
+          forumUrl: row.tournamentForumUrl,
+          rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+          ruleset: row.tournamentRuleset,
+          lobbySize: row.tournamentLobbySize,
+          startTime: row.tournamentStartTime,
+          endTime: row.tournamentEndTime,
+          verificationStatus: row.tournamentVerificationStatus,
+          rejectionReason: row.tournamentRejectionReason,
+        });
+      }
+    }
+
+    // Convert to array (already sorted by tournamentCount from the first query)
+    const result = Array.from(beatmapsMap.values());
+
+    return PlayerBeatmapStatsSchema.array().parse(result);
   });
 
 export const getPlayerDashboardStats = publicProcedure

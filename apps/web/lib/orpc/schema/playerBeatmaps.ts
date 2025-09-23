@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 import { RulesetSchema } from './constants';
+import { TournamentListItemSchema } from './tournament';
 
 export const PlayerBeatmapsRequestSchema = z.object({
   key: z.string().min(1),
@@ -27,6 +28,7 @@ export const PlayerBeatmapStatsSchema = z.object({
   artist: z.string().default(''),
   title: z.string().default(''),
   tournamentCount: z.number().int().nonnegative().default(0),
+  tournaments: z.array(TournamentListItemSchema).optional().default([]),
 });
 
 export type PlayerBeatmapsRequest = z.infer<typeof PlayerBeatmapsRequestSchema>;
