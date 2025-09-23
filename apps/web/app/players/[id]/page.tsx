@@ -166,7 +166,24 @@ export default async function PlayerPage(props: PageProps) {
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
-      {playerData.rating && playerData.rating.adjustments ? (
+      {/* Always show the player card if there's no rating data */}
+      {!playerData.rating && (
+        <Card className="p-6 font-sans">
+          <PlayerCard
+            player={playerData.playerInfo}
+            ruleset={playerData.ruleset}
+          />
+          <Card className="gap-2 rounded-lg p-6 text-center">
+            <h2 className="text-xl font-semibold">No Rating Data Available</h2>
+            <p className="text-muted-foreground">
+              This player has no rating data for the selected ruleset.
+            </p>
+          </Card>
+        </Card>
+      )}
+
+      {/* Show rating data and charts if available */}
+      {playerData.rating && playerData.rating.adjustments && (
         <>
           <PlayerRatingStatsCard
             rating={playerData.rating}
@@ -212,24 +229,11 @@ export default async function PlayerPage(props: PageProps) {
             tournaments={playerTournaments}
             adjustments={playerData.rating.adjustments}
           />
-          {/* Player beatmaps list */}
-          <PlayerBeatmapsList beatmaps={playerBeatmaps} />
         </>
-      ) : (
-        // No ruleset data
-        <Card className="p-6 font-sans">
-          <PlayerCard
-            player={playerData.playerInfo}
-            ruleset={playerData.ruleset}
-          />
-          <Card className="gap-2 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold">No Data Available</h2>
-            <p className="text-muted-foreground">
-              This player has no rating data for the selected ruleset.
-            </p>
-          </Card>
-        </Card>
       )}
+
+      {/* Always show beatmaps list regardless of rating data */}
+      <PlayerBeatmapsList beatmaps={playerBeatmaps} />
     </div>
   );
 }
