@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { createFieldAttribute } from 'better-auth/db';
 import {
   admin as adminPlugin,
   customSession,
@@ -84,6 +85,86 @@ const fetchOsuProfile = async (
   }
 };
 
+type EnsurePlayerParams = {
+  osuId: number;
+  fallbackName: string;
+  profile?: User.Extended.WithStatisticsrulesets | null;
+};
+
+const ensurePlayerAndAppUser = async ({
+  osuId,
+  fallbackName,
+  profile,
+}: EnsurePlayerParams) => {
+  const nowIso = new Date().toISOString();
+
+  let player = await db.query.players.findFirst({
+    where: eq(schema.players.osuId, osuId),
+  });
+
+  if (!player) {
+    const created = await db
+      .insert(schema.players)
+      .values({
+        osuId,
+        username: sanitizeUsername(profile?.username, fallbackName),
+        country: sanitizeCountry(profile?.country_code),
+        defaultRuleset: profile
+          ? mapPlaymodeToRuleset(profile.playmode)
+          : Ruleset.Osu,
+        osuLastFetch: nowIso,
+        osuTrackLastFetch: null,
+      })
+      .onConflictDoNothing({ target: schema.players.osuId })
+      .returning();
+
+    player =
+      created[0] ??
+      (await db.query.players.findFirst({
+        where: eq(schema.players.osuId, osuId),
+      }));
+  } else if (profile) {
+    const sanitizedCountry = sanitizeCountry(profile.country_code);
+    const updatePayload = {
+      username: sanitizeUsername(
+        profile.username,
+        player.username || fallbackName
+      ),
+      country: sanitizedCountry || player.country,
+      defaultRuleset: mapPlaymodeToRuleset(profile.playmode),
+      osuLastFetch: nowIso,
+    };
+
+    await db
+      .update(schema.players)
+      .set(updatePayload)
+      .where(eq(schema.players.id, player.id));
+
+    player = {
+      ...player,
+      ...updatePayload,
+    };
+  }
+
+  if (!player) {
+    return null;
+  }
+
+  await db
+    .insert(schema.users)
+    .values({ playerId: player.id })
+    .onConflictDoNothing({ target: schema.users.playerId });
+
+  const appUser = await db.query.users.findFirst({
+    where: eq(schema.users.playerId, player.id),
+  });
+
+  return {
+    player,
+    appUser,
+  };
+};
+
 const ensureOsuAccountLink = async (
   account: AuthAccount
 ): Promise<number | null> => {
@@ -106,63 +187,19 @@ const ensureOsuAccountLink = async (
       return null;
     }
 
-    let player = await db.query.players.findFirst({
-      where: eq(schema.players.osuId, osuId),
-    });
-
-    const nowIso = new Date().toISOString();
     const profile = await fetchOsuProfile(account.accessToken);
 
-    if (!player) {
-      const fallbackName = authUser.name || `osu-${osuId}`;
-      const [createdPlayer] = await db
-        .insert(schema.players)
-        .values({
-          osuId,
-          username: sanitizeUsername(profile?.username, fallbackName),
-          country: sanitizeCountry(profile?.country_code),
-          defaultRuleset: mapPlaymodeToRuleset(profile?.playmode),
-          osuLastFetch: nowIso,
-          osuTrackLastFetch: null,
-        })
-        .returning();
-
-      player = createdPlayer;
-    } else if (profile) {
-      const sanitizedCountry = sanitizeCountry(profile.country_code);
-      const updatePayload = {
-        username: sanitizeUsername(
-          profile.username,
-          player.username || authUser.name || `osu-${osuId}`
-        ),
-        country: sanitizedCountry || player.country,
-        defaultRuleset: mapPlaymodeToRuleset(profile.playmode),
-        osuLastFetch: nowIso,
-      };
-
-      await db
-        .update(schema.players)
-        .set(updatePayload)
-        .where(eq(schema.players.id, player.id));
-
-      player = {
-        ...player,
-        ...updatePayload,
-      };
-    }
-
-    let appUser = await db.query.users.findFirst({
-      where: eq(schema.users.playerId, player.id),
+    const ensured = await ensurePlayerAndAppUser({
+      osuId,
+      fallbackName: authUser.name || `osu-${osuId}`,
+      profile,
     });
 
-    if (!appUser) {
-      const [createdUser] = await db
-        .insert(schema.users)
-        .values({ playerId: player.id })
-        .returning();
-
-      appUser = createdUser;
+    if (!ensured) {
+      return null;
     }
+
+    let { player, appUser } = ensured;
 
     const scopes = appUser?.scopes ?? [];
     const hasAdminScope = scopes.includes('admin');
@@ -222,6 +259,17 @@ export const auth = betterAuth({
   },
   user: {
     modelName: 'auth_user',
+    additionalFields: {
+      playerId: createFieldAttribute('number', {
+        required: true,
+        input: true,
+        references: {
+          model: 'players',
+          field: 'id',
+          onDelete: 'cascade',
+        },
+      }),
+    },
   },
   verification: {
     modelName: 'auth_verification',
@@ -262,6 +310,16 @@ export const auth = betterAuth({
               return null;
             }
 
+            const ensured = await ensurePlayerAndAppUser({
+              osuId: profile.id,
+              fallbackName: profile.username,
+              profile,
+            });
+
+            if (!ensured) {
+              return null;
+            }
+
             // osu! OAuth2 doesn't return email addresses, so we use a placeholder
             return {
               id: profile.id.toString(),
@@ -269,6 +327,7 @@ export const auth = betterAuth({
               name: profile.username,
               image: profile.avatar_url,
               emailVerified: false,
+              playerId: ensured.player.id,
             };
           },
         },
