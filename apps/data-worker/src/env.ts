@@ -24,20 +24,43 @@ const parseIntegerEnv = (name: keyof NodeJS.ProcessEnv) => {
 };
 
 const osuClientId = parseIntegerEnv('DATA_WORKER_OSU_CLIENT_ID');
-const osuTrackRequestsPerMinute = parseIntegerEnv(
-  'DATA_WORKER_OSUTRACK_REQUESTS_PER_MINUTE'
+
+const parseRateLimit = (
+  requestsKey: keyof NodeJS.ProcessEnv,
+  windowSecondsKey: keyof NodeJS.ProcessEnv
+) => {
+  const requests = parseIntegerEnv(requestsKey);
+  const windowSeconds = parseIntegerEnv(windowSecondsKey);
+
+  if (requests <= 0) {
+    throw new Error(`${String(requestsKey)} must be a positive integer`);
+  }
+
+  if (windowSeconds <= 0) {
+    throw new Error(`${String(windowSecondsKey)} must be a positive integer`);
+  }
+
+  return {
+    requests,
+    windowSeconds,
+  } as const;
+};
+
+const osuApiRateLimit = parseRateLimit(
+  'OSU_API_RATE_LIMIT_REQUESTS',
+  'OSU_API_RATE_LIMIT_WINDOW_SECONDS'
 );
 
-if (osuTrackRequestsPerMinute <= 0) {
-  throw new Error(
-    'DATA_WORKER_OSUTRACK_REQUESTS_PER_MINUTE must be a positive integer'
-  );
-}
+const osuTrackRateLimit = parseRateLimit(
+  'OSUTRACK_API_RATE_LIMIT_REQUESTS',
+  'OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS'
+);
 
 export const dataWorkerEnv = {
   osuClientId,
   osuClientSecret: requireEnv('DATA_WORKER_OSU_CLIENT_SECRET'),
-  osuTrackRequestsPerMinute,
+  osuApiRateLimit,
+  osuTrackRateLimit,
   amqpUrl: requireEnv('DATA_WORKER_AMQP_URL'),
 } as const;
 

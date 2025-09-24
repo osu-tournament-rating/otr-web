@@ -5,7 +5,7 @@ import {
   MessagePriority,
 } from '@otr/core';
 
-import { FixedIntervalRateLimiter } from '../../src/osu-track/rate-limiter';
+import { FixedWindowRateLimiter } from '../../src/rate-limiter';
 import { OsuTrackClient } from '../../src/osu-track/client';
 import { OsuTrackPlayerWorker } from '../../src/osu-track/worker';
 import type { QueueConsumer, QueueMessage } from '../../src/queue/types';
@@ -66,7 +66,10 @@ describe('osu!track end-to-end', () => {
     ];
 
     const queue = new TestQueue();
-    const rateLimiter = new FixedIntervalRateLimiter(60);
+    const rateLimiter = new FixedWindowRateLimiter({
+      requests: 60,
+      windowMs: 60_000,
+    });
     const fetchImpl: typeof fetch = async (input) => {
       const url = new URL(
         typeof input === 'string'

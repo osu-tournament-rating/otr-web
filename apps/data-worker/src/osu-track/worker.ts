@@ -3,7 +3,7 @@ import type { UserStatUpdate } from '@otr/core';
 
 import { consoleLogger, type Logger } from '../logging/logger';
 import type { QueueConsumer } from '../queue/types';
-import type { RateLimiter } from './rate-limiter';
+import type { RateLimiter } from '../rate-limiter';
 import { OsuTrackClient } from './client';
 
 export interface OsuTrackPlayerWorkerEvents {
