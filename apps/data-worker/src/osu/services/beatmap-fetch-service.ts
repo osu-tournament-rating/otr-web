@@ -42,22 +42,6 @@ export class BeatmapFetchService {
   async fetchAndPersist(osuBeatmapId: number): Promise<boolean> {
     const nowIso = new Date().toISOString();
 
-    const existingBeatmap = await this.db.query.beatmaps.findFirst({
-      where: eq(schema.beatmaps.osuId, osuBeatmapId),
-      columns: {
-        id: true,
-        dataFetchStatus: true,
-      },
-    });
-
-    if (
-      existingBeatmap?.dataFetchStatus === DataFetchStatus.Fetched ||
-      existingBeatmap?.dataFetchStatus === DataFetchStatus.Fetching
-    ) {
-      this.logger.info('Beatmap already fetched, skipping', { osuBeatmapId });
-      return true;
-    }
-
     const beatmapRecord = await ensureBeatmapPlaceholder(
       this.db,
       osuBeatmapId,
