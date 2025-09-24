@@ -11,6 +11,7 @@ import {
   Trophy,
   ChevronDown,
   ChevronUp,
+  Gamepad2,
 } from 'lucide-react';
 import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 import BeatmapBackground from '../games/BeatmapBackground';
@@ -28,6 +29,11 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
   const minutes = Math.floor(beatmap.totalLength / 60);
   const seconds = beatmap.totalLength % 60;
   const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+  const totalGamesPlayed = beatmap.tournaments.reduce(
+    (sum, tournament) => sum + tournament.gamesPlayed,
+    0
+  );
 
   const cardContent = (
     <div className="relative overflow-hidden">
@@ -47,12 +53,15 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
               /b/{beatmap.osuId}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-white/90">
-            <span>
-              {beatmap.tournamentCount} tournament
-              {beatmap.tournamentCount === 1 ? '' : 's'}
-            </span>
-            <Trophy className="h-4 w-4 flex-shrink-0" />
+          <div className="flex items-center gap-3 text-sm text-white/90">
+            <div className="flex items-center gap-1.5">
+              <span>{beatmap.tournamentCount}</span>
+              <Trophy className="h-4 w-4 flex-shrink-0" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span>{totalGamesPlayed}</span>
+              <Gamepad2 className="h-4 w-4 flex-shrink-0" />
+            </div>
           </div>
         </div>
 
