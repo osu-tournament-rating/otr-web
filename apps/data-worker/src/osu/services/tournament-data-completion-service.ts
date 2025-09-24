@@ -195,4 +195,8 @@ export class TournamentDataCompletionService {
 
     return true;
   }
+
+  clearPendingAutomationCheck(tournamentId: number): void {
+    this.pendingAutomation.delete(tournamentId);
+  }
 }

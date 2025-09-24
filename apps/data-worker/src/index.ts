@@ -4,6 +4,7 @@ import {
   type FetchMatchMessage,
   type FetchPlayerMessage,
   type FetchPlayerOsuTrackMessage,
+  type ProcessTournamentAutomationCheckMessage,
 } from '@otr/core';
 
 import { db } from './db';
@@ -25,6 +26,14 @@ import {
 import { OsuTrackClient } from './osu-track/client';
 import { OsuTrackPlayerWorker } from './osu-track/worker';
 import { processOsuTrackPlayerResults } from './osu-track/persistence';
+import {
+  GameAutomationChecks,
+  MatchAutomationChecks,
+  ScoreAutomationChecks,
+  TournamentAutomationCheckService,
+  TournamentAutomationCheckWorker,
+  TournamentAutomationChecks,
+} from './automation-checks';
 
 const logger = consoleLogger;
 
@@ -41,9 +50,21 @@ const bootstrap = async () => {
     windowMs: dataWorkerEnv.osuTrackRateLimit.windowSeconds * 1000,
   });
 
+  const automationPublisher =
+    new RabbitMqPublisher<ProcessTournamentAutomationCheckMessage>({
+      url: dataWorkerEnv.amqpUrl,
+      queue: QueueConstants.automatedChecks.tournaments,
+    });
+
   const dataCompletion = new TournamentDataCompletionService({
     db,
     logger,
+    publishAutomationCheck: async ({ tournamentId, overrideVerifiedState }) => {
+      await automationPublisher.publish({
+        tournamentId,
+        overrideVerifiedState,
+      });
+    },
   });
 
   const beatmapPublisher = new RabbitMqPublisher<FetchBeatmapMessage>({
@@ -79,6 +100,14 @@ const bootstrap = async () => {
     logger,
   });
 
+  const automationConsumer =
+    new RabbitMqConsumer<ProcessTournamentAutomationCheckMessage>({
+      url: dataWorkerEnv.amqpUrl,
+      queue: QueueConstants.automatedChecks.tournaments,
+      prefetch: 1,
+      logger,
+    });
+
   const beatmapService = new BeatmapFetchService({
     db,
     api: osuApiClient,
@@ -103,6 +132,15 @@ const bootstrap = async () => {
     api: osuApiClient,
     rateLimiter: osuApiRateLimiter,
     logger,
+  });
+
+  const automationService = new TournamentAutomationCheckService({
+    db,
+    logger,
+    tournamentChecks: new TournamentAutomationChecks(),
+    matchChecks: new MatchAutomationChecks(),
+    gameChecks: new GameAutomationChecks(),
+    scoreChecks: new ScoreAutomationChecks(),
   });
 
   const beatmapWorker = new BeatmapFetchWorker({
@@ -140,6 +178,13 @@ const bootstrap = async () => {
     },
   });
 
+  const automationWorker = new TournamentAutomationCheckWorker({
+    queue: automationConsumer,
+    service: automationService,
+    dataCompletion,
+    logger,
+  });
+
   logger.info('Starting data worker services');
 
   await Promise.all([
@@ -147,6 +192,7 @@ const bootstrap = async () => {
     matchWorker.start(),
     playerWorker.start(),
     osuTrackWorker.start(),
+    automationWorker.start(),
   ]);
 
   const shutdown = async () => {
@@ -156,7 +202,9 @@ const bootstrap = async () => {
       matchWorker.stop(),
       playerWorker.stop(),
       osuTrackWorker.stop(),
+      automationWorker.stop(),
       beatmapPublisher.close(),
+      automationPublisher.close(),
     ]);
     process.exit(0);
   };
