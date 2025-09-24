@@ -358,15 +358,6 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="ratings" className="mt-4">
           <Card className="p-6 font-sans">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="text-primary h-6 w-6" />
-              <h3 className="font-sans text-lg font-semibold">
-                Rating Changes
-              </h3>
-              <span className="text-muted-foreground text-sm">
-                ({tournament.playerTournamentStats?.length || 0} players)
-              </span>
-            </div>
             <TournamentRatingsView
               playerStats={tournament.playerTournamentStats ?? []}
             />

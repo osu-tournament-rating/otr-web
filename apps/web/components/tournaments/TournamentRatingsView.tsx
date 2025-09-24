@@ -20,7 +20,13 @@ import {
 import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react';
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  TrendingUp,
+} from 'lucide-react';
 import RatingDelta from '@/components/rating/RatingDelta';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -237,16 +243,24 @@ export default function TournamentRatingsView({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          onClick={downloadCSV}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Download CSV
-        </Button>
+      <div className="flex items-center gap-2">
+        <TrendingUp className="text-primary h-6 w-6" />
+        <h3 className="font-sans text-lg font-semibold">Rating Changes</h3>
+        <span className="text-muted-foreground text-sm">
+          ({table.getRowModel().rows?.length || 0} players)
+        </span>
+
+        <div className="ml-auto flex">
+          <Button
+            onClick={downloadCSV}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download CSV
+          </Button>
+        </div>
       </div>
       <div className="from-background to-muted/20 overflow-x-auto rounded-lg border bg-gradient-to-br">
         <Table>
