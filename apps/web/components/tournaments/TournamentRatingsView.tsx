@@ -183,16 +183,22 @@ export default function TournamentRatingsView({
   const downloadCSV = useCallback(() => {
     const headers = [
       'Player',
+      'Match Wins',
+      'Match Losses',
       'Rating Before',
       'Rating After',
-      'Rating Change',
+      'Average Change',
+      'Total Change',
     ];
 
     const csvData = playerStats.map((stat) => [
       stat.player.username,
-      'N/A',
-      'N/A',
+      stat.matchesWon,
+      stat.matchesLost,
+      stat.ratingBefore.toFixed(1),
+      stat.ratingAfter.toFixed(1),
       stat.averageRatingDelta.toFixed(1),
+      (stat.averageRatingDelta * stat.matchesPlayed).toFixed(1),
     ]);
 
     const csvContent = [
