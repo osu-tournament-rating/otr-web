@@ -49,7 +49,7 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="games" className="mt-4">
           <Card className="p-6 font-sans">
-            <div className="mb-4 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Gamepad2 className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">Games</h3>
               <span className="text-muted-foreground text-sm">

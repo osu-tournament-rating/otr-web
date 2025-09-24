@@ -57,7 +57,7 @@ export default function TournamentTopPerformers({
 
   return (
     <Card className={className}>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="h-5 w-5 text-yellow-500" />
           Top Performers
