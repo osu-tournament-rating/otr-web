@@ -21,6 +21,7 @@ import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react';
+import RatingDelta from '@/components/rating/RatingDelta';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -31,90 +32,107 @@ interface TournamentRatingsViewProps {
 const SortableHeader = ({
   column,
   children,
+  justify = 'center',
+  defaultDesc = true,
 }: {
   column: {
     toggleSorting: (desc?: boolean) => void;
     getIsSorted: () => false | 'asc' | 'desc';
   };
   children: React.ReactNode;
+  justify?: 'start' | 'center' | 'end';
+  defaultDesc?: boolean;
 }) => (
-  <Button
-    variant="ghost"
-    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-    className="h-auto p-0 font-semibold hover:bg-transparent"
-  >
-    {children}
-    {column.getIsSorted() === 'asc' ? (
-      <ArrowUp className="ml-2 h-4 w-4" />
-    ) : column.getIsSorted() === 'desc' ? (
-      <ArrowDown className="ml-2 h-4 w-4" />
-    ) : (
-      <ArrowUpDown className="ml-2 h-4 w-4" />
-    )}
-  </Button>
-);
-
-const RatingChangeCell = ({ value }: { value: number }) => {
-  const isPositive = value > 0;
-  const isNegative = value < 0;
-
-  return (
-    <div
-      className={cn(
-        'text-center font-medium',
-        isPositive && 'text-green-600 dark:text-green-400',
-        isNegative && 'text-red-600 dark:text-red-400',
-        !isPositive && !isNegative && 'text-muted-foreground'
-      )}
+  <div className={cn('flex', 'justify-' + justify)}>
+    <Button
+      variant="ghost"
+      onClick={() => {
+        const currentSort = column.getIsSorted();
+        if (currentSort === false) {
+          column.toggleSorting(defaultDesc);
+        } else {
+          column.toggleSorting(currentSort === 'asc');
+        }
+      }}
+      className="h-auto p-0 font-semibold hover:bg-transparent"
     >
-      {isPositive ? '+' : ''}
-      {value.toFixed(1)}
-    </div>
-  );
-};
+      {children}
+      {column.getIsSorted() === 'asc' ? (
+        <ArrowUp className="ml-2 h-4 w-4" />
+      ) : column.getIsSorted() === 'desc' ? (
+        <ArrowDown className="ml-2 h-4 w-4" />
+      ) : (
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      )}
+    </Button>
+  </div>
+);
 
 const PlayerCell = ({
   player,
 }: {
   player: TournamentPlayerStats['player'];
 }) => (
-  <div className="flex min-w-0 items-center gap-3">
+  <Link
+    href={`/players/${player.id}`}
+    className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5"
+  >
     <Image
       src={`https://a.ppy.sh/${player.osuId}`}
       alt={`${player.username} avatar`}
-      className="flex-shrink-0 rounded-full"
-      width={32}
-      height={32}
+      className="ring-border/10 flex-shrink-0 rounded-full ring-1"
+      width={28}
+      height={28}
     />
-    <Link
-      href={`/players/${player.id}`}
-      className="hover:text-primary truncate font-medium transition-colors"
-    >
+    <span className="truncate text-xs font-medium sm:text-sm">
       {player.username}
-    </Link>
-  </div>
+    </span>
+  </Link>
 );
 
 export default function TournamentRatingsView({
   playerStats,
 }: TournamentRatingsViewProps) {
   const [sorting, setSorting] = useState<SortingState>([
-    { id: 'averageRatingDelta', desc: true },
+    { id: 'totalChange', desc: true },
   ]);
 
   const columns: ColumnDef<TournamentPlayerStats>[] = useMemo(
     () => [
       {
-        accessorKey: 'player',
-        header: () => <div className="font-semibold">Player</div>,
+        id: 'player',
+        accessorFn: (row) => row.player.username.toLowerCase(),
+        header: ({ column }) => (
+          <SortableHeader column={column} justify="start" defaultDesc={false}>
+            Player
+          </SortableHeader>
+        ),
         cell: ({ row }) => <PlayerCell player={row.original.player} />,
         size: 200,
-        enableSorting: false,
+      },
+      {
+        id: 'matchRecord',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Match W-L</SortableHeader>
+        ),
+        cell: ({ row }) => {
+          const wins = row.original.matchesWon;
+          const losses = row.original.matchesLost;
+          return (
+            <div className="text-center font-medium">
+              <span className="text-green-600">{wins}</span>
+              <span className="text-muted-foreground px-0.5">-</span>
+              <span className="text-red-600">{losses}</span>
+            </div>
+          );
+        },
+        accessorFn: (row) =>
+          (row.matchesWon - row.matchesLost) * 10000 + row.matchesWon,
       },
       {
         accessorKey: 'ratingBefore',
         header: ({ column }) => (
-          <SortableHeader column={column}>Rating Before</SortableHeader>
+          <SortableHeader column={column}>Before</SortableHeader>
         ),
         cell: () => (
           <div className="text-muted-foreground text-center font-medium">
@@ -126,7 +144,7 @@ export default function TournamentRatingsView({
       {
         accessorKey: 'ratingAfter',
         header: ({ column }) => (
-          <SortableHeader column={column}>Rating After</SortableHeader>
+          <SortableHeader column={column}>After</SortableHeader>
         ),
         cell: () => (
           <div className="text-muted-foreground text-center font-medium">
@@ -138,11 +156,27 @@ export default function TournamentRatingsView({
       {
         accessorKey: 'averageRatingDelta',
         header: ({ column }) => (
-          <SortableHeader column={column}>Rating Change</SortableHeader>
+          <SortableHeader column={column}>Avg Change</SortableHeader>
         ),
         cell: ({ getValue }) => (
-          <RatingChangeCell value={getValue() as number} />
+          <div className="text-center">
+            <RatingDelta delta={getValue() as number} />
+          </div>
         ),
+      },
+      {
+        id: 'totalChange',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Total Change</SortableHeader>
+        ),
+        accessorFn: (row) => row.averageRatingDelta * row.matchesPlayed,
+        cell: ({ getValue }) => {
+          return (
+            <div className="text-center">
+              <RatingDelta delta={getValue() as number} />
+            </div>
+          );
+        },
       },
     ],
     []
@@ -245,7 +279,13 @@ export default function TournamentRatingsView({
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        'py-2',
+                        cell.column.id === 'player' && 'pl-4'
+                      )}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
