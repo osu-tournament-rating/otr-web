@@ -119,21 +119,36 @@ export default function TournamentRatingsView({
       {
         id: 'matchRecord',
         header: ({ column }) => (
-          <SortableHeader column={column}>Match W-L</SortableHeader>
+          <SortableHeader column={column}>Matches</SortableHeader>
         ),
         cell: ({ row }) => {
-          const wins = row.original.matchesWon;
-          const losses = row.original.matchesLost;
           return (
             <div className="text-center font-medium">
-              <span className="text-green-600">{wins}</span>
+              <span className="text-green-600">{row.original.matchesWon}</span>
               <span className="text-muted-foreground px-0.5">-</span>
-              <span className="text-red-600">{losses}</span>
+              <span className="text-red-600">{row.original.matchesLost}</span>
             </div>
           );
         },
         accessorFn: (row) =>
           (row.matchesWon - row.matchesLost) * 10000 + row.matchesWon,
+      },
+      {
+        id: 'gameRecord',
+        header: ({ column }) => (
+          <SortableHeader column={column}>Games</SortableHeader>
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-center font-medium">
+              <span className="text-green-600">{row.original.gamesWon}</span>
+              <span className="text-muted-foreground px-0.5">-</span>
+              <span className="text-red-600">{row.original.gamesLost}</span>
+            </div>
+          );
+        },
+        accessorFn: (row) =>
+          (row.gamesWon - row.gamesLost) * 10000 + row.gamesWon,
       },
       {
         accessorKey: 'ratingBefore',
@@ -160,7 +175,7 @@ export default function TournamentRatingsView({
       {
         accessorKey: 'averageRatingDelta',
         header: ({ column }) => (
-          <SortableHeader column={column}>Avg Change</SortableHeader>
+          <SortableHeader column={column}>Avg</SortableHeader>
         ),
         cell: ({ getValue }) => (
           <div className="text-center">
@@ -171,7 +186,7 @@ export default function TournamentRatingsView({
       {
         id: 'totalChange',
         header: ({ column }) => (
-          <SortableHeader column={column}>Total Change</SortableHeader>
+          <SortableHeader column={column}>Total</SortableHeader>
         ),
         accessorFn: (row) => row.averageRatingDelta * row.matchesPlayed,
         cell: ({ getValue }) => {
@@ -189,8 +204,10 @@ export default function TournamentRatingsView({
   const downloadCSV = useCallback(() => {
     const headers = [
       'Player',
-      'Match Wins',
-      'Match Losses',
+      'Matches Won',
+      'Matches Lost',
+      'Games Won',
+      'Games Lost',
       'Rating Before',
       'Rating After',
       'Average Change',
@@ -201,6 +218,8 @@ export default function TournamentRatingsView({
       stat.player.username,
       stat.matchesWon,
       stat.matchesLost,
+      stat.gamesWon,
+      stat.gamesLost,
       stat.ratingBefore.toFixed(1),
       stat.ratingAfter.toFixed(1),
       stat.averageRatingDelta.toFixed(1),
