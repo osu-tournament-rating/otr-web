@@ -5,6 +5,7 @@ import {
   type FetchPlayerMessage,
   type FetchPlayerOsuTrackMessage,
   type ProcessTournamentAutomationCheckMessage,
+  type ProcessTournamentStatsMessage,
 } from '@otr/core';
 
 import { db } from './db';
@@ -34,6 +35,11 @@ import {
   TournamentAutomationCheckWorker,
   TournamentAutomationChecks,
 } from './automation-checks';
+import {
+  TournamentStatsCalculator,
+  TournamentStatsService,
+  TournamentStatsWorker,
+} from './stats';
 
 const logger = consoleLogger;
 
@@ -108,6 +114,13 @@ const bootstrap = async () => {
       logger,
     });
 
+  const statsConsumer = new RabbitMqConsumer<ProcessTournamentStatsMessage>({
+    url: dataWorkerEnv.amqpUrl,
+    queue: QueueConstants.stats.tournaments,
+    prefetch: 1,
+    logger,
+  });
+
   const beatmapService = new BeatmapFetchService({
     db,
     api: osuApiClient,
@@ -141,6 +154,13 @@ const bootstrap = async () => {
     matchChecks: new MatchAutomationChecks(),
     gameChecks: new GameAutomationChecks(),
     scoreChecks: new ScoreAutomationChecks(),
+  });
+
+  const statsCalculator = new TournamentStatsCalculator();
+  const statsService = new TournamentStatsService({
+    db,
+    logger,
+    calculator: statsCalculator,
   });
 
   const beatmapWorker = new BeatmapFetchWorker({
@@ -185,6 +205,12 @@ const bootstrap = async () => {
     logger,
   });
 
+  const statsWorker = new TournamentStatsWorker({
+    queue: statsConsumer,
+    service: statsService,
+    logger,
+  });
+
   logger.info('Starting data worker services');
 
   await Promise.all([
@@ -193,6 +219,7 @@ const bootstrap = async () => {
     playerWorker.start(),
     osuTrackWorker.start(),
     automationWorker.start(),
+    statsWorker.start(),
   ]);
 
   const shutdown = async () => {
@@ -203,6 +230,7 @@ const bootstrap = async () => {
       playerWorker.stop(),
       osuTrackWorker.stop(),
       automationWorker.stop(),
+      statsWorker.stop(),
       beatmapPublisher.close(),
       automationPublisher.close(),
     ]);

@@ -29,7 +29,12 @@ Use this section to track your progress by checking off items which are implemen
 - [x] Phase 4: Automated checks
   - [x] Port the automated checks logic from the legacy application. Follow TDD and implement without modifying existing automated checks tests which are failing. Ensure unit tests pass.
   - [x] Port the queue consumer logic to re-run automated checks for a tournament ID. Upon running, the data should be loaded from the database and all automated checks should be run.
-- [ ] Phase 5: CI/CD
+- [x] Phase 5: Stats
+  - [x] Port the statistics logic from the legacy application. Follow TDD and implement without modifying the statistics or calculations. CRITICAL: Ensure that the same tables and columns being modified in the legacy application are being touched in the new implementation. The new implementation should iterate and improve upon the QUALITY of the code to ensure readability and testability.
+- [ ] Phase 6: UI logic
+  - [ ] When a tournament is submitted, enqueue messages for each match and beatmap so we fetch the data immediately after submission. Once both beatmap and match data has finished fetching, the tournament automation checks queue message should be enqueued. Verify this behavior through an end-to-end test. The legacy behavior does this already.
+  - [ ] When an admin adds a pooled beatmap to a tournament, the beatmap data must be enqueued for fetching
+- [ ] Phase 7: CI/CD
   - [ ] Update the otr-web repository docker images and .github/workflows files to use this new structure. Create a docker-compose file. Ensure migrations and other edge cases are handled correctly. Ensure lint / quality checks are made at the PR stage and block deployments with build failures. Retain the behavior of deploying specific branches/tags to staging/production environments. Ensure releases with a YYYY.MM.DD[.*] title trigger a production release.
   - [ ] The docker-compose project should launch both the web and data-worker applications simultaneously. They are not necessarily dependent on each other, they just depend on a database connection.
   - [ ] Reference the otr-api docker-compose file and port over any logic required (i.e. db). Grafana/telemetry is not required at this time.
