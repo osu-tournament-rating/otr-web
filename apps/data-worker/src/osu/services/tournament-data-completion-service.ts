@@ -35,7 +35,7 @@ export class TournamentDataCompletionService {
       where: eq(schema.matches.id, matchId),
       columns: {
         id: true,
-        tournamentId: schema.matches.tournamentId,
+        tournamentId: true,
       },
     });
 
@@ -56,7 +56,10 @@ export class TournamentDataCompletionService {
     }
   }
 
-  async updateBeatmapFetchStatus(beatmapId: number, status: number): Promise<void> {
+  async updateBeatmapFetchStatus(
+    beatmapId: number,
+    status: number
+  ): Promise<void> {
     const beatmap = await this.db.query.beatmaps.findFirst({
       where: eq(schema.beatmaps.id, beatmapId),
       columns: {
@@ -84,18 +87,15 @@ export class TournamentDataCompletionService {
     const gameTournamentRows = await this.db
       .select({ tournamentId: schema.matches.tournamentId })
       .from(schema.games)
-      .innerJoin(
-        schema.matches,
-        eq(schema.games.matchId, schema.matches.id)
-      )
+      .innerJoin(schema.matches, eq(schema.games.matchId, schema.matches.id))
       .where(eq(schema.games.beatmapId, beatmapId));
 
     const tournamentIds = new Set<number>();
-    pooledTournamentRows.forEach((row) =>
-      row.tournamentId != null && tournamentIds.add(row.tournamentId)
+    pooledTournamentRows.forEach(
+      (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
     );
-    gameTournamentRows.forEach((row) =>
-      row.tournamentId != null && tournamentIds.add(row.tournamentId)
+    gameTournamentRows.forEach(
+      (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
     );
 
     for (const id of tournamentIds) {
@@ -122,9 +122,10 @@ export class TournamentDataCompletionService {
       return false;
     }
 
-    const matchesComplete = matches.every((match) =>
-      match.dataFetchStatus === DataFetchStatus.Fetched ||
-      match.dataFetchStatus === DataFetchStatus.NotFound
+    const matchesComplete = matches.every(
+      (match) =>
+        match.dataFetchStatus === DataFetchStatus.Fetched ||
+        match.dataFetchStatus === DataFetchStatus.NotFound
     );
 
     if (!matchesComplete) {
@@ -139,10 +140,7 @@ export class TournamentDataCompletionService {
     const gameBeatmapIds = await this.db
       .select({ beatmapId: schema.games.beatmapId })
       .from(schema.games)
-      .innerJoin(
-        schema.matches,
-        eq(schema.games.matchId, schema.matches.id)
-      )
+      .innerJoin(schema.matches, eq(schema.games.matchId, schema.matches.id))
       .where(eq(schema.matches.tournamentId, tournamentId));
 
     const beatmapIdSet = new Set<number>();
@@ -163,9 +161,10 @@ export class TournamentDataCompletionService {
         .from(schema.beatmaps)
         .where(inArray(schema.beatmaps.id, Array.from(beatmapIdSet)));
 
-      const beatmapsComplete = beatmapStatuses.every((row) =>
-        row.dataFetchStatus === DataFetchStatus.Fetched ||
-        row.dataFetchStatus === DataFetchStatus.NotFound
+      const beatmapsComplete = beatmapStatuses.every(
+        (row) =>
+          row.dataFetchStatus === DataFetchStatus.Fetched ||
+          row.dataFetchStatus === DataFetchStatus.NotFound
       );
 
       if (!beatmapsComplete) {
@@ -185,9 +184,12 @@ export class TournamentDataCompletionService {
         this.pendingAutomation.delete(tournamentId);
       }
     } else {
-      this.logger.info('Tournament ready for automation checks (no publisher)', {
-        tournamentId,
-      });
+      this.logger.info(
+        'Tournament ready for automation checks (no publisher)',
+        {
+          tournamentId,
+        }
+      );
       this.pendingAutomation.delete(tournamentId);
     }
 

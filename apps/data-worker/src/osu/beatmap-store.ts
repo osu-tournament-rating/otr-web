@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm';
 
 import type { DatabaseClient } from '../db';
 import * as schema from '@otr/core/db/schema';
-import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { Ruleset } from '@otr/core/osu/enums';
 
 type QueryExecutor = Pick<DatabaseClient, 'query' | 'insert' | 'update'>;

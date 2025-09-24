@@ -7,7 +7,9 @@ import { BeatmapFetchService } from '../../services/beatmap-fetch-service';
 import { consoleLogger } from '../../../logging/logger';
 
 class StubQueue implements QueueConsumer<FetchBeatmapMessage> {
-  private handler: ((message: QueueMessage<FetchBeatmapMessage>) => Promise<void>) | null = null;
+  private handler:
+    | ((message: QueueMessage<FetchBeatmapMessage>) => Promise<void>)
+    | null = null;
 
   async start(
     handler: (message: QueueMessage<FetchBeatmapMessage>) => Promise<void>
@@ -32,10 +34,9 @@ describe('BeatmapFetchWorker', () => {
   it('acknowledges messages when the service succeeds', async () => {
     const queue = new StubQueue();
 
-    let calledWith: number | null = null;
+    let calledWith: number | undefined;
 
-    const service: BeatmapFetchService = {
-      // @ts-expect-error partial mock for tests
+    const service: Pick<BeatmapFetchService, 'fetchAndPersist'> = {
       async fetchAndPersist(beatmapId: number) {
         calledWith = beatmapId;
         return true;
@@ -85,8 +86,7 @@ describe('BeatmapFetchWorker', () => {
   it('requeues on failure', async () => {
     const queue = new StubQueue();
 
-    const service: BeatmapFetchService = {
-      // @ts-expect-error partial mock for tests
+    const service: Pick<BeatmapFetchService, 'fetchAndPersist'> = {
       async fetchAndPersist() {
         throw new Error('failed');
       },

@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "types": ["bun-types"],
     "plugins": [
       {
         "name": "next"
@@ -20,10 +21,30 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@/*": ["apps/web/*"],
       "@otr/core": ["packages/otr-core/src/index.ts"],
       "@otr/core/*": ["packages/otr-core/src/*"],
       "@otr/core/osu": ["packages/otr-core/src/osu/enums.ts"],
       "@otr/core/queues": ["packages/otr-core/src/queues/constants.ts"]
     }
-  }
+  },
+  "include": [
+    "env.d.ts",
+    "apps/web/next-env.d.ts",
+    "apps/web/env.d.ts",
+    "apps/web/environment.d.ts",
+    "apps/web/**/*.ts",
+    "apps/web/**/*.tsx",
+    "apps/data-worker/env.d.ts",
+    "apps/data-worker/src/**/*.ts",
+    "packages/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "apps/web/.next",
+    "apps/web/node_modules",
+    "apps/data-worker/node_modules",
+    "**/dist",
+    "**/build"
+  ]
 }

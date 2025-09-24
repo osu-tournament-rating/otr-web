@@ -12,7 +12,9 @@
       "dependencies": {
         "@otr/core": "workspace:*",
         "amqplib": "^0.10.4",
+        "drizzle-orm": "^0.44.5",
         "osu-api-v2-js": "^2.1.1",
+        "pg": "^8.13.1",
       },
       "devDependencies": {
         "@types/amqplib": "^0.10.5",

@@ -199,7 +199,7 @@ const ensureOsuAccountLink = async (
       return null;
     }
 
-    let { player, appUser } = ensured;
+    const { player, appUser } = ensured;
 
     const scopes = appUser?.scopes ?? [];
     const hasAdminScope = scopes.includes('admin');

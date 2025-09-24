@@ -34,10 +34,9 @@ describe('PlayerFetchWorker', () => {
   it('acknowledges successful fetches', async () => {
     const queue = new StubQueue();
 
-    let calledWith: number | null = null;
+    let calledWith: number | undefined;
 
-    // @ts-expect-error partial mock
-    const service: PlayerFetchService = {
+    const service: Pick<PlayerFetchService, 'fetchAndPersist'> = {
       async fetchAndPersist(osuPlayerId: number) {
         calledWith = osuPlayerId;
         return true;
@@ -87,8 +86,7 @@ describe('PlayerFetchWorker', () => {
   it('requeues on error', async () => {
     const queue = new StubQueue();
 
-    const service: PlayerFetchService = {
-      // @ts-expect-error partial mock
+    const service: Pick<PlayerFetchService, 'fetchAndPersist'> = {
       async fetchAndPersist() {
         throw new Error('player-error');
       },

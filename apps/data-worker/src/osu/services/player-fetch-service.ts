@@ -85,7 +85,9 @@ export class PlayerFetchService {
     return true;
   }
 
-  private async getOrCreatePlayer(osuPlayerId: number): Promise<{ id: number }> {
+  private async getOrCreatePlayer(
+    osuPlayerId: number
+  ): Promise<{ id: number }> {
     const existing = await this.db.query.players.findFirst({
       where: eq(schema.players.osuId, osuPlayerId),
       columns: {
@@ -148,9 +150,11 @@ export class PlayerFetchService {
         updated: nowIso,
       });
 
-      const variants = (stats as Record<string, unknown>)?.variants as
-        | Array<{ [key: string]: unknown }>
-        | undefined;
+      const variants = (
+        stats as unknown as {
+          variants?: Array<Record<string, unknown>>;
+        }
+      )?.variants;
 
       if (Array.isArray(variants)) {
         for (const variant of variants) {
@@ -164,7 +168,9 @@ export class PlayerFetchService {
 
           const mappedRuleset =
             MANIA_VARIANT_MAP[
-              String((variant as { variant?: string }).variant ?? '').toLowerCase()
+              String(
+                (variant as { variant?: string }).variant ?? ''
+              ).toLowerCase()
             ];
 
           if (!mappedRuleset) {

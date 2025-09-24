@@ -4,15 +4,17 @@ import type { Logger } from '../../logging/logger';
 import type { QueueConsumer } from '../../queue/types';
 import { PlayerFetchService } from '../services/player-fetch-service';
 
+type PlayerFetchServiceContract = Pick<PlayerFetchService, 'fetchAndPersist'>;
+
 interface PlayerFetchWorkerOptions {
   queue: QueueConsumer<FetchPlayerMessage>;
-  service: PlayerFetchService;
+  service: PlayerFetchServiceContract;
   logger: Logger;
 }
 
 export class PlayerFetchWorker {
   private readonly queue: QueueConsumer<FetchPlayerMessage>;
-  private readonly service: PlayerFetchService;
+  private readonly service: PlayerFetchServiceContract;
   private readonly logger: Logger;
 
   constructor(options: PlayerFetchWorkerOptions) {

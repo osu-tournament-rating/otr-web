@@ -6,6 +6,7 @@
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile dist/data-worker",
+    "lint": "bunx eslint src --ext .ts",
     "test": "bun test"
   },
   "dependencies": {

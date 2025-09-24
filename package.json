@@ -6,11 +6,13 @@
     "packages/*"
   ],
   "scripts": {
+    "lint": "bun run lint:web && bun run lint:data-worker",
     "dev:web": "bun run --filter web dev",
     "dev:data-worker": "bun run --filter data-worker dev",
     "build:web": "bun run --filter web build",
     "start:web": "bun run --filter web start",
     "lint:web": "bun run --filter web lint",
+    "lint:data-worker": "bun run --filter data-worker lint",
     "format:web": "bun run --filter web format"
   },
   "dependencies": {

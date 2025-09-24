@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import type { API } from 'osu-api-v2-js';
+import type { API, Match } from 'osu-api-v2-js';
 
 import { ensureBeatmapPlaceholder } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
@@ -35,6 +35,8 @@ interface MatchFetchServiceOptions {
   publishBeatmapFetch: (osuBeatmapId: number) => Promise<void>;
   dataCompletion: TournamentDataCompletionService;
 }
+
+type MatchGame = NonNullable<Match.Event['game']>;
 
 export class MatchFetchService {
   private readonly db: DatabaseClient;
@@ -103,7 +105,10 @@ export class MatchFetchService {
         })
         .where(eq(schema.matches.id, matchRow.id));
 
-      const userMap = new Map<number, { username?: string; country?: string }>();
+      const userMap = new Map<
+        number,
+        { username?: string; country?: string }
+      >();
       for (const user of apiMatch.users ?? []) {
         userMap.set(user.id, {
           username: user.username,
@@ -137,13 +142,13 @@ export class MatchFetchService {
           beatmapsToQueue.add(game.beatmap_id);
         }
 
-      const existingGame = await tx.query.games.findFirst({
-        where: eq(schema.games.osuId, game.id),
-        columns: {
-          id: true,
-          verificationStatus: true,
-        },
-      });
+        const existingGame = await tx.query.games.findFirst({
+          where: eq(schema.games.osuId, game.id),
+          columns: {
+            id: true,
+            verificationStatus: true,
+          },
+        });
 
         const gameValues = {
           matchId: matchRow.id,
@@ -204,7 +209,8 @@ export class MatchFetchService {
           game,
           ruleset,
           matchVerificationStatus: matchRow.verificationStatus,
-          gameVerificationStatus: gameVerificationStatus ?? VerificationStatus.None,
+          gameVerificationStatus:
+            gameVerificationStatus ?? VerificationStatus.None,
           userMap,
           nowIso,
         });
@@ -224,9 +230,9 @@ export class MatchFetchService {
   }
 
   private async processScores(options: {
-    tx: DatabaseClient;
+    tx: Pick<DatabaseClient, 'query' | 'insert' | 'update'>;
     gameId: number;
-    game: any;
+    game: MatchGame;
     ruleset: Ruleset;
     matchVerificationStatus: number;
     gameVerificationStatus: number;
@@ -253,7 +259,10 @@ export class MatchFetchService {
       },
     });
 
-    const scoreMap = new Map<number, { id: number; verificationStatus: number }>();
+    const scoreMap = new Map<
+      number,
+      { id: number; verificationStatus: number }
+    >();
     for (const score of existingScores) {
       scoreMap.set(score.playerId, score);
     }
@@ -264,19 +273,23 @@ export class MatchFetchService {
         continue;
       }
 
-      const playerId = await getOrCreatePlayerId(tx, userId, userMap.get(userId));
+      const playerId = await getOrCreatePlayerId(
+        tx,
+        userId,
+        userMap.get(userId)
+      );
       const team = convertTeam(score.match?.team ?? 'none');
       const mods = convertModsToFlags(score.mods ?? []);
-      const totalScore = calculateScoreWithMods(score.score ?? 0, mods);
+      const totalScore = calculateScoreWithMods(score.total_score ?? 0, mods);
       const grade = convertScoreGrade(score.rank);
 
       const stats = score.statistics ?? {};
-      const count300 = stats.count_300 ?? stats.great ?? 0;
-      const count100 = stats.count_100 ?? stats.ok ?? 0;
-      const count50 = stats.count_50 ?? stats.meh ?? 0;
-      const countMiss = stats.count_miss ?? stats.miss ?? 0;
-      const countGeki = stats.count_geki ?? stats.large_bonus ?? 0;
-      const countKatu = stats.count_katu ?? stats.small_tick_hit ?? 0;
+      const count300 = stats.great ?? stats.great ?? 0;
+      const count100 = stats.ok ?? stats.ok ?? 0;
+      const count50 = stats.meh ?? stats.meh ?? 0;
+      const countMiss = stats.miss ?? stats.miss ?? 0;
+      const countGeki = stats.large_bonus ?? 0;
+      const countKatu = stats.small_bonus ?? 0;
 
       const baseValues = {
         score: totalScore,

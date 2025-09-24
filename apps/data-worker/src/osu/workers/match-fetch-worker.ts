@@ -4,15 +4,17 @@ import type { Logger } from '../../logging/logger';
 import type { QueueConsumer } from '../../queue/types';
 import { MatchFetchService } from '../services/match-fetch-service';
 
+type MatchFetchServiceContract = Pick<MatchFetchService, 'fetchAndPersist'>;
+
 interface MatchFetchWorkerOptions {
   queue: QueueConsumer<FetchMatchMessage>;
-  service: MatchFetchService;
+  service: MatchFetchServiceContract;
   logger: Logger;
 }
 
 export class MatchFetchWorker {
   private readonly queue: QueueConsumer<FetchMatchMessage>;
-  private readonly service: MatchFetchService;
+  private readonly service: MatchFetchServiceContract;
   private readonly logger: Logger;
 
   constructor(options: MatchFetchWorkerOptions) {

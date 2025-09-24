@@ -13,9 +13,7 @@ type ConfirmChannel = Awaited<
   ReturnType<AmqpConnection['createConfirmChannel']>
 >;
 
-export interface RabbitMqPublisherOptions<
-  TMessage extends MessageEnvelope<Record<string, unknown>>,
-> {
+export interface RabbitMqPublisherOptions {
   url: string;
   queue: string;
   assertQueueOptions?: Options.AssertQueue;
@@ -23,9 +21,8 @@ export interface RabbitMqPublisherOptions<
   connectionFactory?: () => Promise<AmqpConnection>;
 }
 
-export class RabbitMqPublisher<
-  TMessage extends MessageEnvelope<Record<string, unknown>>,
-> implements QueuePublisher<TMessage>
+export class RabbitMqPublisher<TMessage extends MessageEnvelope<unknown>>
+  implements QueuePublisher<TMessage>
 {
   private readonly queue: string;
   private readonly createConnection: () => Promise<AmqpConnection>;
@@ -35,7 +32,7 @@ export class RabbitMqPublisher<
   private connection: AmqpConnection | null = null;
   private channelPromise: Promise<ConfirmChannel> | null = null;
 
-  constructor(options: RabbitMqPublisherOptions<TMessage>) {
+  constructor(options: RabbitMqPublisherOptions) {
     this.queue = options.queue;
     this.createConnection =
       options.connectionFactory ?? (() => connect(options.url));

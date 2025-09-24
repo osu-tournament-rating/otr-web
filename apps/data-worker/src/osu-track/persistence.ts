@@ -20,7 +20,7 @@ type ModeResult = {
   updates: UserStatUpdate[];
 };
 
-type RulesetDataRow = (typeof schema.playerOsuRulesetData.$inferSelect) & {
+type RulesetDataRow = typeof schema.playerOsuRulesetData.$inferSelect & {
   ruleset: number;
 };
 
@@ -144,8 +144,7 @@ export const processOsuTrackPlayerResults = async ({
         rulesetDataMap,
         relevant,
         nowIso,
-        player.id,
-        osuPlayerId
+        player.id
       );
       persistedAny = persistedAny || maniaPersisted;
     }
@@ -173,8 +172,7 @@ const propagateManiaVariants = async (
   rulesetDataMap: RulesetDataMap,
   source: UserStatUpdate,
   updatedAtIso: string,
-  playerId: number,
-  osuPlayerId: number
+  playerId: number
 ): Promise<boolean> => {
   const timestampIso = source.timestamp.toISOString();
   let updatedAny = false;

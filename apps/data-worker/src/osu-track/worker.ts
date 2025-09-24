@@ -1,4 +1,4 @@
-import { type FetchPlayerOsuTrackMessage, QueueConstants } from '@otr/core';
+import { type FetchPlayerOsuTrackMessage } from '@otr/core';
 import type { UserStatUpdate } from '@otr/core';
 
 import { consoleLogger, type Logger } from '../logging/logger';

@@ -4,15 +4,17 @@ import type { Logger } from '../../logging/logger';
 import type { QueueConsumer } from '../../queue/types';
 import { BeatmapFetchService } from '../services/beatmap-fetch-service';
 
+type BeatmapFetchServiceContract = Pick<BeatmapFetchService, 'fetchAndPersist'>;
+
 interface BeatmapFetchWorkerOptions {
   queue: QueueConsumer<FetchBeatmapMessage>;
-  service: BeatmapFetchService;
+  service: BeatmapFetchServiceContract;
   logger: Logger;
 }
 
 export class BeatmapFetchWorker {
   private readonly queue: QueueConsumer<FetchBeatmapMessage>;
-  private readonly service: BeatmapFetchService;
+  private readonly service: BeatmapFetchServiceContract;
   private readonly logger: Logger;
 
   constructor(options: BeatmapFetchWorkerOptions) {

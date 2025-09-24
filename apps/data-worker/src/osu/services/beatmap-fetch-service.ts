@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import type { API } from 'osu-api-v2-js';
 
 import { withNotFoundHandling } from '../api-helpers';
@@ -7,7 +6,10 @@ import {
   convertRuleset,
   normalizeDate,
 } from '../conversions';
-import { ensureBeatmapPlaceholder, updateBeatmapStatus } from '../beatmap-store';
+import {
+  ensureBeatmapPlaceholder,
+  updateBeatmapStatus,
+} from '../beatmap-store';
 import { getOrCreatePlayerId } from '../player-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import type { DatabaseClient } from '../../db';
@@ -74,7 +76,9 @@ export class BeatmapFetchService {
     }
 
     const apiBeatmapset = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() => this.api.getBeatmapset(apiBeatmap.beatmapset_id))
+      withNotFoundHandling(() =>
+        this.api.getBeatmapset(apiBeatmap.beatmapset_id)
+      )
     );
 
     if (!apiBeatmapset) {
@@ -186,12 +190,7 @@ export class BeatmapFetchService {
     beatmapIds.add(beatmapId);
 
     for (const id of beatmapIds) {
-      await updateBeatmapStatus(
-        this.db,
-        id,
-        DataFetchStatus.Fetched,
-        nowIso
-      );
+      await updateBeatmapStatus(this.db, id, DataFetchStatus.Fetched, nowIso);
       await this.dataCompletion.updateBeatmapFetchStatus(
         id,
         DataFetchStatus.Fetched
