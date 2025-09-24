@@ -364,7 +364,7 @@ export default async function Page({ params }: PageProps) {
                 Rating Changes
               </h3>
               <span className="text-muted-foreground text-sm">
-                ({tournament.playerTournamentStats?.length || 0})
+                ({tournament.playerTournamentStats?.length || 0} players)
               </span>
             </div>
             <TournamentRatingsView

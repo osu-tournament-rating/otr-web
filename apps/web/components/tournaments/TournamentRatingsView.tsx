@@ -134,24 +134,22 @@ export default function TournamentRatingsView({
         header: ({ column }) => (
           <SortableHeader column={column}>Before</SortableHeader>
         ),
-        cell: () => (
-          <div className="text-muted-foreground text-center font-medium">
-            N/A
+        cell: ({ row }) => (
+          <div className="text-foreground text-center font-medium">
+            {Math.round(row.original.ratingBefore)}
           </div>
         ),
-        enableSorting: false,
       },
       {
         accessorKey: 'ratingAfter',
         header: ({ column }) => (
           <SortableHeader column={column}>After</SortableHeader>
         ),
-        cell: () => (
-          <div className="text-muted-foreground text-center font-medium">
-            N/A
+        cell: ({ row }) => (
+          <div className="text-foreground text-center font-medium">
+            {Math.round(row.original.ratingAfter)}
           </div>
         ),
-        enableSorting: false,
       },
       {
         accessorKey: 'averageRatingDelta',

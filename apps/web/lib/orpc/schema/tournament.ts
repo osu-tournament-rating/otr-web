@@ -83,6 +83,8 @@ export const TournamentPlayerStatsSchema = playerTournamentStatsSelectSchema
   })
   .extend({
     player: PlayerSchema,
+    ratingBefore: z.number(),
+    ratingAfter: z.number(),
   });
 
 export const TournamentBeatmapSchema = BeatmapSchema.extend({
