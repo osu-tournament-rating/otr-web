@@ -7,6 +7,8 @@ import {
   TeamType,
 } from '@otr/core/osu/enums';
 
+type ModLike = string | { acronym?: string | null } | null | undefined;
+
 const MOD_MAP: Record<string, Mods> = {
   NF: Mods.NoFail,
   EZ: Mods.Easy,
@@ -82,13 +84,25 @@ const BEATMAP_RANK_STATUS_MAP: Record<string, number> = {
   loved: 4,
 };
 
-export const convertModsToFlags = (mods: string[] | undefined | null): Mods => {
+export const convertModsToFlags = (mods: ModLike[] | undefined | null): Mods => {
   if (!mods || mods.length === 0) {
     return Mods.None;
   }
 
   return mods.reduce<Mods>((acc, mod) => {
-    const upper = mod.toUpperCase();
+    let acronym: string | null = null;
+
+    if (typeof mod === 'string') {
+      acronym = mod;
+    } else if (mod && typeof mod.acronym === 'string') {
+      acronym = mod.acronym;
+    }
+
+    if (!acronym) {
+      return acc;
+    }
+
+    const upper = acronym.toUpperCase();
     const bit = MOD_MAP[upper];
     if (bit !== undefined) {
       return (acc | bit) as Mods;

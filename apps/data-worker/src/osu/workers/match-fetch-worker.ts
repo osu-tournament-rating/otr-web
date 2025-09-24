@@ -30,7 +30,19 @@ export class MatchFetchWorker {
       });
 
       try {
-        await this.service.fetchAndPersist(osuMatchId);
+        const persisted = await this.service.fetchAndPersist(osuMatchId);
+
+        if (persisted) {
+          this.logger.info('Successfully processed match fetch', {
+            osuMatchId,
+            correlationId: message.metadata.correlationId,
+          });
+        } else {
+          this.logger.warn('Match fetch completed without persistence', {
+            osuMatchId,
+            correlationId: message.metadata.correlationId,
+          });
+        }
         await message.ack();
       } catch (error) {
         this.logger.error('Failed to process match fetch', {
