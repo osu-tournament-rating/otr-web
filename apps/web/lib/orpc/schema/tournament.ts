@@ -172,6 +172,7 @@ export const TournamentBeatmapAdminMutationResponseSchema = z.object({
   success: z.boolean(),
   addedCount: z.number().int().nonnegative(),
   skippedCount: z.number().int().nonnegative(),
+  warnings: z.array(z.string().min(1)).optional(),
 });
 
 export const TournamentResetAutomatedChecksInputSchema =
@@ -181,11 +182,13 @@ export const TournamentResetAutomatedChecksInputSchema =
 
 export const TournamentAdminMutationResponseSchema = z.object({
   success: z.boolean(),
+  warnings: z.array(z.string().min(1)).optional(),
 });
 
 export const TournamentRefetchMatchDataResponseSchema = z.object({
   success: z.boolean(),
   matchesUpdated: z.number().int().nonnegative(),
+  warnings: z.array(z.string().min(1)).optional(),
 });
 
 export type TournamentAdminUpdateInput = z.infer<

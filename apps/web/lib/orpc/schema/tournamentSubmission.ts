@@ -196,6 +196,7 @@ export type TournamentSubmissionFormValues = z.infer<
 
 export const TournamentSubmissionResponseSchema = z.object({
   id: z.number().int().positive(),
+  warnings: z.array(z.string().min(1)).optional(),
 });
 
 export type TournamentSubmissionResponse = z.infer<

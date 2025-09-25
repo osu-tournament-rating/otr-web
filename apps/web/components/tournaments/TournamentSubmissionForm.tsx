@@ -113,6 +113,11 @@ export default function TournamentSubmissionForm() {
 
       form.reset();
       setBeatmapWarningConfirmed(false); // Reset confirmation state
+
+      result.warnings?.forEach((warning) => {
+        toast.warning(warning);
+      });
+
       toast.success(
         <div className="flex flex-col gap-2">
           <span>Tournament submitted successfully</span>

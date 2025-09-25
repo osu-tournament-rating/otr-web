@@ -39,7 +39,9 @@ export default function RefetchMatchDataButton({
       const result = await orpc.tournaments.admin.refetchMatchData({
         id: tournament.id,
       });
-      // TODO: RabbitMQ message?
+      result.warnings?.forEach((warning) => {
+        toast.warning(warning);
+      });
       toast.success(
         result.matchesUpdated > 0
           ? `Queued ${result.matchesUpdated} matches for refetch`
