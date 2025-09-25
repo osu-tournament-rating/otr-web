@@ -180,8 +180,9 @@ export class TournamentDataCompletionService {
           tournamentId,
           overrideVerifiedState: false,
         });
-      } finally {
+      } catch (error) {
         this.pendingAutomation.delete(tournamentId);
+        throw error;
       }
     } else {
       this.logger.info(

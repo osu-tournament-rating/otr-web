@@ -1,7 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { API, Match } from 'osu-api-v2-js';
 
-import { ensureBeatmapPlaceholder } from '../beatmap-store';
+import {
+  ensureBeatmapPlaceholder,
+  updateBeatmapStatus,
+} from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import { withNotFoundHandling } from '../api-helpers';
 import {
@@ -91,7 +94,7 @@ export class MatchFetchService {
       return false;
     }
 
-    const beatmapsToQueue = new Set<number>();
+    const beatmapsToQueue = new Map<number, { beatmapDbId: number }>();
 
     await this.db.transaction(async (tx) => {
       await tx
@@ -132,14 +135,32 @@ export class MatchFetchService {
         const mods = convertModsToFlags(game.mods ?? []);
 
         const beatmapRecord = await ensureBeatmapPlaceholder(
-          this.db,
+          tx,
           game.beatmap_id,
           DataFetchStatus.NotFetched,
           nowIso
         );
 
         if (beatmapRecord.dataFetchStatus === DataFetchStatus.NotFetched) {
-          beatmapsToQueue.add(game.beatmap_id);
+          const [marked] = await tx
+            .update(schema.beatmaps)
+            .set({
+              dataFetchStatus: DataFetchStatus.Fetching,
+              updated: nowIso,
+            })
+            .where(
+              and(
+                eq(schema.beatmaps.id, beatmapRecord.id),
+                eq(schema.beatmaps.dataFetchStatus, DataFetchStatus.NotFetched)
+              )
+            )
+            .returning({ id: schema.beatmaps.id });
+
+          if (marked) {
+            beatmapsToQueue.set(game.beatmap_id, {
+              beatmapDbId: beatmapRecord.id,
+            });
+          }
         }
 
         const existingGame = await tx.query.games.findFirst({
@@ -217,8 +238,18 @@ export class MatchFetchService {
       }
     });
 
-    for (const beatmapId of beatmapsToQueue) {
-      await this.publishBeatmapFetch(beatmapId);
+    for (const [beatmapId, { beatmapDbId }] of beatmapsToQueue) {
+      try {
+        await this.publishBeatmapFetch(beatmapId);
+      } catch (error) {
+        await updateBeatmapStatus(
+          this.db,
+          beatmapDbId,
+          DataFetchStatus.NotFetched,
+          new Date().toISOString()
+        );
+        throw error;
+      }
     }
 
     await this.dataCompletion.updateMatchFetchStatus(

@@ -34,12 +34,7 @@ export class MatchFetchWorker {
       try {
         const persisted = await this.service.fetchAndPersist(osuMatchId);
 
-        if (persisted) {
-          this.logger.info('Successfully processed match fetch', {
-            osuMatchId,
-            correlationId: message.metadata.correlationId,
-          });
-        } else {
+        if (!persisted) {
           this.logger.warn('Match fetch completed without persistence', {
             osuMatchId,
             correlationId: message.metadata.correlationId,
