@@ -85,8 +85,8 @@ export default function RefetchMatchDataButton({
                 <ul className="list-disc pl-4">
                   <li>All match data will be refetched</li>
                   <li>
-                    If a match has since been deleted from osu!, the data could
-                    be permanently lost.
+                    If a match has since been deleted from osu!, any data we
+                    already have will stay preserved.
                   </li>
                 </ul>
               </div>

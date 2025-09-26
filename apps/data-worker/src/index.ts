@@ -49,11 +49,13 @@ const bootstrap = async () => {
   const osuApiRateLimiter = new FixedWindowRateLimiter({
     requests: dataWorkerEnv.osuApiRateLimit.requests,
     windowMs: dataWorkerEnv.osuApiRateLimit.windowSeconds * 1000,
+    logger,
   });
 
   const osuTrackRateLimiter = new FixedWindowRateLimiter({
     requests: dataWorkerEnv.osuTrackRateLimit.requests,
     windowMs: dataWorkerEnv.osuTrackRateLimit.windowSeconds * 1000,
+    logger,
   });
 
   const automationPublisher =

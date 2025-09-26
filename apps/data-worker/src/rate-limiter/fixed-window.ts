@@ -1,3 +1,5 @@
+import type { Logger } from '../logging/logger';
+
 export interface RateLimiter {
   schedule<T>(task: () => Promise<T>): Promise<T>;
 }
@@ -9,6 +11,7 @@ export interface FixedWindowRateLimiterOptions {
   requests: number;
   windowMs: number;
   now?: () => number;
+  logger?: Logger;
 }
 
 /**
@@ -20,13 +23,14 @@ export class FixedWindowRateLimiter implements RateLimiter {
   private readonly requests: number;
   private readonly windowMs: number;
   private readonly now: () => number;
+  private readonly logger?: Logger;
 
   private windowStart = 0;
   private executedInWindow = 0;
   private tail: Promise<unknown> = Promise.resolve();
 
   constructor(options: FixedWindowRateLimiterOptions) {
-    const { requests, windowMs, now } = options;
+    const { requests, windowMs, now, logger } = options;
 
     if (!Number.isFinite(requests) || requests <= 0) {
       throw new Error('requests must be a positive number');
@@ -39,6 +43,7 @@ export class FixedWindowRateLimiter implements RateLimiter {
     this.requests = Math.floor(requests);
     this.windowMs = Math.floor(windowMs);
     this.now = now ?? Date.now;
+    this.logger = logger;
   }
 
   async schedule<T>(task: () => Promise<T>): Promise<T> {
@@ -75,6 +80,19 @@ export class FixedWindowRateLimiter implements RateLimiter {
       }
 
       const waitMs = this.windowMs - (now - this.windowStart);
+
+      if (this.logger) {
+        const waitSeconds = Math.max(waitMs, 0) / 1000;
+        this.logger.info(
+          'Rate limiter exhausted (no tokens remaining); awaiting refill',
+          {
+            waitSeconds,
+            requestsPerWindow: this.requests,
+            windowMs: this.windowMs,
+          }
+        );
+      }
+
       await sleep(waitMs > 0 ? waitMs : 0);
     }
   }
