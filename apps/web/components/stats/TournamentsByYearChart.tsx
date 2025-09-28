@@ -60,9 +60,9 @@ export default function TournamentsByYearChart({
     if (!active || !payload?.length) return null;
 
     return (
-      <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <div className="bg-background rounded-lg border p-2 shadow-sm">
         <p className="font-bold">Year: {label}</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Tournaments: {formatChartNumber(payload[0].value || 0)}
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function TournamentsByYearChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-primary" />
+          <Calendar className="text-primary h-6 w-6" />
           Tournaments by Year
         </CardTitle>
         <CardDescription>

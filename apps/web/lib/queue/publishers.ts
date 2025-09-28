@@ -23,10 +23,10 @@ let overridePublishers: QueuePublisherRegistry | null = null;
 let defaultPublishers: QueuePublisherRegistry | null = null;
 
 const createDefaultPublishers = (): QueuePublisherRegistry => {
-  const amqpUrl = process.env.DATA_WORKER_AMQP_URL;
+  const amqpUrl = process.env.RABBITMQ_AMQP_URL;
 
   if (!amqpUrl) {
-    throw new Error('DATA_WORKER_AMQP_URL is not configured');
+    throw new Error('RABBITMQ_AMQP_URL is not configured');
   }
 
   const beatmapPublisher = new RabbitMqPublisher<FetchBeatmapMessage>({

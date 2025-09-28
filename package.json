@@ -6,16 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "bun run lint:web && bun run lint:data-worker",
-    "dev:web": "bun run --filter web dev",
-    "dev:data-worker": "bun run --filter data-worker dev",
-    "build:web": "bun run --filter web build",
-    "start:web": "bun run --filter web start",
-    "lint:web": "bun run --filter web lint",
-    "lint:data-worker": "bun run --filter data-worker lint",
-    "format:web": "bun run --filter web format"
+    "lint": "bun run --filter web lint && bun run --filter data-worker lint",
+    "build": "bun run --filter web build && bun run --filter data-worker build",
+    "start": "bun run --filter web start && bun run --filter data-worker start",
+    "dev": "sh -c 'trap \"kill -TERM 0\" INT TERM EXIT; bun run --filter web dev & bun run --filter data-worker dev' & wait",
+    "format": "bunx prettier . --write"
   },
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.6.1"
   }
 }

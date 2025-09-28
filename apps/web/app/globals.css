@@ -388,7 +388,7 @@
       @apply flex flex-col items-start justify-center;
 
       .label {
-        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
+        @apply text-(--score-performance-label) text-xs font-semibold opacity-95;
       }
 
       .value {

@@ -97,12 +97,10 @@ describe('osu!track end-to-end', () => {
       processedResolve = resolve;
     });
 
-    let received:
-      | {
-          message: FetchPlayerOsuTrackMessage;
-          results: Array<{ mode: number; updates: UserStatUpdate[] }>;
-        }
-      | null = null;
+    let received: {
+      message: FetchPlayerOsuTrackMessage;
+      results: Array<{ mode: number; updates: UserStatUpdate[] }>;
+    } | null = null;
 
     const worker = new OsuTrackPlayerWorker({
       queue,

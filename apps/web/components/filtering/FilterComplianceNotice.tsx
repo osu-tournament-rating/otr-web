@@ -45,8 +45,8 @@ export default function FilterComplianceNotice({
     <div className="w-full space-y-3">
       {/* Compliance Warning */}
       <Alert className="border-warning/50 bg-warning/10 dark:border-warning/50 dark:bg-warning/10">
-        <AlertTriangle className="h-4 w-4 text-warning-foreground dark:text-yellow-400" />
-        <AlertTitle className="font-bold text-warning-foreground dark:text-yellow-100">
+        <AlertTriangle className="text-warning-foreground h-4 w-4 dark:text-yellow-400" />
+        <AlertTitle className="text-warning-foreground font-bold dark:text-yellow-100">
           Host Compliance
         </AlertTitle>
         <AlertDescription className="text-warning-foreground/90 dark:text-yellow-100/90">
@@ -110,7 +110,7 @@ export default function FilterComplianceNotice({
             <div className="space-y-2 border-t border-blue-200 pt-3 dark:border-blue-800">
               <p className="text-sm font-medium">Forum post text</p>
               <div className="flex items-center gap-2 rounded-md bg-blue-100/50 p-3 dark:bg-blue-900/20">
-                <code className="flex-1 text-xs break-all">
+                <code className="flex-1 break-all text-xs">
                   {forumPostString}
                 </code>
                 <Button

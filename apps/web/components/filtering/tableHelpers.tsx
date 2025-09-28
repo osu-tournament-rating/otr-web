@@ -37,7 +37,7 @@ export function NumericCell({
   format?: (value: number) => string;
 }) {
   if (value === undefined || value === null) {
-    return <div className="text-center text-muted-foreground">-</div>;
+    return <div className="text-muted-foreground text-center">-</div>;
   }
 
   const formatted = format ? format(value) : value.toString();

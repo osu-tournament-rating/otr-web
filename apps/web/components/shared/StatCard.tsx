@@ -20,14 +20,14 @@ export default function StatCard({
   return (
     <Card
       className={cn(
-        'flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none bg-popover !p-4',
+        'bg-popover flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none !p-4',
         className
       )}
     >
-      {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
+      {icon && <div className="text-primary flex-shrink-0">{icon}</div>}
 
       <div className="flex min-w-0 flex-col">
-        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="text-muted-foreground text-sm">{label}</div>
         <div className={cn('text-lg font-semibold', valueClassName)}>
           {value}
         </div>

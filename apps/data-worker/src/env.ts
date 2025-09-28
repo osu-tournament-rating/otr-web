@@ -61,7 +61,7 @@ export const dataWorkerEnv = {
   osuClientSecret: requireEnv('DATA_WORKER_OSU_CLIENT_SECRET'),
   osuApiRateLimit,
   osuTrackRateLimit,
-  amqpUrl: requireEnv('DATA_WORKER_AMQP_URL'),
+  amqpUrl: requireEnv('RABBITMQ_AMQP_URL'),
 } as const;
 
 export type DataWorkerEnv = typeof dataWorkerEnv;

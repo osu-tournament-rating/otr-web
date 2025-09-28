@@ -65,7 +65,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center">
-        <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
+        <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
       </div>
     );
   }
@@ -121,7 +121,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <SheetClose asChild>
               <Link
                 href={`/players/${player.id}`}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
               >
                 <User className="size-4" />
                 <span>My Profile</span>
@@ -130,7 +130,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           ) : (
             <Link
               href={`/players/${player.id}`}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             >
               <User className="size-4" />
               <span>My Profile</span>
@@ -138,7 +138,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           )}
 
           <button
-            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -160,7 +160,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           <UserAvatar player={player} />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
+      <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
             <div className="absolute inset-0 backdrop-blur-md" />
@@ -199,7 +199,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+          className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
@@ -212,7 +212,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 
 function UserAvatar({ player }: UserAvatarProps) {
   return (
-    <Avatar className="size-9 transition-all hover:border-primary/80">
+    <Avatar className="hover:border-primary/80 size-9 transition-all">
       <AvatarImage
         src={`https://a.ppy.sh/${player.osuId}`}
         alt={player.username ? `${player.username}'s avatar` : 'User avatar'}

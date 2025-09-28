@@ -62,7 +62,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
   return (
     <TableRow
       className={cn(
-        'group transition-colors hover:bg-muted/50',
+        'hover:bg-muted/50 group transition-colors',
         player.won && 'bg-green-500/5 hover:bg-green-500/10'
       )}
     >
@@ -78,12 +78,12 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
               alt={player.username}
               width={AVATAR_SIZE.WIDTH}
               height={AVATAR_SIZE.HEIGHT}
-              className="rounded-full ring-1 ring-border/10"
+              className="ring-border/10 rounded-full ring-1"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-              <User className="h-4 w-4 text-muted-foreground" />
+            <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
+              <User className="text-muted-foreground h-4 w-4" />
             </div>
           )}
           <div className="flex min-w-0 flex-col">
@@ -102,7 +102,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
             aria-label={`${player.gamesWon} wins, ${player.gamesLost} losses`}
           >
             <span className="text-green-600">{player.gamesWon}</span>
-            <span className="px-0.5 text-muted-foreground" aria-hidden="true">
+            <span className="text-muted-foreground px-0.5" aria-hidden="true">
               -
             </span>
             <span className="text-red-600">{player.gamesLost}</span>
@@ -111,7 +111,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
       )}
 
       {/* Rating columns */}
-      <TableCell className="py-2 text-center text-xs text-muted-foreground sm:text-sm">
+      <TableCell className="text-muted-foreground py-2 text-center text-xs sm:text-sm">
         {player.ratingBefore?.toFixed(RATING_PRECISION.DISPLAY) ?? '-'}
       </TableCell>
       <TableCell className="py-2 text-center text-xs font-medium sm:text-sm">

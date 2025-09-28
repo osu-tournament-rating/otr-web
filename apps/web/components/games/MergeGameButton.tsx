@@ -192,7 +192,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
   const renderChildGameInfo = (childGame: GameAdminPreview) => (
     <div key={childGame.id} className="space-y-1 rounded border p-3 text-sm">
       <p className="font-semibold">Game #{childGame.id}</p>
-      <p className="text-xs break-words text-muted-foreground">
+      <p className="text-muted-foreground break-words text-xs">
         {childGame.beatmapTitle ?? 'Unknown beatmap'}[
         {childGame.beatmapDifficulty ?? 'Unknown difficulty'}]
       </p>
@@ -258,9 +258,9 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                   You are about to merge {gameCount} child game{pluralSuffix}{' '}
                   into <strong>Game #{game.id}</strong>.
                 </p>
-                <div className="space-y-1 rounded-md bg-muted p-3 text-sm">
+                <div className="bg-muted space-y-1 rounded-md p-3 text-sm">
                   <p>This will:</p>
-                  <ul className="list-inside list-disc space-y-1 text-muted-foreground">
+                  <ul className="text-muted-foreground list-inside list-disc space-y-1">
                     <li>
                       Move {totalScoresMoved} score{scorePlural} to Game #
                       {game.id}
@@ -270,7 +270,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                     </li>
                   </ul>
                 </div>
-                <p className="text-sm font-medium text-destructive">
+                <p className="text-destructive text-sm font-medium">
                   This action cannot be undone.
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                   Merge scores from child games into{' '}
                   <strong>Game #{game.id}</strong>.
                 </p>
-                <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
+                <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs">
                   <li>All scores will be moved to this game</li>
                   <li>Child games will be permanently deleted</li>
                   <li>Games must have the same beatmap</li>
@@ -362,9 +362,9 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                   )}
                 </Button>
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-destructive text-sm">{error}</p>}
               {beatmapMismatch && (
-                <p className="text-sm text-destructive">{beatmapMismatch}</p>
+                <p className="text-destructive text-sm">{beatmapMismatch}</p>
               )}
             </div>
 

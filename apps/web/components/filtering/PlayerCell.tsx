@@ -14,8 +14,8 @@ export default function PlayerCell({ result }: PlayerCellProps) {
   if (!result.username || !result.playerId) {
     return (
       <div className="flex items-center gap-2">
-        <div className="size-6 rounded-full bg-muted" />
-        <span className="text-sm text-muted-foreground">Unknown</span>
+        <div className="bg-muted size-6 rounded-full" />
+        <span className="text-muted-foreground text-sm">Unknown</span>
       </div>
     );
   }
@@ -36,7 +36,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
       />
       <Link
         href={`/players/${result.playerId}`}
-        className="max-w-30 text-sm font-medium transition-colors hover:text-primary"
+        className="max-w-30 hover:text-primary text-sm font-medium transition-colors"
       >
         {result.username}
       </Link>

@@ -88,7 +88,7 @@ const PlayerCell = ({
     />
     <Link
       href={`/players/${player.id}`}
-      className="truncate font-medium transition-colors hover:text-primary"
+      className="hover:text-primary truncate font-medium transition-colors"
     >
       {player.username}
     </Link>
@@ -117,7 +117,7 @@ export default function TournamentRatingsView({
           <SortableHeader column={column}>Rating Before</SortableHeader>
         ),
         cell: () => (
-          <div className="text-center font-medium text-muted-foreground">
+          <div className="text-muted-foreground text-center font-medium">
             N/A
           </div>
         ),
@@ -129,7 +129,7 @@ export default function TournamentRatingsView({
           <SortableHeader column={column}>Rating After</SortableHeader>
         ),
         cell: () => (
-          <div className="text-center font-medium text-muted-foreground">
+          <div className="text-muted-foreground text-center font-medium">
             N/A
           </div>
         ),
@@ -191,7 +191,7 @@ export default function TournamentRatingsView({
 
   if (playerStats.length === 0) {
     return (
-      <div className="py-8 text-center text-muted-foreground">
+      <div className="text-muted-foreground py-8 text-center">
         No rating data available for this tournament.
       </div>
     );
@@ -210,7 +210,7 @@ export default function TournamentRatingsView({
           Download CSV
         </Button>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20">
+      <div className="from-background to-muted/20 overflow-x-auto rounded-lg border bg-gradient-to-br">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -221,7 +221,7 @@ export default function TournamentRatingsView({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="font-semibold text-foreground"
+                    className="text-foreground font-semibold"
                   >
                     {header.isPlaceholder
                       ? null
@@ -240,7 +240,7 @@ export default function TournamentRatingsView({
                 <TableRow
                   key={row.id}
                   className={cn(
-                    'transition-colors duration-200 hover:bg-muted/30',
+                    'hover:bg-muted/30 transition-colors duration-200',
                     index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
                   )}
                 >

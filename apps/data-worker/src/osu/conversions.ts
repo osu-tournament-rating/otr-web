@@ -84,7 +84,9 @@ const BEATMAP_RANK_STATUS_MAP: Record<string, number> = {
   loved: 4,
 };
 
-export const convertModsToFlags = (mods: ModLike[] | undefined | null): Mods => {
+export const convertModsToFlags = (
+  mods: ModLike[] | undefined | null
+): Mods => {
   if (!mods || mods.length === 0) {
     return Mods.None;
   }
@@ -138,7 +140,9 @@ export const convertTeam = (value: string | undefined | null): Team => {
   return mapped ?? Team.NoTeam;
 };
 
-export const convertScoreGrade = (value: string | undefined | null): ScoreGrade => {
+export const convertScoreGrade = (
+  value: string | undefined | null
+): ScoreGrade => {
   if (!value) {
     return ScoreGrade.D;
   }
@@ -165,7 +169,9 @@ export const convertBeatmapRankStatus = (
   return 0;
 };
 
-export const convertRuleset = (value: number | string | undefined | null): Ruleset => {
+export const convertRuleset = (
+  value: number | string | undefined | null
+): Ruleset => {
   if (typeof value === 'number') {
     switch (value) {
       case Ruleset.Osu:

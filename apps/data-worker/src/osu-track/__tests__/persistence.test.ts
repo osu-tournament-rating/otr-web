@@ -38,9 +38,7 @@ describe('pickRelevantStatUpdate', () => {
     const selected = pickRelevantStatUpdate(updates, null);
 
     expect(selected?.rank).toBe(25);
-    expect(selected?.timestamp.toISOString()).toBe(
-      '2024-05-01T00:00:00.000Z'
-    );
+    expect(selected?.timestamp.toISOString()).toBe('2024-05-01T00:00:00.000Z');
   });
 
   it('returns update closest to earliest verified match date', () => {
@@ -55,8 +53,6 @@ describe('pickRelevantStatUpdate', () => {
     const selected = pickRelevantStatUpdate(updates, earliestMatch);
 
     expect(selected?.rank).toBe(10);
-    expect(selected?.timestamp.toISOString()).toBe(
-      '2024-05-05T00:00:00.000Z'
-    );
+    expect(selected?.timestamp.toISOString()).toBe('2024-05-05T00:00:00.000Z');
   });
 });

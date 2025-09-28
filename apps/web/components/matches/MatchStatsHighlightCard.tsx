@@ -108,12 +108,12 @@ export default function MatchStatsHighlightCard({
               <Icon className={cn('h-4 w-4', iconColorStyles[stat.color])} />
             </div>
             <div className="flex items-center gap-1">
-              <h3 className="text-xs font-medium text-muted-foreground/80">
+              <h3 className="text-muted-foreground/80 text-xs font-medium">
                 {stat.label}
               </h3>
               {stat.helpText && (
                 <SimpleTooltip content={stat.helpText}>
-                  <HelpCircle className="h-3 w-3 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
+                  <HelpCircle className="text-muted-foreground/50 hover:text-muted-foreground h-3 w-3 cursor-help transition-colors" />
                 </SimpleTooltip>
               )}
             </div>
@@ -124,11 +124,11 @@ export default function MatchStatsHighlightCard({
         <div className="flex flex-1 flex-col justify-center">
           <div className="space-y-1">
             <div className="flex items-baseline gap-1.5">
-              <p className="text-2xl font-bold tracking-tight text-foreground">
+              <p className="text-foreground text-2xl font-bold tracking-tight">
                 {stat.value}
               </p>
               {stat.metric && (
-                <span className="text-[10px] font-medium text-muted-foreground/50 uppercase">
+                <span className="text-muted-foreground/50 text-[10px] font-medium uppercase">
                   {stat.metric}
                 </span>
               )}
@@ -145,7 +145,7 @@ export default function MatchStatsHighlightCard({
                     height={TIER_ICON_SIZE.HEIGHT}
                     className="flex-shrink-0"
                   />
-                  <span className="text-[10px] font-medium text-muted-foreground sm:text-[11px] lg:text-[10px]">
+                  <span className="text-muted-foreground text-[10px] font-medium sm:text-[11px] lg:text-[10px]">
                     {stat.tierIcon.tier}
                     {stat.tierIcon.subTier &&
                       ` ${stat.tierIcon.subTier === 1 ? 'I' : stat.tierIcon.subTier === 2 ? 'II' : 'III'}`}
@@ -165,25 +165,25 @@ export default function MatchStatsHighlightCard({
                         alt={stat.player.username}
                         width={AVATAR_SIZE.WIDTH}
                         height={AVATAR_SIZE.HEIGHT}
-                        className="rounded-full shadow-sm ring-2 ring-background transition-transform duration-200 group-hover/player:scale-110"
+                        className="ring-background rounded-full shadow-sm ring-2 transition-transform duration-200 group-hover/player:scale-110"
                         onError={() => setImageError(true)}
                       />
                     ) : (
                       <div
-                        className="h-[24px] w-[24px] rounded-full bg-muted shadow-sm ring-2 ring-background"
+                        className="bg-muted ring-background h-[24px] w-[24px] rounded-full shadow-sm ring-2"
                         role="img"
                         aria-label={`${stat.player.username} avatar placeholder`}
                       />
                     )}
                   </div>
-                  <span className="truncate text-xs font-medium text-muted-foreground transition-colors group-hover/player:text-foreground">
+                  <span className="text-muted-foreground group-hover/player:text-foreground truncate text-xs font-medium transition-colors">
                     {stat.player.username}
                   </span>
                 </Link>
               )}
 
               {!stat.player && !stat.tierIcon && stat.sublabel && (
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {stat.sublabel}
                 </p>
               )}

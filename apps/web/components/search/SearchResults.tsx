@@ -15,7 +15,7 @@ interface SectionHeaderProps {
 function SectionHeader({ icon, title }: SectionHeaderProps) {
   return (
     <div className="flex items-center gap-2 pb-2 sm:gap-3">
-      <div className="flex items-center gap-1.5 text-primary sm:gap-2">
+      <div className="text-primary flex items-center gap-1.5 sm:gap-2">
         {icon}
         <h2 className="text-base font-semibold sm:text-lg">{title}</h2>
       </div>
@@ -41,10 +41,10 @@ export default function SearchResults({
     return (
       <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
         <div className="text-center">
-          <p className="text-base font-medium text-muted-foreground sm:text-lg">
+          <p className="text-muted-foreground text-base font-medium sm:text-lg">
             No results found
           </p>
-          <p className="text-xs text-muted-foreground sm:text-sm">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Try adjusting your search terms
           </p>
         </div>

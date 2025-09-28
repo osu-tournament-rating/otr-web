@@ -69,7 +69,7 @@ export function CountrySearchSelect({
               placeholder="Search countries..."
               value={searchValue}
               onValueChange={setSearchValue}
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <CommandEmpty>No country found.</CommandEmpty>
@@ -92,7 +92,7 @@ export function CountrySearchSelect({
               >
                 <CountryFlag country={country.code} />
                 <span className="truncate">{country.name}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
+                <span className="text-muted-foreground ml-auto text-xs">
                   {country.code}
                 </span>
               </CommandItem>

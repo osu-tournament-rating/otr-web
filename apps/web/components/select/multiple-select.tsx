@@ -189,7 +189,7 @@ function MultiSelect({
                 <Badge
                   variant="secondary"
                   key={item}
-                  className="mr-1 mb-1"
+                  className="mb-1 mr-1"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -202,7 +202,7 @@ function MultiSelect({
                     role="button"
                     tabIndex={-1}
                     aria-label={`Remove ${item}`}
-                    className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="ring-offset-background focus:ring-ring ml-1 cursor-pointer rounded-full outline-none focus:ring-2 focus:ring-offset-2"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -219,7 +219,7 @@ function MultiSelect({
                       handleUnselect(item);
                     }}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
                   </span>
                 </Badge>
               ))

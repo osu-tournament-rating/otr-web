@@ -75,18 +75,18 @@ export default function SearchDialog() {
       </DialogTrigger>
       <DialogTitle className="sr-only">Search</DialogTitle>
       <DialogContent className="flex max-h-[85vh] w-[95vw] max-w-[700px] flex-col gap-0 p-0 sm:w-[90vw] sm:min-w-[500px] md:min-w-[600px]">
-        <div className="border-b bg-background p-3 sm:p-4">
+        <div className="bg-background border-b p-3 sm:p-4">
           <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
             <Input
-              className="border-0 bg-background pr-10 pl-10 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-base"
+              className="bg-background border-0 pl-10 pr-10 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-base"
               placeholder="Search players, tournaments, matches..."
               autoFocus
               value={query}
               onChange={(e) => handleSetQuery(e.target.value)}
               aria-label="Search query"
             />
-            <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
+            <div className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2">
               {isLoading ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : null}
@@ -103,8 +103,8 @@ export default function SearchDialog() {
             ) : (
               <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
                 <div className="space-y-3 text-center">
-                  <Search className="mx-auto h-8 w-8 text-muted-foreground/30 sm:h-10 sm:w-10" />
-                  <p className="text-sm font-medium text-muted-foreground/70 sm:text-base">
+                  <Search className="text-muted-foreground/30 mx-auto h-8 w-8 sm:h-10 sm:w-10" />
+                  <p className="text-muted-foreground/70 text-sm font-medium sm:text-base">
                     Start typing to search
                   </p>
                 </div>

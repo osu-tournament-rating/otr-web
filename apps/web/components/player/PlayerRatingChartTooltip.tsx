@@ -43,9 +43,9 @@ export default function PlayerRatingChartTooltip({
   }`;
 
   return (
-    <div className="rounded-md border bg-popover/90 p-3 font-sans shadow-md">
+    <div className="bg-popover/90 rounded-md border p-3 font-sans shadow-md">
       <p className="mb-1 font-medium">{formattedDate(data.timestamp)}</p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Type:{' '}
         {RatingAdjustmentTypeEnumhelper.getMetadata(data.adjustmentType).text}
       </p>
@@ -67,7 +67,7 @@ export default function PlayerRatingChartTooltip({
       {data.match?.name && (
         <p className="text-sm">
           <span>Match: </span>
-          <span className="mt-1 text-muted-foreground">{data.match.name}</span>
+          <span className="text-muted-foreground mt-1">{data.match.name}</span>
         </p>
       )}
     </div>

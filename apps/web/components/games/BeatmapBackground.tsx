@@ -23,7 +23,7 @@ export default function BeatmapBackground({
 
   return (
     <Image
-      className="absolute z-1 rounded-xl object-cover"
+      className="z-1 absolute rounded-xl object-cover"
       src={hasError ? fallbackSrc : beatmapSrc}
       alt={alt}
       fill

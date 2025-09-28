@@ -9,8 +9,6 @@ export const DataFetchStatus = {
 export type DataFetchStatus =
   (typeof DataFetchStatus)[keyof typeof DataFetchStatus];
 
-export const isDataFetchStatus = (
-  value: unknown
-): value is DataFetchStatus =>
+export const isDataFetchStatus = (value: unknown): value is DataFetchStatus =>
   typeof value === 'number' &&
   Object.values(DataFetchStatus).includes(value as DataFetchStatus);

@@ -12,7 +12,7 @@ export default function FilterReportsPage() {
       <BetaWarningBanner />
       <div className="mb-4 flex flex-col gap-2 sm:mb-6 md:mb-8">
         <h1 className="text-2xl font-bold sm:text-3xl">Filter Reports</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
+        <p className="text-muted-foreground text-sm sm:text-base">
           View Tournament Registrant Filtering reports by entering a report ID.
           These reports show detailed filtering results for tournament
           participants.

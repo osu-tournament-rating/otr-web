@@ -140,7 +140,7 @@ export default function TournamentList({
         }}
       >
         <div
-          className="absolute top-0 left-0 w-full space-y-1"
+          className="absolute left-0 top-0 w-full space-y-1"
           style={{
             transform: `translateY(${
               (virtualizedItems[0]?.start ?? 0) -
@@ -201,7 +201,7 @@ function NoResultsCard() {
   return (
     <Card className="p-4 font-sans sm:p-6">
       <div className="flex flex-col items-center justify-center space-y-2 text-center">
-        <h3 className="text-2xl font-bold text-primary">Nothing found...</h3>
+        <h3 className="text-primary text-2xl font-bold">Nothing found...</h3>
         <p className="text-muted-foreground">
           Try a less restrictive filter for better results!
         </p>

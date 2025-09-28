@@ -7,24 +7,30 @@ on:
     branches: [master]
 
 jobs:
-  lint-and-build:
+  lint-build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22.x
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: bun install --frozen-lockfile
 
-      - name: Check code formatting
-        run: npx prettier . --check --ignore-unknown
+      - name: Run lint
+        run: bun run lint
 
-      - name: Build
-        run: npm run build
+      - name: Type check
+        run: bunx tsc --noEmit
+
+      - name: Build web app
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: bun run build:web
+
+      - name: Build worker binary
+        run: bun run --filter data-worker build

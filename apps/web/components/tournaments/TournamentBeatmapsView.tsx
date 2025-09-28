@@ -162,7 +162,7 @@ export default function TournamentBeatmapsView({
   }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
+      className="hover:text-foreground flex items-center gap-1 whitespace-nowrap transition-colors"
     >
       {children}
       {sortField === field &&
@@ -177,11 +177,11 @@ export default function TournamentBeatmapsView({
   if (beatmaps.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-muted-foreground">
+        <Music className="text-muted-foreground mb-4 h-12 w-12" />
+        <h3 className="text-muted-foreground text-lg font-semibold">
           No Beatmaps Found
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           This tournament has no pooled beatmaps.
         </p>
       </div>
@@ -195,20 +195,20 @@ export default function TournamentBeatmapsView({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             {/* Header */}
-            <thead className="border-b bg-muted/50">
+            <thead className="bg-muted/50 border-b">
               <tr>
-                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SortButton field="osuId">
                     <span className="whitespace-nowrap">osu! ID</span>
                   </SortButton>
                 </th>
-                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider">
                   <SortButton field="title">Beatmap</SortButton>
                 </th>
-                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider">
                   <SortButton field="difficulty">Difficulty</SortButton>
                 </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
                       <SortButton field="sr">
@@ -217,7 +217,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
                       <SortButton field="length">
@@ -226,7 +226,7 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
                       <SortButton field="bpm">
@@ -235,32 +235,32 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Circle Size">
                     <SortButton field="cs">CS</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Approach Rate">
                     <SortButton field="ar">AR</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Overall Difficulty">
                     <SortButton field="od">OD</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="HP Drain Rate">
                     <SortButton field="hp">HP</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Most Common Mod">
                     <SortButton field="mod">Mod</SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Number of Games">
                     <div className="flex justify-center">
                       <SortButton field="gameCount">
@@ -269,14 +269,14 @@ export default function TournamentBeatmapsView({
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SortButton field="creator">Creator</SortButton>
                 </th>
               </tr>
             </thead>
 
             {/* Body */}
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-border divide-y">
               {sortedBeatmaps.map((beatmap) => {
                 const modData = getMostCommonModForBeatmap(
                   beatmap.osuId,
@@ -286,7 +286,7 @@ export default function TournamentBeatmapsView({
                 return (
                   <tr
                     key={beatmap.id}
-                    className="group transition-colors hover:bg-muted/30"
+                    className="hover:bg-muted/30 group transition-colors"
                   >
                     {/* osu! ID */}
                     <td className="px-2 py-2 text-center">
@@ -294,7 +294,7 @@ export default function TournamentBeatmapsView({
                         href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                        className="text-muted-foreground hover:text-primary text-xs transition-colors"
                       >
                         {beatmap.osuId}
                       </Link>
@@ -311,8 +311,8 @@ export default function TournamentBeatmapsView({
                               alt={`${beatmap.beatmapset?.title} cover`}
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-muted">
-                              <Music className="h-3 w-3 text-muted-foreground" />
+                            <div className="bg-muted flex h-full w-full items-center justify-center">
+                              <Music className="text-muted-foreground h-3 w-3" />
                             </div>
                           )}
                         </div>
@@ -323,12 +323,12 @@ export default function TournamentBeatmapsView({
                             href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block transition-colors hover:text-primary"
+                            className="hover:text-primary block transition-colors"
                           >
                             <p className="max-w-[160px] truncate text-xs font-medium">
                               {beatmap.beatmapset?.title || 'Unknown Title'}
                             </p>
-                            <p className="max-w-[140px] truncate text-xs text-muted-foreground">
+                            <p className="text-muted-foreground max-w-[140px] truncate text-xs">
                               by{' '}
                               {beatmap.beatmapset?.artist || 'Unknown Artist'}
                             </p>
@@ -396,7 +396,7 @@ export default function TournamentBeatmapsView({
                         {modData ? (
                           <SingleModIcon mods={modData.mod} size={28} />
                         ) : (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             N/A
                           </span>
                         )}
@@ -418,7 +418,7 @@ export default function TournamentBeatmapsView({
                             href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex max-w-[120px] items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                            className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
                           >
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
@@ -426,7 +426,7 @@ export default function TournamentBeatmapsView({
                             </span>
                           </Link>
                         ) : (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             Unknown
                           </span>
                         )}

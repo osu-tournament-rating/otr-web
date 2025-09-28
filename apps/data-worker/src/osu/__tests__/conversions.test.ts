@@ -17,10 +17,7 @@ describe('convertModsToFlags', () => {
   });
 
   it('converts osu API mod objects to bit flags', () => {
-    const result = convertModsToFlags([
-      { acronym: 'HD' },
-      { acronym: 'HR' },
-    ]);
+    const result = convertModsToFlags([{ acronym: 'HD' }, { acronym: 'HR' }]);
 
     expect(result).toBe((Mods.Hidden | Mods.HardRock) as Mods);
   });
