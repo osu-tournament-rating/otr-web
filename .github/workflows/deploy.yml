@@ -56,5 +56,5 @@ jobs:
           script: |
             set -euo pipefail
             cd "$REMOTE_PATH"
-            docker compose --env-file .env up -d
+            docker compose --profile migration --env-file .env up -d
           envs: REMOTE_PATH
