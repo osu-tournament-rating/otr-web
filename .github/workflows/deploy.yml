@@ -3,18 +3,19 @@ name: Deploy
 on:
   workflow_call:
     inputs:
-      environment:
-        type: choice
+      target:
+        type: string
         description: 'GitHub environment to deploy to (e.g. Staging or Production)'
         required: true
-        options:
-          - Staging
-          - Production
+      deploy_tag:
+        type: string
+        description: 'Docker image tag to deploy'
+        required: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.target }}
 
     steps:
       - name: Checkout repository
