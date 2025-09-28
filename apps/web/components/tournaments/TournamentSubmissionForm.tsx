@@ -112,6 +112,7 @@ export default function TournamentSubmissionForm() {
       const result = await orpc.tournaments.submit(values);
 
       form.reset();
+      setRejectOnSubmit(false);
       setBeatmapWarningConfirmed(false); // Reset confirmation state
 
       result.warnings?.forEach((warning) => {

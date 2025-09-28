@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget, Roles, Team } from '@otr/core/osu';
+import { AdminNoteRouteTarget, Roles, Ruleset, Team } from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import AdminNoteView from '../admin-notes/AdminNoteView';
@@ -28,11 +28,47 @@ export default function ScoreCard({
   const isAdmin = session?.scopes?.includes(Roles.Admin);
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
-  const scoreTeam = score.team as Team;
+
+  const hitJudgments = (() => {
+    switch (score.ruleset) {
+      case Ruleset.Taiko:
+        return [
+          { label: '300', value: `${score.count300}x` },
+          { label: '150', value: `${score.count100}x` },
+          { label: 'Miss', value: `${score.countMiss}x` },
+        ];
+      case Ruleset.Mania4k:
+      case Ruleset.Mania7k:
+      case Ruleset.ManiaOther:
+        return [
+          { label: '320', value: `${score.countGeki}x` },
+          { label: '300', value: `${score.count300}x` },
+          { label: '200', value: `${score.countKatu}x` },
+          { label: '100', value: `${score.count100}x` },
+          { label: '50', value: `${score.count50}x` },
+          { label: 'Miss', value: `${score.countMiss}x` },
+        ];
+      case Ruleset.Catch:
+        return [
+          { label: '300', value: `${score.count300}x` },
+          { label: '30', value: `${score.count100}x` },
+          { label: '10', value: `${score.count50}x` },
+          { label: 'Miss', value: `${score.countMiss}x` },
+        ];
+      case Ruleset.Osu:
+      default:
+        return [
+          { label: '300', value: `${score.count300}x` },
+          { label: '100', value: `${score.count100}x` },
+          { label: '50', value: `${score.count50}x` },
+          { label: 'Miss', value: `${score.countMiss}x` },
+        ];
+    }
+  })();
 
   return (
     <div
-      data-team={Team[scoreTeam]}
+      data-team={Team[score.team]}
       className="team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
     >
       {/* Background team color overlay */}
@@ -121,38 +157,16 @@ export default function ScoreCard({
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
           <div className="flex flex-row items-center justify-start gap-4">
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                {300}
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.count300}x
-              </span>
-            </div>
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                {100}
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.count100}x
-              </span>
-            </div>
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                {50}
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.count50}x
-              </span>
-            </div>
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                Miss
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.countMiss}x
-              </span>
-            </div>
+            {hitJudgments.map((item, index) => (
+              <div key={index} className="performance-item">
+                <span className="label text-neutral-600 dark:text-neutral-400">
+                  {item.label}
+                </span>
+                <span className="value text-neutral-800 dark:text-neutral-200">
+                  {item.value}
+                </span>
+              </div>
+            ))}
           </div>
           {/* Acc / Combo */}
           <div className="flex flex-row items-center justify-end gap-4">

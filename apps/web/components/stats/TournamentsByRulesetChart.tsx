@@ -100,10 +100,10 @@ export default function TournamentsByRulesetChart({
     const item = payload[0].payload as ChartDataItem;
     return (
       <div className="bg-background rounded-lg border p-2 shadow-sm">
-        <p className="font-bold">Ruleset: {item.name}</p>
-        <p className="text-muted-foreground text-sm">
+        <p className="font-bold">
           Tournaments: {formatChartNumber(item.count)}
         </p>
+        <p className="text-muted-foreground text-sm">Ruleset: {item.name}</p>
       </div>
     );
   };

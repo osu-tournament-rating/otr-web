@@ -67,10 +67,10 @@ export default function TournamentsByLobbySizeChart({
 
     return (
       <div className="bg-background rounded-lg border p-2 shadow-sm">
-        <p className="font-bold">Lobby Size: {label}</p>
-        <p className="text-muted-foreground text-sm">
+        <p className="font-bold">
           Tournaments: {formatChartNumber(payload[0].value || 0)}
         </p>
+        <p className="text-muted-foreground text-sm">Lobby Size: {label}</p>
       </div>
     );
   };
