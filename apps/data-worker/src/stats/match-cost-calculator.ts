@@ -44,10 +44,8 @@ export const calculateOtrMatchCosts = (games: StatsGame[]) => {
     const numerator = zScores.length > 1 ? zScores.length - 1 : 0;
     const performanceBonus = 1 + 0.3 * Math.sqrt(numerator / denominator);
 
-    playerMatchCosts.set(
-      playerId,
-      (averagePercentile + 0.5) * performanceBonus
-    );
+    const matchCost = (averagePercentile + 0.5) * performanceBonus;
+    playerMatchCosts.set(playerId, Number.isFinite(matchCost) ? matchCost : 0);
   }
 
   return playerMatchCosts;

@@ -33,6 +33,17 @@ const ensureVerified = <T extends { verificationStatus: VerificationStatus }>(
 
 const uniqueNumbers = (values: Iterable<number>) => Array.from(new Set(values));
 
+const sanitizeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
+
+const average = (values: number[]) => {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const total = values.reduce((sum, value) => sum + sanitizeNumber(value), 0);
+  return sanitizeNumber(total / values.length);
+};
+
 const determineWinningTeam = (scores: StatsScore[]) => {
   const totals = new Map<Team, number>();
 
@@ -274,17 +285,12 @@ export class TournamentStatsCalculator {
     for (const [playerId, scores] of playerScores.entries()) {
       const gamesPlayed = scores.length;
 
-      const averageScore =
-        scores.reduce((sum, score) => sum + score.score, 0) / gamesPlayed;
-      const averagePlacement =
-        scores.reduce((sum, score) => sum + score.placement, 0) / gamesPlayed;
-      const averageMisses =
-        scores.reduce((sum, score) => sum + score.countMiss, 0) / gamesPlayed;
-      const averageAccuracy =
-        scores.reduce(
-          (sum, score) => sum + calculateAccuracyForScore(score),
-          0
-        ) / gamesPlayed;
+      const averageScore = average(scores.map((score) => score.score));
+      const averagePlacement = average(scores.map((score) => score.placement));
+      const averageMisses = average(scores.map((score) => score.countMiss));
+      const averageAccuracy = average(
+        scores.map((score) => calculateAccuracyForScore(score))
+      );
 
       let gamesWon = 0;
       let gamesLost = 0;
@@ -318,7 +324,7 @@ export class TournamentStatsCalculator {
         .flatMap((roster) => roster.roster)
         .filter((id) => id !== playerId);
 
-      const matchCost = matchCosts.get(playerId) ?? 0;
+      const matchCost = sanitizeNumber(matchCosts.get(playerId) ?? 0);
       const won = matchRoster ? matchRoster.score === maxMatchScore : false;
 
       stats.push({
@@ -418,29 +424,27 @@ export class TournamentStatsCalculator {
         0
       );
 
-      const averageMatchCost =
-        data.matchStats.reduce((sum, stat) => sum + stat.matchCost, 0) /
-        matchesPlayed;
-      const averageScore =
-        data.matchStats.reduce((sum, stat) => sum + stat.averageScore, 0) /
-        matchesPlayed;
-      const averagePlacement =
-        data.matchStats.reduce((sum, stat) => sum + stat.averagePlacement, 0) /
-        matchesPlayed;
-      const averageAccuracy =
-        data.matchStats.reduce((sum, stat) => sum + stat.averageAccuracy, 0) /
-        matchesPlayed;
+      const averageMatchCost = average(
+        data.matchStats.map((stat) => stat.matchCost)
+      );
+      const averageScoreValue = average(
+        data.matchStats.map((stat) => stat.averageScore)
+      );
+      const averagePlacement = average(
+        data.matchStats.map((stat) => stat.averagePlacement)
+      );
+      const averageAccuracy = average(
+        data.matchStats.map((stat) => stat.averageAccuracy)
+      );
 
-      const averageRatingDelta =
-        data.ratingDeltas.reduce((sum, delta) => sum + delta, 0) /
-        data.ratingDeltas.length;
+      const averageRatingDelta = average(data.ratingDeltas);
 
       results.push({
         playerId,
         tournamentId: tournament.id,
         averageRatingDelta,
         averageMatchCost,
-        averageScore: Math.trunc(averageScore),
+        averageScore: Math.trunc(averageScoreValue),
         averagePlacement,
         averageAccuracy,
         matchesPlayed,

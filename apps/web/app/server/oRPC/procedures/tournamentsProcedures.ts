@@ -43,6 +43,9 @@ const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
 const escapeLikePattern = (value: string) =>
   value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
 
+const normalizeStatNumber = (value: number) =>
+  Number.isFinite(value) ? value : 0;
+
 export const listTournaments = publicProcedure
   .input(TournamentListRequestSchema)
   .output(TournamentListResponseSchema)
@@ -546,11 +549,11 @@ export const getTournament = publicProcedure
         gamesPlayed: stat.gamesPlayed,
         gamesWon: stat.gamesWon,
         gamesLost: stat.gamesLost,
-        averageMatchCost: stat.averageMatchCost,
-        averageRatingDelta: stat.averageRatingDelta,
-        averageScore: stat.averageScore,
-        averagePlacement: stat.averagePlacement,
-        averageAccuracy: stat.averageAccuracy,
+        averageMatchCost: normalizeStatNumber(stat.averageMatchCost),
+        averageRatingDelta: normalizeStatNumber(stat.averageRatingDelta),
+        averageScore: Math.trunc(normalizeStatNumber(stat.averageScore)),
+        averagePlacement: normalizeStatNumber(stat.averagePlacement),
+        averageAccuracy: normalizeStatNumber(stat.averageAccuracy),
         teammateIds: stat.teammateIds ?? [],
         matchWinRate: stat.matchWinRate,
         player:
