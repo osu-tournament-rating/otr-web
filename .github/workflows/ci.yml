@@ -27,10 +27,8 @@ jobs:
       - name: Type check
         run: bunx tsc --noEmit
 
-      - name: Build web app
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
-        run: bun run build:web
+      - name: Build apps
+        run: bun run build
 
       - name: Build worker binary
         run: bun run --filter data-worker build
