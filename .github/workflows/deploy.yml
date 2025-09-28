@@ -21,8 +21,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: stagecodes/otr-web:${{ inputs.deploy_tag }}
+
+      - name: Build and push data worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/data-worker/Dockerfile
+          push: true
+          tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
+
       - name: Create .env file from secret
-        run: printf '%s' "${{ secrets.ENV }}" > .env
+        run: |
+          printf '%s\n' "${{ secrets.ENV }}" > .env
+          echo "DEPLOY_TAG=${{ inputs.deploy_tag }}" >> .env
 
       - name: Ensure remote directory exists
         uses: appleboy/ssh-action@v1

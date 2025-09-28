@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: ${WEB_IMAGE}
+    image: stagecodes/otr-web:${DEPLOY_TAG}
     profiles:
       - migrate
     depends_on:
@@ -65,7 +65,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: ${WEB_IMAGE}
+    image: stagecodes/otr-web:${DEPLOY_TAG}
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -91,7 +91,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: ${DATA_WORKER_IMAGE}
+    image: stagecodes/otr-data-worker:${DEPLOY_TAG}
     restart: unless-stopped
     depends_on:
       - db
