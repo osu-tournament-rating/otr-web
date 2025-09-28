@@ -27,7 +27,7 @@ const MOD_MAP: Record<string, Mods> = {
   PF: Mods.Perfect,
   '4K': Mods.Key4,
   '5K': Mods.Key5,
-  '6K': Mods.Key8,
+  '6K': Mods.Key6,
   '7K': Mods.Key7,
   '8K': Mods.Key8,
   FI: Mods.FadeIn,
