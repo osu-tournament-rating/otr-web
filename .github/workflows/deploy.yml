@@ -84,5 +84,8 @@ jobs:
           script: |
             set -euo pipefail
             cd "$REMOTE_PATH"
-            docker compose --profile migrate --env-file .env up -d
+            docker compose --env-file .env pull web data-worker
+            docker compose --env-file .env up -d db rabbitmq
+            docker compose --env-file .env --profile migrate run --rm migrate
+            docker compose --env-file .env up -d --remove-orphans
           envs: REMOTE_PATH

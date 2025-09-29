@@ -43,8 +43,10 @@ services:
     image: stagecodes/otr-web:${DEPLOY_TAG}
     profiles:
       - migrate
+    restart: 'no'
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -59,7 +61,7 @@ services:
       OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
       OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
       OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
-    command: ['bunx', 'drizzle-kit', 'push']
+    command: ['./scripts/run-migrations.sh']
 
   web:
     build:
@@ -70,8 +72,10 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -94,8 +98,10 @@ services:
     image: stagecodes/otr-data-worker:${DEPLOY_TAG}
     restart: unless-stopped
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       DATABASE_URL: ${DATABASE_URL}
       RABBITMQ_AMQP_URL: ${RABBITMQ_AMQP_URL}
