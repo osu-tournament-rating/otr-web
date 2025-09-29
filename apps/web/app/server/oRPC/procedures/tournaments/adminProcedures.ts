@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { cascadeTournamentRejection } from '@otr/core/db/rejection-cascade';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import {
   TournamentAdminMutationResponseSchema,
@@ -190,23 +191,31 @@ export const updateTournamentAdmin = protectedProcedure
       input.verificationStatus === VerificationStatus.Verified ||
       input.verificationStatus === VerificationStatus.Rejected;
 
-    await context.db
-      .update(schema.tournaments)
-      .set({
-        name: input.name,
-        abbreviation: input.abbreviation,
-        forumUrl: input.forumUrl,
-        rankRangeLowerBound: input.rankRangeLowerBound,
-        ruleset: input.ruleset,
-        lobbySize: input.lobbySize,
-        verificationStatus: input.verificationStatus,
-        rejectionReason: input.rejectionReason,
-        startTime: input.startTime ?? null,
-        endTime: input.endTime ?? null,
-        verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
-        updated: NOW,
-      })
-      .where(eq(schema.tournaments.id, input.id));
+    await context.db.transaction(async (tx) => {
+      await tx
+        .update(schema.tournaments)
+        .set({
+          name: input.name,
+          abbreviation: input.abbreviation,
+          forumUrl: input.forumUrl,
+          rankRangeLowerBound: input.rankRangeLowerBound,
+          ruleset: input.ruleset,
+          lobbySize: input.lobbySize,
+          verificationStatus: input.verificationStatus,
+          rejectionReason: input.rejectionReason,
+          startTime: input.startTime ?? null,
+          endTime: input.endTime ?? null,
+          verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
+          updated: NOW,
+        })
+        .where(eq(schema.tournaments.id, input.id));
+
+      if (input.verificationStatus === VerificationStatus.Rejected) {
+        await cascadeTournamentRejection(tx, [input.id], {
+          updatedAt: NOW,
+        });
+      }
+    });
 
     return { success: true } as const;
   });

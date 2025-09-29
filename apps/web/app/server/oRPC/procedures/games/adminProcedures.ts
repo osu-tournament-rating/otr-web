@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { cascadeGameRejection } from '@otr/core/db/rejection-cascade';
 import {
   GameAdminDeleteInputSchema,
   GameAdminLookupInputSchema,
@@ -11,6 +12,7 @@ import {
   GameAdminPreviewSchema,
   GameAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
+import { VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -48,21 +50,29 @@ export const updateGameAdmin = protectedProcedure
       input.startTime ?? existing.startTime ?? FALLBACK_DATETIME;
     const endTime = input.endTime ?? existing.endTime ?? FALLBACK_DATETIME;
 
-    await context.db
-      .update(schema.games)
-      .set({
-        ruleset: input.ruleset,
-        scoringType: input.scoringType,
-        teamType: input.teamType,
-        mods: input.mods,
-        verificationStatus: input.verificationStatus,
-        rejectionReason: input.rejectionReason,
-        warningFlags: input.warningFlags,
-        startTime,
-        endTime,
-        updated: NOW,
-      })
-      .where(eq(schema.games.id, input.id));
+    await context.db.transaction(async (tx) => {
+      await tx
+        .update(schema.games)
+        .set({
+          ruleset: input.ruleset,
+          scoringType: input.scoringType,
+          teamType: input.teamType,
+          mods: input.mods,
+          verificationStatus: input.verificationStatus,
+          rejectionReason: input.rejectionReason,
+          warningFlags: input.warningFlags,
+          startTime,
+          endTime,
+          updated: NOW,
+        })
+        .where(eq(schema.games.id, input.id));
+
+      if (input.verificationStatus === VerificationStatus.Rejected) {
+        await cascadeGameRejection(tx, [input.id], {
+          updatedAt: NOW,
+        });
+      }
+    });
 
     return { success: true } as const;
   });

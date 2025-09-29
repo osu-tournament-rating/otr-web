@@ -29,6 +29,10 @@ import {
   ScoreRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu/enums';
+import {
+  cascadeGameRejection,
+  cascadeMatchRejection,
+} from '@otr/core/db/rejection-cascade';
 
 interface MatchFetchServiceOptions {
   db: DatabaseClient;
@@ -126,6 +130,10 @@ export class MatchFetchService {
       const gameEvents = (apiMatch.events ?? []).filter(
         (event) => event?.detail?.type === 'other' && event.game != null
       );
+
+      const isMatchRejected =
+        matchRow.verificationStatus === VerificationStatus.Rejected;
+      const rejectedGameIds = new Set<number>();
 
       for (const event of gameEvents) {
         const game = event.game!;
@@ -234,6 +242,23 @@ export class MatchFetchService {
             gameVerificationStatus ?? VerificationStatus.None,
           userMap,
           nowIso,
+        });
+
+        if (
+          !isMatchRejected &&
+          gameVerificationStatus === VerificationStatus.Rejected
+        ) {
+          rejectedGameIds.add(gameId);
+        }
+      }
+
+      if (isMatchRejected) {
+        await cascadeMatchRejection(tx, [matchRow.id], {
+          updatedAt: nowIso,
+        });
+      } else if (rejectedGameIds.size > 0) {
+        await cascadeGameRejection(tx, Array.from(rejectedGameIds), {
+          updatedAt: nowIso,
         });
       }
     });

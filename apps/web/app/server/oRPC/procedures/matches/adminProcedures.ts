@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { cascadeMatchRejection } from '@otr/core/db/rejection-cascade';
 import {
   MatchAdminDeleteInputSchema,
   MatchAdminDeletePlayerScoresInputSchema,
@@ -44,19 +45,27 @@ export const updateMatchAdmin = protectedProcedure
       input.verificationStatus === VerificationStatus.Verified ||
       input.verificationStatus === VerificationStatus.Rejected;
 
-    await context.db
-      .update(schema.matches)
-      .set({
-        name: input.name,
-        verificationStatus: input.verificationStatus,
-        rejectionReason: input.rejectionReason,
-        warningFlags: input.warningFlags,
-        startTime: input.startTime ?? null,
-        endTime: input.endTime ?? null,
-        verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
-        updated: NOW,
-      })
-      .where(eq(schema.matches.id, input.id));
+    await context.db.transaction(async (tx) => {
+      await tx
+        .update(schema.matches)
+        .set({
+          name: input.name,
+          verificationStatus: input.verificationStatus,
+          rejectionReason: input.rejectionReason,
+          warningFlags: input.warningFlags,
+          startTime: input.startTime ?? null,
+          endTime: input.endTime ?? null,
+          verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
+          updated: NOW,
+        })
+        .where(eq(schema.matches.id, input.id));
+
+      if (input.verificationStatus === VerificationStatus.Rejected) {
+        await cascadeMatchRejection(tx, [input.id], {
+          updatedAt: NOW,
+        });
+      }
+    });
 
     return { success: true } as const;
   });
