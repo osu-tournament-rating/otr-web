@@ -3,8 +3,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [ ! -d node_modules ] || [ ! -d node_modules/pg ]; then
+if ! bun -e "import('pg')" >/dev/null 2>&1; then
   bun install --frozen-lockfile
 fi
+
+# Verify the driver is available before running migrations.
+bun -e "import('pg')" >/dev/null 2>&1
 
 exec bunx drizzle-kit push
