@@ -8,6 +8,7 @@ import {
   QueueConstants,
   type FetchBeatmapMessage,
   type FetchMatchMessage,
+  type FetchPlayerMessage,
   type FetchPlayerOsuTrackMessage,
   type ProcessTournamentAutomationCheckMessage,
 } from '@otr/core';
@@ -15,6 +16,7 @@ import {
 export interface QueuePublisherRegistry {
   fetchBeatmap: QueuePublisher<FetchBeatmapMessage>['publish'];
   fetchMatch: QueuePublisher<FetchMatchMessage>['publish'];
+  fetchPlayer: QueuePublisher<FetchPlayerMessage>['publish'];
   fetchPlayerOsuTrack: QueuePublisher<FetchPlayerOsuTrackMessage>['publish'];
   processAutomationCheck: QueuePublisher<ProcessTournamentAutomationCheckMessage>['publish'];
 }
@@ -39,6 +41,11 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
     queue: QueueConstants.osu.matches,
   });
 
+  const playerPublisher = new RabbitMqPublisher<FetchPlayerMessage>({
+    url: amqpUrl,
+    queue: QueueConstants.osu.players,
+  });
+
   const osuTrackPublisher = new RabbitMqPublisher<FetchPlayerOsuTrackMessage>({
     url: amqpUrl,
     queue: QueueConstants.osuTrack.players,
@@ -54,6 +61,8 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
     fetchBeatmap: (payload, options) =>
       beatmapPublisher.publish(payload, options),
     fetchMatch: (payload, options) => matchPublisher.publish(payload, options),
+    fetchPlayer: (payload, options) =>
+      playerPublisher.publish(payload, options),
     fetchPlayerOsuTrack: (payload, options) =>
       osuTrackPublisher.publish(payload, options),
     processAutomationCheck: (payload, options) =>
@@ -82,6 +91,11 @@ export const publishFetchMatchMessage = (
   payload: QueueMessagePayload<FetchMatchMessage>,
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchMatch(payload, options);
+
+export const publishFetchPlayerMessage = (
+  payload: QueueMessagePayload<FetchPlayerMessage>,
+  options?: QueuePublishOptions
+) => getQueuePublishers().fetchPlayer(payload, options);
 
 export const publishFetchPlayerOsuTrackMessage = (
   payload: QueueMessagePayload<FetchPlayerOsuTrackMessage>,

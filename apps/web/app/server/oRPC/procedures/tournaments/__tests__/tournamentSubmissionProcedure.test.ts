@@ -171,6 +171,12 @@ const noopPublishers: QueuePublisherRegistry = {
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
+  fetchPlayer: async ({ osuPlayerId }) => ({
+    osuPlayerId,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
   fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
     osuPlayerId,
     requestedAt: new Date().toISOString(),
@@ -197,6 +203,7 @@ describe('submitTournamentHandler', () => {
     const queuedBeatmaps: number[] = [];
 
     setQueuePublishersForTesting({
+      ...noopPublishers,
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return noopPublishers.fetchBeatmap({ beatmapId });
@@ -205,8 +212,6 @@ describe('submitTournamentHandler', () => {
         queuedMatches.push(osuMatchId);
         return noopPublishers.fetchMatch({ osuMatchId });
       },
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
-      processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
     const result = await submitTournamentHandler({
@@ -239,14 +244,13 @@ describe('submitTournamentHandler', () => {
     const error = new Error('queue offline');
 
     setQueuePublishersForTesting({
+      ...noopPublishers,
       fetchBeatmap: async () => {
         throw error;
       },
       fetchMatch: async () => {
         throw error;
       },
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
-      processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
     const result = await submitTournamentHandler({

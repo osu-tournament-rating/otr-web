@@ -45,6 +45,12 @@ describe('resetTournamentAutomatedChecksHandler', () => {
         correlationId: 'noop',
         priority: MessagePriority.Normal,
       }),
+      fetchPlayer: async ({ osuPlayerId }) => ({
+        osuPlayerId,
+        requestedAt: new Date().toISOString(),
+        correlationId: 'noop',
+        priority: MessagePriority.Normal,
+      }),
       fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
         osuPlayerId,
         requestedAt: new Date().toISOString(),
@@ -91,6 +97,12 @@ describe('resetTournamentAutomatedChecksHandler', () => {
       }),
       fetchMatch: async ({ osuMatchId }) => ({
         osuMatchId,
+        requestedAt: new Date().toISOString(),
+        correlationId: 'noop',
+        priority: MessagePriority.Normal,
+      }),
+      fetchPlayer: async ({ osuPlayerId }) => ({
+        osuPlayerId,
         requestedAt: new Date().toISOString(),
         correlationId: 'noop',
         priority: MessagePriority.Normal,

@@ -7,7 +7,7 @@ import {
   Ruleset,
   VerificationStatus,
 } from '@otr/core/osu';
-import { protectedProcedure } from './base';
+import { protectedProcedure, publicProcedure } from './base';
 import {
   FilterReportSchema,
   FilteringRequestSchema,
@@ -15,6 +15,7 @@ import {
   StoredFilteringRequestSchema,
   type PlayerFilteringResult,
 } from '@/lib/orpc/schema/filtering';
+import { publishFetchPlayerMessage } from '@/lib/queue/publishers';
 import * as schema from '@otr/core/db/schema';
 
 type FilterReportPlayerRow = typeof schema.filterReportPlayers.$inferSelect & {
@@ -39,7 +40,9 @@ export const filterRegistrants = protectedProcedure
 
     const uniqueOsuIds = Array.from(new Set(input.osuPlayerIds));
 
-    const players = await context.db
+    const seededPlayerOsuIds: number[] = [];
+
+    let players = await context.db
       .select({
         id: schema.players.id,
         osuId: schema.players.osuId,
@@ -49,13 +52,45 @@ export const filterRegistrants = protectedProcedure
       .where(inArray(schema.players.osuId, uniqueOsuIds));
 
     if (players.length !== uniqueOsuIds.length) {
-      const foundOsuIds = new Set(
-        players.map((player) => Number(player.osuId))
+      const foundOsuIds = new Set(players.map((player) => player.osuId));
+      const missingOsuIds = uniqueOsuIds.filter(
+        (osuId) => !foundOsuIds.has(osuId)
       );
-      const missing = uniqueOsuIds.filter((osuId) => !foundOsuIds.has(osuId));
 
-      throw new ORPCError('BAD_REQUEST', {
-        message: `Missing player records for osu! IDs: ${missing.join(', ')}`,
+      if (missingOsuIds.length > 0) {
+        seededPlayerOsuIds.push(...missingOsuIds);
+        // Seed placeholder player rows so filters can record results even if
+        // the data worker has not ingested these profiles yet.
+        await context.db
+          .insert(schema.players)
+          .values(missingOsuIds.map((osuId) => ({ osuId })))
+          .onConflictDoNothing({ target: schema.players.osuId });
+
+        players = await context.db
+          .select({
+            id: schema.players.id,
+            osuId: schema.players.osuId,
+            username: schema.players.username,
+          })
+          .from(schema.players)
+          .where(inArray(schema.players.osuId, uniqueOsuIds));
+      }
+    }
+
+    if (seededPlayerOsuIds.length > 0) {
+      const publishResults = await Promise.allSettled(
+        seededPlayerOsuIds.map((osuId) =>
+          publishFetchPlayerMessage({ osuPlayerId: osuId })
+        )
+      );
+
+      publishResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error('Failed to enqueue missing player fetch', {
+            osuId: seededPlayerOsuIds[index],
+            error: result.reason,
+          });
+        }
       });
     }
 
@@ -63,7 +98,7 @@ export const filterRegistrants = protectedProcedure
     const usernameByPlayerId = new Map<number, string>();
 
     for (const player of players) {
-      const osuId = Number(player.osuId);
+      const osuId = player.osuId;
       playerIdByOsuId.set(osuId, player.id);
       usernameByPlayerId.set(player.id, player.username);
     }
@@ -254,18 +289,25 @@ export const filterRegistrants = protectedProcedure
         });
       }
 
-      await tx.insert(schema.filterReportPlayers).values(
-        playerResults.map((result) => ({
-          filterReportId: report.id,
-          playerId: result.playerId!,
-          isSuccess: result.isSuccess,
-          failureReason: result.failureReason ?? FilteringFailReason.None,
-          currentRating: result.currentRating,
-          peakRating: result.peakRating,
-          tournamentsPlayed: result.tournamentsPlayed,
-          matchesPlayed: result.matchesPlayed,
-        }))
+      const storableResults = playerResults.filter(
+        (result): result is PlayerFilteringResult & { playerId: number } =>
+          result.playerId != null
       );
+
+      if (storableResults.length > 0) {
+        await tx.insert(schema.filterReportPlayers).values(
+          storableResults.map((result) => ({
+            filterReportId: report.id,
+            playerId: result.playerId,
+            isSuccess: result.isSuccess,
+            failureReason: result.failureReason ?? FilteringFailReason.None,
+            currentRating: result.currentRating,
+            peakRating: result.peakRating,
+            tournamentsPlayed: result.tournamentsPlayed,
+            matchesPlayed: result.matchesPlayed,
+          }))
+        );
+      }
 
       return report;
     });
@@ -278,7 +320,7 @@ export const filterRegistrants = protectedProcedure
     };
   });
 
-export const getFilterReport = protectedProcedure
+export const getFilterReport = publicProcedure
   .input(FilterReportIdSchema)
   .output(FilterReportSchema)
   .handler(async ({ input, context }) => {

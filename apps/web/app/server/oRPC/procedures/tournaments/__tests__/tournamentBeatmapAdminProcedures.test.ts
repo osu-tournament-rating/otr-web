@@ -8,6 +8,7 @@ import {
   resetQueuePublishersForTesting,
   setQueuePublishersForTesting,
 } from '@/lib/queue/publishers';
+import type { QueuePublisherRegistry } from '@/lib/queue/publishers';
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
@@ -141,6 +142,40 @@ const createAdminSession = (): AdminSession => ({
   },
 });
 
+const noopQueuePublishers: QueuePublisherRegistry = {
+  fetchBeatmap: async ({ beatmapId }) => ({
+    beatmapId,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
+  fetchMatch: async ({ osuMatchId }) => ({
+    osuMatchId,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
+  fetchPlayer: async ({ osuPlayerId }) => ({
+    osuPlayerId,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
+  fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
+    osuPlayerId,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
+  processAutomationCheck: async ({ tournamentId, overrideVerifiedState }) => ({
+    tournamentId,
+    overrideVerifiedState,
+    requestedAt: new Date().toISOString(),
+    correlationId: 'noop',
+    priority: MessagePriority.Normal,
+  }),
+};
+
 afterEach(() => {
   resetQueuePublishersForTesting();
 });
@@ -151,6 +186,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
     const queuedBeatmaps: number[] = [];
 
     setQueuePublishersForTesting({
+      ...noopQueuePublishers,
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
@@ -163,22 +199,6 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchMatch: async () => {
         throw new Error('match queue should not be called');
       },
-      fetchPlayerOsuTrack: async () => ({
-        osuPlayerId: 0,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
-      processAutomationCheck: async ({
-        tournamentId,
-        overrideVerifiedState,
-      }) => ({
-        tournamentId,
-        overrideVerifiedState,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
     });
 
     const result = await manageTournamentBeatmapsAdminHandler({
@@ -209,6 +229,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
     const queuedBeatmaps: number[] = [];
 
     setQueuePublishersForTesting({
+      ...noopQueuePublishers,
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
@@ -221,22 +242,6 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchMatch: async () => {
         throw new Error('match queue should not be called');
       },
-      fetchPlayerOsuTrack: async () => ({
-        osuPlayerId: 0,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
-      processAutomationCheck: async ({
-        tournamentId,
-        overrideVerifiedState,
-      }) => ({
-        tournamentId,
-        overrideVerifiedState,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
     });
 
     const result = await manageTournamentBeatmapsAdminHandler({
@@ -259,28 +264,13 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
     const db = new ManageBeatmapsTestDb();
 
     setQueuePublishersForTesting({
+      ...noopQueuePublishers,
       fetchBeatmap: async () => {
         throw new Error('queue down');
       },
       fetchMatch: async () => {
         throw new Error('unexpected match publish');
       },
-      fetchPlayerOsuTrack: async () => ({
-        osuPlayerId: 0,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
-      processAutomationCheck: async ({
-        tournamentId,
-        overrideVerifiedState,
-      }) => ({
-        tournamentId,
-        overrideVerifiedState,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
     });
 
     const result = await manageTournamentBeatmapsAdminHandler({
