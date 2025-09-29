@@ -37,6 +37,7 @@ import {
   captureTournamentProcessingState,
   cascadeTournamentRejection,
   determinePostTournamentStatus,
+  isLockedVerificationStatus,
   resetTournamentVerification,
   resetVerificationState,
   shouldSkipAutomation,
@@ -284,7 +285,22 @@ export class TournamentAutomationCheckService {
 
     for (const match of tournament.matches) {
       for (const game of match.games) {
+        const skipGameAutomation =
+          !overrideVerifiedState &&
+          isLockedVerificationStatus(game.verificationStatus);
+
+        if (skipGameAutomation) {
+          continue;
+        }
+
         for (const score of game.scores) {
+          if (
+            !overrideVerifiedState &&
+            isLockedVerificationStatus(score.verificationStatus)
+          ) {
+            continue;
+          }
+
           const scoreRejection = this.scoreChecks.process(
             score,
             tournament.ruleset
@@ -296,12 +312,26 @@ export class TournamentAutomationCheckService {
 
     for (const match of tournament.matches) {
       for (const game of match.games) {
+        if (
+          !overrideVerifiedState &&
+          isLockedVerificationStatus(game.verificationStatus)
+        ) {
+          continue;
+        }
+
         const gameRejection = this.gameChecks.process(game, tournament);
         applyGameAutomationResult(game, gameRejection);
       }
     }
 
     for (const match of tournament.matches) {
+      if (
+        !overrideVerifiedState &&
+        isLockedVerificationStatus(match.verificationStatus)
+      ) {
+        continue;
+      }
+
       const matchRejection = this.matchChecks.process(match, tournament);
       applyMatchAutomationResult(match, matchRejection);
     }

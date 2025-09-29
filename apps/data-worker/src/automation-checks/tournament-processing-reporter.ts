@@ -232,6 +232,10 @@ export const determinePostTournamentStatus = (
     ? VerificationStatus.PreVerified
     : VerificationStatus.PreRejected;
 
+export const isLockedVerificationStatus = (status: VerificationStatus) =>
+  status === VerificationStatus.Verified ||
+  status === VerificationStatus.Rejected;
+
 export const cascadeMatchRejection = (match: AutomationMatch) => {
   match.verificationStatus = VerificationStatus.Rejected;
   match.rejectionReason |= MatchRejectionReason.RejectedTournament;
@@ -259,8 +263,7 @@ export const resetVerificationState = (
 ) => {
   if (
     !overrideVerifiedState &&
-    (match.verificationStatus === VerificationStatus.Verified ||
-      match.verificationStatus === VerificationStatus.Rejected)
+    isLockedVerificationStatus(match.verificationStatus)
   ) {
     return;
   }
@@ -272,8 +275,7 @@ export const resetVerificationState = (
   for (const game of match.games) {
     if (
       overrideVerifiedState ||
-      (game.verificationStatus !== VerificationStatus.Verified &&
-        game.verificationStatus !== VerificationStatus.Rejected)
+      !isLockedVerificationStatus(game.verificationStatus)
     ) {
       game.verificationStatus = VerificationStatus.None;
       game.rejectionReason = GameRejectionReason.None;
@@ -283,8 +285,7 @@ export const resetVerificationState = (
     for (const score of game.scores) {
       if (
         overrideVerifiedState ||
-        (score.verificationStatus !== VerificationStatus.Verified &&
-          score.verificationStatus !== VerificationStatus.Rejected)
+        !isLockedVerificationStatus(score.verificationStatus)
       ) {
         score.verificationStatus = VerificationStatus.None;
         score.rejectionReason = ScoreRejectionReason.None;
