@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -63,7 +63,7 @@ export const searchEntities = protectedProcedure
           )
           .where(ilike(schema.players.username, searchPattern))
           .orderBy(
-            desc(schema.playerRatings.rating),
+            sql`${schema.playerRatings.rating} desc nulls last`,
             asc(schema.players.username)
           )
           .limit(DEFAULT_RESULT_LIMIT),
