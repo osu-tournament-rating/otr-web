@@ -14,6 +14,7 @@ export interface OsuTrackPlayerWorkerEvents {
       updates: UserStatUpdate[];
     }>;
   }) => Promise<void> | void;
+  onProcessed?: (details: { osuPlayerId: number }) => Promise<void> | void;
 }
 
 export interface OsuTrackPlayerWorkerOptions
@@ -38,7 +39,10 @@ export class OsuTrackPlayerWorker {
     this.client = options.client;
     this.rateLimiter = options.rateLimiter;
     this.logger = options.logger ?? defaultLogger;
-    this.events = { onPlayer: options.onPlayer };
+    this.events = {
+      onPlayer: options.onPlayer,
+      onProcessed: options.onProcessed,
+    };
   }
 
   async start() {
@@ -69,6 +73,7 @@ export class OsuTrackPlayerWorker {
         }
         await this.events.onPlayer?.({ message: envelope, results });
         await message.ack();
+        await this.events.onProcessed?.({ osuPlayerId: envelope.osuPlayerId });
 
         const summary = results
           .map((entry) => `${entry.mode}:${entry.updates.length}`)

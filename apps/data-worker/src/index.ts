@@ -40,6 +40,7 @@ import {
   TournamentStatsService,
   TournamentStatsWorker,
 } from './stats';
+import { PlayerRefetchScheduler } from './players/player-refetch-scheduler';
 
 const logger = consoleLogger;
 
@@ -49,11 +50,15 @@ const bootstrap = async () => {
   const osuApiRateLimiter = new FixedWindowRateLimiter({
     requests: dataWorkerEnv.osuApiRateLimit.requests,
     windowMs: dataWorkerEnv.osuApiRateLimit.windowSeconds * 1000,
+    logger,
+    label: 'osu-api',
   });
 
   const osuTrackRateLimiter = new FixedWindowRateLimiter({
     requests: dataWorkerEnv.osuTrackRateLimit.requests,
     windowMs: dataWorkerEnv.osuTrackRateLimit.windowSeconds * 1000,
+    logger,
+    label: 'osu-track',
   });
 
   const automationPublisher =
@@ -76,6 +81,16 @@ const bootstrap = async () => {
   const beatmapPublisher = new RabbitMqPublisher<FetchBeatmapMessage>({
     url: dataWorkerEnv.amqpUrl,
     queue: QueueConstants.osu.beatmaps,
+  });
+
+  const playerPublisher = new RabbitMqPublisher<FetchPlayerMessage>({
+    url: dataWorkerEnv.amqpUrl,
+    queue: QueueConstants.osu.players,
+  });
+
+  const osuTrackPublisher = new RabbitMqPublisher<FetchPlayerOsuTrackMessage>({
+    url: dataWorkerEnv.amqpUrl,
+    queue: QueueConstants.osuTrack.players,
   });
 
   const beatmapConsumer = new RabbitMqConsumer<FetchBeatmapMessage>({
@@ -147,6 +162,14 @@ const bootstrap = async () => {
     logger,
   });
 
+  const playerRefetchScheduler = new PlayerRefetchScheduler({
+    db,
+    logger,
+    osuPublisher: playerPublisher,
+    osuTrackPublisher,
+    config: dataWorkerEnv.playerAutoRefetch,
+  });
+
   const automationService = new TournamentAutomationCheckService({
     db,
     logger,
@@ -179,6 +202,9 @@ const bootstrap = async () => {
     queue: playerConsumer,
     service: playerService,
     logger,
+    onProcessed: async ({ osuPlayerId }) => {
+      playerRefetchScheduler.markOsuPlayerProcessed(osuPlayerId);
+    },
   });
 
   const osuTrackClient = new OsuTrackClient({});
@@ -195,6 +221,9 @@ const bootstrap = async () => {
         osuPlayerId: message.osuPlayerId,
         results,
       });
+    },
+    onProcessed: async ({ osuPlayerId }) => {
+      playerRefetchScheduler.markOsuTrackPlayerProcessed(osuPlayerId);
     },
   });
 
@@ -222,6 +251,8 @@ const bootstrap = async () => {
     statsWorker.start(),
   ]);
 
+  await playerRefetchScheduler.start();
+
   const shutdown = async () => {
     logger.info('Shutting down data worker services');
     await Promise.allSettled([
@@ -231,8 +262,11 @@ const bootstrap = async () => {
       osuTrackWorker.stop(),
       automationWorker.stop(),
       statsWorker.stop(),
+      playerRefetchScheduler.stop(),
       beatmapPublisher.close(),
       automationPublisher.close(),
+      playerPublisher.close(),
+      osuTrackPublisher.close(),
     ]);
     process.exit(0);
   };

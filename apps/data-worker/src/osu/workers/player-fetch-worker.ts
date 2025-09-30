@@ -6,7 +6,11 @@ import { PlayerFetchService } from '../services/player-fetch-service';
 
 type PlayerFetchServiceContract = Pick<PlayerFetchService, 'fetchAndPersist'>;
 
-interface PlayerFetchWorkerOptions {
+interface PlayerFetchWorkerEvents {
+  onProcessed?: (details: { osuPlayerId: number }) => Promise<void> | void;
+}
+
+interface PlayerFetchWorkerOptions extends PlayerFetchWorkerEvents {
   queue: QueueConsumer<FetchPlayerMessage>;
   service: PlayerFetchServiceContract;
   logger: Logger;
@@ -16,11 +20,13 @@ export class PlayerFetchWorker {
   private readonly queue: QueueConsumer<FetchPlayerMessage>;
   private readonly service: PlayerFetchServiceContract;
   private readonly logger: Logger;
+  private readonly events: PlayerFetchWorkerEvents;
 
   constructor(options: PlayerFetchWorkerOptions) {
     this.queue = options.queue;
     this.service = options.service;
     this.logger = options.logger;
+    this.events = { onProcessed: options.onProcessed };
   }
 
   async start() {
@@ -34,6 +40,7 @@ export class PlayerFetchWorker {
       try {
         await this.service.fetchAndPersist(osuPlayerId);
         await message.ack();
+        await this.events.onProcessed?.({ osuPlayerId });
       } catch (error) {
         this.logger.error('Failed to process player fetch', {
           osuPlayerId,

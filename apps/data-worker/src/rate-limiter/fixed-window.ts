@@ -9,6 +9,12 @@ export interface FixedWindowRateLimiterOptions {
   requests: number;
   windowMs: number;
   now?: () => number;
+  logger?: RateLimiterLogger;
+  label?: string;
+}
+
+interface RateLimiterLogger {
+  info(message: string, extra?: Record<string, unknown>): void;
 }
 
 /**
@@ -20,13 +26,15 @@ export class FixedWindowRateLimiter implements RateLimiter {
   private readonly requests: number;
   private readonly windowMs: number;
   private readonly now: () => number;
+  private readonly logger?: RateLimiterLogger;
+  private readonly label: string;
 
   private windowStart = 0;
   private executedInWindow = 0;
   private tail: Promise<unknown> = Promise.resolve();
 
   constructor(options: FixedWindowRateLimiterOptions) {
-    const { requests, windowMs, now } = options;
+    const { requests, windowMs, now, logger, label } = options;
 
     if (!Number.isFinite(requests) || requests <= 0) {
       throw new Error('requests must be a positive number');
@@ -39,6 +47,8 @@ export class FixedWindowRateLimiter implements RateLimiter {
     this.requests = Math.floor(requests);
     this.windowMs = Math.floor(windowMs);
     this.now = now ?? Date.now;
+    this.logger = logger;
+    this.label = label ?? 'fixed-window-rate-limiter';
   }
 
   async schedule<T>(task: () => Promise<T>): Promise<T> {
@@ -67,15 +77,39 @@ export class FixedWindowRateLimiter implements RateLimiter {
       if (this.windowStart === 0 || now - this.windowStart >= this.windowMs) {
         this.windowStart = now;
         this.executedInWindow = 0;
+        this.log('Rate limiter window reset', {
+          windowMs: this.windowMs,
+        });
       }
 
       if (this.executedInWindow < this.requests) {
         this.executedInWindow += 1;
+        this.log('Rate limiter token consumed', {
+          used: this.executedInWindow,
+          remaining: this.requests - this.executedInWindow,
+        });
         return;
       }
 
       const waitMs = this.windowMs - (now - this.windowStart);
-      await sleep(waitMs > 0 ? waitMs : 0);
+      const sleepDuration = waitMs > 0 ? waitMs : 0;
+      this.log('Rate limiter sleeping for window refill', {
+        waitMs: sleepDuration,
+      });
+      await sleep(sleepDuration);
     }
+  }
+
+  private log(message: string, extra?: Record<string, unknown>) {
+    if (!this.logger) {
+      return;
+    }
+
+    const details = Object.entries(extra ?? {})
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .join(' ');
+
+    const line = details ? `${message} | ${details}` : message;
+    this.logger.info(`[${this.label}] ${line}`);
   }
 }
