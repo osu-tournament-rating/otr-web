@@ -85,7 +85,7 @@ export const searchEntities = protectedProcedure
             )
           )
           .orderBy(
-            desc(schema.tournaments.created),
+            sql`${schema.tournaments.endTime} desc nulls last`,
             asc(schema.tournaments.name)
           )
           .limit(DEFAULT_RESULT_LIMIT),
