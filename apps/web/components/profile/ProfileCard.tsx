@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronDown, LogOut, User } from 'lucide-react';
@@ -28,6 +29,7 @@ import { SheetClose } from '@/components/ui/sheet';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 import { cn } from '@/lib/utils';
 import { signOut, useSession as useAuthSession } from '@/lib/auth/auth-client';
+import { SessionContext } from '@/components/session-provider';
 
 type ProfileCardProps = {
   isMobileNav?: boolean;
@@ -51,11 +53,14 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const dbPlayer = session?.dbPlayer ?? null;
   const scopes = session?.dbUser?.scopes ?? [];
   const isLoading = Boolean(isSessionPending);
+  const { refreshSession } = useContext(SessionContext);
 
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
         onSuccess: () => {
+          refreshSession(null);
+          router.refresh();
           router.push(path);
         },
       },
