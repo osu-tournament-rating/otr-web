@@ -47,6 +47,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./.env
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -82,6 +84,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    env_file:
+      - ./.env
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -108,6 +112,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    env_file:
+      - ./.env
     environment:
       DATABASE_URL: ${DATABASE_URL}
       RABBITMQ_AMQP_URL: ${RABBITMQ_AMQP_URL}
