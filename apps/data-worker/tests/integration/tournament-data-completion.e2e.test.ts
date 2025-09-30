@@ -12,11 +12,19 @@ interface MatchRow {
   tournamentId: number;
   dataFetchStatus: number;
   verificationStatus: number;
+  startTime: string | null;
 }
 
 interface BeatmapRow {
   id: number;
   dataFetchStatus: number;
+}
+
+interface TournamentRow {
+  id: number;
+  startTime: string | null;
+  endTime: string | null;
+  updated?: string | null;
 }
 
 interface GameRow {
@@ -96,6 +104,7 @@ const extractNumbers = (condition: any): number[] => {
 class TournamentDataTestDb {
   matches = new Map<number, MatchRow>();
   beatmaps = new Map<number, BeatmapRow>();
+  tournaments = new Map<number, TournamentRow>();
   games: GameRow[] = [];
   joins: JoinRow[] = [];
 
@@ -104,12 +113,16 @@ class TournamentDataTestDb {
     beatmaps: BeatmapRow[];
     games: GameRow[];
     joins: JoinRow[];
+    tournaments?: TournamentRow[];
   }) {
     options.matches.forEach((match) =>
       this.matches.set(match.id, { ...match })
     );
     options.beatmaps.forEach((beatmap) =>
       this.beatmaps.set(beatmap.id, { ...beatmap })
+    );
+    options.tournaments?.forEach((tournament) =>
+      this.tournaments.set(tournament.id, { ...tournament })
     );
     this.games = options.games.map((game) => ({ ...game }));
     this.joins = options.joins.map((join) => ({ ...join }));
@@ -134,6 +147,18 @@ class TournamentDataTestDb {
           verificationStatus: match.verificationStatus,
         };
       },
+      findMany: async (args: { where: unknown }) => {
+        const tournamentIds = extractNumbers(args.where);
+        const [tournamentId] = tournamentIds;
+
+        return Array.from(this.matches.values())
+          .filter((match) => match.tournamentId === tournamentId)
+          .map((match) => ({
+            id: match.id,
+            dataFetchStatus: match.dataFetchStatus,
+            startTime: match.startTime,
+          }));
+      },
     },
     beatmaps: {
       findFirst: async (args: { where: unknown }) => {
@@ -149,6 +174,23 @@ class TournamentDataTestDb {
         return {
           id: beatmap.id,
           dataFetchStatus: beatmap.dataFetchStatus,
+        };
+      },
+    },
+    tournaments: {
+      findFirst: async (args: { where: unknown }) => {
+        const tournamentIds = extractNumbers(args.where);
+        const tournament = tournamentIds
+          .map((id) => this.tournaments.get(id))
+          .find((row): row is TournamentRow => Boolean(row));
+
+        if (!tournament) {
+          return null;
+        }
+
+        return {
+          startTime: tournament.startTime,
+          endTime: tournament.endTime,
         };
       },
     },
@@ -178,6 +220,29 @@ class TournamentDataTestDb {
             const beatmap = this.beatmaps.get(beatmapId);
             if (beatmap && typeof values.dataFetchStatus === 'number') {
               beatmap.dataFetchStatus = values.dataFetchStatus;
+            }
+            return undefined;
+          },
+        }),
+      };
+    }
+
+    if (table === schema.tournaments) {
+      return {
+        set: (values: Partial<TournamentRow>) => ({
+          where: (condition: unknown) => {
+            const [tournamentId] = extractNumbers(condition);
+            const tournament = this.tournaments.get(tournamentId);
+            if (tournament) {
+              if (Object.prototype.hasOwnProperty.call(values, 'startTime')) {
+                tournament.startTime = values.startTime ?? null;
+              }
+              if (Object.prototype.hasOwnProperty.call(values, 'endTime')) {
+                tournament.endTime = values.endTime ?? null;
+              }
+              if (Object.prototype.hasOwnProperty.call(values, 'updated')) {
+                tournament.updated = values.updated ?? null;
+              }
             }
             return undefined;
           },
@@ -220,6 +285,7 @@ class SelectBuilder {
         .map((match) => ({
           id: match.id,
           dataFetchStatus: match.dataFetchStatus,
+          startTime: match.startTime,
         }));
     }
 
@@ -287,12 +353,14 @@ describe('TournamentDataCompletionService', () => {
           tournamentId: 100,
           dataFetchStatus: DataFetchStatus.NotFetched,
           verificationStatus: VerificationStatus.None,
+          startTime: '2024-01-01T00:00:00.000Z',
         },
         {
           id: 2,
           tournamentId: 100,
           dataFetchStatus: DataFetchStatus.NotFetched,
           verificationStatus: VerificationStatus.None,
+          startTime: '2024-01-02T00:00:00.000Z',
         },
       ],
       beatmaps: [
@@ -301,6 +369,7 @@ describe('TournamentDataCompletionService', () => {
       ],
       games: [{ matchId: 1, beatmapId: 11 }],
       joins: [{ pooledBeatmapsId: 10, tournamentsPooledInId: 100 }],
+      tournaments: [{ id: 100, startTime: null, endTime: null, updated: null }],
     });
 
     const publishCalls: Array<{
@@ -331,5 +400,46 @@ describe('TournamentDataCompletionService', () => {
       tournamentId: 100,
       overrideVerifiedState: false,
     });
+  });
+
+  it('updates tournament start and end dates when matches are fully fetched', async () => {
+    const db = new TournamentDataTestDb({
+      matches: [
+        {
+          id: 1,
+          tournamentId: 200,
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          verificationStatus: VerificationStatus.None,
+          startTime: '2024-03-01T12:00:00.000Z',
+        },
+        {
+          id: 2,
+          tournamentId: 200,
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          verificationStatus: VerificationStatus.None,
+          startTime: '2024-03-05T15:30:00.000Z',
+        },
+      ],
+      beatmaps: [],
+      games: [],
+      joins: [],
+      tournaments: [{ id: 200, startTime: null, endTime: null, updated: null }],
+    });
+
+    const service = new TournamentDataCompletionService({
+      db: db as unknown as DatabaseClient,
+      logger: noopLogger,
+    });
+
+    await service.updateMatchFetchStatus(1, DataFetchStatus.Fetched);
+    const afterFirst = db.tournaments.get(200);
+    expect(afterFirst?.startTime).toBeNull();
+    expect(afterFirst?.endTime).toBeNull();
+
+    await service.updateMatchFetchStatus(2, DataFetchStatus.Fetched);
+    const afterSecond = db.tournaments.get(200);
+    expect(afterSecond?.startTime).toBe('2024-03-01T12:00:00.000Z');
+    expect(afterSecond?.endTime).toBe('2024-03-05T15:30:00.000Z');
+    expect(afterSecond?.updated).toBeDefined();
   });
 });
