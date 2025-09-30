@@ -4,6 +4,7 @@ import { TournamentDataCompletionService } from '../../src/osu/services/tourname
 import type { DatabaseClient } from '../../src/db';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import * as schema from '@otr/core/db/schema';
+import { syncTournamentDateRange } from '@otr/core/db';
 import type { Logger } from '../../src/logging/logger';
 import { VerificationStatus } from '@otr/core/osu/enums';
 
@@ -441,5 +442,31 @@ describe('TournamentDataCompletionService', () => {
     expect(afterSecond?.startTime).toBe('2024-03-01T12:00:00.000Z');
     expect(afterSecond?.endTime).toBe('2024-03-05T15:30:00.000Z');
     expect(afterSecond?.updated).toBeDefined();
+  });
+
+  it('clears tournament date range when no matches remain', async () => {
+    const db = new TournamentDataTestDb({
+      matches: [],
+      beatmaps: [],
+      games: [],
+      joins: [],
+      tournaments: [
+        {
+          id: 300,
+          startTime: '2024-04-01T00:00:00.000Z',
+          endTime: '2024-04-05T00:00:00.000Z',
+          updated: null,
+        },
+      ],
+    });
+
+    await syncTournamentDateRange(db as unknown as DatabaseClient, 300, {
+      logger: noopLogger,
+    });
+
+    const updated = db.tournaments.get(300);
+    expect(updated?.startTime).toBeNull();
+    expect(updated?.endTime).toBeNull();
+    expect(updated?.updated).toBeDefined();
   });
 });

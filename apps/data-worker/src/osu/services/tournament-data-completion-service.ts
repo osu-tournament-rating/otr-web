@@ -4,6 +4,7 @@ import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+import { syncTournamentDateRange } from '@otr/core/db';
 
 interface TournamentDataCompletionServiceOptions {
   db: DatabaseClient;
@@ -132,7 +133,9 @@ export class TournamentDataCompletionService {
       return false;
     }
 
-    await this.syncTournamentDateRangeFromMatches(tournamentId);
+    await syncTournamentDateRange(this.db, tournamentId, {
+      logger: this.logger,
+    });
 
     const pooledBeatmapIds = await this.db
       .select({ beatmapId: schema.joinPooledBeatmaps.pooledBeatmapsId })
@@ -201,67 +204,5 @@ export class TournamentDataCompletionService {
 
   clearPendingAutomationCheck(tournamentId: number): void {
     this.pendingAutomation.delete(tournamentId);
-  }
-
-  private async syncTournamentDateRangeFromMatches(
-    tournamentId: number
-  ): Promise<void> {
-    const matchRows = await this.db
-      .select({ startTime: schema.matches.startTime })
-      .from(schema.matches)
-      .where(eq(schema.matches.tournamentId, tournamentId));
-
-    const startTimes = matchRows
-      .map((row) => row.startTime)
-      .filter((value): value is string => typeof value === 'string')
-      .map((value) => new Date(value))
-      .filter((date) => !Number.isNaN(date.getTime()))
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    if (startTimes.length === 0) {
-      return;
-    }
-
-    const computedStartTime = startTimes[0].toISOString();
-    const computedEndTime = startTimes[startTimes.length - 1].toISOString();
-
-    const tournament = await this.db.query.tournaments.findFirst({
-      where: eq(schema.tournaments.id, tournamentId),
-      columns: {
-        startTime: true,
-        endTime: true,
-      },
-    });
-
-    if (!tournament) {
-      this.logger.warn('Attempted to sync dates for unknown tournament', {
-        tournamentId,
-      });
-      return;
-    }
-
-    if (
-      tournament.startTime === computedStartTime &&
-      tournament.endTime === computedEndTime
-    ) {
-      return;
-    }
-
-    const nowIso = new Date().toISOString();
-
-    await this.db
-      .update(schema.tournaments)
-      .set({
-        startTime: computedStartTime,
-        endTime: computedEndTime,
-        updated: nowIso,
-      })
-      .where(eq(schema.tournaments.id, tournamentId));
-
-    this.logger.info('Updated tournament date range from matches', {
-      tournamentId,
-      startTime: computedStartTime,
-      endTime: computedEndTime,
-    });
   }
 }

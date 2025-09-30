@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { syncTournamentDateRange } from '@otr/core/db';
 import { cascadeMatchRejection } from '@otr/core/db/rejection-cascade';
 import {
   MatchAdminDeleteInputSchema,
@@ -148,6 +149,10 @@ export const mergeMatchAdmin = protectedProcedure
         .delete(schema.matches)
         .where(inArray(schema.matches.id, childIds));
 
+      if (parentMatch.tournamentId != null) {
+        await syncTournamentDateRange(tx, parentMatch.tournamentId);
+      }
+
       return {
         success: true,
         mergedMatchCount: childIds.length,
@@ -167,18 +172,29 @@ export const deleteMatchAdmin = protectedProcedure
   .handler(async ({ input, context }) => {
     ensureAdminSession(context.session);
 
-    const deleted = await context.db
-      .delete(schema.matches)
-      .where(eq(schema.matches.id, input.id))
-      .returning({ id: schema.matches.id });
-
-    if (deleted.length === 0) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Match not found',
+    return context.db.transaction(async (tx) => {
+      const match = await tx.query.matches.findFirst({
+        columns: {
+          id: true,
+          tournamentId: true,
+        },
+        where: eq(schema.matches.id, input.id),
       });
-    }
 
-    return { success: true } as const;
+      if (!match) {
+        throw new ORPCError('NOT_FOUND', {
+          message: 'Match not found',
+        });
+      }
+
+      await tx.delete(schema.matches).where(eq(schema.matches.id, input.id));
+
+      if (match.tournamentId != null) {
+        await syncTournamentDateRange(tx, match.tournamentId);
+      }
+
+      return { success: true } as const;
+    });
   });
 
 export const deleteMatchPlayerScoresAdmin = protectedProcedure
