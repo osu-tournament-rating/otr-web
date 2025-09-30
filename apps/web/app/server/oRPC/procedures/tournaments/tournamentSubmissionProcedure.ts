@@ -3,6 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { TournamentRejectionReason, VerificationStatus } from '@otr/core/osu';
 import * as schema from '@otr/core/db/schema';
+import { setAuditUserId } from '@otr/core/db';
 import {
   TournamentSubmissionInputSchema,
   TournamentSubmissionResponseSchema,
@@ -98,6 +99,8 @@ export async function submitTournamentHandler({
 
   try {
     const response = await db.transaction(async (tx) => {
+      await setAuditUserId(tx, submittingUserId);
+
       const existingWithNameAndAbbreviation =
         await tx.query.tournaments.findFirst({
           columns: { id: true },

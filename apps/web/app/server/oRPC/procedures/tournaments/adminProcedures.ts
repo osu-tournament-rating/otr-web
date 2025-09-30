@@ -4,6 +4,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { cascadeTournamentRejection } from '@otr/core/db/rejection-cascade';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+import { setAuditUserId } from '@otr/core/db';
 import {
   TournamentAdminMutationResponseSchema,
   TournamentAdminUpdateInputSchema,
@@ -49,18 +50,23 @@ export async function refetchTournamentMatchDataHandler({
   input,
   context,
 }: RefetchMatchDataArgs) {
-  ensureAdminSession(context.session);
+  const { adminUserId } = ensureAdminSession(context.session);
 
-  const matches: Array<{ id: number; osuId: number }> = await context.db
-    .update(schema.matches)
-    .set({
-      dataFetchStatus: DataFetchStatus.NotFetched,
-      updated: NOW,
-    })
-    .where(eq(schema.matches.tournamentId, input.id))
-    .returning({
-      id: schema.matches.id,
-      osuId: schema.matches.osuId,
+  const matches: Array<{ id: number; osuId: number }> =
+    await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
+      return tx
+        .update(schema.matches)
+        .set({
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          updated: NOW,
+        })
+        .where(eq(schema.matches.tournamentId, input.id))
+        .returning({
+          id: schema.matches.id,
+          osuId: schema.matches.osuId,
+        });
     });
 
   const matchOsuIds = Array.from(
@@ -177,7 +183,11 @@ export const updateTournamentAdmin = protectedProcedure
     const { adminUserId } = ensureAdminSession(context.session);
 
     const existing = await context.db.query.tournaments.findFirst({
-      columns: { id: true },
+      columns: {
+        id: true,
+        verifiedByUserId: true,
+        verificationStatus: true,
+      },
       where: eq(schema.tournaments.id, input.id),
     });
 
@@ -187,11 +197,28 @@ export const updateTournamentAdmin = protectedProcedure
       });
     }
 
-    const shouldAssignReviewer =
+    const verificationStatusChanged =
+      input.verificationStatus !== existing.verificationStatus;
+
+    const newStatusRequiresReviewer =
       input.verificationStatus === VerificationStatus.Verified ||
       input.verificationStatus === VerificationStatus.Rejected;
 
     await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
+      const verifiedByUserId = (() => {
+        if (!verificationStatusChanged) {
+          return existing.verifiedByUserId;
+        }
+
+        if (newStatusRequiresReviewer) {
+          return adminUserId;
+        }
+
+        return null;
+      })();
+
       await tx
         .update(schema.tournaments)
         .set({
@@ -205,7 +232,7 @@ export const updateTournamentAdmin = protectedProcedure
           rejectionReason: input.rejectionReason,
           startTime: input.startTime ?? null,
           endTime: input.endTime ?? null,
-          verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
+          verifiedByUserId,
           updated: NOW,
         })
         .where(eq(schema.tournaments.id, input.id));
@@ -244,6 +271,8 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
     const { adminUserId } = ensureAdminSession(context.session);
 
     await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
       await tx
         .update(schema.tournaments)
         .set({
@@ -408,12 +437,16 @@ export const deleteTournamentAdmin = protectedProcedure
     path: '/tournaments/admin/delete',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const deleted = await context.db
-      .delete(schema.tournaments)
-      .where(eq(schema.tournaments.id, input.id))
-      .returning({ id: schema.tournaments.id });
+    const deleted = await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
+      return tx
+        .delete(schema.tournaments)
+        .where(eq(schema.tournaments.id, input.id))
+        .returning({ id: schema.tournaments.id });
+    });
 
     if (deleted.length === 0) {
       throw new ORPCError('NOT_FOUND', {

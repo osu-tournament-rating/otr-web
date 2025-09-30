@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { setAuditUserId } from '@otr/core/db';
 import { cascadeGameRejection } from '@otr/core/db/rejection-cascade';
 import {
   GameAdminDeleteInputSchema,
@@ -29,7 +30,7 @@ export const updateGameAdmin = protectedProcedure
     path: '/games/admin/update',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
     const existing = await context.db.query.games.findFirst({
       columns: {
@@ -51,6 +52,8 @@ export const updateGameAdmin = protectedProcedure
     const endTime = input.endTime ?? existing.endTime ?? FALLBACK_DATETIME;
 
     await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
       await tx
         .update(schema.games)
         .set({
@@ -87,12 +90,16 @@ export const deleteGameAdmin = protectedProcedure
     path: '/games/admin/delete',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const deleted = await context.db
-      .delete(schema.games)
-      .where(eq(schema.games.id, input.id))
-      .returning({ id: schema.games.id });
+    const deleted = await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
+      return tx
+        .delete(schema.games)
+        .where(eq(schema.games.id, input.id))
+        .returning({ id: schema.games.id });
+    });
 
     if (deleted.length === 0) {
       throw new ORPCError('NOT_FOUND', {
@@ -112,7 +119,7 @@ export const mergeGameAdmin = protectedProcedure
     path: '/games/admin/merge',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
     const childIds = Array.from(new Set(input.childGameIds));
 
@@ -129,6 +136,8 @@ export const mergeGameAdmin = protectedProcedure
     }
 
     return context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
       const [parentGame] = await tx
         .select({
           id: schema.games.id,

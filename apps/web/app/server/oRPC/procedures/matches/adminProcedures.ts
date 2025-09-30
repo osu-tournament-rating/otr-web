@@ -2,7 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
-import { syncTournamentDateRange } from '@otr/core/db';
+import { setAuditUserId, syncTournamentDateRange } from '@otr/core/db';
 import { cascadeMatchRejection } from '@otr/core/db/rejection-cascade';
 import {
   MatchAdminDeleteInputSchema,
@@ -32,7 +32,11 @@ export const updateMatchAdmin = protectedProcedure
     const { adminUserId } = ensureAdminSession(context.session);
 
     const existing = await context.db.query.matches.findFirst({
-      columns: { id: true },
+      columns: {
+        id: true,
+        verifiedByUserId: true,
+        verificationStatus: true,
+      },
       where: eq(schema.matches.id, input.id),
     });
 
@@ -42,11 +46,28 @@ export const updateMatchAdmin = protectedProcedure
       });
     }
 
-    const shouldAssignReviewer =
+    const verificationStatusChanged =
+      input.verificationStatus !== existing.verificationStatus;
+
+    const newStatusRequiresReviewer =
       input.verificationStatus === VerificationStatus.Verified ||
       input.verificationStatus === VerificationStatus.Rejected;
 
     await context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
+      const verifiedByUserId = (() => {
+        if (!verificationStatusChanged) {
+          return existing.verifiedByUserId;
+        }
+
+        if (newStatusRequiresReviewer) {
+          return adminUserId;
+        }
+
+        return null;
+      })();
+
       await tx
         .update(schema.matches)
         .set({
@@ -56,7 +77,7 @@ export const updateMatchAdmin = protectedProcedure
           warningFlags: input.warningFlags,
           startTime: input.startTime ?? null,
           endTime: input.endTime ?? null,
-          verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
+          verifiedByUserId,
           updated: NOW,
         })
         .where(eq(schema.matches.id, input.id));
@@ -80,7 +101,7 @@ export const mergeMatchAdmin = protectedProcedure
     path: '/matches/admin/merge',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
     const childIds = Array.from(new Set(input.childMatchIds));
 
@@ -97,6 +118,8 @@ export const mergeMatchAdmin = protectedProcedure
     }
 
     return context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
       const parentMatch = await tx.query.matches.findFirst({
         columns: {
           id: true,
@@ -170,9 +193,11 @@ export const deleteMatchAdmin = protectedProcedure
     path: '/matches/admin/delete',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
     return context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
+
       const match = await tx.query.matches.findFirst({
         columns: {
           id: true,
@@ -206,28 +231,32 @@ export const deleteMatchPlayerScoresAdmin = protectedProcedure
     path: '/matches/admin/delete-player-scores',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const gameRows = await context.db
-      .select({ id: schema.games.id })
-      .from(schema.games)
-      .where(eq(schema.games.matchId, input.matchId));
+    return context.db.transaction(async (tx) => {
+      await setAuditUserId(tx, adminUserId);
 
-    const gameIds = gameRows.map((row) => row.id);
+      const gameRows = await tx
+        .select({ id: schema.games.id })
+        .from(schema.games)
+        .where(eq(schema.games.matchId, input.matchId));
 
-    if (gameIds.length === 0) {
-      return { success: true, deletedCount: 0 } as const;
-    }
+      const gameIds = gameRows.map((row) => row.id);
 
-    const deleted = await context.db
-      .delete(schema.gameScores)
-      .where(
-        and(
-          eq(schema.gameScores.playerId, input.playerId),
-          inArray(schema.gameScores.gameId, gameIds)
+      if (gameIds.length === 0) {
+        return { success: true, deletedCount: 0 } as const;
+      }
+
+      const deleted = await tx
+        .delete(schema.gameScores)
+        .where(
+          and(
+            eq(schema.gameScores.playerId, input.playerId),
+            inArray(schema.gameScores.gameId, gameIds)
+          )
         )
-      )
-      .returning({ id: schema.gameScores.id });
+        .returning({ id: schema.gameScores.id });
 
-    return { success: true, deletedCount: deleted.length } as const;
+      return { success: true, deletedCount: deleted.length } as const;
+    });
   });
