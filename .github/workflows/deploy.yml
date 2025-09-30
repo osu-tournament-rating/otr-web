@@ -1,88 +1,91 @@
-name: Web deploy
+name: Deploy
 
 on:
   workflow_call:
     inputs:
       target:
-        required: true
         type: string
-        description: 'Environment to deploy to'
+        description: 'GitHub environment to deploy to (e.g. Staging or Production)'
+        required: true
+      deploy_tag:
+        type: string
+        description: 'Docker image tag to deploy'
+        required: true
 
 jobs:
-  publish:
+  deploy:
     runs-on: ubuntu-latest
-    outputs:
-      TAG: ${{ steps.set-tag.outputs.PRIMARY_TAG }}
+    environment: ${{ inputs.target }}
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Login to DockerHub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set Docker Tags
-        id: set-tag
-        run: |
-          image_prefix="${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}"
-          if [[ "${{ inputs.target }}" == "Staging" ]]; then
-            echo "PRIMARY_TAG=staging" >> $GITHUB_OUTPUT
-            echo "TAGS=${image_prefix}:staging" >> $GITHUB_OUTPUT
-          elif [[ "${{ inputs.target }}" == "Production" && "${{ github.ref_type }}" == "tag" ]]; then
-            echo "PRIMARY_TAG=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            {
-              echo 'TAGS<<EOF'
-              echo "${image_prefix}:${{ github.ref_name }}"
-              echo "${image_prefix}:latest"
-              echo 'EOF'
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "Invalid target: ${{ inputs.target }}"
-            exit 1
-          fi
-
-      - name: Build and Push Docker Image
-        # Build will fail if there are any eslint or compilation issues
-        uses: docker/build-push-action@v5
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
         with:
           context: .
+          file: apps/web/Dockerfile
           push: true
-          tags: ${{ steps.set-tag.outputs.TAGS }}
+          tags: stagecodes/otr-web:${{ inputs.deploy_tag }}
 
-  deploy:
-    needs: publish
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.target }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Create .env files
-        run: echo "${{ secrets.ENV }}" > .env
-
-      - name: Copy files to server
-        uses: appleboy/scp-action@master
+      - name: Build and push data worker image
+        uses: docker/build-push-action@v6
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: '.env'
-          target: '${{ secrets.SSH_TARGET_DIR }}/'
+          context: .
+          file: apps/data-worker/Dockerfile
+          push: true
+          tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
 
-      - name: Deploy
-        uses: appleboy/ssh-action@master
+      - name: Create .env file from secret
+        run: |
+          printf '%s\n' "${{ secrets.ENV }}" > .env
+          echo "DEPLOY_TAG=${{ inputs.deploy_tag }}" >> .env
+
+      - name: Ensure remote directory exists
+        uses: appleboy/ssh-action@v1
+        env:
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            TAG=${{ needs.publish.outputs.TAG }}
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:$TAG
-            docker stop ${{ secrets.DOCKER_IMAGE_NAME }} || true
-            docker rm ${{ secrets.DOCKER_IMAGE_NAME }} || true
-            docker run -d -p 3000:3000 --restart always \
-              --name ${{ secrets.DOCKER_IMAGE_NAME }} \
-              --env-file ${{ secrets.SSH_TARGET_DIR }}/.env \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:$TAG
+            set -euo pipefail
+            mkdir -p "$REMOTE_PATH"
+          envs: REMOTE_PATH
+
+      - name: Upload deployment assets
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: '.env,docker-compose.yml'
+          target: ${{ secrets.REMOTE_PATH }}
+
+      - name: Deploy stack via docker compose
+        uses: appleboy/ssh-action@v1
+        env:
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd "$REMOTE_PATH"
+            docker compose --env-file .env pull web data-worker
+            docker compose --env-file .env up -d db rabbitmq
+            docker compose --env-file .env --profile migrate run --rm migrate
+            docker compose --env-file .env up -d --remove-orphans
+          envs: REMOTE_PATH

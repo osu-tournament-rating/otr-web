@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@otr/core": ["../../packages/otr-core/src/index.ts"],
+      "@otr/core/*": ["../../packages/otr-core/src/*"],
+      "@otr/core/osu": ["../../packages/otr-core/src/osu/enums.ts"],
+      "@otr/core/queues": ["../../packages/otr-core/src/queues/constants.ts"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "env.d.ts",
+    "environment.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.cts",
+    "**/*.mts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

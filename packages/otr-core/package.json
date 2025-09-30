@@ -1,0 +1,20 @@
+{
+  "name": "@otr/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts",
+    "./db": "./src/db/index.ts",
+    "./db/*": "./src/db/*",
+    "./osu": "./src/osu/enums.ts",
+    "./osu/*": "./src/osu/*",
+    "./queues": "./src/queues/constants.ts",
+    "./queues/*": "./src/queues/*",
+    "./messages/*": "./src/messages/*"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.44.5"
+  }
+}

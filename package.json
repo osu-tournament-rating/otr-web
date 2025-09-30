@@ -1,17 +1,19 @@
 {
-  "name": "otr-web",
-  "version": "0.1.0",
+  "name": "otr",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "dev:turbo": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "npx prettier . --write --ignore-unknown",
-    "prepare": "husky"
+    "lint": "bun run --filter web lint && bun run --filter data-worker lint",
+    "build": "bun run --filter web build && bun run --filter data-worker build",
+    "start": "bun run --filter web start && bun run --filter data-worker start",
+    "dev": "sh -c 'trap \"kill -TERM 0\" INT TERM EXIT; bun run --filter web dev & bun run --filter data-worker dev' & wait",
+    "format": "bunx prettier . --write"
   },
   "dependencies": {
+    "dotenv": "^16.6.1",
     "@alduino/humanizer": "^1.1.0",
     "@hookform/resolvers": "^4.1.3",
     "@osu-tournament-rating/otr-api-client": "^1.4.1",
