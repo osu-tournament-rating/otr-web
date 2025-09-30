@@ -4,6 +4,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { cascadeTournamentRejection } from '@otr/core/db/rejection-cascade';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+import { withAuditUserId } from '@otr/core/db';
 import {
   TournamentAdminMutationResponseSchema,
   TournamentAdminUpdateInputSchema,
@@ -49,19 +50,24 @@ export async function refetchTournamentMatchDataHandler({
   input,
   context,
 }: RefetchMatchDataArgs) {
-  ensureAdminSession(context.session);
+  const { adminUserId } = ensureAdminSession(context.session);
 
-  const matches: Array<{ id: number; osuId: number }> = await context.db
-    .update(schema.matches)
-    .set({
-      dataFetchStatus: DataFetchStatus.NotFetched,
-      updated: NOW,
-    })
-    .where(eq(schema.matches.tournamentId, input.id))
-    .returning({
-      id: schema.matches.id,
-      osuId: schema.matches.osuId,
-    });
+  const matches: Array<{ id: number; osuId: number }> =
+    await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, () =>
+        tx
+          .update(schema.matches)
+          .set({
+            dataFetchStatus: DataFetchStatus.NotFetched,
+            updated: NOW,
+          })
+          .where(eq(schema.matches.tournamentId, input.id))
+          .returning({
+            id: schema.matches.id,
+            osuId: schema.matches.osuId,
+          })
+      )
+    );
 
   const matchOsuIds = Array.from(
     new Set<number>(
@@ -177,7 +183,11 @@ export const updateTournamentAdmin = protectedProcedure
     const { adminUserId } = ensureAdminSession(context.session);
 
     const existing = await context.db.query.tournaments.findFirst({
-      columns: { id: true },
+      columns: {
+        id: true,
+        verifiedByUserId: true,
+        verificationStatus: true,
+      },
       where: eq(schema.tournaments.id, input.id),
     });
 
@@ -187,35 +197,52 @@ export const updateTournamentAdmin = protectedProcedure
       });
     }
 
-    const shouldAssignReviewer =
+    const verificationStatusChanged =
+      input.verificationStatus !== existing.verificationStatus;
+
+    const newStatusRequiresReviewer =
       input.verificationStatus === VerificationStatus.Verified ||
       input.verificationStatus === VerificationStatus.Rejected;
 
-    await context.db.transaction(async (tx) => {
-      await tx
-        .update(schema.tournaments)
-        .set({
-          name: input.name,
-          abbreviation: input.abbreviation,
-          forumUrl: input.forumUrl,
-          rankRangeLowerBound: input.rankRangeLowerBound,
-          ruleset: input.ruleset,
-          lobbySize: input.lobbySize,
-          verificationStatus: input.verificationStatus,
-          rejectionReason: input.rejectionReason,
-          startTime: input.startTime ?? null,
-          endTime: input.endTime ?? null,
-          verifiedByUserId: shouldAssignReviewer ? adminUserId : null,
-          updated: NOW,
-        })
-        .where(eq(schema.tournaments.id, input.id));
+    await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, async () => {
+        const verifiedByUserId = (() => {
+          if (!verificationStatusChanged) {
+            return existing.verifiedByUserId;
+          }
 
-      if (input.verificationStatus === VerificationStatus.Rejected) {
-        await cascadeTournamentRejection(tx, [input.id], {
-          updatedAt: NOW,
-        });
-      }
-    });
+          if (newStatusRequiresReviewer) {
+            return adminUserId;
+          }
+
+          return null;
+        })();
+
+        await tx
+          .update(schema.tournaments)
+          .set({
+            name: input.name,
+            abbreviation: input.abbreviation,
+            forumUrl: input.forumUrl,
+            rankRangeLowerBound: input.rankRangeLowerBound,
+            ruleset: input.ruleset,
+            lobbySize: input.lobbySize,
+            verificationStatus: input.verificationStatus,
+            rejectionReason: input.rejectionReason,
+            startTime: input.startTime ?? null,
+            endTime: input.endTime ?? null,
+            verifiedByUserId,
+            updated: NOW,
+          })
+          .where(eq(schema.tournaments.id, input.id));
+
+        if (input.verificationStatus === VerificationStatus.Rejected) {
+          await cascadeTournamentRejection(tx, [input.id], {
+            updatedAt: NOW,
+          });
+        }
+      })
+    );
 
     return { success: true } as const;
   });
@@ -243,158 +270,160 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
 
-    await context.db.transaction(async (tx) => {
-      await tx
-        .update(schema.tournaments)
-        .set({
-          verificationStatus: VerificationStatus.Verified,
-          rejectionReason: 0,
-          verifiedByUserId: adminUserId,
-          updated: NOW,
-        })
-        .where(
-          and(
-            eq(schema.tournaments.id, input.id),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.PreVerified
-            )
-          )
-        );
-
-      await tx
-        .update(schema.tournaments)
-        .set({
-          verificationStatus: VerificationStatus.Rejected,
-          verifiedByUserId: adminUserId,
-          updated: NOW,
-        })
-        .where(
-          and(
-            eq(schema.tournaments.id, input.id),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.PreRejected
-            )
-          )
-        );
-
-      await tx
-        .update(schema.matches)
-        .set({
-          verificationStatus: VerificationStatus.Verified,
-          verifiedByUserId: adminUserId,
-          updated: NOW,
-        })
-        .where(
-          and(
-            eq(schema.matches.tournamentId, input.id),
-            eq(
-              schema.matches.verificationStatus,
-              VerificationStatus.PreVerified
-            )
-          )
-        );
-
-      await tx
-        .update(schema.matches)
-        .set({
-          verificationStatus: VerificationStatus.Rejected,
-          verifiedByUserId: adminUserId,
-          updated: NOW,
-        })
-        .where(
-          and(
-            eq(schema.matches.tournamentId, input.id),
-            eq(
-              schema.matches.verificationStatus,
-              VerificationStatus.PreRejected
-            )
-          )
-        );
-
-      const matchRows = await tx
-        .select({ id: schema.matches.id })
-        .from(schema.matches)
-        .where(eq(schema.matches.tournamentId, input.id));
-
-      const matchIds = matchRows.map((row) => row.id);
-
-      if (matchIds.length > 0) {
+    await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, async () => {
         await tx
-          .update(schema.games)
+          .update(schema.tournaments)
           .set({
             verificationStatus: VerificationStatus.Verified,
+            rejectionReason: 0,
+            verifiedByUserId: adminUserId,
             updated: NOW,
           })
           .where(
             and(
-              inArray(schema.games.matchId, matchIds),
+              eq(schema.tournaments.id, input.id),
               eq(
-                schema.games.verificationStatus,
+                schema.tournaments.verificationStatus,
                 VerificationStatus.PreVerified
               )
             )
           );
 
         await tx
-          .update(schema.games)
+          .update(schema.tournaments)
           .set({
             verificationStatus: VerificationStatus.Rejected,
+            verifiedByUserId: adminUserId,
             updated: NOW,
           })
           .where(
             and(
-              inArray(schema.games.matchId, matchIds),
+              eq(schema.tournaments.id, input.id),
               eq(
-                schema.games.verificationStatus,
+                schema.tournaments.verificationStatus,
                 VerificationStatus.PreRejected
               )
             )
           );
 
-        const gameRows = await tx
-          .select({ id: schema.games.id })
-          .from(schema.games)
-          .where(inArray(schema.games.matchId, matchIds));
+        await tx
+          .update(schema.matches)
+          .set({
+            verificationStatus: VerificationStatus.Verified,
+            verifiedByUserId: adminUserId,
+            updated: NOW,
+          })
+          .where(
+            and(
+              eq(schema.matches.tournamentId, input.id),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.PreVerified
+              )
+            )
+          );
 
-        const gameIds = gameRows.map((row) => row.id);
+        await tx
+          .update(schema.matches)
+          .set({
+            verificationStatus: VerificationStatus.Rejected,
+            verifiedByUserId: adminUserId,
+            updated: NOW,
+          })
+          .where(
+            and(
+              eq(schema.matches.tournamentId, input.id),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.PreRejected
+              )
+            )
+          );
 
-        if (gameIds.length > 0) {
+        const matchRows = await tx
+          .select({ id: schema.matches.id })
+          .from(schema.matches)
+          .where(eq(schema.matches.tournamentId, input.id));
+
+        const matchIds = matchRows.map((row) => row.id);
+
+        if (matchIds.length > 0) {
           await tx
-            .update(schema.gameScores)
+            .update(schema.games)
             .set({
               verificationStatus: VerificationStatus.Verified,
               updated: NOW,
             })
             .where(
               and(
-                inArray(schema.gameScores.gameId, gameIds),
+                inArray(schema.games.matchId, matchIds),
                 eq(
-                  schema.gameScores.verificationStatus,
+                  schema.games.verificationStatus,
                   VerificationStatus.PreVerified
                 )
               )
             );
 
           await tx
-            .update(schema.gameScores)
+            .update(schema.games)
             .set({
               verificationStatus: VerificationStatus.Rejected,
               updated: NOW,
             })
             .where(
               and(
-                inArray(schema.gameScores.gameId, gameIds),
+                inArray(schema.games.matchId, matchIds),
                 eq(
-                  schema.gameScores.verificationStatus,
+                  schema.games.verificationStatus,
                   VerificationStatus.PreRejected
                 )
               )
             );
+
+          const gameRows = await tx
+            .select({ id: schema.games.id })
+            .from(schema.games)
+            .where(inArray(schema.games.matchId, matchIds));
+
+          const gameIds = gameRows.map((row) => row.id);
+
+          if (gameIds.length > 0) {
+            await tx
+              .update(schema.gameScores)
+              .set({
+                verificationStatus: VerificationStatus.Verified,
+                updated: NOW,
+              })
+              .where(
+                and(
+                  inArray(schema.gameScores.gameId, gameIds),
+                  eq(
+                    schema.gameScores.verificationStatus,
+                    VerificationStatus.PreVerified
+                  )
+                )
+              );
+
+            await tx
+              .update(schema.gameScores)
+              .set({
+                verificationStatus: VerificationStatus.Rejected,
+                updated: NOW,
+              })
+              .where(
+                and(
+                  inArray(schema.gameScores.gameId, gameIds),
+                  eq(
+                    schema.gameScores.verificationStatus,
+                    VerificationStatus.PreRejected
+                  )
+                )
+              );
+          }
         }
-      }
-    });
+      })
+    );
 
     return { success: true } as const;
   });
@@ -408,12 +437,16 @@ export const deleteTournamentAdmin = protectedProcedure
     path: '/tournaments/admin/delete',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const deleted = await context.db
-      .delete(schema.tournaments)
-      .where(eq(schema.tournaments.id, input.id))
-      .returning({ id: schema.tournaments.id });
+    const deleted = await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, () =>
+        tx
+          .delete(schema.tournaments)
+          .where(eq(schema.tournaments.id, input.id))
+          .returning({ id: schema.tournaments.id })
+      )
+    );
 
     if (deleted.length === 0) {
       throw new ORPCError('NOT_FOUND', {

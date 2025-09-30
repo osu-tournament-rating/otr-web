@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { eq, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
+import { withAuditUserId } from '@otr/core/db';
 import {
   GameScoreAdminDeleteInputSchema,
   GameScoreAdminMutationResponseSchema,
@@ -22,40 +23,44 @@ export const updateScoreAdmin = protectedProcedure
     path: '/scores/admin/update',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const existing = await context.db.query.gameScores.findFirst({
-      columns: { id: true },
-      where: eq(schema.gameScores.id, input.id),
-    });
+    await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, async () => {
+        const existing = await tx.query.gameScores.findFirst({
+          columns: { id: true },
+          where: eq(schema.gameScores.id, input.id),
+        });
 
-    if (!existing) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Score not found',
-      });
-    }
+        if (!existing) {
+          throw new ORPCError('NOT_FOUND', {
+            message: 'Score not found',
+          });
+        }
 
-    await context.db
-      .update(schema.gameScores)
-      .set({
-        score: input.score,
-        placement: input.placement,
-        maxCombo: input.maxCombo,
-        count50: input.count50,
-        count100: input.count100,
-        count300: input.count300,
-        countMiss: input.countMiss,
-        countKatu: input.countKatu,
-        countGeki: input.countGeki,
-        grade: input.grade,
-        mods: input.mods,
-        team: input.team,
-        ruleset: input.ruleset,
-        verificationStatus: input.verificationStatus,
-        rejectionReason: input.rejectionReason,
-        updated: NOW,
+        await tx
+          .update(schema.gameScores)
+          .set({
+            score: input.score,
+            placement: input.placement,
+            maxCombo: input.maxCombo,
+            count50: input.count50,
+            count100: input.count100,
+            count300: input.count300,
+            countMiss: input.countMiss,
+            countKatu: input.countKatu,
+            countGeki: input.countGeki,
+            grade: input.grade,
+            mods: input.mods,
+            team: input.team,
+            ruleset: input.ruleset,
+            verificationStatus: input.verificationStatus,
+            rejectionReason: input.rejectionReason,
+            updated: NOW,
+          })
+          .where(eq(schema.gameScores.id, input.id));
       })
-      .where(eq(schema.gameScores.id, input.id));
+    );
 
     return { success: true } as const;
   });
@@ -69,12 +74,16 @@ export const deleteScoreAdmin = protectedProcedure
     path: '/scores/admin/delete',
   })
   .handler(async ({ input, context }) => {
-    ensureAdminSession(context.session);
+    const { adminUserId } = ensureAdminSession(context.session);
 
-    const deleted = await context.db
-      .delete(schema.gameScores)
-      .where(eq(schema.gameScores.id, input.id))
-      .returning({ id: schema.gameScores.id });
+    const deleted = await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, () =>
+        tx
+          .delete(schema.gameScores)
+          .where(eq(schema.gameScores.id, input.id))
+          .returning({ id: schema.gameScores.id })
+      )
+    );
 
     if (deleted.length === 0) {
       throw new ORPCError('NOT_FOUND', {

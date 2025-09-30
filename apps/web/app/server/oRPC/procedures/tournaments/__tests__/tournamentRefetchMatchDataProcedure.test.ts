@@ -133,6 +133,23 @@ class RefetchMatchDataTestDb {
     });
   }
 
+  async transaction<T>(
+    callback: (
+      tx: ReturnType<RefetchMatchDataTestDb['createTransaction']>
+    ) => Promise<T>
+  ): Promise<T> {
+    const tx = this.createTransaction();
+    return callback(tx);
+  }
+
+  private createTransaction() {
+    return {
+      execute: async () => undefined,
+      update: (table: unknown) => this.update(table),
+      select: () => this.select(),
+    };
+  }
+
   update(table: unknown) {
     if (table === schema.matches) {
       return {

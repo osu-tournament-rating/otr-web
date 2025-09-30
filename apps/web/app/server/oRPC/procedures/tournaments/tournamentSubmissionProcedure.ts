@@ -3,6 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { TournamentRejectionReason, VerificationStatus } from '@otr/core/osu';
 import * as schema from '@otr/core/db/schema';
+import { withAuditUserId } from '@otr/core/db';
 import {
   TournamentSubmissionInputSchema,
   TournamentSubmissionResponseSchema,
@@ -97,214 +98,221 @@ export async function submitTournamentHandler({
   const beatmapsToQueue = new Set<number>();
 
   try {
-    const response = await db.transaction(async (tx) => {
-      const existingWithNameAndAbbreviation =
-        await tx.query.tournaments.findFirst({
-          columns: { id: true },
-          where: and(
-            eq(schema.tournaments.name, input.name),
-            eq(schema.tournaments.abbreviation, input.abbreviation)
-          ),
-        });
+    const response = await db.transaction((tx) =>
+      withAuditUserId(tx, submittingUserId, async () => {
+        const existingWithNameAndAbbreviation =
+          await tx.query.tournaments.findFirst({
+            columns: { id: true },
+            where: and(
+              eq(schema.tournaments.name, input.name),
+              eq(schema.tournaments.abbreviation, input.abbreviation)
+            ),
+          });
 
-      if (existingWithNameAndAbbreviation) {
-        throw errors.NAME_ABBREVIATION_CONFLICT();
-      }
-
-      const [tournament] = await tx
-        .insert(schema.tournaments)
-        .values({
-          name: input.name,
-          abbreviation: input.abbreviation,
-          forumUrl: input.forumUrl,
-          rankRangeLowerBound: input.rankRangeLowerBound,
-          ruleset: input.ruleset,
-          lobbySize: input.lobbySize,
-          rejectionReason,
-          verificationStatus:
-            rejectionReason === TournamentRejectionReason.None
-              ? VerificationStatus.None
-              : VerificationStatus.Rejected,
-          submittedByUserId: submittingUserId,
-        })
-        .returning({ id: schema.tournaments.id });
-
-      if (!tournament) {
-        throw errors.TOURNAMENT_CREATION_FAILED();
-      }
-
-      const tournamentId = tournament.id;
-
-      const matchOsuIds = Array.from(new Set(input.ids)) as number[];
-
-      const existingMatches = matchOsuIds.length
-        ? await tx
-            .select({
-              osuId: schema.matches.osuId,
-              tournamentId: schema.matches.tournamentId,
-            })
-            .from(schema.matches)
-            .where(inArray(schema.matches.osuId, matchOsuIds))
-        : [];
-
-      const conflictingMatches = existingMatches.filter(
-        (match) =>
-          match.tournamentId !== null && match.tournamentId !== tournamentId
-      );
-
-      if (conflictingMatches.length) {
-        throw errors.MATCH_ASSIGNMENT_CONFLICT({
-          message: `The following matches are already assigned to another tournament: ${formatIdList(
-            conflictingMatches.map((match) => Number(match.osuId))
-          )}.`,
-        });
-      }
-
-      const matchesToUpdate = existingMatches.filter(
-        (match) => match.tournamentId === null
-      );
-
-      for (const match of matchesToUpdate) {
-        await tx
-          .update(schema.matches)
-          .set({
-            tournamentId,
-            submittedByUserId: submittingUserId,
-          })
-          .where(eq(schema.matches.osuId, match.osuId));
-      }
-
-      const matchesToInsert = matchOsuIds.filter(
-        (osuId) => !existingMatches.some((match) => match.osuId === osuId)
-      );
-
-      if (matchesToInsert.length) {
-        await tx.insert(schema.matches).values(
-          matchesToInsert.map((osuId) => ({
-            osuId,
-            tournamentId,
-            submittedByUserId: submittingUserId,
-            verificationStatus: VerificationStatus.None,
-            rejectionReason: 0,
-            warningFlags: 0,
-          }))
-        );
-
-        matchesToInsert.forEach((osuId) => matchesToQueue.add(osuId));
-      }
-
-      const beatmapOsuIds = Array.from(new Set(input.beatmapIds)) as number[];
-
-      if (beatmapOsuIds.length) {
-        const beatmapRows = await tx
-          .select({
-            id: schema.beatmaps.id,
-            osuId: schema.beatmaps.osuId,
-          })
-          .from(schema.beatmaps)
-          .where(inArray(schema.beatmaps.osuId, beatmapOsuIds));
-
-        const existingMap = new Map<number, number>();
-        beatmapRows.forEach((beatmap) => {
-          existingMap.set(Number(beatmap.osuId), beatmap.id);
-        });
-
-        const missingOsuIds = beatmapOsuIds.filter(
-          (osuId) => !existingMap.has(osuId)
-        );
-
-        if (missingOsuIds.length > 0) {
-          const placeholderRows = missingOsuIds.map((osuId) =>
-            createPlaceholderBeatmap(osuId, input.ruleset)
-          );
-
-          if (placeholderRows.length > 0) {
-            const insertedBeatmaps = await tx
-              .insert(schema.beatmaps)
-              .values(placeholderRows)
-              .onConflictDoNothing({
-                target: schema.beatmaps.osuId,
-              })
-              .returning({
-                id: schema.beatmaps.id,
-                osuId: schema.beatmaps.osuId,
-              });
-
-            insertedBeatmaps.forEach((beatmap) => {
-              existingMap.set(Number(beatmap.osuId), beatmap.id);
-            });
-          }
-
-          if (missingOsuIds.some((osuId) => !existingMap.has(osuId))) {
-            const refreshedBeatmaps = await tx
-              .select({
-                id: schema.beatmaps.id,
-                osuId: schema.beatmaps.osuId,
-              })
-              .from(schema.beatmaps)
-              .where(inArray(schema.beatmaps.osuId, missingOsuIds));
-
-            refreshedBeatmaps.forEach((beatmap) => {
-              existingMap.set(Number(beatmap.osuId), beatmap.id);
-            });
-          }
-
-          missingOsuIds.forEach((osuId) => beatmapsToQueue.add(osuId));
+        if (existingWithNameAndAbbreviation) {
+          throw errors.NAME_ABBREVIATION_CONFLICT();
         }
 
-        const beatmapIdsForJoin = beatmapOsuIds
-          .map((osuId) => {
-            const beatmapId = existingMap.get(osuId);
-            if (!beatmapId) {
-              return null;
-            }
-
-            return {
-              pooledBeatmapsId: beatmapId,
-              tournamentsPooledInId: tournamentId,
-            } satisfies typeof schema.joinPooledBeatmaps.$inferInsert;
+        const [tournament] = await tx
+          .insert(schema.tournaments)
+          .values({
+            name: input.name,
+            abbreviation: input.abbreviation,
+            forumUrl: input.forumUrl,
+            rankRangeLowerBound: input.rankRangeLowerBound,
+            ruleset: input.ruleset,
+            lobbySize: input.lobbySize,
+            rejectionReason,
+            verificationStatus:
+              rejectionReason === TournamentRejectionReason.None
+                ? VerificationStatus.None
+                : VerificationStatus.Rejected,
+            submittedByUserId: submittingUserId,
           })
-          .filter(Boolean) as (typeof schema.joinPooledBeatmaps.$inferInsert)[];
+          .returning({ id: schema.tournaments.id });
 
-        if (beatmapIdsForJoin.length > 0) {
-          const beatmapIds = beatmapIdsForJoin.map(
-            (value) => value.pooledBeatmapsId
+        if (!tournament) {
+          throw errors.TOURNAMENT_CREATION_FAILED();
+        }
+
+        const tournamentId = tournament.id;
+
+        const matchOsuIds = Array.from(new Set(input.ids)) as number[];
+
+        const existingMatches = matchOsuIds.length
+          ? await tx
+              .select({
+                osuId: schema.matches.osuId,
+                tournamentId: schema.matches.tournamentId,
+              })
+              .from(schema.matches)
+              .where(inArray(schema.matches.osuId, matchOsuIds))
+          : [];
+
+        const conflictingMatches = existingMatches.filter(
+          (match) =>
+            match.tournamentId !== null && match.tournamentId !== tournamentId
+        );
+
+        if (conflictingMatches.length) {
+          throw errors.MATCH_ASSIGNMENT_CONFLICT({
+            message: `The following matches are already assigned to another tournament: ${formatIdList(
+              conflictingMatches.map((match) => Number(match.osuId))
+            )}.`,
+          });
+        }
+
+        const matchesToUpdate = existingMatches.filter(
+          (match) => match.tournamentId === null
+        );
+
+        for (const match of matchesToUpdate) {
+          await tx
+            .update(schema.matches)
+            .set({
+              tournamentId,
+              submittedByUserId: submittingUserId,
+            })
+            .where(eq(schema.matches.osuId, match.osuId));
+        }
+
+        const matchesToInsert = matchOsuIds.filter(
+          (osuId) => !existingMatches.some((match) => match.osuId === osuId)
+        );
+
+        if (matchesToInsert.length) {
+          await tx.insert(schema.matches).values(
+            matchesToInsert.map((osuId) => ({
+              osuId,
+              tournamentId,
+              submittedByUserId: submittingUserId,
+              verificationStatus: VerificationStatus.None,
+              rejectionReason: 0,
+              warningFlags: 0,
+            }))
           );
 
-          const existingJoins = await tx
+          matchesToInsert.forEach((osuId) => matchesToQueue.add(osuId));
+        }
+
+        const beatmapOsuIds = Array.from(new Set(input.beatmapIds)) as number[];
+
+        if (beatmapOsuIds.length) {
+          const beatmapRows = await tx
             .select({
-              beatmapId: schema.joinPooledBeatmaps.pooledBeatmapsId,
+              id: schema.beatmaps.id,
+              osuId: schema.beatmaps.osuId,
             })
-            .from(schema.joinPooledBeatmaps)
-            .where(
-              and(
-                eq(
-                  schema.joinPooledBeatmaps.tournamentsPooledInId,
-                  tournamentId
-                ),
-                inArray(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapIds)
-              )
+            .from(schema.beatmaps)
+            .where(inArray(schema.beatmaps.osuId, beatmapOsuIds));
+
+          const existingMap = new Map<number, number>();
+          beatmapRows.forEach((beatmap) => {
+            existingMap.set(Number(beatmap.osuId), beatmap.id);
+          });
+
+          const missingOsuIds = beatmapOsuIds.filter(
+            (osuId) => !existingMap.has(osuId)
+          );
+
+          if (missingOsuIds.length > 0) {
+            const placeholderRows = missingOsuIds.map((osuId) =>
+              createPlaceholderBeatmap(osuId, input.ruleset)
             );
 
-          const existingJoinSet = new Set(
-            existingJoins.map((row) => row.beatmapId)
-          );
+            if (placeholderRows.length > 0) {
+              const insertedBeatmaps = await tx
+                .insert(schema.beatmaps)
+                .values(placeholderRows)
+                .onConflictDoNothing({
+                  target: schema.beatmaps.osuId,
+                })
+                .returning({
+                  id: schema.beatmaps.id,
+                  osuId: schema.beatmaps.osuId,
+                });
 
-          const joinValues = beatmapIdsForJoin.filter(
-            (value) => !existingJoinSet.has(value.pooledBeatmapsId)
-          );
+              insertedBeatmaps.forEach((beatmap) => {
+                existingMap.set(Number(beatmap.osuId), beatmap.id);
+              });
+            }
 
-          if (joinValues.length > 0) {
-            await tx
-              .insert(schema.joinPooledBeatmaps)
-              .values(joinValues)
-              .onConflictDoNothing();
+            if (missingOsuIds.some((osuId) => !existingMap.has(osuId))) {
+              const refreshedBeatmaps = await tx
+                .select({
+                  id: schema.beatmaps.id,
+                  osuId: schema.beatmaps.osuId,
+                })
+                .from(schema.beatmaps)
+                .where(inArray(schema.beatmaps.osuId, missingOsuIds));
+
+              refreshedBeatmaps.forEach((beatmap) => {
+                existingMap.set(Number(beatmap.osuId), beatmap.id);
+              });
+            }
+
+            missingOsuIds.forEach((osuId) => beatmapsToQueue.add(osuId));
+          }
+
+          const beatmapIdsForJoin = beatmapOsuIds
+            .map((osuId) => {
+              const beatmapId = existingMap.get(osuId);
+              if (!beatmapId) {
+                return null;
+              }
+
+              return {
+                pooledBeatmapsId: beatmapId,
+                tournamentsPooledInId: tournamentId,
+              } satisfies typeof schema.joinPooledBeatmaps.$inferInsert;
+            })
+            .filter(
+              Boolean
+            ) as (typeof schema.joinPooledBeatmaps.$inferInsert)[];
+
+          if (beatmapIdsForJoin.length > 0) {
+            const beatmapIds = beatmapIdsForJoin.map(
+              (value) => value.pooledBeatmapsId
+            );
+
+            const existingJoins = await tx
+              .select({
+                beatmapId: schema.joinPooledBeatmaps.pooledBeatmapsId,
+              })
+              .from(schema.joinPooledBeatmaps)
+              .where(
+                and(
+                  eq(
+                    schema.joinPooledBeatmaps.tournamentsPooledInId,
+                    tournamentId
+                  ),
+                  inArray(
+                    schema.joinPooledBeatmaps.pooledBeatmapsId,
+                    beatmapIds
+                  )
+                )
+              );
+
+            const existingJoinSet = new Set(
+              existingJoins.map((row) => row.beatmapId)
+            );
+
+            const joinValues = beatmapIdsForJoin.filter(
+              (value) => !existingJoinSet.has(value.pooledBeatmapsId)
+            );
+
+            if (joinValues.length > 0) {
+              await tx
+                .insert(schema.joinPooledBeatmaps)
+                .values(joinValues)
+                .onConflictDoNothing();
+            }
           }
         }
-      }
 
-      return { id: tournamentId };
-    });
+        return { id: tournamentId };
+      })
+    );
 
     const queueTasks: Array<{
       kind: 'match' | 'beatmap';

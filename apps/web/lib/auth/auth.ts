@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { betterAuth } from 'better-auth';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createFieldAttribute } from 'better-auth/db';
 import {
@@ -396,6 +397,115 @@ export const auth = betterAuth({
     }),
     nextCookies(), // must be the last plugin
   ],
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      const path = ctx.path ?? '';
+      const newSession = ctx.context.newSession;
+
+      const formatActor = (candidate: unknown): string => {
+        if (!candidate || typeof candidate !== 'object') {
+          return 'anonymous';
+        }
+
+        const sessionCandidate = candidate as {
+          user?: { osuId?: number | string | null } | null;
+          dbUser?: { id?: number | null } | null;
+          dbPlayer?: { osuId?: number | string | bigint | null } | null;
+        };
+
+        const normalize = (value: unknown): string | null => {
+          if (typeof value === 'bigint') {
+            return value.toString();
+          }
+
+          if (typeof value === 'number' || typeof value === 'string') {
+            return String(value);
+          }
+
+          return null;
+        };
+
+        const parts: string[] = [];
+
+        if (sessionCandidate.dbUser?.id != null) {
+          parts.push(`user:${sessionCandidate.dbUser.id}`);
+        }
+
+        const osuId =
+          normalize(sessionCandidate.user?.osuId) ??
+          normalize(sessionCandidate.dbPlayer?.osuId);
+
+        if (osuId) {
+          parts.push(`osu:${osuId}`);
+        }
+
+        return parts.length > 0 ? parts.join(' ') : 'anonymous';
+      };
+
+      const logAuthEvent = (
+        level: 'info' | 'error',
+        message: string,
+        extra?: Record<string, string | number | undefined>
+      ) => {
+        const parts = [`[auth] ${message}`];
+
+        Object.entries(extra ?? {}).forEach(([key, value]) => {
+          if (value === undefined) {
+            return;
+          }
+
+          parts.push(`${key}=${value}`);
+        });
+
+        const line = parts.join(' ');
+
+        if (level === 'error') {
+          console.error(line);
+          return;
+        }
+
+        console.info(line);
+      };
+
+      if (newSession) {
+        const actor = formatActor(newSession);
+        const sessionId =
+          (newSession as { session?: { id?: string; sessionId?: string } })
+            .session?.id ??
+          (newSession as { session?: { id?: string; sessionId?: string } })
+            .session?.sessionId;
+
+        logAuthEvent('info', 'login', {
+          path,
+          user: actor,
+          session: sessionId,
+        });
+
+        return;
+      }
+
+      if (path === '/sign-out') {
+        const actor = formatActor(
+          ctx.context.session ?? ctx.context.newSession
+        );
+        const returned = ctx.context.returned;
+        const isError = returned instanceof APIError;
+
+        const errorDetail = isError
+          ? typeof (returned as { code?: unknown }).code === 'string'
+            ? (returned as { code?: string }).code
+            : (returned as { message?: string }).message
+          : undefined;
+
+        logAuthEvent(isError ? 'error' : 'info', 'logout', {
+          user: actor,
+          status: isError ? 'error' : 'ok',
+          path,
+          error: errorDetail,
+        });
+      }
+    }),
+  },
 });
 
 export type AppSession = typeof auth.$Infer.Session;
