@@ -42,6 +42,7 @@ class SubmitTournamentTestDb {
 
   private createTransaction() {
     return {
+      execute: async () => undefined,
       query: this.query,
       insert: (table: unknown) => {
         if (table === schema.tournaments) {
