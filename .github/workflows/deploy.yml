@@ -81,6 +81,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          timeout: 6000
+          command_timeout: 6000
           script: |
             set -euo pipefail
             cd "$REMOTE_PATH"
