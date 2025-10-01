@@ -16,9 +16,9 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const rank = getValue<number>() ?? 0;
       return (
-        <span className="text-foreground text-center font-semibold">
-          #{rank}
-        </span>
+        <div className="flex w-full justify-center">
+          <span className="text-foreground font-semibold">#{rank}</span>
+        </div>
       );
     },
   },
