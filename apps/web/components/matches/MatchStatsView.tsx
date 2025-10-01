@@ -54,10 +54,10 @@ const StatsProcessingCard = React.memo(() => (
       </div>
 
       <div className="flex flex-col items-center gap-3 text-center">
-        <h3 className="text-xl font-semibold">Statistics Processing</h3>
+        <h3 className="text-xl font-semibold">Statistics Pending</h3>
         <p className="text-muted-foreground max-w-md text-sm">
-          Match statistics are being calculated. This typically takes a few
-          minutes. Check back soon for detailed performance insights.
+          Match statistics will appear after ratings are generated. Please check
+          back later.
         </p>
 
         <div className="mt-2 flex items-center gap-1.5">
