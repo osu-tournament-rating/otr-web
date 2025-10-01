@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LineChartIcon, Info, Calendar } from 'lucide-react';
 import PlayerRatingChartOptions, {
@@ -24,6 +24,77 @@ import PlayerRatingChartView from './PlayerRatingChartView';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
 import { RatingAdjustmentType } from '@otr/core/osu';
 
+type TimeRangeOption = 'all' | '1y' | '6m' | '3m' | 'custom';
+
+const DATE_PRESETS: Record<
+  Exclude<TimeRangeOption, 'all' | 'custom'>,
+  (endDate: Date) => Date
+> = {
+  '1y': (endDate) => {
+    const start = new Date(endDate);
+    start.setFullYear(start.getFullYear() - 1);
+    return start;
+  },
+  '6m': (endDate) => {
+    const start = new Date(endDate);
+    start.setMonth(start.getMonth() - 6);
+    return start;
+  },
+  '3m': (endDate) => {
+    const start = new Date(endDate);
+    start.setMonth(start.getMonth() - 3);
+    return start;
+  },
+};
+
+const toDateOnlyIso = (date: Date) => date.toISOString().split('T')[0];
+
+const parseDateParam = (value: string | null): Date | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const deriveTimeRange = (startDate?: Date, endDate?: Date): TimeRangeOption => {
+  if (!startDate && !endDate) {
+    return 'all';
+  }
+
+  if (!startDate || !endDate) {
+    return 'custom';
+  }
+
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return 'custom';
+  }
+
+  const endDateIso = toDateOnlyIso(endDate);
+
+  for (const [range, resolver] of Object.entries(DATE_PRESETS)) {
+    const expectedStart = resolver(new Date(endDate));
+    if (toDateOnlyIso(expectedStart) === toDateOnlyIso(startDate)) {
+      return range as TimeRangeOption;
+    }
+  }
+
+  // If the end date corresponds to today, re-evaluate presets against today's date
+  // to account for cases where the stored end date might lag behind the current day.
+  const todayIso = toDateOnlyIso(new Date());
+  if (endDateIso !== todayIso) {
+    for (const [range, resolver] of Object.entries(DATE_PRESETS)) {
+      const expectedStart = resolver(new Date());
+      if (toDateOnlyIso(expectedStart) === toDateOnlyIso(startDate)) {
+        return range as TimeRangeOption;
+      }
+    }
+  }
+
+  return 'custom';
+};
+
 interface PlayerRatingChartProps {
   adjustments: PlayerRatingAdjustment[];
   highestRating: number | undefined;
@@ -37,10 +108,11 @@ export default function PlayerRatingChart({
   const searchParams = useSearchParams();
   const { theme } = useTheme();
 
-  const [timeRange, setTimeRange] = useState<string>(
-    searchParams.get('dateMin') && searchParams.get('dateMax')
-      ? 'custom'
-      : 'all'
+  const dateMinParam = searchParams.get('dateMin');
+  const dateMaxParam = searchParams.get('dateMax');
+
+  const [timeRange, setTimeRange] = useState<TimeRangeOption>(() =>
+    deriveTimeRange(parseDateParam(dateMinParam), parseDateParam(dateMaxParam))
   );
   const [activeTab, setActiveTab] = useState<'rating' | 'volatility'>('rating');
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
@@ -49,16 +121,14 @@ export default function PlayerRatingChart({
       showDecay: true,
     });
 
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(
-    searchParams.get('dateMin')
-      ? new Date(searchParams.get('dateMin')!)
-      : undefined
-  );
-  const [dateTo, setDateTo] = useState<Date | undefined>(
-    searchParams.get('dateMax')
-      ? new Date(searchParams.get('dateMax')!)
-      : undefined
-  );
+  useEffect(() => {
+    const derivedRange = deriveTimeRange(
+      parseDateParam(dateMinParam),
+      parseDateParam(dateMaxParam)
+    );
+
+    setTimeRange((prev) => (prev === derivedRange ? prev : derivedRange));
+  }, [dateMinParam, dateMaxParam]);
 
   const { showDecay } = filterValues;
 
@@ -83,45 +153,41 @@ export default function PlayerRatingChart({
   }, [filteredData]);
 
   const handleTimeRangeChange = (value: string) => {
-    setTimeRange(value);
+    const nextRange = value as TimeRangeOption;
+    setTimeRange(nextRange);
 
     const now = new Date();
     const params = new URLSearchParams(searchParams.toString());
 
-    if (value === '1y') {
+    if (nextRange === '1y') {
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(now.getFullYear() - 1);
-      setDateFrom(oneYearAgo);
-      setDateTo(now);
 
       params.set('dateMin', oneYearAgo.toISOString().split('T')[0]);
       params.set('dateMax', now.toISOString().split('T')[0]);
-      router.push(`?${params.toString()}`, { scroll: false });
-    } else if (value === '6m') {
+      const query = params.toString();
+      router.push(query ? `?${query}` : '?', { scroll: false });
+    } else if (nextRange === '6m') {
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(now.getMonth() - 6);
-      setDateFrom(sixMonthsAgo);
-      setDateTo(now);
 
       params.set('dateMin', sixMonthsAgo.toISOString().split('T')[0]);
       params.set('dateMax', now.toISOString().split('T')[0]);
-      router.push(`?${params.toString()}`, { scroll: false });
-    } else if (value === '3m') {
+      const query = params.toString();
+      router.push(query ? `?${query}` : '?', { scroll: false });
+    } else if (nextRange === '3m') {
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(now.getMonth() - 3);
-      setDateFrom(threeMonthsAgo);
-      setDateTo(now);
 
       params.set('dateMin', threeMonthsAgo.toISOString().split('T')[0]);
       params.set('dateMax', now.toISOString().split('T')[0]);
-      router.push(`?${params.toString()}`, { scroll: false });
-    } else if (value === 'all') {
-      setDateFrom(undefined);
-      setDateTo(undefined);
-
+      const query = params.toString();
+      router.push(query ? `?${query}` : '?', { scroll: false });
+    } else if (nextRange === 'all') {
       params.delete('dateMin');
       params.delete('dateMax');
-      router.push(`?${params.toString()}`, { scroll: false });
+      const query = params.toString();
+      router.push(query ? `?${query}` : '?', { scroll: false });
     }
   };
 
@@ -158,7 +224,7 @@ export default function PlayerRatingChart({
                 <SelectItem value="1y">Last Year</SelectItem>
                 <SelectItem value="6m">Last 6 Months</SelectItem>
                 <SelectItem value="3m">Last 3 Months</SelectItem>
-                {dateFrom && dateTo && timeRange === 'custom' && (
+                {timeRange === 'custom' && (
                   <SelectItem value="custom">Custom Range</SelectItem>
                 )}
               </SelectContent>
