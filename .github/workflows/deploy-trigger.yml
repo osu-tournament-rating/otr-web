@@ -17,16 +17,15 @@ on:
         options:
           - Staging
           - Production
-      tag:
-        description: 'Docker image tag to deploy (required for manual production deploys)'
-        required: false
 
 jobs:
   determine:
+    name: Determine deployment context
     runs-on: ubuntu-latest
     outputs:
       target: ${{ steps.resolve.outputs.target }}
       deploy_tag: ${{ steps.resolve.outputs.deploy_tag }}
+      source_ref: ${{ steps.resolve.outputs.source_ref }}
     steps:
       - name: Resolve deployment context
         id: resolve
@@ -34,38 +33,63 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          event_name="${{ github.event_name }}"
+          current_ref="${{ github.ref }}"
+          current_ref_name="${{ github.ref_name }}"
+          current_sha="${{ github.sha }}"
+
+          if [[ "$event_name" == "workflow_dispatch" ]]; then
             target="${{ github.event.inputs.environment }}"
-            tag_input="${{ github.event.inputs.tag }}"
-            if [[ "$target" == "Production" ]]; then
-              if [[ -z "$tag_input" ]]; then
-                echo "Manual production deployments require the 'tag' input." >&2
+            dispatch_ref="${{ github.ref }}"
+            dispatch_ref_type="${{ github.ref_type }}"
+            dispatch_ref_name="${{ github.ref_name }}"
+
+            if [[ "$target" == "Staging" ]]; then
+              if [[ "$dispatch_ref_type" != "tag" && "$dispatch_ref_type" != "branch" ]]; then
+                echo "Staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
                 exit 1
               fi
-              resolved_tag="$tag_input"
-            else
-              resolved_tag="staging-latest"
+
+              echo "target=$target" >> "$GITHUB_OUTPUT"
+              echo "deploy_tag=staging-latest" >> "$GITHUB_OUTPUT"
+              echo "source_ref=$dispatch_ref" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
 
-            echo "target=$target" >> "$GITHUB_OUTPUT"
-            echo "deploy_tag=$resolved_tag" >> "$GITHUB_OUTPUT"
-            exit 0
+            if [[ "$target" == "Production" ]]; then
+              if [[ "$dispatch_ref_type" != "tag" ]]; then
+                echo "Production deployments must target a tag (selected: $dispatch_ref_type)." >&2
+                exit 1
+              fi
+
+              echo "target=$target" >> "$GITHUB_OUTPUT"
+              echo "deploy_tag=$dispatch_ref_name" >> "$GITHUB_OUTPUT"
+              echo "source_ref=$dispatch_ref" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Unsupported environment for manual deployment: $target" >&2
+            exit 1
           fi
 
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/master" ]]; then
+          if [[ "$event_name" == "push" && "$current_ref" == "refs/heads/master" ]]; then
             echo "target=Staging" >> "$GITHUB_OUTPUT"
             echo "deploy_tag=staging-latest" >> "$GITHUB_OUTPUT"
+            echo "source_ref=$current_sha" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.tag_name }}" != "" ]]; then
+          if [[ "$event_name" == "release" && "${{ github.event.release.tag_name }}" != "" ]]; then
+            release_tag="${{ github.event.release.tag_name }}"
             echo "target=Production" >> "$GITHUB_OUTPUT"
-            echo "deploy_tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+            echo "deploy_tag=$release_tag" >> "$GITHUB_OUTPUT"
+            echo "source_ref=$release_tag" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "target=none" >> "$GITHUB_OUTPUT"
           echo "deploy_tag=none" >> "$GITHUB_OUTPUT"
+          echo "source_ref=none" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: determine
@@ -74,4 +98,5 @@ jobs:
     with:
       target: ${{ needs.determine.outputs.target }}
       deploy_tag: ${{ needs.determine.outputs.deploy_tag }}
+      source_ref: ${{ needs.determine.outputs.source_ref }}
     secrets: inherit
