@@ -43,12 +43,12 @@ jobs:
             dispatch_ref_type="${{ github.ref_type }}"
             dispatch_ref_name="${{ github.ref_name }}"
 
-            if [[ "$dispatch_ref_type" != "tag" ]]; then
-              echo "Manual deployments must target a tag (selected: $dispatch_ref_type)." >&2
-              exit 1
-            fi
-
             if [[ "$target" == "Staging" ]]; then
+              if [[ "$dispatch_ref_type" != "tag" && "$dispatch_ref_type" != "branch" ]]; then
+                echo "Staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
+                exit 1
+              fi
+
               echo "target=$target" >> "$GITHUB_OUTPUT"
               echo "deploy_tag=staging-latest" >> "$GITHUB_OUTPUT"
               echo "source_ref=$dispatch_ref" >> "$GITHUB_OUTPUT"
@@ -56,6 +56,11 @@ jobs:
             fi
 
             if [[ "$target" == "Production" ]]; then
+              if [[ "$dispatch_ref_type" != "tag" ]]; then
+                echo "Production deployments must target a tag (selected: $dispatch_ref_type)." >&2
+                exit 1
+              fi
+
               echo "target=$target" >> "$GITHUB_OUTPUT"
               echo "deploy_tag=$dispatch_ref_name" >> "$GITHUB_OUTPUT"
               echo "source_ref=$dispatch_ref" >> "$GITHUB_OUTPUT"
