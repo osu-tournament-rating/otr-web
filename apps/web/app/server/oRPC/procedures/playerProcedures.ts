@@ -411,7 +411,6 @@ export const getPlayerBeatmaps = publicProcedure
   .handler(async ({ input, context }) => {
     const player = await findPlayerByKey(context.db, input.key);
 
-    // goofy ahh lil sql query
     const beatmapRows = await context.db
       .select({
         id: schema.beatmaps.id,
