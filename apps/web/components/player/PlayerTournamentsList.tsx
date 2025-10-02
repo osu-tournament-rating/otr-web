@@ -17,10 +17,12 @@ export default function PlayerTournamentsList({
   tournaments,
   adjustments,
 }: PlayerTournamentsListProps) {
-  const [showAll, setShowAll] = useState(false);
+  const NUM_INITIAL_DISPLAY = 3;
+  const NUM_LOAD_MORE = 25;
+  const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
 
-  // Get either all tournaments or just the most recent 3
-  const displayedTournaments = showAll ? tournaments : tournaments.slice(0, 3);
+  // Get tournaments up to the current display count
+  const displayedTournaments = tournaments.slice(0, displayCount);
 
   if (tournaments.length === 0) {
     return <NoResultsCard />;
@@ -44,13 +46,17 @@ export default function PlayerTournamentsList({
             adjustments={adjustments}
           />
         ))}
-        {tournaments.length > 3 && !showAll && (
+        {tournaments.length > displayCount && (
           <Button
             variant="outline"
             className="w-full justify-center"
-            onClick={() => setShowAll(true)}
+            onClick={() =>
+              setDisplayCount(
+                Math.min(displayCount + NUM_LOAD_MORE, tournaments.length)
+              )
+            }
           >
-            Show More ({tournaments.length - 3} more)
+            Show More ({tournaments.length - displayCount} more)
           </Button>
         )}
       </CardContent>
