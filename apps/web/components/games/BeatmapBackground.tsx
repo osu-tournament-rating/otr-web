@@ -2,15 +2,18 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface BeatmapBackgroundProps {
   beatmapsetId?: number;
   alt: string;
+  className?: string;
 }
 
 export default function BeatmapBackground({
   beatmapsetId,
   alt,
+  className,
 }: BeatmapBackgroundProps) {
   const [hasError, setHasError] = useState(false);
 
@@ -23,7 +26,7 @@ export default function BeatmapBackground({
 
   return (
     <Image
-      className="z-1 absolute rounded-xl object-cover"
+      className={cn('z-1 absolute object-cover', 'rounded-xl', className)}
       src={hasError ? fallbackSrc : beatmapSrc}
       alt={alt}
       fill

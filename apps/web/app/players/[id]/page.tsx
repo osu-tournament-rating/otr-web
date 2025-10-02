@@ -1,3 +1,4 @@
+import PlayerBeatmapsList from '@/components/player/PlayerBeatmapsList';
 import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
@@ -7,6 +8,7 @@ import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
+import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerDashboardStatsCached } from '@/lib/orpc/queries/playerDashboard';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
@@ -15,6 +17,9 @@ import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
+
+const INITIAL_BEATMAPS_LIMIT = 3;
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -99,6 +104,33 @@ async function getTournaments(
   }
 }
 
+async function getBeatmaps(
+  playerId: number,
+  ruleset?: Ruleset
+): Promise<PlayerBeatmapsResponse> {
+  if (!playerId || playerId <= 0) {
+    return {
+      beatmaps: [],
+      totalCount: 0,
+    };
+  }
+
+  try {
+    return await getPlayerBeatmapsCached(
+      playerId,
+      ruleset,
+      INITIAL_BEATMAPS_LIMIT,
+      0
+    );
+  } catch (error) {
+    console.error('Failed to fetch player beatmaps:', error);
+    return {
+      beatmaps: [],
+      totalCount: 0,
+    };
+  }
+}
+
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -111,6 +143,8 @@ export default async function PlayerPage(props: PageProps) {
     return notFound();
   }
 
+  const canonicalPlayerId = playerData.playerInfo.id;
+
   // Get the current ruleset from search params or default to Osu
   const currentRuleset = searchParams.ruleset
     ? (Number(searchParams.ruleset) as Ruleset)
@@ -121,8 +155,8 @@ export default async function PlayerPage(props: PageProps) {
 
   // Redirect to o!TR ID if the current URL uses a different search key
   if (
-    playerData.playerInfo.id &&
-    playerData.playerInfo.id.toString() !== decodedId
+    canonicalPlayerId &&
+    canonicalPlayerId.toString() !== decodedId
   ) {
     // Build query string from search params
     const queryString = new URLSearchParams(
@@ -144,6 +178,12 @@ export default async function PlayerPage(props: PageProps) {
     redirect(redirectUrl);
   }
 
+  // Get the list of tournament beatmaps the player has mapped
+  const playerBeatmapsResponse = await getBeatmaps(
+    canonicalPlayerId ?? 0,
+    currentRuleset
+  );
+
   const modStatsData = playerData.modStats?.filter(
     (stat) =>
       stat.count >=
@@ -162,7 +202,23 @@ export default async function PlayerPage(props: PageProps) {
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
-      {playerData.rating && playerData.rating.adjustments ? (
+      {!playerData.rating && (
+        <Card className="p-6 font-sans">
+          <PlayerCard
+            player={playerData.playerInfo}
+            ruleset={playerData.ruleset}
+          />
+          <Card className="gap-2 rounded-lg p-6 text-center">
+            <h2 className="text-xl font-semibold">No Rating Data Available</h2>
+            <p className="text-muted-foreground">
+              This player has no rating data for the selected ruleset.
+            </p>
+          </Card>
+        </Card>
+      )}
+
+      {/* Show rating data and charts if available */}
+      {playerData.rating && playerData.rating.adjustments && (
         <>
           <PlayerRatingStatsCard
             rating={playerData.rating}
@@ -203,27 +259,22 @@ export default async function PlayerPage(props: PageProps) {
               )}
             </div>
           )}
-          {/* Player tournaments list */}
-          <PlayerTournamentsList
-            tournaments={playerTournaments}
-            adjustments={playerData.rating.adjustments}
-          />
         </>
-      ) : (
-        // No ruleset data
-        <Card className="p-6 font-sans">
-          <PlayerCard
-            player={playerData.playerInfo}
-            ruleset={playerData.ruleset}
-          />
-          <Card className="gap-2 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold">No Data Available</h2>
-            <p className="text-muted-foreground">
-              This player has no rating data for the selected ruleset.
-            </p>
-          </Card>
-        </Card>
       )}
+
+      {/* Tournament history */}
+      <PlayerTournamentsList
+        tournaments={playerTournaments}
+        adjustments={playerData.rating?.adjustments ?? []}
+      />
+
+      {/* Pooled beatmaps */}
+      <PlayerBeatmapsList
+        playerId={canonicalPlayerId}
+        ruleset={currentRuleset}
+        initialBeatmaps={playerBeatmapsResponse.beatmaps}
+        totalCount={playerBeatmapsResponse.totalCount}
+      />
     </div>
   );
 }

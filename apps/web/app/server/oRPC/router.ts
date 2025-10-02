@@ -20,6 +20,7 @@ import {
 } from './procedures/scores/adminProcedures';
 import {
   getPlayer,
+  getPlayerBeatmaps,
   getPlayerDashboardStats,
   getPlayerTournaments,
 } from './procedures/playerProcedures';
@@ -118,6 +119,7 @@ export const router = base.router({
   },
   players: {
     get: getPlayer,
+    beatmaps: getPlayerBeatmaps,
     dashboard: getPlayerDashboardStats,
     tournaments: getPlayerTournaments,
   },
