@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DatabaseClient } from '@/lib/db';
@@ -12,8 +12,14 @@ import {
   type PlayerFrequency,
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerTournamentsRequestSchema } from '@/lib/orpc/schema/playerTournaments';
+import { TournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
-import { RatingAdjustmentType, Ruleset } from '@otr/core/osu';
+import {
+  RatingAdjustmentType,
+  Ruleset,
+  VerificationStatus,
+} from '@otr/core/osu';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
@@ -330,6 +336,69 @@ const buildMatchAggregates = (
     tournamentsPlayed,
   } as const;
 };
+
+export const getPlayerTournaments = publicProcedure
+  .input(PlayerTournamentsRequestSchema)
+  .output(TournamentListItemSchema.array())
+  .handler(async ({ input, context }) => {
+    const player = await findPlayerByKey(context.db, input.key);
+
+    const filters = [
+      sql`${schema.tournaments.id} IN (
+        SELECT DISTINCT ${schema.playerTournamentStats.tournamentId}
+        FROM ${schema.playerTournamentStats}
+        WHERE ${schema.playerTournamentStats.playerId} = ${player.id}
+      )`,
+    ];
+
+    if (input.ruleset != null) {
+      filters.push(eq(schema.tournaments.ruleset, input.ruleset));
+    }
+
+    if (input.dateMin) {
+      filters.push(gte(schema.tournaments.startTime, input.dateMin));
+    }
+
+    if (input.dateMax) {
+      filters.push(lte(schema.tournaments.endTime, input.dateMax));
+    }
+
+    const tournamentRows = await context.db
+      .select({
+        id: schema.tournaments.id,
+        created: schema.tournaments.created,
+        name: schema.tournaments.name,
+        abbreviation: schema.tournaments.abbreviation,
+        forumUrl: schema.tournaments.forumUrl,
+        rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+        ruleset: schema.tournaments.ruleset,
+        lobbySize: schema.tournaments.lobbySize,
+        startTime: schema.tournaments.startTime,
+        endTime: schema.tournaments.endTime,
+        verificationStatus: schema.tournaments.verificationStatus,
+        rejectionReason: schema.tournaments.rejectionReason,
+      })
+      .from(schema.tournaments)
+      .where(sql.join(filters, sql` AND `))
+      .orderBy(desc(schema.tournaments.endTime));
+
+    return tournamentRows.map((row) =>
+      TournamentListItemSchema.parse({
+        id: row.id,
+        created: row.created,
+        name: row.name,
+        abbreviation: row.abbreviation,
+        forumUrl: row.forumUrl,
+        rankRangeLowerBound: row.rankRangeLowerBound,
+        ruleset: row.ruleset as Ruleset,
+        lobbySize: row.lobbySize,
+        startTime: row.startTime ?? null,
+        endTime: row.endTime ?? null,
+        verificationStatus: row.verificationStatus as VerificationStatus,
+        rejectionReason: row.rejectionReason,
+      })
+    );
+  });
 
 export const getPlayerDashboardStats = publicProcedure
   .input(PlayerDashboardRequestSchema)

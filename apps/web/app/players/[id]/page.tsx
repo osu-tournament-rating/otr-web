@@ -5,9 +5,12 @@ import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
+import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
 import { getPlayerDashboardStatsCached } from '@/lib/orpc/queries/playerDashboard';
+import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
 import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
+import { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
@@ -66,6 +69,36 @@ async function getPlayerData(
   }
 }
 
+async function getTournaments(
+  key: string,
+  searchParams: { [key: string]: string | string[] | undefined }
+): Promise<TournamentListItem[]> {
+  const decodedKey = decodeURIComponent(key);
+
+  const dateMin = searchParams.dateMin
+    ? new Date(searchParams.dateMin as string)
+    : undefined;
+  const dateMax = searchParams.dateMax
+    ? new Date(searchParams.dateMax as string)
+    : undefined;
+
+  const ruleset = searchParams.ruleset
+    ? (Number(searchParams.ruleset) as Ruleset)
+    : undefined;
+
+  try {
+    return await getPlayerTournamentsCached(
+      decodedKey,
+      dateMin,
+      dateMax,
+      ruleset
+    );
+  } catch (error) {
+    console.error('Failed to fetch player tournaments:', error);
+    return [];
+  }
+}
+
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -77,6 +110,14 @@ export default async function PlayerPage(props: PageProps) {
   if (!playerData) {
     return notFound();
   }
+
+  // Get the current ruleset from search params or default to Osu
+  const currentRuleset = searchParams.ruleset
+    ? (Number(searchParams.ruleset) as Ruleset)
+    : Ruleset.Osu;
+
+  // Get the list of tournaments that the player has participated in
+  const playerTournaments = await getTournaments(decodedId, searchParams);
 
   // Redirect to o!TR ID if the current URL uses a different search key
   if (
@@ -102,11 +143,6 @@ export default async function PlayerPage(props: PageProps) {
 
     redirect(redirectUrl);
   }
-
-  // Get the current ruleset from search params or default to Osu
-  const currentRuleset = searchParams.ruleset
-    ? (Number(searchParams.ruleset) as Ruleset)
-    : Ruleset.Osu;
 
   const modStatsData = playerData.modStats?.filter(
     (stat) =>
@@ -167,6 +203,11 @@ export default async function PlayerPage(props: PageProps) {
               )}
             </div>
           )}
+          {/* Player tournaments list */}
+          <PlayerTournamentsList
+            tournaments={playerTournaments}
+            adjustments={playerData.rating.adjustments}
+          />
         </>
       ) : (
         // No ruleset data

@@ -1,10 +1,10 @@
 import { cache } from 'react';
 
 import { orpc } from '@/lib/orpc/orpc';
-import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
+import type { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 
-export type PlayerDashboardRequest = {
+export type PlayerTournamentsRequest = {
   key: string;
   dateMin?: Date;
   dateMax?: Date;
@@ -14,13 +14,13 @@ export type PlayerDashboardRequest = {
 const toISOStringOrUndefined = (value?: Date) =>
   value ? value.toISOString() : undefined;
 
-export async function getPlayerDashboardStats({
+export async function getPlayerTournaments({
   key,
   dateMin,
   dateMax,
   ruleset,
-}: PlayerDashboardRequest): Promise<PlayerDashboardStats> {
-  return orpc.players.dashboard({
+}: PlayerTournamentsRequest): Promise<TournamentListItem[]> {
+  return orpc.players.tournaments({
     key,
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
@@ -28,7 +28,7 @@ export async function getPlayerDashboardStats({
   });
 }
 
-export const getPlayerDashboardStatsCached = cache(
+export const getPlayerTournamentsCached = cache(
   async (key: string, dateMin?: Date, dateMax?: Date, ruleset?: Ruleset) =>
-    getPlayerDashboardStats({ key, dateMin, dateMax, ruleset })
+    getPlayerTournaments({ key, dateMin, dateMax, ruleset })
 );
