@@ -21,7 +21,6 @@ import {
   Award,
   Music,
   ExternalLink,
-  TrendingUp,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
