@@ -530,6 +530,30 @@ export const getTournament = publicProcedure
           statsPlayerDefaultRuleset: schema.players.defaultRuleset,
           statsPlayerOsuLastFetch: schema.players.osuLastFetch,
           statsPlayerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
+
+          // correlated subqueries as raw SQL
+          ratingBefore: sql<number>`
+            (
+              SELECT ra.rating_before
+              FROM rating_adjustments ra
+              INNER JOIN matches m2 ON m2.id = ra.match_id
+              WHERE ra.player_id = ${schema.players.id}
+                AND m2.tournament_id = ${schema.playerTournamentStats.tournamentId}
+              ORDER BY ra.timestamp ASC
+              LIMIT 1
+            )
+          `,
+          ratingAfter: sql<number>`
+            (
+              SELECT ra.rating_after
+              FROM rating_adjustments ra
+              INNER JOIN matches m2 ON m2.id = ra.match_id
+              WHERE ra.player_id = ${schema.players.id}
+                AND m2.tournament_id = ${schema.playerTournamentStats.tournamentId}
+              ORDER BY ra.timestamp DESC
+              LIMIT 1
+            )
+          `,
         })
         .from(schema.playerTournamentStats)
         .leftJoin(
@@ -556,6 +580,8 @@ export const getTournament = publicProcedure
         averageAccuracy: normalizeStatNumber(stat.averageAccuracy),
         teammateIds: stat.teammateIds ?? [],
         matchWinRate: stat.matchWinRate,
+        ratingBefore: stat.ratingBefore ?? 0,
+        ratingAfter: stat.ratingAfter ?? 0,
         player:
           stat.statsPlayerId != null
             ? {

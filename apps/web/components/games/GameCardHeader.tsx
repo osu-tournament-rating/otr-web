@@ -87,6 +87,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
               notes={game.adminNotes}
               entity={AdminNoteRouteTarget.Game}
               entityId={game.id}
+              darkMode={true}
             />
             <GameAdminView game={game} />
           </div>
