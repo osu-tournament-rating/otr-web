@@ -17,7 +17,9 @@ import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
+import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
+
+const INITIAL_BEATMAPS_LIMIT = 3;
 
 type PageProps = {
   params: Promise<{ id: string }>; // Player search key from path
@@ -103,16 +105,29 @@ async function getTournaments(
 }
 
 async function getBeatmaps(
-  key: string,
+  playerId: number,
   ruleset?: Ruleset
-): Promise<PlayerBeatmapStats[]> {
-  const decodedKey = decodeURIComponent(key);
+): Promise<PlayerBeatmapsResponse> {
+  if (!playerId || playerId <= 0) {
+    return {
+      beatmaps: [],
+      totalCount: 0,
+    };
+  }
 
   try {
-    return await getPlayerBeatmapsCached(decodedKey, ruleset);
+    return await getPlayerBeatmapsCached(
+      playerId,
+      ruleset,
+      INITIAL_BEATMAPS_LIMIT,
+      0
+    );
   } catch (error) {
     console.error('Failed to fetch player beatmaps:', error);
-    return [];
+    return {
+      beatmaps: [],
+      totalCount: 0,
+    };
   }
 }
 
@@ -128,6 +143,8 @@ export default async function PlayerPage(props: PageProps) {
     return notFound();
   }
 
+  const canonicalPlayerId = playerData.playerInfo.id;
+
   // Get the current ruleset from search params or default to Osu
   const currentRuleset = searchParams.ruleset
     ? (Number(searchParams.ruleset) as Ruleset)
@@ -136,13 +153,10 @@ export default async function PlayerPage(props: PageProps) {
   // Get the list of tournaments that the player has participated in
   const playerTournaments = await getTournaments(decodedId, searchParams);
 
-  // Get the list of tournament beatmaps the player has mapped
-  const playerBeatmaps = await getBeatmaps(decodedId, currentRuleset);
-
   // Redirect to o!TR ID if the current URL uses a different search key
   if (
-    playerData.playerInfo.id &&
-    playerData.playerInfo.id.toString() !== decodedId
+    canonicalPlayerId &&
+    canonicalPlayerId.toString() !== decodedId
   ) {
     // Build query string from search params
     const queryString = new URLSearchParams(
@@ -163,6 +177,12 @@ export default async function PlayerPage(props: PageProps) {
 
     redirect(redirectUrl);
   }
+
+  // Get the list of tournament beatmaps the player has mapped
+  const playerBeatmapsResponse = await getBeatmaps(
+    canonicalPlayerId ?? 0,
+    currentRuleset
+  );
 
   const modStatsData = playerData.modStats?.filter(
     (stat) =>
@@ -249,7 +269,12 @@ export default async function PlayerPage(props: PageProps) {
       />
 
       {/* Pooled beatmaps */}
-      <PlayerBeatmapsList beatmaps={playerBeatmaps} />
+      <PlayerBeatmapsList
+        playerId={canonicalPlayerId}
+        ruleset={currentRuleset}
+        initialBeatmaps={playerBeatmapsResponse.beatmaps}
+        totalCount={playerBeatmapsResponse.totalCount}
+      />
     </div>
   );
 }

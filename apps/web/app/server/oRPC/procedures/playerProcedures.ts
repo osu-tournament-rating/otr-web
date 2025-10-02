@@ -7,6 +7,7 @@ import * as schema from '@otr/core/db/schema';
 import {
   PlayerBeatmapsRequestSchema,
   PlayerBeatmapStatsSchema,
+  PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
 import {
   PlayerDashboardRequestSchema,
@@ -407,9 +408,118 @@ export const getPlayerTournaments = publicProcedure
 
 export const getPlayerBeatmaps = publicProcedure
   .input(PlayerBeatmapsRequestSchema)
-  .output(PlayerBeatmapStatsSchema.array())
+  .output(PlayerBeatmapsResponseSchema)
   .handler(async ({ input, context }) => {
-    const player = await findPlayerByKey(context.db, input.key);
+    const player = await context.db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, input.playerId),
+      columns: {
+        id: true,
+      },
+    });
+
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'Player not found',
+      });
+    }
+
+    const DEFAULT_LIMIT = 25;
+    const MAX_LIMIT = 50;
+    const limit = Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+    const offset = input.offset ?? 0;
+
+    const totalCountRow = await context.db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.pooledBeatmapsId})`,
+      })
+      .from(schema.joinBeatmapCreators)
+      .innerJoin(
+        schema.joinPooledBeatmaps,
+        eq(schema.joinBeatmapCreators.createdBeatmapsId, schema.joinPooledBeatmaps.pooledBeatmapsId)
+      )
+      .innerJoin(
+        schema.beatmaps,
+        eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
+      )
+      .where(
+        and(
+          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+        )
+      );
+
+    const totalCount = Number(totalCountRow[0]?.count ?? 0);
+
+    if (totalCount === 0) {
+      return PlayerBeatmapsResponseSchema.parse({
+        totalCount: 0,
+        beatmaps: [],
+      });
+    }
+
+    if (offset >= totalCount) {
+      return PlayerBeatmapsResponseSchema.parse({
+        totalCount,
+        beatmaps: [],
+      });
+    }
+
+    const tournamentCountExpr = sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`;
+    const gameCountExpr = sql<number>`COUNT(DISTINCT ${schema.games.id})`;
+
+    const beatmapOrderingRows = await context.db
+      .select({
+        beatmapId: schema.beatmaps.id,
+        osuId: schema.beatmaps.osuId,
+        tournamentCount: tournamentCountExpr,
+        gameCount: gameCountExpr,
+      })
+      .from(schema.beatmaps)
+      .innerJoin(
+        schema.joinBeatmapCreators,
+        eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
+      )
+      .innerJoin(
+        schema.joinPooledBeatmaps,
+        eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
+      )
+      .innerJoin(
+        schema.tournaments,
+        eq(
+          schema.tournaments.id,
+          schema.joinPooledBeatmaps.tournamentsPooledInId
+        )
+      )
+      .leftJoin(
+        schema.matches,
+        eq(schema.matches.tournamentId, schema.tournaments.id)
+      )
+      .leftJoin(
+        schema.games,
+        and(
+          eq(schema.games.beatmapId, schema.beatmaps.id),
+          eq(schema.games.matchId, schema.matches.id)
+        )
+      )
+      .where(
+        and(
+          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+        )
+      )
+      .groupBy(schema.beatmaps.id, schema.beatmaps.osuId)
+      .orderBy(desc(tournamentCountExpr), desc(gameCountExpr), desc(schema.beatmaps.osuId))
+      .limit(limit)
+      .offset(offset);
+
+    const beatmapIds = beatmapOrderingRows.map((row) => row.beatmapId);
+
+    if (!beatmapIds.length) {
+      return PlayerBeatmapsResponseSchema.parse({
+        totalCount,
+        beatmaps: [],
+      });
+    }
 
     const beatmapRows = await context.db
       .select({
@@ -479,12 +589,7 @@ export const getPlayerBeatmaps = publicProcedure
           eq(schema.games.matchId, schema.matches.id)
         )
       )
-      .where(
-        and(
-          eq(schema.joinBeatmapCreators.creatorsId, player.id),
-          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
-        )
-      )
+      .where(inArray(schema.beatmaps.id, beatmapIds))
       .groupBy(
         schema.beatmaps.id,
         schema.beatmaps.osuId,
@@ -562,11 +667,14 @@ export const getPlayerBeatmaps = publicProcedure
       }>;
     }
 
-    // Map of beatmap ID to aggregated data
     const beatmapsMap = new Map<number, BeatmapData>();
+    const beatmapIdSet = new Set(beatmapIds);
 
-    // Iterate over rows to count tournaments / mod usage
     for (const row of beatmapRows) {
+      if (!beatmapIdSet.has(row.id)) {
+        continue;
+      }
+
       if (!beatmapsMap.has(row.id)) {
         beatmapsMap.set(row.id, {
           id: row.id,
@@ -600,11 +708,9 @@ export const getPlayerBeatmaps = publicProcedure
         continue;
       }
 
-      // Update tournament and game counts
       beatmap.tournamentCount++;
       beatmap.gameCount += Number(row.gamesPlayed);
 
-      // Find the most common mod used in this tournament for this beatmap
       let mostCommonMod = Mods.None;
       if (row.modsUsed && row.modsUsed.length > 0) {
         const modCounts = new Map<number, number>();
@@ -613,8 +719,7 @@ export const getPlayerBeatmaps = publicProcedure
             continue;
           }
 
-          // Treat both None and NoFail as the same mod combination (no mod)
-          const convertedMod = mod == Mods.None ? Mods.NoFail : mod;
+          const convertedMod = mod === Mods.None ? Mods.NoFail : mod;
 
           modCounts.set(convertedMod, (modCounts.get(convertedMod) ?? 0) + 1);
         }
@@ -628,42 +733,44 @@ export const getPlayerBeatmaps = publicProcedure
         }
       }
 
-      // Append tournament info
-      if (beatmap) {
-        beatmap.tournaments.push({
-          id: row.tournamentId,
-          created: row.tournamentCreated,
-          name: row.tournamentName,
-          abbreviation: row.tournamentAbbreviation,
-          forumUrl: row.tournamentForumUrl,
-          rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-          ruleset: row.tournamentRuleset,
-          lobbySize: row.tournamentLobbySize,
-          startTime: row.tournamentStartTime,
-          endTime: row.tournamentEndTime,
-          verificationStatus: row.tournamentVerificationStatus,
-          rejectionReason: row.tournamentRejectionReason,
-          gamesPlayed: Number(row.gamesPlayed),
-          mostCommonMod: Number(mostCommonMod),
-        });
-      }
+      beatmap.tournaments.push({
+        id: row.tournamentId,
+        created: row.tournamentCreated,
+        name: row.tournamentName,
+        abbreviation: row.tournamentAbbreviation,
+        forumUrl: row.tournamentForumUrl,
+        rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+        ruleset: row.tournamentRuleset,
+        lobbySize: row.tournamentLobbySize,
+        startTime: row.tournamentStartTime,
+        endTime: row.tournamentEndTime,
+        verificationStatus: row.tournamentVerificationStatus,
+        rejectionReason: row.tournamentRejectionReason,
+        gamesPlayed: Number(row.gamesPlayed),
+        mostCommonMod: Number(mostCommonMod),
+      });
     }
 
-    // Convert to array and sort by tournament count, game count, and beatmap ID
-    const result = Array.from(beatmapsMap.values()).sort((a, b) => {
-      // First sort by total tournament count
-      const tournamentDiff = b.tournamentCount - a.tournamentCount;
-      if (tournamentDiff !== 0) return tournamentDiff;
-
-      // Then by total game count
-      const gamesDiff = b.gameCount - a.gameCount;
-      if (gamesDiff !== 0) return gamesDiff;
-
-      // Finally by highest osu! ID
-      return b.osuId - a.osuId;
+    const orderIndex = new Map<number, number>();
+    beatmapOrderingRows.forEach((row, index) => {
+      orderIndex.set(row.beatmapId, index);
     });
 
-    return PlayerBeatmapStatsSchema.array().parse(result);
+    const beatmaps = Array.from(beatmapsMap.values())
+      .sort((a, b) => {
+        const aIndex = orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bIndex = orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return aIndex - bIndex;
+      })
+      .map((beatmap) => ({
+        ...beatmap,
+        tournaments: beatmap.tournaments,
+      }));
+
+    return PlayerBeatmapsResponseSchema.parse({
+      totalCount,
+      beatmaps: PlayerBeatmapStatsSchema.array().parse(beatmaps),
+    });
   });
 
 export const getPlayerDashboardStats = publicProcedure

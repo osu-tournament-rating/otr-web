@@ -9,8 +9,10 @@ export const BeatmapTournamentListItemSchema = TournamentListItemSchema.extend({
 });
 
 export const PlayerBeatmapsRequestSchema = z.object({
-  key: z.string().min(1),
+  playerId: z.number().int().positive(),
   ruleset: RulesetSchema.optional(),
+  limit: z.number().int().positive().max(50).optional(),
+  offset: z.number().int().nonnegative().optional(),
 });
 
 export const PlayerBeatmapStatsSchema = z.object({
@@ -41,6 +43,11 @@ export const PlayerBeatmapStatsSchema = z.object({
 
 export type PlayerBeatmapsRequest = z.infer<typeof PlayerBeatmapsRequestSchema>;
 export type PlayerBeatmapStats = z.infer<typeof PlayerBeatmapStatsSchema>;
+export const PlayerBeatmapsResponseSchema = z.object({
+  totalCount: z.number().int().nonnegative(),
+  beatmaps: z.array(PlayerBeatmapStatsSchema),
+});
+export type PlayerBeatmapsResponse = z.infer<typeof PlayerBeatmapsResponseSchema>;
 export type BeatmapTournamentListItem = z.infer<
   typeof BeatmapTournamentListItemSchema
 >;

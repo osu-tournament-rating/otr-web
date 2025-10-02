@@ -1,29 +1,72 @@
 'use client';
 
+import { useState } from 'react';
+import { Loader2, Music } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Music } from 'lucide-react';
-import { useState } from 'react';
 import PlayerBeatmapCard from './PlayerBeatmapCard';
+import { orpc } from '@/lib/orpc/orpc';
 import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
+import { Ruleset } from '@otr/core/osu';
 
 interface PlayerBeatmapsListProps {
-  beatmaps: PlayerBeatmapStats[];
+  playerId?: number;
+  ruleset?: Ruleset;
+  initialBeatmaps: PlayerBeatmapStats[];
+  totalCount: number;
 }
 
 export default function PlayerBeatmapsList({
-  beatmaps,
+  playerId,
+  ruleset,
+  initialBeatmaps,
+  totalCount: initialTotal,
 }: PlayerBeatmapsListProps) {
-  const NUM_INITIAL_DISPLAY = 3;
-  const NUM_LOAD_MORE = 25;
-  const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
+  const LOAD_MORE_COUNT = 25;
+  const [beatmaps, setBeatmaps] = useState<PlayerBeatmapStats[]>(
+    initialBeatmaps
+  );
+  const [totalCount, setTotalCount] = useState(initialTotal);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Get beatmaps up to the current display count
-  const displayedBeatmaps = beatmaps.slice(0, displayCount);
-
-  if (beatmaps.length === 0) {
+  if (totalCount === 0) {
     return <NoResultsCard />;
   }
+
+  const remainingCount = Math.max(totalCount - beatmaps.length, 0);
+
+  const handleLoadMore = async () => {
+    if (isLoading || remainingCount === 0 || !playerId) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await orpc.players.beatmaps({
+        playerId,
+        ruleset,
+        offset: beatmaps.length,
+        limit: LOAD_MORE_COUNT,
+      });
+
+      const existingIds = new Set(beatmaps.map((beatmap) => beatmap.id));
+      const newBeatmaps = response.beatmaps.filter(
+        (beatmap) => !existingIds.has(beatmap.id)
+      );
+
+      setBeatmaps((prev) => [...prev, ...newBeatmaps]);
+      setTotalCount(response.totalCount);
+    } catch (error) {
+      console.error('Failed to load additional beatmaps', error);
+      setErrorMessage('Failed to load more beatmaps. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Card>
@@ -34,20 +77,29 @@ export default function PlayerBeatmapsList({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col space-y-4">
-        {displayedBeatmaps.map((beatmap) => (
+        {beatmaps.map((beatmap) => (
           <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
         ))}
-        {beatmaps.length > displayCount && (
+        {errorMessage && (
+          <p className="text-sm text-destructive" role="alert">
+            {errorMessage}
+          </p>
+        )}
+        {remainingCount > 0 && playerId && (
           <Button
             variant="outline"
             className="w-full justify-center"
-            onClick={() =>
-              setDisplayCount(
-                Math.min(displayCount + NUM_LOAD_MORE, beatmaps.length)
-              )
-            }
+            disabled={isLoading}
+            onClick={handleLoadMore}
           >
-            Show More ({beatmaps.length - displayCount} more)
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                Loading…
+              </>
+            ) : (
+              `Show More (${remainingCount} more)`
+            )}
           </Button>
         )}
       </CardContent>
@@ -65,7 +117,7 @@ function NoResultsCard() {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-muted-foreground">No beatmap data available</p>
+        <p className="text-muted-foreground">No pooled beatmaps found</p>
       </CardContent>
     </Card>
   );

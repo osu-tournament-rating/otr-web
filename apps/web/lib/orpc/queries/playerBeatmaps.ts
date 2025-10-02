@@ -2,23 +2,36 @@ import { cache } from 'react';
 
 import { orpc } from '@/lib/orpc/orpc';
 import { Ruleset } from '@otr/core/osu';
-import { PlayerBeatmapStats } from '../schema/playerBeatmaps';
-
-export type PlayerBeatmapsRequest = {
-  key: string;
-  ruleset?: Ruleset;
-};
+import {
+  PlayerBeatmapsRequest,
+  PlayerBeatmapsResponse,
+} from '../schema/playerBeatmaps';
 
 export async function getPlayerBeatmaps({
-  key,
+  playerId,
   ruleset,
-}: PlayerBeatmapsRequest): Promise<PlayerBeatmapStats[]> {
+  limit,
+  offset,
+}: PlayerBeatmapsRequest): Promise<PlayerBeatmapsResponse> {
   return orpc.players.beatmaps({
-    key,
+    playerId,
     ruleset,
+    limit,
+    offset,
   });
 }
 
 export const getPlayerBeatmapsCached = cache(
-  async (key: string, ruleset?: Ruleset) => getPlayerBeatmaps({ key, ruleset })
+  async (
+    playerId: number,
+    ruleset?: Ruleset,
+    limit?: number,
+    offset?: number
+  ) =>
+    getPlayerBeatmaps({
+      playerId,
+      ruleset,
+      limit,
+      offset,
+    })
 );
