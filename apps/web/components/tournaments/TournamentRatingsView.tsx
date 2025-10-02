@@ -201,6 +201,15 @@ export default function TournamentRatingsView({
     []
   );
 
+  const table = useReactTable({
+    data: playerStats,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: { sorting },
+  });
+
   const downloadCSV = useCallback(() => {
     const headers = [
       'Player',
@@ -214,17 +223,23 @@ export default function TournamentRatingsView({
       'Total Change',
     ];
 
-    const csvData = playerStats.map((stat) => [
-      stat.player.username,
-      stat.matchesWon,
-      stat.matchesLost,
-      stat.gamesWon,
-      stat.gamesLost,
-      stat.ratingBefore.toFixed(1),
-      stat.ratingAfter.toFixed(1),
-      stat.averageRatingDelta.toFixed(1),
-      (stat.averageRatingDelta * stat.matchesPlayed).toFixed(1),
-    ]);
+    const sortedRows = table.getRowModel().rows;
+
+    const csvData = sortedRows.map((row) => {
+      const stat = row.original;
+
+      return [
+        stat.player.username,
+        stat.matchesWon,
+        stat.matchesLost,
+        stat.gamesWon,
+        stat.gamesLost,
+        stat.ratingBefore.toFixed(1),
+        stat.ratingAfter.toFixed(1),
+        stat.averageRatingDelta.toFixed(1),
+        (stat.averageRatingDelta * stat.matchesPlayed).toFixed(1),
+      ];
+    });
 
     const csvContent = [
       headers.join(','),
@@ -241,16 +256,7 @@ export default function TournamentRatingsView({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [playerStats]);
-
-  const table = useReactTable({
-    data: playerStats,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: { sorting },
-  });
+  }, [table]);
 
   if (playerStats.length === 0) {
     return (
