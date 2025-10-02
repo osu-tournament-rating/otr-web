@@ -76,12 +76,7 @@ function NoResultsCard() {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <h3 className="text-primary text-2xl font-bold">
-          No tournaments found
-        </h3>
-        <p className="text-muted-foreground">
-          This player has not participated in any tournaments recently.
-        </p>
+        <p className="text-muted-foreground">No tournament data available</p>
       </CardContent>
     </Card>
   );
