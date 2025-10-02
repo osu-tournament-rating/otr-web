@@ -54,12 +54,10 @@ export default function PlayerTournamentCard({
           displayText={true}
         />
         <div className="flex w-full items-center gap-2 sm:w-auto">
-          {filteredAdjustments.length > 0 && (
-            <RatingDelta delta={totalRatingDelta} />
-          )}
           <span className="text-muted-foreground font-mono text-sm">
             {tournament.abbreviation}
           </span>
+          <RatingDelta delta={totalRatingDelta} />
         </div>
       </div>
 
