@@ -51,7 +51,7 @@ export default function PlayerTournamentMatchTable({
                   <TableCell>
                     {format(new Date(adjustment.timestamp), 'yyyy-MM-dd')}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[300px] truncate">
                     {adjustment.match ? (
                       <Link
                         href={`/matches/${adjustment.match.id}`}
