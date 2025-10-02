@@ -28,7 +28,6 @@ export default function ScoreCard({
   const isAdmin = session?.scopes?.includes(Roles.Admin);
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
-  const scoreTeam = score.team as Team;
 
   const hitJudgments = (() => {
     switch (score.ruleset) {
