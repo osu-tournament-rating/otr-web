@@ -21,7 +21,7 @@ import {
   Award,
   Music,
   ExternalLink,
-  // TrendingUp,
+  TrendingUp,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -36,7 +36,7 @@ import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentP
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
-// import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
+import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -242,7 +242,7 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
 
   return (
     <Card className="p-6 font-sans">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <BarChart3 className="text-primary h-6 w-6" />
         <h3 className="font-sans text-lg font-semibold">
           Tournament Statistics
@@ -314,16 +314,16 @@ export default async function Page({ params }: PageProps) {
       <TournamentHeader tournament={tournament} />
 
       <Tabs defaultValue="matches" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="matches">Matches</TabsTrigger>
           <TabsTrigger value="beatmaps">Beatmaps</TabsTrigger>
-          {/* <TabsTrigger value="ratings">Ratings</TabsTrigger> */}
+          <TabsTrigger value="ratings">Ratings</TabsTrigger>
           <TabsTrigger value="stats">Stats</TabsTrigger>
         </TabsList>
 
         <TabsContent value="matches" className="mt-4">
           <Card className="p-6 font-sans">
-            <div className="mb-4 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Swords className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">Matches</h3>
               <span className="text-muted-foreground text-sm">
@@ -337,7 +337,7 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="beatmaps" className="mt-4">
           <Card className="p-6 font-sans">
-            <div className="mb-4 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Music className="text-primary h-6 w-6" />
               <h3 className="font-sans text-lg font-semibold">
                 Pooled Beatmaps
@@ -356,23 +356,13 @@ export default async function Page({ params }: PageProps) {
           </Card>
         </TabsContent>
 
-        {/* TODO: Add ratings tab */}
-        {/* <TabsContent value="ratings" className="mt-4">
+        <TabsContent value="ratings" className="mt-4">
           <Card className="p-6 font-sans">
-            <div className="mb-4 flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">
-                Rating Changes
-              </h3>
-              <span className="text-sm text-muted-foreground">
-                ({tournament.playerTournamentStats?.length || 0})
-              </span>
-            </div>
             <TournamentRatingsView
               playerStats={tournament.playerTournamentStats ?? []}
             />
           </Card>
-        </TabsContent> */}
+        </TabsContent>
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <TournamentStatsCard tournament={tournament} />
