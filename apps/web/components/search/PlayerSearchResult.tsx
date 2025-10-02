@@ -30,7 +30,7 @@ export default function PlayerSearchResult({
       : `/players/${data.id}`;
 
   return (
-    <Card className="border-none bg-popover p-3 transition-colors hover:bg-popover/80 sm:p-4">
+    <Card className="bg-popover hover:bg-popover/80 border-none p-3 transition-colors sm:p-4">
       <Link
         href={href}
         onClick={closeDialog}
@@ -70,7 +70,7 @@ export default function PlayerSearchResult({
 
           {!!data.globalRank && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Globe className="h-4 w-4 flex-shrink-0 text-primary sm:h-4 sm:w-4" />
+              <Globe className="text-primary h-4 w-4 flex-shrink-0 sm:h-4 sm:w-4" />
               <span className="text-xs font-medium sm:text-sm">
                 #{data.globalRank.toLocaleString()}
               </span>
@@ -86,7 +86,7 @@ export default function PlayerSearchResult({
                   ruleset={data.ruleset}
                   width={20}
                   height={20}
-                  className="flex-shrink-0 fill-primary sm:h-5 sm:w-5"
+                  className="fill-primary flex-shrink-0 sm:h-5 sm:w-5"
                 />
               </SimpleTooltip>
             </div>

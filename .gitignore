@@ -25,6 +25,7 @@ build/
 # misc
 .DS_Store
 *.pem
+.tmp/
 
 # debug
 npm-debug.log*
@@ -53,3 +54,4 @@ yarn-error.log*
 CLAUDE.md
 remove-local-link.sh
 setup-local-link.sh
+**/dist/

@@ -109,7 +109,7 @@ function FeatureCardDescription({
   return (
     <CardDescription
       className={cn(
-        'text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground',
+        'text-foreground/90 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground transition-colors duration-300',
         className
       )}
       {...props}

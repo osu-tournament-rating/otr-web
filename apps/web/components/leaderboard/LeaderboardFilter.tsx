@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { leaderboardFilterSchema } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -59,18 +60,37 @@ export default function LeaderboardFilter({
 }: {
   filter: z.infer<typeof leaderboardFilterSchema>;
 }) {
+  const normalizedFilter = useMemo(
+    () => ({
+      ...defaultLeaderboardFilterValues,
+      ...filter,
+      tiers: filter.tiers ?? [],
+    }),
+    [filter]
+  );
+
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
     resolver: zodResolver(leaderboardFilterSchema),
-    values: filter,
-    defaultValues: defaultLeaderboardFilterValues,
-    resetOptions: {
-      keepDirtyValues: true,
-    },
+    defaultValues: normalizedFilter,
   });
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    form.reset(normalizedFilter);
+  }, [form, normalizedFilter]);
 
   const router = useRouter();
   const params = useSearchParams();
   const pathName = usePathname();
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+
+    if (!open) {
+      form.reset(normalizedFilter);
+    }
+  };
 
   const onSubmit = (schema: z.infer<typeof leaderboardFilterSchema>) => {
     const searchParams = createSearchParamsFromSchema(schema);
@@ -84,7 +104,7 @@ export default function LeaderboardFilter({
   };
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

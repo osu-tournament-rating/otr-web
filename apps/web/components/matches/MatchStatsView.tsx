@@ -44,26 +44,26 @@ interface MatchStatsViewProps {
 }
 
 const StatsProcessingCard = React.memo(() => (
-  <Card className="relative overflow-hidden bg-card/50 p-6 md:p-8">
+  <Card className="bg-card/50 relative overflow-hidden p-6 md:p-8">
     <div className="flex flex-col items-center justify-center gap-4 py-8 md:py-12">
       <div className="relative">
-        <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
-          <BarChart3 className="h-7 w-7 text-primary" />
+        <div className="bg-primary/20 absolute inset-0 animate-ping rounded-full" />
+        <div className="bg-primary/10 relative flex h-14 w-14 items-center justify-center rounded-full backdrop-blur-sm">
+          <BarChart3 className="text-primary h-7 w-7" />
         </div>
       </div>
 
       <div className="flex flex-col items-center gap-3 text-center">
-        <h3 className="text-xl font-semibold">Statistics Processing</h3>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Match statistics are being calculated. This typically takes a few
-          minutes. Check back soon for detailed performance insights.
+        <h3 className="text-xl font-semibold">Statistics Pending</h3>
+        <p className="text-muted-foreground max-w-md text-sm">
+          Match statistics will appear after ratings are generated. Please check
+          back later.
         </p>
 
         <div className="mt-2 flex items-center gap-1.5">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-0" />
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-150" />
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-300" />
+          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-0" />
+          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-150" />
+          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-300" />
         </div>
       </div>
     </div>
@@ -169,7 +169,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-3 h-7 px-1 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent sm:px-2"
+          className="hover:text-foreground data-[state=open]:bg-accent -ml-3 h-7 px-1 text-xs hover:bg-transparent sm:px-2"
           onClick={() => handleSort(column)}
           aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
           aria-pressed={isActive}
@@ -193,8 +193,8 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
     <Card className="p-5 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <BarChart3 className="h-5 w-5 text-primary" />
+          <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+            <BarChart3 className="text-primary h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold">Match Performance</h3>
@@ -202,14 +202,14 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         </div>
         {averageRatingInfo && (
           <SimpleTooltip content="Average rating of players in this match">
-            <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
+            <div className="border-primary/10 bg-primary/5 hover:border-primary/20 hover:bg-primary/10 ml-2 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-all duration-200 hover:shadow-sm">
               <TierIcon
                 tier={averageRatingInfo.tier}
                 subTier={averageRatingInfo.subTier}
                 width={20}
                 height={20}
               />
-              <span className="text-sm font-semibold text-foreground">
+              <span className="text-foreground text-sm font-semibold">
                 {averageRatingInfo.rating} TR
               </span>
             </div>
@@ -236,13 +236,13 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         <MatchTeamScoresChart games={match.games} />
       )}
 
-      <div className="overflow-hidden rounded-xl border bg-card/50">
-        <div className="border-b bg-muted/30 px-4 py-3.5">
+      <div className="bg-card/50 overflow-hidden rounded-xl border">
+        <div className="bg-muted/30 border-b px-4 py-3.5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold tracking-wide">
               Player Statistics
             </h4>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               Non-rating values are averaged
             </span>
           </div>
@@ -252,7 +252,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {/* Player column - always visible */}
-                <TableHead className="max-w-[160px] min-w-[160px] pl-5">
+                <TableHead className="min-w-[160px] max-w-[160px] pl-5">
                   <SortButton column="username">Player</SortButton>
                 </TableHead>
 
@@ -325,8 +325,8 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         </div>
       </div>
       {isTeamMatch && (
-        <div className="mt-6 rounded-lg border bg-muted/50 p-4">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="bg-muted/50 mt-6 rounded-lg border p-4">
+          <p className="text-muted-foreground text-center text-sm">
             Team statistics coming soon
           </p>
         </div>

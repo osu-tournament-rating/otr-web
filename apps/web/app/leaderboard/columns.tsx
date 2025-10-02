@@ -16,9 +16,9 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const rank = getValue<number>() ?? 0;
       return (
-        <span className="text-center font-semibold text-foreground">
-          #{rank}
-        </span>
+        <div className="flex w-full justify-center">
+          <span className="text-foreground font-semibold">#{rank}</span>
+        </div>
       );
     },
   },
@@ -32,7 +32,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <Link
           href={`/leaderboard?country=${country}`}
-          className="flex w-full gap-2 align-baseline font-medium text-muted-foreground"
+          className="text-muted-foreground flex w-full gap-2 align-baseline font-medium"
         >
           <CountryFlag
             tooltipContent={country}
@@ -55,7 +55,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
           <Image
             src={`https://a.ppy.sh/${player.osuId}`}
             alt={`${player.username} avatar`}
-            className="flex-shrink-0 rounded-full ring-2 ring-muted/20"
+            className="ring-muted/20 flex-shrink-0 rounded-full ring-2"
             width={32}
             height={32}
             unoptimized
@@ -64,7 +64,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
             href={`/players/${player.id}?ruleset=${row.original.ruleset}`}
             className="group"
           >
-            <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
+            <p className="text-foreground group-hover:text-primary max-w-[120px] truncate font-medium transition-colors duration-200 sm:max-w-full">
               {player.username}
             </p>
           </Link>
@@ -106,7 +106,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <div className="flex min-w-[60px] justify-center">
           <SimpleTooltip content={`${rating.toFixed(2)} TR`}>
-            <p className="font-medium text-foreground">{rating.toFixed(0)}</p>
+            <p className="text-foreground font-medium">{rating.toFixed(0)}</p>
           </SimpleTooltip>
         </div>
       );
@@ -118,7 +118,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const tournaments = getValue<number>() ?? 0;
       return (
-        <p className="text-center font-medium text-muted-foreground">
+        <p className="text-muted-foreground text-center font-medium">
           {tournaments}
         </p>
       );
@@ -130,7 +130,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const matches = getValue<number>() ?? 0;
       return (
-        <p className="text-center font-medium text-muted-foreground">
+        <p className="text-muted-foreground text-center font-medium">
           {matches}
         </p>
       );
@@ -143,7 +143,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       const rate = getValue<number>() ?? 0;
       const percentage = Math.round(rate * 100);
       return (
-        <p className="text-center font-medium text-muted-foreground">
+        <p className="text-muted-foreground text-center font-medium">
           {percentage}%
         </p>
       );

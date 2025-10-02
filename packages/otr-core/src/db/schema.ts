@@ -1212,8 +1212,8 @@ export const playerRatings = pgTable(
     ),
     index('ix_player_ratings_ruleset_rating').using(
       'btree',
-      table.ruleset.asc().nullsLast().op('float8_ops'),
-      table.rating.desc().nullsFirst().op('float8_ops')
+      table.ruleset.asc().nullsLast().op('int4_ops'),
+      table.rating.desc().nullsFirst().op('int4_ops')
     ),
     foreignKey({
       columns: [table.playerId],

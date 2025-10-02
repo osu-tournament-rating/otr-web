@@ -68,7 +68,7 @@ const SortButton = memo(
   }) => (
     <button
       onClick={() => onClick(field)}
-      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
+      className="hover:text-foreground flex items-center gap-1 whitespace-nowrap transition-colors"
     >
       {children}
       {sortField === field &&
@@ -122,7 +122,7 @@ const BeatmapRow = memo(
             href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-muted-foreground transition-colors hover:text-primary"
+            className="text-muted-foreground hover:text-primary text-xs transition-colors"
           >
             {beatmap.osuId}
           </Link>
@@ -139,8 +139,8 @@ const BeatmapRow = memo(
                   alt={`${beatmap.beatmapset?.title} cover`}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-muted">
-                  <Music className="h-3 w-3 text-muted-foreground" />
+                <div className="bg-muted flex h-full w-full items-center justify-center">
+                  <Music className="text-muted-foreground h-3 w-3" />
                 </div>
               )}
             </div>
@@ -151,12 +151,12 @@ const BeatmapRow = memo(
                 href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block transition-colors hover:text-primary"
+                className="hover:text-primary block transition-colors"
               >
                 <p className="max-w-[160px] truncate text-xs font-medium">
                   {beatmap.beatmapset?.title || 'Unknown Title'}
                 </p>
-                <p className="max-w-[140px] truncate text-xs text-muted-foreground">
+                <p className="text-muted-foreground max-w-[140px] truncate text-xs">
                   by {beatmap.beatmapset?.artist || 'Unknown Artist'}
                 </p>
               </Link>
@@ -219,7 +219,7 @@ const BeatmapRow = memo(
             {modData ? (
               <SingleModIcon mods={modData.mod} size={28} />
             ) : (
-              <span className="text-xs text-muted-foreground">N/A</span>
+              <span className="text-muted-foreground text-xs">N/A</span>
             )}
           </div>
         </td>
@@ -237,7 +237,7 @@ const BeatmapRow = memo(
                 href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex max-w-[120px] items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
               >
                 <User className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">
@@ -245,7 +245,7 @@ const BeatmapRow = memo(
                 </span>
               </Link>
             ) : (
-              <span className="text-xs text-muted-foreground">Unknown</span>
+              <span className="text-muted-foreground text-xs">Unknown</span>
             )}
           </div>
         </td>
@@ -269,11 +269,11 @@ export default function TournamentBeatmapsViewWithCheckboxes({
   if (beatmaps.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-muted-foreground">
+        <Music className="text-muted-foreground mb-4 h-12 w-12" />
+        <h3 className="text-muted-foreground text-lg font-semibold">
           No Beatmaps Found
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           This tournament has no pooled beatmaps.
         </p>
       </div>
@@ -287,13 +287,13 @@ export default function TournamentBeatmapsViewWithCheckboxes({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             {/* Header */}
-            <thead className="border-b bg-muted/50">
+            <thead className="bg-muted/50 border-b">
               <tr>
                 <th className={`${COLUMN_WIDTHS.checkbox} px-2 py-2`}>
                   {/* Checkbox column header - empty */}
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.osuId} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.osuId} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SortButton
                     field="osuId"
@@ -305,7 +305,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SortButton>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.beatmap} px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.beatmap} text-muted-foreground px-2 py-2 text-left text-xs font-medium tracking-wider`}
                 >
                   <SortButton
                     field="title"
@@ -317,7 +317,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SortButton>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.difficulty} px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.difficulty} text-muted-foreground px-2 py-2 text-left text-xs font-medium tracking-wider`}
                 >
                   <SortButton
                     field="difficulty"
@@ -329,7 +329,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SortButton>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.sr} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.sr} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
@@ -345,7 +345,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.length} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.length} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
@@ -361,7 +361,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.bpm} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.bpm} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
@@ -377,7 +377,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.cs} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.cs} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Circle Size">
                     <SortButton
@@ -391,7 +391,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.ar} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.ar} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Approach Rate">
                     <SortButton
@@ -405,7 +405,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.od} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.od} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Overall Difficulty">
                     <SortButton
@@ -419,7 +419,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.hp} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.hp} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="HP Drain Rate">
                     <SortButton
@@ -433,7 +433,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.mod} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.mod} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Most Common Mod">
                     <SortButton
@@ -447,7 +447,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.gameCount} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.gameCount} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SimpleTooltip content="Number of Games">
                     <div className="flex justify-center">
@@ -463,7 +463,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
                   </SimpleTooltip>
                 </th>
                 <th
-                  className={`${COLUMN_WIDTHS.creator} px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground`}
+                  className={`${COLUMN_WIDTHS.creator} text-muted-foreground px-2 py-2 text-center text-xs font-medium tracking-wider`}
                 >
                   <SortButton
                     field="creator"
@@ -478,7 +478,7 @@ export default function TournamentBeatmapsViewWithCheckboxes({
             </thead>
 
             {/* Body */}
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-border divide-y">
               {sortedBeatmaps.map((beatmap) => {
                 const modData = getMostCommonModForBeatmap(
                   beatmap.osuId,

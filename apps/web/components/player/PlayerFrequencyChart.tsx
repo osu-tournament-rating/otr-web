@@ -240,7 +240,7 @@ export default function PlayerFrequencyChart({
               >
                 {shouldUseFallback ? (
                   <div
-                    className="rounded-full bg-accent"
+                    className="bg-accent rounded-full"
                     style={{ width: avatarSize, height: avatarSize }}
                     aria-label={`${player.username} avatar`}
                   />
@@ -297,11 +297,11 @@ export default function PlayerFrequencyChart({
       const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
 
       return (
-        <div className="rounded-lg border bg-background p-3 shadow-lg">
+        <div className="bg-background rounded-lg border p-3 shadow-lg">
           <div className="flex items-center gap-3">
             {shouldUseFallback ? (
               <div
-                className="rounded-full bg-accent"
+                className="bg-accent rounded-full"
                 style={{ width: avatarSize, height: avatarSize }}
                 aria-label={`${data.username} avatar`}
               />
@@ -319,7 +319,7 @@ export default function PlayerFrequencyChart({
             )}
             <div>
               <p className="font-semibold">{data.username}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Matches played: {data.frequency}
               </p>
             </div>

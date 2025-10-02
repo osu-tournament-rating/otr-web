@@ -114,6 +114,10 @@ export default function GameCard({
     outcomeText = `Team ${TeamEnumHelper.getMetadata(team1).text} wins`;
   }
 
+  const redTeamScores = scoreMap[Team.Red] || [];
+  const blueTeamScores = scoreMap[Team.Blue] || [];
+  const noTeamScores = scoreMap[Team.NoTeam] || [];
+
   return (
     <div className="bg-secondary flex flex-col space-y-2 rounded-xl p-3">
       <GameCardHeader game={game} />
@@ -125,22 +129,24 @@ export default function GameCard({
         </div>
       ) : (
         <div className="flex flex-row flex-wrap gap-1 md:gap-0">
-          {/* Team containers */}
-          {Object.entries(scoreMap).map(([teamKey, scores]) => {
-            const teamEnumValue = parseInt(teamKey, 10) as Team;
-            if (isNaN(teamEnumValue) || Team[teamEnumValue] === undefined) {
-              return null;
-            }
-            const teamName = TeamEnumHelper.getMetadata(teamEnumValue).text;
+          {/* Left column: Red team scores */}
+          <div data-team="Red" className="team-container flex flex-col gap-1">
+            {redTeamScores.map(({ score, won }: ScoreMapItem) => (
+              <ScoreCard
+                key={score.id}
+                score={score}
+                won={won}
+                player={players.find((p) => p.id === score.playerId)}
+              />
+            ))}
 
-            return (
+            {/* No team scores below red team scores */}
+            {noTeamScores.length > 0 && (
               <div
-                key={teamKey}
-                data-team={teamName}
+                data-team="NoTeam"
                 className="team-container flex flex-col gap-1"
               >
-                {/* Score cards */}
-                {scores.map(({ score, won }) => (
+                {noTeamScores.map(({ score, won }: ScoreMapItem) => (
                   <ScoreCard
                     key={score.id}
                     score={score}
@@ -149,8 +155,20 @@ export default function GameCard({
                   />
                 ))}
               </div>
-            );
-          })}
+            )}
+          </div>
+
+          {/* Right column: Blue team scores */}
+          <div data-team="Blue" className="team-container flex flex-col gap-1">
+            {blueTeamScores.map(({ score, won }: ScoreMapItem) => (
+              <ScoreCard
+                key={score.id}
+                score={score}
+                won={won}
+                player={players.find((p) => p.id === score.playerId)}
+              />
+            ))}
+          </div>
         </div>
       )}
       {outcomeText && (

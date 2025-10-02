@@ -126,7 +126,7 @@ export function FilterReportView() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="size-6 text-primary" />
+            <FileText className="text-primary size-6" />
             Filter Report Lookup
           </CardTitle>
         </CardHeader>
@@ -180,10 +180,10 @@ export function FilterReportView() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-2xl">
-                  <ClipboardCheck className="size-6 text-primary" />
+                  <ClipboardCheck className="text-primary size-6" />
                   Filter Report #{report.id}
                 </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Generated on{' '}
                   {new Date(report.created).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -194,21 +194,21 @@ export function FilterReportView() {
                   })}
                 </p>
               </div>
-              <div className="flex gap-3 rounded-lg bg-muted/50 p-3 sm:gap-4">
+              <div className="bg-muted/50 flex gap-3 rounded-lg p-3 sm:gap-4">
                 <div className="flex-1 text-center sm:flex-initial sm:px-2">
                   <p className="text-xl font-bold text-green-600 sm:text-2xl dark:text-green-500">
                     {results.playersPassed}
                   </p>
-                  <p className="text-xs tracking-wider text-muted-foreground uppercase">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">
                     Passed
                   </p>
                 </div>
-                <div className="h-auto w-px bg-border" />
+                <div className="bg-border h-auto w-px" />
                 <div className="flex-1 text-center sm:flex-initial sm:px-2">
                   <p className="text-xl font-bold text-red-600 sm:text-2xl dark:text-red-500">
                     {results.playersFailed}
                   </p>
-                  <p className="text-xs tracking-wider text-muted-foreground uppercase">
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">
                     Failed
                   </p>
                 </div>
@@ -222,10 +222,10 @@ export function FilterReportView() {
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-semibold">
-                    <Filter className="size-4 text-muted-foreground" />
+                    <Filter className="text-muted-foreground size-4" />
                     Filter Criteria
                   </h3>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-muted-foreground text-sm">
                     {report.request.osuPlayerIds.length}{' '}
                     {report.request.osuPlayerIds.length === 1
                       ? 'player'
@@ -233,15 +233,15 @@ export function FilterReportView() {
                     checked
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/30 p-4 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-4 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   <div className="sm:col-span-2 md:col-span-1">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Ruleset
                     </span>
                     <p className="mt-0.5 flex items-center gap-1.5 font-medium">
                       <RulesetIcon
                         ruleset={report.request.ruleset}
-                        className="size-4 fill-primary"
+                        className="fill-primary size-4"
                       />
                       <span>
                         {
@@ -252,98 +252,98 @@ export function FilterReportView() {
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Min. Rating
                     </span>
                     <p
                       className={
                         report.request.minRating
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.minRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Max Rating
                     </span>
                     <p
                       className={
                         report.request.maxRating
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.maxRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Peak Rating Limit
                     </span>
                     <p
                       className={
                         report.request.peakRating
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.peakRating ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Min. Tournaments
                     </span>
                     <p
                       className={
                         report.request.tournamentsPlayed
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.tournamentsPlayed ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Min. Matches
                     </span>
                     <p
                       className={
                         report.request.matchesPlayed
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.matchesPlayed ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Max. Tournaments
                     </span>
                     <p
                       className={
                         report.request.maxTournamentsPlayed
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.maxTournamentsPlayed ?? '—'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Max. Matches
                     </span>
                     <p
                       className={
                         report.request.maxMatchesPlayed
                           ? 'mt-0.5 font-medium'
-                          : 'mt-0.5 text-sm text-muted-foreground/60'
+                          : 'text-muted-foreground/60 mt-0.5 text-sm'
                       }
                     >
                       {report.request.maxMatchesPlayed ?? '—'}

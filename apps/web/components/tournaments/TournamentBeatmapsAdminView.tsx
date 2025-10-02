@@ -138,10 +138,14 @@ export default function TournamentBeatmapsAdminView({
     try {
       const beatmapIds = Array.from(selectedBeatmapIds);
 
-      await orpc.tournaments.admin.manageBeatmaps({
+      const result = await orpc.tournaments.admin.manageBeatmaps({
         tournamentId,
         addBeatmapOsuIds: [],
         removeBeatmapIds: beatmapIds,
+      });
+
+      result.warnings?.forEach((warning) => {
+        toast.warning(warning);
       });
 
       const count = beatmapIds.length;
@@ -222,6 +226,10 @@ export default function TournamentBeatmapsAdminView({
 
       const { addedCount, skippedCount } = result;
 
+      result.warnings?.forEach((warning) => {
+        toast.warning(warning);
+      });
+
       if (addedCount === 0 && skippedCount > 0) {
         toast.success(
           `No new beatmaps were added. Skipped ${skippedCount} already pooled beatmap${
@@ -266,7 +274,7 @@ export default function TournamentBeatmapsAdminView({
   return (
     <div className="space-y-2">
       {/* Admin action bar */}
-      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+      <div className="bg-muted/30 flex items-center justify-between rounded-lg border p-3">
         <div className="flex items-center gap-2">
           <Checkbox
             checked={
@@ -276,7 +284,7 @@ export default function TournamentBeatmapsAdminView({
             onCheckedChange={handleSelectAll}
             aria-label="Select all beatmaps"
           />
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {selectedBeatmapIds.size > 0
               ? `${selectedBeatmapIds.size} selected`
               : 'Select all'}
@@ -311,7 +319,7 @@ export default function TournamentBeatmapsAdminView({
 
                 {/* Beatmap summary section */}
                 <div className="flex-1 space-y-3 overflow-y-auto py-2">
-                  <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="bg-muted/30 rounded-lg border p-3">
                     <p className="mb-2 text-sm font-medium">
                       Beatmaps to be removed:
                     </p>
@@ -331,14 +339,14 @@ export default function TournamentBeatmapsAdminView({
                         return (
                           <div
                             key={beatmapId}
-                            className="rounded px-2 py-1 text-sm hover:bg-muted/50"
+                            className="hover:bg-muted/50 rounded px-2 py-1 text-sm"
                           >
                             <div className="flex items-start gap-2">
                               <a
                                 href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
+                                className="text-muted-foreground hover:text-primary min-w-[3rem] underline decoration-dotted underline-offset-2"
                               >
                                 #{beatmap.osuId || beatmapId}
                               </a>
@@ -351,7 +359,7 @@ export default function TournamentBeatmapsAdminView({
                                   {artist} - {title} [{version}]
                                 </span>
                                 {isDeleted && (
-                                  <span className="ml-2 text-xs text-muted-foreground">
+                                  <span className="text-muted-foreground ml-2 text-xs">
                                     (Deleted from osu!)
                                   </span>
                                 )}
@@ -363,7 +371,7 @@ export default function TournamentBeatmapsAdminView({
                     </div>
                   </div>
 
-                  <div className="space-y-1 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground space-y-1 text-sm">
                     <p>
                       • This will unlink the selected beatmaps from the
                       tournament

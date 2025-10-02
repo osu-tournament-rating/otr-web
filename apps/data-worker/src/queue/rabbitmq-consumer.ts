@@ -38,6 +38,9 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
     });
     await channel.prefetch(this.options.prefetch ?? 1);
 
+    this.connection = connection;
+    this.channel = channel;
+
     const consumer = await channel.consume(
       this.options.queue,
       (message) =>
@@ -47,8 +50,6 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
       { noAck: false }
     );
 
-    this.connection = connection;
-    this.channel = channel;
     this.consumerTag = consumer.consumerTag;
     this.logger.info('Subscribed to queue', { queue: this.options.queue });
   }

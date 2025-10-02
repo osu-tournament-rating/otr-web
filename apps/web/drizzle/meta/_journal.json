@@ -22,6 +22,13 @@
       "when": 1758322785173,
       "tag": "0002_naive_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759261072251,
+      "tag": "0003_audit_triggers",
+      "breakpoints": true
     }
   ]
 }

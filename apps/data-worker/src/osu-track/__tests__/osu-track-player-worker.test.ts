@@ -4,7 +4,7 @@ import { type FetchPlayerOsuTrackMessage, MessagePriority } from '@otr/core';
 import { OsuTrackClient } from '../client';
 import { OsuTrackPlayerWorker } from '../worker';
 import type { QueueConsumer, QueueMessage } from '../../queue/types';
-import type { RateLimiter } from '../rate-limiter';
+import type { RateLimiter } from '../../rate-limiter';
 import type { Logger } from '../../logging/logger';
 
 class StubRateLimiter implements RateLimiter {
@@ -80,13 +80,12 @@ describe('OsuTrackPlayerWorker', () => {
       );
 
     const client = new OsuTrackClient({
-      baseUrl: 'https://osutrack-api.ameo.dev',
       fetchImpl,
     });
 
-    const receivedUpdates: Array<{
+    const received: Array<{
       message: FetchPlayerOsuTrackMessage;
-      pp: number;
+      results: Array<{ mode: number; updates: number }>;
     }> = [];
 
     const worker = new OsuTrackPlayerWorker({
@@ -94,8 +93,14 @@ describe('OsuTrackPlayerWorker', () => {
       client,
       rateLimiter,
       logger: noopLogger,
-      onUpdates: async ({ message, updates }) => {
-        receivedUpdates.push({ message, pp: updates[0]?.pp ?? -1 });
+      onPlayer: async ({ message, results }) => {
+        received.push({
+          message,
+          results: results.map((entry) => ({
+            mode: entry.mode,
+            updates: entry.updates.length,
+          })),
+        });
       },
     });
 
@@ -126,12 +131,17 @@ describe('OsuTrackPlayerWorker', () => {
 
     await queue.emit(message);
 
-    expect(rateLimiter.calls).toBe(1);
+    expect(rateLimiter.calls).toBe(4);
     expect(acked).toBe(1);
     expect(nacked).toBe(0);
-    expect(receivedUpdates).toHaveLength(1);
-    expect(receivedUpdates[0]?.message.osuPlayerId).toBe(7654321);
-    expect(receivedUpdates[0]?.pp).toBe(5123.45);
+    expect(received).toHaveLength(1);
+    expect(received[0]?.message.osuPlayerId).toBe(7654321);
+    expect(received[0]?.results).toEqual([
+      { mode: 0, updates: 1 },
+      { mode: 1, updates: 1 },
+      { mode: 2, updates: 1 },
+      { mode: 3, updates: 1 },
+    ]);
 
     await worker.stop();
   });

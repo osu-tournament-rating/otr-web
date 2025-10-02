@@ -15,3 +15,20 @@ export interface QueueConsumer<TPayload> {
   start(handler: QueueMessageHandler<TPayload>): Promise<void>;
   stop(): Promise<void>;
 }
+
+export type QueueMessagePayload<TMessage> = Omit<
+  TMessage,
+  keyof MessageMetadata
+>;
+
+export interface QueuePublishOptions {
+  metadata?: Partial<MessageMetadata>;
+}
+
+export interface QueuePublisher<TMessage> {
+  publish(
+    payload: QueueMessagePayload<TMessage>,
+    options?: QueuePublishOptions
+  ): Promise<TMessage>;
+  close(): Promise<void>;
+}

@@ -4,8 +4,20 @@ export interface Logger {
   error(message: string, extra?: Record<string, unknown>): void;
 }
 
+const log = (
+  writer: (...args: unknown[]) => void,
+  message: string,
+  extra?: Record<string, unknown>
+) => {
+  if (extra && Object.keys(extra).length > 0) {
+    writer.call(console, message, extra);
+  } else {
+    writer.call(console, message);
+  }
+};
+
 export const consoleLogger: Logger = {
-  info: (message, extra) => console.info(message, extra ?? {}),
-  warn: (message, extra) => console.warn(message, extra ?? {}),
-  error: (message, extra) => console.error(message, extra ?? {}),
+  info: (message, extra) => log(console.info, message, extra),
+  warn: (message, extra) => log(console.warn, message, extra),
+  error: (message, extra) => log(console.error, message, extra),
 };

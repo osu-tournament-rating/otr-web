@@ -16,21 +16,21 @@ export default function MatchSearchResult({
   const { query, closeDialog } = useContext(SearchDialogContext);
 
   return (
-    <Card className="border-none bg-popover p-3 transition-colors hover:bg-popover/80 sm:p-4">
+    <Card className="bg-popover hover:bg-popover/80 border-none p-3 transition-colors sm:p-4">
       <Link
         href={`/matches/${data.id}`}
         onClick={closeDialog}
         className="flex flex-row items-center gap-2 overflow-hidden sm:gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="flex w-full min-w-66 flex-row items-center gap-4 md:min-w-96">
-            <Swords className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
+          <div className="min-w-66 flex w-full flex-row items-center gap-4 md:min-w-96">
+            <Swords className="text-primary h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
             <span>{highlightMatch(data.name ?? 'Unknown match', query)}</span>
           </div>
 
-          <div className="flex w-full flex-col text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex w-full flex-col text-sm">
             <p>Played in</p>
-            <p className="font-bold break-words">{data.tournamentName}</p>
+            <p className="break-words font-bold">{data.tournamentName}</p>
           </div>
         </div>
       </Link>

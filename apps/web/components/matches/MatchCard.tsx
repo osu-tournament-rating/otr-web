@@ -47,7 +47,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   >
                     <BeatmapBackground
                       beatmapsetId={game.beatmap?.beatmapset?.osuId}
-                      alt={`${game.beatmap?.beatmapset?.title} cover`}
+                      alt={`${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} cover`}
                     />
                   </div>
                 </Fragment>

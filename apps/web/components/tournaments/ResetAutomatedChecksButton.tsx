@@ -38,13 +38,16 @@ export default function ResetAutomatedChecksButton({
   const handleReset = async () => {
     setIsLoading(true);
     try {
-      await orpc.tournaments.admin.resetAutomatedChecks({
+      const result = await orpc.tournaments.admin.resetAutomatedChecks({
         id: tournament.id,
         overrideVerifiedState: forceReset,
       });
-      toast.success('Automated checks reset successfully');
+      result.warnings?.forEach((warning) => {
+        toast.warning(warning);
+      });
+      toast.success('Queued automated checks re-run');
       setIsOpen(false);
-      window.location.reload();
+      setForceReset(false);
     } catch {
       toast.error('Failed to reset automated checks');
     } finally {
@@ -95,7 +98,7 @@ export default function ResetAutomatedChecksButton({
             />
             <label
               htmlFor="force-reset"
-              className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Reset verified and rejected data
             </label>

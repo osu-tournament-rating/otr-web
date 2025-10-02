@@ -3,15 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo \"TODO: implement worker dev server\"",
-    "build": "echo \"TODO\"",
-    "start": "echo \"TODO\"",
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --compile --outfile dist/data-worker",
+    "lint": "bunx eslint src --ext .ts",
     "test": "bun test"
   },
   "dependencies": {
     "@otr/core": "workspace:*",
     "amqplib": "^0.10.4",
-    "osu-api-v2-js": "^2.1.1"
+    "drizzle-orm": "^0.44.5",
+    "osu-api-v2-js": "^2.1.1",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.5",

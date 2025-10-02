@@ -66,11 +66,11 @@ export default function TournamentsByLobbySizeChart({
     if (!active || !payload?.length) return null;
 
     return (
-      <div className="rounded-lg border bg-background p-2 shadow-sm">
-        <p className="font-bold">Lobby Size: {label}</p>
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-background rounded-lg border p-2 shadow-sm">
+        <p className="font-bold">
           Tournaments: {formatChartNumber(payload[0].value || 0)}
         </p>
+        <p className="text-muted-foreground text-sm">Lobby Size: {label}</p>
       </div>
     );
   };
@@ -79,7 +79,7 @@ export default function TournamentsByLobbySizeChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-6 w-6 text-primary" />
+          <Users className="text-primary h-6 w-6" />
           Tournaments by Team Size
         </CardTitle>
         <CardDescription>Verified tournaments by team size</CardDescription>
