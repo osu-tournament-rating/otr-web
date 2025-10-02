@@ -1,6 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS otr;
-
-CREATE OR REPLACE FUNCTION otr.resolve_audit_user_id()
+CREATE OR REPLACE FUNCTION public.resolve_audit_user_id()
 RETURNS integer
 LANGUAGE plpgsql
 AS $$
@@ -20,7 +18,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.compute_audit_changes(
+CREATE OR REPLACE FUNCTION public.compute_audit_changes(
   old_row jsonb,
   new_row jsonb,
   tracked_columns text[]
@@ -62,7 +60,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.to_camel_case(identifier text)
+CREATE OR REPLACE FUNCTION public.to_camel_case(identifier text)
 RETURNS text
 LANGUAGE sql
 AS $$
@@ -72,18 +70,18 @@ AS $$
   END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.camelize_changes_json(payload jsonb)
+CREATE OR REPLACE FUNCTION public.camelize_changes_json(payload jsonb)
 RETURNS jsonb
 LANGUAGE sql
 AS $$
   SELECT COALESCE(
-    jsonb_object_agg(otr.to_camel_case(key), value),
+    jsonb_object_agg(public.to_camel_case(key), value),
     '{}'::jsonb
   )
   FROM jsonb_each(payload);
 $$;
 
-CREATE OR REPLACE FUNCTION otr.tournaments_audit_trigger()
+CREATE OR REPLACE FUNCTION public.tournaments_audit_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -125,13 +123,13 @@ BEGIN
     reference_id := OLD.id;
   END IF;
 
-  changes := otr.compute_audit_changes(old_row, new_row, tracked_columns);
+  changes := public.compute_audit_changes(old_row, new_row, tracked_columns);
 
   IF changes = '{}'::jsonb THEN
     RETURN NULL;
   END IF;
 
-  audit_user_id := otr.resolve_audit_user_id();
+  audit_user_id := public.resolve_audit_user_id();
   action_type := CASE TG_OP WHEN 'INSERT' THEN 0 WHEN 'UPDATE' THEN 1 ELSE 2 END;
   reference_id_fk := CASE TG_OP WHEN 'DELETE' THEN NULL ELSE reference_id END;
 
@@ -154,7 +152,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.matches_audit_trigger()
+CREATE OR REPLACE FUNCTION public.matches_audit_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -195,13 +193,13 @@ BEGIN
     reference_id := OLD.id;
   END IF;
 
-  changes := otr.compute_audit_changes(old_row, new_row, tracked_columns);
+  changes := public.compute_audit_changes(old_row, new_row, tracked_columns);
 
   IF changes = '{}'::jsonb THEN
     RETURN NULL;
   END IF;
 
-  audit_user_id := otr.resolve_audit_user_id();
+  audit_user_id := public.resolve_audit_user_id();
   action_type := CASE TG_OP WHEN 'INSERT' THEN 0 WHEN 'UPDATE' THEN 1 ELSE 2 END;
   reference_id_fk := CASE TG_OP WHEN 'DELETE' THEN NULL ELSE reference_id END;
 
@@ -224,7 +222,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.games_audit_trigger()
+CREATE OR REPLACE FUNCTION public.games_audit_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -267,13 +265,13 @@ BEGIN
     reference_id := OLD.id;
   END IF;
 
-  changes := otr.compute_audit_changes(old_row, new_row, tracked_columns);
+  changes := public.compute_audit_changes(old_row, new_row, tracked_columns);
 
   IF changes = '{}'::jsonb THEN
     RETURN NULL;
   END IF;
 
-  audit_user_id := otr.resolve_audit_user_id();
+  audit_user_id := public.resolve_audit_user_id();
   action_type := CASE TG_OP WHEN 'INSERT' THEN 0 WHEN 'UPDATE' THEN 1 ELSE 2 END;
   reference_id_fk := CASE TG_OP WHEN 'DELETE' THEN NULL ELSE reference_id END;
 
@@ -296,7 +294,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION otr.game_scores_audit_trigger()
+CREATE OR REPLACE FUNCTION public.game_scores_audit_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -345,13 +343,13 @@ BEGIN
     reference_id := OLD.id;
   END IF;
 
-  changes := otr.compute_audit_changes(old_row, new_row, tracked_columns);
+  changes := public.compute_audit_changes(old_row, new_row, tracked_columns);
 
   IF changes = '{}'::jsonb THEN
     RETURN NULL;
   END IF;
 
-  audit_user_id := otr.resolve_audit_user_id();
+  audit_user_id := public.resolve_audit_user_id();
   action_type := CASE TG_OP WHEN 'INSERT' THEN 0 WHEN 'UPDATE' THEN 1 ELSE 2 END;
   reference_id_fk := CASE TG_OP WHEN 'DELETE' THEN NULL ELSE reference_id END;
 
@@ -377,43 +375,43 @@ $$;
 DROP TRIGGER IF EXISTS trg_tournaments_audit ON tournaments;
 CREATE TRIGGER trg_tournaments_audit
 AFTER INSERT OR UPDATE OR DELETE ON tournaments
-FOR EACH ROW EXECUTE FUNCTION otr.tournaments_audit_trigger();
+FOR EACH ROW EXECUTE FUNCTION public.tournaments_audit_trigger();
 
 DROP TRIGGER IF EXISTS trg_matches_audit ON matches;
 CREATE TRIGGER trg_matches_audit
 AFTER INSERT OR UPDATE OR DELETE ON matches
-FOR EACH ROW EXECUTE FUNCTION otr.matches_audit_trigger();
+FOR EACH ROW EXECUTE FUNCTION public.matches_audit_trigger();
 
 DROP TRIGGER IF EXISTS trg_games_audit ON games;
 CREATE TRIGGER trg_games_audit
 AFTER INSERT OR UPDATE OR DELETE ON games
-FOR EACH ROW EXECUTE FUNCTION otr.games_audit_trigger();
+FOR EACH ROW EXECUTE FUNCTION public.games_audit_trigger();
 
 DROP TRIGGER IF EXISTS trg_game_scores_audit ON game_scores;
 CREATE TRIGGER trg_game_scores_audit
 AFTER INSERT OR UPDATE OR DELETE ON game_scores
-FOR EACH ROW EXECUTE FUNCTION otr.game_scores_audit_trigger();
+FOR EACH ROW EXECUTE FUNCTION public.game_scores_audit_trigger();
 
 UPDATE tournament_audits
-SET changes = otr.camelize_changes_json(changes)
+SET changes = public.camelize_changes_json(changes)
 WHERE changes IS NOT NULL
   AND jsonb_typeof(changes) = 'object'
   AND changes <> '{}'::jsonb;
 
 UPDATE match_audits
-SET changes = otr.camelize_changes_json(changes)
+SET changes = public.camelize_changes_json(changes)
 WHERE changes IS NOT NULL
   AND jsonb_typeof(changes) = 'object'
   AND changes <> '{}'::jsonb;
 
 UPDATE game_audits
-SET changes = otr.camelize_changes_json(changes)
+SET changes = public.camelize_changes_json(changes)
 WHERE changes IS NOT NULL
   AND jsonb_typeof(changes) = 'object'
   AND changes <> '{}'::jsonb;
 
 UPDATE game_score_audits
-SET changes = otr.camelize_changes_json(changes)
+SET changes = public.camelize_changes_json(changes)
 WHERE changes IS NOT NULL
   AND jsonb_typeof(changes) = 'object'
   AND changes <> '{}'::jsonb;
