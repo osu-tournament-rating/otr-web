@@ -10,13 +10,8 @@ const RATING_PRECISION = {
 } as const;
 
 const RATING_THRESHOLDS = {
-  HIGH_GAIN: 10,
-  HIGH_LOSS: -10,
-  EXTREME: 30,
-  MODERATE: 15,
+  HIGH: 20,
 } as const;
-
-export type RatingIntensity = 'low' | 'medium' | 'high';
 
 function getRatingChangeColor(delta: number | null): string {
   if (delta === null) return 'text-muted-foreground';
@@ -25,11 +20,11 @@ function getRatingChangeColor(delta: number | null): string {
   if (roundedDelta === 0) return 'text-gray-500';
 
   if (delta > 0) {
-    return delta > RATING_THRESHOLDS.HIGH_GAIN
-      ? 'text-green-600'
-      : 'text-green-500';
+    return delta > RATING_THRESHOLDS.HIGH
+      ? 'text-green-500'
+      : 'text-green-500/80';
   }
-  return delta < RATING_THRESHOLDS.HIGH_LOSS ? 'text-red-600' : 'text-red-500';
+  return delta < -RATING_THRESHOLDS.HIGH ? 'text-red-500' : 'text-red-500/80';
 }
 
 interface RatingDeltaProps {
