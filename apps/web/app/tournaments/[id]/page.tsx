@@ -147,7 +147,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
               asChild
               variant="ghost"
               size="icon"
-              className="h-6 w-6 hover:bg-white/20 hover:text-white"
+              className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
             >
               <Link
                 href={tournament.forumUrl}
@@ -155,7 +155,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
                 rel="noopener noreferrer"
                 aria-label="View tournament on osu! website"
               >
-                <ExternalLink className="h-3 w-3 text-white/70 hover:text-white" />
+                <ExternalLink className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
               </Link>
             </Button>
           </SimpleTooltip>

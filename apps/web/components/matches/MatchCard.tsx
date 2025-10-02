@@ -102,6 +102,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entity={AdminNoteRouteTarget.Match}
                 entityId={match.id}
                 entityDisplayName={match.name}
+                darkMode={true}
               />
               <MatchAdminView match={match} />
             </div>
