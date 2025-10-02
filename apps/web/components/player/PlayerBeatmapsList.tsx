@@ -15,7 +15,7 @@ export default function PlayerBeatmapsList({
   beatmaps,
 }: PlayerBeatmapsListProps) {
   const NUM_INITIAL_DISPLAY = 3;
-  const NUM_LOAD_MORE = 100;
+  const NUM_LOAD_MORE = 25;
   const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
 
   // Get beatmaps up to the current display count
@@ -42,8 +42,8 @@ export default function PlayerBeatmapsList({
             variant="outline"
             className="w-full justify-center"
             onClick={() =>
-              setDisplayCount((prev) =>
-                Math.min(prev + NUM_LOAD_MORE, beatmaps.length)
+              setDisplayCount(
+                Math.min(displayCount + NUM_LOAD_MORE, beatmaps.length)
               )
             }
           >
@@ -64,13 +64,8 @@ function NoResultsCard() {
           <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
-        <Card className="w-full gap-2 p-6 text-center">
-          <h2 className="text-xl font-semibold">No Beatmaps Found</h2>
-          <p className="text-muted-foreground">
-            This player has no pooled beatmaps for the selected ruleset.
-          </p>
-        </Card>
+      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
+        <p className="text-muted-foreground">No beatmap data available</p>
       </CardContent>
     </Card>
   );

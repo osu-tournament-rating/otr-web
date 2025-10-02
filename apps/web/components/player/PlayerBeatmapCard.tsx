@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
 import {
-  Timer,
+  Eye,
+  EyeOff,
+  Gamepad2,
   Music,
   Star,
+  Timer,
   Trophy,
-  ChevronDown,
-  ChevronUp,
-  Gamepad2,
 } from 'lucide-react';
 import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 import BeatmapBackground from '../games/BeatmapBackground';
@@ -116,12 +116,12 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
               showTournaments && 'bg-accent text-accent-foreground'
             )}
           >
-            {showTournaments ? 'Hide Tournaments' : 'Show Tournaments'}
             {showTournaments ? (
-              <ChevronUp className="h-4 w-4" />
+              <EyeOff className="h-4 w-4" />
             ) : (
-              <ChevronDown className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
             )}
+            Tournaments
           </Button>
         </div>
       </div>
