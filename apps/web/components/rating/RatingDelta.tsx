@@ -32,15 +32,6 @@ function getRatingChangeColor(delta: number | null): string {
   return delta < RATING_THRESHOLDS.HIGH_LOSS ? 'text-red-600' : 'text-red-500';
 }
 
-function getRatingChangeIntensity(delta: number | null): RatingIntensity {
-  if (delta === null) return 'low';
-
-  const abs = Math.abs(delta);
-  if (abs > RATING_THRESHOLDS.EXTREME) return 'high';
-  if (abs > RATING_THRESHOLDS.MODERATE) return 'medium';
-  return 'low';
-}
-
 interface RatingDeltaProps {
   delta: number;
   className?: string;
