@@ -32,6 +32,7 @@ import AdminNotesList from './AdminNoteList';
 import { useSession } from '@/lib/hooks/useSession';
 import { AdminNote } from './types';
 import { getAdminNoteMutations } from './adminNoteMutations';
+import { cn } from '@/lib/utils';
 
 interface AdminNoteViewProps {
   /**
@@ -53,6 +54,11 @@ interface AdminNoteViewProps {
    * Optional display name for the parent entity. Uses entityId if not provided
    */
   entityDisplayName?: string;
+
+  /**
+   * Optional flag to force dark mode styles
+   */
+  darkMode?: boolean;
 }
 
 export default function AdminNoteView({
@@ -60,6 +66,7 @@ export default function AdminNoteView({
   entity,
   entityId,
   entityDisplayName,
+  darkMode,
 }: AdminNoteViewProps) {
   const session = useSession();
   const router = useRouter();
@@ -111,11 +118,23 @@ export default function AdminNoteView({
               setShowNotification(false);
             }
           }}
-          className="relative h-6 w-6 hover:bg-white/20 hover:text-white"
+          className={cn(
+            'relative h-6 w-6',
+            darkMode
+              ? 'hover:bg-white/20 hover:text-white'
+              : 'hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white'
+          )}
           variant={'ghost'}
           size="icon"
         >
-          <StickyNote className="h-3 w-3 text-white/70 hover:text-white" />
+          <StickyNote
+            className={cn(
+              'h-3 w-3',
+              darkMode
+                ? 'text-white/70 hover:text-white'
+                : 'text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white'
+            )}
+          />
           {showNotification && notify && (
             <div className="absolute -right-1 -top-1 z-50">
               <div className="h-2 w-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
