@@ -397,7 +397,10 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
             dataKey="redScore"
             stroke="#ef4444"
             strokeWidth={2.5}
-            dot={(props) => <CustomDot {...props} />}
+            dot={(props) => {
+              const { key, ...dotProps } = props;
+              return <CustomDot key={key} {...dotProps} />;
+            }}
             activeDot={{ r: 6, strokeWidth: 0 }}
             animationDuration={1000}
           />
@@ -407,7 +410,10 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
             dataKey="blueScore"
             stroke="#3b82f6"
             strokeWidth={2.5}
-            dot={(props) => <CustomDot {...props} />}
+            dot={(props) => {
+              const { key, ...dotProps } = props;
+              return <CustomDot key={key} {...dotProps} />;
+            }}
             activeDot={{ r: 6, strokeWidth: 0 }}
             animationDuration={1000}
           />
