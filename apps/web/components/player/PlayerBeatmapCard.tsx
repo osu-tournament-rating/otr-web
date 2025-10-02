@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { Button } from '../ui/button';
 import PlayerBeatmapTournamentTable from './PlayerBeatmapTournamentTable';
 import { cn } from '@/lib/utils';
+import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 
 interface PlayerBeatmapCardProps {
   beatmap: PlayerBeatmapStats;
@@ -26,9 +27,7 @@ interface PlayerBeatmapCardProps {
 
 export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
   const [showTournaments, setShowTournaments] = useState(false);
-  const minutes = Math.floor(beatmap.totalLength / 60);
-  const seconds = beatmap.totalLength % 60;
-  const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const duration = formatSecondsToMinutesSeconds(beatmap.totalLength);
 
   const totalGamesPlayed = beatmap.tournaments.reduce(
     (sum, tournament) => sum + tournament.gamesPlayed,
