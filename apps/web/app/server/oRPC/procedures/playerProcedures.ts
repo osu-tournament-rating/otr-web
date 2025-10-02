@@ -52,9 +52,56 @@ export const getPlayer = publicProcedure
 
     return PlayerSchema.parse(player[0]);
   });
-type PlayerRow = typeof schema.players.$inferSelect;
+type PlayerRecord = typeof schema.players.$inferSelect;
+type PlayerRow = PlayerRecord;
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
 type PlayerMatchStatsRow = typeof schema.playerMatchStats.$inferSelect;
+
+const tournamentListItemColumns = {
+  id: schema.tournaments.id,
+  created: schema.tournaments.created,
+  name: schema.tournaments.name,
+  abbreviation: schema.tournaments.abbreviation,
+  forumUrl: schema.tournaments.forumUrl,
+  rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+  ruleset: schema.tournaments.ruleset,
+  lobbySize: schema.tournaments.lobbySize,
+  startTime: schema.tournaments.startTime,
+  endTime: schema.tournaments.endTime,
+  verificationStatus: schema.tournaments.verificationStatus,
+  rejectionReason: schema.tournaments.rejectionReason,
+} as const;
+
+const playerCompactColumns = {
+  id: schema.players.id,
+  osuId: schema.players.osuId,
+  username: schema.players.username,
+  country: schema.players.country,
+  defaultRuleset: schema.players.defaultRuleset,
+} as const;
+
+type RatingAdjustmentSummary = Pick<
+  typeof schema.ratingAdjustments.$inferSelect,
+  | 'playerId'
+  | 'adjustmentType'
+  | 'timestamp'
+  | 'ratingBefore'
+  | 'ratingAfter'
+  | 'volatilityBefore'
+  | 'volatilityAfter'
+  | 'matchId'
+>;
+
+const ratingAdjustmentSummaryColumns = {
+  playerId: schema.ratingAdjustments.playerId,
+  adjustmentType: schema.ratingAdjustments.adjustmentType,
+  timestamp: schema.ratingAdjustments.timestamp,
+  ratingBefore: schema.ratingAdjustments.ratingBefore,
+  ratingAfter: schema.ratingAdjustments.ratingAfter,
+  volatilityBefore: schema.ratingAdjustments.volatilityBefore,
+  volatilityAfter: schema.ratingAdjustments.volatilityAfter,
+  matchId: schema.ratingAdjustments.matchId,
+} as const;
 
 const VALID_RULESETS = new Set<Ruleset>([
   Ruleset.Osu,
@@ -370,38 +417,16 @@ export const getPlayerTournaments = publicProcedure
     }
 
     const tournamentRows = await context.db
-      .select({
-        id: schema.tournaments.id,
-        created: schema.tournaments.created,
-        name: schema.tournaments.name,
-        abbreviation: schema.tournaments.abbreviation,
-        forumUrl: schema.tournaments.forumUrl,
-        rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
-        ruleset: schema.tournaments.ruleset,
-        lobbySize: schema.tournaments.lobbySize,
-        startTime: schema.tournaments.startTime,
-        endTime: schema.tournaments.endTime,
-        verificationStatus: schema.tournaments.verificationStatus,
-        rejectionReason: schema.tournaments.rejectionReason,
-      })
+      .select(tournamentListItemColumns)
       .from(schema.tournaments)
       .where(sql.join(filters, sql` AND `))
       .orderBy(desc(schema.tournaments.endTime));
 
     return tournamentRows.map((row) =>
       TournamentListItemSchema.parse({
-        id: row.id,
-        created: row.created,
-        name: row.name,
-        abbreviation: row.abbreviation,
-        forumUrl: row.forumUrl,
-        rankRangeLowerBound: row.rankRangeLowerBound,
+        ...row,
         ruleset: row.ruleset as Ruleset,
-        lobbySize: row.lobbySize,
-        startTime: row.startTime ?? null,
-        endTime: row.endTime ?? null,
         verificationStatus: row.verificationStatus as VerificationStatus,
-        rejectionReason: row.rejectionReason,
       })
     );
   });
@@ -822,14 +847,7 @@ export const getPlayerDashboardStats = publicProcedure
 
     const adjustmentRows = await context.db
       .select({
-        playerId: schema.ratingAdjustments.playerId,
-        adjustmentType: schema.ratingAdjustments.adjustmentType,
-        timestamp: schema.ratingAdjustments.timestamp,
-        ratingBefore: schema.ratingAdjustments.ratingBefore,
-        ratingAfter: schema.ratingAdjustments.ratingAfter,
-        volatilityBefore: schema.ratingAdjustments.volatilityBefore,
-        volatilityAfter: schema.ratingAdjustments.volatilityAfter,
-        matchId: schema.ratingAdjustments.matchId,
+        ...ratingAdjustmentSummaryColumns,
         matchName: schema.matches.name,
         tournamentId: schema.matches.tournamentId,
       })
@@ -1009,13 +1027,7 @@ const hydrateFrequencies = async (
   const ids = ordered.map(([id]) => id);
 
   const players = await db
-    .select({
-      id: schema.players.id,
-      osuId: schema.players.osuId,
-      username: schema.players.username,
-      country: schema.players.country,
-      defaultRuleset: schema.players.defaultRuleset,
-    })
+    .select(playerCompactColumns)
     .from(schema.players)
     .where(inArray(schema.players.id, ids));
 
@@ -1043,17 +1055,7 @@ const hydrateFrequencies = async (
 
 const mapRatingAdjustments = (
   rows: Array<
-    Pick<
-      typeof schema.ratingAdjustments.$inferSelect,
-      | 'playerId'
-      | 'adjustmentType'
-      | 'timestamp'
-      | 'ratingBefore'
-      | 'ratingAfter'
-      | 'volatilityBefore'
-      | 'volatilityAfter'
-      | 'matchId'
-    > & {
+    RatingAdjustmentSummary & {
       matchName: string | null;
       tournamentId: number | null;
     }
