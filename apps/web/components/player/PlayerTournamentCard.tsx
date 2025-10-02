@@ -5,7 +5,7 @@ import Link from 'next/link';
 import VerificationBadge from '../badges/VerificationBadge';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
-import { Users, Target, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Target, Calendar, Eye, EyeOff } from 'lucide-react';
 import RatingDelta from '../rating/RatingDelta';
 import { Button } from '../ui/button';
 import { useState } from 'react';
@@ -120,12 +120,12 @@ export default function PlayerTournamentCard({
             setIsMatchesVisible(!isMatchesVisible);
           }}
         >
-          {isMatchesVisible ? 'Hide Matches' : 'Show Matches'}
           {isMatchesVisible ? (
-            <ChevronUp className="h-4 w-4" />
+            <EyeOff className="h-4 w-4" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <Eye className="h-4 w-4" />
           )}
+          Matches
         </Button>
       </div>
     </div>
