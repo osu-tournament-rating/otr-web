@@ -522,8 +522,49 @@ export const getPlayerBeatmaps = publicProcedure
       )
       .orderBy(desc(schema.tournaments.endTime));
 
+    interface BeatmapData {
+      id: number;
+      osuId: number;
+      rankedStatus: number;
+      diffName: string;
+      totalLength: number;
+      drainLength: number;
+      bpm: number;
+      countCircle: number;
+      countSlider: number;
+      countSpinner: number;
+      cs: number;
+      hp: number;
+      od: number;
+      ar: number;
+      sr: number;
+      maxCombo: number | null;
+      beatmapsetId: number;
+      ruleset: number;
+      artist: string;
+      title: string;
+      tournamentCount: number;
+      gameCount: number;
+      tournaments: Array<{
+        id: number;
+        created: string;
+        name: string;
+        abbreviation: string;
+        forumUrl: string;
+        rankRangeLowerBound: number;
+        ruleset: number;
+        lobbySize: number;
+        startTime: string | null;
+        endTime: string | null;
+        verificationStatus: number;
+        rejectionReason: number;
+        gamesPlayed: number;
+        mostCommonMod: number;
+      }>;
+    }
+
     // Map of beatmap ID to aggregated data
-    const beatmapsMap = new Map<number, any>();
+    const beatmapsMap = new Map<number, BeatmapData>();
 
     // Iterate over rows to count tournaments / mod usage
     for (const row of beatmapRows) {
@@ -556,6 +597,11 @@ export const getPlayerBeatmaps = publicProcedure
       }
 
       const beatmap = beatmapsMap.get(row.id);
+      if (!beatmap) {
+        continue;
+      }
+
+      // Update tournament and game counts
       beatmap.tournamentCount++;
       beatmap.gameCount += Number(row.gamesPlayed);
 
@@ -584,22 +630,24 @@ export const getPlayerBeatmaps = publicProcedure
       }
 
       // Append tournament info
-      beatmap.tournaments.push({
-        id: row.tournamentId,
-        created: row.tournamentCreated,
-        name: row.tournamentName,
-        abbreviation: row.tournamentAbbreviation,
-        forumUrl: row.tournamentForumUrl,
-        rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-        ruleset: row.tournamentRuleset,
-        lobbySize: row.tournamentLobbySize,
-        startTime: row.tournamentStartTime,
-        endTime: row.tournamentEndTime,
-        verificationStatus: row.tournamentVerificationStatus,
-        rejectionReason: row.tournamentRejectionReason,
-        gamesPlayed: Number(row.gamesPlayed),
-        mostCommonMod: Number(mostCommonMod),
-      });
+      if (beatmap) {
+        beatmap.tournaments.push({
+          id: row.tournamentId,
+          created: row.tournamentCreated,
+          name: row.tournamentName,
+          abbreviation: row.tournamentAbbreviation,
+          forumUrl: row.tournamentForumUrl,
+          rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+          ruleset: row.tournamentRuleset,
+          lobbySize: row.tournamentLobbySize,
+          startTime: row.tournamentStartTime,
+          endTime: row.tournamentEndTime,
+          verificationStatus: row.tournamentVerificationStatus,
+          rejectionReason: row.tournamentRejectionReason,
+          gamesPlayed: Number(row.gamesPlayed),
+          mostCommonMod: Number(mostCommonMod),
+        });
+      }
     }
 
     // Convert to array and sort by tournament count, game count, and beatmap ID
