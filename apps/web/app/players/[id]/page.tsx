@@ -71,12 +71,28 @@ async function getPlayerData(
 
 async function getTournaments(
   key: string,
-  ruleset?: Ruleset
+  searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<TournamentListItem[]> {
   const decodedKey = decodeURIComponent(key);
 
+  const dateMin = searchParams.dateMin
+    ? new Date(searchParams.dateMin as string)
+    : undefined;
+  const dateMax = searchParams.dateMax
+    ? new Date(searchParams.dateMax as string)
+    : undefined;
+
+  const ruleset = searchParams.ruleset
+    ? (Number(searchParams.ruleset) as Ruleset)
+    : undefined;
+
   try {
-    return await getPlayerTournamentsCached(decodedKey, ruleset);
+    return await getPlayerTournamentsCached(
+      decodedKey,
+      dateMin,
+      dateMax,
+      ruleset
+    );
   } catch (error) {
     console.error('Failed to fetch player tournaments:', error);
     return [];
@@ -101,7 +117,7 @@ export default async function PlayerPage(props: PageProps) {
     : Ruleset.Osu;
 
   // Get the list of tournaments that the player has participated in
-  const playerTournaments = await getTournaments(decodedId, currentRuleset);
+  const playerTournaments = await getTournaments(decodedId, searchParams);
 
   // Redirect to o!TR ID if the current URL uses a different search key
   if (

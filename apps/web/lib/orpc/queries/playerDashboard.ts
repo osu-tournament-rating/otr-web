@@ -22,9 +22,9 @@ export async function getPlayerDashboardStats({
 }: PlayerDashboardRequest): Promise<PlayerDashboardStats> {
   return orpc.players.dashboard({
     key,
-    ruleset,
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
+    ruleset,
   });
 }
 
