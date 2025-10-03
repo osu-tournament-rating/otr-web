@@ -17,7 +17,7 @@ export default function PlayerTournamentsList({
   tournaments,
   adjustments,
 }: PlayerTournamentsListProps) {
-  const NUM_INITIAL_DISPLAY = 3;
+  const NUM_INITIAL_DISPLAY = 5;
   const NUM_LOAD_MORE = 25;
   const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
 
