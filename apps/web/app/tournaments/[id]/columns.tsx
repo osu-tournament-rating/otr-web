@@ -114,7 +114,7 @@ export const columns = [
           href={`/matches/${row.original.id}`}
           className="break-words hover:underline"
         >
-          {getValue()}
+          {getValue() || `Match ${row.original.id}`}
         </Link>
         {/* Mobile-only additional info */}
         <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
