@@ -46,13 +46,16 @@ export default function PlayerTournamentCard({
 
   const cardContent = (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <VerificationBadge
-          verificationStatus={tournament.verificationStatus}
-          rejectionReason={tournament.rejectionReason}
-          entityType="tournament"
-          displayText={true}
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <Link
+          href={`/tournaments/${tournament.id}`}
+          className="hover:underline"
+        >
+          <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
+            {tournament.name}
+          </h2>
+        </Link>
+
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <span className="text-muted-foreground font-mono text-sm">
             {tournament.abbreviation}
@@ -61,14 +64,15 @@ export default function PlayerTournamentCard({
         </div>
       </div>
 
-      <Link href={`/tournaments/${tournament.id}`} className="hover:underline">
-        <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
-          {tournament.name}
-        </h2>
-      </Link>
-
       <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
         <div className="text-muted-foreground flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <VerificationBadge
+            verificationStatus={tournament.verificationStatus}
+            rejectionReason={tournament.rejectionReason}
+            entityType="tournament"
+            displayText={true}
+          />
+
           <div className="flex items-center gap-1.5">
             <RulesetIcon
               ruleset={tournament.ruleset}
