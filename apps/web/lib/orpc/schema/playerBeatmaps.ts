@@ -47,7 +47,9 @@ export const PlayerBeatmapsResponseSchema = z.object({
   totalCount: z.number().int().nonnegative(),
   beatmaps: z.array(PlayerBeatmapStatsSchema),
 });
-export type PlayerBeatmapsResponse = z.infer<typeof PlayerBeatmapsResponseSchema>;
+export type PlayerBeatmapsResponse = z.infer<
+  typeof PlayerBeatmapsResponseSchema
+>;
 export type BeatmapTournamentListItem = z.infer<
   typeof BeatmapTournamentListItemSchema
 >;
