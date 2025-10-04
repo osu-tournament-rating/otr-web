@@ -33,6 +33,23 @@ import {
   cascadeGameRejection,
   cascadeMatchRejection,
 } from '@otr/core/db/rejection-cascade';
+import { coerceNumericEnumValue } from '@otr/core';
+
+const isManiaVariant = (
+  value: Ruleset
+): value is Ruleset.Mania4k | Ruleset.Mania7k =>
+  value === Ruleset.Mania4k || value === Ruleset.Mania7k;
+
+export const resolveRulesetWithTournament = (
+  rawRuleset: Ruleset,
+  tournamentRuleset: Ruleset
+): Ruleset => {
+  if (rawRuleset === Ruleset.ManiaOther && isManiaVariant(tournamentRuleset)) {
+    return tournamentRuleset;
+  }
+
+  return rawRuleset;
+};
 
 interface MatchFetchServiceOptions {
   db: DatabaseClient;
@@ -71,6 +88,14 @@ export class MatchFetchService {
         dataFetchStatus: true,
         verificationStatus: true,
       },
+      with: {
+        tournament: {
+          columns: {
+            id: true,
+            ruleset: true,
+          },
+        },
+      },
     });
 
     if (!matchRow) {
@@ -79,6 +104,10 @@ export class MatchFetchService {
     }
 
     const nowIso = new Date().toISOString();
+    const tournamentRuleset = coerceNumericEnumValue(
+      Ruleset,
+      matchRow.tournament?.ruleset
+    );
 
     await this.db
       .update(schema.matches)
@@ -137,7 +166,11 @@ export class MatchFetchService {
 
       for (const event of gameEvents) {
         const game = event.game!;
-        const ruleset = convertRuleset(game.mode_int ?? game.mode);
+        const rawRuleset = convertRuleset(game.mode_int ?? game.mode);
+        const ruleset = resolveRulesetWithTournament(
+          rawRuleset,
+          tournamentRuleset ?? rawRuleset
+        );
         const scoringType = convertScoringType(game.scoring_type);
         const teamType = convertTeamType(game.team_type);
         const mods = convertModsToFlags(game.mods ?? []);
