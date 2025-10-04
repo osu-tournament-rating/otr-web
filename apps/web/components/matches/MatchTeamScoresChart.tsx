@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
 
 import { Game } from '@/lib/orpc/schema/match';
-import { Mods, Team } from '@otr/core/osu';
+import { Mods, Team, VerificationStatus } from '@otr/core/osu';
 import { ModsEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 
@@ -260,34 +260,36 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
     const redScoreForGame = getTeamScore(Team.Red);
     const blueScoreForGame = getTeamScore(Team.Blue);
 
-    return games.map((game, index) => {
-      const redScore = redScoreForGame(game);
-      const blueScore = blueScoreForGame(game);
-      const scoreDifference = redScore - blueScore;
+    return games
+      .filter((game) => game.verificationStatus === VerificationStatus.Verified)
+      .map((game, index) => {
+        const redScore = redScoreForGame(game);
+        const blueScore = blueScoreForGame(game);
+        const scoreDifference = redScore - blueScore;
 
-      cumulativeRed += redScore;
-      cumulativeBlue += blueScore;
+        cumulativeRed += redScore;
+        cumulativeBlue += blueScore;
 
-      let winner: 'red' | 'blue' | 'tie' = 'tie';
-      if (scoreDifference > 0) winner = 'red';
-      else if (scoreDifference < 0) winner = 'blue';
+        let winner: 'red' | 'blue' | 'tie' = 'tie';
+        if (scoreDifference > 0) winner = 'red';
+        else if (scoreDifference < 0) winner = 'blue';
 
-      return {
-        mapNumber: index + 1,
-        mapLabel: `${index + 1}`,
-        redScore,
-        blueScore,
-        winner,
-        beatmapTitle: game.beatmap?.beatmapset?.title || 'Unknown',
-        beatmapArtist: game.beatmap?.beatmapset?.artist || 'Unknown',
-        beatmapDifficulty: game.beatmap?.diffName || 'Unknown',
-        beatmapId: game.beatmap?.osuId || 0,
-        mods: formatMods(game.mods || 0),
-        scoreDifference,
-        cumulativeRedScore: cumulativeRed,
-        cumulativeBlueScore: cumulativeBlue,
-      } as ChartDataPoint;
-    });
+        return {
+          mapNumber: index + 1,
+          mapLabel: `${index + 1}`,
+          redScore,
+          blueScore,
+          winner,
+          beatmapTitle: game.beatmap?.beatmapset?.title || 'Unknown',
+          beatmapArtist: game.beatmap?.beatmapset?.artist || 'Unknown',
+          beatmapDifficulty: game.beatmap?.diffName || 'Unknown',
+          beatmapId: game.beatmap?.osuId || 0,
+          mods: formatMods(game.mods || 0),
+          scoreDifference,
+          cumulativeRedScore: cumulativeRed,
+          cumulativeBlueScore: cumulativeBlue,
+        } as ChartDataPoint;
+      });
   }, [games]);
 
   // y-axis tick generation: 5 ticks, rounded to nearest 5k of domain
