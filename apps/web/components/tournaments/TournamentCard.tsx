@@ -53,14 +53,12 @@ export default function TournamentCard({
 
   const cardContent = (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <VerificationBadge
-          verificationStatus={tournament.verificationStatus}
-          rejectionReason={tournament.rejectionReason}
-          entityType="tournament"
-          displayText={displayStatusText}
-        />
-        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
+          {tournament.name}
+        </h2>
+
+        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
           <span className="text-muted-foreground font-mono text-sm">
             {tournament.abbreviation}
           </span>
@@ -80,11 +78,14 @@ export default function TournamentCard({
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
-        {tournament.name}
-      </h2>
-
       <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <VerificationBadge
+          verificationStatus={tournament.verificationStatus}
+          rejectionReason={tournament.rejectionReason}
+          entityType="tournament"
+          displayText={displayStatusText}
+        />
+
         <div className="flex items-center gap-1.5">
           <RulesetIcon
             ruleset={tournament.ruleset}
