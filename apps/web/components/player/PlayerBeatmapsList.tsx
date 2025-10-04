@@ -24,9 +24,8 @@ export default function PlayerBeatmapsList({
   totalCount: initialTotal,
 }: PlayerBeatmapsListProps) {
   const LOAD_MORE_COUNT = 25;
-  const [beatmaps, setBeatmaps] = useState<PlayerBeatmapStats[]>(
-    initialBeatmaps
-  );
+  const [beatmaps, setBeatmaps] =
+    useState<PlayerBeatmapStats[]>(initialBeatmaps);
   const [totalCount, setTotalCount] = useState(initialTotal);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -81,7 +80,7 @@ export default function PlayerBeatmapsList({
           <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
         ))}
         {errorMessage && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-destructive text-sm" role="alert">
             {errorMessage}
           </p>
         )}

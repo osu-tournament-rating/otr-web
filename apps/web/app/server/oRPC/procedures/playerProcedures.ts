@@ -460,7 +460,10 @@ export const getPlayerBeatmaps = publicProcedure
       .from(schema.joinBeatmapCreators)
       .innerJoin(
         schema.joinPooledBeatmaps,
-        eq(schema.joinBeatmapCreators.createdBeatmapsId, schema.joinPooledBeatmaps.pooledBeatmapsId)
+        eq(
+          schema.joinBeatmapCreators.createdBeatmapsId,
+          schema.joinPooledBeatmaps.pooledBeatmapsId
+        )
       )
       .innerJoin(
         schema.beatmaps,
@@ -533,7 +536,11 @@ export const getPlayerBeatmaps = publicProcedure
         )
       )
       .groupBy(schema.beatmaps.id, schema.beatmaps.osuId)
-      .orderBy(desc(tournamentCountExpr), desc(gameCountExpr), desc(schema.beatmaps.osuId))
+      .orderBy(
+        desc(tournamentCountExpr),
+        desc(gameCountExpr),
+        desc(schema.beatmaps.osuId)
+      )
       .limit(limit)
       .offset(offset);
 
