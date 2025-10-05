@@ -210,7 +210,7 @@ export const searchEntities = protectedProcedure
           .where(matchCondition)
           .orderBy(
             desc(matchRank),
-            desc(schema.matches.startTime),
+            sql`${schema.matches.startTime} desc nulls last`,
             asc(schema.matches.name)
           )
           .limit(DEFAULT_RESULT_LIMIT),
@@ -277,10 +277,7 @@ export const searchEntities = protectedProcedure
       console.error('[orpc] search.query failed', error);
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to perform search operation',
+        message: 'Failed to perform search operation',
       });
     }
   });
