@@ -88,7 +88,6 @@ type GameRow = {
   mods: number;
   startTime: string;
   endTime: string;
-  playMode: number;
   verificationStatus: number;
   rejectionReason: number;
   warningFlags: number;
@@ -181,7 +180,6 @@ export class TournamentAutomationCheckService {
                 mods: true,
                 startTime: true,
                 endTime: true,
-                playMode: true,
                 verificationStatus: true,
                 rejectionReason: true,
                 warningFlags: true,
@@ -453,7 +451,6 @@ const mapGame = (game: GameRow): AutomationGame => ({
   mods: game.mods as Mods,
   startTime: game.startTime,
   endTime: game.endTime,
-  playMode: game.playMode as Ruleset,
   verificationStatus: game.verificationStatus as VerificationStatus,
   rejectionReason: game.rejectionReason as GameRejectionReason,
   warningFlags: game.warningFlags as GameWarningFlags,

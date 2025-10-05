@@ -216,7 +216,6 @@ export class MatchFetchService {
           matchId: matchRow.id,
           beatmapId: beatmapRecord.id,
           ruleset,
-          playMode: ruleset,
           scoringType,
           teamType,
           mods,
