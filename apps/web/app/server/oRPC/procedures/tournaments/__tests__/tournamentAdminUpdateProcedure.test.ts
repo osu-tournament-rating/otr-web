@@ -149,7 +149,7 @@ class UpdateTournamentTestTransaction {
           const rows = this.rowsFor(table);
 
           return {
-            returning: async (_selection?: Record<string, unknown>) =>
+            returning: async () =>
               rows.map((row) => ({ ...row })),
           };
         },
