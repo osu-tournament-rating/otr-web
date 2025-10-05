@@ -2,7 +2,8 @@ import { createSelectSchema } from 'drizzle-zod';
 
 import * as schema from '@otr/core/db/schema';
 
-export const playerSelectSchema = createSelectSchema(schema.players);
+const rawPlayerSelectSchema = createSelectSchema(schema.players);
+export const playerSelectSchema = rawPlayerSelectSchema.omit({ searchVector: true });
 
 export const userSelectSchema = createSelectSchema(schema.users);
 
@@ -14,7 +15,10 @@ export const beatmapAttributeSelectSchema = createSelectSchema(
 
 export const gameSelectSchema = createSelectSchema(schema.games);
 export const gameScoreSelectSchema = createSelectSchema(schema.gameScores);
-export const matchSelectSchema = createSelectSchema(schema.matches);
+
+const rawMatchSelectSchema = createSelectSchema(schema.matches);
+export const matchSelectSchema = rawMatchSelectSchema.omit({ searchVector: true });
+
 export const matchRosterSelectSchema = createSelectSchema(schema.matchRosters);
 
 export const playerMatchStatsSelectSchema = createSelectSchema(
@@ -33,7 +37,11 @@ export const filterReportPlayerSelectSchema = createSelectSchema(
   schema.filterReportPlayers
 );
 
-export const tournamentSelectSchema = createSelectSchema(schema.tournaments);
+const rawTournamentSelectSchema = createSelectSchema(schema.tournaments);
+export const tournamentSelectSchema = rawTournamentSelectSchema.omit({
+  searchVector: true,
+});
+
 export const tournamentAdminNoteSelectSchema = createSelectSchema(
   schema.tournamentAdminNotes
 );

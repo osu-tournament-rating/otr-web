@@ -12,8 +12,15 @@ import {
   doublePrecision,
   text,
   primaryKey,
+  customType,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
+
+const tsVector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
   migrationId: varchar('migration_id', { length: 150 }).primaryKey().notNull(),
@@ -785,6 +792,12 @@ export const matches = pgTable(
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     name: varchar({ length: 512 }).default('').notNull(),
+    searchVector: tsVector('search_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', ${matches.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${matches.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B')`
+      ),
     startTime: timestamp('start_time', { withTimezone: true, mode: 'string' }),
     endTime: timestamp('end_time', { withTimezone: true, mode: 'string' }),
     verificationStatus: integer('verification_status').default(0).notNull(),
@@ -815,6 +828,11 @@ export const matches = pgTable(
     index('ix_matches_verified_by_user_id').using(
       'btree',
       table.verifiedByUserId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_matches_search_vector').using('gin', table.searchVector),
+    index('ix_matches_name_trgm').using(
+      'gin',
+      table.name.op('gin_trgm_ops')
     ),
     foreignKey({
       columns: [table.tournamentId],
@@ -1048,6 +1066,11 @@ export const players = pgTable(
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     username: varchar({ length: 32 }).default('').notNull(),
+    searchVector: tsVector('search_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL => sql`setweight(to_tsvector('simple', ${players.username}), 'A')`
+      ),
     country: varchar({ length: 4 }).default('').notNull(),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),
     osuLastFetch: timestamp('osu_last_fetch', {
@@ -1069,6 +1092,11 @@ export const players = pgTable(
     index('ix_players_country').using(
       'btree',
       table.country.asc().nullsLast().op('text_ops')
+    ),
+    index('ix_players_search_vector').using('gin', table.searchVector),
+    index('ix_players_username_trgm').using(
+      'gin',
+      table.username.op('gin_trgm_ops')
     ),
     uniqueIndex('ix_players_osu_id').using(
       'btree',
@@ -1402,6 +1430,12 @@ export const tournaments = pgTable(
     }),
     name: varchar({ length: 512 }).notNull(),
     abbreviation: varchar({ length: 32 }).notNull(),
+    searchVector: tsVector('search_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', ${tournaments.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${tournaments.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B') || setweight(to_tsvector('simple', ${tournaments.abbreviation}), 'A')`
+      ),
     forumUrl: varchar('forum_url', { length: 255 }).notNull(),
     rankRangeLowerBound: integer('rank_range_lower_bound').notNull(),
     ruleset: integer().notNull(),
@@ -1426,6 +1460,15 @@ export const tournaments = pgTable(
     index('ix_tournaments_ruleset').using(
       'btree',
       table.ruleset.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_tournaments_search_vector').using('gin', table.searchVector),
+    index('ix_tournaments_name_trgm').using(
+      'gin',
+      table.name.op('gin_trgm_ops')
+    ),
+    index('ix_tournaments_abbreviation_trgm').using(
+      'gin',
+      table.abbreviation.op('gin_trgm_ops')
     ),
     index('ix_tournaments_submitted_by_user_id').using(
       'btree',

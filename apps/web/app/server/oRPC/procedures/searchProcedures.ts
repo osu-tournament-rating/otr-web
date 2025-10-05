@@ -1,5 +1,13 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  sql,
+  type AnyColumn,
+  type SQL,
+} from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -15,10 +23,23 @@ import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { protectedProcedure } from './base';
 
 const DEFAULT_RESULT_LIMIT = 5;
-const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
+const SIMILARITY_THRESHOLD = 0.3;
 
-const escapeLikePattern = (value: string) =>
-  value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
+const normalizeSearchTerm = (value: string) =>
+  value
+    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const buildPrefixQuery = (tokens: readonly string[]) =>
+  tokens.length === 0
+    ? null
+    : tokens
+        .map((token) => {
+          const safeToken = token.replace(/'/g, "''");
+          return `'${safeToken}':*`;
+        })
+        .join(' & ');
 
 export const searchEntities = protectedProcedure
   .input(SearchRequestSchema)
@@ -39,9 +60,97 @@ export const searchEntities = protectedProcedure
       });
     }
 
-    const searchPattern = `%${escapeLikePattern(term)}%`;
+    const normalizedTerm = normalizeSearchTerm(term);
+
+    if (!normalizedTerm) {
+      return SearchResponseSchema.parse({
+        players: [],
+        tournaments: [],
+        matches: [],
+      });
+    }
+
+    const tokens = normalizedTerm.split(/\s+/).filter(Boolean);
+
+    if (tokens.length === 0) {
+      return SearchResponseSchema.parse({
+        players: [],
+        tournaments: [],
+        matches: [],
+      });
+    }
+
+    const prefixQueryText = buildPrefixQuery(tokens);
+    // Use the plain parser for natural-language matches and a prefix query so users can search by partial tokens.
+    const tsQuery = sql`plainto_tsquery('simple', ${normalizedTerm})`;
+    const prefixTsQuery = prefixQueryText
+      ? sql`to_tsquery('simple', ${prefixQueryText})`
+      : null;
+
+    const primaryToken = tokens[0] ?? normalizedTerm;
+    const hasDistinctPrimaryToken = primaryToken !== normalizedTerm;
+    const buildSimilarity = (column: AnyColumn | SQL) =>
+      hasDistinctPrimaryToken
+        ? sql`greatest(similarity(${column}, ${normalizedTerm}), similarity(${column}, ${primaryToken}))`
+        : sql`similarity(${column}, ${normalizedTerm})`;
 
     try {
+      const playerVector = schema.players.searchVector;
+      const playerSimilarity = buildSimilarity(schema.players.username);
+      // Players match if they satisfy either the full-term or prefix query; the dual check helps partial matches without sacrificing exact ones.
+      const playerCondition = prefixTsQuery
+        ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`
+        : sql`(${playerVector} @@ ${tsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+      // Rank players by whichever query produced the highest score so prefix hits can bubble above weaker full-term matches.
+      const playerRank = prefixTsQuery
+        ? sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ts_rank_cd(${playerVector}, ${prefixTsQuery}), ${playerSimilarity})`
+        : sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ${playerSimilarity})`;
+
+      const tournamentVector = schema.tournaments.searchVector;
+      const tournamentNameSimilarity = buildSimilarity(schema.tournaments.name);
+      const tournamentAbbreviationSimilarity = buildSimilarity(
+        schema.tournaments.abbreviation
+      );
+      const tournamentSimilarity = sql`greatest(${tournamentNameSimilarity}, ${tournamentAbbreviationSimilarity})`;
+      // Apply the same full vs prefix matching strategy for tournaments to keep behavior consistent across entities.
+      const tournamentCondition = prefixTsQuery
+        ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`
+        : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+      // Favor the strongest relevance score from either query path when ordering tournament results.
+      const tournamentRank = prefixTsQuery
+        ? sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ts_rank_cd(${tournamentVector}, ${prefixTsQuery}), ${tournamentSimilarity})`
+        : sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ${tournamentSimilarity})`;
+
+      // Matches stitch in tournament metadata to boost relevance when users search by tourney identifiers or abbreviations.
+      const matchVector = sql`
+        ${schema.matches.searchVector}
+        || setweight(to_tsvector('simple', coalesce(${schema.tournaments.name}, '')), 'B')
+        || setweight(
+          to_tsvector(
+            'simple',
+            regexp_replace(coalesce(${schema.tournaments.name}, ''), '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')
+          ),
+          'C'
+        )
+        || setweight(to_tsvector('simple', coalesce(${schema.tournaments.abbreviation}, '')), 'D')
+      `;
+      const matchNameSimilarity = buildSimilarity(schema.matches.name);
+      const matchTournamentNameSimilarity = buildSimilarity(
+        sql`coalesce(${schema.tournaments.name}, '')`
+      );
+      const matchTournamentAbbreviationSimilarity = buildSimilarity(
+        sql`coalesce(${schema.tournaments.abbreviation}, '')`
+      );
+      const matchSimilarity = sql`greatest(${matchNameSimilarity}, ${matchTournamentNameSimilarity}, ${matchTournamentAbbreviationSimilarity})`;
+      // Allow either query to satisfy the match vector so partial tournament text still finds the right match records.
+      const matchCondition = prefixTsQuery
+        ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`
+        : sql`(${matchVector} @@ ${tsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+      // Rank matches using the highest relevance from the two query shapes to reflect the most confident hit.
+      const matchRank = prefixTsQuery
+        ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
+        : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
+
       const [playerRows, tournamentRows, matchRows] = await Promise.all([
         context.db
           .select({
@@ -61,8 +170,9 @@ export const searchEntities = protectedProcedure
               eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
             )
           )
-          .where(ilike(schema.players.username, searchPattern))
+          .where(playerCondition)
           .orderBy(
+            desc(playerRank),
             sql`${schema.playerRatings.rating} desc nulls last`,
             asc(schema.players.username)
           )
@@ -78,13 +188,9 @@ export const searchEntities = protectedProcedure
             lobbySize: schema.tournaments.lobbySize,
           })
           .from(schema.tournaments)
-          .where(
-            or(
-              ilike(schema.tournaments.name, searchPattern),
-              ilike(schema.tournaments.abbreviation, searchPattern)
-            )
-          )
+          .where(tournamentCondition)
           .orderBy(
+            desc(tournamentRank),
             sql`${schema.tournaments.endTime} desc nulls last`,
             asc(schema.tournaments.name)
           )
@@ -101,8 +207,12 @@ export const searchEntities = protectedProcedure
             schema.tournaments,
             eq(schema.matches.tournamentId, schema.tournaments.id)
           )
-          .where(ilike(schema.matches.name, searchPattern))
-          .orderBy(desc(schema.matches.startTime), asc(schema.matches.name))
+          .where(matchCondition)
+          .orderBy(
+            desc(matchRank),
+            sql`${schema.matches.startTime} desc nulls last`,
+            asc(schema.matches.name)
+          )
           .limit(DEFAULT_RESULT_LIMIT),
       ]);
 
@@ -167,10 +277,7 @@ export const searchEntities = protectedProcedure
       console.error('[orpc] search.query failed', error);
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to perform search operation',
+        message: 'Failed to perform search operation',
       });
     }
   });
