@@ -523,7 +523,6 @@ export const games = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updated: timestamp({ withTimezone: true, mode: 'string' }),
-    playMode: integer('play_mode').default(0).notNull(),
   },
   (table) => [
     index('ix_games_beatmap_id').using(
@@ -1263,7 +1262,7 @@ export const playerRatings = pgTable(
     index('ix_player_ratings_ruleset_rating').using(
       'btree',
       table.ruleset.asc().nullsLast().op('int4_ops'),
-      table.rating.desc().nullsFirst().op('int4_ops')
+      table.rating.desc().nullsFirst().op('float8_ops')
     ),
     foreignKey({
       columns: [table.playerId],

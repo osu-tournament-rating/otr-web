@@ -124,7 +124,6 @@ describe('TournamentAutomationCheckService', () => {
             mods: Mods.None,
             startTime: `2024-01-01T00:${10 + index}:00Z`,
             endTime: `2024-01-01T00:${20 + index}:00Z`,
-            playMode: Ruleset.Osu,
             verificationStatus: VerificationStatus.None,
             rejectionReason: GameRejectionReason.None,
             warningFlags: GameWarningFlags.None,

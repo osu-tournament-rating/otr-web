@@ -43,6 +43,13 @@
       "when": 1759628145681,
       "tag": "0005_mature_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759688373967,
+      "tag": "0006_stiff_hellcat",
+      "breakpoints": true
     }
   ]
 }
