@@ -11,7 +11,7 @@ import {
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@otr/core/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { Ruleset } from '@otr/core/osu';
 import { API as OsuApi } from 'osu-api-v2-js';
 import type { User } from 'osu-api-v2-js';
@@ -30,6 +30,10 @@ type AuthAccount = {
 
 type AuthUserRecord = typeof schema.auth_users.$inferSelect;
 
+type OsuProfileLike =
+  | User.Extended.WithStatisticsrulesets
+  | User.Relation['target'];
+
 const parseOsuId = (value?: string | null) => {
   if (!value) {
     return null;
@@ -39,12 +43,13 @@ const parseOsuId = (value?: string | null) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const sanitizeUsername = (
-  value: string | null | undefined,
-  fallback: string
-) => {
-  const base = value && value.trim().length > 0 ? value.trim() : fallback;
-  return base;
+const sanitizeUsername = (value: string | null | undefined) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : '';
 };
 
 const sanitizeCountry = (value: string | null | undefined) =>
@@ -88,31 +93,42 @@ const fetchOsuProfile = async (
 
 type EnsurePlayerParams = {
   osuId: number;
-  fallbackName: string;
-  profile?: User.Extended.WithStatisticsrulesets | null;
+  profile?: OsuProfileLike | null;
 };
 
-const ensurePlayerAndAppUser = async ({
+const ensurePlayer = async ({
   osuId,
-  fallbackName,
   profile,
-}: EnsurePlayerParams) => {
+}: EnsurePlayerParams): Promise<typeof schema.players.$inferSelect | null> => {
   const nowIso = new Date().toISOString();
 
   let player = await db.query.players.findFirst({
     where: eq(schema.players.osuId, osuId),
   });
 
+  const sanitizedUsername = sanitizeUsername(profile?.username);
+  const sanitizedCountry = sanitizeCountry(profile?.country_code);
+  let profilePlaymode: string | null | undefined;
+  if (profile && 'playmode' in profile) {
+    profilePlaymode = profile.playmode;
+  }
+  const defaultRuleset = profile
+    ? mapPlaymodeToRuleset(profilePlaymode)
+    : Ruleset.Osu;
+
+  if (profile?.is_bot) {
+    // Skip persisting bot accounts
+    return player ?? null;
+  }
+
   if (!player) {
     const created = await db
       .insert(schema.players)
       .values({
         osuId,
-        username: sanitizeUsername(profile?.username, fallbackName),
-        country: sanitizeCountry(profile?.country_code),
-        defaultRuleset: profile
-          ? mapPlaymodeToRuleset(profile.playmode)
-          : Ruleset.Osu,
+        username: sanitizedUsername,
+        country: sanitizedCountry,
+        defaultRuleset,
         osuLastFetch: nowIso,
         osuTrackLastFetch: null,
       })
@@ -125,14 +141,10 @@ const ensurePlayerAndAppUser = async ({
         where: eq(schema.players.osuId, osuId),
       }));
   } else if (profile) {
-    const sanitizedCountry = sanitizeCountry(profile.country_code);
     const updatePayload = {
-      username: sanitizeUsername(
-        profile.username,
-        player.username || fallbackName
-      ),
+      username: sanitizedUsername || player.username,
       country: sanitizedCountry || player.country,
-      defaultRuleset: mapPlaymodeToRuleset(profile.playmode),
+      defaultRuleset,
       osuLastFetch: nowIso,
     };
 
@@ -146,6 +158,14 @@ const ensurePlayerAndAppUser = async ({
       ...updatePayload,
     };
   }
+
+  return player ?? null;
+};
+
+const ensurePlayerAndAppUser = async (
+  params: EnsurePlayerParams
+) => {
+  const player = await ensurePlayer(params);
 
   if (!player) {
     return null;
@@ -164,6 +184,129 @@ const ensurePlayerAndAppUser = async ({
     player,
     appUser,
   };
+};
+
+const syncPlayerFriends = async ({
+  playerId,
+  accessToken,
+  profile,
+}: {
+  playerId: number;
+  accessToken?: string | null;
+  profile: User.Extended.WithStatisticsrulesets;
+}) => {
+  if (!accessToken) {
+    return;
+  }
+
+  await ensurePlayer({
+    osuId: profile.id,
+    profile,
+  });
+
+  let relations: User.Relation[] = [];
+
+  try {
+    const api = new OsuApi({
+      access_token: accessToken,
+      token_type: 'Bearer',
+    });
+
+    const fetched = await api.getFriends();
+    relations = Array.isArray(fetched) ? fetched : [];
+  } catch (error) {
+    console.error('Failed to fetch osu! friends', error);
+    return;
+  }
+
+  const uniqueFriends = new Map<number, User.Relation>();
+
+  for (const relation of relations) {
+    if (!relation || relation.relation_type !== 'friend') {
+      continue;
+    }
+
+    if (typeof relation.target_id !== 'number') {
+      continue;
+    }
+
+    uniqueFriends.set(relation.target_id, relation);
+  }
+
+  const friendEntries: Array<{ friendId: number; mutual: boolean }> = [];
+
+  for (const [targetId, relation] of uniqueFriends) {
+    const profile = relation.target;
+
+    if (profile?.is_bot) {
+      continue;
+    }
+
+    const ensured = await ensurePlayer({
+      osuId: targetId,
+      profile,
+    });
+
+    if (!ensured) {
+      continue;
+    }
+
+    friendEntries.push({
+      friendId: ensured.id,
+      mutual: !!relation.mutual,
+    });
+  }
+
+  const friendIdSet = new Set(friendEntries.map((entry) => entry.friendId));
+
+  try {
+    await db.transaction(async (tx) => {
+      if (friendEntries.length === 0) {
+        await tx
+          .delete(schema.playerFriends)
+          .where(eq(schema.playerFriends.playerId, playerId));
+        return;
+      }
+
+      await tx
+        .insert(schema.playerFriends)
+        .values(
+          friendEntries.map((entry) => ({
+            playerId,
+            friendId: entry.friendId,
+            mutual: entry.mutual,
+          }))
+        )
+        .onConflictDoUpdate({
+          target: [schema.playerFriends.playerId, schema.playerFriends.friendId],
+          set: {
+            mutual: sql`excluded.mutual`,
+          },
+        });
+
+      const existing = await tx
+        .select({ friendId: schema.playerFriends.friendId })
+        .from(schema.playerFriends)
+        .where(eq(schema.playerFriends.playerId, playerId));
+
+      const stale = existing
+        .map((entry) => entry.friendId)
+        .filter((id) => !friendIdSet.has(id));
+
+      if (stale.length > 0) {
+        await tx
+          .delete(schema.playerFriends)
+          .where(
+            and(
+              eq(schema.playerFriends.playerId, playerId),
+              inArray(schema.playerFriends.friendId, stale)
+            )
+          );
+      }
+    });
+  } catch (error) {
+    console.error('Failed to sync osu! friends to database', error);
+  }
 };
 
 const ensureOsuAccountLink = async (
@@ -192,7 +335,6 @@ const ensureOsuAccountLink = async (
 
     const ensured = await ensurePlayerAndAppUser({
       osuId,
-      fallbackName: authUser.name || `osu-${osuId}`,
       profile,
     });
 
@@ -201,6 +343,14 @@ const ensureOsuAccountLink = async (
     }
 
     const { player, appUser } = ensured;
+
+    if (profile) {
+      await syncPlayerFriends({
+        playerId: player.id,
+        accessToken: account.accessToken,
+        profile,
+      });
+    }
 
     const scopes = appUser?.scopes ?? [];
     const hasAdminScope = scopes.includes('admin');
@@ -313,13 +463,18 @@ export const auth = betterAuth({
 
             const ensured = await ensurePlayerAndAppUser({
               osuId: profile.id,
-              fallbackName: profile.username,
               profile,
             });
 
             if (!ensured) {
               return null;
             }
+
+            await syncPlayerFriends({
+              playerId: ensured.player.id,
+              accessToken: tokens.accessToken,
+              profile,
+            });
 
             // osu! OAuth2 doesn't return email addresses, so we use a placeholder
             return {

@@ -47,10 +47,7 @@ export default function PlayerTournamentCard({
   const cardContent = (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <Link
-          href={`/tournaments/${tournament.id}`}
-          className="hover:underline"
-        >
+        <Link href={`/tournaments/${tournament.id}`}>
           <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
             {tournament.name}
           </h2>

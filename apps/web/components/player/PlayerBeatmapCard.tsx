@@ -46,11 +46,16 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
       <div className="absolute inset-0 z-[2] h-full w-full bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
 
       <div className="relative z-[3] flex flex-col gap-3 p-4 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-full items-center gap-2 sm:w-auto">
-            <span className="font-mono text-sm text-white/80">
-              /b/{beatmap.osuId}
-            </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Link href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}>
+              <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm sm:text-xl md:text-2xl">
+                {beatmap.artist} - {beatmap.title}
+              </h2>
+              <div className="mt-1 text-sm text-white/80">
+                [{beatmap.diffName}]
+              </div>
+            </Link>
           </div>
           <div className="flex items-center gap-3 text-sm text-white/90">
             <div className="flex items-center gap-1.5">
@@ -63,17 +68,6 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
             </div>
           </div>
         </div>
-
-        <Link
-          href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
-          target="_blank"
-          className="group/link"
-        >
-          <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm group-hover/link:underline sm:text-xl md:text-2xl">
-            {beatmap.artist} - {beatmap.title}
-          </h2>
-          <div className="mt-1 text-sm text-white/80">[{beatmap.diffName}]</div>
-        </Link>
 
         <div className="flex flex-col gap-2 text-sm text-white/80 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">

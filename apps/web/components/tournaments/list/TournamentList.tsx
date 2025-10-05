@@ -167,7 +167,7 @@ export default function TournamentList({
 
             return (
               <div
-                className="relative w-full pb-5"
+                className="relative w-full pb-3"
                 key={item.key}
                 data-index={item.index}
                 ref={virtualizer.measureElement}
