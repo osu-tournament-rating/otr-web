@@ -36,6 +36,13 @@
       "when": 1759626092277,
       "tag": "0004_nifty_prism",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759628145681,
+      "tag": "0005_mature_rafael_vega",
+      "breakpoints": true
     }
   ]
 }
