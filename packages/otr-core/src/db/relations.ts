@@ -4,6 +4,7 @@ import {
   auth_sessions,
   auth_users,
   players,
+  playerFriends,
   beatmapsets,
   users,
   filterReports,
@@ -69,6 +70,12 @@ export const playersRelations = relations(players, ({ many }) => ({
   users: many(users),
   joinBeatmapCreators: many(joinBeatmapCreators),
   authUsers: many(auth_users),
+  friends: many(playerFriends, {
+    relationName: 'playerFriends_player',
+  }),
+  friendOf: many(playerFriends, {
+    relationName: 'playerFriends_friend',
+  }),
 }));
 
 export const filterReportsRelations = relations(
@@ -429,6 +436,26 @@ export const oAuthClientAdminNoteRelations = relations(
     oAuthClient: one(oAuthClients, {
       fields: [oAuthClientAdminNote.referenceId],
       references: [oAuthClients.id],
+    }),
+  })
+);
+
+export const playerFriendsRelations = relations(
+  playerFriends,
+  ({ one }) => ({
+    player: one(players, {
+      fields: [playerFriends.playerId],
+      references: [players.id],
+      relationName: 'playerFriends_player',
+    }),
+    friend: one(users, {
+      fields: [playerFriends.friendId],
+      references: [users.playerId],
+    }),
+    friendPlayer: one(players, {
+      fields: [playerFriends.friendId],
+      references: [players.id],
+      relationName: 'playerFriends_friend',
     }),
   })
 );
