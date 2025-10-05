@@ -56,7 +56,7 @@ jobs:
       - name: Create .env file from secret
         run: |
           printf '%s\n' "${{ secrets.ENV }}" > .env
-          echo "DEPLOY_TAG=${{ inputs.deploy_tag }}" >> .env
+          echo "DOCKER_DEPLOY_TAG=${{ inputs.deploy_tag }}" >> .env
 
       - name: Ensure remote directory exists
         uses: appleboy/ssh-action@v1
