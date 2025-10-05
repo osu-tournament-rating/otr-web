@@ -29,6 +29,13 @@
       "when": 1759261072251,
       "tag": "0003_audit_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759626092277,
+      "tag": "0004_nifty_prism",
+      "breakpoints": true
     }
   ]
 }

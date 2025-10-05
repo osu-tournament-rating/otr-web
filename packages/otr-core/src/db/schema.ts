@@ -1105,6 +1105,28 @@ export const players = pgTable(
   ]
 );
 
+export const playerFriends = pgTable(
+  'player_friends',
+  {
+    playerId: integer('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    friendId: integer('friend_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    mutual: boolean('mutual').default(false).notNull(),
+  },
+  (table) => [
+    index('ix_player_friends_friend_id').using(
+      'btree',
+      table.friendId.asc().nullsLast().op('int4_ops')
+    ),
+    primaryKey({
+      columns: [table.playerId, table.friendId],
+    }),
+  ]
+);
+
 export const oAuthClients = pgTable(
   'o_auth_clients',
   {
