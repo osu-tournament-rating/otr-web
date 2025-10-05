@@ -469,10 +469,21 @@ export const getPlayerBeatmaps = publicProcedure
         schema.beatmaps,
         eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
       )
+      .innerJoin(
+        schema.tournaments,
+        eq(
+          schema.tournaments.id,
+          schema.joinPooledBeatmaps.tournamentsPooledInId
+        )
+      )
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, player.id),
-          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+          // Filter by the tournament ruleset because mania variants reuse the same
+          // beatmap ruleset (e.g., 4k/7k both map back to Mania = 3).
+          input.ruleset != null
+            ? eq(schema.tournaments.ruleset, input.ruleset)
+            : undefined
         )
       );
 
@@ -532,7 +543,11 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, player.id),
-          input.ruleset ? eq(schema.beatmaps.ruleset, input.ruleset) : undefined
+          // Keep ordering scoped to the tournament ruleset so pagination stays in sync
+          // when a player switches between ruleset tabs.
+          input.ruleset != null
+            ? eq(schema.tournaments.ruleset, input.ruleset)
+            : undefined
         )
       )
       .groupBy(schema.beatmaps.id, schema.beatmaps.osuId)
@@ -621,7 +636,15 @@ export const getPlayerBeatmaps = publicProcedure
           eq(schema.games.matchId, schema.matches.id)
         )
       )
-      .where(inArray(schema.beatmaps.id, beatmapIds))
+      .where(
+        and(
+          inArray(schema.beatmaps.id, beatmapIds),
+          // Ensure hydrated tournaments also belong to the requested ruleset.
+          input.ruleset != null
+            ? eq(schema.tournaments.ruleset, input.ruleset)
+            : undefined
+        )
+      )
       .groupBy(
         schema.beatmaps.id,
         schema.beatmaps.osuId,
