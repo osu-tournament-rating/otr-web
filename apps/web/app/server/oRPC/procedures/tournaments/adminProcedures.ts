@@ -11,6 +11,7 @@ import {
   TournamentIdInputSchema,
   TournamentRefetchMatchDataResponseSchema,
   TournamentResetAutomatedChecksInputSchema,
+  type TournamentAdminUpdateInput,
   type TournamentIdInput,
   type TournamentResetAutomatedChecksInput,
 } from '@/lib/orpc/schema/tournament';
@@ -18,7 +19,7 @@ import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import {
   publishFetchMatchMessage,
   publishProcessTournamentAutomationCheckMessage,
@@ -171,6 +172,101 @@ export async function resetTournamentAutomatedChecksHandler({
   } as const;
 }
 
+interface UpdateTournamentAdminContext {
+  db: DatabaseClient;
+  session: {
+    dbUser?: {
+      id: number;
+      scopes?: string[] | null;
+    } | null;
+  } | null;
+}
+
+export interface UpdateTournamentAdminArgs {
+  input: TournamentAdminUpdateInput;
+  context: UpdateTournamentAdminContext;
+}
+
+export async function updateTournamentAdminHandler({
+  input,
+  context,
+}: UpdateTournamentAdminArgs) {
+  const { adminUserId } = ensureAdminSession(context.session);
+
+  const existing = await context.db.query.tournaments.findFirst({
+    columns: {
+      id: true,
+      verifiedByUserId: true,
+      verificationStatus: true,
+      ruleset: true,
+    },
+    where: eq(schema.tournaments.id, input.id),
+  });
+
+  if (!existing) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Tournament not found',
+    });
+  }
+
+  const verificationStatusChanged =
+    input.verificationStatus !== existing.verificationStatus;
+
+  const newStatusRequiresReviewer =
+    input.verificationStatus === VerificationStatus.Verified ||
+    input.verificationStatus === VerificationStatus.Rejected;
+
+  const shouldPropagateManiaVariant =
+    existing.ruleset === Ruleset.ManiaOther &&
+    (input.ruleset === Ruleset.Mania4k || input.ruleset === Ruleset.Mania7k);
+
+  await context.db.transaction((tx) =>
+    withAuditUserId(tx, adminUserId, async () => {
+      const verifiedByUserId = (() => {
+        if (!verificationStatusChanged) {
+          return existing.verifiedByUserId;
+        }
+
+        if (newStatusRequiresReviewer) {
+          return adminUserId;
+        }
+
+        return null;
+      })();
+
+      await tx
+        .update(schema.tournaments)
+        .set({
+          name: input.name,
+          abbreviation: input.abbreviation,
+          forumUrl: input.forumUrl,
+          rankRangeLowerBound: input.rankRangeLowerBound,
+          ruleset: input.ruleset,
+          lobbySize: input.lobbySize,
+          verificationStatus: input.verificationStatus,
+          rejectionReason: input.rejectionReason,
+          startTime: input.startTime ?? null,
+          endTime: input.endTime ?? null,
+          verifiedByUserId,
+          updated: NOW,
+        })
+        .where(eq(schema.tournaments.id, input.id));
+
+      if (shouldPropagateManiaVariant) {
+        await alignTournamentChildRulesets(tx, input.id, input.ruleset);
+      }
+
+      if (input.verificationStatus === VerificationStatus.Rejected) {
+        await cascadeTournamentRejection(tx, [input.id], {
+          updatedAt: NOW,
+        });
+      }
+    })
+  );
+
+  return { success: true } as const;
+}
+
 export const updateTournamentAdmin = protectedProcedure
   .input(TournamentAdminUpdateInputSchema)
   .output(TournamentAdminMutationResponseSchema)
@@ -179,73 +275,54 @@ export const updateTournamentAdmin = protectedProcedure
     tags: ['admin'],
     path: '/tournaments/admin/update',
   })
-  .handler(async ({ input, context }) => {
-    const { adminUserId } = ensureAdminSession(context.session);
+  .handler(({ input, context }) =>
+    updateTournamentAdminHandler({ input, context })
+  );
 
-    const existing = await context.db.query.tournaments.findFirst({
-      columns: {
-        id: true,
-        verifiedByUserId: true,
-        verificationStatus: true,
-      },
-      where: eq(schema.tournaments.id, input.id),
-    });
+async function alignTournamentChildRulesets(
+  tx: Pick<DatabaseClient, 'select' | 'update'>,
+  tournamentId: number,
+  nextRuleset: Ruleset
+) {
+  const matchRows = await tx
+    .select({ id: schema.matches.id })
+    .from(schema.matches)
+    .where(eq(schema.matches.tournamentId, tournamentId));
 
-    if (!existing) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Tournament not found',
-      });
-    }
+  if (matchRows.length === 0) {
+    return;
+  }
 
-    const verificationStatusChanged =
-      input.verificationStatus !== existing.verificationStatus;
+  const matchIds = matchRows.map((row) => row.id);
 
-    const newStatusRequiresReviewer =
-      input.verificationStatus === VerificationStatus.Verified ||
-      input.verificationStatus === VerificationStatus.Rejected;
+  const gameRows = await tx
+    .select({ id: schema.games.id })
+    .from(schema.games)
+    .where(inArray(schema.games.matchId, matchIds));
 
-    await context.db.transaction((tx) =>
-      withAuditUserId(tx, adminUserId, async () => {
-        const verifiedByUserId = (() => {
-          if (!verificationStatusChanged) {
-            return existing.verifiedByUserId;
-          }
+  if (gameRows.length === 0) {
+    return;
+  }
 
-          if (newStatusRequiresReviewer) {
-            return adminUserId;
-          }
+  const gameIds = gameRows.map((row) => row.id);
 
-          return null;
-        })();
+  // Propogate variants to games/scores
+  await tx
+    .update(schema.games)
+    .set({
+      ruleset: nextRuleset,
+      updated: NOW,
+    })
+    .where(inArray(schema.games.id, gameIds));
 
-        await tx
-          .update(schema.tournaments)
-          .set({
-            name: input.name,
-            abbreviation: input.abbreviation,
-            forumUrl: input.forumUrl,
-            rankRangeLowerBound: input.rankRangeLowerBound,
-            ruleset: input.ruleset,
-            lobbySize: input.lobbySize,
-            verificationStatus: input.verificationStatus,
-            rejectionReason: input.rejectionReason,
-            startTime: input.startTime ?? null,
-            endTime: input.endTime ?? null,
-            verifiedByUserId,
-            updated: NOW,
-          })
-          .where(eq(schema.tournaments.id, input.id));
-
-        if (input.verificationStatus === VerificationStatus.Rejected) {
-          await cascadeTournamentRejection(tx, [input.id], {
-            updatedAt: NOW,
-          });
-        }
-      })
-    );
-
-    return { success: true } as const;
-  });
+  await tx
+    .update(schema.gameScores)
+    .set({
+      ruleset: nextRuleset,
+      updated: NOW,
+    })
+    .where(inArray(schema.gameScores.gameId, gameIds));
+}
 
 export const resetTournamentAutomatedChecks = protectedProcedure
   .input(TournamentResetAutomatedChecksInputSchema)
