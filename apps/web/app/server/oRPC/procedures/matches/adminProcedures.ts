@@ -13,7 +13,12 @@ import {
   MatchAdminMutationResponseSchema,
   MatchAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
-import { VerificationStatus } from '@otr/core/osu';
+import {
+  GameWarningFlags,
+  MatchWarningFlags,
+  VerificationStatus,
+} from '@otr/core/osu';
+import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -67,19 +72,31 @@ export const updateMatchAdmin = protectedProcedure
           return null;
         })();
 
+        const shouldClearWarnings =
+          input.verificationStatus === VerificationStatus.Verified || 
+          input.verificationStatus === VerificationStatus.Rejected;
+
+        const nextWarningFlags = shouldClearWarnings
+          ? MatchWarningFlags.None
+          : input.warningFlags;
+
         await tx
           .update(schema.matches)
           .set({
             name: input.name,
             verificationStatus: input.verificationStatus,
             rejectionReason: input.rejectionReason,
-            warningFlags: input.warningFlags,
+            warningFlags: nextWarningFlags,
             startTime: input.startTime ?? null,
             endTime: input.endTime ?? null,
             verifiedByUserId,
             updated: NOW,
           })
           .where(eq(schema.matches.id, input.id));
+
+        if (input.verificationStatus === VerificationStatus.Verified) {
+          await cascadeClearWarningFlags(tx, input.id);
+        }
 
         if (input.verificationStatus === VerificationStatus.Rejected) {
           await cascadeMatchRejection(tx, [input.id], {
@@ -91,6 +108,24 @@ export const updateMatchAdmin = protectedProcedure
 
     return { success: true } as const;
   });
+
+async function cascadeClearWarningFlags(
+  tx: Pick<DatabaseClient, 'update'>,
+  matchId: number
+) {
+  await tx
+    .update(schema.games)
+    .set({
+      warningFlags: GameWarningFlags.None,
+      updated: NOW,
+    })
+    .where(
+      and(
+        eq(schema.games.matchId, matchId),
+        eq(schema.games.verificationStatus, VerificationStatus.Verified)
+      )
+    );
+}
 
 export const mergeMatchAdmin = protectedProcedure
   .input(MatchAdminMergeInputSchema)

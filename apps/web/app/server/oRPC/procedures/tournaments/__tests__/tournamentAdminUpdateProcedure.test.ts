@@ -5,30 +5,54 @@ import {
   type UpdateTournamentAdminArgs,
 } from '../adminProcedures';
 import * as schema from '@otr/core/db/schema';
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import {
+  GameWarningFlags,
+  MatchWarningFlags,
+  Ruleset,
+  VerificationStatus,
+} from '@otr/core/osu';
 import type { DatabaseClient } from '@/lib/db';
 
+type RequireKeys<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
+
+type TestTournamentRow = RequireKeys<
+  typeof schema.tournaments.$inferSelect,
+  'id' | 'verificationStatus' | 'ruleset'
+>;
+
+type TestMatchRow = RequireKeys<typeof schema.matches.$inferSelect, 'id'>;
+
+type TestGameRow = RequireKeys<
+  typeof schema.games.$inferSelect,
+  'id' | 'matchId'
+>;
+
+type TestGameScoreRow = RequireKeys<
+  typeof schema.gameScores.$inferSelect,
+  'id' | 'gameId'
+>;
+
 class UpdateTournamentTestDb {
-  public readonly matches: Array<{ id: number }>;
-  public readonly games: Array<{ id: number; matchId: number }>;
+  public readonly matches: TestMatchRow[];
+  public readonly games: TestGameRow[];
+  public readonly gameScores: TestGameScoreRow[];
   public readonly tournamentUpdates: Array<Record<string, unknown>> = [];
+  public readonly matchUpdates: Array<Record<string, unknown>> = [];
   public readonly gameUpdates: Array<Record<string, unknown>> = [];
   public readonly gameScoreUpdates: Array<Record<string, unknown>> = [];
   public auditCallCount = 0;
 
   constructor(
-    private readonly existingTournament: {
-      id: number;
-      verificationStatus: number;
-      ruleset: number;
-    },
+    private readonly existingTournament: TestTournamentRow,
     options: {
-      matches: Array<{ id: number }>;
-      games: Array<{ id: number; matchId: number }>;
-    }
+      matches?: TestMatchRow[];
+      games?: TestGameRow[];
+      gameScores?: TestGameScoreRow[];
+    } = {}
   ) {
-    this.matches = options.matches;
-    this.games = options.games;
+    this.matches = options.matches ?? [];
+    this.games = options.games ?? [];
+    this.gameScores = options.gameScores ?? [];
   }
 
   query = {
@@ -54,6 +78,46 @@ class UpdateTournamentTestTransaction {
     this.parent.auditCallCount += 1;
   }
 
+  private recordUpdate(table: unknown, values: Record<string, unknown>) {
+    if (table === schema.tournaments) {
+      this.parent.tournamentUpdates.push(values);
+      return;
+    }
+
+    if (table === schema.matches) {
+      this.parent.matchUpdates.push(values);
+      return;
+    }
+
+    if (table === schema.games) {
+      this.parent.gameUpdates.push(values);
+      return;
+    }
+
+    if (table === schema.gameScores) {
+      this.parent.gameScoreUpdates.push(values);
+      return;
+    }
+
+    throw new Error('Unsupported update target');
+  }
+
+  private rowsFor(table: unknown) {
+    if (table === schema.matches) {
+      return this.parent.matches;
+    }
+
+    if (table === schema.games) {
+      return this.parent.games;
+    }
+
+    if (table === schema.gameScores) {
+      return this.parent.gameScores;
+    }
+
+    return [];
+  }
+
   select() {
     return {
       from: (table: unknown) => ({
@@ -66,6 +130,10 @@ class UpdateTournamentTestTransaction {
             return this.parent.games;
           }
 
+          if (table === schema.gameScores) {
+            return this.parent.gameScores;
+          }
+
           return [];
         },
       }),
@@ -75,23 +143,15 @@ class UpdateTournamentTestTransaction {
   update(table: unknown) {
     return {
       set: (values: Record<string, unknown>) => ({
-        where: async () => {
-          if (table === schema.tournaments) {
-            this.parent.tournamentUpdates.push(values);
-            return;
-          }
+        where: () => {
+          this.recordUpdate(table, values);
 
-          if (table === schema.games) {
-            this.parent.gameUpdates.push(values);
-            return;
-          }
+          const rows = this.rowsFor(table);
 
-          if (table === schema.gameScores) {
-            this.parent.gameScoreUpdates.push(values);
-            return;
-          }
-
-          throw new Error('Unsupported update target');
+          return {
+            returning: async (_selection?: Record<string, unknown>) =>
+              rows.map((row) => ({ ...row })),
+          };
         },
       }),
     };
@@ -175,5 +235,107 @@ describe('updateTournamentAdminHandler', () => {
     expect(result.success).toBe(true);
     expect(db.gameUpdates).toHaveLength(0);
     expect(db.gameScoreUpdates).toHaveLength(0);
+  });
+
+  it('clears warnings when the tournament is verified', async () => {
+    const db = new UpdateTournamentTestDb(
+      {
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        ruleset: Ruleset.Mania4k,
+      },
+      {
+        matches: [{ id: 10, warningFlags: MatchWarningFlags.UnexpectedBeatmapsFound }],
+        games: [{ id: 20, matchId: 10, warningFlags: GameWarningFlags.BeatmapUsedOnce }],
+      }
+    );
+
+    const args: UpdateTournamentAdminArgs = {
+      input: {
+        ...baseInput,
+        verificationStatus: VerificationStatus.Verified,
+      },
+      context: {
+        db: db as unknown as DatabaseClient,
+        session: adminSession,
+      },
+    };
+
+    const result = await updateTournamentAdminHandler(args);
+
+    expect(result.success).toBe(true);
+    expect(db.matchUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          warningFlags: MatchWarningFlags.None,
+        }),
+      ])
+    );
+    expect(db.gameUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          warningFlags: GameWarningFlags.None,
+        }),
+      ])
+    );
+  });
+
+  it('clears warnings when the tournament is rejected', async () => {
+    const db = new UpdateTournamentTestDb(
+      {
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        ruleset: Ruleset.Mania4k,
+      },
+      {
+        matches: [
+          {
+            id: 10,
+            warningFlags: MatchWarningFlags.LowGameCount,
+            verificationStatus: VerificationStatus.Verified,
+          },
+        ],
+        games: [
+          {
+            id: 20,
+            matchId: 10,
+            warningFlags: GameWarningFlags.BeatmapUsedOnce,
+            verificationStatus: VerificationStatus.Verified,
+          },
+        ],
+        gameScores: [{ id: 30, gameId: 20 }],
+      }
+    );
+
+    const args: UpdateTournamentAdminArgs = {
+      input: {
+        ...baseInput,
+        verificationStatus: VerificationStatus.Rejected,
+      },
+      context: {
+        db: db as unknown as DatabaseClient,
+        session: adminSession,
+      },
+    };
+
+    const result = await updateTournamentAdminHandler(args);
+
+    expect(result.success).toBe(true);
+    expect(db.matchUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          warningFlags: MatchWarningFlags.None,
+          verificationStatus: VerificationStatus.Rejected,
+        }),
+      ])
+    );
+    expect(db.gameUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          warningFlags: GameWarningFlags.None,
+          verificationStatus: VerificationStatus.Rejected,
+        }),
+      ])
+    );
   });
 });
