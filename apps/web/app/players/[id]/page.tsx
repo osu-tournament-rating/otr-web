@@ -153,7 +153,7 @@ export default async function PlayerPage(props: PageProps) {
   // Get the list of tournaments that the player has participated in
   const playerTournaments = await getTournaments(decodedId, {
     ...searchParams,
-    ruleset: Number(currentRuleset).toString(),
+    ruleset: currentRuleset.toString(),
   });
 
   // Redirect to o!TR ID if the current URL uses a different search key
