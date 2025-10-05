@@ -154,10 +154,7 @@ export default async function PlayerPage(props: PageProps) {
   const playerTournaments = await getTournaments(decodedId, searchParams);
 
   // Redirect to o!TR ID if the current URL uses a different search key
-  if (
-    canonicalPlayerId &&
-    canonicalPlayerId.toString() !== decodedId
-  ) {
+  if (canonicalPlayerId && canonicalPlayerId.toString() !== decodedId) {
     // Build query string from search params
     const queryString = new URLSearchParams(
       Object.entries(searchParams).reduce(

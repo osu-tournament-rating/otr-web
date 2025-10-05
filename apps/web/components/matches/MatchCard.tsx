@@ -122,7 +122,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
               </span>
               <Link href={`/matches/${match.id}`}>
                 <p className="truncate text-sm font-bold text-white drop-shadow-sm transition-colors hover:text-white/80 sm:text-xl">
-                  {match.name}
+                  {match.name || `Match ${match.id}`}
                 </p>
               </Link>
             </div>
