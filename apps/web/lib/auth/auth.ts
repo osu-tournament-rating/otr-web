@@ -114,6 +114,11 @@ const ensurePlayer = async ({
     ? mapPlaymodeToRuleset(profile.playmode)
     : Ruleset.Osu;
 
+  if (sanitizedCountry === 'A1') {
+    // osu! bots are marked with pseudo-country A1; skip persisting them
+    return player ?? null;
+  }
+
   if (!player) {
     const created = await db
       .insert(schema.players)
