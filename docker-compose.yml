@@ -6,13 +6,13 @@ services:
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DOCKER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DOCKER_POSTGRES_DB}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DOCKER_POSTGRES_USER} -d ${DOCKER_POSTGRES_DB}']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -26,8 +26,8 @@ services:
       - '5672:5672'
       - '15672:15672'
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:${DEPLOY_TAG:-local}
+    image: stagecodes/otr-web:${DOCKER_DEPLOY_TAG:-local}
     profiles:
       - migrate
     restart: 'no'
@@ -50,13 +50,13 @@ services:
     env_file:
       - ./.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL}
       WEB_OSU_CLIENT_ID: ${WEB_OSU_CLIENT_ID}
       WEB_OSU_CLIENT_SECRET: ${WEB_OSU_CLIENT_SECRET}
-      RABBITMQ_AMQP_URL: ${RABBITMQ_AMQP_URL}
+      RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
       DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
       OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
@@ -75,7 +75,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:${DEPLOY_TAG:-local}
+    image: stagecodes/otr-web:${DOCKER_DEPLOY_TAG:-local}
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -87,13 +87,13 @@ services:
     env_file:
       - ./.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL}
       WEB_OSU_CLIENT_ID: ${WEB_OSU_CLIENT_ID}
       WEB_OSU_CLIENT_SECRET: ${WEB_OSU_CLIENT_SECRET}
-      RABBITMQ_AMQP_URL: ${RABBITMQ_AMQP_URL}
+      RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
       DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
       OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
@@ -105,7 +105,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: stagecodes/otr-data-worker:${DEPLOY_TAG:-local}
+    image: stagecodes/otr-data-worker:${DOCKER_DEPLOY_TAG:-local}
     restart: unless-stopped
     depends_on:
       db:
@@ -115,8 +115,8 @@ services:
     env_file:
       - ./.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      RABBITMQ_AMQP_URL: ${RABBITMQ_AMQP_URL}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+      RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
       DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
       OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
