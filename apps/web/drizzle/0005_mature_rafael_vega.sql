@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
 DROP INDEX "ix_player_ratings_ruleset_rating";--> statement-breakpoint
 ALTER TABLE "matches" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', "matches"."name"), 'A') || setweight(to_tsvector('simple', regexp_replace("matches"."name", '([A-Za-z]+)([0-9]+)', '\1 \2', 'g')), 'B')) STORED NOT NULL;--> statement-breakpoint
 ALTER TABLE "players" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', "players"."username"), 'A')) STORED NOT NULL;--> statement-breakpoint
