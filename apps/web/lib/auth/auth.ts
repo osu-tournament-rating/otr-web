@@ -30,11 +30,9 @@ type AuthAccount = {
 
 type AuthUserRecord = typeof schema.auth_users.$inferSelect;
 
-type PlayerProfileLike = {
-  username?: string | null;
-  country_code?: string | null;
-  playmode?: string | null;
-};
+type OsuProfileLike =
+  | User.Extended.WithStatisticsrulesets
+  | User.Relation['target'];
 
 const parseOsuId = (value?: string | null) => {
   if (!value) {
@@ -95,7 +93,7 @@ const fetchOsuProfile = async (
 
 type EnsurePlayerParams = {
   osuId: number;
-  profile?: PlayerProfileLike | null;
+  profile?: OsuProfileLike | null;
 };
 
 const ensurePlayer = async ({
@@ -110,12 +108,16 @@ const ensurePlayer = async ({
 
   const sanitizedUsername = sanitizeUsername(profile?.username);
   const sanitizedCountry = sanitizeCountry(profile?.country_code);
+  let profilePlaymode: string | null | undefined;
+  if (profile && 'playmode' in profile) {
+    profilePlaymode = profile.playmode;
+  }
   const defaultRuleset = profile
-    ? mapPlaymodeToRuleset(profile.playmode)
+    ? mapPlaymodeToRuleset(profilePlaymode)
     : Ruleset.Osu;
 
-  if (sanitizedCountry === 'A1') {
-    // osu! bots are marked with pseudo-country A1; skip persisting them
+  if (profile?.is_bot) {
+    // Skip persisting bot accounts
     return player ?? null;
   }
 
@@ -211,9 +213,7 @@ const syncPlayerFriends = async ({
     });
 
     const fetched = await api.getFriends();
-    relations = Array.isArray(fetched)
-      ? (fetched as User.Relation[])
-      : [];
+    relations = Array.isArray(fetched) ? fetched : [];
   } catch (error) {
     console.error('Failed to fetch osu! friends', error);
     return;
@@ -237,6 +237,11 @@ const syncPlayerFriends = async ({
 
   for (const [targetId, relation] of uniqueFriends) {
     const profile = relation.target;
+
+    if (profile?.is_bot) {
+      continue;
+    }
+
     const ensured = await ensurePlayer({
       osuId: targetId,
       profile,
