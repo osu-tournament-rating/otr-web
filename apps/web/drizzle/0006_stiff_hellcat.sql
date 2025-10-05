@@ -1,0 +1,1 @@
+ALTER TABLE "games" DROP COLUMN "play_mode";
