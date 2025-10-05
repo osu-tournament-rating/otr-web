@@ -151,7 +151,10 @@ export default async function PlayerPage(props: PageProps) {
     : Ruleset.Osu;
 
   // Get the list of tournaments that the player has participated in
-  const playerTournaments = await getTournaments(decodedId, searchParams);
+  const playerTournaments = await getTournaments(decodedId, {
+    ...searchParams,
+    ruleset: currentRuleset.toString(),
+  });
 
   // Redirect to o!TR ID if the current URL uses a different search key
   if (canonicalPlayerId && canonicalPlayerId.toString() !== decodedId) {
