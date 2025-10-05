@@ -6,3 +6,4 @@ export * from './messages/values';
 export * from './messages/types';
 export * from './osu-track/user-stat-update';
 export * from './utils/time';
+export * from './utils/enum';
