@@ -13,7 +13,7 @@ import {
   GameAdminPreviewSchema,
   GameAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
-import { VerificationStatus } from '@otr/core/osu';
+import { GameWarningFlags, VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -53,6 +53,14 @@ export const updateGameAdmin = protectedProcedure
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
+        const shouldClearWarnings =
+          input.verificationStatus === VerificationStatus.Verified ||
+          input.verificationStatus === VerificationStatus.Rejected;
+
+        const nextWarningFlags = shouldClearWarnings
+          ? GameWarningFlags.None
+          : input.warningFlags;
+
         await tx
           .update(schema.games)
           .set({
@@ -62,7 +70,7 @@ export const updateGameAdmin = protectedProcedure
             mods: input.mods,
             verificationStatus: input.verificationStatus,
             rejectionReason: input.rejectionReason,
-            warningFlags: input.warningFlags,
+            warningFlags: nextWarningFlags,
             startTime,
             endTime,
             updated: NOW,

@@ -19,7 +19,12 @@ import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import {
+  GameWarningFlags,
+  MatchWarningFlags,
+  Ruleset,
+  VerificationStatus,
+} from '@otr/core/osu';
 import {
   publishFetchMatchMessage,
   publishProcessTournamentAutomationCheckMessage,
@@ -256,6 +261,10 @@ export async function updateTournamentAdminHandler({
         await alignTournamentChildRulesets(tx, input.id, input.ruleset);
       }
 
+      if (input.verificationStatus === VerificationStatus.Verified) {
+        await clearTournamentWarningFlags(tx, input.id);
+      }
+
       if (input.verificationStatus === VerificationStatus.Rejected) {
         await cascadeTournamentRejection(tx, [input.id], {
           updatedAt: NOW,
@@ -324,6 +333,53 @@ async function alignTournamentChildRulesets(
     .where(inArray(schema.gameScores.gameId, gameIds));
 }
 
+async function clearTournamentWarningFlags(
+  tx: Pick<DatabaseClient, 'select' | 'update'>,
+  tournamentId: number
+) {
+  await tx
+    .update(schema.matches)
+    .set({
+      warningFlags: MatchWarningFlags.None,
+      updated: NOW,
+    })
+    .where(
+      and(
+        eq(schema.matches.tournamentId, tournamentId),
+        eq(schema.matches.verificationStatus, VerificationStatus.Verified)
+      )
+    );
+
+  const verifiedMatches = await tx
+    .select({ id: schema.matches.id })
+    .from(schema.matches)
+    .where(
+      and(
+        eq(schema.matches.tournamentId, tournamentId),
+        eq(schema.matches.verificationStatus, VerificationStatus.Verified)
+      )
+    );
+
+  const matchIds = verifiedMatches.map((match) => match.id);
+
+  if (matchIds.length === 0) {
+    return;
+  }
+
+  await tx
+    .update(schema.games)
+    .set({
+      warningFlags: GameWarningFlags.None,
+      updated: NOW,
+    })
+    .where(
+      and(
+        inArray(schema.games.matchId, matchIds),
+        eq(schema.games.verificationStatus, VerificationStatus.Verified)
+      )
+    );
+}
+
 export const resetTournamentAutomatedChecks = protectedProcedure
   .input(TournamentResetAutomatedChecksInputSchema)
   .output(TournamentAdminMutationResponseSchema)
@@ -388,6 +444,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
           .update(schema.matches)
           .set({
             verificationStatus: VerificationStatus.Verified,
+            warningFlags: MatchWarningFlags.None,
             verifiedByUserId: adminUserId,
             updated: NOW,
           })
@@ -405,6 +462,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
           .update(schema.matches)
           .set({
             verificationStatus: VerificationStatus.Rejected,
+            warningFlags: MatchWarningFlags.None,
             verifiedByUserId: adminUserId,
             updated: NOW,
           })
@@ -430,6 +488,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             .update(schema.games)
             .set({
               verificationStatus: VerificationStatus.Verified,
+              warningFlags: GameWarningFlags.None,
               updated: NOW,
             })
             .where(
@@ -446,6 +505,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             .update(schema.games)
             .set({
               verificationStatus: VerificationStatus.Rejected,
+              warningFlags: GameWarningFlags.None,
               updated: NOW,
             })
             .where(

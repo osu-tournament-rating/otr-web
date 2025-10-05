@@ -3,7 +3,9 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import {
   GameRejectionReason,
+  GameWarningFlags,
   MatchRejectionReason,
+  MatchWarningFlags,
   ScoreRejectionReason,
   VerificationStatus,
 } from '../osu/enums';
@@ -91,6 +93,7 @@ async function cascadeGames(
     .set({
       verificationStatus: VerificationStatus.Rejected,
       rejectionReason: sql`${schema.games.rejectionReason} | ${GameRejectionReason.RejectedMatch}`,
+      warningFlags: GameWarningFlags.None,
       updated: updatedAt,
     })
     .where(inArray(schema.games.matchId, matchIds))
@@ -115,6 +118,7 @@ export async function cascadeMatchRejection(
   const updatedAt = resolveTimestamp(options?.updatedAt);
   const matchUpdate: Record<string, unknown> = {
     verificationStatus: VerificationStatus.Rejected,
+    warningFlags: MatchWarningFlags.None,
     updated: updatedAt,
   };
 
@@ -162,6 +166,7 @@ export async function cascadeTournamentRejection(
     .set({
       verificationStatus: VerificationStatus.Rejected,
       rejectionReason: sql`${schema.matches.rejectionReason} | ${MatchRejectionReason.RejectedTournament}`,
+      warningFlags: MatchWarningFlags.None,
       updated: updatedAt,
     })
     .where(inArray(schema.matches.tournamentId, tournamentIds))
