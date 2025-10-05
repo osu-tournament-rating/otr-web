@@ -252,7 +252,6 @@ export const getMatch = publicProcedure
         verificationStatus: schema.games.verificationStatus,
         rejectionReason: schema.games.rejectionReason,
         warningFlags: schema.games.warningFlags,
-        playMode: schema.games.playMode,
         beatmapDbId: schema.beatmaps.id,
         beatmapOsuId: schema.beatmaps.osuId,
         beatmapRuleset: schema.beatmaps.ruleset,
@@ -723,7 +722,6 @@ export const getMatch = publicProcedure
         verificationStatus: game.verificationStatus as VerificationStatus,
         rejectionReason: game.rejectionReason,
         warningFlags: game.warningFlags,
-        playMode: game.playMode,
         isFreeMod:
           (game.mods & MODS_FREE_MOD_ALLOWED) === MODS_FREE_MOD_ALLOWED,
         beatmap,

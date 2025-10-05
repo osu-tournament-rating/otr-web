@@ -76,7 +76,6 @@ export const createGame = (
       overrides.endTime !== undefined
         ? overrides.endTime
         : new Date('2024-01-01T01:00:00Z').toISOString(),
-    playMode: overrides.playMode ?? Ruleset.Osu,
     verificationStatus:
       overrides.verificationStatus ?? VerificationStatus.PreVerified,
     rejectionReason: overrides.rejectionReason ?? GameRejectionReason.None,

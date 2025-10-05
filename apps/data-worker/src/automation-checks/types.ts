@@ -59,7 +59,6 @@ export interface AutomationGame {
   mods: Mods;
   startTime: string;
   endTime: string;
-  playMode: Ruleset;
   verificationStatus: VerificationStatus;
   rejectionReason: GameRejectionReason;
   warningFlags: GameWarningFlags;

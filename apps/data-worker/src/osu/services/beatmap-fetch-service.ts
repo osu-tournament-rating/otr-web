@@ -154,7 +154,6 @@ export class BeatmapFetchService {
           maxCombo: beatmap.max_combo ?? null,
           beatmapsetId: beatmapsetRow.id,
           dataFetchStatus: DataFetchStatus.Fetched,
-          playMode: ruleset,
           updated: nowIso,
         };
 
