@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Music } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,17 @@ export default function PlayerBeatmapsList({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (totalCount === 0) {
+  useEffect(() => {
+    // Reset to the server response whenever the player/ruleset changes to avoid
+    // mixing cached pages from a different profile view after navigation.
+    setBeatmaps(initialBeatmaps);
+    setTotalCount(initialTotal);
+    setErrorMessage(null);
+  }, [initialBeatmaps, initialTotal, playerId, ruleset]);
+
+  if (totalCount === 0 && beatmaps.length === 0) {
+    // With SSR + cache resets the list can briefly be empty; only show the empty state
+    // once both the count and current list confirm there is nothing to display.
     return <NoResultsCard />;
   }
 
