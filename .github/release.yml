@@ -1,17 +1,14 @@
 changelog:
   categories:
+    - title: Performance Improvements ⚡
+      labels:
+        - 'meta:performance'
     - title: New Features ✅
       labels:
-        - 'type:feature'
-    - title: Interface Changes ✅
-      labels:
-        - 'type:ui/ux'
-    - title: Code Quality 👨‍💻
-      labels:
-        - 'type:code-quality'
+        - 'pr:feature'
     - title: Bug Fixes 🔧
       labels:
-        - 'bug'
+        - 'pr:bug'
     - title: Misc. Fixes 🚧
       labels:
         - '*'
