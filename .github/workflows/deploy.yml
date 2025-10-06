@@ -56,7 +56,6 @@ jobs:
       - name: Create .env file from secret
         run: |
           printf '%s\n' "${{ secrets.ENV }}" > .env
-          echo "DOCKER_DEPLOY_TAG=${{ inputs.deploy_tag }}" >> .env
 
       - name: Ensure remote directory exists
         uses: appleboy/ssh-action@v1
@@ -92,6 +91,8 @@ jobs:
           command_timeout: 60m
           script: |
             set -euo pipefail
+            export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
+            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
             cd "$REMOTE_PATH"
             docker compose --env-file .env pull web data-worker
             docker compose --env-file .env up -d db rabbitmq

@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:${DOCKER_DEPLOY_TAG:-local}
+    image: "${WEB_IMAGE:-stagecodes/otr-web:local}"
     profiles:
       - migrate
     restart: 'no'
@@ -75,7 +75,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:${DOCKER_DEPLOY_TAG:-local}
+    image: "${WEB_IMAGE:-stagecodes/otr-web:local}"
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -105,7 +105,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: stagecodes/otr-data-worker:${DOCKER_DEPLOY_TAG:-local}
+    image: "${DATA_WORKER_IMAGE:-stagecodes/otr-data-worker:local}"
     restart: unless-stopped
     depends_on:
       db:
