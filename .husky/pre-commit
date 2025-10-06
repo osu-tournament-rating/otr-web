@@ -5,17 +5,17 @@ set -e
 # Ensure the hook runs from the repository root
 cd "$(dirname "$0")/.."
 
-echo "Running TypeScript type check for apps/web..."
-npx tsc --noEmit -p apps/web/tsconfig.json
+echo "Linting..."
+bun run lint
 
-echo "Running TypeScript type check for apps/data-worker..."
-npx tsc --noEmit -p apps/data-worker/tsconfig.json
+echo "Type checking..."
+bunx tsc
 
 staged_files="$(git diff --cached --name-only --diff-filter=ACM)"
 
 if [ -n "$staged_files" ]; then
   echo "Running Prettier on staged files..."
-  printf '%s' "$staged_files" | tr '\n' '\0' | xargs -0 npx prettier --write --ignore-unknown
+  printf '%s' "$staged_files" | tr '\n' '\0' | xargs -0 bunx prettier --write --ignore-unknown
   printf '%s' "$staged_files" | tr '\n' '\0' | xargs -0 git add
 fi
 
