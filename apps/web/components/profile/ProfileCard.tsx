@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronDown, LogOut, User } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -142,6 +142,26 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </Link>
           )}
 
+          {isMobileNav ? (
+            <SheetClose asChild>
+              <Link
+                href="/settings"
+                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              >
+                <Settings className="size-4" />
+                <span>Settings</span>
+              </Link>
+            </SheetClose>
+          ) : (
+            <Link
+              href="/settings"
+              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            >
+              <Settings className="size-4" />
+              <span>Settings</span>
+            </Link>
+          )}
+
           <button
             className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
@@ -201,6 +221,12 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           <Link href={`/players/${player.id}`}>
             <User className="mr-2 size-4" />
             <span>My Profile</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/settings">
+            <Settings className="mr-2 size-4" />
+            <span>Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem

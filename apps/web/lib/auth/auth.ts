@@ -5,6 +5,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createFieldAttribute } from 'better-auth/db';
 import {
   admin as adminPlugin,
+  apiKey,
   customSession,
   genericOAuth,
 } from 'better-auth/plugins';
@@ -162,9 +163,7 @@ const ensurePlayer = async ({
   return player ?? null;
 };
 
-const ensurePlayerAndAppUser = async (
-  params: EnsurePlayerParams
-) => {
+const ensurePlayerAndAppUser = async (params: EnsurePlayerParams) => {
   const player = await ensurePlayer(params);
 
   if (!player) {
@@ -278,7 +277,10 @@ const syncPlayerFriends = async ({
           }))
         )
         .onConflictDoUpdate({
-          target: [schema.playerFriends.playerId, schema.playerFriends.friendId],
+          target: [
+            schema.playerFriends.playerId,
+            schema.playerFriends.friendId,
+          ],
           set: {
             mutual: sql`excluded.mutual`,
           },
@@ -393,6 +395,7 @@ export const auth = betterAuth({
       account: schema.auth_accounts,
       verification: schema.auth_verifications,
       session: schema.auth_sessions,
+      apikeys: schema.apiKeys,
     },
   }),
   session: {
@@ -443,6 +446,13 @@ export const auth = betterAuth({
       },
       adminRoles: [...ADMIN_ROLES],
       defaultRole: 'user',
+    }),
+    apiKey({
+      rateLimit: {
+        enabled: true,
+        maxRequests: 60,
+        timeWindow: 60 * 1000,
+      },
     }),
     genericOAuth({
       config: [

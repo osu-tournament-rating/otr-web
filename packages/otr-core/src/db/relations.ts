@@ -3,6 +3,7 @@ import {
   auth_accounts,
   auth_sessions,
   auth_users,
+  apiKeys as apiKeys,
   players,
   playerFriends,
   beatmapsets,
@@ -54,6 +55,14 @@ export const authUsersRelations = relations(auth_users, ({ one, many }) => ({
   }),
   accounts: many(auth_accounts),
   sessions: many(auth_sessions),
+  apiKeys: many(apiKeys),
+}));
+
+export const authApiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(auth_users, {
+    fields: [apiKeys.userId],
+    references: [auth_users.id],
+  }),
 }));
 
 export const playersRelations = relations(players, ({ many }) => ({
@@ -440,25 +449,22 @@ export const oAuthClientAdminNoteRelations = relations(
   })
 );
 
-export const playerFriendsRelations = relations(
-  playerFriends,
-  ({ one }) => ({
-    player: one(players, {
-      fields: [playerFriends.playerId],
-      references: [players.id],
-      relationName: 'playerFriends_player',
-    }),
-    friend: one(users, {
-      fields: [playerFriends.friendId],
-      references: [users.playerId],
-    }),
-    friendPlayer: one(players, {
-      fields: [playerFriends.friendId],
-      references: [players.id],
-      relationName: 'playerFriends_friend',
-    }),
-  })
-);
+export const playerFriendsRelations = relations(playerFriends, ({ one }) => ({
+  player: one(players, {
+    fields: [playerFriends.playerId],
+    references: [players.id],
+    relationName: 'playerFriends_player',
+  }),
+  friend: one(users, {
+    fields: [playerFriends.friendId],
+    references: [users.playerId],
+  }),
+  friendPlayer: one(players, {
+    fields: [playerFriends.friendId],
+    references: [players.id],
+    relationName: 'playerFriends_friend',
+  }),
+}));
 
 export const joinBeatmapCreatorsRelations = relations(
   joinBeatmapCreators,

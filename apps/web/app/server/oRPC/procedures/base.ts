@@ -3,9 +3,20 @@ import { ORPCError, os } from '@orpc/server';
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
 
-const base = os.$context<{
-  headers: Headers;
-}>();
+type VerifiedApiKeyContext = {
+  apiKey?: {
+    id: string;
+    userId: string;
+    name: string | null;
+    enabled: boolean;
+  } | null;
+};
+
+const base = os.$context<
+  {
+    headers: Headers;
+  } & VerifiedApiKeyContext
+>();
 
 const formatProcedurePath = (path: readonly string[]) =>
   path.length > 0 ? path.join('.') : 'unknown';
@@ -53,6 +64,7 @@ const formatSessionActor = (session: unknown): string => {
 type LoggingContext = {
   headers?: Headers;
   session?: unknown;
+  apiKey?: VerifiedApiKeyContext['apiKey'];
 };
 
 type LogInvocationArgs = {
@@ -215,6 +227,10 @@ const logInvocation = async ({
       `user=${formatSessionActor(session)}`,
     ];
 
+    if (context.apiKey?.id) {
+      parts.push(`apiKey=${context.apiKey.id}`);
+    }
+
     if (args) {
       parts.push(`args=${args}`);
     }
@@ -235,6 +251,67 @@ const logInvocation = async ({
     console.error(`[oRPC] logging-failed error=${describeError(loggingError)}`);
   }
 };
+
+const extractApiKey = (headers?: Headers) => {
+  if (!headers) {
+    return null;
+  }
+
+  const authorization = headers.get('authorization');
+  if (authorization?.startsWith('Bearer ')) {
+    const token = authorization.slice('Bearer '.length).trim();
+    return token.length > 0 ? token : null;
+  }
+
+  return null;
+};
+
+const withOptionalApiKey = base.middleware(async ({ context, next }) => {
+  const candidate = extractApiKey(context.headers);
+
+  if (!candidate) {
+    return next({
+      context: {
+        ...context,
+        apiKey: null,
+      } as typeof context & { apiKey: VerifiedApiKeyContext['apiKey'] },
+    });
+  }
+
+  try {
+    const verification = await auth.api.verifyApiKey({
+      headers: context.headers,
+      body: {
+        key: candidate,
+      },
+    });
+
+    if (!verification?.valid || !verification.key?.enabled) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'Invalid API key provided',
+      });
+    }
+
+    const { id, userId, name, enabled } = verification.key;
+
+    return next({
+      context: {
+        ...context,
+        apiKey: {
+          id,
+          userId,
+          name: name ?? null,
+          enabled,
+        },
+      } as typeof context & { apiKey: VerifiedApiKeyContext['apiKey'] },
+    });
+  } catch (error) {
+    throw new ORPCError('UNAUTHORIZED', {
+      message: 'Invalid API key provided',
+      cause: error instanceof Error ? error : undefined,
+    });
+  }
+});
 
 const withDatabase = base.middleware(async ({ context, next }) => {
   return next({
@@ -292,7 +369,10 @@ const withRequestLogging = base.middleware(
   }
 );
 
-export const publicProcedure = base.use(withDatabase).use(withRequestLogging);
+export const publicProcedure = base
+  .use(withDatabase)
+  .use(withOptionalApiKey)
+  .use(withRequestLogging);
 export const protectedProcedure = base
   .use(withDatabase)
   .use(withAuth)

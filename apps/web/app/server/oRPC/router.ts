@@ -59,6 +59,11 @@ import {
   filterRegistrants,
   getFilterReport,
 } from './procedures/filteringProcedures';
+import {
+  deleteUserApiKey,
+  generateUserApiKey,
+  getUserApiKeys,
+} from './procedures/apiKeyProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -129,6 +134,11 @@ export const router = base.router({
   filtering: {
     filter: filterRegistrants,
     report: getFilterReport,
+  },
+  apiClients: {
+    getKeys: getUserApiKeys,
+    generateKey: generateUserApiKey,
+    deleteKey: deleteUserApiKey,
   },
   tournaments: {
     list: listTournaments,
