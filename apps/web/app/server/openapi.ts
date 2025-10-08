@@ -181,6 +181,8 @@ export const openAPIHandler = new OpenAPIHandler(router, {
   filter: (args) => isPublicProcedure(args),
 });
 
+const API_SECURITY_SCHEME_NAME = 'ApiKeyAuth';
+const securityRequirement = [{ [API_SECURITY_SCHEME_NAME]: [] as string[] }];
 const tags = [
   {
     name: 'public',
@@ -227,6 +229,18 @@ export const generatePublicOpenAPISpec = async () => {
     },
     servers: buildServers(),
     tags,
+    security: securityRequirement,
+    components: {
+      securitySchemes: {
+        [API_SECURITY_SCHEME_NAME]: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'API Key',
+          description:
+            'Send an o!TR API key using the Authorization: Bearer <key> header.',
+        },
+      },
+    },
     commonSchemas: {
       User: {
         schema: UserSchema,

@@ -83,11 +83,6 @@ export default function ApiKeySettingsClient({
   rateLimit,
 }: ApiKeySettingsClientProps) {
   const [keys, setKeys] = useState<ApiKeyMetadataWithKey[]>(initialKeys);
-  const [recentSecret, setRecentSecret] = useState<{
-    id: string;
-    name: string;
-    value: string;
-  } | null>(null);
   const [pendingName, setPendingName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -132,7 +127,6 @@ export default function ApiKeySettingsClient({
         name: trimmedName,
       });
       const metadata: ApiKeyMetadataWithKey = result;
-      const secretValue = result.key;
 
       setKeys((previous) => {
         const withoutDuplicate = previous.filter(
@@ -141,11 +135,6 @@ export default function ApiKeySettingsClient({
         return [...withoutDuplicate, metadata];
       });
 
-      setRecentSecret({
-        id: metadata.id,
-        name: getKeyName(metadata),
-        value: secretValue,
-      });
       setPendingName('');
       toast.success('API key generated successfully');
     } catch (err) {
@@ -172,9 +161,6 @@ export default function ApiKeySettingsClient({
     try {
       await orpc.apiClients.deleteKey({ keyId });
       setKeys((previous) => previous.filter((key) => key.id !== keyId));
-      if (recentSecret?.id === keyId) {
-        setRecentSecret(null);
-      }
       toast.success('API key deleted');
     } catch (err) {
       const message =
@@ -197,33 +183,6 @@ export default function ApiKeySettingsClient({
           osu! Tournament Ratings.
         </p>
       </div>
-
-      {recentSecret && (
-        <Alert>
-          <AlertTitle>Save &quot;{recentSecret.name}&quot; securely</AlertTitle>
-          <AlertDescription className="flex flex-col gap-3">
-            <p>
-              Store this secret in your password manager. You can always copy it
-              again from the API key list.
-            </p>
-            <div className="bg-muted flex flex-col gap-3 rounded-md border px-3 py-3 text-sm">
-              <span className="break-all font-mono text-base">
-                {recentSecret.value}
-              </span>
-              <div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex w-fit items-center gap-2"
-                  onClick={() => handleCopySecret(recentSecret.value)}
-                >
-                  <Copy className="size-4" /> Copy secret
-                </Button>
-              </div>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
 
       <Card>
         <CardHeader className="flex flex-col gap-4">
@@ -386,8 +345,7 @@ export default function ApiKeySettingsClient({
               <span className="font-medium">
                 `Authorization: Bearer &lt;key&gt;`
               </span>{' '}
-              when calling public oRPC routes. Protected routes continue to
-              require a signed-in session.
+              when making API calls.
             </div>
           )}
         </CardContent>
