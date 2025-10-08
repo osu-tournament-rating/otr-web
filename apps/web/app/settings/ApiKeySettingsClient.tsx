@@ -149,9 +149,17 @@ export default function ApiKeySettingsClient({
     }
   };
 
-  const handleCopySecret = (value: string) => {
+  const handleCopySecret = (value: string | null | undefined) => {
+    const secret = value?.trim();
+    if (!secret) {
+      toast.error(
+        'Secret is unavailable. Generate a new key to continue using the API.'
+      );
+      return;
+    }
+
     navigator.clipboard
-      .writeText(value)
+      .writeText(secret)
       .then(() => toast.success('API key copied to clipboard'))
       .catch(() => toast.error('Failed to copy API key.'));
   };

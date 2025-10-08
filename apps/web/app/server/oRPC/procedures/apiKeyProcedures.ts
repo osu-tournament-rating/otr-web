@@ -33,6 +33,7 @@ type ApiKeyResponse = Omit<
 const MAX_API_KEYS_PER_USER = 3;
 const FALLBACK_API_KEY_NAME = 'API key';
 const API_KEY_PREFIX = 'otr-';
+const API_KEY_METADATA_SECRET_FIELD = 'secret';
 
 const normalizeTimestamp = (value: unknown) => {
   if (value instanceof Date) {
@@ -46,10 +47,53 @@ const normalizeTimestamp = (value: unknown) => {
   return value === null || value === undefined ? null : String(value);
 };
 
+const parseApiKeyMetadata = (metadata: unknown): Record<string, unknown> => {
+  if (!metadata) {
+    return {};
+  }
+
+  if (typeof metadata === 'string') {
+    try {
+      const parsed = JSON.parse(metadata);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  if (typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return { ...(metadata as Record<string, unknown>) };
+  }
+
+  return {};
+};
+
+const extractStoredSecret = (metadata: unknown): string | null => {
+  const parsed = parseApiKeyMetadata(metadata);
+  const candidate = parsed[API_KEY_METADATA_SECRET_FIELD];
+
+  if (typeof candidate !== 'string') {
+    return null;
+  }
+
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const encodeApiKeyMetadata = (metadata: Record<string, unknown>) => {
+  try {
+    return JSON.stringify(metadata);
+  } catch {
+    return null;
+  }
+};
+
 const toMetadataShape = (record: RawApiKeyRecord | ApiKeyResponse) => {
   const {
     key: _omitKey,
-    metadata: _omitMetadata,
+    metadata: rawMetadata,
     permissions: _omitPermissions,
     createdAt,
     updatedAt,
@@ -60,10 +104,10 @@ const toMetadataShape = (record: RawApiKeyRecord | ApiKeyResponse) => {
   } = record as ApiKeyResponse;
 
   void _omitKey;
-  void _omitMetadata;
   void _omitPermissions;
 
   const recordWithMetadata = record as ApiKeyResponse;
+  const storedSecret = extractStoredSecret(rawMetadata);
   const normalizedName =
     typeof recordWithMetadata.name === 'string'
       ? recordWithMetadata.name.trim()
@@ -72,8 +116,7 @@ const toMetadataShape = (record: RawApiKeyRecord | ApiKeyResponse) => {
   return {
     ...rest,
     name: normalizedName.length > 0 ? normalizedName : FALLBACK_API_KEY_NAME,
-    key:
-      typeof recordWithMetadata.key === 'string' ? recordWithMetadata.key : '',
+    key: storedSecret ?? '',
     createdAt: normalizeTimestamp(createdAt),
     updatedAt: normalizeTimestamp(updatedAt),
     lastRequest: normalizeTimestamp(lastRequest),
@@ -144,6 +187,24 @@ export const generateUserApiKey = protectedProcedure
         prefix: API_KEY_PREFIX,
       },
     });
+
+    if (created?.id) {
+      const rawMetadata =
+        typeof created === 'object' && created !== null && 'metadata' in created
+          ? (created as { metadata?: unknown }).metadata
+          : null;
+      const combinedMetadata = parseApiKeyMetadata(rawMetadata);
+      combinedMetadata[API_KEY_METADATA_SECRET_FIELD] = created.key;
+
+      const encoded = encodeApiKeyMetadata(combinedMetadata);
+
+      if (encoded) {
+        await context.db
+          .update(schema.apiKeys)
+          .set({ metadata: encoded })
+          .where(eq(schema.apiKeys.id, created.id));
+      }
+    }
 
     return ApiKeyWithSecretSchema.parse({
       ...toMetadataShape(created as ApiKeyResponse),
