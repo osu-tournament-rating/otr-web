@@ -35,6 +35,11 @@ const FALLBACK_API_KEY_NAME = 'API key';
 const API_KEY_PREFIX = 'otr-';
 const API_KEY_METADATA_SECRET_FIELD = 'secret';
 
+type ApiKeyMetadataPayload = {
+  secret?: string;
+  [key: string]: unknown;
+};
+
 const normalizeTimestamp = (value: unknown) => {
   if (value instanceof Date) {
     return value.toISOString();
@@ -47,7 +52,7 @@ const normalizeTimestamp = (value: unknown) => {
   return value === null || value === undefined ? null : String(value);
 };
 
-const parseApiKeyMetadata = (metadata: unknown): Record<string, unknown> => {
+const parseApiKeyMetadata = (metadata: unknown): ApiKeyMetadataPayload => {
   if (!metadata) {
     return {};
   }
@@ -56,7 +61,7 @@ const parseApiKeyMetadata = (metadata: unknown): Record<string, unknown> => {
     try {
       const parsed = JSON.parse(metadata);
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>)
+        ? (parsed as ApiKeyMetadataPayload)
         : {};
     } catch {
       return {};
@@ -64,7 +69,7 @@ const parseApiKeyMetadata = (metadata: unknown): Record<string, unknown> => {
   }
 
   if (typeof metadata === 'object' && !Array.isArray(metadata)) {
-    return { ...(metadata as Record<string, unknown>) };
+    return { ...(metadata as ApiKeyMetadataPayload) };
   }
 
   return {};
@@ -82,7 +87,7 @@ const extractStoredSecret = (metadata: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const encodeApiKeyMetadata = (metadata: Record<string, unknown>) => {
+const encodeApiKeyMetadata = (metadata: ApiKeyMetadataPayload) => {
   try {
     return JSON.stringify(metadata);
   } catch {
