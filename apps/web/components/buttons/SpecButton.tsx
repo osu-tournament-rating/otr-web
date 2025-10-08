@@ -1,20 +1,20 @@
-import { Book } from 'lucide-react';
 import Link from 'next/link';
-import { iconButtonStyle } from './IconButton';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
+import { iconButtonStyle } from './IconButton';
+import { FileCode } from 'lucide-react';
 
-export default function DocsButton() {
+export default function SpecButton() {
   return (
-    <Link href={'https://docs.otr.stagec.xyz'} target="_blank">
-      <SimpleTooltip content="Read the docs">
+    <Link href="/spec" prefetch={false}>
+      <SimpleTooltip content="OpenAPI specification">
         <Button
-          aria-label="Docs"
+          aria-label="API spec"
           className="hover:text-primary cursor-pointer"
           variant="ghost"
           size="icon"
         >
-          <Book className={iconButtonStyle()} />
+          <FileCode className={iconButtonStyle()} />
         </Button>
       </SimpleTooltip>
     </Link>

@@ -28,6 +28,9 @@ export default function SpecPage() {
                 theme: 'auto',
                 hideDownload: false,
                 withDefaultFonts: true,
+                showToolbar: "never",
+                hideClientButton: true,
+                hideTestRequestButton: true,
                 url: '/spec.json',
               });
             })();
