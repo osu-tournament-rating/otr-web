@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -197,10 +196,6 @@ export default function ApiKeySettingsClient({
             <KeyRound className="text-primary size-6" />
             <div>
               <CardTitle>API Keys</CardTitle>
-              <CardDescription>
-                Issue up to {MAX_API_KEYS} keys to connect dashboards, bots, or
-                other trusted tools.
-              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -339,10 +334,6 @@ export default function ApiKeySettingsClient({
           ) : (
             <div className="border-border/60 text-muted-foreground flex flex-col items-start gap-2 rounded-xl border p-6 text-sm">
               <span>No API keys yet.</span>
-              <span>
-                Generate a key to connect external dashboards or automation
-                tools to the o!TR API.
-              </span>
             </div>
           )}
 
@@ -359,8 +350,8 @@ export default function ApiKeySettingsClient({
 
         <CardFooter className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-muted-foreground text-sm">
-            Remember to rotate keys regularly and remove any integrations you no
-            longer use.
+            Remember not to leave your keys in sheet templates or other places
+            by mistake.
           </span>
           <span className="text-sm font-medium">
             {remainingSlots} of {MAX_API_KEYS} slots available
