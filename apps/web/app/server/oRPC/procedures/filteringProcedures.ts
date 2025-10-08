@@ -33,7 +33,7 @@ export const filterRegistrants = protectedProcedure
     summary: 'Filter tournament registrants',
     tags: ['authenticated'],
     method: 'POST',
-    path: '/filtering/filter',
+    path: '/filtering/registrants:filter',
   })
   .handler(async ({ input, context }) => {
     const userId = context.session.dbUser?.id;
@@ -330,7 +330,7 @@ export const getFilterReport = publicProcedure
   .input(FilterReportIdSchema)
   .output(FilterReportSchema)
   .route({
-    summary: 'Get stored filtering report',
+    summary: 'Get filtering report',
     tags: ['public'],
     method: 'GET',
     path: '/filtering/reports/{id}',

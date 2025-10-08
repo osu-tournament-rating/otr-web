@@ -29,10 +29,10 @@ export const updateMatchAdmin = protectedProcedure
   .input(MatchAdminUpdateInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: update match',
+    summary: 'Update match',
     tags: ['admin'],
     method: 'PATCH',
-    path: '/matches/admin/update',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -132,10 +132,10 @@ export const mergeMatchAdmin = protectedProcedure
   .input(MatchAdminMergeInputSchema)
   .output(MatchAdminMergeResponseSchema)
   .route({
-    summary: 'Admin: merge matches',
+    summary: 'Merge matches',
     tags: ['admin'],
     method: 'POST',
-    path: '/matches/admin/merge',
+    path: '/matches:merge',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -225,10 +225,10 @@ export const deleteMatchAdmin = protectedProcedure
   .input(MatchAdminDeleteInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete match',
+    summary: 'Delete match',
     tags: ['admin'],
     method: 'DELETE',
-    path: '/matches/admin/delete',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -264,10 +264,10 @@ export const deleteMatchPlayerScoresAdmin = protectedProcedure
   .input(MatchAdminDeletePlayerScoresInputSchema)
   .output(MatchAdminDeletePlayerScoresResponseSchema)
   .route({
-    summary: 'Admin: delete player scores from match',
+    summary: 'Delete player scores from match',
     tags: ['admin'],
     method: 'DELETE',
-    path: '/matches/admin/delete-player-scores',
+    path: '/matches/{matchId}/players/{playerId}/scores',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);

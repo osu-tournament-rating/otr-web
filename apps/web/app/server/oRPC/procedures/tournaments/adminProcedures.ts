@@ -280,10 +280,10 @@ export const updateTournamentAdmin = protectedProcedure
   .input(TournamentAdminUpdateInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: update tournament',
+    summary: 'Update tournament',
     tags: ['admin'],
     method: 'PATCH',
-    path: '/tournaments/admin/update',
+    path: '/tournaments/{id}',
   })
   .handler(({ input, context }) =>
     updateTournamentAdminHandler({ input, context })
@@ -385,10 +385,10 @@ export const resetTournamentAutomatedChecks = protectedProcedure
   .input(TournamentResetAutomatedChecksInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: reset automated checks',
+    summary: 'Reset tournament automated checks',
     tags: ['admin'],
     method: 'POST',
-    path: '/tournaments/admin/reset-automated-checks',
+    path: '/tournaments/{id}:reset-automated-checks',
   })
   .handler(async ({ input, context }) =>
     resetTournamentAutomatedChecksHandler({ input, context })
@@ -398,10 +398,10 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: accept pre-verification statuses',
+    summary: 'Accept tournament pre-verification statuses',
     tags: ['admin'],
     method: 'POST',
-    path: '/tournaments/admin/accept-pre-verification-statuses',
+    path: '/tournaments/{id}:accept-pre-verification-statuses',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -572,10 +572,10 @@ export const deleteTournamentAdmin = protectedProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete tournament',
+    summary: 'Delete tournament',
     tags: ['admin'],
     method: 'DELETE',
-    path: '/tournaments/admin/delete',
+    path: '/tournaments/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -602,10 +602,10 @@ export const deleteTournamentBeatmapsAdmin = protectedProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete pooled beatmaps',
+    summary: 'Delete tournament beatmaps',
     tags: ['admin'],
     method: 'DELETE',
-    path: '/tournaments/admin/delete-beatmaps',
+    path: '/tournaments/{id}/beatmaps',
   })
   .handler(async ({ input, context }) => {
     ensureAdminSession(context.session);
@@ -621,10 +621,10 @@ export const refetchTournamentMatchData = protectedProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentRefetchMatchDataResponseSchema)
   .route({
-    summary: 'Admin: refetch tournament match data',
+    summary: 'Refetch tournament match data',
     tags: ['admin'],
     method: 'POST',
-    path: '/tournaments/admin/refetch-match-data',
+    path: '/tournaments/{id}:refetch-match-data',
   })
   .handler(async ({ input, context }) =>
     refetchTournamentMatchDataHandler({ input, context })

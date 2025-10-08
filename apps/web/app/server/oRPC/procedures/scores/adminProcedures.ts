@@ -18,10 +18,10 @@ export const updateScoreAdmin = protectedProcedure
   .input(GameScoreAdminUpdateInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: update game score',
+    summary: 'Update game score',
     tags: ['admin'],
     method: 'PATCH',
-    path: '/scores/admin/update',
+    path: '/scores/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -70,10 +70,10 @@ export const deleteScoreAdmin = protectedProcedure
   .input(GameScoreAdminDeleteInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete game score',
+    summary: 'Delete game score',
     tags: ['admin'],
     method: 'DELETE',
-    path: '/scores/admin/delete',
+    path: '/scores/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);

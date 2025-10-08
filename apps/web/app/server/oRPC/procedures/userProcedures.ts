@@ -14,7 +14,7 @@ export const getUser = protectedProcedure
     })
   )
   .route({
-    summary: 'Get a user',
+    summary: 'Get user details',
     tags: ['authenticated'],
     method: 'GET',
     path: '/users/{id}',
@@ -40,7 +40,7 @@ export const getUser = protectedProcedure
 export const getCurrentUser = protectedProcedure
   .output(CurrentUserSchema)
   .route({
-    summary: 'Get the authenticated user',
+    summary: 'Get current user',
     tags: ['authenticated'],
     method: 'GET',
     path: '/users/me',

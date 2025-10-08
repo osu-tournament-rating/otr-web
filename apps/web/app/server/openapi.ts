@@ -198,15 +198,16 @@ const securityRequirement = [{ [API_SECURITY_SCHEME_NAME]: [] as string[] }];
 const tags = [
   {
     name: 'public',
-    description: 'Public endpoints that do not require authentication',
+    description:
+      'Public endpoints that do not require authentication when used from the website, accessible via public API',
   },
   {
     name: 'authenticated',
-    description: 'Endpoints that require authentication',
+    description: 'Endpoints that require a user to be signed in',
   },
   {
     name: 'admin',
-    description: 'May be used by admins only',
+    description: 'Admin-only endpoints',
   },
 ];
 

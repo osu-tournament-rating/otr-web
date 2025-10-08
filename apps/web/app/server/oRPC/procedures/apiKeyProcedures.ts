@@ -85,7 +85,7 @@ const toMetadataShape = (record: RawApiKeyRecord | ApiKeyResponse) => {
 export const getUserApiKeys = protectedProcedure
   .output(ApiKeyWithSecretSchema.array())
   .route({
-    summary: 'List API keys for the signed-in user',
+    summary: 'List API keys',
     tags: ['authenticated'],
     method: 'GET',
     path: '/api-clients/keys',
@@ -118,10 +118,10 @@ export const generateUserApiKey = protectedProcedure
   )
   .output(ApiKeyWithSecretSchema)
   .route({
-    summary: 'Generate API key for the signed-in user',
+    summary: 'Create API key',
     tags: ['authenticated'],
     method: 'POST',
-    path: '/api-clients/keys/generate',
+    path: '/api-clients/keys',
   })
   .handler(async ({ context, input }) => {
     const existing = await context.db.query.apiKeys.findMany({
@@ -163,10 +163,10 @@ export const deleteUserApiKey = protectedProcedure
     })
   )
   .route({
-    summary: 'Delete an API key for the signed-in user',
+    summary: 'Delete API key',
     tags: ['authenticated'],
-    method: 'POST',
-    path: '/api-clients/keys/delete',
+    method: 'DELETE',
+    path: '/api-clients/keys/{keyId}',
   })
   .handler(async ({ context, input }) => {
     const keyRecord = await context.db.query.apiKeys.findFirst({

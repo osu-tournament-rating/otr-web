@@ -37,7 +37,7 @@ export const searchEntities = protectedProcedure
   .input(SearchRequestSchema)
   .output(SearchResponseSchema)
   .route({
-    summary: 'Search players, tournaments, and matches',
+    summary: 'Search entities',
     tags: ['authenticated'],
     method: 'GET',
     path: '/search',
