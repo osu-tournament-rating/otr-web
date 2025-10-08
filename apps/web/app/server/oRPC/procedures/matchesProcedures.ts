@@ -201,7 +201,8 @@ export const getMatch = publicProcedure
   .route({
     summary: 'Get match detail',
     tags: ['public'],
-    path: '/matches/get',
+    method: 'GET',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const [matchRow] = await context.db

@@ -282,6 +282,7 @@ export const updateTournamentAdmin = protectedProcedure
   .route({
     summary: 'Admin: update tournament',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/tournaments/admin/update',
   })
   .handler(({ input, context }) =>
@@ -386,6 +387,7 @@ export const resetTournamentAutomatedChecks = protectedProcedure
   .route({
     summary: 'Admin: reset automated checks',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/admin/reset-automated-checks',
   })
   .handler(async ({ input, context }) =>
@@ -398,6 +400,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
   .route({
     summary: 'Admin: accept pre-verification statuses',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/admin/accept-pre-verification-statuses',
   })
   .handler(async ({ input, context }) => {
@@ -571,6 +574,7 @@ export const deleteTournamentAdmin = protectedProcedure
   .route({
     summary: 'Admin: delete tournament',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/tournaments/admin/delete',
   })
   .handler(async ({ input, context }) => {
@@ -600,6 +604,7 @@ export const deleteTournamentBeatmapsAdmin = protectedProcedure
   .route({
     summary: 'Admin: delete pooled beatmaps',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/tournaments/admin/delete-beatmaps',
   })
   .handler(async ({ input, context }) => {
@@ -618,6 +623,7 @@ export const refetchTournamentMatchData = protectedProcedure
   .route({
     summary: 'Admin: refetch tournament match data',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/admin/refetch-match-data',
   })
   .handler(async ({ input, context }) =>

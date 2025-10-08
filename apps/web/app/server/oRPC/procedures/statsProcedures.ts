@@ -35,6 +35,7 @@ export const getPlatformStats = publicProcedure
   .route({
     summary: 'Get platform statistics',
     tags: ['public'],
+    method: 'GET',
     path: '/stats/platform',
   })
   .handler(async ({ context }) => {

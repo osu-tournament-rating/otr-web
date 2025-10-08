@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import * as schema from '@otr/core/db/schema';
 import { CurrentUserSchema } from '@/lib/orpc/schema/user';
@@ -16,6 +16,7 @@ export const getUser = protectedProcedure
   .route({
     summary: 'Get a user',
     tags: ['authenticated'],
+    method: 'GET',
     path: '/users/{id}',
   })
   .handler(async ({ input, context }) => {
@@ -41,6 +42,7 @@ export const getCurrentUser = protectedProcedure
   .route({
     summary: 'Get the authenticated user',
     tags: ['authenticated'],
+    method: 'GET',
     path: '/users/me',
   })
   .handler(async ({ context }) => {

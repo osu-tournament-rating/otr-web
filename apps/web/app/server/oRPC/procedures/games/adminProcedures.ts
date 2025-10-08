@@ -27,6 +27,7 @@ export const updateGameAdmin = protectedProcedure
   .route({
     summary: 'Admin: update game',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/games/admin/update',
   })
   .handler(async ({ input, context }) => {
@@ -95,6 +96,7 @@ export const deleteGameAdmin = protectedProcedure
     // TODO: Remove 'Admin:' prefix for all admin route summaries
     summary: 'Admin: delete game',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/games/admin/delete',
   })
   .handler(async ({ input, context }) => {
@@ -124,6 +126,7 @@ export const mergeGameAdmin = protectedProcedure
   .route({
     summary: 'Admin: merge games',
     tags: ['admin'],
+    method: 'POST',
     path: '/games/admin/merge',
   })
   .handler(async ({ input, context }) => {
@@ -275,6 +278,7 @@ export const lookupGamesAdmin = protectedProcedure
   .route({
     summary: 'Admin: fetch games by id',
     tags: ['admin'],
+    method: 'GET',
     path: '/games/admin/lookup',
   })
   .handler(async ({ input, context }) => {

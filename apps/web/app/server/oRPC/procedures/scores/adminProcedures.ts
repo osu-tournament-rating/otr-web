@@ -20,6 +20,7 @@ export const updateScoreAdmin = protectedProcedure
   .route({
     summary: 'Admin: update game score',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/scores/admin/update',
   })
   .handler(async ({ input, context }) => {
@@ -71,6 +72,7 @@ export const deleteScoreAdmin = protectedProcedure
   .route({
     summary: 'Admin: delete game score',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/scores/admin/delete',
   })
   .handler(async ({ input, context }) => {

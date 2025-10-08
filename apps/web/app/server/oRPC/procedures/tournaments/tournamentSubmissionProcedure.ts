@@ -429,6 +429,7 @@ export const submitTournament = protectedProcedure
   .route({
     summary: 'Submit tournament for verification',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/submit',
   })
   .handler(submitTournamentHandler);

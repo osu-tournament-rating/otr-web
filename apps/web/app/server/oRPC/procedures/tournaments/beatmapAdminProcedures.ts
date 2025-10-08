@@ -270,6 +270,7 @@ export const manageTournamentBeatmapsAdmin = protectedProcedure
   .route({
     summary: 'Admin: manage pooled beatmaps',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/admin/manage-beatmaps',
   })
   .handler(async ({ input, context }) =>

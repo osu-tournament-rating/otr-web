@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import { ORPCError } from '@orpc/server';
 
@@ -87,6 +87,7 @@ export const getUserApiKeys = protectedProcedure
   .route({
     summary: 'List API keys for the signed-in user',
     tags: ['authenticated'],
+    method: 'GET',
     path: '/api-clients/keys',
   })
   .handler(async ({ context }) => {
@@ -119,6 +120,7 @@ export const generateUserApiKey = protectedProcedure
   .route({
     summary: 'Generate API key for the signed-in user',
     tags: ['authenticated'],
+    method: 'POST',
     path: '/api-clients/keys/generate',
   })
   .handler(async ({ context, input }) => {
@@ -163,6 +165,7 @@ export const deleteUserApiKey = protectedProcedure
   .route({
     summary: 'Delete an API key for the signed-in user',
     tags: ['authenticated'],
+    method: 'POST',
     path: '/api-clients/keys/delete',
   })
   .handler(async ({ context, input }) => {

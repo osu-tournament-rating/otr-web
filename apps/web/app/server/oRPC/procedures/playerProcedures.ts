@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';
@@ -37,6 +37,12 @@ export const getPlayer = publicProcedure
     })
   )
   .output(PlayerSchema)
+  .route({
+    summary: 'Get player by id',
+    tags: ['public'],
+    method: 'GET',
+    path: '/players/{id}',
+  })
   .handler(async ({ input, context }) => {
     const player = await context.db
       .select()
@@ -393,6 +399,12 @@ const buildMatchAggregates = (
 export const getPlayerTournaments = publicProcedure
   .input(PlayerTournamentsRequestSchema)
   .output(TournamentListItemSchema.array())
+  .route({
+    summary: 'List tournaments for a player by key',
+    tags: ['public'],
+    method: 'GET',
+    path: '/players/{key}/tournaments',
+  })
   .handler(async ({ input, context }) => {
     const player = await findPlayerByKey(context.db, input.key);
 
@@ -434,6 +446,12 @@ export const getPlayerTournaments = publicProcedure
 export const getPlayerBeatmaps = publicProcedure
   .input(PlayerBeatmapsRequestSchema)
   .output(PlayerBeatmapsResponseSchema)
+  .route({
+    summary: 'List beatmaps created by a player',
+    tags: ['public'],
+    method: 'GET',
+    path: '/players/{playerId}/beatmaps',
+  })
   .handler(async ({ input, context }) => {
     const player = await context.db.query.players.findFirst({
       where: (players, { eq }) => eq(players.id, input.playerId),
@@ -831,6 +849,12 @@ export const getPlayerBeatmaps = publicProcedure
 export const getPlayerDashboardStats = publicProcedure
   .input(PlayerDashboardRequestSchema)
   .output(PlayerDashboardStatsSchema)
+  .route({
+    summary: 'Get aggregated dashboard stats for a player',
+    tags: ['public'],
+    method: 'GET',
+    path: '/players/{key}/dashboard',
+  })
   .handler(async ({ input, context }) => {
     const player = await findPlayerByKey(context.db, input.key);
 

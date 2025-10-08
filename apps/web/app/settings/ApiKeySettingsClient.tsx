@@ -179,8 +179,7 @@ export default function ApiKeySettingsClient({
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold">API Access</h2>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Create and manage API keys for trusted services that integrate with
-          osu! Tournament Ratings.
+          Use o!TR in spreadsheets and other tools via the API.
         </p>
       </div>
 

@@ -264,6 +264,7 @@ export const createTournamentAdminNote = protectedProcedure
   .route({
     summary: 'Admin: create tournament admin note',
     tags: ['admin'],
+    method: 'POST',
     path: '/tournaments/admin-notes/create',
   })
   .handler(async ({ input, context }) => {
@@ -301,6 +302,7 @@ export const updateTournamentAdminNote = protectedProcedure
   .route({
     summary: 'Admin: update tournament admin note',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/tournaments/admin-notes/update',
   })
   .handler(async ({ input, context }) => {
@@ -353,6 +355,7 @@ export const deleteTournamentAdminNote = protectedProcedure
   .route({
     summary: 'Admin: delete tournament admin note',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/tournaments/admin-notes/delete',
   })
   .handler(async ({ input, context }) => {
@@ -389,6 +392,7 @@ export const createMatchAdminNote = protectedProcedure
   .route({
     summary: 'Admin: create match admin note',
     tags: ['admin'],
+    method: 'POST',
     path: '/matches/admin-notes/create',
   })
   .handler(async ({ input, context }) => {
@@ -426,6 +430,7 @@ export const updateMatchAdminNote = protectedProcedure
   .route({
     summary: 'Admin: update match admin note',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/matches/admin-notes/update',
   })
   .handler(async ({ input, context }) => {
@@ -478,6 +483,7 @@ export const deleteMatchAdminNote = protectedProcedure
   .route({
     summary: 'Admin: delete match admin note',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/matches/admin-notes/delete',
   })
   .handler(async ({ input, context }) => {
@@ -514,6 +520,7 @@ export const createGameAdminNote = protectedProcedure
   .route({
     summary: 'Admin: create game admin note',
     tags: ['admin'],
+    method: 'POST',
     path: '/games/admin-notes/create',
   })
   .handler(async ({ input, context }) => {
@@ -551,6 +558,7 @@ export const updateGameAdminNote = protectedProcedure
   .route({
     summary: 'Admin: update game admin note',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/games/admin-notes/update',
   })
   .handler(async ({ input, context }) => {
@@ -603,6 +611,7 @@ export const deleteGameAdminNote = protectedProcedure
   .route({
     summary: 'Admin: delete game admin note',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/games/admin-notes/delete',
   })
   .handler(async ({ input, context }) => {
@@ -639,6 +648,7 @@ export const createScoreAdminNote = protectedProcedure
   .route({
     summary: 'Admin: create score admin note',
     tags: ['admin'],
+    method: 'POST',
     path: '/scores/admin-notes/create',
   })
   .handler(async ({ input, context }) => {
@@ -676,6 +686,7 @@ export const updateScoreAdminNote = protectedProcedure
   .route({
     summary: 'Admin: update score admin note',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/scores/admin-notes/update',
   })
   .handler(async ({ input, context }) => {
@@ -728,6 +739,7 @@ export const deleteScoreAdminNote = protectedProcedure
   .route({
     summary: 'Admin: delete score admin note',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/scores/admin-notes/delete',
   })
   .handler(async ({ input, context }) => {

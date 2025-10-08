@@ -31,6 +31,7 @@ export const updateMatchAdmin = protectedProcedure
   .route({
     summary: 'Admin: update match',
     tags: ['admin'],
+    method: 'PATCH',
     path: '/matches/admin/update',
   })
   .handler(async ({ input, context }) => {
@@ -73,7 +74,7 @@ export const updateMatchAdmin = protectedProcedure
         })();
 
         const shouldClearWarnings =
-          input.verificationStatus === VerificationStatus.Verified || 
+          input.verificationStatus === VerificationStatus.Verified ||
           input.verificationStatus === VerificationStatus.Rejected;
 
         const nextWarningFlags = shouldClearWarnings
@@ -133,6 +134,7 @@ export const mergeMatchAdmin = protectedProcedure
   .route({
     summary: 'Admin: merge matches',
     tags: ['admin'],
+    method: 'POST',
     path: '/matches/admin/merge',
   })
   .handler(async ({ input, context }) => {
@@ -225,6 +227,7 @@ export const deleteMatchAdmin = protectedProcedure
   .route({
     summary: 'Admin: delete match',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/matches/admin/delete',
   })
   .handler(async ({ input, context }) => {
@@ -263,6 +266,7 @@ export const deleteMatchPlayerScoresAdmin = protectedProcedure
   .route({
     summary: 'Admin: delete player scores from match',
     tags: ['admin'],
+    method: 'DELETE',
     path: '/matches/admin/delete-player-scores',
   })
   .handler(async ({ input, context }) => {

@@ -6,6 +6,18 @@ import {
 } from '@orpc/zod/zod4';
 
 import { router } from '@/app/server/oRPC/router';
+import { LeaderboardEntrySchema } from '@/lib/orpc/schema/leaderboard';
+import { MatchSchema } from '@/lib/orpc/schema/match';
+import {
+  PlayerBeatmapStatsSchema,
+  PlayerBeatmapsResponseSchema,
+} from '@/lib/orpc/schema/playerBeatmaps';
+import { PlayerDashboardStatsSchema } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerSchema } from '@/lib/orpc/schema/player';
+import {
+  TournamentDetailSchema,
+  TournamentListItemSchema,
+} from '@/lib/orpc/schema/tournament';
 import { UserSchema } from '@/lib/orpc/schema/user';
 
 const INTEGER_DEFAULT_MIN_VALUES = new Set([
@@ -244,6 +256,30 @@ export const generatePublicOpenAPISpec = async () => {
     commonSchemas: {
       User: {
         schema: UserSchema,
+      },
+      Player: {
+        schema: PlayerSchema,
+      },
+      Match: {
+        schema: MatchSchema,
+      },
+      Tournament: {
+        schema: TournamentDetailSchema,
+      },
+      TournamentListItem: {
+        schema: TournamentListItemSchema,
+      },
+      LeaderboardEntry: {
+        schema: LeaderboardEntrySchema,
+      },
+      PlayerBeatmap: {
+        schema: PlayerBeatmapStatsSchema,
+      },
+      PlayerBeatmapResponse: {
+        schema: PlayerBeatmapsResponseSchema,
+      },
+      PlayerDashboard: {
+        schema: PlayerDashboardStatsSchema,
       },
     },
     filter: (args) => isPublicProcedure(args),

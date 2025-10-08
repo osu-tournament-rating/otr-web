@@ -20,7 +20,8 @@ export const getLeaderboard = publicProcedure
   .route({
     summary: 'Get leaderboard results',
     tags: ['public'],
-    path: '/leaderboard/list',
+    method: 'GET',
+    path: '/leaderboard',
   })
   .handler(async ({ input, context }) => {
     try {
