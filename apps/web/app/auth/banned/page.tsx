@@ -1,81 +1,66 @@
-type SearchParams = Record<string, string | string[] | undefined> | undefined;
+import { ShieldAlert } from 'lucide-react';
+import { type Metadata } from 'next';
 
-const getParam = (
-  searchParams: SearchParams,
-  key: string
-): string | undefined => {
-  const value = searchParams?.[key];
-  if (Array.isArray(value)) {
-    return value[0];
-  }
-
-  return typeof value === 'string' ? value : undefined;
+export const metadata: Metadata = {
+  title: 'Account Suspended',
+  description: 'Your osu! Tournament Rating account has been banned.',
 };
 
-const sanitizeText = (value: string | undefined) => {
-  if (!value) {
-    return null;
-  }
+type RawSearchParams = Record<string, string | string[] | undefined>;
 
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+type BannedPageProps = {
+  searchParams?: Promise<RawSearchParams>;
 };
 
-const formatExpiration = (value: string | null) => {
-  if (!value) {
-    return 'Indefinite';
+const resolveSearchParams = async (
+  searchParams: BannedPageProps['searchParams'] | RawSearchParams
+): Promise<RawSearchParams> => {
+  if (!searchParams) {
+    return {};
   }
 
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Indefinite';
+  if (typeof (searchParams as Promise<RawSearchParams>).then === 'function') {
+    const resolved = await (searchParams as Promise<RawSearchParams>);
+    return (resolved ?? {}) as RawSearchParams;
   }
 
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  });
-
-  return `${formatter.format(parsed)} UTC`;
+  return searchParams as RawSearchParams;
 };
 
-type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+const extractReason = (params: RawSearchParams): string | undefined => {
+  const rawReason = params.reason;
+  if (!rawReason) {
+    return undefined;
+  }
+  return Array.isArray(rawReason) ? rawReason[0] : rawReason;
 };
 
-export default function Page({ searchParams }: PageProps) {
-  const reasonParam =
-    getParam(searchParams, 'reason') ??
-    getParam(searchParams, 'error_description');
-  const sanitizedReason =
-    sanitizeText(reasonParam) ?? 'No ban reason was provided.';
-
-  const expiresParam = sanitizeText(getParam(searchParams, 'until'));
-  const formattedExpiration = formatExpiration(expiresParam ?? null);
+export default async function BannedPage(props: BannedPageProps) {
+  const params = await resolveSearchParams(props.searchParams);
+  const reason = extractReason(params);
 
   return (
-    <div className="rounded-4xl bg-card m-5 flex flex-col gap-4 p-10 text-center">
-      <p className="text-primary font-mono text-4xl">Account Banned</p>
-      <p className="text-accent-foreground font-mono">
-        Your account is currently banned from osu! Tournament Rating.
-      </p>
-
-      <div className="text-accent-foreground mx-auto flex max-w-xl flex-col gap-2 text-left font-mono text-sm md:text-base">
-        <p>
-          <span className="text-muted-foreground/80">Ban reason:</span>{' '}
-          {sanitizedReason}
-        </p>
-        <p>
-          <span className="text-muted-foreground/80">Ban expires:</span>{' '}
-          {formattedExpiration}
-        </p>
+    <main className="mx-auto w-full max-w-2xl px-4 pb-12 pt-4 sm:pt-8">
+      <div className="border-border bg-background space-y-6 rounded-2xl border px-6 py-8 text-center shadow-sm sm:px-10 sm:py-12">
+        <div className="bg-destructive/10 text-destructive ring-destructive/30 mx-auto flex h-14 w-14 items-center justify-center rounded-full ring-1">
+          <ShieldAlert aria-hidden="true" className="h-7 w-7" />
+        </div>
+        <header className="space-y-3">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Account Suspended
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Your osu! Tournament Rating account has been temporarily disabled.
+            If you believe this is an error, please contact the administrators.
+          </p>
+        </header>
+        {reason ? (
+          <section className="border-destructive/30 bg-destructive/10 text-destructive space-y-1 rounded-xl border px-4 py-3 text-left text-sm sm:text-base">
+            <p className="font-medium">Reason:</p>
+            <p>{reason}</p>
+          </section>
+        ) : null}
       </div>
-
-      <p className="text-muted-foreground font-mono text-xs md:text-sm">
-        If you believe this is a mistake, please contact an administrator for
-        further review.
-      </p>
-    </div>
+    </main>
   );
 }
