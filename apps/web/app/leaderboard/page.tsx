@@ -17,6 +17,7 @@ import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
+import { ORPCError } from '@orpc/client';
 
 export const metadata: Metadata = {
   title: 'Global Leaderboard',
@@ -25,20 +26,27 @@ export const metadata: Metadata = {
 };
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const response = await orpc.leaderboard.list({
-    page: params.page,
-    ruleset: params.ruleset,
+  const filter = {
+    ...params,
     country: params.country?.trim() ? params.country.trim() : undefined,
-    minOsuRank: params.minOsuRank,
-    maxOsuRank: params.maxOsuRank,
-    minRating: params.minRating,
-    maxRating: params.maxRating,
-    minMatches: params.minMatches,
-    maxMatches: params.maxMatches,
     minWinRate: (params.minWinRate ?? 0) / 100,
     maxWinRate: (params.maxWinRate ?? 100) / 100,
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
-  });
+  };
+
+  // If friend filter is set, get current user ID
+  if (params.friend) {
+    const currentUser = await orpc.users.me();
+    if (currentUser) {
+      filter.userId = currentUser.player.id;
+    } else {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User must be logged in to view friend leaderboard',
+      });
+    }
+  }
+
+  const response = await orpc.leaderboard.list(filter);
 
   return response;
 }

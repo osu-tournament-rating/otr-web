@@ -30,6 +30,8 @@ export const defaultLeaderboardFilterValues: z.infer<
   minWinRate: 0,
   maxWinRate: 100,
   tiers: [],
+  friend: false,
+  userId: undefined,
 };
 
 export function createSearchParamsFromSchema(
@@ -45,7 +47,7 @@ export function createSearchParamsFromSchema(
         return;
       }
 
-      setFlattenedParams<string | number>(searchParams, k, v);
+      setFlattenedParams<string | number | boolean>(searchParams, k, v);
     }
   });
 

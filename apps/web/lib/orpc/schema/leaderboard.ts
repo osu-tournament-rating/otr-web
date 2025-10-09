@@ -72,6 +72,8 @@ export const LeaderboardRequestSchema = z.object({
   minWinRate: z.number().min(0).max(1).optional(),
   maxWinRate: z.number().min(0).max(1).optional(),
   tiers: LeaderboardTierKeySchema.array().optional(),
+  friend: z.boolean().optional(),
+  userId: z.number().int().min(1).optional(),
 });
 
 export const LeaderboardResponseSchema = z.object({
