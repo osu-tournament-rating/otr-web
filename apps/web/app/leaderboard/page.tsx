@@ -15,6 +15,7 @@ import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
 import { ORPCError } from '@orpc/client';
@@ -69,6 +70,19 @@ export default async function Page(props: {
 
     return '/leaderboard' + (navParams.size > 0 ? `?${navParams}` : '');
   };
+
+  // Helper to create URLs for tab navigation
+  const createTabUri = (isFriend: boolean): string => {
+    const tabParams = createSearchParamsFromSchema({
+      ...filter,
+      friend: isFriend || undefined,
+      page: 1, // Reset to first page when switching tabs
+    });
+
+    return '/leaderboard' + (tabParams.size > 0 ? `?${tabParams}` : '');
+  };
+
+  const currentTab = filter.friend ? 'friends' : 'all';
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -140,7 +154,19 @@ export default async function Page(props: {
                   Global Leaderboard
                 </CardTitle>
               </div>
-              <LeaderboardFilter filter={filter} />
+              <div className="flex items-center gap-4">
+                <Tabs value={currentTab} className="w-auto">
+                  <TabsList>
+                    <TabsTrigger value="all" asChild>
+                      <Link href={createTabUri(false)}>All</Link>
+                    </TabsTrigger>
+                    <TabsTrigger value="friends" asChild>
+                      <Link href={createTabUri(true)}>Friends</Link>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <LeaderboardFilter filter={filter} />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
