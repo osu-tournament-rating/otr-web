@@ -12,7 +12,11 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DOCKER_POSTGRES_USER} -d ${DOCKER_POSTGRES_DB}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DOCKER_POSTGRES_USER} -d ${DOCKER_POSTGRES_DB}',
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -40,7 +44,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: "${WEB_IMAGE:-stagecodes/otr-web:local}"
+    image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
     profiles:
       - migrate
     restart: 'no'
@@ -75,7 +79,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: "${WEB_IMAGE:-stagecodes/otr-web:local}"
+    image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -105,7 +109,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: "${DATA_WORKER_IMAGE:-stagecodes/otr-data-worker:local}"
+    image: '${DATA_WORKER_IMAGE:-stagecodes/otr-data-worker:local}'
     restart: unless-stopped
     depends_on:
       db:
