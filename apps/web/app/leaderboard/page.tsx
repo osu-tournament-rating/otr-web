@@ -18,7 +18,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
-import { ORPCError } from '@orpc/client';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/auth';
 
 export const metadata: Metadata = {
   title: 'Global Leaderboard',
@@ -35,16 +37,9 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
   };
 
-  // If friend filter is set, get current user ID
   if (params.friend) {
     const currentUser = await orpc.users.me();
-    if (currentUser) {
-      filter.userId = currentUser.player.id;
-    } else {
-      throw new ORPCError('UNAUTHORIZED', {
-        message: 'User must be logged in to view friend leaderboard',
-      });
-    }
+    filter.userId = currentUser.player.id;
   }
 
   const response = await orpc.leaderboard.list(filter);
@@ -56,6 +51,14 @@ export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
+
+  // Redirect to main leaderboard if user tries to access friends tab while logged out
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (filter.friend && !session) {
+    redirect('/leaderboard');
+  }
+
   const data = await getData(filter);
 
   const totalPages = data.pages;
@@ -155,16 +158,19 @@ export default async function Page(props: {
                 </CardTitle>
               </div>
               <div className="flex items-center gap-4">
-                <Tabs value={currentTab} className="w-auto">
-                  <TabsList>
-                    <TabsTrigger value="all" asChild>
-                      <Link href={createTabUri(false)}>All</Link>
-                    </TabsTrigger>
-                    <TabsTrigger value="friends" asChild>
-                      <Link href={createTabUri(true)}>Friends</Link>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                {session && (
+                  <Tabs value={currentTab} className="w-auto">
+                    <TabsList>
+                      <TabsTrigger value="all" asChild>
+                        <Link href={createTabUri(false)}>All</Link>
+                      </TabsTrigger>
+                      <TabsTrigger value="friends" asChild>
+                        <Link href={createTabUri(true)}>Friends</Link>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                )}
+
                 <LeaderboardFilter filter={filter} />
               </div>
             </div>
