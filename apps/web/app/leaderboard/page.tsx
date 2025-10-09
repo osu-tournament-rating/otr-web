@@ -15,8 +15,12 @@ import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/auth';
 
 export const metadata: Metadata = {
   title: 'Global Leaderboard',
@@ -25,20 +29,20 @@ export const metadata: Metadata = {
 };
 
 async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
-  const response = await orpc.leaderboard.list({
-    page: params.page,
-    ruleset: params.ruleset,
+  const filter = {
+    ...params,
     country: params.country?.trim() ? params.country.trim() : undefined,
-    minOsuRank: params.minOsuRank,
-    maxOsuRank: params.maxOsuRank,
-    minRating: params.minRating,
-    maxRating: params.maxRating,
-    minMatches: params.minMatches,
-    maxMatches: params.maxMatches,
     minWinRate: (params.minWinRate ?? 0) / 100,
     maxWinRate: (params.maxWinRate ?? 100) / 100,
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
-  });
+  };
+
+  if (params.friend) {
+    const currentUser = await orpc.users.me();
+    filter.userId = currentUser.player.id;
+  }
+
+  const response = await orpc.leaderboard.list(filter);
 
   return response;
 }
@@ -47,6 +51,14 @@ export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
+
+  // Redirect to main leaderboard if user tries to access friends tab while logged out
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (filter.friend && !session) {
+    redirect('/leaderboard');
+  }
+
   const data = await getData(filter);
 
   const totalPages = data.pages;
@@ -61,6 +73,19 @@ export default async function Page(props: {
 
     return '/leaderboard' + (navParams.size > 0 ? `?${navParams}` : '');
   };
+
+  // Helper to create URLs for tab navigation
+  const createTabUri = (isFriend: boolean): string => {
+    const tabParams = createSearchParamsFromSchema({
+      ...filter,
+      friend: isFriend || undefined,
+      page: 1, // Reset to first page when switching tabs
+    });
+
+    return '/leaderboard' + (tabParams.size > 0 ? `?${tabParams}` : '');
+  };
+
+  const currentTab = filter.friend ? 'friends' : 'all';
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -132,7 +157,22 @@ export default async function Page(props: {
                   Global Leaderboard
                 </CardTitle>
               </div>
-              <LeaderboardFilter filter={filter} />
+              <div className="flex items-center gap-4">
+                {session && (
+                  <Tabs value={currentTab} className="w-auto">
+                    <TabsList>
+                      <TabsTrigger value="all" asChild>
+                        <Link href={createTabUri(false)}>All</Link>
+                      </TabsTrigger>
+                      <TabsTrigger value="friends" asChild>
+                        <Link href={createTabUri(true)}>Friends</Link>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                )}
+
+                <LeaderboardFilter filter={filter} />
+              </div>
             </div>
           </CardHeader>
           <CardContent>

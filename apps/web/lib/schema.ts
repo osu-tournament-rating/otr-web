@@ -160,4 +160,6 @@ export const leaderboardFilterSchema = z.object({
     },
     z.array(z.enum(leaderboardTierFilterValues)).optional()
   ),
+  friend: z.coerce.boolean().optional(),
+  userId: z.coerce.number().min(1).optional(),
 });

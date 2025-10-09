@@ -31,6 +31,7 @@ export const getLeaderboard = publicProcedure
         Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
       );
       const ruleset = input.ruleset ?? Ruleset.Osu;
+      const userId = input.userId ?? 0;
 
       const tournamentsPlayedExpr = sql<number>`
         COALESCE(COUNT(DISTINCT ${schema.tournaments.id})::int, 0)
@@ -75,67 +76,92 @@ export const getLeaderboard = publicProcedure
         ${schema.playerOsuRulesetData.globalRank}
       `.as('osuGlobalRank');
 
-      const leaderboardBase = context.db.$with('leaderboard_base').as(
-        context.db
-          .select({
-            playerId: schema.players.id,
-            osuId: schema.players.osuId,
-            username: schema.players.username,
-            country: schema.players.country,
-            rating: schema.playerRatings.rating,
-            volatility: schema.playerRatings.volatility,
-            percentile: schema.playerRatings.percentile,
-            ratingGlobalRank: schema.playerRatings.globalRank,
-            countryRank: schema.playerRatings.countryRank,
-            tournamentsPlayed: tournamentsPlayedExpr,
-            matchesPlayed: matchesPlayedExpr,
-            winRate: winRateExpr,
-            osuGlobalRank: osuGlobalRankExpr,
-          })
-          .from(schema.playerRatings)
-          .innerJoin(
-            schema.players,
-            eq(schema.playerRatings.playerId, schema.players.id)
+      const selectFields = {
+        playerId: schema.players.id,
+        osuId: schema.players.osuId,
+        username: schema.players.username,
+        country: schema.players.country,
+        rating: schema.playerRatings.rating,
+        volatility: schema.playerRatings.volatility,
+        percentile: schema.playerRatings.percentile,
+        ratingGlobalRank: schema.playerRatings.globalRank,
+        countryRank: schema.playerRatings.countryRank,
+        tournamentsPlayed: tournamentsPlayedExpr,
+        matchesPlayed: matchesPlayedExpr,
+        winRate: winRateExpr,
+        osuGlobalRank: osuGlobalRankExpr,
+      } as const;
+
+      let leaderboardBaseQuery = input.friend
+        ? context.db
+            .select(selectFields)
+            .from(schema.playerFriends)
+            .innerJoin(
+              schema.players,
+              eq(schema.players.id, schema.playerFriends.friendId)
+            )
+            .innerJoin(
+              schema.playerRatings,
+              eq(schema.playerRatings.playerId, schema.players.id)
+            )
+        : context.db
+            .select(selectFields)
+            .from(schema.playerRatings)
+            .innerJoin(
+              schema.players,
+              eq(schema.playerRatings.playerId, schema.players.id)
+            );
+
+      leaderboardBaseQuery = leaderboardBaseQuery
+        .leftJoin(
+          schema.playerTournamentStats,
+          eq(schema.playerTournamentStats.playerId, schema.players.id)
+        )
+        .leftJoin(
+          schema.tournaments,
+          and(
+            eq(
+              schema.tournaments.id,
+              schema.playerTournamentStats.tournamentId
+            ),
+            eq(schema.tournaments.ruleset, schema.playerRatings.ruleset)
           )
-          .leftJoin(
-            schema.playerTournamentStats,
-            eq(schema.playerTournamentStats.playerId, schema.players.id)
-          )
-          .leftJoin(
-            schema.tournaments,
-            and(
-              eq(
-                schema.tournaments.id,
-                schema.playerTournamentStats.tournamentId
-              ),
-              eq(schema.tournaments.ruleset, schema.playerRatings.ruleset)
+        )
+        .leftJoin(
+          schema.playerOsuRulesetData,
+          and(
+            eq(schema.playerOsuRulesetData.playerId, schema.players.id),
+            eq(
+              schema.playerOsuRulesetData.ruleset,
+              schema.playerRatings.ruleset
             )
           )
-          .leftJoin(
-            schema.playerOsuRulesetData,
-            and(
-              eq(schema.playerOsuRulesetData.playerId, schema.players.id),
-              eq(
-                schema.playerOsuRulesetData.ruleset,
-                schema.playerRatings.ruleset
-              )
-            )
-          )
-          .where(eq(schema.playerRatings.ruleset, ruleset))
-          .groupBy(
-            schema.playerRatings.id,
-            schema.playerRatings.rating,
-            schema.playerRatings.volatility,
-            schema.playerRatings.percentile,
-            schema.playerRatings.globalRank,
-            schema.playerRatings.countryRank,
-            schema.players.id,
-            schema.players.osuId,
-            schema.players.username,
-            schema.players.country,
-            schema.playerOsuRulesetData.globalRank
-          )
-      );
+        );
+
+      const ratingRulesetFilter = eq(schema.playerRatings.ruleset, ruleset);
+      const playerScopeFilter = input.friend
+        ? eq(schema.playerFriends.playerId, userId)
+        : undefined;
+      const baseWhere = playerScopeFilter
+        ? and(playerScopeFilter, ratingRulesetFilter)
+        : ratingRulesetFilter;
+      const groupByColumns = [
+        schema.playerRatings.id,
+        schema.playerRatings.rating,
+        schema.playerRatings.volatility,
+        schema.playerRatings.percentile,
+        schema.playerRatings.globalRank,
+        schema.playerRatings.countryRank,
+        schema.players.id,
+        schema.players.osuId,
+        schema.players.username,
+        schema.players.country,
+        schema.playerOsuRulesetData.globalRank,
+      ] as const;
+
+      const leaderboardBase = context.db
+        .$with('leaderboard_base')
+        .as(leaderboardBaseQuery.where(baseWhere).groupBy(...groupByColumns));
 
       const filters: SQL<unknown>[] = [];
 
