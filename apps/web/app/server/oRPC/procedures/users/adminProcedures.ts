@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, eq, ilike, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, ilike, isNull, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -8,10 +8,13 @@ import {
   AdminBanUserLookupResponseSchema,
   AdminPlayerSearchInputSchema,
   AdminPlayerSearchResponseSchema,
+  AdminUserApiKeysInputSchema,
 } from '@/lib/orpc/schema/user';
+import { ApiKeyMetadataSchema } from '@/lib/orpc/schema/apiKey';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { toApiKeyMetadata } from '../apiKeyProcedures';
 
 const AdminBanLookupInputSchema = AdminBanUserInputSchema.pick({
   playerId: true,
@@ -130,6 +133,44 @@ export const lookupAuthUserAdmin = protectedProcedure
         banExpires: normalizeTimestamp(authUser.banExpires),
       },
     });
+  });
+
+export const listUserApiKeysAdmin = protectedProcedure
+  .input(AdminUserApiKeysInputSchema)
+  .output(ApiKeyMetadataSchema.array())
+  .route({
+    summary: 'List active API keys for a player',
+    tags: ['admin'],
+    method: 'GET',
+    path: '/users:api-keys',
+  })
+  .handler(async ({ context, input }) => {
+    ensureAdminSession(context.session);
+
+    const authUser = await context.db.query.auth_users.findFirst({
+      columns: {
+        id: true,
+      },
+      where: eq(schema.auth_users.playerId, input.playerId),
+    });
+
+    if (!authUser) {
+      return [];
+    }
+
+    const records = await context.db.query.apiKeys.findMany({
+      where: and(
+        eq(schema.apiKeys.userId, authUser.id),
+        eq(schema.apiKeys.enabled, true),
+        or(
+          isNull(schema.apiKeys.expiresAt),
+          gt(schema.apiKeys.expiresAt, sql`CURRENT_TIMESTAMP`)
+        )
+      ),
+      orderBy: desc(schema.apiKeys.createdAt),
+    });
+
+    return records.map((record) => toApiKeyMetadata(record));
   });
 
 export const banUserAdmin = protectedProcedure

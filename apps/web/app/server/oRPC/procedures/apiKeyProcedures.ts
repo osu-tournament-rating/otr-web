@@ -4,7 +4,10 @@ import { z } from 'zod/v4';
 import { ORPCError } from '@orpc/server';
 
 import { auth } from '@/lib/auth/auth';
-import { ApiKeyWithSecretSchema } from '@/lib/orpc/schema/apiKey';
+import {
+  ApiKeyMetadataSchema,
+  ApiKeyWithSecretSchema,
+} from '@/lib/orpc/schema/apiKey';
 import * as schema from '@otr/core/db/schema';
 
 import { protectedProcedure } from './base';
@@ -129,6 +132,9 @@ const toMetadataShape = (record: RawApiKeyRecord | ApiKeyResponse) => {
     expiresAt: normalizeTimestamp(expiresAt),
   };
 };
+
+export const toApiKeyMetadata = (record: RawApiKeyRecord) =>
+  ApiKeyMetadataSchema.parse(toMetadataShape(record));
 
 export const getUserApiKeys = protectedProcedure
   .output(ApiKeyWithSecretSchema.array())

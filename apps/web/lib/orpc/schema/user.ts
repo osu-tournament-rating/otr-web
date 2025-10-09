@@ -49,6 +49,12 @@ export const AdminBanUserLookupResponseSchema = z.object({
   authUser: AdminAuthUserSchema.nullable(),
 });
 
+export const AdminUserApiKeysInputSchema = z.object({
+  playerId: z.number().int().positive(),
+});
+
+export type AdminUserApiKeysInput = z.infer<typeof AdminUserApiKeysInputSchema>;
+
 export type AdminBanReason = z.infer<typeof AdminBanReasonSchema>;
 export type AdminAuthUser = z.infer<typeof AdminAuthUserSchema>;
 export type AdminBanUserLookupResponse = z.infer<
