@@ -262,9 +262,10 @@ export const createTournamentAdminNote = protectedProcedure
   .input(TournamentAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: create tournament admin note',
+    summary: 'Create tournament admin note',
     tags: ['admin'],
-    path: '/tournaments/admin-notes/create',
+    method: 'POST',
+    path: '/tournaments/admin-notes',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -299,9 +300,10 @@ export const updateTournamentAdminNote = protectedProcedure
   .input(TournamentAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: update tournament admin note',
+    summary: 'Update tournament admin note',
     tags: ['admin'],
-    path: '/tournaments/admin-notes/update',
+    method: 'PATCH',
+    path: '/tournaments/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -351,9 +353,10 @@ export const deleteTournamentAdminNote = protectedProcedure
   .input(TournamentAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete tournament admin note',
+    summary: 'Delete tournament admin note',
     tags: ['admin'],
-    path: '/tournaments/admin-notes/delete',
+    method: 'DELETE',
+    path: '/tournaments/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -387,9 +390,10 @@ export const createMatchAdminNote = protectedProcedure
   .input(MatchAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: create match admin note',
+    summary: 'Create match admin note',
     tags: ['admin'],
-    path: '/matches/admin-notes/create',
+    method: 'POST',
+    path: '/matches/admin-notes',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -424,9 +428,10 @@ export const updateMatchAdminNote = protectedProcedure
   .input(MatchAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: update match admin note',
+    summary: 'Update match admin note',
     tags: ['admin'],
-    path: '/matches/admin-notes/update',
+    method: 'PATCH',
+    path: '/matches/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -476,9 +481,10 @@ export const deleteMatchAdminNote = protectedProcedure
   .input(MatchAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete match admin note',
+    summary: 'Delete match admin note',
     tags: ['admin'],
-    path: '/matches/admin-notes/delete',
+    method: 'DELETE',
+    path: '/matches/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -512,9 +518,10 @@ export const createGameAdminNote = protectedProcedure
   .input(GameAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: create game admin note',
+    summary: 'Create game admin note',
     tags: ['admin'],
-    path: '/games/admin-notes/create',
+    method: 'POST',
+    path: '/games/admin-notes',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -549,9 +556,10 @@ export const updateGameAdminNote = protectedProcedure
   .input(GameAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: update game admin note',
+    summary: 'Update game admin note',
     tags: ['admin'],
-    path: '/games/admin-notes/update',
+    method: 'PATCH',
+    path: '/games/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -601,9 +609,10 @@ export const deleteGameAdminNote = protectedProcedure
   .input(GameAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete game admin note',
+    summary: 'Delete game admin note',
     tags: ['admin'],
-    path: '/games/admin-notes/delete',
+    method: 'DELETE',
+    path: '/games/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -637,9 +646,10 @@ export const createScoreAdminNote = protectedProcedure
   .input(GameScoreAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: create score admin note',
+    summary: 'Create score admin note',
     tags: ['admin'],
-    path: '/scores/admin-notes/create',
+    method: 'POST',
+    path: '/scores/admin-notes',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -674,9 +684,10 @@ export const updateScoreAdminNote = protectedProcedure
   .input(GameScoreAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
-    summary: 'Admin: update score admin note',
+    summary: 'Update score admin note',
     tags: ['admin'],
-    path: '/scores/admin-notes/update',
+    method: 'PATCH',
+    path: '/scores/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -726,9 +737,10 @@ export const deleteScoreAdminNote = protectedProcedure
   .input(GameScoreAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete score admin note',
+    summary: 'Delete score admin note',
     tags: ['admin'],
-    path: '/scores/admin-notes/delete',
+    method: 'DELETE',
+    path: '/scores/admin-notes/{noteId}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);

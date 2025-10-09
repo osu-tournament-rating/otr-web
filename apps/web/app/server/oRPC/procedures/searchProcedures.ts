@@ -1,13 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  sql,
-  type AnyColumn,
-  type SQL,
-} from 'drizzle-orm';
+import { and, asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -45,9 +37,10 @@ export const searchEntities = protectedProcedure
   .input(SearchRequestSchema)
   .output(SearchResponseSchema)
   .route({
-    summary: 'Search players, tournaments, and matches',
+    summary: 'Search entities',
     tags: ['authenticated'],
-    path: '/search/query',
+    method: 'GET',
+    path: '/search',
   })
   .handler(async ({ input, context }) => {
     const term = input.searchKey.trim();

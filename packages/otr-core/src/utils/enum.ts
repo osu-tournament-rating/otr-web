@@ -1,17 +1,15 @@
-export type NumericEnumValue<E extends Record<string, string | number>> = Extract<
-  E[keyof E],
-  number
->;
+export type NumericEnumValue<E extends Record<string, string | number>> =
+  Extract<E[keyof E], number>;
 
 export function coerceNumericEnumValue<
-  E extends Record<string, string | number>
+  E extends Record<string, string | number>,
 >(
   enumObject: E,
   candidate: number | null | undefined
 ): NumericEnumValue<E> | undefined;
 
 export function coerceNumericEnumValue<
-  E extends Record<string, string | number>
+  E extends Record<string, string | number>,
 >(
   enumObject: E,
   candidate: number | null | undefined,
@@ -19,7 +17,7 @@ export function coerceNumericEnumValue<
 ): NumericEnumValue<E>;
 
 export function coerceNumericEnumValue<
-  E extends Record<string, string | number>
+  E extends Record<string, string | number>,
 >(
   enumObject: E,
   candidate: number | null | undefined,

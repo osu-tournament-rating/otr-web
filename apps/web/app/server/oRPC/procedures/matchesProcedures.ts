@@ -199,9 +199,10 @@ export const getMatch = publicProcedure
   .input(MatchIdInputSchema)
   .output(MatchDetailSchema)
   .route({
-    summary: 'Get match detail',
+    summary: 'Get match details',
     tags: ['public'],
-    path: '/matches/get',
+    method: 'GET',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const [matchRow] = await context.db

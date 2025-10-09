@@ -20,6 +20,8 @@ describe('coerceNumericEnumValue', () => {
     expect(coerceNumericEnumValue(Ruleset, 99, Ruleset.Catch)).toBe(
       Ruleset.Catch
     );
-    expect(coerceNumericEnumValue(Ruleset, null, Ruleset.Osu)).toBe(Ruleset.Osu);
+    expect(coerceNumericEnumValue(Ruleset, null, Ruleset.Osu)).toBe(
+      Ruleset.Osu
+    );
   });
 });

@@ -27,6 +27,12 @@ import {
 import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
 import {
+  banUserAdmin,
+  listUserApiKeysAdmin,
+  lookupAuthUserAdmin,
+  searchPlayersAdmin,
+} from './procedures/users/adminProcedures';
+import {
   getTournament,
   listTournaments,
 } from './procedures/tournamentsProcedures';
@@ -59,6 +65,11 @@ import {
   filterRegistrants,
   getFilterReport,
 } from './procedures/filteringProcedures';
+import {
+  deleteUserApiKey,
+  generateUserApiKey,
+  getUserApiKeys,
+} from './procedures/apiKeyProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -72,6 +83,12 @@ export const router = base.router({
   },
   users: {
     me: getCurrentUser,
+    admin: {
+      search: searchPlayersAdmin,
+      lookup: lookupAuthUserAdmin,
+      ban: banUserAdmin,
+      apiKeys: listUserApiKeysAdmin,
+    },
   },
   leaderboard: {
     list: getLeaderboard,
@@ -129,6 +146,11 @@ export const router = base.router({
   filtering: {
     filter: filterRegistrants,
     report: getFilterReport,
+  },
+  apiClients: {
+    getKeys: getUserApiKeys,
+    generateKey: generateUserApiKey,
+    deleteKey: deleteUserApiKey,
   },
   tournaments: {
     list: listTournaments,

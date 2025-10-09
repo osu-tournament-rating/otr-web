@@ -18,9 +18,10 @@ export const getLeaderboard = publicProcedure
   .input(LeaderboardRequestSchema)
   .output(LeaderboardResponseSchema)
   .route({
-    summary: 'Get leaderboard results',
+    summary: 'List leaderboard entries',
     tags: ['public'],
-    path: '/leaderboard/list',
+    method: 'GET',
+    path: '/leaderboard',
   })
   .handler(async ({ input, context }) => {
     try {
