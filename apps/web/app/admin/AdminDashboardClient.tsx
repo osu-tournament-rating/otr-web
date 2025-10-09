@@ -49,22 +49,7 @@ import {
 import type { ApiKeyMetadata } from '@/lib/orpc/schema/apiKey';
 import { orpc } from '@/lib/orpc/orpc';
 import { cn } from '@/lib/utils';
-
-const formatRank = (value: number | null | undefined) => {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-
-  return `#${value.toLocaleString()}`;
-};
-
-const formatRating = (value: number | null | undefined) => {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-
-  return value.toFixed(2);
-};
+import { getApiKeyPreview } from '@/lib/utils/apiKey';
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
@@ -80,24 +65,6 @@ const formatDateTime = (value: string | null | undefined) => {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-};
-
-const getKeyPreview = (metadata: ApiKeyMetadata) => {
-  const prefix = metadata.prefix?.trim() ?? '';
-  const start = metadata.start?.trim() ?? '';
-  const preview = `${prefix}${start}`.trim();
-
-  if (!preview) {
-    return '—';
-  }
-
-  return `${preview}…`;
-};
-
-const BAN_REASON_SUMMARY: Record<AdminBanReason, string> = {
-  'API abuse': 'Rate-limit evasion or credential sharing.',
-  'Submissions abuse': 'Fraudulent or automated submissions.',
-  'Requests abuse': 'Spam or disruptive traffic.',
 };
 
 export default function AdminDashboardClient() {
@@ -410,12 +377,6 @@ export default function AdminDashboardClient() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Player</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Rating
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Global rank
-                    </TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
@@ -423,7 +384,7 @@ export default function AdminDashboardClient() {
                 <TableBody>
                   {searching ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={3}>
                         <div className="text-muted-foreground flex items-center gap-3 text-sm">
                           <Loader2 className="size-4 animate-spin" />
                           Searching players…
@@ -432,7 +393,7 @@ export default function AdminDashboardClient() {
                     </TableRow>
                   ) : results.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={3}>
                         <p className="text-muted-foreground text-sm">
                           {didSearch
                             ? 'No authenticated players matched that username.'
@@ -481,12 +442,6 @@ export default function AdminDashboardClient() {
                                 </span>
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {formatRating(player.rating)}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {formatRank(player.globalRank)}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">
@@ -619,7 +574,9 @@ export default function AdminDashboardClient() {
                                 ? keyMetadata.name.trim()
                                 : 'API key'}
                             </TableCell>
-                            <TableCell>{getKeyPreview(keyMetadata)}</TableCell>
+                            <TableCell>
+                              {getApiKeyPreview(keyMetadata)}
+                            </TableCell>
                             <TableCell>
                               {formatDateTime(keyMetadata.lastRequest)}
                             </TableCell>
@@ -639,24 +596,6 @@ export default function AdminDashboardClient() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {results.some((player) => player.banned && player.banReason) && (
-              <div className="border-muted-foreground/40 text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-                <p className="text-foreground font-medium">
-                  Recorded ban reasons
-                </p>
-                <ul className="mt-1 list-disc space-y-1 pl-4">
-                  {ADMIN_BAN_REASONS.map((reason) => (
-                    <li key={reason}>
-                      <span className="text-foreground font-medium">
-                        {reason}:
-                      </span>{' '}
-                      {BAN_REASON_SUMMARY[reason]}
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
           </CardContent>

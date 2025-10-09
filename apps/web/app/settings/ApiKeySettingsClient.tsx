@@ -35,8 +35,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ApiKeyMetadataWithKey } from '@/lib/orpc/schema/apiKey';
+import type { ApiKeyMetadataWithKey } from '@/lib/orpc/schema/apiKey';
 import { orpc } from '@/lib/orpc/orpc';
+import { getApiKeyPreview } from '@/lib/utils/apiKey';
 
 interface ApiKeySettingsClientProps {
   initialKeys: ApiKeyMetadataWithKey[];
@@ -241,6 +242,7 @@ export default function ApiKeySettingsClient({
               </TableHeader>
               <TableBody>
                 {sortedKeys.map((keyMetadata) => {
+                  const keyPreview = getApiKeyPreview(keyMetadata);
                   const requestsPerMinute = calculateRequestsPerMinute(
                     keyMetadata.rateLimitMax,
                     keyMetadata.rateLimitTimeWindow,
@@ -251,7 +253,14 @@ export default function ApiKeySettingsClient({
                   return (
                     <TableRow key={keyMetadata.id}>
                       <TableCell className="font-medium">
-                        {getKeyName(keyMetadata)}
+                        <div className="flex flex-col">
+                          <span>{getKeyName(keyMetadata)}</span>
+                          {keyPreview !== '—' && (
+                            <span className="text-muted-foreground text-xs">
+                              {keyPreview}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {requestsPerMinute

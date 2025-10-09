@@ -69,8 +69,6 @@ export const AdminPlayerSearchResultSchema = z.object({
   playerId: z.number().int(),
   username: z.string(),
   osuId: z.number().int(),
-  rating: z.number().nullable(),
-  globalRank: z.number().nullable(),
   banned: z.boolean(),
   banReason: z.string().nullable(),
 });

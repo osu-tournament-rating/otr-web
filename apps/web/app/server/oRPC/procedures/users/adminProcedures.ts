@@ -54,8 +54,6 @@ export const searchPlayersAdmin = protectedProcedure
         playerId: schema.players.id,
         username: schema.players.username,
         osuId: schema.players.osuId,
-        rating: schema.playerRatings.rating,
-        globalRank: schema.playerRatings.globalRank,
         banned: schema.auth_users.banned,
         banReason: schema.auth_users.banReason,
       })
@@ -63,13 +61,6 @@ export const searchPlayersAdmin = protectedProcedure
       .innerJoin(
         schema.players,
         eq(schema.auth_users.playerId, schema.players.id)
-      )
-      .leftJoin(
-        schema.playerRatings,
-        and(
-          eq(schema.playerRatings.playerId, schema.players.id),
-          eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
-        )
       )
       .where(ilike(schema.players.username, pattern))
       .orderBy(asc(schema.players.username))
@@ -80,14 +71,6 @@ export const searchPlayersAdmin = protectedProcedure
         playerId: Number(row.playerId),
         username: row.username,
         osuId: Number(row.osuId),
-        rating:
-          row.rating === null || row.rating === undefined
-            ? null
-            : Number(row.rating),
-        globalRank:
-          row.globalRank === null || row.globalRank === undefined
-            ? null
-            : Number(row.globalRank),
         banned: Boolean(row.banned),
         banReason: row.banReason ?? null,
       }))
