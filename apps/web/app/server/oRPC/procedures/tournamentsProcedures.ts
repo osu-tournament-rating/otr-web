@@ -52,7 +52,8 @@ export const listTournaments = publicProcedure
   .route({
     summary: 'List tournaments',
     tags: ['public'],
-    path: '/tournaments/list',
+    method: 'GET',
+    path: '/tournaments',
   })
   .handler(async ({ input, context }) => {
     try {
@@ -240,7 +241,8 @@ export const getTournament = publicProcedure
   .route({
     summary: 'Get tournament details',
     tags: ['public'],
-    path: '/tournaments/get',
+    method: 'GET',
+    path: '/tournaments/{id}',
   })
   .handler(async ({ input, context }) => {
     try {

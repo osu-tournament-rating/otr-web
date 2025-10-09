@@ -1,10 +1,15 @@
 import { db } from '@/lib/db';
-import { betterAuth } from 'better-auth';
+import {
+  betterAuth,
+  type GenericEndpointContext,
+  type Session,
+} from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createFieldAttribute } from 'better-auth/db';
 import {
   admin as adminPlugin,
+  apiKey,
   customSession,
   genericOAuth,
 } from 'better-auth/plugins';
@@ -162,9 +167,7 @@ const ensurePlayer = async ({
   return player ?? null;
 };
 
-const ensurePlayerAndAppUser = async (
-  params: EnsurePlayerParams
-) => {
+const ensurePlayerAndAppUser = async (params: EnsurePlayerParams) => {
   const player = await ensurePlayer(params);
 
   if (!player) {
@@ -185,6 +188,113 @@ const ensurePlayerAndAppUser = async (
     appUser,
   };
 };
+
+const bannedLoginRedirectPlugin = () => ({
+  id: 'otr-banned-redirect',
+  init() {
+    return {
+      options: {
+        databaseHooks: {
+          session: {
+            create: {
+              async before(
+                session: Session & Record<string, unknown>,
+                ctx?: GenericEndpointContext
+              ) {
+                if (!ctx) {
+                  return;
+                }
+
+                const user = (await ctx.context.internalAdapter.findUserById(
+                  session.userId
+                )) as (AuthUserRecord & Record<string, unknown>) | null;
+
+                if (!user?.banned) {
+                  return;
+                }
+
+                const banExpiresValue =
+                  user.banExpires instanceof Date
+                    ? user.banExpires
+                    : user.banExpires
+                      ? new Date(user.banExpires)
+                      : null;
+
+                if (
+                  banExpiresValue &&
+                  !Number.isNaN(banExpiresValue.getTime()) &&
+                  banExpiresValue.getTime() < Date.now()
+                ) {
+                  await ctx.context.internalAdapter.updateUser(session.userId, {
+                    banned: false,
+                    banReason: null,
+                    banExpires: null,
+                  });
+
+                  return;
+                }
+
+                const path = ctx.path ?? '';
+                const isAuthCallback =
+                  path.startsWith('/callback') ||
+                  path.startsWith('/oauth2/callback');
+                const bannedMessage =
+                  'You have been banned from this application. Please contact support if you believe this is an error.';
+
+                if (isAuthCallback) {
+                  const origin =
+                    ctx.context.options.baseURL ??
+                    (() => {
+                      try {
+                        return new URL(ctx.context.baseURL).origin;
+                      } catch {
+                        return undefined;
+                      }
+                    })();
+
+                  const searchParams = new URLSearchParams();
+
+                  if (user.banReason) {
+                    searchParams.set('reason', user.banReason);
+                  }
+
+                  if (
+                    banExpiresValue &&
+                    !Number.isNaN(banExpiresValue.getTime())
+                  ) {
+                    searchParams.set('until', banExpiresValue.toISOString());
+                  }
+
+                  const query = searchParams.toString();
+
+                  const redirectTarget = (() => {
+                    if (origin) {
+                      const url = new URL('/auth/banned', origin);
+                      if (query) {
+                        url.search = `?${query}`;
+                      }
+
+                      return url.toString();
+                    }
+
+                    return `/auth/banned${query ? `?${query}` : ''}`;
+                  })();
+
+                  throw ctx.redirect(redirectTarget);
+                }
+
+                throw new APIError('FORBIDDEN', {
+                  message: bannedMessage,
+                  code: 'BANNED_USER',
+                });
+              },
+            },
+          },
+        },
+      },
+    };
+  },
+});
 
 const syncPlayerFriends = async ({
   playerId,
@@ -278,7 +388,10 @@ const syncPlayerFriends = async ({
           }))
         )
         .onConflictDoUpdate({
-          target: [schema.playerFriends.playerId, schema.playerFriends.friendId],
+          target: [
+            schema.playerFriends.playerId,
+            schema.playerFriends.friendId,
+          ],
           set: {
             mutual: sql`excluded.mutual`,
           },
@@ -393,6 +506,7 @@ export const auth = betterAuth({
       account: schema.auth_accounts,
       verification: schema.auth_verifications,
       session: schema.auth_sessions,
+      apikeys: schema.apiKeys,
     },
   }),
   session: {
@@ -435,6 +549,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    bannedLoginRedirectPlugin(),
     adminPlugin({
       ac,
       roles: {
@@ -443,6 +558,13 @@ export const auth = betterAuth({
       },
       adminRoles: [...ADMIN_ROLES],
       defaultRole: 'user',
+    }),
+    apiKey({
+      rateLimit: {
+        enabled: true,
+        maxRequests: 60,
+        timeWindow: 60 * 1000,
+      },
     }),
     genericOAuth({
       config: [

@@ -62,9 +62,7 @@ class UpdateTournamentTestDb {
   } as const;
 
   async transaction<T>(
-    callback: (
-      tx: UpdateTournamentTestTransaction
-    ) => Promise<T>
+    callback: (tx: UpdateTournamentTestTransaction) => Promise<T>
   ): Promise<T> {
     const tx = new UpdateTournamentTestTransaction(this);
     return callback(tx);
@@ -149,8 +147,7 @@ class UpdateTournamentTestTransaction {
           const rows = this.rowsFor(table);
 
           return {
-            returning: async () =>
-              rows.map((row) => ({ ...row })),
+            returning: async () => rows.map((row) => ({ ...row })),
           };
         },
       }),
@@ -245,8 +242,16 @@ describe('updateTournamentAdminHandler', () => {
         ruleset: Ruleset.Mania4k,
       },
       {
-        matches: [{ id: 10, warningFlags: MatchWarningFlags.UnexpectedBeatmapsFound }],
-        games: [{ id: 20, matchId: 10, warningFlags: GameWarningFlags.BeatmapUsedOnce }],
+        matches: [
+          { id: 10, warningFlags: MatchWarningFlags.UnexpectedBeatmapsFound },
+        ],
+        games: [
+          {
+            id: 20,
+            matchId: 10,
+            warningFlags: GameWarningFlags.BeatmapUsedOnce,
+          },
+        ],
       }
     );
 

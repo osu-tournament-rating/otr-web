@@ -30,6 +30,7 @@ import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
 import DocsButton from '../buttons/DocsButton';
+import SpecButton from '../buttons/SpecButton';
 import { Roles } from '@otr/core/osu';
 import { useSession as useAuthSession } from '@/lib/auth/auth-client';
 import { useSession } from '@/lib/hooks/useSession';
@@ -140,6 +141,7 @@ export default function Header() {
           <SearchDialog />
           <ModeToggle />
           <DocsButton />
+          <SpecButton />
           <SupportButton />
           <ClientOnly>
             <div className="hidden md:ml-1 md:block">

@@ -99,6 +99,52 @@ export const auth_verifications = pgTable('auth_verifications', {
     .notNull(),
 });
 
+export const apiKeys = pgTable('api_keys', {
+  id: text('id').primaryKey(),
+  name: text('name'),
+  start: text('start'),
+  prefix: text('prefix'),
+  key: text('key').notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => auth_users.id, { onDelete: 'cascade' }),
+  refillInterval: integer('refill_interval'),
+  refillAmount: integer('refill_amount'),
+  lastRefillAt: timestamp('last_refill_at', {
+    withTimezone: true,
+    mode: 'string',
+  }),
+  enabled: boolean('enabled').default(true).notNull(),
+  rateLimitEnabled: boolean('rate_limit_enabled').default(true).notNull(),
+  rateLimitTimeWindow: integer('rate_limit_time_window'),
+  rateLimitMax: integer('rate_limit_max'),
+  requestCount: integer('request_count').default(0).notNull(),
+  remaining: integer('remaining'),
+  lastRequest: timestamp('last_request', {
+    withTimezone: true,
+    mode: 'string',
+  }),
+  expiresAt: timestamp('expires_at', {
+    withTimezone: true,
+    mode: 'string',
+  }),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+    mode: 'string',
+  })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp('updated_at', {
+    withTimezone: true,
+    mode: 'string',
+  })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$onUpdate(() => sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  permissions: text('permissions'),
+  metadata: text('metadata'),
+});
+
 export const beatmapsets = pgTable(
   'beatmapsets',
   {
@@ -829,10 +875,7 @@ export const matches = pgTable(
       table.verifiedByUserId.asc().nullsLast().op('int4_ops')
     ),
     index('ix_matches_search_vector').using('gin', table.searchVector),
-    index('ix_matches_name_trgm').using(
-      'gin',
-      table.name.op('gin_trgm_ops')
-    ),
+    index('ix_matches_name_trgm').using('gin', table.name.op('gin_trgm_ops')),
     foreignKey({
       columns: [table.tournamentId],
       foreignColumns: [tournaments.id],
@@ -1068,7 +1111,8 @@ export const players = pgTable(
     searchVector: tsVector('search_vector')
       .notNull()
       .generatedAlwaysAs(
-        (): SQL => sql`setweight(to_tsvector('simple', ${players.username}), 'A')`
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', ${players.username}), 'A')`
       ),
     country: varchar({ length: 4 }).default('').notNull(),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),

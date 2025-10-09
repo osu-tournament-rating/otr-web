@@ -25,9 +25,10 @@ export const updateGameAdmin = protectedProcedure
   .input(GameAdminUpdateInputSchema)
   .output(GameAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: update game',
+    summary: 'Update game',
     tags: ['admin'],
-    path: '/games/admin/update',
+    method: 'PATCH',
+    path: '/games/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -92,10 +93,10 @@ export const deleteGameAdmin = protectedProcedure
   .input(GameAdminDeleteInputSchema)
   .output(GameAdminMutationResponseSchema)
   .route({
-    // TODO: Remove 'Admin:' prefix for all admin route summaries
-    summary: 'Admin: delete game',
+    summary: 'Delete game',
     tags: ['admin'],
-    path: '/games/admin/delete',
+    method: 'DELETE',
+    path: '/games/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -122,9 +123,10 @@ export const mergeGameAdmin = protectedProcedure
   .input(GameAdminMergeInputSchema)
   .output(GameAdminMergeResponseSchema)
   .route({
-    summary: 'Admin: merge games',
+    summary: 'Merge games',
     tags: ['admin'],
-    path: '/games/admin/merge',
+    method: 'POST',
+    path: '/games:merge',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -273,9 +275,10 @@ export const lookupGamesAdmin = protectedProcedure
   .input(GameAdminLookupInputSchema)
   .output(GameAdminPreviewSchema.array())
   .route({
-    summary: 'Admin: fetch games by id',
+    summary: 'Lookup games',
     tags: ['admin'],
-    path: '/games/admin/lookup',
+    method: 'GET',
+    path: '/games:lookup',
   })
   .handler(async ({ input, context }) => {
     ensureAdminSession(context.session);

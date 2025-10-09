@@ -29,6 +29,12 @@ const FilterReportIdSchema = z.object({
 export const filterRegistrants = protectedProcedure
   .input(FilteringRequestSchema)
   .output(FilteringResultSchema)
+  .route({
+    summary: 'Filter tournament registrants',
+    tags: ['authenticated'],
+    method: 'POST',
+    path: '/filtering/registrants:filter',
+  })
   .handler(async ({ input, context }) => {
     const userId = context.session.dbUser?.id;
 
@@ -323,6 +329,12 @@ export const filterRegistrants = protectedProcedure
 export const getFilterReport = publicProcedure
   .input(FilterReportIdSchema)
   .output(FilterReportSchema)
+  .route({
+    summary: 'Get filtering report',
+    tags: ['public'],
+    method: 'GET',
+    path: '/filtering/reports/{id}',
+  })
   .handler(async ({ input, context }) => {
     const report = await context.db.query.filterReports.findFirst({
       where: eq(schema.filterReports.id, input.id),

@@ -29,9 +29,10 @@ export const updateMatchAdmin = protectedProcedure
   .input(MatchAdminUpdateInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: update match',
+    summary: 'Update match',
     tags: ['admin'],
-    path: '/matches/admin/update',
+    method: 'PATCH',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -73,7 +74,7 @@ export const updateMatchAdmin = protectedProcedure
         })();
 
         const shouldClearWarnings =
-          input.verificationStatus === VerificationStatus.Verified || 
+          input.verificationStatus === VerificationStatus.Verified ||
           input.verificationStatus === VerificationStatus.Rejected;
 
         const nextWarningFlags = shouldClearWarnings
@@ -131,9 +132,10 @@ export const mergeMatchAdmin = protectedProcedure
   .input(MatchAdminMergeInputSchema)
   .output(MatchAdminMergeResponseSchema)
   .route({
-    summary: 'Admin: merge matches',
+    summary: 'Merge matches',
     tags: ['admin'],
-    path: '/matches/admin/merge',
+    method: 'POST',
+    path: '/matches:merge',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -223,9 +225,10 @@ export const deleteMatchAdmin = protectedProcedure
   .input(MatchAdminDeleteInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: delete match',
+    summary: 'Delete match',
     tags: ['admin'],
-    path: '/matches/admin/delete',
+    method: 'DELETE',
+    path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
@@ -261,9 +264,10 @@ export const deleteMatchPlayerScoresAdmin = protectedProcedure
   .input(MatchAdminDeletePlayerScoresInputSchema)
   .output(MatchAdminDeletePlayerScoresResponseSchema)
   .route({
-    summary: 'Admin: delete player scores from match',
+    summary: 'Delete player scores from match',
     tags: ['admin'],
-    path: '/matches/admin/delete-player-scores',
+    method: 'DELETE',
+    path: '/matches/{matchId}/players/{playerId}/scores',
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);

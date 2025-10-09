@@ -268,9 +268,10 @@ export const manageTournamentBeatmapsAdmin = protectedProcedure
   .input(TournamentBeatmapAdminMutationInputSchema)
   .output(TournamentBeatmapAdminMutationResponseSchema)
   .route({
-    summary: 'Admin: manage pooled beatmaps',
+    summary: 'Manage tournament beatmaps',
     tags: ['admin'],
-    path: '/tournaments/admin/manage-beatmaps',
+    method: 'POST',
+    path: '/tournaments/beatmaps:manage',
   })
   .handler(async ({ input, context }) =>
     manageTournamentBeatmapsAdminHandler({ input, context })
