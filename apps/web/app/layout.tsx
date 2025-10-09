@@ -30,12 +30,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-inter">
+      <body className="font-inter flex min-h-screen flex-col">
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <TooltipProvider>
             <SessionProvider user={session}>
               <Header />
-              <main className="mx-auto w-full max-w-[1050px] pb-5 sm:px-5 sm:py-10">
+              <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
                 {children}
               </main>
               <Footer />
