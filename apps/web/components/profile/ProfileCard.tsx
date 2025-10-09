@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, ShieldAlert, User } from 'lucide-react';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ import LoginButton from '@/components/buttons/LoginButton';
 import { SheetClose } from '@/components/ui/sheet';
 import { useAuthRedirectPath } from '@/lib/hooks/useAbsolutePath';
 import { cn } from '@/lib/utils';
+import { hasAdminScope } from '@/lib/auth/roles';
 import { signOut, useSession as useAuthSession } from '@/lib/auth/auth-client';
 import { SessionContext } from '@/components/session-provider';
 
@@ -52,6 +53,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const error = (sessionResult as { error?: unknown }).error ?? null;
   const dbPlayer = session?.dbPlayer ?? null;
   const scopes = session?.dbUser?.scopes ?? [];
+  const isAdmin = hasAdminScope(scopes);
   const isLoading = Boolean(isSessionPending);
   const { refreshSession } = useContext(SessionContext);
 
@@ -162,6 +164,27 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </Link>
           )}
 
+          {isAdmin &&
+            (isMobileNav ? (
+              <SheetClose asChild>
+                <Link
+                  href="/admin"
+                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                >
+                  <ShieldAlert className="size-4" />
+                  <span>Admin</span>
+                </Link>
+              </SheetClose>
+            ) : (
+              <Link
+                href="/admin"
+                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              >
+                <ShieldAlert className="size-4" />
+                <span>Admin</span>
+              </Link>
+            ))}
+
           <button
             className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
@@ -229,6 +252,14 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/admin">
+              <ShieldAlert className="mr-2 size-4" />
+              <span>Admin</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
           onClick={handleLogout}

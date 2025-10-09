@@ -18,3 +18,63 @@ export const CurrentUserSchema = z.object({
 });
 
 export type CurrentUser = z.infer<typeof CurrentUserSchema>;
+
+export const ADMIN_BAN_REASONS = [
+  'API abuse',
+  'Submissions abuse',
+  'Requests abuse',
+] as const;
+
+export const AdminBanReasonSchema = z.enum(ADMIN_BAN_REASONS);
+
+export const AdminBanUserInputSchema = z.object({
+  playerId: z.number().int().positive(),
+  reason: AdminBanReasonSchema,
+});
+
+export const AdminBanUserResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export const AdminAuthUserSchema = z.object({
+  id: z.string(),
+  playerId: z.number().int(),
+  banned: z.boolean(),
+  banReason: z.string().nullable(),
+  banExpires: z.string().nullable(),
+});
+
+export const AdminBanUserLookupResponseSchema = z.object({
+  exists: z.boolean(),
+  authUser: AdminAuthUserSchema.nullable(),
+});
+
+export type AdminBanReason = z.infer<typeof AdminBanReasonSchema>;
+export type AdminAuthUser = z.infer<typeof AdminAuthUserSchema>;
+export type AdminBanUserLookupResponse = z.infer<
+  typeof AdminBanUserLookupResponseSchema
+>;
+
+export const AdminPlayerSearchInputSchema = z.object({
+  query: z.string().trim().min(2, 'Enter at least two characters to search'),
+});
+
+export const AdminPlayerSearchResultSchema = z.object({
+  playerId: z.number().int(),
+  username: z.string(),
+  osuId: z.number().int(),
+  rating: z.number().nullable(),
+  globalRank: z.number().nullable(),
+  banned: z.boolean(),
+  banReason: z.string().nullable(),
+});
+
+export const AdminPlayerSearchResponseSchema =
+  AdminPlayerSearchResultSchema.array();
+
+export type AdminPlayerSearchInput = z.infer<
+  typeof AdminPlayerSearchInputSchema
+>;
+export type AdminPlayerSearchResult = z.infer<
+  typeof AdminPlayerSearchResultSchema
+>;

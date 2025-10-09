@@ -27,6 +27,11 @@ import {
 import { searchEntities } from './procedures/searchProcedures';
 import { getCurrentUser, getUser } from './procedures/userProcedures';
 import {
+  banUserAdmin,
+  lookupAuthUserAdmin,
+  searchPlayersAdmin,
+} from './procedures/users/adminProcedures';
+import {
   getTournament,
   listTournaments,
 } from './procedures/tournamentsProcedures';
@@ -77,6 +82,11 @@ export const router = base.router({
   },
   users: {
     me: getCurrentUser,
+    admin: {
+      search: searchPlayersAdmin,
+      lookup: lookupAuthUserAdmin,
+      ban: banUserAdmin,
+    },
   },
   leaderboard: {
     list: getLeaderboard,
