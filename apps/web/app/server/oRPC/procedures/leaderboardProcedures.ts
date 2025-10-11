@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { SQL, and, eq, gte, lte, sql } from 'drizzle-orm';
+import { SQL, and, or, eq, gte, lte, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -95,14 +95,14 @@ export const getLeaderboard = publicProcedure
       let leaderboardBaseQuery = input.friend
         ? context.db
             .select(selectFields)
-            .from(schema.playerFriends)
+            .from(schema.playerRatings)
             .innerJoin(
               schema.players,
-              eq(schema.players.id, schema.playerFriends.friendId)
-            )
-            .innerJoin(
-              schema.playerRatings,
               eq(schema.playerRatings.playerId, schema.players.id)
+            )
+            .leftJoin(
+              schema.playerFriends,
+              eq(schema.playerFriends.friendId, schema.players.id)
             )
         : context.db
             .select(selectFields)
@@ -140,7 +140,10 @@ export const getLeaderboard = publicProcedure
 
       const ratingRulesetFilter = eq(schema.playerRatings.ruleset, ruleset);
       const playerScopeFilter = input.friend
-        ? eq(schema.playerFriends.playerId, userId)
+        ? or(
+            eq(schema.playerFriends.playerId, userId),
+            eq(schema.players.id, userId)
+          )
         : undefined;
       const baseWhere = playerScopeFilter
         ? and(playerScopeFilter, ratingRulesetFilter)
