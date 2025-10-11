@@ -51,6 +51,7 @@ const leaderboardRatingBaseSchema = playerRatingSelectSchema
 
 export const LeaderboardEntrySchema = leaderboardRatingBaseSchema.extend({
   player: LeaderboardPlayerSchema,
+  countryRank: z.number().int().nonnegative(),
   tournamentsPlayed: z.number().int().nonnegative(),
   matchesPlayed: z.number().int().nonnegative(),
   winRate: z.number().min(0).max(1),
