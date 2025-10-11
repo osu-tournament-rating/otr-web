@@ -27,6 +27,9 @@ jobs:
       - name: Type check
         run: bunx tsc --noEmit
 
+      - name: Format check
+        run: bunx prettier . --check
+
       - name: Build apps
         run: bun run build
 
