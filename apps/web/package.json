@@ -7,7 +7,7 @@
     "dev:turbo": "bun run next dev --turbopack",
     "build": "bun run next build",
     "start": "bun run next start",
-    "lint": "bun run next lint",
+    "lint": "bun run eslint .",
     "format": "bun run prettier . --write --ignore-unknown",
     "prepare": "husky"
   },
