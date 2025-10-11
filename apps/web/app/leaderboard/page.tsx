@@ -61,6 +61,12 @@ export default async function Page(props: {
 
   const data = await getData(filter);
 
+  // Get current user's player ID for row highlighting
+  let currentUserPlayerId: number | null = null;
+  if (session && 'dbPlayer' in session && session.dbPlayer) {
+    currentUserPlayerId = (session.dbPlayer as { id: number }).id;
+  }
+
   const totalPages = data.pages;
   const page = data.page ?? filter.page ?? 1;
 
@@ -176,7 +182,11 @@ export default async function Page(props: {
             </div>
           </CardHeader>
           <CardContent>
-            <LeaderboardDataTable columns={columns} data={data.leaderboard} />
+            <LeaderboardDataTable
+              columns={columns}
+              data={data.leaderboard}
+              currentUserPlayerId={currentUserPlayerId}
+            />
           </CardContent>
         </Card>
       )}
