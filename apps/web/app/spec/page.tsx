@@ -7,8 +7,14 @@ export const metadata = {
 
 export default function SpecPage() {
   return (
-    <div className="bg-background text-foreground min-h-screen">
-      <div id="scalar-api-reference" className="h-screen" />
+    <div className="bg-background text-foreground">
+      <div
+        id="scalar-api-reference"
+        className="w-full"
+        style={{
+          minHeight: 'calc(100vh - var(--header-height-px))',
+        }}
+      />
       <Script
         src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"
         strategy="afterInteractive"
@@ -19,12 +25,26 @@ export default function SpecPage() {
         dangerouslySetInnerHTML={{
           __html: `
             (function initScalar() {
+              var selector = '#scalar-api-reference';
+
+              function applyContainerSizing() {
+                var container = document.querySelector(selector);
+                if (!container) {
+                  return;
+                }
+                container.style.height = 'auto';
+                container.style.minHeight =
+                  'calc(100vh - var(--header-height-px))';
+              }
+
               if (!window || !window.Scalar) {
                 setTimeout(initScalar, 50);
                 return;
               }
 
-              window.Scalar.createApiReference('#scalar-api-reference', {
+              applyContainerSizing();
+
+              window.Scalar.createApiReference(selector, {
                 theme: 'auto',
                 hideDownload: false,
                 withDefaultFonts: true,
@@ -33,6 +53,8 @@ export default function SpecPage() {
                 hideTestRequestButton: true,
                 url: '/spec.json',
               });
+
+              requestAnimationFrame(applyContainerSizing);
             })();
           `,
         }}
