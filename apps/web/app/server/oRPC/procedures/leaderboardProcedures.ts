@@ -338,7 +338,7 @@ export const getLeaderboard = publicProcedure
   .output(LeaderboardResponseSchema)
   .route({
     summary: 'List leaderboard entries',
-    tags: ['public'],
+    tags: ['Leaderboards', 'public'],
     method: 'GET',
     path: '/leaderboard',
   })

@@ -183,16 +183,56 @@ const schemaConverters = [
   }),
 ];
 
+const publicRouteTags = [
+  {
+    name: 'Leaderboards',
+    description: 'Leaderboard listings and rating tier data.',
+  },
+  {
+    name: 'Matches',
+    description: 'Match lookups and detailed result records.',
+  },
+  {
+    name: 'Players',
+    description: 'Player profiles, beatmaps, and statistics.',
+  },
+  {
+    name: 'Filtering',
+    description: 'Filtering pipeline reports and review outcomes.',
+  },
+  {
+    name: 'Tournaments',
+    description: 'Tournament discovery and related metadata.',
+  },
+  {
+    name: 'Stats',
+    description: 'Platform-wide summaries and aggregated metrics.',
+  },
+] as const;
+
+const PUBLIC_TAG_GROUP_NAME = '🛰 Public';
+
+const PUBLIC_TAG_NORMALIZED = new Set<string>([
+  ...publicRouteTags.map((tag) => tag.name.toLowerCase()),
+  // Keep legacy support for the old "public" tag in case a route
+  // has not been migrated yet.
+  'public',
+]);
+
 const isPublicProcedure = ({
   contract,
 }: {
   contract: { ['~orpc']?: { route?: { tags?: readonly string[] } } };
-}) =>
-  Boolean(
-    contract?.['~orpc']?.route?.tags?.some(
-      (tag) => tag?.toLowerCase() === 'public'
-    )
+}) => {
+  const tags = contract?.['~orpc']?.route?.tags;
+  if (!Array.isArray(tags)) {
+    return false;
+  }
+
+  return tags.some((tag) =>
+    tag ? PUBLIC_TAG_NORMALIZED.has(tag.toLowerCase()) : false
   );
+};
 
 const openAPIGenerator = new OpenAPIGenerator({
   schemaConverters,
@@ -206,11 +246,7 @@ export const openAPIHandler = new OpenAPIHandler(router, {
 const API_SECURITY_SCHEME_NAME = 'ApiKeyAuth';
 const securityRequirement = [{ [API_SECURITY_SCHEME_NAME]: [] as string[] }];
 const tags = [
-  {
-    name: 'public',
-    description:
-      'Public endpoints that do not require authentication when used from the website, accessible via public API',
-  },
+  ...publicRouteTags,
   {
     name: 'authenticated',
     description: 'Endpoints that require a user to be signed in',
@@ -244,7 +280,7 @@ const buildServers = () => {
 };
 
 export const generatePublicOpenAPISpec = async () => {
-  return openAPIGenerator.generate(router, {
+  const spec = await openAPIGenerator.generate(router, {
     info: {
       title: 'o!TR API',
       version: '1.0.0',
@@ -305,4 +341,24 @@ export const generatePublicOpenAPISpec = async () => {
     },
     filter: (args) => isPublicProcedure(args),
   });
+
+  type TagGroup = { name: string; tags: string[] };
+  const publicTagNames = publicRouteTags.map((tag) => tag.name);
+  const specWithGroups = spec as { 'x-tagGroups'?: TagGroup[] };
+  const existingTagGroups = Array.isArray(specWithGroups['x-tagGroups'])
+    ? specWithGroups['x-tagGroups']
+    : [];
+
+  const nextTagGroups: TagGroup[] = [
+    {
+      name: PUBLIC_TAG_GROUP_NAME,
+      tags: publicTagNames,
+    },
+    ...existingTagGroups.filter((group) => group?.name !== PUBLIC_TAG_GROUP_NAME),
+  ];
+
+  return {
+    ...spec,
+    'x-tagGroups': nextTagGroups,
+  };
 };

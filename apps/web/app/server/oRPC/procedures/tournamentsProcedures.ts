@@ -51,7 +51,7 @@ export const listTournaments = publicProcedure
   .output(TournamentListResponseSchema)
   .route({
     summary: 'List tournaments',
-    tags: ['public'],
+    tags: ['Tournaments', 'public'],
     method: 'GET',
     path: '/tournaments',
   })
@@ -240,7 +240,7 @@ export const getTournament = publicProcedure
   .output(TournamentDetailSchema)
   .route({
     summary: 'Get tournament details',
-    tags: ['public'],
+    tags: ['Tournaments', 'public'],
     method: 'GET',
     path: '/tournaments/{id}',
   })

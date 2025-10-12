@@ -27,6 +27,16 @@ export default function SpecPage() {
             (function initScalar() {
               var selector = '#scalar-api-reference';
               var themeRoot = document.documentElement;
+              var PUBLIC_GROUP_LABEL = '🛰 Public';
+              var PUBLIC_TAG_NAMES = [
+                'Leaderboards',
+                'Matches',
+                'Players',
+                'Filtering',
+                'Tournaments',
+                'Stats',
+              ];
+              var MODELS_ICON = '📦';
               var baseConfig = {
                 hideDownload: false,
                 withDefaultFonts: true,
@@ -35,9 +45,16 @@ export default function SpecPage() {
                 hideTestRequestButton: true,
                 hideDarkModeToggle: true,
                 url: '/spec.json',
+                tagGroups: [
+                  {
+                    name: PUBLIC_GROUP_LABEL,
+                    tags: PUBLIC_TAG_NAMES,
+                  },
+                ],
               };
               var scalarInstance = null;
               var themeObserver = null;
+              var sidebarObserver = null;
               var appliedTheme = null;
               var desiredTheme = null;
               var retryTimeout = null;
@@ -50,6 +67,69 @@ export default function SpecPage() {
                 container.style.height = 'auto';
                 container.style.minHeight =
                   'calc(100vh - var(--header-height-px))';
+              }
+
+              function applySidebarIcons() {
+                var container = document.querySelector(selector);
+                if (!container) {
+                  return;
+                }
+
+                var nav = container.querySelector('nav');
+                if (!nav) {
+                  return;
+                }
+
+                var navElements = nav.querySelectorAll('button, summary, span, div, a');
+                for (var index = 0; index < navElements.length; index += 1) {
+                  var element = navElements[index];
+                  if (!element || typeof element.textContent !== 'string') {
+                    continue;
+                  }
+
+                  var label = element.textContent.trim();
+                  if (!label || element.children.length > 0) {
+                    continue;
+                  }
+
+                  if (
+                    label === 'Models' &&
+                    element.getAttribute('data-otr-icon-applied') !== 'true' &&
+                    !label.startsWith(MODELS_ICON)
+                  ) {
+                    element.setAttribute('data-otr-icon-applied', 'true');
+                    element.textContent = MODELS_ICON + ' ' + label;
+                  }
+                }
+              }
+
+              function setupSidebarEnhancements() {
+                applySidebarIcons();
+
+                if (typeof MutationObserver === 'undefined') {
+                  return;
+                }
+
+                var container = document.querySelector(selector);
+                if (!container) {
+                  return;
+                }
+
+                var nav = container.querySelector('nav');
+                if (!nav) {
+                  setTimeout(setupSidebarEnhancements, 50);
+                  return;
+                }
+
+                if (sidebarObserver) {
+                  sidebarObserver.disconnect();
+                }
+
+                sidebarObserver = new MutationObserver(applySidebarIcons);
+                sidebarObserver.observe(nav, {
+                  childList: true,
+                  subtree: true,
+                });
               }
 
               function getCurrentTheme() {
@@ -93,7 +173,10 @@ export default function SpecPage() {
                   })
                 );
                 appliedTheme = desiredTheme;
-                requestAnimationFrame(applyContainerSizing);
+                requestAnimationFrame(function () {
+                  applyContainerSizing();
+                  setupSidebarEnhancements();
+                });
               }
 
               function requestThemeSync() {
@@ -111,6 +194,10 @@ export default function SpecPage() {
                 if (themeObserver) {
                   themeObserver.disconnect();
                   themeObserver = null;
+                }
+                if (sidebarObserver) {
+                  sidebarObserver.disconnect();
+                  sidebarObserver = null;
                 }
                 if (scalarInstance && typeof scalarInstance.destroy === 'function') {
                   scalarInstance.destroy();

@@ -34,7 +34,7 @@ export const getPlatformStats = publicProcedure
   .output(PlatformStatsSchema)
   .route({
     summary: 'Get platform statistics',
-    tags: ['public'],
+    tags: ['Stats', 'public'],
     method: 'GET',
     path: '/stats/platform',
   })

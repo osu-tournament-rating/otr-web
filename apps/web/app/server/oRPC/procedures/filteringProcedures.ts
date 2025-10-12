@@ -331,7 +331,7 @@ export const getFilterReport = publicProcedure
   .output(FilterReportSchema)
   .route({
     summary: 'Get filtering report',
-    tags: ['public'],
+    tags: ['Filtering', 'public'],
     method: 'GET',
     path: '/filtering/reports/{id}',
   })

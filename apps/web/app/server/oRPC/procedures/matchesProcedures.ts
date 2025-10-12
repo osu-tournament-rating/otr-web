@@ -200,7 +200,7 @@ export const getMatch = publicProcedure
   .output(MatchDetailSchema)
   .route({
     summary: 'Get match details',
-    tags: ['public'],
+    tags: ['Matches', 'public'],
     method: 'GET',
     path: '/matches/{id}',
   })

@@ -37,7 +37,7 @@ export const getPlayer = publicProcedure
   .output(PlayerSchema)
   .route({
     summary: 'Get player details',
-    tags: ['public'],
+    tags: ['Players', 'public'],
     method: 'GET',
     path: '/players/{id}',
   })
@@ -354,7 +354,7 @@ export const getPlayerTournaments = publicProcedure
   .output(TournamentListItemSchema.array())
   .route({
     summary: 'List player tournaments',
-    tags: ['public'],
+    tags: ['Players', 'public'],
     method: 'GET',
     path: '/players/{playerId}/tournaments',
   })
@@ -408,7 +408,7 @@ export const getPlayerBeatmaps = publicProcedure
   .output(PlayerBeatmapsResponseSchema)
   .route({
     summary: 'List player beatmaps',
-    tags: ['public'],
+    tags: ['Players', 'public'],
     method: 'GET',
     path: '/players/{playerId}/beatmaps',
   })
@@ -819,7 +819,7 @@ export const getPlayerDashboardStats = publicProcedure
   .output(PlayerDashboardStatsSchema)
   .route({
     summary: 'Get player dashboard stats',
-    tags: ['public'],
+    tags: ['Players', 'public'],
     method: 'GET',
     path: '/players/{playerId}/dashboard',
   })
