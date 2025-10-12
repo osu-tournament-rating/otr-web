@@ -5,7 +5,7 @@ import type { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 
 export type PlayerTournamentsRequest = {
-  key: string;
+  playerId: number;
   dateMin?: Date;
   dateMax?: Date;
   ruleset?: Ruleset;
@@ -15,13 +15,13 @@ const toISOStringOrUndefined = (value?: Date) =>
   value ? value.toISOString() : undefined;
 
 export async function getPlayerTournaments({
-  key,
+  playerId,
   dateMin,
   dateMax,
   ruleset,
 }: PlayerTournamentsRequest): Promise<TournamentListItem[]> {
   return orpc.players.tournaments({
-    key,
+    playerId,
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
     ruleset,
@@ -29,6 +29,6 @@ export async function getPlayerTournaments({
 }
 
 export const getPlayerTournamentsCached = cache(
-  async (key: string, dateMin?: Date, dateMax?: Date, ruleset?: Ruleset) =>
-    getPlayerTournaments({ key, dateMin, dateMax, ruleset })
+  async (playerId: number, dateMin?: Date, dateMax?: Date, ruleset?: Ruleset) =>
+    getPlayerTournaments({ playerId, dateMin, dateMax, ruleset })
 );

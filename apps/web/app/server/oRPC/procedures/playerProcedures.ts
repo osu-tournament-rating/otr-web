@@ -10,14 +10,12 @@ import {
   PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
 import {
-  PlayerDashboardRequestSchema,
   PlayerDashboardStatsSchema,
   PlayerCompactSchema,
   type PlayerDashboardStats,
   type PlayerFrequency,
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
-import { PlayerTournamentsRequestSchema } from '@/lib/orpc/schema/playerTournaments';
 import { TournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
@@ -58,8 +56,7 @@ export const getPlayer = publicProcedure
 
     return PlayerSchema.parse(player[0]);
   });
-type PlayerRecord = typeof schema.players.$inferSelect;
-type PlayerRow = PlayerRecord;
+type PlayerRow = typeof schema.players.$inferSelect;
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
 type PlayerMatchStatsRow = typeof schema.playerMatchStats.$inferSelect;
 
@@ -161,6 +158,7 @@ const isStrictNumeric = (value: string): boolean => /^[0-9]+$/.test(value);
 
 const normaliseKey = (value: string): string => value.trim();
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const findPlayerByKey = async (
   db: DatabaseClient,
   key: string
@@ -409,16 +407,31 @@ const buildMatchAggregates = (
 };
 
 export const getPlayerTournaments = publicProcedure
-  .input(PlayerTournamentsRequestSchema)
+  .input(
+    // Accept a strict playerId instead of a fuzzy "key"
+    z.object({
+      playerId: z.number().int().positive(),
+      ruleset: z.number().int().optional(),
+      dateMin: z.string().optional(),
+      dateMax: z.string().optional(),
+    })
+  )
   .output(TournamentListItemSchema.array())
   .route({
     summary: 'List player tournaments',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{key}/tournaments',
+    path: '/players/{playerId}/tournaments',
   })
   .handler(async ({ input, context }) => {
-    const player = await findPlayerByKey(context.db, input.key);
+    const player = await context.db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, input.playerId),
+      columns: { id: true },
+    });
+
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
 
     const filters = [
       sql`${schema.tournaments.id} IN (
@@ -859,16 +872,30 @@ export const getPlayerBeatmaps = publicProcedure
   });
 
 export const getPlayerDashboardStats = publicProcedure
-  .input(PlayerDashboardRequestSchema)
+  .input(
+    // Accept a strict playerId instead of a fuzzy "key"
+    z.object({
+      playerId: z.number().int().positive(),
+      ruleset: z.number().int().optional(),
+      dateMin: z.string().optional(),
+      dateMax: z.string().optional(),
+    })
+  )
   .output(PlayerDashboardStatsSchema)
   .route({
     summary: 'Get player dashboard stats',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{key}/dashboard',
+    path: '/players/{playerId}/dashboard',
   })
   .handler(async ({ input, context }) => {
-    const player = await findPlayerByKey(context.db, input.key);
+    const player = await context.db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, input.playerId),
+    });
+
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
 
     const playerDefaultRuleset = VALID_RULESETS.has(
       player.defaultRuleset as Ruleset
@@ -877,8 +904,11 @@ export const getPlayerDashboardStats = publicProcedure
       : Ruleset.Osu;
 
     const resolvedRuleset = (() => {
-      if (input.ruleset != null && VALID_RULESETS.has(input.ruleset)) {
-        return input.ruleset;
+      if (
+        input.ruleset != null &&
+        VALID_RULESETS.has(input.ruleset as Ruleset)
+      ) {
+        return input.ruleset as Ruleset;
       }
 
       return playerDefaultRuleset;
@@ -1058,6 +1088,12 @@ export const getPlayerDashboardStats = publicProcedure
 
     return PlayerDashboardStatsSchema.parse(response);
   });
+
+// Public helper to resolve a fuzzy search key (username, osuId, or internal id)
+// into a canonical playerId to be used with other player endpoints.
+// Note: No public resolver endpoint is exposed. Callers should obtain a
+// canonical playerId via existing discovery flows and pass that id to public
+// endpoints.
 
 const buildFrequencyMap = (
   rows: MatchStatsRow[],

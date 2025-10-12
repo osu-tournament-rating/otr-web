@@ -97,21 +97,13 @@ const tournamentDetailBaseSchema = tournamentSelectSchema
   .extend({
     ruleset: RulesetSchema,
     verificationStatus: VerificationStatusSchema,
-    matches: z.array(MatchSchema),
-    adminNotes: z.array(TournamentAdminNoteSchema),
-    playerTournamentStats: z.array(TournamentPlayerStatsSchema),
-    pooledBeatmaps: z.array(TournamentBeatmapSchema),
+    matches: z.array(MatchSchema).default([]),
+    adminNotes: z.array(TournamentAdminNoteSchema).default([]),
+    playerTournamentStats: z.array(TournamentPlayerStatsSchema).default([]),
+    pooledBeatmaps: z.array(TournamentBeatmapSchema).default([]),
   });
 
-export const TournamentDetailSchema = tournamentDetailBaseSchema.transform(
-  (value) => ({
-    ...value,
-    matches: value.matches ?? [],
-    adminNotes: value.adminNotes ?? [],
-    playerTournamentStats: value.playerTournamentStats ?? [],
-    pooledBeatmaps: value.pooledBeatmaps ?? [],
-  })
-);
+export const TournamentDetailSchema = tournamentDetailBaseSchema;
 
 export const TournamentAdminUpdateInputSchema = z.object({
   id: z.number().int().positive(),

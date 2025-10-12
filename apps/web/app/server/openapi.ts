@@ -19,6 +19,16 @@ import {
   TournamentListItemSchema,
 } from '@/lib/orpc/schema/tournament';
 import { UserSchema } from '@/lib/orpc/schema/user';
+import { PlatformStatsSchema } from '@/lib/orpc/schema/stats';
+import {
+  RatingAdjustmentTypeSchema,
+  RulesetSchema,
+  ScoreGradeSchema,
+  ScoringTypeSchema,
+  TeamSchema,
+  TeamTypeSchema,
+  VerificationStatusSchema,
+} from '@/lib/orpc/schema/constants';
 
 const INTEGER_DEFAULT_MIN_VALUES = new Set([
   Number.MIN_SAFE_INTEGER,
@@ -255,6 +265,13 @@ export const generatePublicOpenAPISpec = async () => {
       },
     },
     commonSchemas: {
+      Ruleset: { schema: RulesetSchema },
+      ScoringType: { schema: ScoringTypeSchema },
+      TeamType: { schema: TeamTypeSchema },
+      Team: { schema: TeamSchema },
+      ScoreGrade: { schema: ScoreGradeSchema },
+      RatingAdjustmentType: { schema: RatingAdjustmentTypeSchema },
+      VerificationStatus: { schema: VerificationStatusSchema },
       User: {
         schema: UserSchema,
       },
@@ -281,6 +298,9 @@ export const generatePublicOpenAPISpec = async () => {
       },
       PlayerDashboard: {
         schema: PlayerDashboardStatsSchema,
+      },
+      PlatformStats: {
+        schema: PlatformStatsSchema,
       },
     },
     filter: (args) => isPublicProcedure(args),
