@@ -1,6 +1,9 @@
 import { os } from '@orpc/server';
 
-import { getLeaderboard } from './procedures/leaderboardProcedures';
+import {
+  getLeaderboard,
+  getLeaderboardFriends,
+} from './procedures/leaderboardProcedures';
 import { getMatch } from './procedures/matchesProcedures';
 import {
   deleteGameAdmin,
@@ -92,6 +95,7 @@ export const router = base.router({
   },
   leaderboard: {
     list: getLeaderboard,
+    friends: getLeaderboardFriends,
   },
   search: {
     query: searchEntities,
