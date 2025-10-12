@@ -51,11 +51,8 @@ export const MatchPlayerSchema = PlayerSchema.pick({
 });
 
 export const MatchBeatmapSchema = BeatmapSchema.extend({
-  creators: z.array(PlayerSchema).optional(),
-}).transform((value) => ({
-  ...value,
-  creators: value.creators ?? [],
-}));
+  creators: z.array(PlayerSchema).default([]),
+});
 
 export const MatchRosterSchema = matchRosterSelectSchema
   .pick({
@@ -74,13 +71,9 @@ const gameScoreBaseSchema = gameScoreSelectSchema.extend({
   ruleset: RulesetSchema,
   verificationStatus: VerificationStatusSchema,
   accuracy: z.number(),
-  adminNotes: z.array(AdminNoteSchema).optional(),
+  adminNotes: z.array(AdminNoteSchema).default([]),
 });
-
-export const GameScoreSchema = gameScoreBaseSchema.transform((value) => ({
-  ...value,
-  adminNotes: value.adminNotes ?? [],
-}));
+export const GameScoreSchema = gameScoreBaseSchema;
 
 const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
   ruleset: RulesetSchema,
@@ -89,22 +82,10 @@ const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
   verificationStatus: VerificationStatusSchema,
   isFreeMod: z.boolean(),
   beatmap: MatchBeatmapSchema.nullable(),
-  adminNotes: z.array(AdminNoteSchema).optional(),
-  scores: z.array(GameScoreSchema).optional(),
+  adminNotes: z.array(AdminNoteSchema).default([]),
+  scores: z.array(GameScoreSchema).default([]),
 });
-
-export const GameSchema = gameBaseSchema.transform((value) => ({
-  ...value,
-  beatmap:
-    value.beatmap != null
-      ? {
-          ...value.beatmap,
-          creators: value.beatmap.creators ?? [],
-        }
-      : null,
-  adminNotes: value.adminNotes ?? [],
-  scores: value.scores ?? [],
-}));
+export const GameSchema = gameBaseSchema;
 
 export const PlayerMatchStatsSchema = playerMatchStatsSelectSchema.pick({
   id: true,
@@ -148,27 +129,17 @@ export const MatchWinRecordSchema = z
   .nullable();
 
 const matchBaseSchema = matchSelectSchema.omit(CreatedUpdatedOmit).extend({
-  games: z.array(GameSchema).optional(),
-  players: z.array(MatchPlayerSchema).optional(),
-  playerMatchStats: z.array(PlayerMatchStatsSchema).optional(),
-  ratingAdjustments: z.array(RatingAdjustmentSchema).optional(),
-  adminNotes: z.array(AdminNoteSchema).optional(),
-  tournament: MatchTournamentSchema.optional(),
-  winRecord: MatchWinRecordSchema.optional(),
-  rosters: z.array(MatchRosterSchema).optional(),
+  games: z.array(GameSchema).default([]),
+  players: z.array(MatchPlayerSchema).default([]),
+  playerMatchStats: z.array(PlayerMatchStatsSchema).default([]),
+  ratingAdjustments: z.array(RatingAdjustmentSchema).default([]),
+  adminNotes: z.array(AdminNoteSchema).default([]),
+  tournament: MatchTournamentSchema.nullable().default(null),
+  winRecord: MatchWinRecordSchema.nullable().default(null),
+  rosters: z.array(MatchRosterSchema).default([]),
 });
 
-export const MatchSchema = matchBaseSchema.transform((value) => ({
-  ...value,
-  games: value.games ?? [],
-  players: value.players ?? [],
-  playerMatchStats: value.playerMatchStats ?? [],
-  ratingAdjustments: value.ratingAdjustments ?? [],
-  adminNotes: value.adminNotes ?? [],
-  tournament: value.tournament ?? null,
-  winRecord: value.winRecord ?? null,
-  rosters: value.rosters ?? [],
-}));
+export const MatchSchema = matchBaseSchema;
 
 export const MatchDetailSchema = MatchSchema;
 
