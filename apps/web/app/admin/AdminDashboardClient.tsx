@@ -217,21 +217,30 @@ export default function AdminDashboardClient() {
       return;
     }
 
-    if (!/[a-zA-Z]/.test(trimmed)) {
-      toast.error('Search by username, not numeric IDs.');
-      return;
-    }
-
     setSearching(true);
     setDidSearch(true);
 
     try {
-      const response = await orpc.users.admin.search({ query: trimmed });
-      setResults(response);
+      const dashboard = await orpc.players.dashboard({ key: trimmed });
+      const playerId = dashboard.playerInfo.id;
 
-      if (response.length === 0) {
+      const lookup = await orpc.users.admin.lookup({ playerId });
+
+      if (!lookup.exists || !lookup.authUser) {
+        setResults([]);
         toast.info('No authenticated users matched that username.');
+        return;
       }
+
+      setResults([
+        {
+          playerId,
+          username: dashboard.playerInfo.username,
+          osuId: dashboard.playerInfo.osuId,
+          banned: lookup.authUser.banned,
+          banReason: lookup.authUser.banReason,
+        },
+      ]);
     } catch (error) {
       console.error('[admin] search failed', error);
       toast.error('Search failed. Please try again.');

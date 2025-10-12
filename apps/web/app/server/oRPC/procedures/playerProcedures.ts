@@ -174,6 +174,18 @@ const findPlayerByKey = async (
   }
 
   if (isStrictNumeric(trimmed)) {
+    // Allow usernames that are entirely numeric (e.g., "846553767646068").
+    // Prefer an exact username match before interpreting the key as an ID.
+    const byExactUsername = await db
+      .select()
+      .from(schema.players)
+      .where(ilike(schema.players.username, trimmed))
+      .limit(1);
+
+    if (byExactUsername[0]) {
+      return byExactUsername[0];
+    }
+
     const numericKey = Number(trimmed);
 
     const byId = await db
