@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod/v4';
 
 import type { DatabaseClient } from '@/lib/db';
@@ -10,14 +10,12 @@ import {
   PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
 import {
-  PlayerDashboardRequestSchema,
   PlayerDashboardStatsSchema,
   PlayerCompactSchema,
   type PlayerDashboardStats,
   type PlayerFrequency,
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerDashboard';
-import { PlayerTournamentsRequestSchema } from '@/lib/orpc/schema/playerTournaments';
 import { TournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
@@ -58,8 +56,7 @@ export const getPlayer = publicProcedure
 
     return PlayerSchema.parse(player[0]);
   });
-type PlayerRecord = typeof schema.players.$inferSelect;
-type PlayerRow = PlayerRecord;
+// removed unused PlayerRecord alias
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
 type PlayerMatchStatsRow = typeof schema.playerMatchStats.$inferSelect;
 
@@ -157,60 +154,8 @@ const resolveDateBounds = (dateMin?: string, dateMax?: string): DateBounds => {
   };
 };
 
-const isStrictNumeric = (value: string): boolean => /^[0-9]+$/.test(value);
-
-const normaliseKey = (value: string): string => value.trim();
-
-const findPlayerByKey = async (
-  db: DatabaseClient,
-  key: string
-): Promise<PlayerRow> => {
-  const trimmed = normaliseKey(key);
-
-  if (!trimmed) {
-    throw new ORPCError('NOT_FOUND', {
-      message: 'Player not found',
-    });
-  }
-
-  if (isStrictNumeric(trimmed)) {
-    const numericKey = Number(trimmed);
-
-    const byId = await db
-      .select()
-      .from(schema.players)
-      .where(eq(schema.players.id, numericKey))
-      .limit(1);
-
-    if (byId[0]) {
-      return byId[0];
-    }
-
-    const byOsuId = await db
-      .select()
-      .from(schema.players)
-      .where(eq(schema.players.osuId, numericKey))
-      .limit(1);
-
-    if (byOsuId[0]) {
-      return byOsuId[0];
-    }
-  }
-
-  const byUsername = await db
-    .select()
-    .from(schema.players)
-    .where(ilike(schema.players.username, trimmed))
-    .limit(1);
-
-  if (byUsername[0]) {
-    return byUsername[0];
-  }
-
-  throw new ORPCError('NOT_FOUND', {
-    message: 'Player not found',
-  });
-};
+// Note: public endpoints accept canonical numeric playerId. Fuzzy key resolution
+// is performed server-side in the app layer.
 
 const toNumber = (value: unknown, fallback = 0): number => {
   const parsed = Number(value);
@@ -397,16 +342,31 @@ const buildMatchAggregates = (
 };
 
 export const getPlayerTournaments = publicProcedure
-  .input(PlayerTournamentsRequestSchema)
+  .input(
+    // Accept a strict playerId instead of a fuzzy "key"
+    z.object({
+      playerId: z.number().int().positive(),
+      ruleset: z.number().int().optional(),
+      dateMin: z.string().optional(),
+      dateMax: z.string().optional(),
+    })
+  )
   .output(TournamentListItemSchema.array())
   .route({
     summary: 'List player tournaments',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{key}/tournaments',
+    path: '/players/{playerId}/tournaments',
   })
   .handler(async ({ input, context }) => {
-    const player = await findPlayerByKey(context.db, input.key);
+    const player = await context.db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, input.playerId),
+      columns: { id: true },
+    });
+
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
 
     const filters = [
       sql`${schema.tournaments.id} IN (
@@ -847,16 +807,30 @@ export const getPlayerBeatmaps = publicProcedure
   });
 
 export const getPlayerDashboardStats = publicProcedure
-  .input(PlayerDashboardRequestSchema)
+  .input(
+    // Accept a strict playerId instead of a fuzzy "key"
+    z.object({
+      playerId: z.number().int().positive(),
+      ruleset: z.number().int().optional(),
+      dateMin: z.string().optional(),
+      dateMax: z.string().optional(),
+    })
+  )
   .output(PlayerDashboardStatsSchema)
   .route({
     summary: 'Get player dashboard stats',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{key}/dashboard',
+    path: '/players/{playerId}/dashboard',
   })
   .handler(async ({ input, context }) => {
-    const player = await findPlayerByKey(context.db, input.key);
+    const player = await context.db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, input.playerId),
+    });
+
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
 
     const playerDefaultRuleset = VALID_RULESETS.has(
       player.defaultRuleset as Ruleset
@@ -865,8 +839,11 @@ export const getPlayerDashboardStats = publicProcedure
       : Ruleset.Osu;
 
     const resolvedRuleset = (() => {
-      if (input.ruleset != null && VALID_RULESETS.has(input.ruleset)) {
-        return input.ruleset;
+      if (
+        input.ruleset != null &&
+        VALID_RULESETS.has(input.ruleset as Ruleset)
+      ) {
+        return input.ruleset as Ruleset;
       }
 
       return playerDefaultRuleset;
@@ -1046,6 +1023,12 @@ export const getPlayerDashboardStats = publicProcedure
 
     return PlayerDashboardStatsSchema.parse(response);
   });
+
+// Public helper to resolve a fuzzy search key (username, osuId, or internal id)
+// into a canonical playerId to be used with other player endpoints.
+// Note: No public resolver endpoint is exposed. Callers should obtain a
+// canonical playerId via existing discovery flows and pass that id to public
+// endpoints.
 
 const buildFrequencyMap = (
   rows: MatchStatsRow[],

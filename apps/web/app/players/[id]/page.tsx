@@ -18,6 +18,7 @@ import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
+import { resolvePlayerIdFromKey } from '@/lib/db/player-resolve';
 
 const INITIAL_BEATMAPS_LIMIT = 3;
 
@@ -49,6 +50,7 @@ async function getPlayerData(
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<PlayerDashboardStats | undefined> {
   const decodedKey = decodeURIComponent(key);
+  const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
 
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
@@ -63,7 +65,7 @@ async function getPlayerData(
 
   try {
     return await getPlayerDashboardStatsCached(
-      decodedKey,
+      playerId,
       dateMin,
       dateMax,
       ruleset
@@ -79,6 +81,7 @@ async function getTournaments(
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<TournamentListItem[]> {
   const decodedKey = decodeURIComponent(key);
+  const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
 
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
@@ -93,7 +96,7 @@ async function getTournaments(
 
   try {
     return await getPlayerTournamentsCached(
-      decodedKey,
+      playerId,
       dateMin,
       dateMax,
       ruleset
