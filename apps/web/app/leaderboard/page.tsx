@@ -37,12 +37,17 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
   };
 
-  if (params.friend) {
-    const currentUser = await orpc.users.me();
-    filter.userId = currentUser.player.id;
-  }
+  // Strip friend-specific fields from the RPC input; protected route derives
+  // the user scope from session.
+  const baseFilter = {
+    ...filter,
+    friend: undefined,
+    userId: undefined,
+  } as const;
 
-  const response = await orpc.leaderboard.list(filter);
+  const response = params.friend
+    ? await orpc.leaderboard.friends(baseFilter)
+    : await orpc.leaderboard.list(baseFilter);
 
   return response;
 }
