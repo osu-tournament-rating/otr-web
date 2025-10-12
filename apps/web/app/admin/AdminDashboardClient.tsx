@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Gavel, KeyRound, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,7 +69,7 @@ const formatDateTime = (value: string | null | undefined) => {
 
 export default function AdminDashboardClient() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<AdminPlayerSearchResult[]>([]);
+  const [result, setResult] = useState<AdminPlayerSearchResult | null>(null);
   const [searching, setSearching] = useState(false);
   const [didSearch, setDidSearch] = useState(false);
 
@@ -78,118 +78,37 @@ export default function AdminDashboardClient() {
     useState<AdminPlayerSearchResult | null>(null);
   const [banReason, setBanReason] = useState<AdminBanReason | null>(null);
   const [banning, setBanning] = useState(false);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
-  const [apiKeyCache, setApiKeyCache] = useState<
-    Record<number, ApiKeyMetadata[]>
-  >({});
-  const [apiKeyLoadingPlayerId, setApiKeyLoadingPlayerId] = useState<
-    number | null
-  >(null);
+
+  const [showKeys, setShowKeys] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKeyMetadata[]>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
-  const bannedCount = useMemo(
-    () => results.filter((entry) => entry.banned).length,
-    [results]
-  );
-
-  const selectedPlayer = useMemo(() => {
-    if (selectedPlayerId === null) {
-      return null;
-    }
-
-    return (
-      results.find((player) => player.playerId === selectedPlayerId) ?? null
-    );
-  }, [results, selectedPlayerId]);
-
-  const selectedPlayerApiKeys = useMemo(() => {
-    if (!selectedPlayer) {
-      return [];
-    }
-
-    return apiKeyCache[selectedPlayer.playerId] ?? [];
-  }, [apiKeyCache, selectedPlayer]);
-
-  const selectedPlayerApiKeyCount = selectedPlayerApiKeys.length;
-
-  const isLoadingApiKeys = Boolean(
-    selectedPlayer && apiKeyLoadingPlayerId === selectedPlayer.playerId
-  );
-
-  const apiKeyBadgeLabel = useMemo(() => {
-    if (!selectedPlayer) {
-      return 'Select a user';
-    }
-
-    if (isLoadingApiKeys) {
-      return 'Loading…';
-    }
-
-    if (apiKeyError) {
-      return 'Failed to load keys';
-    }
-
-    return `${selectedPlayerApiKeyCount} ${
-      selectedPlayerApiKeyCount === 1 ? 'active key' : 'active keys'
-    }`;
-  }, [
-    apiKeyError,
-    isLoadingApiKeys,
-    selectedPlayer,
-    selectedPlayerApiKeyCount,
-  ]);
+  useEffect(() => {
+    setShowKeys(false);
+    setApiKeys([]);
+    setApiKeysLoading(false);
+    setApiKeyError(null);
+  }, [result?.playerId]);
 
   useEffect(() => {
-    if (selectedPlayerId === null) {
-      return;
-    }
-
-    const stillPresent = results.some(
-      (player) => player.playerId === selectedPlayerId
-    );
-
-    if (!stillPresent) {
-      setSelectedPlayerId(null);
-      setApiKeyError(null);
-      setApiKeyLoadingPlayerId(null);
-    }
-  }, [results, selectedPlayerId]);
-
-  useEffect(() => {
-    if (!selectedPlayer) {
-      setApiKeyError(null);
-      setApiKeyLoadingPlayerId(null);
-      return;
-    }
-
-    if (apiKeyCache[selectedPlayer.playerId]) {
-      setApiKeyError(null);
+    if (!result || !showKeys) {
       return;
     }
 
     let active = true;
-    setApiKeyLoadingPlayerId(selectedPlayer.playerId);
+    setApiKeysLoading(true);
     setApiKeyError(null);
 
     orpc.users.admin
-      .apiKeys({ playerId: selectedPlayer.playerId })
+      .apiKeys({ playerId: result.playerId })
       .then((keys) => {
-        if (!active) {
-          return;
-        }
-
-        setApiKeyCache((previous) => ({
-          ...previous,
-          [selectedPlayer.playerId]: keys,
-        }));
+        if (!active) return;
+        setApiKeys(keys);
       })
       .catch((error) => {
-        if (!active) {
-          return;
-        }
-
+        if (!active) return;
         console.error('[admin] failed to fetch API keys', error);
-
         const message =
           error instanceof Error
             ? error.message
@@ -197,17 +116,14 @@ export default function AdminDashboardClient() {
         setApiKeyError(message);
       })
       .finally(() => {
-        if (!active) {
-          return;
-        }
-
-        setApiKeyLoadingPlayerId(null);
+        if (!active) return;
+        setApiKeysLoading(false);
       });
 
     return () => {
       active = false;
     };
-  }, [apiKeyCache, selectedPlayer]);
+  }, [result, showKeys]);
 
   const performSearch = useCallback(async (term: string) => {
     const trimmed = term.trim();
@@ -222,9 +138,10 @@ export default function AdminDashboardClient() {
 
     try {
       const response = await orpc.users.admin.search({ query: trimmed });
-      setResults(response);
+      const top = response[0] ?? null;
+      setResult(top);
 
-      if (response.length === 0) {
+      if (!top) {
         toast.info('No authenticated users matched that username.');
       }
     } catch (error) {
@@ -274,12 +191,10 @@ export default function AdminDashboardClient() {
         reason: banReason,
       });
 
-      setResults((previous) =>
-        previous.map((entry) =>
-          entry.playerId === pendingPlayer.playerId
-            ? { ...entry, banned: true, banReason }
-            : entry
-        )
+      setResult((previous) =>
+        previous && previous.playerId === pendingPlayer.playerId
+          ? { ...previous, banned: true, banReason }
+          : previous
       );
 
       toast.success(
@@ -297,22 +212,14 @@ export default function AdminDashboardClient() {
     }
   }, [banReason, handleDialogOpenChange, pendingPlayer]);
 
-  const handleSelectPlayer = useCallback((player: AdminPlayerSearchResult) => {
-    setApiKeyError(null);
-    setSelectedPlayerId((previous) =>
-      previous === player.playerId ? null : player.playerId
-    );
-  }, []);
-
   return (
     <TooltipProvider delayDuration={100}>
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Admin controls</CardTitle>
+            <CardTitle>User lookup</CardTitle>
             <CardDescription>
-              Search authenticated players and enforce bans with documented
-              reasons.
+              Search for users by username to review ban status and API access.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -352,247 +259,177 @@ export default function AdminDashboardClient() {
               </Button>
             </form>
 
-            <div className="text-muted-foreground flex flex-wrap gap-4 text-sm">
-              <span>
-                Results:{' '}
-                <span className="text-foreground font-medium">
-                  {results.length}
-                </span>
-              </span>
-              <span>
-                Banned:{' '}
-                <span className="text-foreground font-medium">
-                  {bannedCount}
-                </span>
-              </span>
-            </div>
-
-            <div className="overflow-hidden rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Player</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {searching ? (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <div className="text-muted-foreground flex items-center gap-3 text-sm">
-                          <Loader2 className="size-4 animate-spin" />
-                          Searching players…
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : results.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <p className="text-muted-foreground text-sm">
-                          {didSearch
-                            ? 'No authenticated players matched that username.'
-                            : 'Search for a username to view accounts linked to auth.'}
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    results.map((player) => {
-                      const initials = player.username
-                        .slice(0, 2)
-                        .toUpperCase();
-                      const isSelected = selectedPlayerId === player.playerId;
-                      const banTooltipLabel = player.banned
-                        ? 'Update ban reason'
-                        : 'Ban user';
-                      const keyTooltipLabel = isSelected
-                        ? 'Hide API keys'
-                        : 'View API keys';
-
-                      return (
-                        <TableRow
-                          key={player.playerId}
-                          className={cn(
-                            'hover:bg-muted/60 cursor-pointer border-l-2 border-transparent',
-                            isSelected && 'border-primary bg-primary/5'
-                          )}
-                          onClick={() => handleSelectPlayer(player)}
-                          aria-selected={isSelected}
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="size-10 border">
-                                <AvatarImage
-                                  src={`https://a.ppy.sh/${player.osuId}`}
-                                  alt={`${player.username}'s avatar`}
-                                />
-                                <AvatarFallback>{initials}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col">
-                                <span className="font-medium">
-                                  {player.username}
-                                </span>
-                                <span className="text-muted-foreground text-xs">
-                                  osu! ID {player.osuId}
-                                </span>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <Badge
-                                variant={
-                                  player.banned ? 'destructive' : 'secondary'
-                                }
-                                className={cn(
-                                  player.banned && 'bg-destructive/20'
-                                )}
-                              >
-                                {player.banned ? 'Banned' : 'Active'}
-                              </Badge>
-                              {player.banned && player.banReason && (
-                                <span className="text-muted-foreground text-xs">
-                                  Reason: {player.banReason}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn(
-                                      'hover:text-primary',
-                                      isSelected
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground'
-                                    )}
-                                    aria-label={keyTooltipLabel}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleSelectPlayer(player);
-                                    }}
-                                  >
-                                    <KeyRound className="size-5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left">
-                                  {keyTooltipLabel}
-                                </TooltipContent>
-                              </Tooltip>
-
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn(
-                                      'hover:text-destructive',
-                                      player.banned
-                                        ? 'text-destructive'
-                                        : 'text-muted-foreground'
-                                    )}
-                                    aria-label={banTooltipLabel}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleOpenBanDialog(player);
-                                    }}
-                                  >
-                                    <Gavel className="size-5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left">
-                                  {banTooltipLabel}
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {selectedPlayer && (
-              <div className="border-border bg-muted/10 space-y-4 rounded-lg border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <KeyRound className="text-primary size-5" />
+            {searching ? (
+              <div className="text-muted-foreground flex items-center gap-3 text-sm">
+                <Loader2 className="size-4 animate-spin" />
+                Searching…
+              </div>
+            ) : didSearch && !result ? (
+              <p className="text-muted-foreground text-sm">
+                No authenticated players matched that username.
+              </p>
+            ) : result ? (
+              <div className="overflow-hidden rounded-lg border">
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-12 border">
+                      <AvatarImage
+                        src={`https://a.ppy.sh/${result.osuId}`}
+                        alt={`${result.username}'s avatar`}
+                      />
+                      <AvatarFallback>
+                        {result.username.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex flex-col">
-                      <span className="text-foreground font-semibold">
-                        {selectedPlayer.username}&apos;s API keys
+                      <span className="text-foreground font-medium">
+                        {result.username}
                       </span>
-                      <span className="text-muted-foreground text-xs">
-                        Active keys currently enabled for this user.
-                      </span>
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                        <span>osu! ID {result.osuId}</span>
+                        <span>•</span>
+                        <Badge
+                          variant={result.banned ? 'destructive' : 'secondary'}
+                          className={cn(result.banned && 'bg-destructive/20')}
+                        >
+                          {result.banned ? 'Banned' : 'Active'}
+                        </Badge>
+                        {result.banned && result.banReason && (
+                          <span className="text-muted-foreground">
+                            Reason: {result.banReason}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-normal">
-                    {apiKeyBadgeLabel}
-                  </Badge>
+
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'hover:text-primary',
+                            showKeys ? 'text-primary' : 'text-muted-foreground'
+                          )}
+                          aria-label={
+                            showKeys ? 'Hide API keys' : 'View API keys'
+                          }
+                          onClick={() => setShowKeys((v) => !v)}
+                        >
+                          <KeyRound className="size-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">
+                        {showKeys ? 'Hide API keys' : 'View API keys'}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'hover:text-destructive',
+                            result.banned
+                              ? 'text-destructive'
+                              : 'text-muted-foreground'
+                          )}
+                          aria-label={
+                            result.banned ? 'Update ban reason' : 'Ban user'
+                          }
+                          onClick={() => handleOpenBanDialog(result)}
+                        >
+                          <Gavel className="size-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">
+                        {result.banned ? 'Update ban reason' : 'Ban user'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
 
-                <div className="overflow-hidden rounded-md border">
-                  {isLoadingApiKeys ? (
-                    <div className="text-muted-foreground flex items-center gap-2 p-4 text-sm">
-                      <Loader2 className="size-4 animate-spin" />
-                      Loading API keys…
+                {showKeys && (
+                  <div className="border-t">
+                    <div className="flex items-center justify-between gap-3 p-4">
+                      <div className="flex items-center gap-2">
+                        <KeyRound className="text-primary size-5" />
+                        <span className="text-foreground font-semibold">
+                          API keys
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="font-normal">
+                        {apiKeysLoading
+                          ? 'Loading…'
+                          : apiKeyError
+                            ? 'Failed to load keys'
+                            : `${apiKeys.length} ${apiKeys.length === 1 ? 'active key' : 'active keys'}`}
+                      </Badge>
                     </div>
-                  ) : apiKeyError ? (
-                    <div className="text-destructive p-4 text-sm">
-                      {apiKeyError}
+
+                    <div className="mx-4 mb-4 overflow-hidden rounded-md border">
+                      {apiKeysLoading ? (
+                        <div className="text-muted-foreground flex items-center gap-2 p-4 text-sm">
+                          <Loader2 className="size-4 animate-spin" />
+                          Loading API keys…
+                        </div>
+                      ) : apiKeyError ? (
+                        <div className="text-destructive p-4 text-sm">
+                          {apiKeyError}
+                        </div>
+                      ) : apiKeys.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Key</TableHead>
+                              <TableHead>Last used</TableHead>
+                              <TableHead>Created</TableHead>
+                              <TableHead className="text-right">
+                                Requests
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {apiKeys.map((keyMetadata) => (
+                              <TableRow key={keyMetadata.id}>
+                                <TableCell className="font-medium">
+                                  {keyMetadata.name &&
+                                  keyMetadata.name.trim().length > 0
+                                    ? keyMetadata.name.trim()
+                                    : 'API key'}
+                                </TableCell>
+                                <TableCell>
+                                  {getApiKeyPreview(keyMetadata)}
+                                </TableCell>
+                                <TableCell>
+                                  {formatDateTime(keyMetadata.lastRequest)}
+                                </TableCell>
+                                <TableCell>
+                                  {formatDateTime(keyMetadata.createdAt)}
+                                </TableCell>
+                                <TableCell className="text-right text-sm">
+                                  {keyMetadata.requestCount}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-muted-foreground p-4 text-sm">
+                          No active API keys found for this user.
+                        </div>
+                      )}
                     </div>
-                  ) : selectedPlayerApiKeyCount > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Key</TableHead>
-                          <TableHead>Last used</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead className="text-right">Requests</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedPlayerApiKeys.map((keyMetadata) => (
-                          <TableRow key={keyMetadata.id}>
-                            <TableCell className="font-medium">
-                              {keyMetadata.name &&
-                              keyMetadata.name.trim().length > 0
-                                ? keyMetadata.name.trim()
-                                : 'API key'}
-                            </TableCell>
-                            <TableCell>
-                              {getApiKeyPreview(keyMetadata)}
-                            </TableCell>
-                            <TableCell>
-                              {formatDateTime(keyMetadata.lastRequest)}
-                            </TableCell>
-                            <TableCell>
-                              {formatDateTime(keyMetadata.createdAt)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm">
-                              {keyMetadata.requestCount}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-muted-foreground p-4 text-sm">
-                      No active API keys found for this user.
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
       </div>
