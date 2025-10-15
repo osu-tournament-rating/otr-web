@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod/v4';
 
 import type { DatabaseClient } from '@/lib/db';
@@ -56,7 +56,7 @@ export const getPlayer = publicProcedure
 
     return PlayerSchema.parse(player[0]);
   });
-// removed unused PlayerRecord alias
+type PlayerRow = typeof schema.players.$inferSelect;
 type PlayerRatingRow = typeof schema.playerRatings.$inferSelect;
 type PlayerMatchStatsRow = typeof schema.playerMatchStats.$inferSelect;
 
@@ -154,8 +154,73 @@ const resolveDateBounds = (dateMin?: string, dateMax?: string): DateBounds => {
   };
 };
 
-// Note: public endpoints accept canonical numeric playerId. Fuzzy key resolution
-// is performed server-side in the app layer.
+const isStrictNumeric = (value: string): boolean => /^[0-9]+$/.test(value);
+
+const normaliseKey = (value: string): string => value.trim();
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const findPlayerByKey = async (
+  db: DatabaseClient,
+  key: string
+): Promise<PlayerRow> => {
+  const trimmed = normaliseKey(key);
+
+  if (!trimmed) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Player not found',
+    });
+  }
+
+  if (isStrictNumeric(trimmed)) {
+    // Allow usernames that are entirely numeric (e.g., "846553767646068").
+    // Prefer an exact username match before interpreting the key as an ID.
+    const byExactUsername = await db
+      .select()
+      .from(schema.players)
+      .where(ilike(schema.players.username, trimmed))
+      .limit(1);
+
+    if (byExactUsername[0]) {
+      return byExactUsername[0];
+    }
+
+    const numericKey = Number(trimmed);
+
+    const byId = await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.id, numericKey))
+      .limit(1);
+
+    if (byId[0]) {
+      return byId[0];
+    }
+
+    const byOsuId = await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.osuId, numericKey))
+      .limit(1);
+
+    if (byOsuId[0]) {
+      return byOsuId[0];
+    }
+  }
+
+  const byUsername = await db
+    .select()
+    .from(schema.players)
+    .where(ilike(schema.players.username, trimmed))
+    .limit(1);
+
+  if (byUsername[0]) {
+    return byUsername[0];
+  }
+
+  throw new ORPCError('NOT_FOUND', {
+    message: 'Player not found',
+  });
+};
 
 const toNumber = (value: unknown, fallback = 0): number => {
   const parsed = Number(value);

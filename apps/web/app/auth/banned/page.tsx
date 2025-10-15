@@ -55,9 +55,11 @@ export default async function BannedPage(props: BannedPageProps) {
           </p>
         </header>
         {reason ? (
-          <section className="border-destructive/30 bg-destructive/10 text-destructive space-y-1 rounded-xl border px-4 py-3 text-left text-sm sm:text-base">
-            <p className="font-medium">Reason:</p>
-            <p>{reason}</p>
+          <section className="border-destructive/30 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-left text-sm sm:text-base">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-medium">Reason:</span>
+              <span className="break-words">{reason}</span>
+            </div>
           </section>
         ) : null}
       </div>
