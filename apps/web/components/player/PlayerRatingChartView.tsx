@@ -15,7 +15,7 @@ import {
 import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { capitalize } from '@/lib/utils';
 import { ChartContainer } from '../ui/chart';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { RatingAdjustmentType } from '@otr/core/osu';
 
 const CHART_CONSTANTS = {

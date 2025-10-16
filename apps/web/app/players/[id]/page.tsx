@@ -9,9 +9,9 @@ import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
 import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
-import { getPlayerDashboardStatsCached } from '@/lib/orpc/queries/playerDashboard';
+import { getPlayerStatsCached } from '@/lib/orpc/queries/playerStats';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
-import type { PlayerDashboardStats } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
@@ -48,7 +48,7 @@ export async function generateMetadata({
 async function getPlayerData(
   key: string,
   searchParams: { [key: string]: string | string[] | undefined }
-): Promise<PlayerDashboardStats | undefined> {
+): Promise<PlayerStats | undefined> {
   const decodedKey = decodeURIComponent(key);
   const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
 
@@ -64,12 +64,7 @@ async function getPlayerData(
     : undefined;
 
   try {
-    return await getPlayerDashboardStatsCached(
-      playerId,
-      dateMin,
-      dateMax,
-      ruleset
-    );
+    return await getPlayerStatsCached(playerId, dateMin, dateMax, ruleset);
   } catch (error) {
     console.error('Failed to fetch player data:', error);
     return undefined;

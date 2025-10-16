@@ -1,7 +1,7 @@
 'use client';
 
 import PlayerFrequencyChart from './PlayerFrequencyChart';
-import type { PlayerFrequency } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 
 interface PlayerOpponentsChartProps {
   className?: string;

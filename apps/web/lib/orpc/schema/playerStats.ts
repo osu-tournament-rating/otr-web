@@ -105,7 +105,7 @@ export const AggregatePlayerMatchStatsSchema = z.object({
   periodEnd: z.string().nullable(),
 });
 
-export const PlayerDashboardStatsSchema = z.object({
+export const PlayerStatsSchema = z.object({
   playerInfo: PlayerCompactSchema,
   ruleset: RulesetSchema,
   rating: PlayerRatingStatsSchema.nullable(),
@@ -116,7 +116,7 @@ export const PlayerDashboardStatsSchema = z.object({
   tournamentPerformanceStats: z.unknown().nullable().optional(),
 });
 
-export const PlayerDashboardRequestSchema = z.object({
+export const PlayerStatsRequestSchema = z.object({
   playerId: z.number().int().positive(),
   ruleset: RulesetSchema.optional(),
   dateMin: z.string().optional(),
@@ -134,7 +134,5 @@ export type PlayerRatingStats = z.infer<typeof PlayerRatingStatsSchema>;
 export type AggregatePlayerMatchStats = z.infer<
   typeof AggregatePlayerMatchStatsSchema
 >;
-export type PlayerDashboardStats = z.infer<typeof PlayerDashboardStatsSchema>;
-export type PlayerDashboardRequest = z.infer<
-  typeof PlayerDashboardRequestSchema
->;
+export type PlayerStats = z.infer<typeof PlayerStatsSchema>;
+export type PlayerStatsRequest = z.infer<typeof PlayerStatsRequestSchema>;

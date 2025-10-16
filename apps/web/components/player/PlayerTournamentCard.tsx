@@ -11,7 +11,7 @@ import { Button } from '../ui/button';
 import { useState } from 'react';
 import PlayerTournamentMatchTable from './PlayerTournamentMatchTable';
 import { cn } from '@/lib/utils';
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
 
 function formatRankRangeDisplay(rankRange: number): string {

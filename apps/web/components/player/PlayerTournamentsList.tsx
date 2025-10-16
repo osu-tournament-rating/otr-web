@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import PlayerTournamentCard from './PlayerTournamentCard';
 
 interface PlayerTournamentsListProps {

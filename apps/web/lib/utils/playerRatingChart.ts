@@ -1,4 +1,4 @@
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
 export type ChartDataPoint = {
   formattedAxisDate: string;

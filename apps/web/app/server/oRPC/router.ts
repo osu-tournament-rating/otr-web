@@ -24,7 +24,7 @@ import {
 import {
   getPlayer,
   getPlayerBeatmaps,
-  getPlayerDashboardStats,
+  getPlayerStats,
   getPlayerTournaments,
 } from './procedures/playerProcedures';
 import { searchEntities } from './procedures/searchProcedures';
@@ -141,7 +141,7 @@ export const router = base.router({
   players: {
     get: getPlayer,
     beatmaps: getPlayerBeatmaps,
-    dashboard: getPlayerDashboardStats,
+    stats: getPlayerStats,
     tournaments: getPlayerTournaments,
   },
   stats: {

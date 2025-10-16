@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '../ui/table';
 import { sortData } from '@/lib/utils/playerRatingChart';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { RatingAdjustmentType } from '@otr/core/osu';
 
 interface PlayerRatingChartTableProps {

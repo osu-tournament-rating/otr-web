@@ -5,7 +5,7 @@ import TierIcon from '../icons/TierIcon';
 import TRText from '../rating/TRText';
 import { Progress } from '../ui/progress';
 import SimpleTooltip from '../simple-tooltip';
-import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingStats } from '@/lib/orpc/schema/playerStats';
 
 interface TierProgressProps {
   rating: PlayerRatingStats;

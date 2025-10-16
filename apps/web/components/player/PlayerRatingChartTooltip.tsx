@@ -1,7 +1,7 @@
 import TRText from '../rating/TRText';
 import { format } from 'date-fns';
 import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
 export function formattedDate(date: Date | string) {
   return format(new Date(date), 'MMM d, yyyy');
