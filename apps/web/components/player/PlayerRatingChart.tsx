@@ -21,7 +21,7 @@ import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { RatingAdjustmentType } from '@otr/core/osu';
 
 type TimeRangeOption = 'all' | '1y' | '6m' | '3m' | 'custom';

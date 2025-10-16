@@ -410,4 +410,4 @@ export default function PlayerFrequencyChart({
     </Card>
   );
 }
-import type { PlayerFrequency } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';

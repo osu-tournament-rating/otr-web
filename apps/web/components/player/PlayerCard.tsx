@@ -1,4 +1,4 @@
-import type { PlayerCompact } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerCompact } from '@/lib/orpc/schema/playerStats';
 import { Ruleset } from '@otr/core/osu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Link from 'next/link';

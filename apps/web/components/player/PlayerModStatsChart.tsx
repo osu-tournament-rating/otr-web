@@ -21,7 +21,7 @@ import { InfoIcon } from 'lucide-react';
 import SimpleTooltip from '../simple-tooltip';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { formatChartNumber } from '@/lib/utils/chart';
-import type { PlayerModStats } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
 import { Mods } from '@otr/core/osu';
 
 interface ChartDataEntry {

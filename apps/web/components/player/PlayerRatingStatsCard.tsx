@@ -15,7 +15,7 @@ import PlayerCard from './PlayerCard';
 import PlayerTierProgress from './PlayerTierProgress';
 import CountryFlag from '@/components/shared/CountryFlag';
 import Link from 'next/link';
-import type { PlayerRatingStats } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingStats } from '@/lib/orpc/schema/playerStats';
 import { Ruleset } from '@otr/core/osu';
 
 function formatPercentage(value: number | undefined | null): string {

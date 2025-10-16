@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import {
   Table,
   TableBody,

@@ -12,7 +12,7 @@ import {
   PlayerBeatmapStatsSchema,
   PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
-import { PlayerDashboardStatsSchema } from '@/lib/orpc/schema/playerDashboard';
+import { PlayerStatsSchema } from '@/lib/orpc/schema/playerStats';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
   TournamentDetailSchema,
@@ -296,8 +296,8 @@ export const generatePublicOpenAPISpec = async () => {
       PlayerBeatmapResponse: {
         schema: PlayerBeatmapsResponseSchema,
       },
-      PlayerDashboard: {
-        schema: PlayerDashboardStatsSchema,
+      PlayerStats: {
+        schema: PlayerStatsSchema,
       },
       PlatformStats: {
         schema: PlatformStatsSchema,

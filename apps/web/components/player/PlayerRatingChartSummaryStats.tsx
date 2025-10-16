@@ -4,7 +4,7 @@ import { sortData } from '@/lib/utils/playerRatingChart';
 import StatCard from '../shared/StatCard';
 import TierIcon from '../icons/TierIcon';
 import { getTierFromRating } from '@/lib/utils/tierData';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerDashboard';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
 interface PlayerRatingChartSummaryStatsProps {
   data: PlayerRatingAdjustment[];

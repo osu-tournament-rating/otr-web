@@ -10,12 +10,12 @@ import {
   PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
 import {
-  PlayerDashboardStatsSchema,
+  PlayerStatsSchema,
   PlayerCompactSchema,
-  type PlayerDashboardStats,
+  type PlayerStats,
   type PlayerFrequency,
   type PlayerRatingAdjustment,
-} from '@/lib/orpc/schema/playerDashboard';
+} from '@/lib/orpc/schema/playerStats';
 import { TournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
@@ -871,9 +871,8 @@ export const getPlayerBeatmaps = publicProcedure
     });
   });
 
-export const getPlayerDashboardStats = publicProcedure
+export const getPlayerStats = publicProcedure
   .input(
-    // Accept a strict playerId instead of a fuzzy "key"
     z.object({
       playerId: z.number().int().positive(),
       ruleset: z.number().int().optional(),
@@ -881,12 +880,12 @@ export const getPlayerDashboardStats = publicProcedure
       dateMax: z.string().optional(),
     })
   )
-  .output(PlayerDashboardStatsSchema)
+  .output(PlayerStatsSchema)
   .route({
-    summary: 'Get player dashboard stats',
+    summary: 'Get player stats',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{playerId}/dashboard',
+    path: '/players/{playerId}/stats',
   })
   .handler(async ({ input, context }) => {
     const player = await context.db.query.players.findFirst({
@@ -1069,7 +1068,7 @@ export const getPlayerDashboardStats = publicProcedure
         })()
       : null;
 
-    const response: PlayerDashboardStats = {
+    const response: PlayerStats = {
       playerInfo: {
         id: player.id,
         osuId: player.osuId,
@@ -1086,7 +1085,7 @@ export const getPlayerDashboardStats = publicProcedure
       tournamentPerformanceStats: null,
     };
 
-    return PlayerDashboardStatsSchema.parse(response);
+    return PlayerStatsSchema.parse(response);
   });
 
 // Public helper to resolve a fuzzy search key (username, osuId, or internal id)
