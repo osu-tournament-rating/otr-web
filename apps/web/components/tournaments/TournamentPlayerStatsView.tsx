@@ -1,22 +1,21 @@
 'use client';
 
 import { Ruleset } from '@otr/core/osu';
-
 import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
 import TournamentTopPerformers from './TournamentTopPerformers';
 
-interface TournamentPlayerStatsDashboardProps {
+interface TournamentPlayerStatsViewProps {
   playerStats: TournamentPlayerStats[];
   className?: string;
   ruleset: Ruleset;
 }
 
-export default function TournamentPlayerStatsDashboard({
+export default function TournamentPlayerStatsView({
   playerStats,
   className,
   ruleset,
-}: TournamentPlayerStatsDashboardProps) {
+}: TournamentPlayerStatsViewProps) {
   if (!playerStats || playerStats.length === 0) {
     return (
       <div className={className}>
