@@ -31,7 +31,7 @@ import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
-import TournamentPlayerStatsDashboard from '@/components/tournaments/TournamentPlayerStatsDashboard';
+import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
@@ -365,7 +365,7 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <TournamentStatsCard tournament={tournament} />
-          <TournamentPlayerStatsDashboard
+          <TournamentPlayerStatsView
             playerStats={tournament.playerTournamentStats ?? []}
             ruleset={tournament.ruleset}
           />
