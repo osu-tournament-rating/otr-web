@@ -1,7 +1,16 @@
 import { ORPCError, os } from '@orpc/server';
+import * as schema from '@otr/core/db/schema';
+import { eq } from 'drizzle-orm';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
+
+type ApiKeyActor = {
+  userId: string;
+  playerId: number | null;
+  osuId: number | null;
+  osuUsername: string | null;
+};
 
 type VerifiedApiKeyContext = {
   apiKey?: {
@@ -10,6 +19,7 @@ type VerifiedApiKeyContext = {
     name: string | null;
     enabled: boolean;
   } | null;
+  apiKeyActor?: ApiKeyActor | null;
 };
 
 const base = os.$context<
@@ -20,6 +30,14 @@ const base = os.$context<
 
 const formatProcedurePath = (path: readonly string[]) =>
   path.length > 0 ? path.join('.') : 'unknown';
+
+const maskApiKey = (value: string): string => {
+  if (value.length <= 5) {
+    return '*****';
+  }
+
+  return `${value.slice(0, 5)}...`;
+};
 
 const normalizeOsuId = (value: unknown) => {
   if (typeof value === 'bigint') {
@@ -65,6 +83,7 @@ type LoggingContext = {
   headers?: Headers;
   session?: unknown;
   apiKey?: VerifiedApiKeyContext['apiKey'];
+  apiKeyActor?: VerifiedApiKeyContext['apiKeyActor'];
 };
 
 type LogInvocationArgs = {
@@ -207,7 +226,11 @@ const formatArgs = (input: unknown): string | undefined => {
       ? `${serialized.slice(0, maxLength - 3)}...`
       : serialized;
   } catch (serializationError) {
-    console.error('[oRPC] argument-serialization-failed', serializationError);
+    const timestamp = new Date().toISOString();
+    console.error(
+      `${timestamp} [oRPC]: argument-serialization-failed`,
+      serializationError
+    );
     return '[unserializable]';
   }
 };
@@ -221,14 +244,39 @@ const logInvocation = async ({
 }: LogInvocationArgs) => {
   try {
     const session = await resolveSessionForLogging(context, context.session);
+    const timestamp = new Date().toISOString();
 
-    const parts = [
-      `[oRPC] ${formatProcedurePath(path)}`,
-      `user=${formatSessionActor(session)}`,
-    ];
+    const parts = [`procedure=${formatProcedurePath(path)}`];
+
+    let userDescriptor = formatSessionActor(session);
+    let playerDescriptor: string | null = null;
+
+    const apiKeyActor = context.apiKeyActor;
+
+    if (apiKeyActor) {
+      if (apiKeyActor.osuUsername) {
+        userDescriptor = apiKeyActor.osuUsername;
+      } else if (apiKeyActor.playerId != null) {
+        userDescriptor = `player:${apiKeyActor.playerId}`;
+      } else if (apiKeyActor.osuId != null) {
+        userDescriptor = `osu:${apiKeyActor.osuId}`;
+      } else if (context.apiKey?.userId) {
+        userDescriptor = `auth:${context.apiKey.userId}`;
+      }
+
+      if (apiKeyActor.playerId != null) {
+        playerDescriptor = String(apiKeyActor.playerId);
+      }
+    }
+
+    parts.push(`user=${JSON.stringify(userDescriptor)}`);
+
+    if (playerDescriptor) {
+      parts.push(`playerId=${playerDescriptor}`);
+    }
 
     if (context.apiKey?.id) {
-      parts.push(`apiKey=${context.apiKey.id}`);
+      parts.push(`apiKey=${maskApiKey(context.apiKey.id)}`);
     }
 
     if (args) {
@@ -241,14 +289,17 @@ const logInvocation = async ({
     if (error) {
       parts.push(`status=error`);
       parts.push(`error=${describeError(error)}`);
-      console.error(parts.join(' '));
+      console.error(`${timestamp} [oRPC]: ${parts.join(' ')}`);
       return;
     }
 
     parts.push(`status=ok`);
-    console.info(parts.join(' '));
+    console.info(`${timestamp} [oRPC]: ${parts.join(' ')}`);
   } catch (loggingError) {
-    console.error(`[oRPC] logging-failed error=${describeError(loggingError)}`);
+    const timestamp = new Date().toISOString();
+    console.error(
+      `${timestamp} [oRPC]: logging-failed error=${describeError(loggingError)}`
+    );
   }
 };
 
@@ -274,7 +325,8 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       context: {
         ...context,
         apiKey: null,
-      } as typeof context & { apiKey: VerifiedApiKeyContext['apiKey'] },
+        apiKeyActor: null,
+      } as typeof context & VerifiedApiKeyContext,
     });
   }
 
@@ -293,6 +345,46 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
     }
 
     const { id, userId, name, enabled } = verification.key;
+    let apiKeyActor: ApiKeyActor | null = null;
+
+    try {
+      const authUser = await db.query.auth_users.findFirst({
+        columns: {
+          id: true,
+          name: true,
+          playerId: true,
+        },
+        where: eq(schema.auth_users.id, userId),
+        with: {
+          player: {
+            columns: {
+              id: true,
+              osuId: true,
+              username: true,
+            },
+          },
+        },
+      });
+
+      if (authUser) {
+        const playerId = authUser.player?.id ?? authUser.playerId ?? null;
+
+        apiKeyActor = {
+          userId,
+          playerId,
+          osuId: authUser.player?.osuId ?? null,
+          osuUsername:
+            authUser.player?.username ?? (authUser.name ? authUser.name : null),
+        };
+      }
+    } catch (apiKeyActorError) {
+      const timestamp = new Date().toISOString();
+      console.error(
+        `${timestamp} [oRPC]: api-key-owner-lookup-failed apiKey=${maskApiKey(
+          id
+        )} error=${describeError(apiKeyActorError)}`
+      );
+    }
 
     return next({
       context: {
@@ -303,7 +395,8 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
           name: name ?? null,
           enabled,
         },
-      } as typeof context & { apiKey: VerifiedApiKeyContext['apiKey'] },
+        apiKeyActor,
+      } as typeof context & VerifiedApiKeyContext,
     });
   } catch (error) {
     throw new ORPCError('UNAUTHORIZED', {
