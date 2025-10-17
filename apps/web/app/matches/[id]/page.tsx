@@ -10,6 +10,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { orpc } from '@/lib/orpc/orpc';
 import { MatchDetail } from '@/lib/orpc/schema/match';
 import { VerificationStatus } from '@otr/core/osu';
+import {
+  fetchOrpcOptional,
+  fetchOrpcOrNotFound,
+  parseParamsOrNotFound,
+} from '@/lib/orpc/server-helpers';
 
 type PageProps = { params: Promise<{ id: number }> };
 
@@ -17,22 +22,31 @@ const matchPageParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-async function fetchMatchById(id: number): Promise<MatchDetail> {
-  return orpc.matches.get({ id });
-}
-
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = matchPageParamsSchema.parse(await params);
-  const match = await fetchMatchById(id);
+  const parsedParams = matchPageParamsSchema.safeParse(await params);
+
+  if (!parsedParams.success) {
+    return { title: 'Match Not Found' };
+  }
+
+  const match = await fetchOrpcOptional(() =>
+    orpc.matches.get({ id: parsedParams.data.id })
+  );
+
+  if (!match) {
+    return { title: 'Match Not Found' };
+  }
 
   return { title: match.name };
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = matchPageParamsSchema.parse(await params);
-  const match = await fetchMatchById(id);
+  const { id } = parseParamsOrNotFound(matchPageParamsSchema, await params);
+  const match: MatchDetail = await fetchOrpcOrNotFound(() =>
+    orpc.matches.get({ id })
+  );
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;
   const gameCount = match.games?.length ?? 0;
