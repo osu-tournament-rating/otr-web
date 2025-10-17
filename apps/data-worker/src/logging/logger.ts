@@ -9,10 +9,16 @@ const log = (
   message: string,
   extra?: Record<string, unknown>
 ) => {
+  const timestamp = new Date().toISOString();
+  const formattedMessage = `timestamp=${timestamp} ${message}`;
+
   if (extra && Object.keys(extra).length > 0) {
-    writer.call(console, message, extra);
+    writer.call(console, formattedMessage, {
+      ...extra,
+      timestamp,
+    });
   } else {
-    writer.call(console, message);
+    writer.call(console, formattedMessage);
   }
 };
 
