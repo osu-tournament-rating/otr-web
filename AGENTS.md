@@ -79,6 +79,7 @@
 - Data worker suites can be scoped with Bun's test filters; integration tests may require Postgres and RabbitMQ (use Docker compose for parity).
 - Web-side procedure tests live in `app/server/oRPC/procedures/**/__tests__`. Mirror their patterns (mock context, assert ORPC responses) when adding new endpoints.
 - Accessibility: keyboard navigation and aria labels must be validated when modifying UI primitives. Rely on shadcn components for baseline semantics.
+- It is crucial to not use `any`, `unknown`, or `as unknown as` syntax. Unless it is impossible or extraordinarily inconvenient to do so, everything must be completely typed. When modifying files, look for usage of this syntax in that specific file and modernize it if found. Expansion syntax (`...prop`) is okay. Never use `Object.assign`.
 
 ## Deployment & Operations
 
