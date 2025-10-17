@@ -36,6 +36,11 @@ import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
 import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
+import {
+  fetchOrpcOptional,
+  fetchOrpcOrNotFound,
+  parseParamsOrNotFound,
+} from '@/lib/orpc/server-helpers';
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -46,8 +51,19 @@ const tournamentPageParamsSchema = z.object({
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = tournamentPageParamsSchema.parse(await params);
-  const tournament = await orpc.tournaments.get({ id });
+  const parsedParams = tournamentPageParamsSchema.safeParse(await params);
+
+  if (!parsedParams.success) {
+    return { title: 'Tournament Not Found' };
+  }
+
+  const tournament = await fetchOrpcOptional(() =>
+    orpc.tournaments.get({ id: parsedParams.data.id })
+  );
+
+  if (!tournament) {
+    return { title: 'Tournament Not Found' };
+  }
 
   return { title: tournament.name };
 }
@@ -290,8 +306,13 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = tournamentPageParamsSchema.parse(await params);
-  const tournament = await orpc.tournaments.get({ id });
+  const { id } = parseParamsOrNotFound(
+    tournamentPageParamsSchema,
+    await params
+  );
+  const tournament: TournamentDetail = await fetchOrpcOrNotFound(() =>
+    orpc.tournaments.get({ id })
+  );
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = tournament.pooledBeatmaps ?? [];
 

@@ -19,6 +19,11 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
 import { resolvePlayerIdFromKey } from '@/lib/db/player-resolve';
+import { z } from 'zod';
+import {
+  fetchOrpcOptional,
+  parseParamsOrNotFound,
+} from '@/lib/orpc/server-helpers';
 
 const INITIAL_BEATMAPS_LIMIT = 3;
 
@@ -27,11 +32,22 @@ type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+const playerPageParamsSchema = z.object({
+  id: z.string().min(1),
+});
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const decodedId = decodeURIComponent(id);
+  const parsedParams = playerPageParamsSchema.safeParse(await params);
+
+  if (!parsedParams.success) {
+    return {
+      title: 'Player Not Found',
+    };
+  }
+
+  const decodedId = decodeURIComponent(parsedParams.data.id);
   const playerData = await getPlayerData(decodedId, {});
 
   if (!playerData) {
@@ -52,6 +68,10 @@ async function getPlayerData(
   const decodedKey = decodeURIComponent(key);
   const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
 
+  if (playerId <= 0) {
+    return undefined;
+  }
+
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
     : undefined;
@@ -64,7 +84,10 @@ async function getPlayerData(
     : undefined;
 
   try {
-    return await getPlayerStatsCached(playerId, dateMin, dateMax, ruleset);
+    const playerStats = await fetchOrpcOptional(() =>
+      getPlayerStatsCached(playerId, dateMin, dateMax, ruleset)
+    );
+    return playerStats;
   } catch (error) {
     console.error('Failed to fetch player data:', error);
     return undefined;
@@ -131,9 +154,9 @@ async function getBeatmaps(
 
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
-  const params = await props.params;
+  const { id } = parseParamsOrNotFound(playerPageParamsSchema, await props.params);
 
-  const decodedId = decodeURIComponent(params.id);
+  const decodedId = decodeURIComponent(id);
   const playerData = await getPlayerData(decodedId, searchParams);
 
   // Handle case where player data might not be found
