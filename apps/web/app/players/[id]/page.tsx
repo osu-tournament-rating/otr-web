@@ -154,7 +154,10 @@ async function getBeatmaps(
 
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
-  const { id } = parseParamsOrNotFound(playerPageParamsSchema, await props.params);
+  const { id } = parseParamsOrNotFound(
+    playerPageParamsSchema,
+    await props.params
+  );
 
   const decodedId = decodeURIComponent(id);
   const playerData = await getPlayerData(decodedId, searchParams);
