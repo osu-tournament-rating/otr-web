@@ -9,7 +9,7 @@ export const BeatmapTournamentListItemSchema = TournamentListItemSchema.extend({
 });
 
 export const PlayerBeatmapsRequestSchema = z.object({
-  playerId: z.number().int().positive(),
+  id: z.number().int().positive(),
   ruleset: RulesetSchema.optional(),
   limit: z.number().int().positive().max(50).optional(),
   offset: z.number().int().nonnegative().optional(),

@@ -8,13 +8,13 @@ import {
 } from '../schema/playerBeatmaps';
 
 export async function getPlayerBeatmaps({
-  playerId,
+  id,
   ruleset,
   limit,
   offset,
 }: PlayerBeatmapsRequest): Promise<PlayerBeatmapsResponse> {
   return orpc.players.beatmaps({
-    playerId,
+    id,
     ruleset,
     limit,
     offset,
@@ -29,7 +29,7 @@ export const getPlayerBeatmapsCached = cache(
     offset?: number
   ) =>
     getPlayerBeatmaps({
-      playerId,
+      id: playerId,
       ruleset,
       limit,
       offset,
