@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { SQL, and, or, eq, gte, lte, sql } from 'drizzle-orm';
+import { SQL, and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -34,6 +34,22 @@ async function runLeaderboard({
       Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
     );
     const ruleset = input.ruleset ?? Ruleset.Osu;
+    let scopedPlayerIds: number[] | undefined;
+
+    if (friendUserId != null) {
+      // Scope friend leaderboard to the signed-in user plus their friends.
+      const friendRows = await context.db
+        .select({ friendId: schema.playerFriends.friendId })
+        .from(schema.playerFriends)
+        .where(eq(schema.playerFriends.playerId, friendUserId));
+
+      scopedPlayerIds = Array.from(
+        new Set<number>([
+          friendUserId,
+          ...friendRows.map((row) => Number(row.friendId)),
+        ])
+      );
+    }
 
     const tournamentsPlayedExpr = sql<number>`
       COALESCE(COUNT(DISTINCT ${schema.tournaments.id})::int, 0)
@@ -94,27 +110,13 @@ async function runLeaderboard({
       osuGlobalRank: osuGlobalRankExpr,
     } as const;
 
-    let leaderboardBaseQuery = friendUserId
-      ? context.db
-          .select(selectFields)
-          .from(schema.playerRatings)
-          .innerJoin(
-            schema.players,
-            eq(schema.playerRatings.playerId, schema.players.id)
-          )
-          .leftJoin(
-            schema.playerFriends,
-            eq(schema.playerFriends.friendId, schema.players.id)
-          )
-      : context.db
-          .select(selectFields)
-          .from(schema.playerRatings)
-          .innerJoin(
-            schema.players,
-            eq(schema.playerRatings.playerId, schema.players.id)
-          );
-
-    leaderboardBaseQuery = leaderboardBaseQuery
+    const leaderboardBaseQuery = context.db
+      .select(selectFields)
+      .from(schema.playerRatings)
+      .innerJoin(
+        schema.players,
+        eq(schema.playerRatings.playerId, schema.players.id)
+      )
       .leftJoin(
         schema.playerTournamentStats,
         eq(schema.playerTournamentStats.playerId, schema.players.id)
@@ -135,12 +137,10 @@ async function runLeaderboard({
       );
 
     const ratingRulesetFilter = eq(schema.playerRatings.ruleset, ruleset);
-    const playerScopeFilter = friendUserId
-      ? or(
-          eq(schema.playerFriends.playerId, friendUserId),
-          eq(schema.players.id, friendUserId)
-        )
-      : undefined;
+    const playerScopeFilter =
+      scopedPlayerIds && scopedPlayerIds.length > 0
+        ? inArray(schema.players.id, scopedPlayerIds)
+        : undefined;
     const baseWhere = playerScopeFilter
       ? and(playerScopeFilter, ratingRulesetFilter)
       : ratingRulesetFilter;
