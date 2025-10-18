@@ -408,9 +408,8 @@ const buildMatchAggregates = (
 
 export const getPlayerTournaments = publicProcedure
   .input(
-    // Accept a strict playerId instead of a fuzzy "key"
     z.object({
-      playerId: z.number().int().positive(),
+      id: z.number().int().positive(),
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
       dateMax: z.string().optional(),
@@ -421,11 +420,11 @@ export const getPlayerTournaments = publicProcedure
     summary: 'List player tournaments',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{playerId}/tournaments',
+    path: '/players/{id}/tournaments',
   })
   .handler(async ({ input, context }) => {
     const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.playerId),
+      where: (players, { eq }) => eq(players.id, input.id),
       columns: { id: true },
     });
 
@@ -475,11 +474,11 @@ export const getPlayerBeatmaps = publicProcedure
     summary: 'List player beatmaps',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{playerId}/beatmaps',
+    path: '/players/{id}/beatmaps',
   })
   .handler(async ({ input, context }) => {
     const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.playerId),
+      where: (players, { eq }) => eq(players.id, input.id),
       columns: {
         id: true,
       },
@@ -874,7 +873,7 @@ export const getPlayerBeatmaps = publicProcedure
 export const getPlayerStats = publicProcedure
   .input(
     z.object({
-      playerId: z.number().int().positive(),
+      id: z.number().int().positive(),
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
       dateMax: z.string().optional(),
@@ -885,11 +884,11 @@ export const getPlayerStats = publicProcedure
     summary: 'Get player stats',
     tags: ['public'],
     method: 'GET',
-    path: '/players/{playerId}/stats',
+    path: '/players/{id}/stats',
   })
   .handler(async ({ input, context }) => {
     const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.playerId),
+      where: (players, { eq }) => eq(players.id, input.id),
     });
 
     if (!player) {

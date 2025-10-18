@@ -117,7 +117,7 @@ export const PlayerStatsSchema = z.object({
 });
 
 export const PlayerStatsRequestSchema = z.object({
-  playerId: z.number().int().positive(),
+  id: z.number().int().positive(),
   ruleset: RulesetSchema.optional(),
   dateMin: z.string().optional(),
   dateMax: z.string().optional(),

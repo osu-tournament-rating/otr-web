@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 import { RulesetSchema } from './constants';
 
 export const PlayerTournamentsRequestSchema = z.object({
-  playerId: z.number().int().positive(),
+  id: z.number().int().positive(),
   ruleset: RulesetSchema.optional(),
   dateMin: z.string().optional(),
   dateMax: z.string().optional(),

@@ -5,7 +5,7 @@ import type { PlayerStats as PlayerStatsResponse } from '@/lib/orpc/schema/playe
 import { Ruleset } from '@otr/core/osu';
 
 export type PlayerStatsRequest = {
-  playerId: number;
+  id: number;
   dateMin?: Date;
   dateMax?: Date;
   ruleset?: Ruleset;
@@ -15,13 +15,13 @@ const toISOStringOrUndefined = (value?: Date) =>
   value ? value.toISOString() : undefined;
 
 export async function getPlayerStats({
-  playerId,
+  id,
   dateMin,
   dateMax,
   ruleset,
 }: PlayerStatsRequest): Promise<PlayerStatsResponse> {
   return orpc.players.stats({
-    playerId,
+    id,
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
     ruleset,
@@ -30,5 +30,5 @@ export async function getPlayerStats({
 
 export const getPlayerStatsCached = cache(
   async (playerId: number, dateMin?: Date, dateMax?: Date, ruleset?: Ruleset) =>
-    getPlayerStats({ playerId, dateMin, dateMax, ruleset })
+    getPlayerStats({ id: playerId, dateMin, dateMax, ruleset })
 );
