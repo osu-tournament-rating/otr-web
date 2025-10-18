@@ -14,12 +14,7 @@ type ApiKeyActor = {
 };
 
 type VerifiedApiKeyContext = {
-  apiKey?: {
-    id: string;
-    userId: string;
-    name: string | null;
-    enabled: boolean;
-  } | null;
+  apiKey?: VerifiedApiKey | null;
   apiKeyActor?: ApiKeyActor | null;
 };
 
@@ -28,6 +23,29 @@ const base = os.$context<
     headers: Headers;
   } & VerifiedApiKeyContext
 >();
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+type VerifiedApiKey = {
+  id: string;
+  userId: string;
+  name: string | null;
+  enabled: boolean;
+};
+
+type ApiKeyVerificationErrorPayload = {
+  code?: string | null;
+  message?: string | null;
+  details?: JsonValue;
+};
+
+type ApiKeyVerificationResponse = {
+  valid?: boolean;
+  key?: VerifiedApiKey | null;
+  error?: ApiKeyVerificationErrorPayload | null;
+};
 
 const formatProcedurePath = (path: readonly string[]) =>
   path.length > 0 ? path.join('.') : 'unknown';
@@ -100,14 +118,28 @@ const resolveOrpcCodeForStatus = (status: number): OrpcErrorCode => {
   return 'INTERNAL_SERVER_ERROR';
 };
 
-const toOrpcErrorFromBetterAuth = (error: APIError): ORPCError<string, unknown> => {
+type BetterAuthErrorData = {
+  status: number;
+  message: string;
+  cause: APIError;
+};
+
+const toOrpcErrorFromBetterAuth = (
+  error: APIError
+): ORPCError<string, BetterAuthErrorData> => {
   const status = Number.isInteger(error.status) ? Number(error.status) : 500;
   const code = resolveOrpcCodeForStatus(status);
+  const payload: BetterAuthErrorData = {
+    status,
+    message: error.message,
+    cause: error,
+  };
 
   return new ORPCError(code, {
     status,
     message: error.message,
     cause: error,
+    data: payload,
   });
 };
 
@@ -115,29 +147,24 @@ const DEFAULT_SUCCESS_STATUS = 200;
 
 const RATE_LIMIT_ERROR_CODES = new Set(['RATE_LIMITED', 'USAGE_EXCEEDED']);
 
-const extractApiKeyVerificationError = (verification: unknown) => {
-  if (!verification || typeof verification !== 'object') {
+const extractApiKeyVerificationError = (
+  verification: ApiKeyVerificationResponse | null | undefined
+): {
+  code: string | null;
+  message: string | null;
+  details: JsonValue | undefined;
+} => {
+  const error = verification?.error;
+
+  if (!error) {
     return {
       code: null,
       message: null,
-      details: undefined as unknown,
+      details: undefined,
     };
   }
 
-  const error = (verification as { error?: unknown }).error;
-  if (!error || typeof error !== 'object') {
-    return {
-      code: null,
-      message: null,
-      details: undefined as unknown,
-    };
-  }
-
-  const { code, message, details } = error as {
-    code?: unknown;
-    message?: unknown;
-    details?: unknown;
-  };
+  const { code, message, details } = error;
 
   return {
     code: typeof code === 'string' ? code : null,
@@ -148,14 +175,22 @@ const extractApiKeyVerificationError = (verification: unknown) => {
 
 const createVerificationErrorData = (
   code: string | null,
-  details: unknown
-): Record<string, unknown> | undefined => {
-  const base = code ? { code } : {};
+  details: JsonValue | undefined
+): Record<string, JsonValue> | undefined => {
+  const base: Record<string, JsonValue> = {};
 
-  if (details && typeof details === 'object' && !Array.isArray(details)) {
+  if (code) {
+    base.code = code;
+  }
+
+  if (
+    details &&
+    typeof details === 'object' &&
+    !Array.isArray(details)
+  ) {
     return {
       ...base,
-      ...(details as Record<string, unknown>),
+      ...(details as JsonObject),
     };
   }
 
@@ -169,7 +204,9 @@ const createVerificationErrorData = (
   return Object.keys(base).length > 0 ? base : undefined;
 };
 
-const handleInvalidApiKeyVerification = (verification: unknown): never => {
+const handleInvalidApiKeyVerification = (
+  verification: ApiKeyVerificationResponse | null | undefined
+): never => {
   const { code, message, details } = extractApiKeyVerificationError(verification);
   const data = createVerificationErrorData(code, details);
 
@@ -204,6 +241,12 @@ type ProcedureRouteMeta = {
   };
 };
 
+type StatusCarrier = {
+  status?: number;
+};
+
+type MaybeStatus = StatusCarrier | Response | null | undefined;
+
 const resolveSuccessStatus = (procedure: ProcedureRouteMeta | undefined): number => {
   const candidate = procedure?.['~orpc']?.route?.successStatus;
   if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
@@ -214,20 +257,48 @@ const resolveSuccessStatus = (procedure: ProcedureRouteMeta | undefined): number
 };
 
 const resolveSuccessStatusFromResult = (
-  result: unknown,
+  result: MaybeStatus,
   fallbackStatus: number
 ): number => {
-  if (typeof result === 'object' && result !== null) {
-    const candidate = (result as { status?: unknown }).status;
-    if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
-      return candidate;
-    }
+  if (!result) {
+    return fallbackStatus;
+  }
+
+  if (result instanceof Response) {
+    const status = result.status;
+    return status >= 200 && status < 400 ? status : fallbackStatus;
+  }
+
+  const candidate = result.status;
+  if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
+    return candidate;
   }
 
   return fallbackStatus;
 };
 
-const resolveErrorStatus = (error: unknown): number => {
+type AnyOrpcError = ORPCError<string, JsonValue | undefined>;
+
+type ProcedureError =
+  | AnyOrpcError
+  | APIError
+  | (Error & StatusCarrier)
+  | StatusCarrier
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
+
+type OsuIdValue = bigint | number | string | null | undefined;
+
+type SessionSnapshot = {
+  user?: { osuId?: OsuIdValue } | null;
+  dbUser?: { id?: number | null } | null;
+  dbPlayer?: { osuId?: OsuIdValue } | null;
+};
+
+const resolveErrorStatus = (error: ProcedureError): number => {
   if (!error) {
     return 500;
   }
@@ -243,8 +314,8 @@ const resolveErrorStatus = (error: unknown): number => {
     }
   }
 
-  if (typeof error === 'object' && error !== null) {
-    const candidate = (error as { status?: unknown }).status;
+  if (error && typeof error === 'object') {
+    const candidate = (error as StatusCarrier).status;
     if (typeof candidate === 'number' && candidate >= 400 && candidate < 600) {
       return candidate;
     }
@@ -253,7 +324,7 @@ const resolveErrorStatus = (error: unknown): number => {
   return 500;
 };
 
-const normalizeOsuId = (value: unknown) => {
+const normalizeOsuId = (value: OsuIdValue) => {
   if (typeof value === 'bigint') {
     return value.toString();
   }
@@ -265,26 +336,20 @@ const normalizeOsuId = (value: unknown) => {
   return null;
 };
 
-const formatSessionActor = (session: unknown): string => {
-  if (!session || typeof session !== 'object') {
+const formatSessionActor = (session: SessionSnapshot | null | undefined): string => {
+  if (!session) {
     return 'anonymous';
   }
 
-  const candidate = session as {
-    user?: { osuId?: number | string | null } | null;
-    dbUser?: { id?: number | null } | null;
-    dbPlayer?: { osuId?: number | string | bigint | null } | null;
-  };
-
   const parts: string[] = [];
 
-  if (candidate.dbUser?.id != null) {
-    parts.push(`user:${candidate.dbUser.id}`);
+  if (session.dbUser?.id != null) {
+    parts.push(`user:${session.dbUser.id}`);
   }
 
   const osuId =
-    normalizeOsuId(candidate.user?.osuId) ??
-    normalizeOsuId(candidate.dbPlayer?.osuId);
+    normalizeOsuId(session.user?.osuId) ??
+    normalizeOsuId(session.dbPlayer?.osuId);
 
   if (osuId) {
     parts.push(`osu:${osuId}`);
@@ -295,7 +360,7 @@ const formatSessionActor = (session: unknown): string => {
 
 type LoggingContext = {
   headers?: Headers;
-  session?: unknown;
+  session?: SessionSnapshot | null;
   apiKey?: VerifiedApiKeyContext['apiKey'];
   apiKeyActor?: VerifiedApiKeyContext['apiKeyActor'];
 };
@@ -305,13 +370,13 @@ type LogInvocationArgs = {
   context: LoggingContext;
   durationMs: number;
   statusCode: number;
-  error?: unknown;
+  error?: ProcedureError;
 };
 
 const resolveSessionForLogging = async (
   context: LoggingContext,
-  existingSession: unknown
-) => {
+  existingSession: SessionSnapshot | null | undefined
+): Promise<SessionSnapshot | null | undefined> => {
   if (existingSession) {
     return existingSession;
   }
@@ -325,13 +390,14 @@ const resolveSessionForLogging = async (
   }
 
   try {
-    return await auth.api.getSession({ headers: context.headers });
+    const session = await auth.api.getSession({ headers: context.headers });
+    return session as SessionSnapshot | null | undefined;
   } catch {
     return undefined;
   }
 };
 
-const describeError = (error: unknown) => {
+const describeError = (error: ProcedureError) => {
   if (!error) {
     return 'unknown';
   }
@@ -404,8 +470,9 @@ const logInvocation = async ({
     console.info(`${timestamp} [oRPC]: ${parts.join(' ')}`);
   } catch (loggingError) {
     const timestamp = new Date().toISOString();
+    const description = describeError(loggingError as ProcedureError);
     console.error(
-      `${timestamp} [oRPC]: logging-failed error=${describeError(loggingError)}`
+      `${timestamp} [oRPC]: logging-failed error=${description}`
     );
   }
 };
@@ -496,10 +563,11 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       }
     } catch (apiKeyActorError) {
       const timestamp = new Date().toISOString();
+      const description = describeError(apiKeyActorError as ProcedureError);
       console.error(
         `${timestamp} [oRPC]: api-key-owner-lookup-failed apiKey=${maskApiKey(
           id
-        )} error=${describeError(apiKeyActorError)}`
+        )} error=${description}`
       );
     }
 
@@ -578,22 +646,27 @@ const withRequestLogging = base.middleware(
 
     try {
       const result = await next();
+      const resultWithStatus = result as MaybeStatus;
 
       await logInvocation({
         path,
         context,
         durationMs: Date.now() - start,
-        statusCode: resolveSuccessStatusFromResult(result, successStatus),
+        statusCode: resolveSuccessStatusFromResult(
+          resultWithStatus,
+          successStatus
+        ),
       });
 
       return result;
     } catch (error) {
+      const procedureError = error as ProcedureError;
       await logInvocation({
         path,
         context,
         durationMs: Date.now() - start,
-        statusCode: resolveErrorStatus(error),
-        error,
+        statusCode: resolveErrorStatus(procedureError),
+        error: procedureError,
       });
 
       throw error;
