@@ -183,11 +183,7 @@ const createVerificationErrorData = (
     base.code = code;
   }
 
-  if (
-    details &&
-    typeof details === 'object' &&
-    !Array.isArray(details)
-  ) {
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
     return {
       ...base,
       ...(details as JsonObject),
@@ -207,7 +203,8 @@ const createVerificationErrorData = (
 const handleInvalidApiKeyVerification = (
   verification: ApiKeyVerificationResponse | null | undefined
 ): never => {
-  const { code, message, details } = extractApiKeyVerificationError(verification);
+  const { code, message, details } =
+    extractApiKeyVerificationError(verification);
   const data = createVerificationErrorData(code, details);
 
   if (code && RATE_LIMIT_ERROR_CODES.has(code)) {
@@ -247,7 +244,9 @@ type StatusCarrier = {
 
 type MaybeStatus = StatusCarrier | Response | null | undefined;
 
-const resolveSuccessStatus = (procedure: ProcedureRouteMeta | undefined): number => {
+const resolveSuccessStatus = (
+  procedure: ProcedureRouteMeta | undefined
+): number => {
   const candidate = procedure?.['~orpc']?.route?.successStatus;
   if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
     return candidate;
@@ -336,7 +335,9 @@ const normalizeOsuId = (value: OsuIdValue) => {
   return null;
 };
 
-const formatSessionActor = (session: SessionSnapshot | null | undefined): string => {
+const formatSessionActor = (
+  session: SessionSnapshot | null | undefined
+): string => {
   if (!session) {
     return 'anonymous';
   }
@@ -471,9 +472,7 @@ const logInvocation = async ({
   } catch (loggingError) {
     const timestamp = new Date().toISOString();
     const description = describeError(loggingError as ProcedureError);
-    console.error(
-      `${timestamp} [oRPC]: logging-failed error=${description}`
-    );
+    console.error(`${timestamp} [oRPC]: logging-failed error=${description}`);
   }
 };
 
