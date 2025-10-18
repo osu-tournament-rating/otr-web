@@ -1,4 +1,5 @@
 import { ORPCError, os } from '@orpc/server';
+import { APIError } from 'better-auth/api';
 import * as schema from '@otr/core/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -13,12 +14,7 @@ type ApiKeyActor = {
 };
 
 type VerifiedApiKeyContext = {
-  apiKey?: {
-    id: string;
-    userId: string;
-    name: string | null;
-    enabled: boolean;
-  } | null;
+  apiKey?: VerifiedApiKey | null;
   apiKeyActor?: ApiKeyActor | null;
 };
 
@@ -27,6 +23,29 @@ const base = os.$context<
     headers: Headers;
   } & VerifiedApiKeyContext
 >();
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+type VerifiedApiKey = {
+  id: string;
+  userId: string;
+  name: string | null;
+  enabled: boolean;
+};
+
+type ApiKeyVerificationErrorPayload = {
+  code?: string | null;
+  message?: string | null;
+  details?: JsonValue;
+};
+
+type ApiKeyVerificationResponse = {
+  valid?: boolean;
+  key?: VerifiedApiKey | null;
+  error?: ApiKeyVerificationErrorPayload | null;
+};
 
 const formatProcedurePath = (path: readonly string[]) =>
   path.length > 0 ? path.join('.') : 'unknown';
@@ -39,7 +58,272 @@ const maskApiKey = (value: string): string => {
   return `${value.slice(0, 5)}...`;
 };
 
-const normalizeOsuId = (value: unknown) => {
+type OrpcErrorCode =
+  | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'METHOD_NOT_SUPPORTED'
+  | 'NOT_ACCEPTABLE'
+  | 'TIMEOUT'
+  | 'CONFLICT'
+  | 'PRECONDITION_FAILED'
+  | 'PAYLOAD_TOO_LARGE'
+  | 'UNSUPPORTED_MEDIA_TYPE'
+  | 'UNPROCESSABLE_CONTENT'
+  | 'TOO_MANY_REQUESTS'
+  | 'CLIENT_CLOSED_REQUEST'
+  | 'INTERNAL_SERVER_ERROR'
+  | 'NOT_IMPLEMENTED'
+  | 'BAD_GATEWAY'
+  | 'SERVICE_UNAVAILABLE'
+  | 'GATEWAY_TIMEOUT';
+
+const STATUS_TO_ORPC_CODE = new Map<number, OrpcErrorCode>([
+  [400, 'BAD_REQUEST'],
+  [401, 'UNAUTHORIZED'],
+  [403, 'FORBIDDEN'],
+  [404, 'NOT_FOUND'],
+  [405, 'METHOD_NOT_SUPPORTED'],
+  [406, 'NOT_ACCEPTABLE'],
+  [408, 'TIMEOUT'],
+  [409, 'CONFLICT'],
+  [412, 'PRECONDITION_FAILED'],
+  [413, 'PAYLOAD_TOO_LARGE'],
+  [415, 'UNSUPPORTED_MEDIA_TYPE'],
+  [422, 'UNPROCESSABLE_CONTENT'],
+  [429, 'TOO_MANY_REQUESTS'],
+  [499, 'CLIENT_CLOSED_REQUEST'],
+  [500, 'INTERNAL_SERVER_ERROR'],
+  [501, 'NOT_IMPLEMENTED'],
+  [502, 'BAD_GATEWAY'],
+  [503, 'SERVICE_UNAVAILABLE'],
+  [504, 'GATEWAY_TIMEOUT'],
+] as const);
+
+const resolveOrpcCodeForStatus = (status: number): OrpcErrorCode => {
+  const candidate = STATUS_TO_ORPC_CODE.get(status);
+  if (candidate) {
+    return candidate;
+  }
+
+  if (status >= 500) {
+    return 'INTERNAL_SERVER_ERROR';
+  }
+
+  if (status >= 400) {
+    return 'BAD_REQUEST';
+  }
+
+  return 'INTERNAL_SERVER_ERROR';
+};
+
+type BetterAuthErrorData = {
+  status: number;
+  message: string;
+  cause: APIError;
+};
+
+const toOrpcErrorFromBetterAuth = (
+  error: APIError
+): ORPCError<string, BetterAuthErrorData> => {
+  const status = Number.isInteger(error.status) ? Number(error.status) : 500;
+  const code = resolveOrpcCodeForStatus(status);
+  const payload: BetterAuthErrorData = {
+    status,
+    message: error.message,
+    cause: error,
+  };
+
+  return new ORPCError(code, {
+    status,
+    message: error.message,
+    cause: error,
+    data: payload,
+  });
+};
+
+const DEFAULT_SUCCESS_STATUS = 200;
+
+const RATE_LIMIT_ERROR_CODES = new Set(['RATE_LIMITED', 'USAGE_EXCEEDED']);
+
+const extractApiKeyVerificationError = (
+  verification: ApiKeyVerificationResponse | null | undefined
+): {
+  code: string | null;
+  message: string | null;
+  details: JsonValue | undefined;
+} => {
+  const error = verification?.error;
+
+  if (!error) {
+    return {
+      code: null,
+      message: null,
+      details: undefined,
+    };
+  }
+
+  const { code, message, details } = error;
+
+  return {
+    code: typeof code === 'string' ? code : null,
+    message: typeof message === 'string' ? message : null,
+    details,
+  };
+};
+
+const createVerificationErrorData = (
+  code: string | null,
+  details: JsonValue | undefined
+): Record<string, JsonValue> | undefined => {
+  const base: Record<string, JsonValue> = {};
+
+  if (code) {
+    base.code = code;
+  }
+
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
+    return {
+      ...base,
+      ...(details as JsonObject),
+    };
+  }
+
+  if (details !== undefined && details !== null) {
+    return {
+      ...base,
+      details,
+    };
+  }
+
+  return Object.keys(base).length > 0 ? base : undefined;
+};
+
+const handleInvalidApiKeyVerification = (
+  verification: ApiKeyVerificationResponse | null | undefined
+): never => {
+  const { code, message, details } =
+    extractApiKeyVerificationError(verification);
+  const data = createVerificationErrorData(code, details);
+
+  if (code && RATE_LIMIT_ERROR_CODES.has(code)) {
+    throw new ORPCError('TOO_MANY_REQUESTS', {
+      status: 429,
+      message: message ?? 'API key rate limit exceeded',
+      data,
+    });
+  }
+
+  if (code === 'KEY_DISABLED') {
+    throw new ORPCError('FORBIDDEN', {
+      status: 403,
+      message: message ?? 'API key disabled',
+      data,
+    });
+  }
+
+  throw new ORPCError('UNAUTHORIZED', {
+    status: 401,
+    message: message ?? 'Invalid API key provided',
+    data,
+  });
+};
+
+type ProcedureRouteMeta = {
+  ['~orpc']?: {
+    route?: {
+      successStatus?: number;
+    };
+  };
+};
+
+type StatusCarrier = {
+  status?: number;
+};
+
+type MaybeStatus = StatusCarrier | Response | null | undefined;
+
+const resolveSuccessStatus = (
+  procedure: ProcedureRouteMeta | undefined
+): number => {
+  const candidate = procedure?.['~orpc']?.route?.successStatus;
+  if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
+    return candidate;
+  }
+
+  return DEFAULT_SUCCESS_STATUS;
+};
+
+const resolveSuccessStatusFromResult = (
+  result: MaybeStatus,
+  fallbackStatus: number
+): number => {
+  if (!result) {
+    return fallbackStatus;
+  }
+
+  if (result instanceof Response) {
+    const status = result.status;
+    return status >= 200 && status < 400 ? status : fallbackStatus;
+  }
+
+  const candidate = result.status;
+  if (typeof candidate === 'number' && candidate >= 200 && candidate < 400) {
+    return candidate;
+  }
+
+  return fallbackStatus;
+};
+
+type AnyOrpcError = ORPCError<string, JsonValue | undefined>;
+
+type ProcedureError =
+  | AnyOrpcError
+  | APIError
+  | (Error & StatusCarrier)
+  | StatusCarrier
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
+
+type OsuIdValue = bigint | number | string | null | undefined;
+
+type SessionSnapshot = {
+  user?: { osuId?: OsuIdValue } | null;
+  dbUser?: { id?: number | null } | null;
+  dbPlayer?: { osuId?: OsuIdValue } | null;
+};
+
+const resolveErrorStatus = (error: ProcedureError): number => {
+  if (!error) {
+    return 500;
+  }
+
+  if (error instanceof ORPCError) {
+    return error.status;
+  }
+
+  if (error instanceof APIError) {
+    const status = Number(error.status);
+    if (Number.isInteger(status)) {
+      return status;
+    }
+  }
+
+  if (error && typeof error === 'object') {
+    const candidate = (error as StatusCarrier).status;
+    if (typeof candidate === 'number' && candidate >= 400 && candidate < 600) {
+      return candidate;
+    }
+  }
+
+  return 500;
+};
+
+const normalizeOsuId = (value: OsuIdValue) => {
   if (typeof value === 'bigint') {
     return value.toString();
   }
@@ -51,26 +335,22 @@ const normalizeOsuId = (value: unknown) => {
   return null;
 };
 
-const formatSessionActor = (session: unknown): string => {
-  if (!session || typeof session !== 'object') {
+const formatSessionActor = (
+  session: SessionSnapshot | null | undefined
+): string => {
+  if (!session) {
     return 'anonymous';
   }
 
-  const candidate = session as {
-    user?: { osuId?: number | string | null } | null;
-    dbUser?: { id?: number | null } | null;
-    dbPlayer?: { osuId?: number | string | bigint | null } | null;
-  };
-
   const parts: string[] = [];
 
-  if (candidate.dbUser?.id != null) {
-    parts.push(`user:${candidate.dbUser.id}`);
+  if (session.dbUser?.id != null) {
+    parts.push(`user:${session.dbUser.id}`);
   }
 
   const osuId =
-    normalizeOsuId(candidate.user?.osuId) ??
-    normalizeOsuId(candidate.dbPlayer?.osuId);
+    normalizeOsuId(session.user?.osuId) ??
+    normalizeOsuId(session.dbPlayer?.osuId);
 
   if (osuId) {
     parts.push(`osu:${osuId}`);
@@ -81,7 +361,7 @@ const formatSessionActor = (session: unknown): string => {
 
 type LoggingContext = {
   headers?: Headers;
-  session?: unknown;
+  session?: SessionSnapshot | null;
   apiKey?: VerifiedApiKeyContext['apiKey'];
   apiKeyActor?: VerifiedApiKeyContext['apiKeyActor'];
 };
@@ -90,16 +370,20 @@ type LogInvocationArgs = {
   path: readonly string[];
   context: LoggingContext;
   durationMs: number;
-  error?: unknown;
-  args?: string;
+  statusCode: number;
+  error?: ProcedureError;
 };
 
 const resolveSessionForLogging = async (
   context: LoggingContext,
-  existingSession: unknown
-) => {
+  existingSession: SessionSnapshot | null | undefined
+): Promise<SessionSnapshot | null | undefined> => {
   if (existingSession) {
     return existingSession;
+  }
+
+  if (context.apiKey || context.apiKeyActor) {
+    return undefined;
   }
 
   if (!context.headers) {
@@ -107,13 +391,14 @@ const resolveSessionForLogging = async (
   }
 
   try {
-    return await auth.api.getSession({ headers: context.headers });
+    const session = await auth.api.getSession({ headers: context.headers });
+    return session as SessionSnapshot | null | undefined;
   } catch {
     return undefined;
   }
 };
 
-const describeError = (error: unknown) => {
+const describeError = (error: ProcedureError) => {
   if (!error) {
     return 'unknown';
   }
@@ -133,114 +418,12 @@ const describeError = (error: unknown) => {
   }
 };
 
-const SENSITIVE_KEYS = new Set([
-  'token',
-  'accessToken',
-  'refreshToken',
-  'authorization',
-  'password',
-  'secret',
-]);
-
-const redactSensitive = (key: string, value: unknown) => {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  if (SENSITIVE_KEYS.has(key.toLowerCase())) {
-    return '[redacted]';
-  }
-
-  return value;
-};
-
-const formatArgs = (input: unknown): string | undefined => {
-  if (input === null || input === undefined) {
-    return undefined;
-  }
-
-  if (typeof input === 'bigint') {
-    return input.toString();
-  }
-
-  if (
-    typeof input === 'string' ||
-    typeof input === 'number' ||
-    typeof input === 'boolean'
-  ) {
-    return String(input);
-  }
-
-  if (typeof input === 'function') {
-    return '[function]';
-  }
-
-  if (typeof input === 'object' && input) {
-    if (
-      typeof (input as { [Symbol.asyncIterator]?: unknown })[
-        Symbol.asyncIterator
-      ] === 'function'
-    ) {
-      return '[async-iterator]';
-    }
-
-    if (
-      typeof ReadableStream !== 'undefined' &&
-      input instanceof ReadableStream
-    ) {
-      return '[stream]';
-    }
-  }
-
-  const seen = new WeakSet<object>();
-
-  const replacer = (key: string, value: unknown) => {
-    if (typeof value === 'bigint') {
-      return value.toString();
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value as object)) {
-        return '[Circular]';
-      }
-
-      seen.add(value as object);
-    }
-
-    if (typeof value === 'string') {
-      return redactSensitive(key, value);
-    }
-
-    return value;
-  };
-
-  try {
-    const serialized = JSON.stringify(input, replacer);
-
-    if (!serialized || serialized === '{}' || serialized === '[]') {
-      return undefined;
-    }
-
-    const maxLength = 2000;
-    return serialized.length > maxLength
-      ? `${serialized.slice(0, maxLength - 3)}...`
-      : serialized;
-  } catch (serializationError) {
-    const timestamp = new Date().toISOString();
-    console.error(
-      `${timestamp} [oRPC]: argument-serialization-failed`,
-      serializationError
-    );
-    return '[unserializable]';
-  }
-};
-
 const logInvocation = async ({
   path,
   context,
   durationMs,
+  statusCode,
   error,
-  args,
 }: LogInvocationArgs) => {
   try {
     const session = await resolveSessionForLogging(context, context.session);
@@ -271,17 +454,8 @@ const logInvocation = async ({
 
     parts.push(`user=${JSON.stringify(userDescriptor)}`);
 
-    if (playerDescriptor) {
-      parts.push(`playerId=${playerDescriptor}`);
-    }
-
-    if (context.apiKey?.id) {
-      parts.push(`apiKey=${maskApiKey(context.apiKey.id)}`);
-    }
-
-    if (args) {
-      parts.push(`args=${args}`);
-    }
+    parts.push(`playerId=${playerDescriptor ?? 'null'}`);
+    parts.push(`code=${statusCode}`);
 
     const roundedDuration = Math.max(0, Math.round(durationMs));
     parts.push(`duration=${roundedDuration}ms`);
@@ -297,9 +471,8 @@ const logInvocation = async ({
     console.info(`${timestamp} [oRPC]: ${parts.join(' ')}`);
   } catch (loggingError) {
     const timestamp = new Date().toISOString();
-    console.error(
-      `${timestamp} [oRPC]: logging-failed error=${describeError(loggingError)}`
-    );
+    const description = describeError(loggingError as ProcedureError);
+    console.error(`${timestamp} [oRPC]: logging-failed error=${description}`);
   }
 };
 
@@ -338,13 +511,23 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       },
     });
 
-    if (!verification?.valid || !verification.key?.enabled) {
-      throw new ORPCError('UNAUTHORIZED', {
-        message: 'Invalid API key provided',
+    const verifiedKey = verification?.key ?? null;
+
+    if (!verification?.valid || !verifiedKey) {
+      handleInvalidApiKeyVerification(verification);
+    }
+
+    const activeKey = verifiedKey as NonNullable<typeof verifiedKey>;
+
+    if (activeKey.enabled === false) {
+      throw new ORPCError('FORBIDDEN', {
+        status: 403,
+        message: 'API key disabled',
+        data: { code: 'KEY_DISABLED' },
       });
     }
 
-    const { id, userId, name, enabled } = verification.key;
+    const { id, userId, name, enabled } = activeKey;
     let apiKeyActor: ApiKeyActor | null = null;
 
     try {
@@ -379,10 +562,11 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       }
     } catch (apiKeyActorError) {
       const timestamp = new Date().toISOString();
+      const description = describeError(apiKeyActorError as ProcedureError);
       console.error(
         `${timestamp} [oRPC]: api-key-owner-lookup-failed apiKey=${maskApiKey(
           id
-        )} error=${describeError(apiKeyActorError)}`
+        )} error=${description}`
       );
     }
 
@@ -399,7 +583,16 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       } as typeof context & VerifiedApiKeyContext,
     });
   } catch (error) {
+    if (error instanceof ORPCError) {
+      throw error;
+    }
+
+    if (error instanceof APIError) {
+      throw toOrpcErrorFromBetterAuth(error);
+    }
+
     throw new ORPCError('UNAUTHORIZED', {
+      status: 401,
       message: 'Invalid API key provided',
       cause: error instanceof Error ? error : undefined,
     });
@@ -416,45 +609,63 @@ const withDatabase = base.middleware(async ({ context, next }) => {
 });
 
 const withAuth = base.middleware(async ({ context, next }) => {
-  const session = await auth.api.getSession({ headers: context.headers });
+  try {
+    const session = await auth.api.getSession({ headers: context.headers });
 
-  if (!session) {
-    throw new ORPCError('UNAUTHORIZED', {
-      message: 'Invalid or expired session',
+    if (!session) {
+      throw new ORPCError('UNAUTHORIZED', {
+        status: 401,
+        message: 'Invalid or expired session',
+      });
+    }
+
+    return next({
+      context: {
+        ...context,
+        session,
+      },
     });
-  }
+  } catch (error) {
+    if (error instanceof ORPCError) {
+      throw error;
+    }
 
-  return next({
-    context: {
-      ...context,
-      session,
-    },
-  });
+    if (error instanceof APIError) {
+      throw toOrpcErrorFromBetterAuth(error);
+    }
+
+    throw error;
+  }
 });
 
 const withRequestLogging = base.middleware(
-  async ({ context, path, next }, input) => {
+  async ({ context, path, next, procedure }) => {
     const start = Date.now();
-    const args = formatArgs(input);
+    const successStatus = resolveSuccessStatus(procedure);
 
     try {
       const result = await next();
+      const resultWithStatus = result as MaybeStatus;
 
       await logInvocation({
         path,
         context,
         durationMs: Date.now() - start,
-        args,
+        statusCode: resolveSuccessStatusFromResult(
+          resultWithStatus,
+          successStatus
+        ),
       });
 
       return result;
     } catch (error) {
+      const procedureError = error as ProcedureError;
       await logInvocation({
         path,
         context,
         durationMs: Date.now() - start,
-        error,
-        args,
+        statusCode: resolveErrorStatus(procedureError),
+        error: procedureError,
       });
 
       throw error;
