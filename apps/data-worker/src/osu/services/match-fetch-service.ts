@@ -114,11 +114,8 @@ export class MatchFetchService {
       .set({ dataFetchStatus: DataFetchStatus.Fetching, updated: nowIso })
       .where(eq(schema.matches.id, matchRow.id));
 
-    const apiMatch = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() => this.api.getMatch(osuMatchId))
-    );
-
-    if (!apiMatch) {
+    const paged = await this.fetchFullMatch(osuMatchId);
+    if (!paged) {
       await this.dataCompletion.updateMatchFetchStatus(
         matchRow.id,
         DataFetchStatus.NotFound
@@ -127,15 +124,17 @@ export class MatchFetchService {
       return false;
     }
 
+    const { initialMatch, allEvents, allUsers } = paged;
+
     const beatmapsToQueue = new Map<number, { beatmapDbId: number }>();
 
     await this.db.transaction(async (tx) => {
       await tx
         .update(schema.matches)
         .set({
-          name: apiMatch.match?.name ?? `Match ${matchRow.id}`,
-          startTime: normalizeDate(apiMatch.match?.start_time) ?? null,
-          endTime: normalizeDate(apiMatch.match?.end_time) ?? null,
+          name: initialMatch.match?.name ?? `Match ${matchRow.id}`,
+          startTime: normalizeDate(initialMatch.match?.start_time) ?? null,
+          endTime: normalizeDate(initialMatch.match?.end_time) ?? null,
           dataFetchStatus: DataFetchStatus.Fetched,
           updated: nowIso,
         })
@@ -145,18 +144,12 @@ export class MatchFetchService {
         number,
         { username?: string; country?: string }
       >();
-      for (const user of apiMatch.users ?? []) {
-        userMap.set(user.id, {
-          username: user.username,
-          country: user.country_code,
-        });
-        await getOrCreatePlayerId(tx, user.id, {
-          username: user.username,
-          country: user.country_code,
-        });
+      for (const [userId, meta] of allUsers) {
+        userMap.set(userId, meta);
+        await getOrCreatePlayerId(tx, userId, meta);
       }
 
-      const gameEvents = (apiMatch.events ?? []).filter(
+      const gameEvents = (allEvents ?? []).filter(
         (event) => event?.detail?.type === 'other' && event.game != null
       );
 
@@ -315,6 +308,114 @@ export class MatchFetchService {
     );
 
     return true;
+  }
+
+  private async fetchFullMatch(osuMatchId: number): Promise<{
+    initialMatch: Match;
+    allEvents: NonNullable<Match['events']>;
+    allUsers: Map<number, { username?: string; country?: string }>;
+  } | null> {
+    // Initial fetch to get match info and the boundary event ids
+    const initialMatch = await this.rateLimiter.schedule(() =>
+      withNotFoundHandling(() => this.api.getMatch(osuMatchId))
+    );
+
+    if (!initialMatch) {
+      return null;
+    }
+
+    // Aggregate all events and users across pages without wasting calls
+    const allEventsById = new Map<
+      number,
+      NonNullable<Match['events']>[number]
+    >();
+    const allUsers = new Map<number, { username?: string; country?: string }>();
+
+    const addPage = (page: Match | null) => {
+      if (!page) return { added: 0 };
+      let added = 0;
+      for (const user of page.users ?? []) {
+        allUsers.set(user.id, {
+          username: user.username,
+          country: user.country_code,
+        });
+      }
+      for (const event of page.events ?? []) {
+        if (!allEventsById.has(event.id)) {
+          allEventsById.set(event.id, event);
+          added += 1;
+        }
+      }
+      return { added };
+    };
+
+    addPage(initialMatch);
+
+    const firstEventId = initialMatch.first_event_id;
+    const latestEventId = initialMatch.latest_event_id;
+
+    const limit = 100;
+    let minSeenId = Infinity;
+    let maxSeenId = -Infinity;
+    for (const id of allEventsById.keys()) {
+      if (id < minSeenId) minSeenId = id;
+      if (id > maxSeenId) maxSeenId = id;
+    }
+
+    const hasFirst = () => allEventsById.has(firstEventId);
+    const hasLatest = () => allEventsById.has(latestEventId);
+
+    // Expand queries towards the start and end until both bounds are included
+    while (!hasFirst() || !hasLatest()) {
+      let progressed = false;
+
+      if (!hasFirst()) {
+        const query = Number.isFinite(minSeenId)
+          ? { before: minSeenId, limit }
+          : { after: firstEventId - 1, limit };
+
+        const page = await this.rateLimiter.schedule(() =>
+          withNotFoundHandling(() => this.api.getMatch(osuMatchId, query))
+        );
+        const { added } = addPage(page);
+        if (added > 0) {
+          progressed = true;
+          for (const id of page?.events?.map((e) => e.id) ?? []) {
+            if (id < minSeenId) minSeenId = id;
+            if (id > maxSeenId) maxSeenId = id;
+          }
+        }
+      }
+
+      if (!hasLatest()) {
+        const query = Number.isFinite(maxSeenId)
+          ? { after: maxSeenId, limit }
+          : { before: latestEventId + 1, limit };
+
+        const page = await this.rateLimiter.schedule(() =>
+          withNotFoundHandling(() => this.api.getMatch(osuMatchId, query))
+        );
+        const { added } = addPage(page);
+        if (added > 0) {
+          progressed = true;
+          for (const id of page?.events?.map((e) => e.id) ?? []) {
+            if (id < minSeenId) minSeenId = id;
+            if (id > maxSeenId) maxSeenId = id;
+          }
+        }
+      }
+
+      // Avoid infinite loops in abnormal cases
+      if (!progressed) {
+        break;
+      }
+    }
+
+    const allEvents = Array.from(allEventsById.values()).sort(
+      (a, b) => a.id - b.id
+    );
+
+    return { initialMatch, allEvents, allUsers };
   }
 
   private async processScores(options: {
