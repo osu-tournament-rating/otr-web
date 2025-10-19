@@ -2,7 +2,10 @@ import { ORPCError } from '@orpc/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
-import { cascadeTournamentRejection } from '@otr/core/db/rejection-cascade';
+import {
+  cascadeMatchRejection,
+  cascadeTournamentRejection,
+} from '@otr/core/db/rejection-cascade';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { withAuditUserId } from '@otr/core/db';
 import {
@@ -461,7 +464,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             )
           );
 
-        await tx
+        const rejectedMatches = await tx
           .update(schema.matches)
           .set({
             verificationStatus: VerificationStatus.Rejected,
@@ -477,32 +480,53 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
                 VerificationStatus.PreRejected
               )
             )
+          )
+          .returning({ id: schema.matches.id });
+
+        if (rejectedMatches.length > 0) {
+          await cascadeMatchRejection(
+            tx,
+            rejectedMatches.map((match) => match.id),
+            {
+              updatedAt: NOW,
+            }
           );
+        }
 
         const matchRows = await tx
-          .select({ id: schema.matches.id })
+          .select({
+            id: schema.matches.id,
+            verificationStatus: schema.matches.verificationStatus,
+          })
           .from(schema.matches)
           .where(eq(schema.matches.tournamentId, input.id));
 
         const matchIds = matchRows.map((row) => row.id);
+        const verifiedMatchIds = matchRows
+          .filter(
+            (row) => row.verificationStatus === VerificationStatus.Verified
+          )
+          .map((row) => row.id);
 
         if (matchIds.length > 0) {
-          await tx
-            .update(schema.games)
-            .set({
-              verificationStatus: VerificationStatus.Verified,
-              warningFlags: GameWarningFlags.None,
-              updated: NOW,
-            })
-            .where(
-              and(
-                inArray(schema.games.matchId, matchIds),
-                eq(
-                  schema.games.verificationStatus,
-                  VerificationStatus.PreVerified
+          if (verifiedMatchIds.length > 0) {
+            await tx
+              .update(schema.games)
+              .set({
+                verificationStatus: VerificationStatus.Verified,
+                warningFlags: GameWarningFlags.None,
+                updated: NOW,
+              })
+              .where(
+                and(
+                  inArray(schema.games.matchId, verifiedMatchIds),
+                  eq(
+                    schema.games.verificationStatus,
+                    VerificationStatus.PreVerified
+                  )
                 )
-              )
-            );
+              );
+          }
 
           await tx
             .update(schema.games)
@@ -522,13 +546,26 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
             );
 
           const gameRows = await tx
-            .select({ id: schema.games.id })
+            .select({
+              id: schema.games.id,
+              verificationStatus: schema.games.verificationStatus,
+            })
             .from(schema.games)
             .where(inArray(schema.games.matchId, matchIds));
 
           const gameIds = gameRows.map((row) => row.id);
+          const verifiedGameIds = gameRows
+            .filter(
+              (row) => row.verificationStatus === VerificationStatus.Verified
+            )
+            .map((row) => row.id);
+          const rejectedGameIds = gameRows
+            .filter(
+              (row) => row.verificationStatus === VerificationStatus.Rejected
+            )
+            .map((row) => row.id);
 
-          if (gameIds.length > 0) {
+          if (verifiedGameIds.length > 0) {
             await tx
               .update(schema.gameScores)
               .set({
@@ -537,14 +574,26 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
               })
               .where(
                 and(
-                  inArray(schema.gameScores.gameId, gameIds),
+                  inArray(schema.gameScores.gameId, verifiedGameIds),
                   eq(
                     schema.gameScores.verificationStatus,
                     VerificationStatus.PreVerified
                   )
                 )
               );
+          }
 
+          if (rejectedGameIds.length > 0) {
+            await tx
+              .update(schema.gameScores)
+              .set({
+                verificationStatus: VerificationStatus.Rejected,
+                updated: NOW,
+              })
+              .where(inArray(schema.gameScores.gameId, rejectedGameIds));
+          }
+
+          if (gameIds.length > 0) {
             await tx
               .update(schema.gameScores)
               .set({
