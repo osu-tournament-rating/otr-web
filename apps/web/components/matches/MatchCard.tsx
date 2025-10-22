@@ -120,11 +120,9 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   {match.tournament?.name}
                 </Link>
               </span>
-              <Link href={`/matches/${match.id}`}>
-                <p className="truncate text-sm font-bold text-white drop-shadow-sm transition-colors hover:text-white/80 sm:text-xl">
-                  {match.name || `Match ${match.id}`}
-                </p>
-              </Link>
+              <p className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
+                {match.name || `Match ${match.id}`}
+              </p>
             </div>
             <div className="min-w-1/8 flex flex-col items-end justify-end gap-1">
               {uniquePlayersCount > 0 && (
