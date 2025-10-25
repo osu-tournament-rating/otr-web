@@ -132,7 +132,7 @@
         "lucide-react": "^0.477.0",
         "next": "^15.3.2",
         "next-themes": "^0.4.4",
-        "osu-api-v2-js": "^2.1.1",
+        "osu-api-v2-js": "^2.1.2",
         "pg": "^8.13.1",
         "react": "^19.1.0",
         "react-day-picker": "^8.10.1",
