@@ -9,6 +9,9 @@ on:
 jobs:
   lint-build:
     runs-on: ubuntu-latest
+    env:
+      # Dummy value needed so build-time imports that require DATABASE_URL do not throw.
+      DATABASE_URL: postgresql://dummy:dummy@127.0.0.1:5432/dummy
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
