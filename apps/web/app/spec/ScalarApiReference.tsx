@@ -81,13 +81,10 @@ export function ScalarApiReference() {
 
       const desiredTheme = getCurrentTheme();
 
-      scalarInstance = window.Scalar.createApiReference(
-        SCALAR_SELECTOR,
-        {
-          ...baseConfig,
-          forceDarkModeState: desiredTheme,
-        }
-      );
+      scalarInstance = window.Scalar.createApiReference(SCALAR_SELECTOR, {
+        ...baseConfig,
+        forceDarkModeState: desiredTheme,
+      });
       appliedTheme = desiredTheme;
       requestAnimationFrame(applyContainerSizing);
     };
