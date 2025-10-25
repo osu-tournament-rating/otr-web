@@ -57,6 +57,13 @@ export default function SpecPage() {
               var desiredTheme = null;
               var retryTimeout = null;
 
+              function isOnSpecRoute() {
+                if (typeof window === 'undefined' || !window.location) {
+                  return false;
+                }
+                return window.location.pathname.startsWith('/spec');
+              }
+
               function applyContainerSizing() {
                 var container = document.querySelector(selector);
                 if (!container) {
@@ -81,6 +88,11 @@ export default function SpecPage() {
               }
 
               function mountScalar() {
+                if (!isOnSpecRoute()) {
+                  cleanup();
+                  return;
+                }
+
                 if (!desiredTheme) {
                   desiredTheme = getCurrentTheme();
                 }
@@ -112,6 +124,10 @@ export default function SpecPage() {
               }
 
               function requestThemeSync() {
+                if (!isOnSpecRoute()) {
+                  cleanup();
+                  return;
+                }
                 desiredTheme = getCurrentTheme();
                 if (desiredTheme !== appliedTheme) {
                   mountScalar();
