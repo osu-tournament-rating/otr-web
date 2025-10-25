@@ -428,7 +428,7 @@ export const submitTournament = protectedProcedure
   })
   .route({
     summary: 'Submit tournament for verification',
-    tags: ['admin'],
+    tags: ['authenticated'],
     method: 'POST',
     path: '/tournaments:submit',
   })
