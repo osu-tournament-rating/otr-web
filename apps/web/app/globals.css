@@ -319,6 +319,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-color: var(--background) !important;
   }
 
   input[type='number']::-webkit-outer-spin-button,
