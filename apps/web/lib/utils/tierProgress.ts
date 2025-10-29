@@ -102,10 +102,7 @@ export const buildTierProgress = (rating: number) => {
   const majorRange = Math.max(nextBounds.min - currentBounds.min, 1);
   const subTierRange = majorRange / SUB_TIERS;
   const progressInTier = Math.max(0, rating - currentBounds.min);
-  const currentSubTier = Math.min(
-    SUB_TIERS,
-    Math.floor(progressInTier / subTierRange) + 1
-  );
+  const currentSubTier = SUB_TIERS - Math.floor(progressInTier / subTierRange);
   const currentSubTierBase =
     currentBounds.min + subTierRange * (currentSubTier - 1);
   const ratingForNextTier = Math.min(
