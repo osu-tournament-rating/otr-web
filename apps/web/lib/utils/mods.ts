@@ -9,6 +9,7 @@ const modMultipliers: Record<number, number> = {
   [Mods.Nightcore]: 1.12,
   [Mods.Flashlight]: 1.12,
   [Mods.HalfTime]: 1.0 / 3.0,
+  [Mods.SpunOut]: 0.9,
 };
 
 /**
