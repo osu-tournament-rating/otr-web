@@ -64,11 +64,12 @@ export default function PlayerModStatsChart({
       );
 
       const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      // Join mod texts and remove all "NF" occurrences
+      // Join mod texts and remove all "NF" and "SO" occurrences
       let label = metadata
         .map((meta) => meta.text)
         .join('')
-        .replace(/NF/g, '');
+        .replace(/NF/g, '')
+        .replace(/SO/g, '');
 
       // If label is empty, it's "No Mod" (NM)
       if (label === '') {
