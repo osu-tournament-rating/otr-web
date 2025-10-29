@@ -40,8 +40,9 @@ export function normalizedScore(mods: Mods, score: number): number {
  * @returns CSS color variable string
  */
 export function getModColor(mods: Mods) {
-  // Strip NF
+  // Strip NF and SO
   mods &= ~Mods.NoFail;
+  mods &= ~Mods.SpunOut;
 
   switch (mods) {
     // Simply return the mod color for both arguments
