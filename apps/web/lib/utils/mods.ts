@@ -6,7 +6,7 @@ const modMultipliers: Record<number, number> = {
   [Mods.HardRock]: 1.1,
   [Mods.Hidden]: 1.06,
   [Mods.DoubleTime]: 1.2,
-  [Mods.Nightcore]: 1.12,
+  [Mods.Nightcore]: 1.2,
   [Mods.Flashlight]: 1.12,
   [Mods.HalfTime]: 1.0 / 3.0,
   [Mods.SpunOut]: 0.9,
