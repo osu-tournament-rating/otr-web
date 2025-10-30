@@ -1,6 +1,6 @@
 'use client';
 
-import { DatabaseBackup, Loader2 } from 'lucide-react';
+import { FileMusicIcon, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -73,8 +73,8 @@ export default function RefetchBeatmapDataButton({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <DatabaseBackup className="h-4 w-4" />
+            <Button variant="destructive" size="sm">
+              <FileMusicIcon className="h-4 w-4" />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
