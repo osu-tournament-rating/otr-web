@@ -80,12 +80,40 @@ const useSearchInput = (initialQuery: string) => {
   };
 };
 
-const useUrlSync = (watchedValues: FilterFormData) => {
+const useUrlSync = (
+  watchedValues: FilterFormData,
+  currentFilter: FilterFormData
+) => {
   const pathName = usePathname();
   const router = useRouter();
   const lastPushedUrl = useRef<string>('');
+  const filterPropRef = useRef(currentFilter);
+  const isUpdatingFromPropRef = useRef(false);
+
+  // Track when filter prop changes (browser navigation) and set flag to prevent URL sync loop
+  useEffect(() => {
+    const filterChanged =
+      JSON.stringify(filterPropRef.current) !== JSON.stringify(currentFilter);
+
+    if (filterChanged) {
+      filterPropRef.current = currentFilter;
+      isUpdatingFromPropRef.current = true;
+
+      // Reset flag after brief delay to allow form to sync
+      const timer = setTimeout(() => {
+        isUpdatingFromPropRef.current = false;
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentFilter]);
 
   useEffect(() => {
+    // Prevent URL sync when updating from browser navigation to avoid loop
+    if (isUpdatingFromPropRef.current) {
+      return;
+    }
+
     const searchParams = new URLSearchParams();
 
     Object.entries(watchedValues).forEach(([key, value]) => {
@@ -286,7 +314,7 @@ export default function TournamentListFilter({
   );
 
   const watchedValues = form.watch();
-  useUrlSync(watchedValues);
+  useUrlSync(watchedValues, filter);
 
   return (
     <Form {...form}>
