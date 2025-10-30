@@ -148,13 +148,7 @@ export default function TournamentAdminView({
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>
-            <div className="flex items-center gap-2">
-              Edit Tournament
-              {/* Accept pre-verification statuses */}
-              <AcceptPreVerificationStatusesButton tournament={tournament} />
-            </div>
-          </DialogTitle>
+          <DialogTitle>Edit Tournament</DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
         {/* Edit form */}
@@ -338,24 +332,22 @@ export default function TournamentAdminView({
               />
             </div>
 
-            {/* Form action buttons */}
-            <div className="flex justify-between">
+            {/* Admin operation buttons */}
+            <div className="border-border flex items-center gap-6 border-b border-t py-3">
+              {/* Verification & Safe Operations */}
               <div className="flex gap-2">
-                {/* Clear changes */}
-                <Button
-                  type="reset"
-                  variant={'secondary'}
-                  size="sm"
-                  onClick={() => form.reset()}
-                  disabled={
-                    !form.formState.isDirty || form.formState.isSubmitting
-                  }
-                >
-                  Clear
-                </Button>
+                <AcceptPreVerificationStatusesButton tournament={tournament} />
                 <ResetAutomatedChecksButton tournament={tournament} />
+              </div>
+
+              {/* Data Synchronization */}
+              <div className="border-border flex gap-2 border-l pl-6">
                 <RefetchMatchDataButton tournament={tournament} />
                 <RefetchBeatmapDataButton tournament={tournament} />
+              </div>
+
+              {/* Destructive Operations */}
+              <div className="border-border flex gap-2 border-l pl-6">
                 <DeleteTournamentBeatmapsButton tournament={tournament} />
                 <DeleteButton
                   entityType="tournament"
@@ -364,6 +356,22 @@ export default function TournamentAdminView({
                   onDeleted={() => (window.location.href = '/tournaments')}
                 />
               </div>
+            </div>
+
+            {/* Form action buttons */}
+            <div className="flex justify-between">
+              {/* Clear changes */}
+              <Button
+                type="reset"
+                variant={'secondary'}
+                size="sm"
+                onClick={() => form.reset()}
+                disabled={
+                  !form.formState.isDirty || form.formState.isSubmitting
+                }
+              >
+                Clear
+              </Button>
 
               {/* Save changes */}
               <Button

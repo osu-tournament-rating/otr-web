@@ -1,6 +1,6 @@
 'use client';
 
-import { FileMusicIcon, Loader2 } from 'lucide-react';
+import { FileMusic, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -73,8 +73,12 @@ export default function RefetchBeatmapDataButton({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              <FileMusicIcon className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:hover:bg-yellow-500/10"
+            >
+              <FileMusic className="h-4 w-4" />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
