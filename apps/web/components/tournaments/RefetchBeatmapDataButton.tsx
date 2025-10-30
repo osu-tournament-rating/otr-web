@@ -1,7 +1,8 @@
 'use client';
 
-import { Database, Loader2 } from 'lucide-react';
+import { FileMusic, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -20,36 +21,44 @@ import {
 } from '@/components/ui/tooltip';
 import { orpc } from '@/lib/orpc/orpc';
 
-interface RefetchMatchDataButtonProps {
+interface RefetchBeatmapDataButtonProps {
   tournament: {
     id: number;
     name: string;
   };
 }
 
-export default function RefetchMatchDataButton({
+export default function RefetchBeatmapDataButton({
   tournament,
-}: RefetchMatchDataButtonProps) {
+}: RefetchBeatmapDataButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
-  const handleReset = async () => {
+  const handleRefetch = async () => {
     setIsLoading(true);
     try {
-      const result = await orpc.tournaments.admin.refetchMatchData({
+      const result = await orpc.tournaments.admin.refetchBeatmaps({
         id: tournament.id,
       });
+
       result.warnings?.forEach((warning) => {
         toast.warning(warning);
       });
-      toast.success(
-        result.matchesUpdated > 0
-          ? `Queued ${result.matchesUpdated} matches for refetch`
-          : 'Queued match data for refetch'
-      );
+
+      const message =
+        result.beatmapsUpdated > 0
+          ? `Queued ${result.beatmapsUpdated} beatmap${result.beatmapsUpdated === 1 ? '' : 's'} for refetch` +
+            (result.beatmapsSkipped > 0
+              ? ` (${result.beatmapsSkipped} deleted beatmap${result.beatmapsSkipped === 1 ? '' : 's'} skipped)`
+              : '')
+          : 'No beatmaps to refetch';
+
+      toast.success(message);
       setIsOpen(false);
+      router.refresh();
     } catch {
-      toast.error('Failed to queue match data for refetch');
+      toast.error('Failed to queue beatmap data for refetch');
     } finally {
       setIsLoading(false);
     }
@@ -69,28 +78,29 @@ export default function RefetchMatchDataButton({
               size="sm"
               className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:hover:bg-yellow-500/10"
             >
-              <Database className="h-4 w-4" />
+              <FileMusic className="h-4 w-4" />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Refetch match data</p>
+          <p>Refetch beatmap data</p>
         </TooltipContent>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Match Data Refetch</DialogTitle>
+            <DialogTitle>Confirm Beatmap Data Refetch</DialogTitle>
             <DialogDescription asChild>
               <div>
-                Are you sure you want to refetch match data for{' '}
-                <strong>{tournament.name}</strong>? This action cannot be
-                undone.
+                Are you sure you want to refetch beatmap data for{' '}
+                <strong>{tournament.name}</strong>?
                 <br />
                 <br />
                 <ul className="list-disc pl-4">
-                  <li>All match data will be refetched</li>
+                  <li>All tournament beatmaps will be refetched from osu!</li>
+                  <li>Deleted beatmaps (404s) will keep their existing data</li>
+                  <li>Valid beatmaps will be updated with latest data</li>
                   <li>
-                    If a match has since been deleted from osu!, the data could
-                    be permanently lost.
+                    Missing players will be created from beatmap/beatmapset
+                    creators
                   </li>
                 </ul>
               </div>
@@ -104,11 +114,7 @@ export default function RefetchMatchDataButton({
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReset}
-              disabled={isLoading}
-            >
+            <Button onClick={handleRefetch} disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -142,6 +142,9 @@ const bootstrap = async () => {
     rateLimiter: osuApiRateLimiter,
     logger,
     dataCompletion,
+    publishPlayerFetch: async (osuPlayerId) => {
+      await playerPublisher.publish({ osuPlayerId });
+    },
   });
 
   const matchService = new MatchFetchService({

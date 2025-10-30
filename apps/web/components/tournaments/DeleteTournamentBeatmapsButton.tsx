@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Music } from 'lucide-react';
+import { Loader2, Unlink } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -41,7 +41,7 @@ export default function DeleteTournamentBeatmapsButton({
       setIsOpen(false);
       window.location.reload();
     } catch {
-      toast.error('Failed to delete pooled beatmaps');
+      toast.error('Failed to unlink pooled beatmaps');
     } finally {
       setIsLoading(false);
     }
@@ -57,19 +57,19 @@ export default function DeleteTournamentBeatmapsButton({
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
             <Button variant="destructive" size="sm">
-              <Music className="size-4" />
+              <Unlink className="size-4" />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Delete pooled beatmaps</p>
+          <p>Unlink pooled beatmaps</p>
         </TooltipContent>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Delete Pooled Beatmaps</DialogTitle>
+            <DialogTitle>Confirm Unlink Pooled Beatmaps</DialogTitle>
             <DialogDescription asChild>
               <div>
-                Are you sure you want to delete all pooled beatmaps from{' '}
+                Are you sure you want to unlink all pooled beatmaps from{' '}
                 <strong>{tournament.name}</strong>? This action cannot be
                 undone.
                 <br />

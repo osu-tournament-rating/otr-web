@@ -24,6 +24,7 @@ interface BeatmapFetchServiceOptions {
   rateLimiter: RateLimiter;
   logger: Logger;
   dataCompletion: TournamentDataCompletionService;
+  publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
 }
 
 export class BeatmapFetchService {
@@ -32,6 +33,7 @@ export class BeatmapFetchService {
   private readonly rateLimiter: RateLimiter;
   private readonly logger: Logger;
   private readonly dataCompletion: TournamentDataCompletionService;
+  private readonly publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
 
   constructor(options: BeatmapFetchServiceOptions) {
     this.db = options.db;
@@ -39,9 +41,13 @@ export class BeatmapFetchService {
     this.rateLimiter = options.rateLimiter;
     this.logger = options.logger;
     this.dataCompletion = options.dataCompletion;
+    this.publishPlayerFetch = options.publishPlayerFetch;
   }
 
-  async fetchAndPersist(osuBeatmapId: number): Promise<boolean> {
+  async fetchAndPersist(
+    osuBeatmapId: number,
+    options?: { skipAutomationChecks?: boolean }
+  ): Promise<boolean> {
     const nowIso = new Date().toISOString();
 
     const beatmapRecord = await ensureBeatmapPlaceholder(
@@ -69,7 +75,8 @@ export class BeatmapFetchService {
     if (!apiBeatmap) {
       await this.dataCompletion.updateBeatmapFetchStatus(
         beatmapId,
-        DataFetchStatus.NotFound
+        DataFetchStatus.NotFound,
+        { skipAutomationChecks: options?.skipAutomationChecks }
       );
       this.logger.warn('Beatmap not found in osu! API', { osuBeatmapId });
       return false;
@@ -84,7 +91,8 @@ export class BeatmapFetchService {
     if (!apiBeatmapset) {
       await this.dataCompletion.updateBeatmapFetchStatus(
         beatmapId,
-        DataFetchStatus.NotFound
+        DataFetchStatus.NotFound,
+        { skipAutomationChecks: options?.skipAutomationChecks }
       );
       this.logger.warn('Beatmapset not found for beatmap', {
         osuBeatmapId,
@@ -129,6 +137,26 @@ export class BeatmapFetchService {
         ? apiBeatmapset.beatmaps
         : [apiBeatmap];
 
+      // Collect unique user IDs from all beatmaps
+      const userIds = new Set<number>();
+      for (const beatmap of beatmapRows) {
+        if (beatmap.user_id) {
+          userIds.add(beatmap.user_id);
+        }
+      }
+
+      // Enqueue player fetch messages for background processing
+      for (const userId of userIds) {
+        try {
+          await this.publishPlayerFetch(userId);
+        } catch (error) {
+          this.logger.error('Failed to enqueue player fetch', {
+            userId,
+            error,
+          });
+        }
+      }
+
       const affectedBeatmapIds: number[] = [];
 
       for (const beatmap of beatmapRows) {
@@ -171,6 +199,23 @@ export class BeatmapFetchService {
 
         if (row) {
           affectedBeatmapIds.push(row.id);
+
+          // Create or update player record for beatmap creator
+          if (beatmap.user_id) {
+            const beatmapCreatorId = await getOrCreatePlayerId(
+              tx,
+              beatmap.user_id
+            );
+
+            // Link beatmap to its creator in join table
+            await tx
+              .insert(schema.joinBeatmapCreators)
+              .values({
+                createdBeatmapsId: row.id,
+                creatorsId: beatmapCreatorId,
+              })
+              .onConflictDoNothing();
+          }
         }
       }
 
@@ -192,7 +237,8 @@ export class BeatmapFetchService {
       await updateBeatmapStatus(this.db, id, DataFetchStatus.Fetched, nowIso);
       await this.dataCompletion.updateBeatmapFetchStatus(
         id,
-        DataFetchStatus.Fetched
+        DataFetchStatus.Fetched,
+        { skipAutomationChecks: options?.skipAutomationChecks }
       );
     }
 

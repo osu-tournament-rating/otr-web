@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, RefreshCcwDotIcon } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -65,8 +65,8 @@ export default function ResetAutomatedChecksButton({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              <RefreshCcwDotIcon className="h-4 w-4" />
+            <Button variant="default" size="sm">
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
