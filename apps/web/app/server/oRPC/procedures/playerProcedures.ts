@@ -1004,6 +1004,7 @@ export const getPlayerStats = publicProcedure
 
     const modFilters = [
       eq(schema.gameScores.playerId, player.id),
+      eq(schema.gameScores.verificationStatus, VerificationStatus.Verified),
       eq(schema.tournaments.ruleset, resolvedRuleset),
     ];
 
