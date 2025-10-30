@@ -48,6 +48,7 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
 import { TournamentRejectionReason } from '@otr/core/osu';
 import RefetchMatchDataButton from './RefetchMatchDataButton';
+import RefetchBeatmapDataButton from './RefetchBeatmapDataButton';
 
 interface TournamentAdminViewProps {
   tournament: TournamentDetail;
@@ -354,6 +355,7 @@ export default function TournamentAdminView({
                 </Button>
                 <ResetAutomatedChecksButton tournament={tournament} />
                 <RefetchMatchDataButton tournament={tournament} />
+                <RefetchBeatmapDataButton tournament={tournament} />
                 <DeleteTournamentBeatmapsButton tournament={tournament} />
                 <DeleteButton
                   entityType="tournament"

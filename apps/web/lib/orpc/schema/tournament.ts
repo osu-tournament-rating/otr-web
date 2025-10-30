@@ -185,6 +185,13 @@ export const TournamentRefetchMatchDataResponseSchema = z.object({
   warnings: z.array(z.string().min(1)).optional(),
 });
 
+export const TournamentRefetchBeatmapDataResponseSchema = z.object({
+  success: z.boolean(),
+  beatmapsUpdated: z.number().int().nonnegative(),
+  beatmapsSkipped: z.number().int().nonnegative(),
+  warnings: z.array(z.string().min(1)).optional(),
+});
+
 export type TournamentAdminUpdateInput = z.infer<
   typeof TournamentAdminUpdateInputSchema
 >;
@@ -203,6 +210,9 @@ export type TournamentResetAutomatedChecksInput = z.infer<
 export type TournamentIdInput = z.infer<typeof TournamentIdInputSchema>;
 export type TournamentRefetchMatchDataResponse = z.infer<
   typeof TournamentRefetchMatchDataResponseSchema
+>;
+export type TournamentRefetchBeatmapDataResponse = z.infer<
+  typeof TournamentRefetchBeatmapDataResponseSchema
 >;
 export type { VerificationStatusValue };
 

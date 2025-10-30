@@ -25,14 +25,15 @@ export class BeatmapFetchWorker {
 
   async start() {
     await this.queue.start(async (message) => {
-      const { beatmapId } = message.payload;
+      const { beatmapId, skipAutomationChecks } = message.payload;
       this.logger.info('Processing beatmap fetch message', {
         beatmapId,
+        skipAutomationChecks,
         correlationId: message.metadata.correlationId,
       });
 
       try {
-        await this.service.fetchAndPersist(beatmapId);
+        await this.service.fetchAndPersist(beatmapId, { skipAutomationChecks });
         await message.ack();
       } catch (error) {
         this.logger.error('Failed to process beatmap fetch', {

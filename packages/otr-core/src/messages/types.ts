@@ -7,6 +7,7 @@ export type MessageEnvelope<TPayload> = MessageMetadata & TPayload;
 
 export type FetchBeatmapMessage = MessageEnvelope<{
   beatmapId: number;
+  skipAutomationChecks?: boolean;
 }>;
 
 export type FetchMatchMessage = MessageEnvelope<{

@@ -59,7 +59,8 @@ export class TournamentDataCompletionService {
 
   async updateBeatmapFetchStatus(
     beatmapId: number,
-    status: number
+    status: number,
+    options?: { skipAutomationChecks?: boolean }
   ): Promise<void> {
     const beatmap = await this.db.query.beatmaps.findFirst({
       where: eq(schema.beatmaps.id, beatmapId),
@@ -91,16 +92,18 @@ export class TournamentDataCompletionService {
       .innerJoin(schema.matches, eq(schema.games.matchId, schema.matches.id))
       .where(eq(schema.games.beatmapId, beatmapId));
 
-    const tournamentIds = new Set<number>();
-    pooledTournamentRows.forEach(
-      (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
-    );
-    gameTournamentRows.forEach(
-      (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
-    );
+    if (!options?.skipAutomationChecks) {
+      const tournamentIds = new Set<number>();
+      pooledTournamentRows.forEach(
+        (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
+      );
+      gameTournamentRows.forEach(
+        (row) => row.tournamentId != null && tournamentIds.add(row.tournamentId)
+      );
 
-    for (const id of tournamentIds) {
-      await this.checkAndTriggerAutomationChecksIfComplete(id);
+      for (const id of tournamentIds) {
+        await this.checkAndTriggerAutomationChecksIfComplete(id);
+      }
     }
   }
 

@@ -44,6 +44,7 @@ import {
   acceptTournamentPreVerificationStatuses,
   deleteTournamentAdmin,
   deleteTournamentBeatmapsAdmin,
+  refetchTournamentBeatmaps,
   refetchTournamentMatchData,
   resetTournamentAutomatedChecks,
   updateTournamentAdmin,
@@ -173,6 +174,7 @@ export const router = base.router({
       manageBeatmaps: manageTournamentBeatmapsAdmin,
       deleteBeatmaps: deleteTournamentBeatmapsAdmin,
       refetchMatchData: refetchTournamentMatchData,
+      refetchBeatmaps: refetchTournamentBeatmaps,
     },
   },
 });

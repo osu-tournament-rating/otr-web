@@ -12,6 +12,7 @@ import {
   TournamentAdminMutationResponseSchema,
   TournamentAdminUpdateInputSchema,
   TournamentIdInputSchema,
+  TournamentRefetchBeatmapDataResponseSchema,
   TournamentRefetchMatchDataResponseSchema,
   TournamentResetAutomatedChecksInputSchema,
   type TournamentAdminUpdateInput,
@@ -29,9 +30,11 @@ import {
   VerificationStatus,
 } from '@otr/core/osu';
 import {
+  publishFetchBeatmapMessage,
   publishFetchMatchMessage,
   publishProcessTournamentAutomationCheckMessage,
 } from '@/lib/queue/publishers';
+import { MessagePriority } from '@otr/core';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 export const REFETCH_QUEUE_WARNING =
@@ -134,6 +137,93 @@ export async function refetchTournamentMatchDataHandler({
   return {
     success: true,
     matchesUpdated: matches.length,
+    warnings: warnings.length ? warnings : undefined,
+  } as const;
+}
+
+interface RefetchBeatmapDataContext {
+  db: DatabaseClient;
+  session: {
+    dbUser?: {
+      id: number;
+      scopes?: string[] | null;
+    } | null;
+  } | null;
+}
+
+export interface RefetchBeatmapDataArgs {
+  input: TournamentIdInput;
+  context: RefetchBeatmapDataContext;
+}
+
+export async function refetchTournamentBeatmapsHandler({
+  input,
+  context,
+}: RefetchBeatmapDataArgs) {
+  const { adminUserId } = ensureAdminSession(context.session);
+
+  const beatmapRows = await context.db
+    .select({
+      id: schema.beatmaps.id,
+      osuId: schema.beatmaps.osuId,
+      dataFetchStatus: schema.beatmaps.dataFetchStatus,
+    })
+    .from(schema.joinPooledBeatmaps)
+    .innerJoin(
+      schema.beatmaps,
+      eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
+    )
+    .where(eq(schema.joinPooledBeatmaps.tournamentsPooledInId, input.id));
+
+  const beatmapIdsToUpdate = beatmapRows
+    .filter((b) => b.dataFetchStatus !== DataFetchStatus.NotFound)
+    .map((b) => b.id);
+
+  if (beatmapIdsToUpdate.length > 0) {
+    await context.db.transaction((tx) =>
+      withAuditUserId(tx, adminUserId, () =>
+        tx
+          .update(schema.beatmaps)
+          .set({
+            dataFetchStatus: DataFetchStatus.NotFetched,
+            updated: NOW,
+          })
+          .where(inArray(schema.beatmaps.id, beatmapIdsToUpdate))
+      )
+    );
+  }
+
+  const queueTasks = beatmapRows
+    .filter((b) => b.dataFetchStatus !== DataFetchStatus.NotFound)
+    .map((b) => ({
+      beatmapId: b.osuId,
+      promise: publishFetchBeatmapMessage(
+        {
+          beatmapId: b.osuId,
+          skipAutomationChecks: true,
+        },
+        {
+          metadata: {
+            priority: MessagePriority.High,
+          },
+        }
+      ),
+    }));
+
+  const warnings: string[] = [];
+
+  if (queueTasks.length > 0) {
+    const results = await Promise.allSettled(queueTasks.map((t) => t.promise));
+    const failures = results.filter((r) => r.status === 'rejected');
+    if (failures.length > 0) {
+      warnings.push(REFETCH_QUEUE_WARNING);
+    }
+  }
+
+  return {
+    success: true,
+    beatmapsUpdated: beatmapIdsToUpdate.length,
+    beatmapsSkipped: beatmapRows.length - beatmapIdsToUpdate.length,
     warnings: warnings.length ? warnings : undefined,
   } as const;
 }
@@ -677,4 +767,17 @@ export const refetchTournamentMatchData = protectedProcedure
   })
   .handler(async ({ input, context }) =>
     refetchTournamentMatchDataHandler({ input, context })
+  );
+
+export const refetchTournamentBeatmaps = protectedProcedure
+  .input(TournamentIdInputSchema)
+  .output(TournamentRefetchBeatmapDataResponseSchema)
+  .route({
+    summary: 'Refetch tournament beatmap data',
+    tags: ['admin'],
+    method: 'POST',
+    path: '/tournaments/{id}:refetch-beatmap-data',
+  })
+  .handler(async ({ input, context }) =>
+    refetchTournamentBeatmapsHandler({ input, context })
   );
