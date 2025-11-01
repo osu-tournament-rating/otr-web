@@ -18,8 +18,6 @@ import {
   tournamentSubmissionFormSchema,
   type TournamentSubmissionFormValues,
 } from '@/lib/orpc/schema/tournamentSubmission';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
@@ -43,6 +41,30 @@ import {
 } from '../ui/alert-dialog';
 import { TournamentRejectionReason } from '@otr/core/osu';
 import { hasAdminScope } from '@/lib/auth/roles';
+
+const getFieldClassName = (hasError: boolean): string => {
+  return `border-2 shadow-sm ${
+    hasError
+      ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive'
+      : 'border-input bg-card focus-visible:border-primary focus-visible:ring-primary'
+  } focus-visible:ring-1`;
+};
+
+const getSelectFieldClassName = (hasError: boolean): string => {
+  return `w-full border-2 shadow-sm ${
+    hasError
+      ? 'border-destructive focus:border-destructive focus:ring-destructive'
+      : 'border-input bg-card focus:border-primary focus:ring-primary'
+  } focus:ring-1`;
+};
+
+const getTextareaFieldClassName = (hasError: boolean): string => {
+  return `field-sizing-fixed min-h-32 border-2 shadow-sm ${
+    hasError
+      ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive'
+      : 'border-input bg-card focus-visible:border-primary focus-visible:ring-primary'
+  } focus-visible:ring-1`;
+};
 
 // Form section component for better organization
 type FormSectionProps = {
@@ -68,9 +90,6 @@ export default function TournamentSubmissionForm() {
   const isAdmin = hasAdminScope(session?.scopes ?? []);
 
   const form = useForm<TournamentSubmissionFormValues>({
-    resolver: zodResolver(
-      tournamentSubmissionFormSchema as unknown as z.ZodType<TournamentSubmissionFormValues>
-    ),
     defaultValues: {
       name: '',
       abbreviation: '',
@@ -82,19 +101,43 @@ export default function TournamentSubmissionForm() {
       ids: [],
       beatmapIds: [],
     },
-    mode: 'onChange',
   });
 
   const [rejectOnSubmit, setRejectOnSubmit] = useState(false);
   const [showBeatmapWarning, setShowBeatmapWarning] = useState(false);
   const [beatmapWarningConfirmed, setBeatmapWarningConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function onSubmit(values: TournamentSubmissionFormValues) {
-    const beatmapIds = values.beatmapIds as number[];
+  const performSubmit = async () => {
+    form.clearErrors();
+
+    const formValues = form.getValues();
+    const validationResult =
+      tournamentSubmissionFormSchema.safeParse(formValues);
+
+    if (!validationResult.success) {
+      validationResult.error.issues.forEach((issue) => {
+        const fieldName = issue.path[0];
+        if (
+          fieldName &&
+          typeof fieldName === 'string' &&
+          fieldName in formValues
+        ) {
+          form.setError(fieldName as keyof TournamentSubmissionFormValues, {
+            type: 'validation',
+            message: issue.message,
+          });
+        }
+      });
+      return;
+    }
+
+    const validatedData = validationResult.data;
+    const beatmapIds = validatedData.beatmapIds;
 
     if (
       rejectOnSubmit &&
-      values.rejectionReason === TournamentRejectionReason.None
+      validatedData.rejectionReason === TournamentRejectionReason.None
     ) {
       form.setError('rejectionReason', {
         message: 'Rejection reason must be selected when rejecting on submit',
@@ -102,18 +145,18 @@ export default function TournamentSubmissionForm() {
       return;
     }
 
-    // Check if beatmaps are missing and user hasn't confirmed
     if (beatmapIds.length === 0 && !beatmapWarningConfirmed) {
       setShowBeatmapWarning(true);
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const result = await orpc.tournaments.submit(values);
+      const result = await orpc.tournaments.submit(validatedData);
 
       form.reset();
       setRejectOnSubmit(false);
-      setBeatmapWarningConfirmed(false); // Reset confirmation state
+      setBeatmapWarningConfirmed(false);
 
       result.warnings?.forEach((warning) => {
         toast.warning(warning);
@@ -134,14 +177,21 @@ export default function TournamentSubmissionForm() {
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await performSubmit();
+  };
 
   return (
     <Card className="w-full overflow-hidden">
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={handleFormSubmit}
           className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
         >
           <FormSection
@@ -152,7 +202,7 @@ export default function TournamentSubmissionForm() {
               <FormField
                 control={form.control}
                 name="abbreviation"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="w-full sm:flex-1">
                     <LabelWithTooltip
                       label="Abbreviation"
@@ -162,7 +212,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="OWC2024"
                         {...field}
-                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                        className={getFieldClassName(!!fieldState.error)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -172,7 +222,7 @@ export default function TournamentSubmissionForm() {
               <FormField
                 control={form.control}
                 name="name"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="w-full sm:flex-1">
                     <LabelWithTooltip
                       label="Name"
@@ -182,7 +232,7 @@ export default function TournamentSubmissionForm() {
                       <Input
                         placeholder="osu! World Cup 2024"
                         {...field}
-                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                        className={getFieldClassName(!!fieldState.error)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -194,7 +244,7 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="forumUrl"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
                     label="Forum Post URL"
@@ -204,9 +254,8 @@ export default function TournamentSubmissionForm() {
                     <Input
                       placeholder="https://osu.ppy.sh/community/forums/topics/..."
                       {...field}
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                      className={getFieldClassName(!!fieldState.error)}
                       onChange={(e) => {
-                        // Strip query parameters before setting value
                         const url = e.target.value;
                         const baseUrl = url.split('?')[0];
                         field.onChange(baseUrl);
@@ -223,7 +272,7 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="ruleset"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem className="sm:col-span-2 lg:col-span-1">
                   <LabelWithTooltip
                     label="Ruleset"
@@ -234,7 +283,9 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
+                      <SelectTrigger
+                        className={getSelectFieldClassName(!!fieldState.error)}
+                      >
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
                     </FormControl>
@@ -247,7 +298,7 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="lobbySize"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
                     label="Lobby Size"
@@ -258,7 +309,9 @@ export default function TournamentSubmissionForm() {
                     value={field.value?.toString() || ''}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary w-full border-2 shadow-sm focus:ring-1">
+                      <SelectTrigger
+                        className={getSelectFieldClassName(!!fieldState.error)}
+                      >
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                     </FormControl>
@@ -271,7 +324,7 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="rankRangeLowerBound"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
                     label="Rank Restriction"
@@ -282,7 +335,7 @@ export default function TournamentSubmissionForm() {
                       type="number"
                       min={1}
                       placeholder="Enter rank restriction"
-                      className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+                      className={getFieldClassName(!!fieldState.error)}
                       {...field}
                       value={field.value || ''}
                       onChange={(e) => {
@@ -358,11 +411,10 @@ export default function TournamentSubmissionForm() {
             icon={<Database className="text-primary h-6 w-6" />}
             title="Data"
           >
-            {/* Matches */}
             <FormField
               control={form.control}
               name="ids"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
                     label="Matches"
@@ -379,7 +431,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="field-sizing-fixed border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
+                      className={getTextareaFieldClassName(!!fieldState.error)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -387,11 +439,10 @@ export default function TournamentSubmissionForm() {
               )}
             />
 
-            {/* Beatmap links */}
             <FormField
               control={form.control}
               name="beatmapIds"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
                     label="Beatmaps"
@@ -408,7 +459,7 @@ export default function TournamentSubmissionForm() {
                       onChange={(e) =>
                         field.onChange(e.target.value.split('\n'))
                       }
-                      className="field-sizing-fixed border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-32 border-2 shadow-sm focus-visible:ring-1"
+                      className={getTextareaFieldClassName(!!fieldState.error)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -420,9 +471,9 @@ export default function TournamentSubmissionForm() {
           <Button
             type="submit"
             className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl sm:py-6 sm:text-lg"
-            disabled={form.formState.isSubmitting}
+            disabled={isSubmitting}
           >
-            {form.formState.isSubmitting ? (
+            {isSubmitting ? (
               <LoaderCircle className="animate-spin" />
             ) : (
               'Submit Tournament'
@@ -460,8 +511,7 @@ export default function TournamentSubmissionForm() {
               onClick={() => {
                 setShowBeatmapWarning(false);
                 setBeatmapWarningConfirmed(true);
-                // Resubmit the form after confirmation
-                form.handleSubmit(onSubmit)();
+                void performSubmit();
               }}
             >
               Continue without beatmaps
