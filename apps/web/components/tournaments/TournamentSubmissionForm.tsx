@@ -112,7 +112,8 @@ export default function TournamentSubmissionForm() {
     form.clearErrors();
 
     const formValues = form.getValues();
-    const validationResult = tournamentSubmissionFormSchema.safeParse(formValues);
+    const validationResult =
+      tournamentSubmissionFormSchema.safeParse(formValues);
 
     if (!validationResult.success) {
       validationResult.error.issues.forEach((issue) => {
