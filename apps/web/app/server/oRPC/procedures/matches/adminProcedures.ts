@@ -11,6 +11,8 @@ import {
   MatchAdminMergeInputSchema,
   MatchAdminMergeResponseSchema,
   MatchAdminMutationResponseSchema,
+  MatchAdminRefreshAllInputSchema,
+  MatchAdminRefreshAllResponseSchema,
   MatchAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
 import {
@@ -19,6 +21,7 @@ import {
   VerificationStatus,
 } from '@otr/core/osu';
 import type { DatabaseClient } from '@/lib/db';
+import { publishFetchMatchMessage } from '@/lib/queue/publishers';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -298,4 +301,87 @@ export const deleteMatchPlayerScoresAdmin = protectedProcedure
         return { success: true, deletedCount: deleted.length } as const;
       })
     );
+  });
+
+export const refetchAllMatchData = protectedProcedure
+  .input(MatchAdminRefreshAllInputSchema)
+  .output(MatchAdminRefreshAllResponseSchema)
+  .route({
+    summary: 'Refresh all match data',
+    tags: ['admin'],
+    method: 'POST',
+    path: '/matches:refetchAll',
+  })
+  .handler(async ({ context }) => {
+    ensureAdminSession(context.session);
+
+    const matches: Array<{ id: number; osuId: number }> = await context.db
+      .select({
+        id: schema.matches.id,
+        osuId: schema.matches.osuId,
+      })
+      .from(schema.matches);
+
+    const matchOsuIds = Array.from(
+      new Set<number>(
+        matches
+          .map((match) => Number(match.osuId))
+          .filter((osuId) => Number.isFinite(osuId))
+      )
+    );
+
+    const publishInBackground = async () => {
+      const BATCH_SIZE = 100;
+      const BATCH_DELAY_MS = 10;
+      let totalPublished = 0;
+      let totalFailures = 0;
+
+      console.log(
+        `[admin] Starting background publish of ${matchOsuIds.length} match refetch messages`
+      );
+
+      for (let i = 0; i < matchOsuIds.length; i += BATCH_SIZE) {
+        const batch = matchOsuIds.slice(i, i + BATCH_SIZE);
+
+        for (const osuMatchId of batch) {
+          try {
+            await publishFetchMatchMessage({ osuMatchId });
+            totalPublished++;
+          } catch (error) {
+            totalFailures++;
+            console.error('Failed to publish refetch message', {
+              type: 'match',
+              id: osuMatchId,
+              error,
+            });
+          }
+        }
+
+        if (i + BATCH_SIZE < matchOsuIds.length) {
+          await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+        }
+
+        if ((i + BATCH_SIZE) % 1000 === 0) {
+          console.log(
+            `[admin] Published ${totalPublished}/${matchOsuIds.length} match refetch messages (${totalFailures} failures)`
+          );
+        }
+      }
+
+      console.log(
+        `[admin] Completed publishing ${totalPublished} match refetch messages (${totalFailures} failures)`
+      );
+    };
+
+    publishInBackground().catch((error) => {
+      console.error('[admin] Background publish failed:', error);
+    });
+
+    return {
+      success: true,
+      matchesUpdated: matches.length,
+      warnings: [
+        `Queuing ${matchOsuIds.length} matches for refetch. This will continue in the background and may take several minutes to complete. Check server logs for progress.`,
+      ],
+    } as const;
   });

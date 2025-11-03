@@ -84,6 +84,9 @@ export default function AdminDashboardClient() {
   const [apiKeysLoading, setApiKeysLoading] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
+  const [refetchDialogOpen, setRefetchDialogOpen] = useState(false);
+  const [refetching, setRefetching] = useState(false);
+
   useEffect(() => {
     setShowKeys(false);
     setApiKeys([]);
@@ -211,6 +214,43 @@ export default function AdminDashboardClient() {
       setBanning(false);
     }
   }, [banReason, handleDialogOpenChange, pendingPlayer]);
+
+  const handleOpenRefetchDialog = useCallback(() => {
+    setRefetchDialogOpen(true);
+  }, []);
+
+  const handleRefetchDialogOpenChange = useCallback((open: boolean) => {
+    setRefetchDialogOpen(open);
+    if (!open) {
+      setRefetching(false);
+    }
+  }, []);
+
+  const handleConfirmRefetch = useCallback(async () => {
+    setRefetching(true);
+
+    try {
+      const response = await orpc.matches.admin.refetchAll({});
+
+      toast.success(
+        `Queued ${response.matchesUpdated} matches for refetch from osu! API.`
+      );
+
+      if (response.warnings && response.warnings.length > 0) {
+        response.warnings.forEach((warning) => toast.warning(warning));
+      }
+
+      handleRefetchDialogOpenChange(false);
+    } catch (error) {
+      console.error('[admin] refetch all matches failed', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to queue matches for refetch.';
+      toast.error(message);
+      setRefetching(false);
+    }
+  }, [handleRefetchDialogOpenChange]);
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -432,6 +472,31 @@ export default function AdminDashboardClient() {
             ) : null}
           </CardContent>
         </Card>
+
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Dangerous operations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              onClick={handleOpenRefetchDialog}
+              disabled={refetching}
+              className="w-full sm:w-auto"
+            >
+              {refetching ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Processing…
+                </>
+              ) : (
+                'Refresh All Match Data'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={banDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -489,6 +554,53 @@ export default function AdminDashboardClient() {
                 </>
               ) : (
                 'Confirm ban'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={refetchDialogOpen}
+        onOpenChange={handleRefetchDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              Refresh All Match Data
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will queue{' '}
+              <span className="text-foreground font-semibold">all matches</span>{' '}
+              in the database for refetch from the osu! API. This is a heavy
+              operation that will reset the fetch status for every match and
+              enqueue them all for reprocessing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="border-destructive/50 bg-destructive/5 rounded-lg border p-4">
+            <p className="text-destructive text-sm font-medium">
+              ⚠️ Warning: This operation cannot be undone
+            </p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              All matches will be marked as unfetched and queued for data
+              retrieval. This may take a significant amount of time to complete
+              and will impact system resources.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={refetching}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRefetch}
+              disabled={refetching}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {refetching ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Processing…
+                </>
+              ) : (
+                'Confirm Refresh'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -254,6 +254,14 @@ export const MatchAdminDeletePlayerScoresResponseSchema = z.object({
   deletedCount: NonNegativeIntSchema,
 });
 
+export const MatchAdminRefreshAllInputSchema = z.object({});
+
+export const MatchAdminRefreshAllResponseSchema = z.object({
+  success: z.boolean(),
+  matchesUpdated: NonNegativeIntSchema,
+  warnings: z.array(z.string()).optional(),
+});
+
 export const GameAdminDeleteInputSchema = z.object({
   id: PositiveIntSchema,
 });
@@ -329,6 +337,9 @@ export type MatchAdminDeletePlayerScoresInput = z.infer<
 >;
 export type MatchAdminDeletePlayerScoresResponse = z.infer<
   typeof MatchAdminDeletePlayerScoresResponseSchema
+>;
+export type MatchAdminRefreshAllResponse = z.infer<
+  typeof MatchAdminRefreshAllResponseSchema
 >;
 export type MatchAdminNoteCreateInput = z.infer<
   typeof MatchAdminNoteCreateInputSchema

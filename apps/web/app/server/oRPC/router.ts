@@ -15,6 +15,7 @@ import {
   deleteMatchAdmin,
   deleteMatchPlayerScoresAdmin,
   mergeMatchAdmin,
+  refetchAllMatchData,
   updateMatchAdmin,
 } from './procedures/matches/adminProcedures';
 import {
@@ -108,6 +109,7 @@ export const router = base.router({
       delete: deleteMatchAdmin,
       deletePlayerScores: deleteMatchPlayerScoresAdmin,
       merge: mergeMatchAdmin,
+      refetchAll: refetchAllMatchData,
     },
     adminNotes: {
       create: createMatchAdminNote,
