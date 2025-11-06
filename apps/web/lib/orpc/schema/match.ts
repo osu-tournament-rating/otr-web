@@ -65,15 +65,15 @@ export const MatchRosterSchema = matchRosterSelectSchema
     team: TeamSchema,
   });
 
-const gameScoreBaseSchema = gameScoreSelectSchema.extend({
-  grade: ScoreGradeSchema,
-  team: TeamSchema,
-  ruleset: RulesetSchema,
-  verificationStatus: VerificationStatusSchema,
-  accuracy: z.number(),
-  adminNotes: z.array(AdminNoteSchema).default([]),
-});
-export const GameScoreSchema = gameScoreBaseSchema;
+export const GameScoreSchema = gameScoreSelectSchema
+  .omit(CreatedUpdatedOmit)
+  .extend({
+    grade: ScoreGradeSchema,
+    team: TeamSchema,
+    ruleset: RulesetSchema,
+    verificationStatus: VerificationStatusSchema,
+    adminNotes: z.array(AdminNoteSchema).default([]),
+  });
 
 const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
   ruleset: RulesetSchema,
@@ -223,12 +223,12 @@ export const GameScoreAdminUpdateInputSchema = z.object({
   score: NonNegativeIntSchema,
   placement: NonNegativeIntSchema,
   maxCombo: NonNegativeIntSchema,
-  count50: NonNegativeIntSchema,
-  count100: NonNegativeIntSchema,
-  count300: NonNegativeIntSchema,
-  countMiss: NonNegativeIntSchema,
-  countKatu: NonNegativeIntSchema,
-  countGeki: NonNegativeIntSchema,
+  statGreat: NonNegativeIntSchema.nullable(),
+  statOk: NonNegativeIntSchema.nullable(),
+  statMeh: NonNegativeIntSchema.nullable(),
+  statMiss: NonNegativeIntSchema.nullable(),
+  statGood: NonNegativeIntSchema.nullable(),
+  statPerfect: NonNegativeIntSchema.nullable(),
   accuracy: z.number().min(0),
   grade: ScoreGradeSchema,
   mods: BitmaskEnumValueSchema,

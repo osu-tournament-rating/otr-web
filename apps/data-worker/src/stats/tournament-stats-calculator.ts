@@ -1,6 +1,5 @@
 import { Team, VerificationStatus } from '@otr/core/osu';
 
-import { calculateAccuracy } from './accuracy';
 import { calculateOtrMatchCosts } from './match-cost-calculator';
 import type {
   MatchProcessingResult,
@@ -122,16 +121,7 @@ const generateMatchRosters = (
   }));
 };
 
-const calculateAccuracyForScore = (score: StatsScore) =>
-  calculateAccuracy({
-    ruleset: score.ruleset,
-    count300: score.count300,
-    count100: score.count100,
-    count50: score.count50,
-    countMiss: score.countMiss,
-    countKatu: score.countKatu,
-    countGeki: score.countGeki,
-  });
+const calculateAccuracyForScore = (score: StatsScore) => score.accuracy;
 
 export class TournamentStatsCalculator {
   calculateAllStatistics(tournament: StatsTournament): StatsCalculationResult {
@@ -287,7 +277,7 @@ export class TournamentStatsCalculator {
 
       const averageScore = average(scores.map((score) => score.score));
       const averagePlacement = average(scores.map((score) => score.placement));
-      const averageMisses = average(scores.map((score) => score.countMiss));
+      const averageMisses = average(scores.map((score) => score.statMiss ?? 0));
       const averageAccuracy = average(
         scores.map((score) => calculateAccuracyForScore(score))
       );

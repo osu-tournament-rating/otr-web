@@ -33,35 +33,35 @@ export default function ScoreCard({
     switch (score.ruleset) {
       case Ruleset.Taiko:
         return [
-          { label: '300', value: `${score.count300}x` },
-          { label: '150', value: `${score.count100}x` },
-          { label: 'Miss', value: `${score.countMiss}x` },
+          { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Mania4k:
       case Ruleset.Mania7k:
       case Ruleset.ManiaOther:
         return [
-          { label: '320', value: `${score.countGeki}x` },
-          { label: '300', value: `${score.count300}x` },
-          { label: '200', value: `${score.countKatu}x` },
-          { label: '100', value: `${score.count100}x` },
-          { label: '50', value: `${score.count50}x` },
-          { label: 'Miss', value: `${score.countMiss}x` },
+          { label: 'Perfect', value: `${score.statPerfect ?? 0}x` },
+          { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Good', value: `${score.statGood ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Catch:
         return [
-          { label: '300', value: `${score.count300}x` },
-          { label: '30', value: `${score.count100}x` },
-          { label: '10', value: `${score.count50}x` },
-          { label: 'Miss', value: `${score.countMiss}x` },
+          { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Large Droplet', value: `${score.statOk ?? 0}x` },
+          { label: 'Small Droplet', value: `${score.statMeh ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Osu:
       default:
         return [
-          { label: '300', value: `${score.count300}x` },
-          { label: '100', value: `${score.count100}x` },
-          { label: '50', value: `${score.count50}x` },
-          { label: 'Miss', value: `${score.countMiss}x` },
+          { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
     }
   })();
