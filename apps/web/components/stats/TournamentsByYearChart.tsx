@@ -38,14 +38,15 @@ export default function TournamentsByYearChart({
   data,
   className,
 }: TournamentsByYearChartProps) {
-  const { chartData } = useMemo(() => {
+  const { chartData, maxCount } = useMemo(() => {
     const processedData: ChartDataItem[] = Object.entries(data)
       .map(([year, count]) => ({ year, count }))
       .sort((a, b) => parseInt(a.year, 10) - parseInt(b.year, 10));
 
     const totalCount = processedData.reduce((sum, item) => sum + item.count, 0);
+    const maxValue = Math.max(...processedData.map((item) => item.count), 0);
 
-    return { chartData: processedData, total: totalCount };
+    return { chartData: processedData, total: totalCount, maxCount: maxValue };
   }, [data]);
 
   const CustomTooltip = ({
@@ -92,7 +93,10 @@ export default function TournamentsByYearChart({
               stroke={CHART_COLORS.mutedForeground}
             />
             <XAxis dataKey="year" stroke={CHART_COLORS.mutedForeground} />
-            <YAxis stroke={CHART_COLORS.mutedForeground} />
+            <YAxis
+              stroke={CHART_COLORS.mutedForeground}
+              domain={[0, Math.ceil(maxCount * 1.1)]}
+            />
             <Tooltip cursor={false} content={<CustomTooltip />} />
             <Bar
               dataKey="count"
