@@ -78,6 +78,7 @@ export default function TournamentsByRulesetChart({
           count,
         };
       })
+      .filter((item) => item.count > 0)
       .sort((a, b) => b.count - a.count);
 
     const totalCount = processedData.reduce((sum, item) => sum + item.count, 0);

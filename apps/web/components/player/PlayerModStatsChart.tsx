@@ -52,6 +52,11 @@ export default function PlayerModStatsChart({
     if (!modStats || modStats.length === 0) {
       return [];
     }
+
+    // Calculate total games across all mod stats
+    const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
+    const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
+
     // Create a map to aggregate scores by mod combination
     const modMap = new Map<string, ChartDataEntry>();
 
@@ -104,6 +109,7 @@ export default function PlayerModStatsChart({
     });
 
     return Array.from(modMap.values())
+      .filter((entry) => entry.count >= threshold)
       .map(({ label, averageScore, fill }) => ({
         label,
         averageScore,

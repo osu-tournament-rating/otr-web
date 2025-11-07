@@ -41,6 +41,11 @@ export default function PlayerModCountChart({
     if (!modStats || modStats.length === 0) {
       return [];
     }
+
+    // Calculate total games across all mod stats
+    const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
+    const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
+
     // Create a map to aggregate counts by mod combination
     const modMap = new Map<string, ProcessedEntry>();
 
@@ -78,7 +83,9 @@ export default function PlayerModCountChart({
       }
     });
 
-    return Array.from(modMap.values()).sort((a, b) => b.count - a.count);
+    return Array.from(modMap.values())
+      .filter((entry) => entry.count >= threshold)
+      .sort((a, b) => b.count - a.count);
   }, [modStats]);
 
   // Calculate total games for percentage display and center label
