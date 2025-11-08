@@ -46,7 +46,7 @@ SET accuracy = CASE
     CASE
       WHEN COALESCE(stat_great, 0) + COALESCE(stat_ok, 0) + COALESCE(stat_meh, 0) + COALESCE(stat_good, 0) + COALESCE(stat_miss, 0) = 0 THEN 0
       ELSE GREATEST(0, LEAST(1,
-        (COALESCE(stat_great, 0) + COALESCE(stat_ok, 0) + COALESCE(stat_meh, 0)) /
+        (COALESCE(stat_great, 0) + COALESCE(stat_ok, 0) + COALESCE(stat_meh, 0)) * 1.0 / -- * 1.0 added to convert to double
         (COALESCE(stat_great, 0) + COALESCE(stat_ok, 0) + COALESCE(stat_meh, 0) + COALESCE(stat_good, 0) + COALESCE(stat_miss, 0))
       ))
     END
