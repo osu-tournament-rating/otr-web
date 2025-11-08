@@ -73,4 +73,7 @@ UPDATE game_scores SET
     stat_meh = NULL,
     stat_good = NULL,
     stat_perfect = NULL
-WHERE ruleset = 2;
+WHERE ruleset = 2;--> statement-breakpoint
+
+-- Set legacy_total_score
+UPDATE game_scores SET legacy_total_score = score;
