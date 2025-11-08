@@ -156,8 +156,8 @@ export default function ScoreCard({
         {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="flex flex-row items-center justify-start gap-4">
-            {hitJudgments.map((item, index) => (
+          <div className="flex items-center justify-start gap-4">
+            {[...hitJudgments].reverse().map((item, index) => (
               <div key={index} className="performance-item">
                 <span className="label text-neutral-600 dark:text-neutral-400">
                   {item.label}
@@ -169,21 +169,21 @@ export default function ScoreCard({
             ))}
           </div>
           {/* Acc / Combo */}
-          <div className="flex flex-row items-center justify-end gap-4">
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                Combo
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.maxCombo}x
-              </span>
-            </div>
+          <div className="team-flex-row flex items-center justify-start gap-4">
             <div className="performance-item">
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Accuracy
               </span>
               <span className="value text-neutral-800 dark:text-neutral-200">
                 {score.accuracy.toFixed(2)}%
+              </span>
+            </div>
+            <div className="performance-item">
+              <span className="label text-neutral-600 dark:text-neutral-400">
+                Combo
+              </span>
+              <span className="value text-neutral-800 dark:text-neutral-200">
+                {score.maxCombo}x
               </span>
             </div>
           </div>
