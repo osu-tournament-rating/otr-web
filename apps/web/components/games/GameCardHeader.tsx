@@ -17,6 +17,8 @@ import SimpleTooltip from '../simple-tooltip';
 export default function GameCardHeader({ game }: { game: Game }) {
   const startTime = game.startTime ? new Date(game.startTime) : null;
   const endTime = game.endTime ? new Date(game.endTime) : null;
+  const isDeletedBeatmap =
+    !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
@@ -98,17 +100,23 @@ export default function GameCardHeader({ game }: { game: Game }) {
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
               <span className="font-semibold text-white">
-                {game.beatmap?.beatmapset?.creator?.username ?? 'Unknown user'}
+                {isDeletedBeatmap
+                  ? 'Unknown user'
+                  : (game.beatmap?.beatmapset?.creator?.username ??
+                    'Unknown user')}
               </span>
               <span>• Map by</span>
               <span className="font-semibold text-white">
-                {game.beatmap?.creators.map((c) => c.username).join(', ') ??
-                  'Unknown creator'}
+                {isDeletedBeatmap
+                  ? 'Unknown creator'
+                  : game.beatmap?.creators.map((c) => c.username).join(', ') ||
+                    'Unknown creator'}
               </span>
             </span>
             <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
-              {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'}{' '}
-              {game.beatmap && `[${game.beatmap.diffName}]`}
+              {isDeletedBeatmap
+                ? 'Deleted beatmap'
+                : `${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [${game.beatmap?.diffName ?? 'Unknown'}]`}
             </span>
           </div>
           <ModIconset
