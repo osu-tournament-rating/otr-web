@@ -175,7 +175,7 @@ export default function ScoreCard({
                 Accuracy
               </span>
               <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.accuracy.toFixed(2)}%
+                {(score.accuracy * 100).toFixed(2)}%
               </span>
             </div>
             <div className="performance-item">
