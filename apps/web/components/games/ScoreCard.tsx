@@ -51,8 +51,8 @@ export default function ScoreCard({
       case Ruleset.Catch:
         return [
           { label: 'Great', value: `${score.statGreat ?? 0}x` },
-          { label: 'Large Droplet', value: `${score.statOk ?? 0}x` },
-          { label: 'Small Droplet', value: `${score.statMeh ?? 0}x` },
+          { label: 'Lg. Drop', value: `${score.statLargeTickHit ?? 0}x` },
+          { label: 'Sm. Drop Miss', value: `${score.statSmallTickMiss ?? 0}x` },
           { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Osu:
