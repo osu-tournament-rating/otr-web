@@ -14,7 +14,6 @@ import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments
 import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
 import { TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
-import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
@@ -208,14 +207,6 @@ export default async function PlayerPage(props: PageProps) {
     currentRuleset
   );
 
-  const modStatsData = playerData.modStats?.filter(
-    (stat) =>
-      stat.count >=
-      ((playerData.modStats?.reduce((sum, stat) => sum + stat.count, 0) ?? 0) *
-        MOD_CHART_DISPLAY_THRESHOLD) /
-        100.0
-  );
-
   const chartHighestRating = playerData.rating?.adjustments?.length
     ? playerData.rating.adjustments.reduce(
         (max, adjustment) => Math.max(max, adjustment.ratingAfter),
@@ -253,19 +244,19 @@ export default async function PlayerPage(props: PageProps) {
             highestRating={chartHighestRating ?? undefined}
           />
           {/* Display all statistics charts in a responsive grid */}
-          {(modStatsData ||
+          {(playerData.modStats ||
             playerData.frequentTeammates ||
             playerData.frequentOpponents) && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-2">
-              {modStatsData && (
+              {playerData.modStats && (
                 <>
                   <PlayerModStatsChart
                     className="w-full"
-                    modStats={modStatsData}
+                    modStats={playerData.modStats}
                   />
                   <PlayerModCountChart
                     className="w-full"
-                    modStats={modStatsData}
+                    modStats={playerData.modStats}
                   />
                 </>
               )}
