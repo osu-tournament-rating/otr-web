@@ -121,8 +121,6 @@ const generateMatchRosters = (
   }));
 };
 
-const calculateAccuracyForScore = (score: StatsScore) => score.accuracy;
-
 export class TournamentStatsCalculator {
   calculateAllStatistics(tournament: StatsTournament): StatsCalculationResult {
     if (tournament.verificationStatus !== VerificationStatus.Verified) {
@@ -278,9 +276,7 @@ export class TournamentStatsCalculator {
       const averageScore = average(scores.map((score) => score.score));
       const averagePlacement = average(scores.map((score) => score.placement));
       const averageMisses = average(scores.map((score) => score.statMiss ?? 0));
-      const averageAccuracy = average(
-        scores.map((score) => calculateAccuracyForScore(score))
-      );
+      const averageAccuracy = average(scores.map((score) => score.accuracy));
 
       let gamesWon = 0;
       let gamesLost = 0;
