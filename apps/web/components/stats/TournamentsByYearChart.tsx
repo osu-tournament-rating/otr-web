@@ -102,7 +102,10 @@ export default function TournamentsByYearChart({
               stroke={CHART_COLORS.mutedForeground}
             />
             <XAxis dataKey="year" stroke={CHART_COLORS.mutedForeground} />
-            <YAxis stroke={CHART_COLORS.mutedForeground} domain={[0, yAxisMax]} />
+            <YAxis
+              stroke={CHART_COLORS.mutedForeground}
+              domain={[0, yAxisMax]}
+            />
             <Tooltip cursor={false} content={<CustomTooltip />} />
             <Bar
               dataKey="count"
