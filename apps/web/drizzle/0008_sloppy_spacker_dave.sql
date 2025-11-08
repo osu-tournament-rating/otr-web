@@ -30,15 +30,3 @@ ALTER TABLE "game_scores" ADD COLUMN "stat_ignore_hit" integer;--> statement-bre
 ALTER TABLE "game_scores" ADD COLUMN "stat_ignore_miss" integer;--> statement-breakpoint
 ALTER TABLE "game_scores" ADD COLUMN "stat_legacy_combo_increase" integer;--> statement-breakpoint
 ALTER TABLE "game_scores" ADD COLUMN "legacy_total_score" integer DEFAULT 0 NOT NULL;
-
--- Catch migration
-UPDATE game_scores
-    SET
-    stat_large_tick_hit = stat_ok,
-    stat_small_tick_hit = stat_meh,
-    stat_small_tick_miss = stat_good,
-    stat_ok = NULL,
-    stat_meh = NULL,
-    stat_good = NULL,
-    stat_perfect = NULL
-WHERE ruleset = 2;
