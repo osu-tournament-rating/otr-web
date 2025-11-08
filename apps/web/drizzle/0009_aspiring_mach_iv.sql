@@ -15,7 +15,9 @@ ALTER TABLE "game_scores" ALTER COLUMN "rejection_reason" DROP DEFAULT;--> state
 ALTER TABLE "game_scores" ALTER COLUMN "stat_ok" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "game_scores" ALTER COLUMN "stat_meh" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "game_scores" ALTER COLUMN "stat_good" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "game_scores" ALTER COLUMN "stat_great" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "game_scores" ALTER COLUMN "stat_perfect" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "game_scores" ALTER COLUMN "stat_miss" DROP NOT NULL;--> statement-breakpoint
 
 -- Recalculate accuracy for all scores using the old formula
 -- Accuracy is calculated as a float from 0 to 1.0 based on ruleset
