@@ -159,13 +159,13 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
         score: values.score,
         placement: values.placement,
         maxCombo: values.maxCombo,
-        count50: values.count50,
-        count100: values.count100,
-        count300: values.count300,
-        countMiss: values.countMiss,
-        countKatu: values.countKatu,
-        countGeki: values.countGeki,
         accuracy: values.accuracy,
+        statGreat: values.statGreat,
+        statOk: values.statOk,
+        statMeh: values.statMeh,
+        statMiss: values.statMiss,
+        statGood: values.statGood,
+        statPerfect: values.statPerfect,
         grade: values.grade,
         mods: values.mods,
         ruleset: values.ruleset,
@@ -217,12 +217,12 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
       'score',
       'accuracy',
       'maxCombo',
-      'count300',
-      'count100',
-      'count50',
-      'countMiss',
-      'countGeki',
-      'countKatu',
+      'statGreat',
+      'statOk',
+      'statMeh',
+      'statMiss',
+      'statGood',
+      'statPerfect',
       'grade',
       'mods',
     ] as const;
@@ -381,16 +381,24 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
               <div className="flex gap-5">
                 <FormField
                   control={form.control}
-                  name="count300"
+                  name="statPerfect"
                   render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>300</FormLabel>
+                      <FormLabel>Perfect</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
                           type="number"
                           min={0}
                           {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -399,16 +407,24 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                 />
                 <FormField
                   control={form.control}
-                  name="count100"
+                  name="statGreat"
                   render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>100</FormLabel>
+                      <FormLabel>Great</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
                           type="number"
                           min={0}
                           {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -417,16 +433,24 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                 />
                 <FormField
                   control={form.control}
-                  name="count50"
+                  name="statGood"
                   render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>50</FormLabel>
+                      <FormLabel>Good</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
                           type="number"
                           min={0}
                           {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -438,7 +462,59 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
               <div className="flex gap-5">
                 <FormField
                   control={form.control}
-                  name="countMiss"
+                  name="statOk"
+                  render={({ field, fieldState }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Ok</FormLabel>
+                      <FormControl>
+                        <Input
+                          className={inputChangedStyle(fieldState)}
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="statMeh"
+                  render={({ field, fieldState }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Meh</FormLabel>
+                      <FormControl>
+                        <Input
+                          className={inputChangedStyle(fieldState)}
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="statMiss"
                   render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Miss</FormLabel>
@@ -448,42 +524,14 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                           type="number"
                           min={0}
                           {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="countGeki"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Geki</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          type="number"
-                          min={0}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="countKatu"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Katu</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          type="number"
-                          min={0}
-                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />

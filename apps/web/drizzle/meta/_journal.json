@@ -57,6 +57,20 @@
       "when": 1759872800691,
       "tag": "0007_busy_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1762466797559,
+      "tag": "0008_sloppy_spacker_dave",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1762633337922,
+      "tag": "0009_aspiring_mach_iv",
+      "breakpoints": true
     }
   ]
 }

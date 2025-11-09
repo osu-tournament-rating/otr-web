@@ -473,27 +473,37 @@ export class MatchFetchService {
       const grade = convertScoreGrade(score.rank);
 
       const stats = score.statistics ?? {};
-      const count300 = stats.great ?? stats.great ?? 0;
-      const count100 = stats.ok ?? stats.ok ?? 0;
-      const count50 = stats.meh ?? stats.meh ?? 0;
-      const countMiss = stats.miss ?? stats.miss ?? 0;
-      const countGeki = stats.large_bonus ?? 0;
-      const countKatu = stats.small_bonus ?? 0;
 
       const baseValues = {
         score: totalScore,
         placement: 0,
+        accuracy: score.accuracy,
+        pp: score.pp ?? null,
         maxCombo: score.max_combo ?? 0,
-        count300,
-        count100,
-        count50,
-        countMiss,
-        countGeki,
-        countKatu,
+        statComboBreak: stats.combo_break ?? null,
         pass: score.passed ?? score.match?.pass ?? false,
         perfect: score.perfect ?? false,
+        isPerfectCombo: score.is_perfect_combo,
+        legacyPerfect: score.legacy_perfect,
         grade,
         mods,
+        statGreat: stats.great ?? null,
+        statOk: stats.ok ?? null,
+        statMeh: stats.meh ?? null,
+        statMiss: stats.miss ?? null,
+        statGood: stats.good ?? null,
+        statPerfect: stats.perfect ?? null,
+        statSliderTailHit: stats.slider_tail_hit ?? null,
+        statLargeTickHit: stats.large_tick_hit ?? null,
+        statLargeTickMiss: stats.large_tick_miss ?? null,
+        statSmallTickHit: stats.small_tick_hit ?? null,
+        statSmallTickMiss: stats.small_tick_miss ?? null,
+        statLargeBonus: stats.large_bonus ?? null,
+        statSmallBonus: stats.small_bonus ?? null,
+        statIgnoreHit: stats.ignore_hit ?? null,
+        statIgnoreMiss: stats.ignore_miss ?? null,
+        statLegacyComboIncrease: stats.legacy_combo_increase ?? null,
+        legacyTotalScore: score.legacy_total_score,
         team,
         ruleset,
         updated: nowIso,

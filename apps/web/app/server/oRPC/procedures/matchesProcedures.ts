@@ -4,6 +4,7 @@ import { asc, desc, eq, inArray } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { AdminNoteSchema, AdminNoteUserSchema } from '@/lib/orpc/schema/common';
 import {
+  GameScoreSchema,
   MatchDetailSchema,
   MatchIdInputSchema,
   MatchRoster,
@@ -14,7 +15,6 @@ import {
   RatingAdjustmentType,
   Ruleset,
   ScoringType,
-  ScoreGrade,
   Team,
   TeamType,
   VerificationStatus,
@@ -100,62 +100,6 @@ function mapAdminNote(row: AdminNoteRow): AdminNote {
       player: { ...FALLBACK_PLAYER },
     },
   };
-}
-
-function calculateAccuracy({
-  ruleset,
-  count50,
-  count100,
-  count300,
-  countMiss,
-  countKatu,
-  countGeki,
-}: {
-  ruleset: Ruleset;
-  count50: number;
-  count100: number;
-  count300: number;
-  countMiss: number;
-  countKatu: number;
-  countGeki: number;
-}): number {
-  const clamp = (value: number) =>
-    Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
-
-  switch (ruleset) {
-    case Ruleset.Osu: {
-      const total = count300 + count100 + count50 + countMiss;
-      if (total === 0) return 0;
-      const numerator = count300 * 300 + count100 * 100 + count50 * 50;
-      return clamp((numerator / (total * 300)) * 100);
-    }
-    case Ruleset.Taiko: {
-      const total = count300 + count100 + countMiss;
-      if (total === 0) return 0;
-      const numerator = count300 + count100 * 0.5;
-      return clamp((numerator / total) * 100);
-    }
-    case Ruleset.Catch: {
-      const caught = count300 + count100 + count50;
-      const total = caught + countKatu + countMiss;
-      if (total === 0) return 0;
-      return clamp((caught / total) * 100);
-    }
-    case Ruleset.ManiaOther:
-    case Ruleset.Mania4k:
-    case Ruleset.Mania7k:
-    default: {
-      const total =
-        count300 + countGeki + count100 + countKatu + count50 + countMiss;
-      if (total === 0) return 0;
-      const numerator =
-        (count300 + countGeki) * 300 +
-        countKatu * 200 +
-        count100 * 100 +
-        count50 * 50;
-      return clamp((numerator / (total * 300)) * 100);
-    }
-  }
 }
 
 function deriveWinRecord(matchId: number, rosters: MatchRoster[]) {
@@ -396,16 +340,31 @@ export const getMatch = publicProcedure
             score: schema.gameScores.score,
             placement: schema.gameScores.placement,
             maxCombo: schema.gameScores.maxCombo,
-            count50: schema.gameScores.count50,
-            count100: schema.gameScores.count100,
-            count300: schema.gameScores.count300,
-            countMiss: schema.gameScores.countMiss,
-            countKatu: schema.gameScores.countKatu,
-            countGeki: schema.gameScores.countGeki,
+            accuracy: schema.gameScores.accuracy,
+            pp: schema.gameScores.pp,
+            statGreat: schema.gameScores.statGreat,
+            statOk: schema.gameScores.statOk,
+            statMeh: schema.gameScores.statMeh,
+            statMiss: schema.gameScores.statMiss,
+            statGood: schema.gameScores.statGood,
+            statPerfect: schema.gameScores.statPerfect,
+            statComboBreak: schema.gameScores.statComboBreak,
+            statSliderTailHit: schema.gameScores.statSliderTailHit,
+            statLargeTickHit: schema.gameScores.statLargeTickHit,
+            statLargeTickMiss: schema.gameScores.statLargeTickMiss,
+            statSmallTickHit: schema.gameScores.statSmallTickHit,
+            statSmallTickMiss: schema.gameScores.statSmallTickMiss,
+            statLargeBonus: schema.gameScores.statLargeBonus,
+            statSmallBonus: schema.gameScores.statSmallBonus,
+            statIgnoreHit: schema.gameScores.statIgnoreHit,
+            statIgnoreMiss: schema.gameScores.statIgnoreMiss,
+            statLegacyComboIncrease: schema.gameScores.statLegacyComboIncrease,
             pass: schema.gameScores.pass,
-            perfect: schema.gameScores.perfect,
+            isPerfectCombo: schema.gameScores.isPerfectCombo,
+            legacyPerfect: schema.gameScores.legacyPerfect,
             grade: schema.gameScores.grade,
             mods: schema.gameScores.mods,
+            legacyTotalScore: schema.gameScores.legacyTotalScore,
             team: schema.gameScores.team,
             ruleset: schema.gameScores.ruleset,
             verificationStatus: schema.gameScores.verificationStatus,
@@ -672,42 +631,12 @@ export const getMatch = publicProcedure
             }
           : null;
 
-      const scores = (scoresByGameId.get(game.id) ?? []).map((score) => ({
-        id: score.id,
-        playerId: score.playerId,
-        gameId: score.gameId,
-        score: score.score,
-        placement: score.placement,
-        maxCombo: score.maxCombo,
-        count50: score.count50,
-        count100: score.count100,
-        count300: score.count300,
-        countMiss: score.countMiss,
-        countKatu: score.countKatu,
-        countGeki: score.countGeki,
-        pass: score.pass,
-        perfect: score.perfect,
-        grade: score.grade as ScoreGrade,
-        mods: score.mods,
-        team: score.team as Team,
-        ruleset: score.ruleset as Ruleset,
-        verificationStatus: score.verificationStatus as VerificationStatus,
-        rejectionReason: score.rejectionReason,
-        accuracy: Number(
-          calculateAccuracy({
-            ruleset: score.ruleset as Ruleset,
-            count50: score.count50,
-            count100: score.count100,
-            count300: score.count300,
-            countMiss: score.countMiss,
-            countKatu: score.countKatu,
-            countGeki: score.countGeki,
-          }).toFixed(6)
-        ),
-        adminNotes: scoreAdminNotesByScoreId.get(score.id) ?? [],
-        created: score.created,
-        updated: score.updated ?? null,
-      }));
+      const scores = (scoresByGameId.get(game.id) ?? []).map((score) =>
+        GameScoreSchema.parse({
+          ...score,
+          adminNotes: scoreAdminNotesByScoreId.get(score.id) ?? [],
+        })
+      );
 
       return {
         id: game.id,
