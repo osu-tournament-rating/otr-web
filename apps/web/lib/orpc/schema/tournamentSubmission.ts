@@ -57,6 +57,7 @@ const baseSubmissionSchema = z.object({
   rejectionReason: createBitwiseEnumSchema(TournamentRejectionReason).default(
     TournamentRejectionReason.None
   ),
+  isLazer: z.boolean().default(false),
   ids: z.array(matchIdSchema).min(1, 'At least one match ID is required'),
   beatmapIds: z.array(beatmapIdSchema).default([]),
 });

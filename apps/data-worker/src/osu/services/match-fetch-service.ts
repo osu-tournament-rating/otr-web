@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import type { API, Match } from 'osu-api-v2-js';
+import type { API, Match, Multiplayer } from 'osu-api-v2-js';
 
 import {
   ensureBeatmapPlaceholder,
@@ -87,6 +87,7 @@ export class MatchFetchService {
         tournamentId: true,
         dataFetchStatus: true,
         verificationStatus: true,
+        isLazer: true,
       },
       with: {
         tournament: {
@@ -103,6 +104,24 @@ export class MatchFetchService {
       return false;
     }
 
+    if (matchRow.isLazer) {
+      return this.fetchAndPersistLazerRoom(osuMatchId, matchRow);
+    }
+
+    return this.fetchAndPersistStableMatch(osuMatchId, matchRow);
+  }
+
+  private async fetchAndPersistStableMatch(
+    osuMatchId: number,
+    matchRow: {
+      id: number;
+      tournamentId: number;
+      dataFetchStatus: number;
+      verificationStatus: number;
+      isLazer: boolean;
+      tournament?: { id: number; ruleset: number } | null;
+    }
+  ): Promise<boolean> {
     const nowIso = new Date().toISOString();
     const tournamentRuleset = coerceNumericEnumValue(
       Ruleset,
@@ -527,6 +546,397 @@ export class MatchFetchService {
           .update(schema.gameScores)
           .set({
             ...baseValues,
+            verificationStatus,
+            rejectionReason,
+          })
+          .where(eq(schema.gameScores.id, existing.id));
+
+        continue;
+      }
+
+      let verificationStatus = VerificationStatus.None;
+      let rejectionReason = 0;
+
+      if (
+        matchVerificationStatus === VerificationStatus.Rejected ||
+        gameVerificationStatus === VerificationStatus.Rejected
+      ) {
+        verificationStatus = VerificationStatus.Rejected;
+        rejectionReason = ScoreRejectionReason.RejectedGame;
+      }
+
+      await tx.insert(schema.gameScores).values({
+        gameId,
+        playerId,
+        ...baseValues,
+        verificationStatus,
+        rejectionReason,
+      });
+    }
+  }
+
+  private async fetchAndPersistLazerRoom(
+    roomId: number,
+    matchRow: {
+      id: number;
+      tournamentId: number;
+      dataFetchStatus: number;
+      verificationStatus: number;
+      isLazer: boolean;
+      tournament?: { id: number; ruleset: number } | null;
+    }
+  ): Promise<boolean> {
+    const nowIso = new Date().toISOString();
+    const tournamentRuleset = coerceNumericEnumValue(
+      Ruleset,
+      matchRow.tournament?.ruleset
+    );
+
+    await this.db
+      .update(schema.matches)
+      .set({ dataFetchStatus: DataFetchStatus.Fetching, updated: nowIso })
+      .where(eq(schema.matches.id, matchRow.id));
+
+    const roomData = await this.rateLimiter.schedule(() =>
+      withNotFoundHandling(() => this.api.getRoomEvents(roomId))
+    );
+
+    if (!roomData) {
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.NotFound
+      );
+      this.logger.warn('osu! API returned no data for room', { roomId });
+      return false;
+    }
+
+    const { room, events, playlist_items, users } = roomData;
+
+    if (!room || !events) {
+      this.logger.warn('Invalid room data structure', { roomId });
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.Error
+      );
+      return false;
+    }
+
+    const disbandedEvent = events.find(
+      (e: Multiplayer.Room.Event) => e.event_type === 'room_disbanded'
+    );
+    if (!disbandedEvent) {
+      this.logger.warn('Room is still in progress (no room_disbanded event)', {
+        roomId,
+      });
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.Error
+      );
+      return false;
+    }
+
+    if (room.type !== 'team_versus' && room.type !== 'head_to_head') {
+      this.logger.warn(
+        'Unsupported room type (only realtime tournaments supported)',
+        {
+          roomId,
+          roomType: room.type,
+        }
+      );
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.Error
+      );
+      return false;
+    }
+
+    const beatmapsToQueue = new Map<number, { beatmapDbId: number }>();
+
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(schema.matches)
+        .set({
+          name: room.name ?? `Room ${matchRow.id}`,
+          startTime: normalizeDate(room.starts_at) ?? null,
+          endTime: normalizeDate(room.ends_at) ?? null,
+          dataFetchStatus: DataFetchStatus.Fetched,
+          updated: nowIso,
+        })
+        .where(eq(schema.matches.id, matchRow.id));
+
+      const userMap = new Map<
+        number,
+        { username?: string; country?: string }
+      >();
+      for (const user of users ?? []) {
+        const meta = {
+          username: user.username,
+          country: user.country_code,
+        };
+        userMap.set(user.id, meta);
+        await getOrCreatePlayerId(tx, user.id, meta);
+      }
+
+      const isMatchRejected =
+        matchRow.verificationStatus === VerificationStatus.Rejected;
+      const rejectedGameIds = new Set<number>();
+
+      for (const playlistItem of playlist_items ?? []) {
+        const rawRuleset = coerceNumericEnumValue(
+          Ruleset,
+          playlistItem.ruleset_id,
+          Ruleset.Osu
+        );
+        const ruleset = resolveRulesetWithTournament(
+          rawRuleset,
+          tournamentRuleset ?? rawRuleset
+        );
+
+        const mods = convertModsToFlags(playlistItem.required_mods ?? []);
+
+        const beatmapRecord = await ensureBeatmapPlaceholder(
+          tx,
+          playlistItem.beatmap_id,
+          DataFetchStatus.NotFetched,
+          nowIso
+        );
+
+        if (beatmapRecord.dataFetchStatus === DataFetchStatus.NotFetched) {
+          const [marked] = await tx
+            .update(schema.beatmaps)
+            .set({
+              dataFetchStatus: DataFetchStatus.Fetching,
+              updated: nowIso,
+            })
+            .where(
+              and(
+                eq(schema.beatmaps.id, beatmapRecord.id),
+                eq(schema.beatmaps.dataFetchStatus, DataFetchStatus.NotFetched)
+              )
+            )
+            .returning({ id: schema.beatmaps.id });
+
+          if (marked) {
+            beatmapsToQueue.set(playlistItem.beatmap_id, {
+              beatmapDbId: beatmapRecord.id,
+            });
+          }
+        }
+
+        const gameStartedEvent = events.find(
+          (e: Multiplayer.Room.Event) =>
+            e.event_type === 'game_started' &&
+            e.playlist_item_id === playlistItem.id
+        );
+        const gameCompletedEvent = events.find(
+          (e: Multiplayer.Room.Event) =>
+            e.event_type === 'game_completed' &&
+            e.playlist_item_id === playlistItem.id
+        );
+
+        if (!gameStartedEvent || !gameCompletedEvent) {
+          this.logger.warn('Playlist item missing start/complete events', {
+            playlistItemId: playlistItem.id,
+            roomId,
+          });
+          continue;
+        }
+
+        const existingGame = await tx.query.games.findFirst({
+          where: and(
+            eq(schema.games.matchId, matchRow.id),
+            eq(schema.games.osuId, playlistItem.id)
+          ),
+          columns: {
+            id: true,
+            verificationStatus: true,
+          },
+        });
+
+        const scoringType = 0;
+        const teamType = room.type === 'team_versus' ? 1 : 0;
+
+        const gameValues = {
+          matchId: matchRow.id,
+          beatmapId: beatmapRecord.id,
+          ruleset,
+          scoringType,
+          teamType,
+          mods,
+          startTime: normalizeDate(gameStartedEvent.created_at) ?? nowIso,
+          endTime: normalizeDate(gameCompletedEvent.created_at) ?? nowIso,
+          updated: nowIso,
+        };
+
+        let gameId: number;
+        let gameVerificationStatus = existingGame?.verificationStatus;
+
+        if (existingGame) {
+          await tx
+            .update(schema.games)
+            .set(gameValues)
+            .where(eq(schema.games.id, existingGame.id));
+          gameId = existingGame.id;
+        } else {
+          let verificationStatus = VerificationStatus.None;
+          let rejectionReason = 0;
+
+          if (matchRow.verificationStatus === VerificationStatus.Rejected) {
+            verificationStatus = VerificationStatus.Rejected;
+            rejectionReason = GameRejectionReason.RejectedMatch;
+          }
+
+          const [insertedGame] = await tx
+            .insert(schema.games)
+            .values({
+              osuId: playlistItem.id,
+              ...gameValues,
+              verificationStatus,
+              rejectionReason,
+              warningFlags: 0,
+            })
+            .returning({
+              id: schema.games.id,
+              verificationStatus: schema.games.verificationStatus,
+            });
+
+          gameId = insertedGame.id;
+          gameVerificationStatus = insertedGame.verificationStatus;
+
+          if (verificationStatus === VerificationStatus.Rejected) {
+            rejectedGameIds.add(gameId);
+          }
+        }
+
+        await this.processLazerScores(
+          tx,
+          playlistItem.scores ?? [],
+          gameId,
+          ruleset,
+          userMap,
+          matchRow.verificationStatus,
+          gameVerificationStatus ?? VerificationStatus.None
+        );
+      }
+
+      if (isMatchRejected) {
+        await cascadeMatchRejection(tx, [matchRow.id], {
+          updatedAt: nowIso,
+        });
+      } else if (rejectedGameIds.size > 0) {
+        await cascadeGameRejection(tx, Array.from(rejectedGameIds), {
+          updatedAt: nowIso,
+        });
+      }
+    });
+
+    for (const [osuBeatmapId, { beatmapDbId }] of beatmapsToQueue) {
+      try {
+        await this.publishBeatmapFetch(osuBeatmapId);
+      } catch (error) {
+        await updateBeatmapStatus(
+          this.db,
+          beatmapDbId,
+          DataFetchStatus.NotFetched,
+          new Date().toISOString()
+        );
+        throw error;
+      }
+    }
+
+    await this.dataCompletion.updateMatchFetchStatus(
+      matchRow.id,
+      DataFetchStatus.Fetched
+    );
+    return true;
+  }
+
+  private async processLazerScores(
+    tx: Parameters<Parameters<typeof this.db.transaction>[0]>[0],
+    scores: Multiplayer.Room.PlaylistItem.Score[],
+    gameId: number,
+    ruleset: Ruleset,
+    userMap: Map<number, { username?: string; country?: string }>,
+    matchVerificationStatus: number,
+    gameVerificationStatus: number
+  ): Promise<void> {
+    for (const score of scores) {
+      const osuUserId = score.user_id;
+      const meta = userMap.get(osuUserId);
+      if (!meta) {
+        this.logger.warn('Score for unknown user', { osuUserId, gameId });
+        continue;
+      }
+
+      const playerId = await getOrCreatePlayerId(tx, osuUserId, meta);
+
+      const stats = score.statistics;
+      const totalScore = score.total_score;
+      const team = convertTeam((score as { team?: string }).team ?? 'none');
+      const grade = convertScoreGrade(score.rank);
+      const mods = convertModsToFlags(score.mods ?? []);
+
+      const baseValues = {
+        score: totalScore,
+        placement: 0,
+        accuracy: score.accuracy,
+        pp: score.pp,
+        maxCombo: score.max_combo,
+        pass: score.passed,
+        isPerfectCombo: score.is_perfect_combo ?? false,
+        legacyPerfect: score.legacy_perfect ?? false,
+        grade,
+        mods,
+        statGreat: stats.great ?? null,
+        statOk: stats.ok ?? null,
+        statMeh: stats.meh ?? null,
+        statMiss: stats.miss ?? null,
+        statGood: stats.good ?? null,
+        statPerfect: stats.perfect ?? null,
+        statSliderTailHit: stats.slider_tail_hit ?? null,
+        statLargeTickHit: stats.large_tick_hit ?? null,
+        statLargeTickMiss: stats.large_tick_miss ?? null,
+        statSmallTickHit: stats.small_tick_hit ?? null,
+        statSmallTickMiss: stats.small_tick_miss ?? null,
+        statLargeBonus: stats.large_bonus ?? null,
+        statSmallBonus: stats.small_bonus ?? null,
+        statIgnoreHit: stats.ignore_hit ?? null,
+        statIgnoreMiss: stats.ignore_miss ?? null,
+        statLegacyComboIncrease: stats.legacy_combo_increase ?? null,
+        statComboBreak: stats.combo_break ?? null,
+        legacyTotalScore: score.legacy_total_score ?? totalScore,
+        team,
+        ruleset,
+      };
+
+      const existing = await tx.query.gameScores.findFirst({
+        where: and(
+          eq(schema.gameScores.gameId, gameId),
+          eq(schema.gameScores.playerId, playerId)
+        ),
+        columns: {
+          id: true,
+          verificationStatus: true,
+        },
+      });
+
+      if (existing) {
+        let verificationStatus = existing.verificationStatus;
+        let rejectionReason = 0;
+
+        if (
+          matchVerificationStatus === VerificationStatus.Rejected ||
+          gameVerificationStatus === VerificationStatus.Rejected
+        ) {
+          verificationStatus = VerificationStatus.Rejected;
+          rejectionReason = ScoreRejectionReason.RejectedGame;
+        }
+
+        await tx
+          .update(schema.gameScores)
+          .set({
+            ...baseValues,
+            updated: new Date().toISOString(),
             verificationStatus,
             rejectionReason,
           })

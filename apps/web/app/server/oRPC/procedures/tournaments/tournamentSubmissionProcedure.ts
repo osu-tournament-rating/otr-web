@@ -189,6 +189,7 @@ export async function submitTournamentHandler({
               verificationStatus: VerificationStatus.None,
               rejectionReason: 0,
               warningFlags: 0,
+              isLazer: input.isLazer,
             }))
           );
 

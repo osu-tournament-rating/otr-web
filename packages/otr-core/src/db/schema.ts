@@ -594,8 +594,9 @@ export const games = pgTable(
       'btree',
       table.matchId.asc().nullsLast().op('int4_ops')
     ),
-    uniqueIndex('ix_games_osu_id').using(
+    uniqueIndex('ix_games_match_id_osu_id').using(
       'btree',
+      table.matchId.asc().nullsLast().op('int4_ops'),
       table.osuId.asc().nullsLast().op('int8_ops')
     ),
     index('ix_games_start_time').using(
@@ -863,6 +864,7 @@ export const matches = pgTable(
     verificationStatus: integer('verification_status').default(0).notNull(),
     rejectionReason: integer('rejection_reason').default(0).notNull(),
     warningFlags: integer('warning_flags').default(0).notNull(),
+    isLazer: boolean('is_lazer').default(false).notNull(),
     tournamentId: integer('tournament_id').notNull(),
     submittedByUserId: integer('submitted_by_user_id'),
     verifiedByUserId: integer('verified_by_user_id'),
@@ -873,9 +875,10 @@ export const matches = pgTable(
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
   },
   (table) => [
-    uniqueIndex('ix_matches_osu_id').using(
+    uniqueIndex('ix_matches_osu_id_is_lazer').using(
       'btree',
-      table.osuId.asc().nullsLast().op('int8_ops')
+      table.osuId.asc().nullsLast().op('int8_ops'),
+      table.isLazer.asc().nullsLast().op('bool_ops')
     ),
     index('ix_matches_submitted_by_user_id').using(
       'btree',
