@@ -16,8 +16,6 @@ import {
   isPreVerifiedOrVerified,
 } from './utils';
 
-const EXPECTED_SCORING_TYPE = ScoringType.ScoreV2;
-
 export interface GameAutomationChecksOptions {
   logger?: {
     trace(message: string, context?: Record<string, unknown>): void;
@@ -83,7 +81,7 @@ export class GameAutomationChecks {
 
   private checkScoringType(game: AutomationGame): GameRejectionReason {
     if (
-      game.scoringType === EXPECTED_SCORING_TYPE ||
+      game.scoringType === ScoringType.ScoreV2 ||
       game.scoringType === ScoringType.Lazer
     ) {
       return GameRejectionReason.None;
