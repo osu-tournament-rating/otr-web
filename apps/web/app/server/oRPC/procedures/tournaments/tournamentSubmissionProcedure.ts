@@ -128,6 +128,7 @@ export async function submitTournamentHandler({
                 ? VerificationStatus.None
                 : VerificationStatus.Rejected,
             submittedByUserId: submittingUserId,
+            isLazer: input.isLazer,
           })
           .returning({ id: schema.tournaments.id });
 
@@ -146,7 +147,12 @@ export async function submitTournamentHandler({
                 tournamentId: schema.matches.tournamentId,
               })
               .from(schema.matches)
-              .where(inArray(schema.matches.osuId, matchOsuIds))
+              .where(
+                and(
+                  inArray(schema.matches.osuId, matchOsuIds),
+                  eq(schema.matches.isLazer, input.isLazer)
+                )
+              )
           : [];
 
         const conflictingMatches = existingMatches.filter(
@@ -173,7 +179,12 @@ export async function submitTournamentHandler({
               tournamentId,
               submittedByUserId: submittingUserId,
             })
-            .where(eq(schema.matches.osuId, match.osuId));
+            .where(
+              and(
+                eq(schema.matches.osuId, match.osuId),
+                eq(schema.matches.isLazer, input.isLazer)
+              )
+            );
         }
 
         const matchesToInsert = matchOsuIds.filter(
