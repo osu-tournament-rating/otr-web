@@ -440,29 +440,38 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="ids"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <LabelWithTooltip
-                    label="Matches"
-                    tooltip="osu! match IDs or URLs (one per line)"
-                  />
-                  <FormControl>
-                    <Textarea
-                      placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890\nhttps://osu.ppy.sh/multiplayer/rooms/1537300`}
-                      value={
-                        Array.isArray(field.value)
-                          ? field.value.map(String).join('\n')
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(e.target.value.split('\n'))
-                      }
-                      className={getTextareaFieldClassName(!!fieldState.error)}
+              render={({ field, fieldState }) => {
+                const isLazer = form.watch('isLazer');
+                const placeholder = isLazer
+                  ? `https://osu.ppy.sh/multiplayer/rooms/1537300\nhttps://osu.ppy.sh/multiplayer/rooms/2048512`
+                  : `https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`;
+
+                return (
+                  <FormItem>
+                    <LabelWithTooltip
+                      label="Matches"
+                      tooltip="osu! match IDs or URLs (one per line)"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                    <FormControl>
+                      <Textarea
+                        placeholder={placeholder}
+                        value={
+                          Array.isArray(field.value)
+                            ? field.value.map(String).join('\n')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(e.target.value.split('\n'))
+                        }
+                        className={getTextareaFieldClassName(
+                          !!fieldState.error
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
