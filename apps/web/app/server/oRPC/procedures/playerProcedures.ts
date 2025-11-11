@@ -22,6 +22,7 @@ import {
   Mods,
   RatingAdjustmentType,
   Ruleset,
+  ScoringType,
   VerificationStatus,
 } from '@otr/core/osu';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
@@ -1010,6 +1011,7 @@ export const getPlayerStats = publicProcedure
       eq(schema.gameScores.playerId, player.id),
       eq(schema.gameScores.verificationStatus, VerificationStatus.Verified),
       eq(schema.tournaments.ruleset, resolvedRuleset),
+      eq(schema.games.scoringType, ScoringType.ScoreV2),
     ];
 
     if (bounds.start) {
