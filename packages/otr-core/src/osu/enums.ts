@@ -145,6 +145,7 @@ export enum ScoringType {
   Accuracy = 1,
   Combo = 2,
   ScoreV2 = 3,
+  Lazer = 4,
 }
 
 export enum Team {

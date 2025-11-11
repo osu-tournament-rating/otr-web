@@ -16,7 +16,6 @@ import {
   isPreVerifiedOrVerified,
 } from './utils';
 
-const INVALID_TEAM_TYPE = TeamType.TeamVs;
 const EXPECTED_SCORING_TYPE = ScoringType.ScoreV2;
 
 export interface GameAutomationChecksOptions {
@@ -68,7 +67,10 @@ export class GameAutomationChecks {
   }
 
   private checkTeamType(game: AutomationGame): GameRejectionReason {
-    if (game.teamType === INVALID_TEAM_TYPE) {
+    if (
+      game.teamType === TeamType.TeamVs ||
+      game.teamType === TeamType.HeadToHead
+    ) {
       return GameRejectionReason.None;
     }
 
@@ -80,7 +82,10 @@ export class GameAutomationChecks {
   }
 
   private checkScoringType(game: AutomationGame): GameRejectionReason {
-    if (game.scoringType === EXPECTED_SCORING_TYPE) {
+    if (
+      game.scoringType === EXPECTED_SCORING_TYPE ||
+      game.scoringType === ScoringType.Lazer
+    ) {
       return GameRejectionReason.None;
     }
 

@@ -23,7 +23,9 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import {
   GameRejectionReason,
   Ruleset,
+  ScoringType,
   ScoreRejectionReason,
+  TeamType,
   VerificationStatus,
 } from '@otr/core/osu/enums';
 import {
@@ -238,8 +240,17 @@ export class RoomFetchService {
           },
         });
 
-        const scoringType = 0;
-        const teamType = room.type === 'team_versus' ? 1 : 0;
+        const scoringType = ScoringType.Lazer;
+        const teamType =
+          room.type === 'team_versus'
+            ? TeamType.TeamVs
+            : room.type === 'head_to_head'
+              ? TeamType.HeadToHead
+              : undefined;
+
+        if (teamType === undefined) {
+          throw new Error(`Unsupported room type: ${room.type}`);
+        }
 
         const gameValues = {
           matchId: matchRow.id,
