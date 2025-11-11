@@ -129,7 +129,8 @@ export class TournamentDataCompletionService {
     const matchesComplete = matches.every(
       (match) =>
         match.dataFetchStatus === DataFetchStatus.Fetched ||
-        match.dataFetchStatus === DataFetchStatus.NotFound
+        match.dataFetchStatus === DataFetchStatus.NotFound ||
+        match.dataFetchStatus === DataFetchStatus.Error
     );
 
     if (!matchesComplete) {
