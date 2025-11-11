@@ -90,7 +90,11 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   className="h-6 w-6 hover:bg-white/20 hover:text-white"
                 >
                   <Link
-                    href={`https://osu.ppy.sh/community/matches/${match.osuId}`}
+                    href={
+                      match.isLazer
+                        ? `https://osu.ppy.sh/multiplayer/rooms/${match.osuId}`
+                        : `https://osu.ppy.sh/community/matches/${match.osuId}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="View match on osu! website"
