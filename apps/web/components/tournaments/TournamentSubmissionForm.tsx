@@ -10,6 +10,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -98,6 +99,7 @@ export default function TournamentSubmissionForm() {
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
       rejectionReason: TournamentRejectionReason.None,
+      isLazer: false,
       ids: [],
       beatmapIds: [],
     },
@@ -353,59 +355,83 @@ export default function TournamentSubmissionForm() {
             />
           </div>
 
-          {isAdmin && (
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-row items-center gap-2">
-                <Checkbox
-                  checked={rejectOnSubmit}
-                  onClick={() => setRejectOnSubmit((prev) => !prev)}
-                />
-                <label>Reject this tournament on submission</label>
-              </div>
-              {rejectOnSubmit && (
-                <FormField
-                  control={form.control}
-                  name="rejectionReason"
-                  render={({
-                    field: { onChange, value },
-                    fieldState: { invalid },
-                  }) => (
-                    <FormItem>
-                      <FormControl>
-                        <MultipleSelect
-                          placeholder="Select rejection reason"
-                          options={Object.entries(
-                            TournamentRejectionReasonEnumHelper.metadata
-                          )
-                            .filter(
-                              ([v]) =>
-                                Number(v) !== TournamentRejectionReason.None
-                            )
-                            .map(([v, { text }]) => ({
-                              value: v,
-                              label: text,
-                            }))}
-                          selected={TournamentRejectionReasonEnumHelper.getFlags(
-                            value
-                          ).map(String)}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row items-center gap-4">
+              <FormField
+                control={form.control}
+                name="isLazer"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <LabelWithTooltip
+                      label="Played on osu!lazer"
+                      tooltip="Check this if the tournament was played on osu!lazer instead of osu!stable"
+                    />
+                  </FormItem>
+                )}
+              />
 
-                            onChange(flag);
-                          }}
-                          invalid={invalid}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {isAdmin && (
+                <div className="flex flex-row items-center gap-2">
+                  <Checkbox
+                    checked={rejectOnSubmit}
+                    onClick={() => setRejectOnSubmit((prev) => !prev)}
+                  />
+                  <FormLabel className="text-foreground font-medium">
+                    Reject this tournament on submission
+                  </FormLabel>
+                </div>
               )}
             </div>
-          )}
+
+            {isAdmin && rejectOnSubmit && (
+              <FormField
+                control={form.control}
+                name="rejectionReason"
+                render={({
+                  field: { onChange, value },
+                  fieldState: { invalid },
+                }) => (
+                  <FormItem>
+                    <FormControl>
+                      <MultipleSelect
+                        placeholder="Select rejection reason"
+                        options={Object.entries(
+                          TournamentRejectionReasonEnumHelper.metadata
+                        )
+                          .filter(
+                            ([v]) =>
+                              Number(v) !== TournamentRejectionReason.None
+                          )
+                          .map(([v, { text }]) => ({
+                            value: v,
+                            label: text,
+                          }))}
+                        selected={TournamentRejectionReasonEnumHelper.getFlags(
+                          value
+                        ).map(String)}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
+
+                          onChange(flag);
+                        }}
+                        invalid={invalid}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
 
           <FormSection
             icon={<Database className="text-primary h-6 w-6" />}
@@ -422,7 +448,7 @@ export default function TournamentSubmissionForm() {
                   />
                   <FormControl>
                     <Textarea
-                      placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
+                      placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890\nhttps://osu.ppy.sh/multiplayer/rooms/1537300`}
                       value={
                         Array.isArray(field.value)
                           ? field.value.map(String).join('\n')

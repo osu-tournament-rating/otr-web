@@ -12,6 +12,7 @@ export type FetchBeatmapMessage = MessageEnvelope<{
 
 export type FetchMatchMessage = MessageEnvelope<{
   osuMatchId: number;
+  isLazer: boolean;
 }>;
 
 export type FetchPlayerMessage = MessageEnvelope<{

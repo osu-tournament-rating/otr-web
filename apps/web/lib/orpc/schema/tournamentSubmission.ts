@@ -111,7 +111,7 @@ const parseMatchIds = z.preprocess(
 
         const str = String(item).trim();
         const match = str.match(
-          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
+          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp|multiplayer\/rooms)\/(\d+)(?:\/events)?)$/
         );
         return match ? Number(match[1] || match[2]) : 0;
       });

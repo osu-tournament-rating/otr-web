@@ -25,18 +25,23 @@ export class MatchFetchWorker {
 
   async start() {
     await this.queue.start(async (message) => {
-      const { osuMatchId } = message.payload;
+      const { osuMatchId, isLazer } = message.payload;
       this.logger.info('Processing match fetch message', {
         osuMatchId,
+        isLazer,
         correlationId: message.metadata.correlationId,
       });
 
       try {
-        const persisted = await this.service.fetchAndPersist(osuMatchId);
+        const persisted = await this.service.fetchAndPersist(
+          osuMatchId,
+          isLazer
+        );
 
         if (!persisted) {
           this.logger.warn('Match fetch completed without persistence', {
             osuMatchId,
+            isLazer,
             correlationId: message.metadata.correlationId,
           });
         }
@@ -44,6 +49,7 @@ export class MatchFetchWorker {
       } catch (error) {
         this.logger.error('Failed to process match fetch', {
           osuMatchId,
+          isLazer,
           error,
         });
         await message.nack(true);

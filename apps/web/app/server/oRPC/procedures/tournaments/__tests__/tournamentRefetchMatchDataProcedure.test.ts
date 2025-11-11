@@ -20,6 +20,7 @@ interface MatchRow {
   tournamentId: number;
   osuId: number;
   dataFetchStatus: number;
+  isLazer: boolean;
 }
 
 interface GameRow {
@@ -163,7 +164,11 @@ class RefetchMatchDataTestDb {
                   if (typeof values.dataFetchStatus === 'number') {
                     match.dataFetchStatus = values.dataFetchStatus;
                   }
-                  return { id: match.id, osuId: match.osuId };
+                  return {
+                    id: match.id,
+                    osuId: match.osuId,
+                    isLazer: match.isLazer,
+                  };
                 });
             },
           }),
@@ -243,8 +248,9 @@ const noopPublishers: QueuePublisherRegistry = {
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
-  fetchMatch: async ({ osuMatchId }) => ({
+  fetchMatch: async ({ osuMatchId, isLazer }) => ({
     osuMatchId,
+    isLazer,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
     priority: MessagePriority.Normal,
@@ -283,18 +289,21 @@ describe('refetchTournamentMatchDataHandler', () => {
           tournamentId: 100,
           osuId: 123,
           dataFetchStatus: DataFetchStatus.Fetched,
+          isLazer: false,
         },
         {
           id: 2,
           tournamentId: 100,
           osuId: 456,
           dataFetchStatus: DataFetchStatus.Fetched,
+          isLazer: true,
         },
         {
           id: 3,
           tournamentId: 200,
           osuId: 789,
           dataFetchStatus: DataFetchStatus.Fetched,
+          isLazer: false,
         },
       ],
       games: [
@@ -314,13 +323,13 @@ describe('refetchTournamentMatchDataHandler', () => {
       ],
     });
 
-    const queuedMatches: number[] = [];
+    const queuedMatches: Array<{ osuMatchId: number; isLazer: boolean }> = [];
 
     setQueuePublishersForTesting({
       fetchBeatmap: noopPublishers.fetchBeatmap,
-      fetchMatch: async ({ osuMatchId }) => {
-        queuedMatches.push(osuMatchId);
-        return noopPublishers.fetchMatch({ osuMatchId });
+      fetchMatch: async ({ osuMatchId, isLazer }) => {
+        queuedMatches.push({ osuMatchId, isLazer });
+        return noopPublishers.fetchMatch({ osuMatchId, isLazer });
       },
       fetchPlayer: noopPublishers.fetchPlayer,
       fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
@@ -337,7 +346,10 @@ describe('refetchTournamentMatchDataHandler', () => {
 
     expect(result.matchesUpdated).toBe(2);
     expect(result.warnings).toBeUndefined();
-    expect(queuedMatches).toEqual([123, 456]);
+    expect(queuedMatches).toEqual([
+      { osuMatchId: 123, isLazer: false },
+      { osuMatchId: 456, isLazer: true },
+    ]);
   });
 
   it('returns warnings when publishing fails', async () => {
@@ -348,6 +360,7 @@ describe('refetchTournamentMatchDataHandler', () => {
           tournamentId: 100,
           osuId: 123,
           dataFetchStatus: DataFetchStatus.Fetched,
+          isLazer: false,
         },
       ],
       games: [{ matchId: 1, beatmapId: 10 }],

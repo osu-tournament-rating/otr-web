@@ -1503,6 +1503,7 @@ export const tournaments = pgTable(
     lobbySize: integer('lobby_size').notNull(),
     verificationStatus: integer('verification_status').default(0).notNull(),
     rejectionReason: integer('rejection_reason').default(0).notNull(),
+    isLazer: boolean('is_lazer').default(false).notNull(),
     submittedByUserId: integer('submitted_by_user_id'),
     verifiedByUserId: integer('verified_by_user_id'),
     startTime: timestamp('start_time', { withTimezone: true, mode: 'string' }),

@@ -34,6 +34,7 @@ const tournamentSearchBaseSchema = tournamentSelectSchema.pick({
   rejectionReason: true,
   lobbySize: true,
   abbreviation: true,
+  isLazer: true,
 });
 
 export const TournamentSearchResultSchema = tournamentSearchBaseSchema

@@ -79,9 +79,15 @@ export class MatchFetchService {
     this.dataCompletion = options.dataCompletion;
   }
 
-  async fetchAndPersist(osuMatchId: number): Promise<boolean> {
+  async fetchAndPersist(
+    osuMatchId: number,
+    isLazer: boolean
+  ): Promise<boolean> {
     const matchRow = await this.db.query.matches.findFirst({
-      where: eq(schema.matches.osuId, osuMatchId),
+      where: and(
+        eq(schema.matches.osuId, osuMatchId),
+        eq(schema.matches.isLazer, isLazer)
+      ),
       columns: {
         id: true,
         tournamentId: true,

@@ -166,8 +166,9 @@ const noopPublishers: QueuePublisherRegistry = {
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
-  fetchMatch: async ({ osuMatchId }) => ({
+  fetchMatch: async ({ osuMatchId, isLazer }) => ({
     osuMatchId,
+    isLazer,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
     priority: MessagePriority.Normal,
@@ -200,7 +201,7 @@ afterEach(() => {
 describe('submitTournamentHandler', () => {
   it('queues new matches and beatmaps after a successful submission', async () => {
     const db = new SubmitTournamentTestDb();
-    const queuedMatches: number[] = [];
+    const queuedMatches: Array<{ osuMatchId: number; isLazer: boolean }> = [];
     const queuedBeatmaps: number[] = [];
 
     setQueuePublishersForTesting({
@@ -209,9 +210,9 @@ describe('submitTournamentHandler', () => {
         queuedBeatmaps.push(beatmapId);
         return noopPublishers.fetchBeatmap({ beatmapId });
       },
-      fetchMatch: async ({ osuMatchId }) => {
-        queuedMatches.push(osuMatchId);
-        return noopPublishers.fetchMatch({ osuMatchId });
+      fetchMatch: async ({ osuMatchId, isLazer }) => {
+        queuedMatches.push({ osuMatchId, isLazer });
+        return noopPublishers.fetchMatch({ osuMatchId, isLazer });
       },
     });
 
@@ -237,7 +238,10 @@ describe('submitTournamentHandler', () => {
 
     expect(result.id).toBe(500);
     expect(result.warnings).toBeUndefined();
-    expect(queuedMatches).toEqual([101, 202]);
+    expect(queuedMatches).toEqual([
+      { osuMatchId: 101, isLazer: false },
+      { osuMatchId: 202, isLazer: false },
+    ]);
     expect(queuedBeatmaps).toEqual([303]);
   });
 

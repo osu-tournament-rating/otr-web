@@ -325,7 +325,10 @@ export async function submitTournamentHandler({
       queueTasks.push({
         kind: 'match',
         id: osuMatchId,
-        promise: publishFetchMatchMessage({ osuMatchId }),
+        promise: publishFetchMatchMessage({
+          osuMatchId,
+          isLazer: input.isLazer,
+        }),
       });
     });
 
