@@ -7,6 +7,7 @@ import {
 } from '@/lib/orpc/schema/match';
 import { Team } from '@otr/core/osu';
 import { TierName } from '@/lib/utils/tierData';
+import { formatAccuracy } from '@/lib/utils/format';
 
 export type HighlightColor =
   | 'blue'
@@ -188,12 +189,15 @@ export function calculateHighlightStats(
   highlights.push({
     id: 'accuracy',
     label: 'Top Accuracy',
-    value: `${topAccuracy.averageAccuracy.toFixed(PRECISION.ACCURACY_DECIMAL)}%`,
+    value: formatAccuracy(
+      topAccuracy.averageAccuracy,
+      PRECISION.ACCURACY_DECIMAL
+    ),
     sublabel: topAccuracy.username,
     icon: 'Crosshair',
     color: 'blue',
     player: createHighlightPlayer(topAccuracy),
-    isSpecial: topAccuracy.averageAccuracy >= 95,
+    isSpecial: topAccuracy.averageAccuracy >= 0.95,
     metric: 'avg',
   });
   const topScorer = players.reduce((prev, curr) =>
