@@ -354,6 +354,26 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                 />
                 <FormField
                   control={form.control}
+                  name="accuracy"
+                  render={({ field, fieldState }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Accuracy</FormLabel>
+                      <FormControl>
+                        <Input
+                          className={inputChangedStyle(fieldState)}
+                          type="number"
+                          min={0}
+                          max={1}
+                          step={0.0001}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="grade"
                   render={({ field: { value, onChange }, fieldState }) => (
                     <FormItem className="flex-1">

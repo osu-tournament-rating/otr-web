@@ -47,6 +47,7 @@ export const TournamentListItemSchema = tournamentSelectSchema
     endTime: true,
     verificationStatus: true,
     rejectionReason: true,
+    isLazer: true,
   })
   .extend({
     ruleset: RulesetSchema,

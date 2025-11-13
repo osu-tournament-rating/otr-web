@@ -149,7 +149,7 @@ export default function PlayerModStatsChart({
         </CardTitle>
         <CardDescription>
           Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
-          verified games
+          verified ScoreV2 games
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">

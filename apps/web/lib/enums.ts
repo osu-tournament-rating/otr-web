@@ -446,7 +446,7 @@ export const GameRejectionReasonEnumHelper: IBitwiseEnumHelper<GameRejectionReas
       [GameRejectionReason.InvalidScoringType]: {
         text: 'Invalid Scoring Type',
         description:
-          'The game was played with a scoring type that is not ScoreV2',
+          'The game was played with a scoring type that is not ScoreV2 or Lazer',
       },
       [GameRejectionReason.InvalidTeamType]: {
         text: 'Invalid Team Type',
@@ -542,6 +542,10 @@ export const ScoringTypeEnumHelper: IEnumHelper<ScoringType> = {
     [ScoringType.ScoreV2]: {
       text: 'ScoreV2',
       description: 'placeholder',
+    },
+    [ScoringType.Lazer]: {
+      text: 'Lazer',
+      description: 'Lazer scoring type',
     },
   },
 };

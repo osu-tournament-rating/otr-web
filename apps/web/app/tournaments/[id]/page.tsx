@@ -27,6 +27,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { RulesetEnumHelper } from '@/lib/enums';
 import VerificationBadge from '@/components/badges/VerificationBadge';
+import { LazerBadge } from '@/components/badges/LazerBadge';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
@@ -178,6 +179,8 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
         {/* Tournament metadata */}
         <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <LazerBadge isLazer={tournament.isLazer} />
+
           <div className="flex items-center gap-1.5">
             <RulesetIcon
               ruleset={tournament.ruleset}

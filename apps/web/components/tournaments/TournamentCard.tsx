@@ -13,6 +13,7 @@ import {
 
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import { LazerBadge } from '../badges/LazerBadge';
 import RulesetIcon from '../icons/RulesetIcon';
 import { Card } from '../ui/card';
 import TournamentAdminView from './TournamentAdminView';
@@ -85,6 +86,8 @@ export default function TournamentCard({
           entityType="tournament"
           displayText={displayStatusText}
         />
+
+        <LazerBadge isLazer={tournament.isLazer} />
 
         <div className="flex items-center gap-1.5">
           <RulesetIcon

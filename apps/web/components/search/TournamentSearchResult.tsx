@@ -8,6 +8,7 @@ import type { TournamentSearchResult } from '@/lib/orpc/schema/search';
 import { RulesetEnumHelper } from '@/lib/enums';
 import { highlightMatch } from '@/lib/utils/search';
 import VerificationBadge from '../badges/VerificationBadge';
+import { LazerBadge } from '../badges/LazerBadge';
 import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { Card } from '../ui/card';
@@ -41,6 +42,8 @@ export default function TournamentSearchResult({
         </div>
 
         <div className="ml-10 flex flex-shrink items-center gap-3 sm:ml-0 sm:gap-4">
+          <LazerBadge isLazer={data.isLazer} />
+
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Users className="text-primary h-4 w-4 flex-shrink-0 sm:h-4 sm:w-4" />
             <span className="text-xs font-medium sm:text-sm">

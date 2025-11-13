@@ -5,6 +5,7 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatAccuracy } from '@/lib/utils/format';
 import { ProcessedPlayerStats, formatScore } from './MatchStatsUtils';
 import RatingDelta from '@/components/rating/RatingDelta';
 
@@ -113,7 +114,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
             {formatScore(player.averageScore)}
           </TableCell>
           <TableCell className="hidden py-2 text-center text-sm md:table-cell">
-            {player.averageAccuracy.toFixed(2)}%
+            {formatAccuracy(player.averageAccuracy)}
           </TableCell>
           <TableCell className="hidden py-2 text-center text-sm md:table-cell">
             {player.averageMisses.toFixed(1)}

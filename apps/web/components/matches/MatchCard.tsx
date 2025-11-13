@@ -6,6 +6,7 @@ import { AdminNoteRouteTarget } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
 import { formatUTCDate } from '@/lib/utils/date';
 import VerificationBadge from '../badges/VerificationBadge';
+import { LazerBadge } from '../badges/LazerBadge';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import MatchAdminView from './MatchAdminView';
 import { Card } from '../ui/card';
@@ -73,6 +74,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 displayText
                 size="small"
               />
+              <LazerBadge isLazer={match.isLazer} />
               <span className="text-xs text-white/80 sm:text-sm">
                 {match.startTime
                   ? formatUTCDate(new Date(match.startTime))
@@ -88,7 +90,11 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   className="h-6 w-6 hover:bg-white/20 hover:text-white"
                 >
                   <Link
-                    href={`https://osu.ppy.sh/community/matches/${match.osuId}`}
+                    href={
+                      match.isLazer
+                        ? `https://osu.ppy.sh/multiplayer/rooms/${match.osuId}`
+                        : `https://osu.ppy.sh/community/matches/${match.osuId}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="View match on osu! website"

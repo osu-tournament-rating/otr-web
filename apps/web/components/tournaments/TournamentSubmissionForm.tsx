@@ -10,6 +10,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -98,6 +99,7 @@ export default function TournamentSubmissionForm() {
       rankRangeLowerBound: undefined,
       lobbySize: undefined,
       rejectionReason: TournamentRejectionReason.None,
+      isLazer: false,
       ids: [],
       beatmapIds: [],
     },
@@ -353,59 +355,83 @@ export default function TournamentSubmissionForm() {
             />
           </div>
 
-          {isAdmin && (
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-row items-center gap-2">
-                <Checkbox
-                  checked={rejectOnSubmit}
-                  onClick={() => setRejectOnSubmit((prev) => !prev)}
-                />
-                <label>Reject this tournament on submission</label>
-              </div>
-              {rejectOnSubmit && (
-                <FormField
-                  control={form.control}
-                  name="rejectionReason"
-                  render={({
-                    field: { onChange, value },
-                    fieldState: { invalid },
-                  }) => (
-                    <FormItem>
-                      <FormControl>
-                        <MultipleSelect
-                          placeholder="Select rejection reason"
-                          options={Object.entries(
-                            TournamentRejectionReasonEnumHelper.metadata
-                          )
-                            .filter(
-                              ([v]) =>
-                                Number(v) !== TournamentRejectionReason.None
-                            )
-                            .map(([v, { text }]) => ({
-                              value: v,
-                              label: text,
-                            }))}
-                          selected={TournamentRejectionReasonEnumHelper.getFlags(
-                            value
-                          ).map(String)}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row items-center gap-4">
+              <FormField
+                control={form.control}
+                name="isLazer"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <LabelWithTooltip
+                      label="Played on osu!lazer"
+                      tooltip="Check this if the tournament was played on osu!lazer instead of osu!stable"
+                    />
+                  </FormItem>
+                )}
+              />
 
-                            onChange(flag);
-                          }}
-                          invalid={invalid}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {isAdmin && (
+                <div className="flex flex-row items-center gap-2">
+                  <Checkbox
+                    checked={rejectOnSubmit}
+                    onClick={() => setRejectOnSubmit((prev) => !prev)}
+                  />
+                  <FormLabel className="text-foreground font-medium">
+                    Reject this tournament on submission
+                  </FormLabel>
+                </div>
               )}
             </div>
-          )}
+
+            {isAdmin && rejectOnSubmit && (
+              <FormField
+                control={form.control}
+                name="rejectionReason"
+                render={({
+                  field: { onChange, value },
+                  fieldState: { invalid },
+                }) => (
+                  <FormItem>
+                    <FormControl>
+                      <MultipleSelect
+                        placeholder="Select rejection reason"
+                        options={Object.entries(
+                          TournamentRejectionReasonEnumHelper.metadata
+                        )
+                          .filter(
+                            ([v]) =>
+                              Number(v) !== TournamentRejectionReason.None
+                          )
+                          .map(([v, { text }]) => ({
+                            value: v,
+                            label: text,
+                          }))}
+                        selected={TournamentRejectionReasonEnumHelper.getFlags(
+                          value
+                        ).map(String)}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
+
+                          onChange(flag);
+                        }}
+                        invalid={invalid}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
 
           <FormSection
             icon={<Database className="text-primary h-6 w-6" />}
@@ -414,29 +440,38 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="ids"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <LabelWithTooltip
-                    label="Matches"
-                    tooltip="osu! match IDs or URLs (one per line)"
-                  />
-                  <FormControl>
-                    <Textarea
-                      placeholder={`https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`}
-                      value={
-                        Array.isArray(field.value)
-                          ? field.value.map(String).join('\n')
-                          : ''
-                      }
-                      onChange={(e) =>
-                        field.onChange(e.target.value.split('\n'))
-                      }
-                      className={getTextareaFieldClassName(!!fieldState.error)}
+              render={({ field, fieldState }) => {
+                const isLazer = form.watch('isLazer');
+                const placeholder = isLazer
+                  ? `https://osu.ppy.sh/multiplayer/rooms/1537300\nhttps://osu.ppy.sh/multiplayer/rooms/2048512`
+                  : `https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`;
+
+                return (
+                  <FormItem>
+                    <LabelWithTooltip
+                      label="Matches"
+                      tooltip="osu! match IDs or URLs (one per line)"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                    <FormControl>
+                      <Textarea
+                        placeholder={placeholder}
+                        value={
+                          Array.isArray(field.value)
+                            ? field.value.map(String).join('\n')
+                            : ''
+                        }
+                        onChange={(e) =>
+                          field.onChange(e.target.value.split('\n'))
+                        }
+                        className={getTextareaFieldClassName(
+                          !!fieldState.error
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField

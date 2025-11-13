@@ -41,6 +41,7 @@ describe('resetTournamentAutomatedChecksHandler', () => {
       }),
       fetchMatch: async ({ osuMatchId }) => ({
         osuMatchId,
+        isLazer: false,
         requestedAt: new Date().toISOString(),
         correlationId: 'noop',
         priority: MessagePriority.Normal,
@@ -97,6 +98,7 @@ describe('resetTournamentAutomatedChecksHandler', () => {
       }),
       fetchMatch: async ({ osuMatchId }) => ({
         osuMatchId,
+        isLazer: false,
         requestedAt: new Date().toISOString(),
         correlationId: 'noop',
         priority: MessagePriority.Normal,

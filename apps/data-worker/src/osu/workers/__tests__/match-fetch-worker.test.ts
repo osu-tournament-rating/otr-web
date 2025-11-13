@@ -34,11 +34,11 @@ describe('MatchFetchWorker', () => {
   it('acknowledges successful fetches', async () => {
     const queue = new StubQueue();
 
-    let calledWith: number | undefined;
+    let calledWith: { osuMatchId: number; isLazer: boolean } | undefined;
 
     const service: Pick<MatchFetchService, 'fetchAndPersist'> = {
-      async fetchAndPersist(osuMatchId: number) {
-        calledWith = osuMatchId;
+      async fetchAndPersist(osuMatchId: number, isLazer: boolean) {
+        calledWith = { osuMatchId, isLazer };
         return true;
       },
     };
@@ -57,6 +57,7 @@ describe('MatchFetchWorker', () => {
     const message: QueueMessage<FetchMatchMessage> = {
       payload: {
         osuMatchId: 445566,
+        isLazer: false,
         requestedAt: new Date().toISOString(),
         correlationId: 'match-correlation',
         priority: MessagePriority.Normal,
@@ -76,7 +77,7 @@ describe('MatchFetchWorker', () => {
 
     await queue.emit(message);
 
-    expect(calledWith).toBe(445566);
+    expect(calledWith).toEqual({ osuMatchId: 445566, isLazer: false });
     expect(acked).toBe(1);
     expect(nacked).toBe(0);
 
@@ -106,6 +107,7 @@ describe('MatchFetchWorker', () => {
     const message: QueueMessage<FetchMatchMessage> = {
       payload: {
         osuMatchId: 112233,
+        isLazer: true,
         requestedAt: new Date().toISOString(),
         correlationId: 'match-error',
         priority: MessagePriority.Normal,

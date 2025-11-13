@@ -196,6 +196,7 @@ export const listTournaments = publicProcedure
           endTime: schema.tournaments.endTime,
           verificationStatus: schema.tournaments.verificationStatus,
           rejectionReason: schema.tournaments.rejectionReason,
+          isLazer: schema.tournaments.isLazer,
         })
         .from(schema.tournaments);
 
@@ -223,6 +224,7 @@ export const listTournaments = publicProcedure
           endTime: row.endTime ?? null,
           verificationStatus: row.verificationStatus as VerificationStatus,
           rejectionReason: row.rejectionReason,
+          isLazer: row.isLazer,
         })
       );
     } catch (error) {
@@ -376,6 +378,7 @@ export const getTournament = publicProcedure
           verificationStatus: schema.matches.verificationStatus,
           rejectionReason: schema.matches.rejectionReason,
           warningFlags: schema.matches.warningFlags,
+          isLazer: schema.matches.isLazer,
           submittedByUserId: schema.matches.submittedByUserId,
           verifiedByUserId: schema.matches.verifiedByUserId,
           dataFetchStatus: schema.matches.dataFetchStatus,
@@ -451,6 +454,7 @@ export const getTournament = publicProcedure
         verificationStatus: match.verificationStatus as VerificationStatus,
         rejectionReason: match.rejectionReason,
         warningFlags: match.warningFlags,
+        isLazer: match.isLazer,
         submittedByUserId: match.submittedByUserId ?? null,
         verifiedByUserId: match.verifiedByUserId ?? null,
         dataFetchStatus: match.dataFetchStatus,
@@ -691,6 +695,7 @@ export const getTournament = publicProcedure
         endTime: tournament.endTime ?? null,
         verificationStatus: tournament.verificationStatus as VerificationStatus,
         rejectionReason: tournament.rejectionReason,
+        isLazer: tournament.isLazer,
         submittedByUserId: tournament.submittedByUserId ?? null,
         verifiedByUserId: tournament.verifiedByUserId ?? null,
         matches: normalizedMatches,

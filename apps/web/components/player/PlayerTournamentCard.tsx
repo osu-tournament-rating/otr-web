@@ -3,6 +3,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import Link from 'next/link';
 import VerificationBadge from '../badges/VerificationBadge';
+import { LazerBadge } from '../badges/LazerBadge';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
 import { Users, Target, Calendar, Eye, EyeOff } from 'lucide-react';
@@ -69,6 +70,8 @@ export default function PlayerTournamentCard({
             entityType="tournament"
             displayText={true}
           />
+
+          <LazerBadge isLazer={tournament.isLazer} />
 
           <div className="flex items-center gap-1.5">
             <RulesetIcon

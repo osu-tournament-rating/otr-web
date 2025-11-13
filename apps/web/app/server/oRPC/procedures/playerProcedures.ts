@@ -22,6 +22,7 @@ import {
   Mods,
   RatingAdjustmentType,
   Ruleset,
+  ScoringType,
   VerificationStatus,
 } from '@otr/core/osu';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
@@ -73,6 +74,7 @@ const tournamentListItemColumns = {
   endTime: schema.tournaments.endTime,
   verificationStatus: schema.tournaments.verificationStatus,
   rejectionReason: schema.tournaments.rejectionReason,
+  isLazer: schema.tournaments.isLazer,
 } as const;
 
 const playerCompactColumns = {
@@ -644,6 +646,7 @@ export const getPlayerBeatmaps = publicProcedure
         tournamentEndTime: schema.tournaments.endTime,
         tournamentVerificationStatus: schema.tournaments.verificationStatus,
         tournamentRejectionReason: schema.tournaments.rejectionReason,
+        tournamentIsLazer: schema.tournaments.isLazer,
         gamesPlayed: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
         modsUsed: sql<Mods[]>`array_agg(${schema.games.mods})`,
       })
@@ -759,6 +762,7 @@ export const getPlayerBeatmaps = publicProcedure
         endTime: string | null;
         verificationStatus: number;
         rejectionReason: number;
+        isLazer: boolean;
         gamesPlayed: number;
         mostCommonMod: number;
       }>;
@@ -843,6 +847,7 @@ export const getPlayerBeatmaps = publicProcedure
         endTime: row.tournamentEndTime,
         verificationStatus: row.tournamentVerificationStatus,
         rejectionReason: row.tournamentRejectionReason,
+        isLazer: row.tournamentIsLazer,
         gamesPlayed: Number(row.gamesPlayed),
         mostCommonMod: Number(mostCommonMod),
       });
@@ -1006,6 +1011,7 @@ export const getPlayerStats = publicProcedure
       eq(schema.gameScores.playerId, player.id),
       eq(schema.gameScores.verificationStatus, VerificationStatus.Verified),
       eq(schema.tournaments.ruleset, resolvedRuleset),
+      eq(schema.games.scoringType, ScoringType.ScoreV2),
     ];
 
     if (bounds.start) {

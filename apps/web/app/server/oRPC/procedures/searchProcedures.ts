@@ -179,6 +179,7 @@ export const searchEntities = protectedProcedure
             verificationStatus: schema.tournaments.verificationStatus,
             rejectionReason: schema.tournaments.rejectionReason,
             lobbySize: schema.tournaments.lobbySize,
+            isLazer: schema.tournaments.isLazer,
           })
           .from(schema.tournaments)
           .where(tournamentCondition)
@@ -246,6 +247,7 @@ export const searchEntities = protectedProcedure
           rejectionReason: Number(row.rejectionReason),
           lobbySize: Number(row.lobbySize),
           abbreviation: row.abbreviation ?? null,
+          isLazer: row.isLazer,
         })
       );
 

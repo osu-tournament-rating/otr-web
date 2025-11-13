@@ -64,7 +64,7 @@ export async function refetchTournamentMatchDataHandler({
 }: RefetchMatchDataArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
 
-  const matches: Array<{ id: number; osuId: number }> =
+  const matches: Array<{ id: number; osuId: number; isLazer: boolean }> =
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, () =>
         tx
@@ -77,16 +77,20 @@ export async function refetchTournamentMatchDataHandler({
           .returning({
             id: schema.matches.id,
             osuId: schema.matches.osuId,
+            isLazer: schema.matches.isLazer,
           })
       )
     );
 
-  const matchOsuIds = Array.from(
-    new Set<number>(
+  const uniqueMatches = Array.from(
+    new Map(
       matches
-        .map((match) => Number(match.osuId))
-        .filter((osuId) => Number.isFinite(osuId))
-    )
+        .filter((match) => Number.isFinite(Number(match.osuId)))
+        .map((match) => [
+          `${match.osuId}-${match.isLazer}`,
+          { osuMatchId: Number(match.osuId), isLazer: match.isLazer },
+        ])
+    ).values()
   );
 
   const queueTasks: Array<{
@@ -95,11 +99,11 @@ export async function refetchTournamentMatchDataHandler({
     promise: Promise<unknown>;
   }> = [];
 
-  matchOsuIds.forEach((osuMatchId) => {
+  uniqueMatches.forEach(({ osuMatchId, isLazer }) => {
     queueTasks.push({
       kind: 'match',
       id: osuMatchId,
-      promise: publishFetchMatchMessage({ osuMatchId }),
+      promise: publishFetchMatchMessage({ osuMatchId, isLazer }),
     });
   });
 

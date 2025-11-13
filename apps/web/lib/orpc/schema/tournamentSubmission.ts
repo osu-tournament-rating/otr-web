@@ -57,6 +57,7 @@ const baseSubmissionSchema = z.object({
   rejectionReason: createBitwiseEnumSchema(TournamentRejectionReason).default(
     TournamentRejectionReason.None
   ),
+  isLazer: z.boolean().default(false),
   ids: z.array(matchIdSchema).min(1, 'At least one match ID is required'),
   beatmapIds: z.array(beatmapIdSchema).default([]),
 });
@@ -110,7 +111,7 @@ const parseMatchIds = z.preprocess(
 
         const str = String(item).trim();
         const match = str.match(
-          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
+          /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp|multiplayer\/rooms)\/(\d+)(?:\/events)?)$/
         );
         return match ? Number(match[1] || match[2]) : 0;
       });

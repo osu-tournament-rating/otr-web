@@ -6,6 +6,7 @@ import {
   updateBeatmapStatus,
 } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
+import { RoomFetchService } from './room-fetch-service';
 import { withNotFoundHandling } from '../api-helpers';
 import {
   calculateScoreWithMods,
@@ -69,6 +70,7 @@ export class MatchFetchService {
   private readonly logger: Logger;
   private readonly publishBeatmapFetch: (osuBeatmapId: number) => Promise<void>;
   private readonly dataCompletion: TournamentDataCompletionService;
+  private readonly roomFetchService: RoomFetchService;
 
   constructor(options: MatchFetchServiceOptions) {
     this.db = options.db;
@@ -77,16 +79,24 @@ export class MatchFetchService {
     this.logger = options.logger;
     this.publishBeatmapFetch = options.publishBeatmapFetch;
     this.dataCompletion = options.dataCompletion;
+    this.roomFetchService = new RoomFetchService(options);
   }
 
-  async fetchAndPersist(osuMatchId: number): Promise<boolean> {
+  async fetchAndPersist(
+    osuMatchId: number,
+    isLazer: boolean
+  ): Promise<boolean> {
     const matchRow = await this.db.query.matches.findFirst({
-      where: eq(schema.matches.osuId, osuMatchId),
+      where: and(
+        eq(schema.matches.osuId, osuMatchId),
+        eq(schema.matches.isLazer, isLazer)
+      ),
       columns: {
         id: true,
         tournamentId: true,
         dataFetchStatus: true,
         verificationStatus: true,
+        isLazer: true,
       },
       with: {
         tournament: {
@@ -103,6 +113,24 @@ export class MatchFetchService {
       return false;
     }
 
+    if (matchRow.isLazer) {
+      return this.fetchAndPersistLazerRoom(osuMatchId, matchRow);
+    }
+
+    return this.fetchAndPersistStableMatch(osuMatchId, matchRow);
+  }
+
+  private async fetchAndPersistStableMatch(
+    osuMatchId: number,
+    matchRow: {
+      id: number;
+      tournamentId: number;
+      dataFetchStatus: number;
+      verificationStatus: number;
+      isLazer: boolean;
+      tournament?: { id: number; ruleset: number } | null;
+    }
+  ): Promise<boolean> {
     const nowIso = new Date().toISOString();
     const tournamentRuleset = coerceNumericEnumValue(
       Ruleset,
@@ -554,5 +582,19 @@ export class MatchFetchService {
         rejectionReason,
       });
     }
+  }
+
+  private async fetchAndPersistLazerRoom(
+    roomId: number,
+    matchRow: {
+      id: number;
+      tournamentId: number;
+      dataFetchStatus: number;
+      verificationStatus: number;
+      isLazer: boolean;
+      tournament?: { id: number; ruleset: number } | null;
+    }
+  ): Promise<boolean> {
+    return this.roomFetchService.fetchAndPersistRoom(roomId, matchRow);
   }
 }

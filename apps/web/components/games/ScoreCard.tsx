@@ -8,6 +8,7 @@ import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
 import { AdminNoteRouteTarget, Roles, Ruleset, Team } from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
+import { formatAccuracy } from '@/lib/utils/format';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
 import CountryFlag from '../shared/CountryFlag';
@@ -183,7 +184,7 @@ export default function ScoreCard({
                 Accuracy
               </span>
               <span className="value text-neutral-800 dark:text-neutral-200">
-                {(score.accuracy * 100).toFixed(2)}%
+                {formatAccuracy(score.accuracy)}
               </span>
             </div>
           </div>
