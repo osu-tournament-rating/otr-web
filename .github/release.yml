@@ -1,5 +1,8 @@
 changelog:
   categories:
+    - title: Breaking API Changes ⚠️
+      labels:
+        - 'pr:breaking-change'
     - title: Performance Improvements ⚡
       labels:
         - 'meta:performance'
