@@ -1,14 +1,20 @@
 changelog:
   categories:
-    - title: Performance Improvements ⚡
+    - title: Breaking API Changes ⚠️
       labels:
-        - 'meta:performance'
+        - 'pr:breaking-change'
     - title: New Features ✅
       labels:
         - 'pr:feature'
     - title: Bug Fixes 🔧
       labels:
         - 'pr:bug'
-    - title: Misc. Fixes 🚧
+    - title: Operations 👷🏻‍♂️
+      labels:
+        - 'meta:ops'
+    - title: Performance Improvements ⚡
+      labels:
+        - 'meta:performance'
+    - title: Other Changes 🚧
       labels:
         - '*'
