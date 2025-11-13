@@ -1,7 +1,6 @@
 import {
   GameRejectionReason,
   GameWarningFlags,
-  Mods,
   ScoringType,
   TeamType,
 } from '@otr/core/osu';
@@ -15,6 +14,9 @@ import {
   isPlaceholderDate,
   isPreVerifiedOrVerified,
 } from './utils';
+
+const VALID_TEAM_TYPES = [TeamType.TeamVs, TeamType.HeadToHead];
+const VALID_SCORING_TYPES = [ScoringType.ScoreV2, ScoringType.Lazer];
 
 export interface GameAutomationChecksOptions {
   logger?: {
@@ -65,10 +67,7 @@ export class GameAutomationChecks {
   }
 
   private checkTeamType(game: AutomationGame): GameRejectionReason {
-    if (
-      game.teamType === TeamType.TeamVs ||
-      game.teamType === TeamType.HeadToHead
-    ) {
+    if (VALID_TEAM_TYPES.includes(game.teamType)) {
       return GameRejectionReason.None;
     }
 
@@ -80,10 +79,7 @@ export class GameAutomationChecks {
   }
 
   private checkScoringType(game: AutomationGame): GameRejectionReason {
-    if (
-      game.scoringType === ScoringType.ScoreV2 ||
-      game.scoringType === ScoringType.Lazer
-    ) {
+    if (VALID_SCORING_TYPES.includes(game.scoringType)) {
       return GameRejectionReason.None;
     }
 
@@ -217,14 +213,3 @@ export class GameAutomationChecks {
     return GameRejectionReason.None;
   }
 }
-
-export const INVALID_GAME_MODS: Mods[] = [
-  Mods.SuddenDeath,
-  Mods.Perfect,
-  Mods.Relax,
-  Mods.Autoplay,
-  Mods.Relax2,
-];
-
-export const VALID_TEAM_TYPE = TeamType.TeamVs;
-export const VALID_SCORING_TYPE = ScoringType.ScoreV2;
