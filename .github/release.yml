@@ -3,12 +3,15 @@ changelog:
     - title: Breaking API Changes ⚠️
       labels:
         - 'pr:breaking-change'
-    - title: Performance Improvements ⚡
-      labels:
-        - 'meta:performance'
     - title: New Features ✅
       labels:
         - 'pr:feature'
+    - title: Operations 👷🏻‍♂️
+      labels:
+        - 'meta:ops'
+    - title: Performance Improvements ⚡
+      labels:
+        - 'meta:performance'
     - title: Bug Fixes 🔧
       labels:
         - 'pr:bug'
