@@ -6,15 +6,15 @@ changelog:
     - title: New Features ✅
       labels:
         - 'pr:feature'
+    - title: Bug Fixes 🔧
+      labels:
+        - 'pr:bug'
     - title: Operations 👷🏻‍♂️
       labels:
         - 'meta:ops'
     - title: Performance Improvements ⚡
       labels:
         - 'meta:performance'
-    - title: Bug Fixes 🔧
-      labels:
-        - 'pr:bug'
-    - title: Misc. Fixes 🚧
+    - title: Other Changes 🚧
       labels:
         - '*'
