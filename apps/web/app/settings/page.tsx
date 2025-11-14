@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Settings } from 'lucide-react';
 
+import AccountDeletionClient from '@/app/settings/AccountDeletionClient';
 import ApiKeySettingsClient from '@/app/settings/ApiKeySettingsClient';
 import { auth } from '@/lib/auth/auth';
 import { orpc } from '@/lib/orpc/orpc';
@@ -32,6 +33,7 @@ export default async function SettingsPage() {
           initialKeys={keys}
           rateLimit={{ maxRequests: 60, timeWindowMs: 60_000 }}
         />
+        <AccountDeletionClient />
       </div>
     </div>
   );
