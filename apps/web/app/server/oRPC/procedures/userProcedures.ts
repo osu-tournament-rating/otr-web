@@ -6,6 +6,7 @@ import * as schema from '@otr/core/db/schema';
 import { CurrentUserSchema } from '@/lib/orpc/schema/user';
 
 import { protectedProcedure } from './base';
+import { db } from '@/lib/db';
 
 export const getUser = protectedProcedure
   .input(
@@ -78,4 +79,62 @@ export const getCurrentUser = protectedProcedure
       scopes: user?.scopes ?? [],
       userId: user?.id ?? null,
     });
+  });
+
+export const deleteMyAccount = protectedProcedure
+  .route({
+    summary: 'Permanently delete user account data',
+    tags: ['authenticated'],
+    method: 'DELETE',
+    path: '/users/me',
+  })
+  .handler(async ({ context }) => {
+    const { user } = context.session;
+
+    if (!user?.id) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'No authenticated user found',
+      });
+    }
+
+    const authUserId = user.id;
+
+    const authUser = await context.db.query.auth_users.findFirst({
+      where: eq(schema.auth_users.id, authUserId),
+      columns: {
+        id: true,
+        email: true,
+        playerId: true,
+      },
+    });
+
+    if (!authUser) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'User not found',
+      });
+    }
+
+    await db.transaction(async (tx) => {
+      if (authUser.playerId) {
+        await tx
+          .delete(schema.playerFriends)
+          .where(eq(schema.playerFriends.playerId, authUser.playerId));
+      }
+
+      if (authUser.email) {
+        await tx
+          .delete(schema.auth_verifications)
+          .where(eq(schema.auth_verifications.identifier, authUser.email));
+      }
+
+      await tx
+        .delete(schema.users)
+        .where(eq(schema.users.playerId, authUser.playerId));
+
+      await tx
+        .delete(schema.auth_users)
+        .where(eq(schema.auth_users.id, authUserId));
+    });
+
+    return { success: true };
   });

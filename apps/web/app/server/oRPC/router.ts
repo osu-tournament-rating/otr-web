@@ -28,7 +28,11 @@ import {
   getPlayerTournaments,
 } from './procedures/playerProcedures';
 import { searchEntities } from './procedures/searchProcedures';
-import { getCurrentUser, getUser } from './procedures/userProcedures';
+import {
+  deleteMyAccount,
+  getCurrentUser,
+  getUser,
+} from './procedures/userProcedures';
 import {
   banUserAdmin,
   listUserApiKeysAdmin,
@@ -87,6 +91,7 @@ export const router = base.router({
   },
   users: {
     me: getCurrentUser,
+    deleteMe: deleteMyAccount,
     admin: {
       search: searchPlayersAdmin,
       lookup: lookupAuthUserAdmin,
