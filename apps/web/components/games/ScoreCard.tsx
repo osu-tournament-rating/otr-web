@@ -34,35 +34,35 @@ export default function ScoreCard({
     switch (score.ruleset) {
       case Ruleset.Taiko:
         return [
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
           { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Mania4k:
       case Ruleset.Mania7k:
       case Ruleset.ManiaOther:
         return [
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
-          { label: 'Good', value: `${score.statGood ?? 0}x` },
-          { label: 'Great', value: `${score.statGreat ?? 0}x` },
           { label: 'Perfect', value: `${score.statPerfect ?? 0}x` },
+          { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Good', value: `${score.statGood ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Catch:
         return [
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-          { label: 'Sm. Drop Miss', value: `${score.statSmallTickMiss ?? 0}x` },
-          { label: 'Lg. Drop', value: `${score.statLargeTickHit ?? 0}x` },
           { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Lg. Drop', value: `${score.statLargeTickHit ?? 0}x` },
+          { label: 'Sm. Drop Miss', value: `${score.statSmallTickMiss ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
       case Ruleset.Osu:
       default:
         return [
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
           { label: 'Great', value: `${score.statGreat ?? 0}x` },
+          { label: 'Ok', value: `${score.statOk ?? 0}x` },
+          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
+          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
         ];
     }
   })();
@@ -157,7 +157,7 @@ export default function ScoreCard({
         {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
           {/* 300 / 100 / 50 / Miss */}
-          <div className="team-flex-row flex items-center justify-start gap-4">
+          <div className="flex items-center justify-start gap-4">
             {hitJudgments.map((item, index) => (
               <div key={index} className="performance-item">
                 <span className="label text-neutral-600 dark:text-neutral-400">
