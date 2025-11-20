@@ -122,7 +122,7 @@ export default function GameCard({
     <div className="bg-secondary flex flex-col space-y-2 rounded-xl p-3">
       <GameCardHeader game={game} />
       {game.scores.length === 0 ? (
-        <div className="rounded-md border p-4 text-center">
+        <div className="rounded-md border border-neutral-300 p-4 text-center dark:border-neutral-700">
           <p className="text-gray-600 dark:text-gray-400">
             No scores available
           </p>
@@ -172,7 +172,7 @@ export default function GameCard({
         </div>
       )}
       {outcomeText && (
-        <div className="mt-2 rounded-md border p-2 text-center">
+        <div className="mt-2 rounded-md border border-neutral-300 p-2 text-center dark:border-neutral-700">
           <p
             className={`text-lg font-semibold ${
               outcomeText.includes('wins')
