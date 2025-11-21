@@ -78,6 +78,7 @@ import {
   generateUserApiKey,
   getUserApiKeys,
 } from './procedures/apiKeyProcedures';
+import { massEnqueue } from './procedures/admin/massEnqueueProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -86,6 +87,9 @@ export interface InitialContext {
 const base = os.$context<InitialContext>();
 
 export const router = base.router({
+  admin: {
+    massEnqueue,
+  },
   user: {
     get: getUser,
   },
