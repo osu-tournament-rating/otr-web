@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Gavel, KeyRound, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -47,9 +47,12 @@ import {
   type AdminPlayerSearchResult,
 } from '@/lib/orpc/schema/user';
 import type { ApiKeyMetadata } from '@/lib/orpc/schema/apiKey';
+import type { AdminMassEnqueueResponse } from '@/lib/orpc/schema/admin';
 import { orpc } from '@/lib/orpc/orpc';
 import { cn } from '@/lib/utils';
 import { getApiKeyPreview } from '@/lib/utils/apiKey';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
@@ -67,6 +70,9 @@ const formatDateTime = (value: string | null | undefined) => {
   });
 };
 
+const formatPluralMessage = (count: number, singular: string, plural: string) =>
+  `${count} ${count === 1 ? singular : plural}`;
+
 export default function AdminDashboardClient() {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<AdminPlayerSearchResult | null>(null);
@@ -83,6 +89,22 @@ export default function AdminDashboardClient() {
   const [apiKeys, setApiKeys] = useState<ApiKeyMetadata[]>([]);
   const [apiKeysLoading, setApiKeysLoading] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+
+  const [beatmapIdsInput, setBeatmapIdsInput] = useState('');
+  const [matchIdsInput, setMatchIdsInput] = useState('');
+  const [priority, setPriority] = useState<'Low' | 'Normal' | 'High'>('Normal');
+  const [massEnqueueing, setMassEnqueueing] = useState(false);
+  const [massEnqueueCompletionData, setMassEnqueueCompletionData] =
+    useState<AdminMassEnqueueResponse | null>(null);
+
+  const [progressPhase, setProgressPhase] = useState<
+    'beatmaps' | 'matches' | null
+  >(null);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [currentBatch, setCurrentBatch] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [showProgress, setShowProgress] = useState(false);
 
   useEffect(() => {
     setShowKeys(false);
@@ -211,6 +233,155 @@ export default function AdminDashboardClient() {
       setBanning(false);
     }
   }, [banReason, handleDialogOpenChange, pendingPlayer]);
+
+  const parseIds = useCallback((input: string): number[] => {
+    if (!input.trim()) {
+      return [];
+    }
+
+    const sanitized = input.replace(/[^\d\s,\n]+/g, ' ');
+
+    const ids = sanitized
+      .split(/[\s,\n]+/)
+      .map((part) => {
+        const trimmed = part.trim();
+        if (!trimmed || trimmed.length > 10) return null;
+        const num = Number.parseInt(trimmed, 10);
+        return Number.isSafeInteger(num) && num > 0 ? num : null;
+      })
+      .filter((id): id is number => id !== null);
+
+    return Array.from(new Set(ids));
+  }, []);
+
+  const parsedBeatmapIds = useMemo(
+    () => parseIds(beatmapIdsInput),
+    [beatmapIdsInput, parseIds]
+  );
+  const parsedMatchIds = useMemo(
+    () => parseIds(matchIdsInput),
+    [matchIdsInput, parseIds]
+  );
+
+  const handleMassEnqueue = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      const allBeatmapIds = parsedBeatmapIds;
+      const allMatchIds = parsedMatchIds;
+
+      const beatmapIds = allBeatmapIds.filter(
+        (id) => id >= 1 && id <= 20_000_000
+      );
+      const matchIds = allMatchIds.filter((id) => id >= 1);
+
+      const filteredBeatmaps = allBeatmapIds.length - beatmapIds.length;
+      const filteredMatches = allMatchIds.length - matchIds.length;
+
+      if (filteredBeatmaps > 0) {
+        toast.warning(
+          `Filtered out ${formatPluralMessage(filteredBeatmaps, 'invalid beatmap ID', 'invalid beatmap IDs')} (must be between 1 and 20,000,000).`
+        );
+      }
+
+      if (filteredMatches > 0) {
+        toast.warning(
+          `Filtered out ${formatPluralMessage(filteredMatches, 'invalid match ID', 'invalid match IDs')} (must be positive).`
+        );
+      }
+
+      if (beatmapIds.length === 0 && matchIds.length === 0) {
+        toast.error('No valid IDs to enqueue after filtering.');
+        return;
+      }
+
+      setMassEnqueueing(true);
+      setMassEnqueueCompletionData(null);
+      setShowProgress(false);
+      setProgressPhase(null);
+      setProgressPercent(0);
+      setCurrentBatch(0);
+      setTotalBatches(0);
+      setProgressMessage('');
+
+      try {
+        const iterator = await orpc.admin.massEnqueue({
+          beatmapIds,
+          matchIds,
+          priority,
+        });
+
+        for await (const event of iterator) {
+          if (event.type === 'progress') {
+            setShowProgress(true);
+            setProgressPhase(event.phase);
+            setCurrentBatch(event.currentBatch);
+            setTotalBatches(event.totalBatches);
+            setProgressMessage(event.message);
+
+            const percent = (event.itemsProcessed / event.totalItems) * 100;
+            setProgressPercent(Math.min(percent, 100));
+          } else if (event.type === 'complete') {
+            setMassEnqueueCompletionData({
+              beatmapsUpdated: event.beatmapsUpdated,
+              beatmapsSkipped: event.beatmapsSkipped,
+              matchesUpdated: event.matchesUpdated,
+              matchesSkipped: event.matchesSkipped,
+              warnings: event.warnings,
+            });
+
+            const totalUpdated = event.beatmapsUpdated + event.matchesUpdated;
+            const totalSkipped = event.beatmapsSkipped + event.matchesSkipped;
+
+            if (totalUpdated > 0) {
+              toast.success(
+                `Successfully enqueued ${formatPluralMessage(totalUpdated, 'item', 'items')} for refetch.`
+              );
+            }
+
+            if (totalSkipped > 0) {
+              toast.info(
+                `Skipped ${formatPluralMessage(totalSkipped, 'item', 'items')} (not found or already marked as 404).`
+              );
+            }
+
+            if (event.warnings && event.warnings.length > 0) {
+              event.warnings.forEach((warning) => toast.warning(warning));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[admin] mass enqueue failed', error);
+
+        let message = 'Mass enqueue failed. Please try again.';
+
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorMessage = String(error.message);
+
+          if (
+            errorMessage.toLowerCase().includes('validation') ||
+            errorMessage.toLowerCase().includes('invalid')
+          ) {
+            if (errorMessage.includes('beatmap')) {
+              message = `Beatmap validation error: ${errorMessage}`;
+            } else if (errorMessage.includes('match')) {
+              message = `Match validation error: ${errorMessage}`;
+            } else {
+              message = errorMessage;
+            }
+          } else if (errorMessage.length > 0 && errorMessage !== 'Error') {
+            message = errorMessage;
+          }
+        }
+
+        toast.error(message);
+      } finally {
+        setMassEnqueueing(false);
+        setShowProgress(false);
+      }
+    },
+    [parsedBeatmapIds, parsedMatchIds, priority]
+  );
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -430,6 +601,196 @@ export default function AdminDashboardClient() {
                 )}
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Mass enqueue</CardTitle>
+            <CardDescription>
+              Mass enqueue beatmaps and matches for refetch. Enter IDs separated
+              by commas, spaces, or newlines. Only IDs that exist in the
+              database will be enqueued.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleMassEnqueue} className="space-y-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="beatmap-ids" className="text-sm font-medium">
+                    Beatmap IDs
+                  </Label>
+                  <Textarea
+                    id="beatmap-ids"
+                    value={beatmapIdsInput}
+                    onChange={(event) => setBeatmapIdsInput(event.target.value)}
+                    placeholder="1234567, 2345678, 3456789..."
+                    disabled={massEnqueueing}
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                  {beatmapIdsInput.trim() && (
+                    <p className="text-muted-foreground text-xs">
+                      {parsedBeatmapIds.length} unique beatmap
+                      {parsedBeatmapIds.length === 1 ? '' : 's'} parsed
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="match-ids" className="text-sm font-medium">
+                    Match IDs
+                  </Label>
+                  <Textarea
+                    id="match-ids"
+                    value={matchIdsInput}
+                    onChange={(event) => setMatchIdsInput(event.target.value)}
+                    placeholder="12345678, 23456789, 34567890..."
+                    disabled={massEnqueueing}
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                  {matchIdsInput.trim() && (
+                    <p className="text-muted-foreground text-xs">
+                      {parsedMatchIds.length} unique match
+                      {parsedMatchIds.length === 1 ? '' : 'es'} parsed
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Priority</Label>
+                  <RadioGroup
+                    value={priority}
+                    onValueChange={(value) =>
+                      setPriority(value as 'Low' | 'Normal' | 'High')
+                    }
+                    disabled={massEnqueueing}
+                    className="flex gap-3"
+                  >
+                    {(['Low', 'Normal', 'High'] as const).map((p) => (
+                      <div key={p} className="flex items-center gap-2">
+                        <RadioGroupItem value={p} id={`priority-${p}`} />
+                        <Label
+                          htmlFor={`priority-${p}`}
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          {p}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={massEnqueueing}
+                  className="sm:w-auto"
+                >
+                  {massEnqueueing ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Enqueueing…
+                    </>
+                  ) : (
+                    'Enqueue refetch'
+                  )}
+                </Button>
+              </div>
+
+              {showProgress && massEnqueueing && (
+                <div className="rounded-lg border p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Loader2 className="size-4 animate-spin" />
+                    <span className="text-foreground font-semibold">
+                      {progressMessage}
+                    </span>
+                  </div>
+                  <div className="mb-2 flex gap-2 text-xs">
+                    <span
+                      className={
+                        progressPhase === 'beatmaps'
+                          ? 'text-foreground font-semibold'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      Beatmaps
+                    </span>
+                    <span className="text-muted-foreground">→</span>
+                    <span
+                      className={
+                        progressPhase === 'matches'
+                          ? 'text-foreground font-semibold'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      Matches
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground capitalize">
+                        {progressPhase}
+                      </span>
+                      <span className="text-muted-foreground">
+                        Batch {currentBatch} of {totalBatches}
+                      </span>
+                    </div>
+                    <Progress value={progressPercent} className="h-2 w-full" />
+                    <div className="text-muted-foreground text-right text-xs">
+                      {progressPercent.toFixed(0)}% complete
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {massEnqueueCompletionData && (
+                <div className="rounded-lg border p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-foreground font-semibold">
+                      Results
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground text-xs">Beatmaps</p>
+                      <div className="text-foreground text-sm">
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {massEnqueueCompletionData.beatmapsUpdated} enqueued
+                        </span>
+                        {massEnqueueCompletionData.beatmapsSkipped > 0 && (
+                          <>
+                            {' • '}
+                            <span className="text-muted-foreground">
+                              {massEnqueueCompletionData.beatmapsSkipped}{' '}
+                              skipped
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground text-xs">Matches</p>
+                      <div className="text-foreground text-sm">
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {massEnqueueCompletionData.matchesUpdated} enqueued
+                        </span>
+                        {massEnqueueCompletionData.matchesSkipped > 0 && (
+                          <>
+                            {' • '}
+                            <span className="text-muted-foreground">
+                              {massEnqueueCompletionData.matchesSkipped} skipped
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </form>
           </CardContent>
         </Card>
       </div>
