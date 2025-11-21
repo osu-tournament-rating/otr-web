@@ -21,6 +21,8 @@ import {
   Award,
   Music,
   ExternalLink,
+  UserPlus,
+  UserCheck,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -178,41 +180,94 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
         </div>
 
         {/* Tournament metadata */}
-        <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <LazerBadge isLazer={tournament.isLazer} />
+        <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
+              <LazerBadge isLazer={tournament.isLazer} />
 
-          <div className="flex items-center gap-1.5">
-            <RulesetIcon
-              ruleset={tournament.ruleset}
-              width={16}
-              height={16}
-              className="flex-shrink-0 fill-current"
-            />
-            <span className="truncate">
-              {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
-            </span>
+              <div className="flex items-center gap-1.5">
+                <RulesetIcon
+                  ruleset={tournament.ruleset}
+                  width={16}
+                  height={16}
+                  className="flex-shrink-0 fill-current"
+                />
+                <span className="truncate">
+                  {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {tournament.lobbySize}v{tournament.lobbySize}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Target className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">
+                  {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
+                </span>
+              </div>
+
+              {tournament.submittedByUsername && (
+                <SimpleTooltip content="Submitter">
+                  <div className="hidden items-center gap-1.5 sm:flex">
+                    <UserPlus className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate text-xs sm:text-sm">
+                      {tournament.submittedByUsername}
+                    </span>
+                  </div>
+                </SimpleTooltip>
+              )}
+
+              {tournament.verifiedByUsername && (
+                <SimpleTooltip content="Verifier">
+                  <div className="hidden items-center gap-1.5 sm:flex">
+                    <UserCheck className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate text-xs sm:text-sm">
+                      {tournament.verifiedByUsername}
+                    </span>
+                  </div>
+                </SimpleTooltip>
+              )}
+            </div>
+
+            {startDate && endDate && (
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate text-xs sm:text-sm">
+                  {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <Users className="h-4 w-4 flex-shrink-0" />
-            <span>
-              {tournament.lobbySize}v{tournament.lobbySize}
-            </span>
-          </div>
+          {(tournament.submittedByUsername ||
+            tournament.verifiedByUsername) && (
+            <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
+              {tournament.submittedByUsername && (
+                <SimpleTooltip content="Submitter">
+                  <div className="flex items-center gap-1.5">
+                    <UserPlus className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate text-xs sm:text-sm">
+                      {tournament.submittedByUsername}
+                    </span>
+                  </div>
+                </SimpleTooltip>
+              )}
 
-          <div className="flex items-center gap-1.5">
-            <Target className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">
-              {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
-            </span>
-          </div>
-
-          {startDate && endDate && (
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate text-xs sm:text-sm">
-                {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
-              </span>
+              {tournament.verifiedByUsername && (
+                <SimpleTooltip content="Verifier">
+                  <div className="flex items-center gap-1.5">
+                    <UserCheck className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate text-xs sm:text-sm">
+                      {tournament.verifiedByUsername}
+                    </span>
+                  </div>
+                </SimpleTooltip>
+              )}
             </div>
           )}
         </div>
