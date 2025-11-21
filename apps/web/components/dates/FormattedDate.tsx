@@ -5,9 +5,8 @@ import ClientOnly from '../client-only';
 
 type Formats = 'short' | 'full';
 
-function getTimezoneOffset(timeZone: string): string {
-  const now = new Date();
-  const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+function getTimezoneOffset(timeZone: string, date: Date): string {
+  const utc = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
   const target = new Date(utc.toLocaleString('en-US', { timeZone: 'UTC' }));
   const local = new Date(utc.toLocaleString('en-US', { timeZone }));
 
@@ -43,7 +42,7 @@ function getFullTimestampParts(date: Date): [string, string] {
 
   return [
     `${day} ${month} ${year}`,
-    `${hour}:${min}:${sec} ${getTimezoneOffset(timezone)}`,
+    `${hour}:${min}:${sec} ${getTimezoneOffset(timezone, date)}`,
   ];
 }
 
