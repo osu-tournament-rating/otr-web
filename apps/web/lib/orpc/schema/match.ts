@@ -229,7 +229,7 @@ export const GameScoreAdminUpdateInputSchema = z.object({
   statMiss: NonNegativeIntSchema.nullable(),
   statGood: NonNegativeIntSchema.nullable(),
   statPerfect: NonNegativeIntSchema.nullable(),
-  accuracy: z.number().min(0),
+  accuracy: z.number().nonnegative().max(1.0),
   grade: ScoreGradeSchema,
   mods: BitmaskEnumValueSchema,
   ruleset: RulesetSchema,
