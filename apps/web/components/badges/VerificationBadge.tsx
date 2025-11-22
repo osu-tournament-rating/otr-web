@@ -14,6 +14,7 @@ import {
   AlertTriangle, // PreRejected
   XCircle, // Rejected
   Clock, // None/Pending
+  UserCheck, // Verifier
 } from 'lucide-react';
 import React from 'react';
 import SimpleTooltip from '../simple-tooltip';
@@ -95,6 +96,8 @@ interface VerificationBadgeProps {
   entityType?: ApiItemType;
   /** Game index for tooltip (when used in games column) */
   gameIndex?: number;
+  /** Username of the verifier (shown in tooltip for Verified/Rejected status) */
+  verifierUsername?: string;
 }
 
 function getWarningMetadata(
@@ -195,14 +198,28 @@ function createTooltipContent(
   statusText: string,
   warningMetadata: Array<{ text: string }>,
   rejectionMetadata: Array<{ text: string }>,
-  gameIndex?: number
+  gameIndex?: number,
+  verifierUsername?: string,
+  verificationStatus?: VerificationStatus
 ) {
+  const shouldShowVerifier =
+    verifierUsername &&
+    (verificationStatus === VerificationStatus.Verified ||
+      verificationStatus === VerificationStatus.Rejected);
+
   return (
     <div>
       {gameIndex !== undefined && (
         <p className="font-bold">Game {gameIndex + 1}</p>
       )}
-      <p>{statusText}</p>
+      {!shouldShowVerifier && <p>{statusText}</p>}
+
+      {shouldShowVerifier && (
+        <div className="flex items-center gap-1.5">
+          <UserCheck className="h-3.5 w-3.5" />
+          <span>{verifierUsername}</span>
+        </div>
+      )}
 
       {warningMetadata.length > 0 && (
         <div className="mt-2">
@@ -238,6 +255,7 @@ export default function VerificationBadge({
   rejectionReason,
   entityType,
   gameIndex,
+  verifierUsername,
 }: VerificationBadgeProps) {
   const { text: statusText } =
     VerificationStatusEnumHelper.getMetadata(verificationStatus);
@@ -271,8 +289,14 @@ export default function VerificationBadge({
     </div>
   );
 
-  // Show tooltip if there are warnings, rejections, or if displayText is false
-  const shouldShowTooltip = !displayText || hasWarnings || hasRejections;
+  const hasVerifier =
+    verifierUsername &&
+    (verificationStatus === VerificationStatus.Verified ||
+      verificationStatus === VerificationStatus.Rejected);
+
+  // Show tooltip if there are warnings, rejections, verifier info, or if displayText is false
+  const shouldShowTooltip =
+    !displayText || hasWarnings || hasRejections || hasVerifier;
 
   if (!shouldShowTooltip) {
     return badge;
@@ -282,7 +306,9 @@ export default function VerificationBadge({
     statusText,
     warningMetadata,
     rejectionMetadata,
-    gameIndex
+    gameIndex,
+    verifierUsername,
+    verificationStatus
   );
 
   return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;

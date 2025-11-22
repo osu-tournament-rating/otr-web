@@ -20,6 +20,7 @@ export type MatchRow = {
     verificationStatus: VerificationStatus;
     warningFlags: MatchWarningFlags;
     rejectionReason: MatchRejectionReason;
+    verifiedByUsername: string | null;
   };
   startDate: string;
   games: Pick<
@@ -76,6 +77,7 @@ export const columns = [
           rejectionReason={getValue().rejectionReason}
           entityType="match"
           displayText
+          verifierUsername={getValue().verifiedByUsername ?? undefined}
         />
       </div>
     ),

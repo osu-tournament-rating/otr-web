@@ -3,7 +3,7 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { AdminNoteRouteTarget } from '@otr/core/osu';
 import Link from 'next/link';
-import { Users, Target, Calendar, UserPlus, UserCheck } from 'lucide-react';
+import { Users, Target, Calendar, UserPlus } from 'lucide-react';
 
 import {
   TournamentAdminNote,
@@ -88,6 +88,12 @@ export default function TournamentCard({
               rejectionReason={tournament.rejectionReason}
               entityType="tournament"
               displayText={displayStatusText}
+              verifierUsername={
+                'verifiedByUsername' in tournament &&
+                tournament.verifiedByUsername
+                  ? tournament.verifiedByUsername
+                  : undefined
+              }
             />
 
             <LazerBadge isLazer={tournament.isLazer} />
@@ -129,18 +135,6 @@ export default function TournamentCard({
                   </div>
                 </SimpleTooltip>
               )}
-
-            {'verifiedByUsername' in tournament &&
-              tournament.verifiedByUsername && (
-                <SimpleTooltip content="Verifier">
-                  <div className="hidden items-center gap-1.5 sm:flex">
-                    <UserCheck className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate text-xs sm:text-sm">
-                      {tournament.verifiedByUsername}
-                    </span>
-                  </div>
-                </SimpleTooltip>
-              )}
           </div>
 
           {startDate && endDate && (
@@ -153,36 +147,19 @@ export default function TournamentCard({
           )}
         </div>
 
-        {(('submittedByUsername' in tournament &&
-          tournament.submittedByUsername) ||
-          ('verifiedByUsername' in tournament &&
-            tournament.verifiedByUsername)) && (
-          <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
-            {'submittedByUsername' in tournament &&
-              tournament.submittedByUsername && (
-                <SimpleTooltip content="Submitter">
-                  <div className="flex items-center gap-1.5">
-                    <UserPlus className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate text-xs sm:text-sm">
-                      {tournament.submittedByUsername}
-                    </span>
-                  </div>
-                </SimpleTooltip>
-              )}
-
-            {'verifiedByUsername' in tournament &&
-              tournament.verifiedByUsername && (
-                <SimpleTooltip content="Verifier">
-                  <div className="flex items-center gap-1.5">
-                    <UserCheck className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate text-xs sm:text-sm">
-                      {tournament.verifiedByUsername}
-                    </span>
-                  </div>
-                </SimpleTooltip>
-              )}
-          </div>
-        )}
+        {'submittedByUsername' in tournament &&
+          tournament.submittedByUsername && (
+            <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
+              <SimpleTooltip content="Submitter">
+                <div className="flex items-center gap-1.5">
+                  <UserPlus className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate text-xs sm:text-sm">
+                    {tournament.submittedByUsername}
+                  </span>
+                </div>
+              </SimpleTooltip>
+            </div>
+          )}
       </div>
     </div>
   );

@@ -69,6 +69,7 @@ export default function PlayerTournamentCard({
             rejectionReason={tournament.rejectionReason}
             entityType="tournament"
             displayText={true}
+            verifierUsername={tournament.verifiedByUsername ?? undefined}
           />
 
           <LazerBadge isLazer={tournament.isLazer} />

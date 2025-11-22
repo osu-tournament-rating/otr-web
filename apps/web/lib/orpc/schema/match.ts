@@ -137,6 +137,7 @@ const matchBaseSchema = matchSelectSchema.omit(CreatedUpdatedOmit).extend({
   tournament: MatchTournamentSchema.nullable().default(null),
   winRecord: MatchWinRecordSchema.nullable().default(null),
   rosters: z.array(MatchRosterSchema).default([]),
+  verifiedByUsername: z.string().nullable(),
 });
 
 export const MatchSchema = matchBaseSchema;

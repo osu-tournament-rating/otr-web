@@ -210,6 +210,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
             warningFlags={childMatch.warningFlags}
             rejectionReason={childMatch.rejectionReason}
             entityType="match"
+            verifierUsername={childMatch.verifiedByUsername ?? undefined}
           />
         </div>
       </div>
