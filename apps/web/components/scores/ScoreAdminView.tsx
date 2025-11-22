@@ -362,9 +362,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                         <Input
                           className={inputChangedStyle(fieldState)}
                           type="number"
-                          min={0}
-                          max={1}
-                          step={0.0001}
                           {...field}
                         />
                       </FormControl>
