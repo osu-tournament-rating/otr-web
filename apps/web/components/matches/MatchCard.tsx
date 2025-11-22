@@ -73,6 +73,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entityType="match"
                 displayText
                 size="small"
+                verifierUsername={match.verifiedByUsername ?? undefined}
               />
               <LazerBadge isLazer={match.isLazer} />
               <span className="text-xs text-white/80 sm:text-sm">

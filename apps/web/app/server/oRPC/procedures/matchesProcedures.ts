@@ -1,4 +1,5 @@
 import { ORPCError } from '@orpc/server';
+import { alias } from 'drizzle-orm/pg-core';
 import { asc, desc, eq, inArray } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
@@ -182,6 +183,22 @@ export const getMatch = publicProcedure
     }
 
     const matchId = matchRow.id;
+
+    const verifierUser = alias(schema.users, 'verifierUser');
+    const verifierPlayer = alias(schema.players, 'verifierPlayer');
+
+    const verifiedByUsername = matchRow.verifiedByUserId
+      ? await context.db
+          .select({ username: verifierPlayer.username })
+          .from(verifierUser)
+          .innerJoin(
+            verifierPlayer,
+            eq(verifierUser.playerId, verifierPlayer.id)
+          )
+          .where(eq(verifierUser.id, matchRow.verifiedByUserId))
+          .limit(1)
+          .then((rows) => rows[0]?.username ?? null)
+      : null;
 
     const gameRows = await context.db
       .select({
@@ -739,6 +756,7 @@ export const getMatch = publicProcedure
       tournament,
       winRecord,
       rosters,
+      verifiedByUsername,
     });
 
     return matchDetail;

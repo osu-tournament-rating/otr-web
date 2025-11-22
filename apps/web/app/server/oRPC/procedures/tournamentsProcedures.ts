@@ -182,6 +182,11 @@ export const listTournaments = publicProcedure
         orderBy.push(desc(schema.tournaments.created));
       }
 
+      const submitterUser = alias(schema.users, 'submitterUser');
+      const submitterPlayer = alias(schema.players, 'submitterPlayer');
+      const verifierUser = alias(schema.users, 'verifierUser');
+      const verifierPlayer = alias(schema.players, 'verifierPlayer');
+
       const baseQuery = context.db
         .select({
           id: schema.tournaments.id,
@@ -197,8 +202,23 @@ export const listTournaments = publicProcedure
           verificationStatus: schema.tournaments.verificationStatus,
           rejectionReason: schema.tournaments.rejectionReason,
           isLazer: schema.tournaments.isLazer,
+          submittedByUsername: submitterPlayer.username,
+          verifiedByUsername: verifierPlayer.username,
         })
-        .from(schema.tournaments);
+        .from(schema.tournaments)
+        .leftJoin(
+          submitterUser,
+          eq(schema.tournaments.submittedByUserId, submitterUser.id)
+        )
+        .leftJoin(
+          submitterPlayer,
+          eq(submitterUser.playerId, submitterPlayer.id)
+        )
+        .leftJoin(
+          verifierUser,
+          eq(schema.tournaments.verifiedByUserId, verifierUser.id)
+        )
+        .leftJoin(verifierPlayer, eq(verifierUser.playerId, verifierPlayer.id));
 
       const conditionedQuery =
         whereClause !== undefined
@@ -225,6 +245,8 @@ export const listTournaments = publicProcedure
           verificationStatus: row.verificationStatus as VerificationStatus,
           rejectionReason: row.rejectionReason,
           isLazer: row.isLazer,
+          submittedByUsername: row.submittedByUsername ?? null,
+          verifiedByUsername: row.verifiedByUsername ?? null,
         })
       );
     } catch (error) {
@@ -257,6 +279,37 @@ export const getTournament = publicProcedure
           message: 'Tournament not found',
         });
       }
+
+      const submitterUser = alias(schema.users, 'submitterUser');
+      const submitterPlayer = alias(schema.players, 'submitterPlayer');
+      const verifierUser = alias(schema.users, 'verifierUser');
+      const verifierPlayer = alias(schema.players, 'verifierPlayer');
+
+      const submittedByUsername = tournament.submittedByUserId
+        ? await context.db
+            .select({ username: submitterPlayer.username })
+            .from(submitterUser)
+            .innerJoin(
+              submitterPlayer,
+              eq(submitterUser.playerId, submitterPlayer.id)
+            )
+            .where(eq(submitterUser.id, tournament.submittedByUserId))
+            .limit(1)
+            .then((rows) => rows[0]?.username ?? null)
+        : null;
+
+      const verifiedByUsername = tournament.verifiedByUserId
+        ? await context.db
+            .select({ username: verifierPlayer.username })
+            .from(verifierUser)
+            .innerJoin(
+              verifierPlayer,
+              eq(verifierUser.playerId, verifierPlayer.id)
+            )
+            .where(eq(verifierUser.id, tournament.verifiedByUserId))
+            .limit(1)
+            .then((rows) => rows[0]?.username ?? null)
+        : null;
 
       const beatmapsetCreator = alias(schema.players, 'beatmapsetCreator');
 
@@ -698,6 +751,8 @@ export const getTournament = publicProcedure
         isLazer: tournament.isLazer,
         submittedByUserId: tournament.submittedByUserId ?? null,
         verifiedByUserId: tournament.verifiedByUserId ?? null,
+        submittedByUsername,
+        verifiedByUsername,
         matches: normalizedMatches,
         adminNotes,
         playerTournamentStats: playerStats,

@@ -52,6 +52,8 @@ export const TournamentListItemSchema = tournamentSelectSchema
   .extend({
     ruleset: RulesetSchema,
     verificationStatus: VerificationStatusSchema,
+    submittedByUsername: z.string().nullable(),
+    verifiedByUsername: z.string().nullable(),
   });
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
@@ -102,6 +104,8 @@ const tournamentDetailBaseSchema = tournamentSelectSchema
     adminNotes: z.array(TournamentAdminNoteSchema).default([]),
     playerTournamentStats: z.array(TournamentPlayerStatsSchema).default([]),
     pooledBeatmaps: z.array(TournamentBeatmapSchema).default([]),
+    submittedByUsername: z.string().nullable(),
+    verifiedByUsername: z.string().nullable(),
   });
 
 export const TournamentDetailSchema = tournamentDetailBaseSchema;
