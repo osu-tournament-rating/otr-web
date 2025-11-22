@@ -121,7 +121,7 @@ export const scoreEditFormSchema = z.object({
   statMiss: z.coerce.number().nonnegative().int().nullable(),
   statGood: z.coerce.number().nonnegative().int().nullable(),
   statPerfect: z.coerce.number().nonnegative().int().nullable(),
-  accuracy: z.coerce.number().nonnegative(),
+  accuracy: z.coerce.number().nonnegative().max(1.0),
   grade: bitwiseEnumValueSchema(ScoreGrade),
   mods: bitwiseEnumValueSchema(Mods),
   ruleset: numericEnumValueSchema(Ruleset),
