@@ -420,6 +420,9 @@ export const getTournament = publicProcedure
         creatorsByBeatmapId.set(beatmapId, current);
       }
 
+      const matchVerifierUser = alias(schema.users, 'matchVerifierUser');
+      const matchVerifierPlayer = alias(schema.players, 'matchVerifierPlayer');
+
       const matchRows = await context.db
         .select({
           id: schema.matches.id,
@@ -434,9 +437,18 @@ export const getTournament = publicProcedure
           isLazer: schema.matches.isLazer,
           submittedByUserId: schema.matches.submittedByUserId,
           verifiedByUserId: schema.matches.verifiedByUserId,
+          verifiedByUsername: matchVerifierPlayer.username,
           dataFetchStatus: schema.matches.dataFetchStatus,
         })
         .from(schema.matches)
+        .leftJoin(
+          matchVerifierUser,
+          eq(schema.matches.verifiedByUserId, matchVerifierUser.id)
+        )
+        .leftJoin(
+          matchVerifierPlayer,
+          eq(matchVerifierUser.playerId, matchVerifierPlayer.id)
+        )
         .where(eq(schema.matches.tournamentId, tournament.id))
         .orderBy(desc(schema.matches.startTime), desc(schema.matches.id));
 
@@ -510,6 +522,7 @@ export const getTournament = publicProcedure
         isLazer: match.isLazer,
         submittedByUserId: match.submittedByUserId ?? null,
         verifiedByUserId: match.verifiedByUserId ?? null,
+        verifiedByUsername: match.verifiedByUsername ?? null,
         dataFetchStatus: match.dataFetchStatus,
         games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
           id: game.id,
