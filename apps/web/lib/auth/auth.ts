@@ -457,14 +457,6 @@ const ensureOsuAccountLink = async (
 
     const { player, appUser } = ensured;
 
-    if (profile) {
-      await syncPlayerFriends({
-        playerId: player.id,
-        accessToken: account.accessToken,
-        profile,
-      });
-    }
-
     const scopes = appUser?.scopes ?? [];
     const hasAdminScope = scopes.includes('admin');
 
@@ -575,7 +567,7 @@ export const auth = betterAuth({
           authorizationUrl: 'https://osu.ppy.sh/oauth/authorize',
           tokenUrl: 'https://osu.ppy.sh/oauth/token',
           userInfoUrl: OSU_PROFILE_URL,
-          scopes: ['identify', 'public', 'friends.read'],
+          scopes: ['identify', 'public'],
           getUserInfo: async (tokens) => {
             const profile = await fetchOsuProfile(tokens.accessToken);
 
