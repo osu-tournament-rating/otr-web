@@ -17,7 +17,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { authClient } from '@/lib/auth/auth-client';
 import { orpc } from '@/lib/orpc/orpc';
 
@@ -77,84 +83,76 @@ export default function FriendsSyncClient({
   };
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Friends</h2>
-        <p className="text-muted-foreground text-sm sm:text-base">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <Users className="text-primary size-6" />
+          <CardTitle>Friends</CardTitle>
+        </div>
+        <CardDescription>
           Sync your osu! friends list to filter the leaderboard by friends.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <p className="text-muted-foreground text-sm">
+          {friendCount > 0
+            ? `${friendCount} friend${friendCount !== 1 ? 's' : ''} synced.`
+            : 'Your friends list has not been synced yet.'}
         </p>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Users className="text-primary size-6" />
-            <CardTitle>Friends Sync</CardTitle>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            {friendCount > 0
-              ? `${friendCount} friend${friendCount !== 1 ? 's' : ''} synced.`
-              : 'Your friends list has not been synced. Click below to authorize access.'}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleSyncFriends} disabled={isSyncing}>
-              {isSyncing ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Redirecting...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 size-4" />
-                  {friendCount > 0 ? 'Resync Friends' : 'Sync Friends'}
-                </>
-              )}
-            </Button>
-
-            {friendCount > 0 && (
-              <AlertDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={isDeleting}>
-                    <Trash2 className="mr-2 size-4" />
-                    Delete Friends
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Delete your friends list?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will remove all {friendCount} friend
-                      {friendCount !== 1 ? 's' : ''} from your synced list. You
-                      can sync them again at any time.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteFriends}
-                      className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? 'Deleting...' : 'Delete Friends'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleSyncFriends} disabled={isSyncing}>
+            {isSyncing ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 size-4" />
+                {friendCount > 0 ? 'Resync Friends' : 'Sync Friends'}
+              </>
             )}
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+          </Button>
+
+          {friendCount > 0 && (
+            <AlertDialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+            >
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isDeleting}>
+                  <Trash2 className="mr-2 size-4" />
+                  Delete Friends
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your friends list?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove all {friendCount} friend
+                    {friendCount !== 1 ? 's' : ''} from your synced list. You
+                    can sync them again at any time.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteFriends}
+                    className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Friends'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
