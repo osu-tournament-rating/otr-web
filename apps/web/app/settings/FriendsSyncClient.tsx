@@ -111,7 +111,7 @@ export default function FriendsSyncClient({
             ) : (
               <>
                 <RefreshCw className="mr-2 size-4" />
-                {friendCount > 0 ? 'Resync Friends' : 'Sync Friends'}
+                Sync Friends
               </>
             )}
           </Button>
