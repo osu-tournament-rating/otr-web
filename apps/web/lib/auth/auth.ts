@@ -457,14 +457,6 @@ const ensureOsuAccountLink = async (
 
     const { player, appUser } = ensured;
 
-    if (profile) {
-      await syncPlayerFriends({
-        playerId: player.id,
-        accessToken: account.accessToken,
-        profile,
-      });
-    }
-
     const scopes = appUser?.scopes ?? [];
     const hasAdminScope = scopes.includes('admin');
 
@@ -575,7 +567,7 @@ export const auth = betterAuth({
           authorizationUrl: 'https://osu.ppy.sh/oauth/authorize',
           tokenUrl: 'https://osu.ppy.sh/oauth/token',
           userInfoUrl: OSU_PROFILE_URL,
-          scopes: ['identify', 'public', 'friends.read'],
+          scopes: ['identify', 'public'],
           getUserInfo: async (tokens) => {
             const profile = await fetchOsuProfile(tokens.accessToken);
 
@@ -592,11 +584,14 @@ export const auth = betterAuth({
               return null;
             }
 
-            await syncPlayerFriends({
-              playerId: ensured.player.id,
-              accessToken: tokens.accessToken,
-              profile,
-            });
+            const grantedScopes = tokens.scopes ?? [];
+            if (grantedScopes.includes('friends.read')) {
+              await syncPlayerFriends({
+                playerId: ensured.player.id,
+                accessToken: tokens.accessToken,
+                profile,
+              });
+            }
 
             // osu! OAuth2 doesn't return email addresses, so we use a placeholder
             return {
