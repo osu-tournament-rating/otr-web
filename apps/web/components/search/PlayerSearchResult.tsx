@@ -30,7 +30,13 @@ export default function PlayerSearchResult({
       : `/players/${data.id}`;
 
   return (
-    <Card className="bg-popover hover:bg-popover/80 border-none p-3 transition-colors sm:p-4">
+    <Card
+      className={`border-none p-3 transition-colors sm:p-4 ${
+        data.isFriend
+          ? 'bg-primary/15 hover:bg-primary/20'
+          : 'bg-popover hover:bg-popover/80'
+      }`}
+    >
       <Link
         href={href}
         onClick={closeDialog}

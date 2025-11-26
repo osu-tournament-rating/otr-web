@@ -144,6 +144,20 @@ export const searchEntities = protectedProcedure
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
 
+      const session = context.session as
+        | { dbPlayer?: { id?: number | null } | null }
+        | undefined;
+      const currentPlayerId = session?.dbPlayer?.id;
+
+      let friendIds: Set<number> = new Set();
+      if (currentPlayerId) {
+        const friendRows = await context.db
+          .select({ friendId: schema.playerFriends.friendId })
+          .from(schema.playerFriends)
+          .where(eq(schema.playerFriends.playerId, currentPlayerId));
+        friendIds = new Set(friendRows.map((row) => Number(row.friendId)));
+      }
+
       const [playerRows, tournamentRows, matchRows] = await Promise.all([
         context.db
           .select({
@@ -226,15 +240,17 @@ export const searchEntities = protectedProcedure
             : (rulesetValue as Ruleset);
         const tierProgress =
           rating !== null ? buildTierProgress(rating).tierProgress : null;
+        const playerId = Number(row.id);
 
         return PlayerSearchResultSchema.parse({
-          id: Number(row.id),
+          id: playerId,
           osuId: Number(row.osuId),
           username: row.username,
           rating,
           ruleset,
           globalRank,
           tierProgress,
+          isFriend: friendIds.has(playerId),
         });
       });
 

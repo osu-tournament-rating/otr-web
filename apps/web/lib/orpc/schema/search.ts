@@ -24,6 +24,7 @@ export const PlayerSearchResultSchema = playerSelectSchema
     ruleset: RulesetSchema.nullable(),
     globalRank: playerRatingSelectSchema.shape.globalRank.nullable(),
     tierProgress: TierProgressSchema.nullable(),
+    isFriend: z.boolean().optional(),
   });
 
 const tournamentSearchBaseSchema = tournamentSelectSchema.pick({
