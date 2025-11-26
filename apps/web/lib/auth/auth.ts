@@ -584,14 +584,11 @@ export const auth = betterAuth({
               return null;
             }
 
-            const grantedScopes = tokens.scopes ?? [];
-            if (grantedScopes.includes('friends.read')) {
-              await syncPlayerFriends({
-                playerId: ensured.player.id,
-                accessToken: tokens.accessToken,
-                profile,
-              });
-            }
+            await syncPlayerFriends({
+              playerId: ensured.player.id,
+              accessToken: tokens.accessToken,
+              profile,
+            });
 
             // osu! OAuth2 doesn't return email addresses, so we use a placeholder
             return {

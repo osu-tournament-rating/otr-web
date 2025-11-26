@@ -138,3 +138,39 @@ export const deleteMyAccount = protectedProcedure
 
     return { success: true };
   });
+
+export const deleteMyFriends = protectedProcedure
+  .route({
+    summary: 'Delete all friends for the current user',
+    tags: ['authenticated'],
+    method: 'DELETE',
+    path: '/users/me/friends',
+  })
+  .handler(async ({ context }) => {
+    const { user } = context.session;
+
+    if (!user?.id) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'No authenticated user found',
+      });
+    }
+
+    const authUser = await context.db.query.auth_users.findFirst({
+      where: eq(schema.auth_users.id, user.id),
+      columns: {
+        playerId: true,
+      },
+    });
+
+    if (!authUser?.playerId) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'User not found',
+      });
+    }
+
+    await db
+      .delete(schema.playerFriends)
+      .where(eq(schema.playerFriends.playerId, authUser.playerId));
+
+    return { success: true };
+  });

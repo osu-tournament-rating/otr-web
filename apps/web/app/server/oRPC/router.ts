@@ -30,6 +30,7 @@ import {
 import { searchEntities } from './procedures/searchProcedures';
 import {
   deleteMyAccount,
+  deleteMyFriends,
   getCurrentUser,
   getUser,
 } from './procedures/userProcedures';
@@ -96,6 +97,7 @@ export const router = base.router({
   users: {
     me: getCurrentUser,
     deleteMe: deleteMyAccount,
+    deleteMyFriends: deleteMyFriends,
     admin: {
       search: searchPlayersAdmin,
       lookup: lookupAuthUserAdmin,
