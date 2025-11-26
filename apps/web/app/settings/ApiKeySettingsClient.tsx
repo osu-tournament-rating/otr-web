@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -183,22 +184,16 @@ export default function ApiKeySettingsClient({
   };
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">API Access</h2>
-        <p className="text-muted-foreground text-sm sm:text-base">
-          Use o!TR in spreadsheets and other tools via the API.
-        </p>
-      </div>
-
+    <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-col gap-4">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <KeyRound className="text-primary size-6" />
-            <div>
-              <CardTitle>API Keys</CardTitle>
-            </div>
+            <CardTitle>API Keys</CardTitle>
           </div>
+          <CardDescription>
+            Use o!TR in spreadsheets and other tools via the API.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -374,6 +369,6 @@ export default function ApiKeySettingsClient({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-    </section>
+    </div>
   );
 }
