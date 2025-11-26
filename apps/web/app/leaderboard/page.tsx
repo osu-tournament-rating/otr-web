@@ -15,12 +15,13 @@ import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';
 import { createSearchParamsFromSchema } from '@/lib/utils/leaderboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
+import { hasFriends } from '@/lib/db/player-friends';
+import LeaderboardTabs from './LeaderboardTabs';
 
 export const metadata: Metadata = {
   title: 'Global Leaderboard',
@@ -61,6 +62,15 @@ export default async function Page(props: {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   if (filter.friend && !session) {
+    redirect('/leaderboard');
+  }
+
+  // Check if user has friends synced
+  const playerId = session?.dbPlayer?.id;
+  const userHasFriends = playerId ? await hasFriends(playerId) : false;
+
+  // Redirect to main leaderboard if user tries to access friends tab with no friends
+  if (filter.friend && !userHasFriends) {
     redirect('/leaderboard');
   }
 
@@ -170,16 +180,12 @@ export default async function Page(props: {
               </div>
               <div className="flex items-center gap-4">
                 {session && (
-                  <Tabs value={currentTab} className="w-auto">
-                    <TabsList>
-                      <TabsTrigger value="all" asChild>
-                        <Link href={createTabUri(false)}>All</Link>
-                      </TabsTrigger>
-                      <TabsTrigger value="friends" asChild>
-                        <Link href={createTabUri(true)}>Friends</Link>
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <LeaderboardTabs
+                    currentTab={currentTab}
+                    allTabHref={createTabUri(false)}
+                    friendsTabHref={createTabUri(true)}
+                    hasFriends={userHasFriends}
+                  />
                 )}
 
                 <LeaderboardFilter filter={filter} />
