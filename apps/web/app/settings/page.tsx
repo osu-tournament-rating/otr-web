@@ -2,15 +2,13 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Settings } from 'lucide-react';
 import { Suspense } from 'react';
-import { eq, sql } from 'drizzle-orm';
 
 import AccountDeletionClient from '@/app/settings/AccountDeletionClient';
 import ApiKeySettingsClient from '@/app/settings/ApiKeySettingsClient';
 import FriendsSyncClient from '@/app/settings/FriendsSyncClient';
 import { auth } from '@/lib/auth/auth';
 import { orpc } from '@/lib/orpc/orpc';
-import { db } from '@/lib/db';
-import * as schema from '@otr/core/db/schema';
+import { getFriendCount } from '@/lib/db/player-friends';
 
 export default async function SettingsPage() {
   const headersList = await headers();
@@ -23,15 +21,7 @@ export default async function SettingsPage() {
   const keys = await orpc.apiClients.getKeys();
 
   const playerId = appSession.dbPlayer?.id;
-  let friendCount = 0;
-
-  if (playerId) {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.playerFriends)
-      .where(eq(schema.playerFriends.playerId, playerId));
-    friendCount = result[0]?.count ?? 0;
-  }
+  const friendCount = playerId ? await getFriendCount(playerId) : 0;
 
   return (
     <div className="flex flex-col gap-10">
