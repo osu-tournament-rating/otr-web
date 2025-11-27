@@ -5,7 +5,14 @@ import Image from 'next/image';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronDown, LogOut, Settings, ShieldAlert, User } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  LogOut,
+  Settings,
+  ShieldAlert,
+  User,
+} from 'lucide-react';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -164,27 +171,52 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </Link>
           )}
 
-          {isAdmin &&
-            (isMobileNav ? (
-              <SheetClose asChild>
-                <Link
-                  href="/admin"
-                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                >
-                  <ShieldAlert className="size-4" />
-                  <span>Admin</span>
-                </Link>
-              </SheetClose>
-            ) : (
-              <Link
-                href="/admin"
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-              >
-                <ShieldAlert className="size-4" />
-                <span>Admin</span>
-              </Link>
-            ))}
+          {isAdmin && (
+            <>
+              <hr className="border-border my-1" />
+              {isMobileNav ? (
+                <>
+                  <SheetClose asChild>
+                    <Link
+                      href="/admin"
+                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <ShieldAlert className="size-4" />
+                      <span>Admin</span>
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href="/admin/reports"
+                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <AlertTriangle className="size-4" />
+                      <span>Reports</span>
+                    </Link>
+                  </SheetClose>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/admin"
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <ShieldAlert className="size-4" />
+                    <span>Admin</span>
+                  </Link>
+                  <Link
+                    href="/admin/reports"
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <AlertTriangle className="size-4" />
+                    <span>Reports</span>
+                  </Link>
+                </>
+              )}
+            </>
+          )}
 
+          <hr className="border-border my-1" />
           <button
             className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
@@ -253,13 +285,23 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           </Link>
         </DropdownMenuItem>
         {isAdmin && (
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/admin">
-              <ShieldAlert className="mr-2 size-4" />
-              <span>Admin</span>
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin">
+                <ShieldAlert className="mr-2 size-4" />
+                <span>Admin</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin/reports">
+                <AlertTriangle className="mr-2 size-4" />
+                <span>Reports</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
           onClick={handleLogout}

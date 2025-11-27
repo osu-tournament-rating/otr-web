@@ -3,13 +3,15 @@ import { ExternalLink } from 'lucide-react';
 
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
 import { Game } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget } from '@otr/core/osu';
+import { GameReportableFields } from '@/lib/orpc/schema/report';
+import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';
 import BeatmapBackground from './BeatmapBackground';
 import FormattedDate from '../dates/FormattedDate';
 import ModIconset from '../icons/ModIconset';
 import RulesetIcon from '../icons/RulesetIcon';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import ReportButton from '../reports/ReportButton';
 import GameAdminView from './GameAdminView';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
@@ -85,6 +87,25 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 </Link>
               </Button>
             </SimpleTooltip>
+            <ReportButton
+              entityType={ReportEntityType.Game}
+              entityId={game.id}
+              entityDisplayName={
+                game.beatmap?.beatmapset?.title
+                  ? `${game.beatmap.beatmapset.title} [${game.beatmap.diffName}]`
+                  : `Game ${game.id}`
+              }
+              reportableFields={GameReportableFields}
+              currentValues={{
+                ruleset: String(game.ruleset),
+                scoringType: String(game.scoringType),
+                teamType: String(game.teamType),
+                mods: String(game.mods),
+                startTime: game.startTime ?? '',
+                endTime: game.endTime ?? '',
+              }}
+              darkMode={true}
+            />
             <AdminNoteView
               notes={game.adminNotes}
               entity={AdminNoteRouteTarget.Game}

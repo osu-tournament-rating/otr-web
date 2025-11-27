@@ -5,12 +5,20 @@ import Link from 'next/link';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget, Roles, Ruleset, Team } from '@otr/core/osu';
+import { ScoreReportableFields } from '@/lib/orpc/schema/report';
+import {
+  AdminNoteRouteTarget,
+  ReportEntityType,
+  Roles,
+  Ruleset,
+  Team,
+} from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { formatAccuracy } from '@/lib/utils/format';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import ReportButton from '../reports/ReportButton';
 import CountryFlag from '../shared/CountryFlag';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import ModIconset from '../icons/ModIconset';
@@ -90,6 +98,21 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
+            <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3">
+              <ReportButton
+                entityType={ReportEntityType.Score}
+                entityId={score.id}
+                entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
+                reportableFields={ScoreReportableFields}
+                currentValues={{
+                  score: String(score.score),
+                  accuracy: String(score.accuracy),
+                  maxCombo: String(score.maxCombo),
+                  mods: String(score.mods),
+                  team: String(score.team),
+                }}
+              />
+            </div>
             {showAdminControls && (
               <div className="relative flex items-center gap-0.5">
                 <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">

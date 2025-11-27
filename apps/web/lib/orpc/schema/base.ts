@@ -52,3 +52,5 @@ export const tournamentAdminNoteSelectSchema = createSelectSchema(
 export const playerRatingSelectSchema = createSelectSchema(
   schema.playerRatings
 );
+
+export const dataReportSelectSchema = createSelectSchema(schema.dataReports);

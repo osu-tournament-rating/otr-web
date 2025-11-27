@@ -1741,3 +1741,57 @@ export const joinPooledBeatmaps = pgTable(
     }),
   ]
 );
+
+export const dataReports = pgTable(
+  'data_reports',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'data_reports_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
+    entityType: integer('entity_type').notNull(),
+    entityId: integer('entity_id').notNull(),
+    suggestedChanges: jsonb('suggested_changes').notNull(),
+    justification: text('justification').notNull(),
+    status: integer('status').default(0).notNull(),
+    adminNote: text('admin_note'),
+    reporterUserId: integer('reporter_user_id').notNull(),
+    resolvedByUserId: integer('resolved_by_user_id'),
+    created: timestamp({ withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    resolvedAt: timestamp('resolved_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+  },
+  (table) => [
+    index('ix_data_reports_entity_type_entity_id').using(
+      'btree',
+      table.entityType.asc().nullsLast().op('int4_ops'),
+      table.entityId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_data_reports_status').using(
+      'btree',
+      table.status.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_data_reports_reporter_user_id').using(
+      'btree',
+      table.reporterUserId.asc().nullsLast().op('int4_ops')
+    ),
+    foreignKey({
+      columns: [table.reporterUserId],
+      foreignColumns: [users.id],
+      name: 'fk_data_reports_users_reporter_user_id',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.resolvedByUserId],
+      foreignColumns: [users.id],
+      name: 'fk_data_reports_users_resolved_by_user_id',
+    }).onDelete('set null'),
+  ]
+);

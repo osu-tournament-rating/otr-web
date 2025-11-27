@@ -80,6 +80,12 @@ import {
   getUserApiKeys,
 } from './procedures/apiKeyProcedures';
 import { massEnqueue } from './procedures/admin/massEnqueueProcedures';
+import {
+  createReport,
+  getReport,
+  listReports,
+  resolveReport,
+} from './procedures/reports/reportProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -90,6 +96,12 @@ const base = os.$context<InitialContext>();
 export const router = base.router({
   admin: {
     massEnqueue,
+  },
+  reports: {
+    create: createReport,
+    list: listReports,
+    get: getReport,
+    resolve: resolveReport,
   },
   user: {
     get: getUser,
