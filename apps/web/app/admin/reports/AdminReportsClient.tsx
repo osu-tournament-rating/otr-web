@@ -346,23 +346,28 @@ export default function AdminReportsClient() {
 
               <div>
                 <Label className="text-muted-foreground text-xs">
-                  Suggested Changes
+                  Reported Fields
                 </Label>
-                <div className="mt-2 space-y-2">
-                  {Object.entries(
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.keys(
                     selectedReport.suggestedChanges as Record<string, string>
-                  ).map(([field, value]) => (
-                    <div
-                      key={field}
-                      className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2"
-                    >
-                      <span className="text-sm font-medium">
-                        {formatFieldName(field)}
-                      </span>
-                      <span className="text-sm">{value}</span>
-                    </div>
+                  ).map((field) => (
+                    <Badge key={field} variant="secondary">
+                      {formatFieldName(field)}
+                    </Badge>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-muted-foreground text-xs">
+                  Suggested Changes
+                </Label>
+                <p className="bg-muted/50 mt-2 whitespace-pre-wrap rounded-md p-3 text-sm">
+                  {Object.values(
+                    selectedReport.suggestedChanges as Record<string, string>
+                  )[0] ?? '—'}
+                </p>
               </div>
 
               <div>
