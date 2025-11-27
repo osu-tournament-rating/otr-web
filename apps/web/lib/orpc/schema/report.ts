@@ -110,7 +110,7 @@ const reportBaseSchema = dataReportSelectSchema.pick({
 });
 
 export const ReportSchema = reportBaseSchema.extend({
-  reporter: reportUserSchema,
+  reporter: reportUserSchema.nullable(),
   resolvedBy: reportUserSchema.nullable(),
   entityDisplayName: z.string(),
   matchId: z.number().int().positive().optional(),

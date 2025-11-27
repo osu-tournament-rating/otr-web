@@ -311,8 +311,10 @@ export default function AdminReportsClient() {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        {report.reporter.player.username ??
-                          `User #${report.reporter.id}`}
+                        {report.reporter
+                          ? (report.reporter.player.username ??
+                            `User #${report.reporter.id}`)
+                          : '[Deleted User]'}
                       </TableCell>
                       <TableCell>{getStatusBadge(report.status)}</TableCell>
                       <TableCell className="text-muted-foreground text-xs">
@@ -359,8 +361,10 @@ export default function AdminReportsClient() {
                     Reporter
                   </Label>
                   <p className="text-sm font-medium">
-                    {selectedReport.reporter.player.username ??
-                      `User #${selectedReport.reporter.id}`}
+                    {selectedReport.reporter
+                      ? (selectedReport.reporter.player.username ??
+                        `User #${selectedReport.reporter.id}`)
+                      : '[Deleted User]'}
                   </p>
                 </div>
                 <div>
