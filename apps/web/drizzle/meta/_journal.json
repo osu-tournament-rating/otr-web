@@ -78,6 +78,13 @@
       "when": 1762814246421,
       "tag": "0010_wet_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1764275034052,
+      "tag": "0011_friendly_metal_master",
+      "breakpoints": true
     }
   ]
 }

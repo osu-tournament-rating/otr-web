@@ -7,6 +7,8 @@ import {
   MatchWarningFlags,
   Mods,
   RatingAdjustmentType,
+  ReportEntityType,
+  ReportStatus,
   Ruleset,
   ScoreGrade,
   ScoreRejectionReason,
@@ -826,3 +828,45 @@ export const FilteringFailReasonEnumHelper: IBitwiseEnumHelper<FilteringFailReas
       },
     },
   };
+
+export const ReportEntityTypeEnumHelper: IEnumHelper<ReportEntityType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [ReportEntityType.Tournament]: {
+      text: 'Tournament',
+      description: '',
+    },
+    [ReportEntityType.Match]: {
+      text: 'Match',
+      description: '',
+    },
+    [ReportEntityType.Game]: {
+      text: 'Game',
+      description: '',
+    },
+    [ReportEntityType.Score]: {
+      text: 'Score',
+      description: '',
+    },
+  },
+};
+
+export const ReportStatusEnumHelper: IEnumHelper<ReportStatus> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [ReportStatus.Pending]: {
+      text: 'Pending',
+      description: 'Awaiting review',
+    },
+    [ReportStatus.Approved]: {
+      text: 'Approved',
+      description: 'Report was accepted',
+    },
+    [ReportStatus.Rejected]: {
+      text: 'Rejected',
+      description: 'Report was declined',
+    },
+  },
+};

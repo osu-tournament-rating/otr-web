@@ -2,10 +2,17 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronDown, LogOut, Settings, ShieldAlert, User } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  LogOut,
+  Settings,
+  ShieldAlert,
+  User,
+} from 'lucide-react';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,6 +38,7 @@ import { cn } from '@/lib/utils';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { signOut, useSession as useAuthSession } from '@/lib/auth/auth-client';
 import { SessionContext } from '@/components/session-provider';
+import { orpc } from '@/lib/orpc/orpc';
 
 type ProfileCardProps = {
   isMobileNav?: boolean;
@@ -41,6 +49,7 @@ type DbPlayer = NonNullable<NonNullable<SessionData>['dbPlayer']>;
 
 type UserAvatarProps = {
   player: DbPlayer;
+  showNotificationDot?: boolean;
 };
 
 export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
@@ -56,6 +65,15 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const isAdmin = hasAdminScope(scopes);
   const isLoading = Boolean(isSessionPending);
   const { refreshSession } = useContext(SessionContext);
+  const [unseenReportCount, setUnseenReportCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    orpc.reports.unseenCount({}).then((result) => {
+      setUnseenReportCount(result.count);
+    });
+  }, [isAdmin]);
 
   const handleLogout = async () => {
     await signOut({
@@ -83,6 +101,9 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 
   const player = dbPlayer;
 
+  const reportCountDisplay =
+    unseenReportCount > 99 ? '99+' : unseenReportCount.toString();
+
   if (isMobile) {
     return (
       <Collapsible open={isOpen} onOpenChange={toggleIsOpen}>
@@ -100,7 +121,10 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </div>
             <div className="relative z-10 flex items-center justify-between p-2">
               <div className="flex items-center gap-3">
-                <UserAvatar player={player} />
+                <UserAvatar
+                  player={player}
+                  showNotificationDot={unseenReportCount > 0}
+                />
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{player.username}</span>
                   {player.country && (
@@ -164,27 +188,66 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </Link>
           )}
 
-          {isAdmin &&
-            (isMobileNav ? (
-              <SheetClose asChild>
-                <Link
-                  href="/admin"
-                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                >
-                  <ShieldAlert className="size-4" />
-                  <span>Admin</span>
-                </Link>
-              </SheetClose>
-            ) : (
-              <Link
-                href="/admin"
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-              >
-                <ShieldAlert className="size-4" />
-                <span>Admin</span>
-              </Link>
-            ))}
+          {isAdmin && (
+            <>
+              <hr className="border-border my-1" />
+              {isMobileNav ? (
+                <>
+                  <SheetClose asChild>
+                    <Link
+                      href="/admin"
+                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <ShieldAlert className="size-4" />
+                      <span>Admin</span>
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href="/admin/reports"
+                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <AlertTriangle className="size-4" />
+                      <span className="flex items-center gap-2">
+                        Reports
+                        {unseenReportCount > 0 && (
+                          <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                            {reportCountDisplay}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </SheetClose>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/admin"
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <ShieldAlert className="size-4" />
+                    <span>Admin</span>
+                  </Link>
+                  <Link
+                    href="/admin/reports"
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <AlertTriangle className="size-4" />
+                    <span className="flex items-center gap-2">
+                      Reports
+                      {unseenReportCount > 0 && (
+                        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                          {reportCountDisplay}
+                        </span>
+                      )}
+                    </span>
+                  </Link>
+                </>
+              )}
+            </>
+          )}
 
+          <hr className="border-border my-1" />
           <button
             className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
             onClick={handleLogout}
@@ -205,7 +268,10 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           whileTap={{ scale: 0.97 }}
           className="cursor-pointer focus:outline-none"
         >
-          <UserAvatar player={player} />
+          <UserAvatar
+            player={player}
+            showNotificationDot={unseenReportCount > 0}
+          />
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
@@ -253,13 +319,30 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           </Link>
         </DropdownMenuItem>
         {isAdmin && (
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/admin">
-              <ShieldAlert className="mr-2 size-4" />
-              <span>Admin</span>
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin">
+                <ShieldAlert className="mr-2 size-4" />
+                <span>Admin</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin/reports">
+                <AlertTriangle className="mr-2 size-4" />
+                <span className="flex items-center gap-2">
+                  Reports
+                  {unseenReportCount > 0 && (
+                    <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                      {reportCountDisplay}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
           onClick={handleLogout}
@@ -272,16 +355,21 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   );
 }
 
-function UserAvatar({ player }: UserAvatarProps) {
+function UserAvatar({ player, showNotificationDot }: UserAvatarProps) {
   return (
-    <Avatar className="hover:border-primary/80 size-9 transition-all">
-      <AvatarImage
-        src={`https://a.ppy.sh/${player.osuId}`}
-        alt={player.username ? `${player.username}'s avatar` : 'User avatar'}
-      />
-      <AvatarFallback>
-        <User className="size-4" />
-      </AvatarFallback>
-    </Avatar>
+    <div className="relative">
+      <Avatar className="hover:border-primary/80 size-9 transition-all">
+        <AvatarImage
+          src={`https://a.ppy.sh/${player.osuId}`}
+          alt={player.username ? `${player.username}'s avatar` : 'User avatar'}
+        />
+        <AvatarFallback>
+          <User className="size-4" />
+        </AvatarFallback>
+      </Avatar>
+      {showNotificationDot && (
+        <span className="absolute right-0 top-0 size-2.5 rounded-full bg-blue-500" />
+      )}
+    </div>
   );
 }

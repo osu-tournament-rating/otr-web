@@ -189,4 +189,17 @@ export enum VerificationStatus {
   Verified = 4,
 }
 
+export enum ReportEntityType {
+  Tournament = 0,
+  Match = 1,
+  Game = 2,
+  Score = 3,
+}
+
+export enum ReportStatus {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2,
+}
+
 export type BitwiseEnum = number;

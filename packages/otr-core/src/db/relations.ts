@@ -38,6 +38,7 @@ import {
   oAuthClientAdminNote,
   joinBeatmapCreators,
   joinPooledBeatmaps,
+  dataReports,
 } from './schema';
 
 export const beatmapsetsRelations = relations(beatmapsets, ({ one, many }) => ({
@@ -122,6 +123,12 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
     fields: [users.playerId],
     references: [players.id],
+  }),
+  dataReports_reporter: many(dataReports, {
+    relationName: 'dataReports_reporterUserId_users_id',
+  }),
+  dataReports_resolvedBy: many(dataReports, {
+    relationName: 'dataReports_resolvedByUserId_users_id',
   }),
 }));
 
@@ -493,3 +500,16 @@ export const joinPooledBeatmapsRelations = relations(
     }),
   })
 );
+
+export const dataReportsRelations = relations(dataReports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [dataReports.reporterUserId],
+    references: [users.id],
+    relationName: 'dataReports_reporterUserId_users_id',
+  }),
+  resolvedBy: one(users, {
+    fields: [dataReports.resolvedByUserId],
+    references: [users.id],
+    relationName: 'dataReports_resolvedByUserId_users_id',
+  }),
+}));

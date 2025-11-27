@@ -2,12 +2,14 @@ import Link from 'next/link';
 import React, { Fragment } from 'react';
 import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
 
-import { AdminNoteRouteTarget } from '@otr/core/osu';
+import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
+import { MatchReportableFields } from '@/lib/orpc/schema/report';
 import { formatUTCDate } from '@/lib/utils/date';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
 import AdminNoteView from '../admin-notes/AdminNoteView';
+import ReportButton from '../reports/ReportButton';
 import MatchAdminView from './MatchAdminView';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -104,6 +106,18 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   </Link>
                 </Button>
               </SimpleTooltip>
+              <ReportButton
+                entityType={ReportEntityType.Match}
+                entityId={match.id}
+                entityDisplayName={match.name || `Match ${match.id}`}
+                reportableFields={MatchReportableFields}
+                currentValues={{
+                  name: match.name,
+                  startTime: match.startTime ?? '',
+                  endTime: match.endTime ?? '',
+                }}
+                darkMode={true}
+              />
               <AdminNoteView
                 notes={match.adminNotes}
                 entity={AdminNoteRouteTarget.Match}

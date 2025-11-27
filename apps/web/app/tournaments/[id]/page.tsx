@@ -1,5 +1,9 @@
 import { orpc } from '@/lib/orpc/orpc';
-import { AdminNoteRouteTarget, VerificationStatus } from '@otr/core/osu';
+import {
+  AdminNoteRouteTarget,
+  ReportEntityType,
+  VerificationStatus,
+} from '@otr/core/osu';
 import {
   TournamentDetail,
   TournamentMatch,
@@ -34,6 +38,8 @@ import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
 import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
+import ReportButton from '@/components/reports/ReportButton';
+import { TournamentReportableFields } from '@/lib/orpc/schema/report';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
@@ -143,8 +149,21 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">
-              {' '}
-              {/* Admin actions */}
+              <ReportButton
+                entityType={ReportEntityType.Tournament}
+                entityId={tournament.id}
+                entityDisplayName={tournament.name}
+                reportableFields={TournamentReportableFields}
+                currentValues={{
+                  name: tournament.name,
+                  abbreviation: tournament.abbreviation,
+                  forumUrl: tournament.forumUrl,
+                  rankRangeLowerBound: String(tournament.rankRangeLowerBound),
+                  lobbySize: String(tournament.lobbySize),
+                  startTime: tournament.startTime ?? '',
+                  endTime: tournament.endTime ?? '',
+                }}
+              />
               <AdminNoteView
                 notes={tournament.adminNotes ?? []}
                 entity={AdminNoteRouteTarget.Tournament}

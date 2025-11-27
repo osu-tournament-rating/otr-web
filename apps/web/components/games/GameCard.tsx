@@ -1,8 +1,11 @@
+'use client';
+
 import GameCardHeader from './GameCardHeader';
 import ScoreCard from './ScoreCard';
 import { TeamEnumHelper } from '@/lib/enums';
 import { Game, GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
 import { Team } from '@otr/core/osu';
+import { cn } from '@/lib/utils';
 
 type ScoreMapItem = {
   /** Player score */
@@ -20,9 +23,13 @@ type ScoreMap = Partial<Record<Team, ScoreMapItem[]>>;
 export default function GameCard({
   game,
   players = [],
+  highlighted = false,
+  highlightScoreId = null,
 }: {
   game: Game;
   players: MatchPlayer[];
+  highlighted?: boolean;
+  highlightScoreId?: number | null;
 }) {
   const scoreMap: ScoreMap = {};
 
@@ -119,7 +126,13 @@ export default function GameCard({
   const noTeamScores = scoreMap[Team.NoTeam] || [];
 
   return (
-    <div className="bg-secondary flex flex-col space-y-2 rounded-xl p-3">
+    <div
+      id={`game-${game.id}`}
+      className={cn(
+        'bg-secondary flex flex-col space-y-2 rounded-xl p-3 transition-all duration-300',
+        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+      )}
+    >
       <GameCardHeader game={game} />
       {game.scores.length === 0 ? (
         <div className="rounded-md border border-neutral-300 p-4 text-center dark:border-neutral-700">
@@ -137,6 +150,7 @@ export default function GameCard({
                 score={score}
                 won={won}
                 player={players.find((p) => p.id === score.playerId)}
+                highlighted={score.id === highlightScoreId}
               />
             ))}
 
@@ -152,6 +166,7 @@ export default function GameCard({
                     score={score}
                     won={won}
                     player={players.find((p) => p.id === score.playerId)}
+                    highlighted={score.id === highlightScoreId}
                   />
                 ))}
               </div>
@@ -166,6 +181,7 @@ export default function GameCard({
                 score={score}
                 won={won}
                 player={players.find((p) => p.id === score.playerId)}
+                highlighted={score.id === highlightScoreId}
               />
             ))}
           </div>

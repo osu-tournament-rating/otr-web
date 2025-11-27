@@ -5,12 +5,20 @@ import Link from 'next/link';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { AdminNoteRouteTarget, Roles, Ruleset, Team } from '@otr/core/osu';
+import { ScoreReportableFields } from '@/lib/orpc/schema/report';
+import {
+  AdminNoteRouteTarget,
+  ReportEntityType,
+  Roles,
+  Ruleset,
+  Team,
+} from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { formatAccuracy } from '@/lib/utils/format';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
+import ReportButton from '../reports/ReportButton';
 import CountryFlag from '../shared/CountryFlag';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import ModIconset from '../icons/ModIconset';
@@ -20,10 +28,12 @@ export default function ScoreCard({
   score,
   player,
   won = false,
+  highlighted = false,
 }: {
   score: GameScore;
   player?: MatchPlayer;
   won?: boolean;
+  highlighted?: boolean;
 }) {
   const session = useSession();
   const isAdmin = session?.scopes?.includes(Roles.Admin);
@@ -69,8 +79,12 @@ export default function ScoreCard({
 
   return (
     <div
+      id={`score-${score.id}`}
       data-team={Team[score.team]}
-      className="team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+      className={cn(
+        'team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800',
+        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+      )}
     >
       {/* Background team color overlay */}
       <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />
@@ -90,6 +104,21 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
+            <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3">
+              <ReportButton
+                entityType={ReportEntityType.Score}
+                entityId={score.id}
+                entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
+                reportableFields={ScoreReportableFields}
+                currentValues={{
+                  score: String(score.score),
+                  accuracy: String(score.accuracy),
+                  maxCombo: String(score.maxCombo),
+                  mods: String(score.mods),
+                  team: String(score.team),
+                }}
+              />
+            </div>
             {showAdminControls && (
               <div className="relative flex items-center gap-0.5">
                 <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
