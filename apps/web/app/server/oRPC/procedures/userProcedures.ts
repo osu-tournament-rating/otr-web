@@ -4,9 +4,10 @@ import { z } from 'zod/v4';
 
 import * as schema from '@otr/core/db/schema';
 import { CurrentUserSchema } from '@/lib/orpc/schema/user';
+import { auth } from '@/lib/auth/auth';
+import { db } from '@/lib/db';
 
 import { protectedProcedure } from './base';
-import { db } from '@/lib/db';
 
 export const getUser = protectedProcedure
   .input(
@@ -97,44 +98,16 @@ export const deleteMyAccount = protectedProcedure
       });
     }
 
-    const authUserId = user.id;
-
-    const authUser = await context.db.query.auth_users.findFirst({
-      where: eq(schema.auth_users.id, authUserId),
-      columns: {
-        id: true,
-        email: true,
-        playerId: true,
-      },
+    const result = await auth.api.deleteUser({
+      headers: context.headers,
+      body: {},
     });
 
-    if (!authUser) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'User not found',
+    if (!result) {
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Failed to delete account',
       });
     }
-
-    await db.transaction(async (tx) => {
-      if (authUser.playerId) {
-        await tx
-          .delete(schema.playerFriends)
-          .where(eq(schema.playerFriends.playerId, authUser.playerId));
-      }
-
-      if (authUser.email) {
-        await tx
-          .delete(schema.auth_verifications)
-          .where(eq(schema.auth_verifications.identifier, authUser.email));
-      }
-
-      await tx
-        .delete(schema.users)
-        .where(eq(schema.users.playerId, authUser.playerId));
-
-      await tx
-        .delete(schema.auth_users)
-        .where(eq(schema.auth_users.id, authUserId));
-    });
 
     return { success: true };
   });

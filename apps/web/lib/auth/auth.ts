@@ -527,6 +527,20 @@ export const auth = betterAuth({
         },
       }),
     },
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user) => {
+        const authUser = user as AuthUserRecord;
+        if (authUser.playerId) {
+          await db
+            .delete(schema.playerFriends)
+            .where(eq(schema.playerFriends.playerId, authUser.playerId));
+          await db
+            .delete(schema.users)
+            .where(eq(schema.users.playerId, authUser.playerId));
+        }
+      },
+    },
   },
   verification: {
     modelName: 'auth_verification',
