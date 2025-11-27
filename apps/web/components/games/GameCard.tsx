@@ -1,3 +1,5 @@
+'use client';
+
 import GameCardHeader from './GameCardHeader';
 import ScoreCard from './ScoreCard';
 import { TeamEnumHelper } from '@/lib/enums';
