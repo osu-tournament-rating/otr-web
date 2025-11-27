@@ -109,6 +109,10 @@ export default function AdminReportsClient() {
     fetchReports();
   }, [fetchReports]);
 
+  useEffect(() => {
+    orpc.reports.markViewed({});
+  }, []);
+
   const handleViewDetails = useCallback((report: Report) => {
     setSelectedReport(report);
     setAdminNote(report.adminNote ?? '');

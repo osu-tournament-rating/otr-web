@@ -83,7 +83,9 @@ import { massEnqueue } from './procedures/admin/massEnqueueProcedures';
 import {
   createReport,
   getReport,
+  getUnseenReportCount,
   listReports,
+  markReportsViewed,
   resolveReport,
 } from './procedures/reports/reportProcedures';
 
@@ -102,6 +104,8 @@ export const router = base.router({
     list: listReports,
     get: getReport,
     resolve: resolveReport,
+    unseenCount: getUnseenReportCount,
+    markViewed: markReportsViewed,
   },
   user: {
     get: getUser,

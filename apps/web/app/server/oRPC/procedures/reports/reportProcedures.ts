@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
@@ -12,6 +12,7 @@ import {
   ReportMutationResponseSchema,
   ReportResolveInputSchema,
   ReportSchema,
+  UnseenReportCountResponseSchema,
 } from '@/lib/orpc/schema/report';
 
 import { protectedProcedure } from '../base';
@@ -380,4 +381,52 @@ export const resolveReport = protectedProcedure
       .where(eq(schema.dataReports.id, input.reportId));
 
     return { success: true, reportId: input.reportId };
+  });
+
+export const getUnseenReportCount = protectedProcedure
+  .output(UnseenReportCountResponseSchema)
+  .route({
+    summary: 'Get count of unseen pending reports (admin)',
+    tags: ['reports', 'admin'],
+    method: 'GET',
+    path: '/reports/unseen-count',
+  })
+  .handler(async ({ context }) => {
+    const { adminUserId } = ensureAdminSession(context.session);
+
+    const user = await context.db.query.users.findFirst({
+      columns: { lastViewedReportsAt: true },
+      where: eq(schema.users.id, adminUserId),
+    });
+
+    const conditions = [eq(schema.dataReports.status, ReportStatus.Pending)];
+    if (user?.lastViewedReportsAt) {
+      conditions.push(gt(schema.dataReports.created, user.lastViewedReportsAt));
+    }
+
+    const [result] = await context.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.dataReports)
+      .where(and(...conditions));
+
+    return { count: result?.count ?? 0 };
+  });
+
+export const markReportsViewed = protectedProcedure
+  .output(ReportMutationResponseSchema)
+  .route({
+    summary: 'Mark reports as viewed (admin)',
+    tags: ['reports', 'admin'],
+    method: 'POST',
+    path: '/reports/mark-viewed',
+  })
+  .handler(async ({ context }) => {
+    const { adminUserId } = ensureAdminSession(context.session);
+
+    await context.db
+      .update(schema.users)
+      .set({ lastViewedReportsAt: NOW })
+      .where(eq(schema.users.id, adminUserId));
+
+    return { success: true };
   });

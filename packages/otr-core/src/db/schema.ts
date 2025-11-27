@@ -1640,6 +1640,10 @@ export const users = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updated: timestamp({ withTimezone: true, mode: 'string' }),
+    lastViewedReportsAt: timestamp('last_viewed_reports_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
   },
   (table) => [
     uniqueIndex('ix_users_player_id').using(

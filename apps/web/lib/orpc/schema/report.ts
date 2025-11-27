@@ -56,9 +56,7 @@ export const ReportCreateInputSchema = z.object({
       (obj) => Object.keys(obj).length > 0,
       'At least one field change required'
     ),
-  justification: z
-    .string()
-    .min(10, 'Justification must be at least 10 characters'),
+  justification: z.string().min(1),
 });
 
 export const ReportListInputSchema = z.object({
@@ -131,4 +129,12 @@ export type Report = z.infer<typeof ReportSchema>;
 export type ReportListResponse = z.infer<typeof ReportListResponseSchema>;
 export type ReportMutationResponse = z.infer<
   typeof ReportMutationResponseSchema
+>;
+
+export const UnseenReportCountResponseSchema = z.object({
+  count: z.number().int().nonnegative(),
+});
+
+export type UnseenReportCountResponse = z.infer<
+  typeof UnseenReportCountResponseSchema
 >;
