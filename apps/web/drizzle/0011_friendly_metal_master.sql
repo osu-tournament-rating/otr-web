@@ -12,6 +12,7 @@ CREATE TABLE "data_reports" (
 	"resolved_at" timestamp with time zone
 );
 --> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN "last_viewed_reports_at" timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "data_reports" ADD CONSTRAINT "fk_data_reports_users_reporter_user_id" FOREIGN KEY ("reporter_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "data_reports" ADD CONSTRAINT "fk_data_reports_users_resolved_by_user_id" FOREIGN KEY ("resolved_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "ix_data_reports_entity_type_entity_id" ON "data_reports" USING btree ("entity_type" int4_ops,"entity_id" int4_ops);--> statement-breakpoint

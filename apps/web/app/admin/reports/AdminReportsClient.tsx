@@ -146,7 +146,7 @@ export default function AdminReportsClient() {
         );
 
         toast.success(
-          `Report ${status === ReportStatus.Approved ? 'resolved' : 'denied'}`
+          `Report ${status === ReportStatus.Approved ? 'approved' : 'rejected'}`
         );
         setDetailsOpen(false);
         setSelectedReport(null);
@@ -452,7 +452,7 @@ export default function AdminReportsClient() {
                       ) : (
                         <X className="mr-2 size-4" />
                       )}
-                      Deny
+                      Reject
                     </Button>
                     <Button
                       onClick={() => handleResolve(ReportStatus.Approved)}
@@ -464,7 +464,7 @@ export default function AdminReportsClient() {
                       ) : (
                         <Check className="mr-2 size-4" />
                       )}
-                      Resolve
+                      Approve
                     </Button>
                   </div>
                 </div>

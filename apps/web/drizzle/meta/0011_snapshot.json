@@ -1,5 +1,5 @@
 {
-  "id": "07b7d060-58ad-45a7-b0bb-8143be3cc765",
+  "id": "21c7eb62-c040-4787-a767-a04e08c87c6f",
   "prevId": "5357d771-ceb8-4d11-8cea-00fb5418e461",
   "version": "7",
   "dialect": "postgresql",
@@ -5765,6 +5765,12 @@
         },
         "updated": {
           "name": "updated",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_viewed_reports_at": {
+          "name": "last_viewed_reports_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
