@@ -80,6 +80,10 @@ export const ReportGetInputSchema = z.object({
   reportId: z.number().int().positive(),
 });
 
+export const ReportReopenInputSchema = z.object({
+  reportId: z.number().int().positive(),
+});
+
 const reportPlayerSchema = z.object({
   id: z.number().int().positive(),
   osuId: z.number().int().positive(),
@@ -109,6 +113,7 @@ export const ReportSchema = reportBaseSchema.extend({
   reporter: reportUserSchema,
   resolvedBy: reportUserSchema.nullable(),
   entityDisplayName: z.string(),
+  matchId: z.number().int().positive().optional(),
 });
 
 export const ReportListResponseSchema = z.object({
@@ -125,6 +130,7 @@ export type ReportCreateInput = z.infer<typeof ReportCreateInputSchema>;
 export type ReportListInput = z.infer<typeof ReportListInputSchema>;
 export type ReportResolveInput = z.infer<typeof ReportResolveInputSchema>;
 export type ReportGetInput = z.infer<typeof ReportGetInputSchema>;
+export type ReportReopenInput = z.infer<typeof ReportReopenInputSchema>;
 export type Report = z.infer<typeof ReportSchema>;
 export type ReportListResponse = z.infer<typeof ReportListResponseSchema>;
 export type ReportMutationResponse = z.infer<

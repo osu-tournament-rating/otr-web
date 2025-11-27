@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { z } from 'zod';
-import { Gamepad2, BarChart3 } from 'lucide-react';
+import { Gamepad2, BarChart3, Loader2 } from 'lucide-react';
 
-import GameCard from '@/components/games/GameCard';
+import GamesListClient from '@/components/games/GamesListClient';
 import MatchCard from '@/components/matches/MatchCard';
 import MatchStatsView from '@/components/matches/MatchStatsView';
 import { Card } from '@/components/ui/card';
@@ -71,27 +72,18 @@ export default async function Page({ params }: PageProps) {
               </span>
             </div>
             {gameCount > 0 ? (
-              <div className="space-y-4">
-                {[...(match.games ?? [])]
-                  .sort((a, b) => {
-                    const aTime = a.startTime
-                      ? new Date(a.startTime).getTime()
-                      : 0;
-                    const bTime = b.startTime
-                      ? new Date(b.startTime).getTime()
-                      : 0;
-                    return aTime - bTime;
-                  })
-                  .map((game) => (
-                    <GameCard
-                      key={game.id}
-                      game={game}
-                      players={(match.players ?? []).filter((player) =>
-                        game.scores.map((s) => s.playerId).includes(player.id)
-                      )}
-                    />
-                  ))}
-              </div>
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="text-muted-foreground size-6 animate-spin" />
+                  </div>
+                }
+              >
+                <GamesListClient
+                  games={match.games ?? []}
+                  players={match.players ?? []}
+                />
+              </Suspense>
             ) : (
               <div className="text-muted-foreground flex h-32 items-center justify-center">
                 No games recorded for this match

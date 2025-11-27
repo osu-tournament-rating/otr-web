@@ -10,6 +10,7 @@ import {
   ReportListInputSchema,
   ReportListResponseSchema,
   ReportMutationResponseSchema,
+  ReportReopenInputSchema,
   ReportResolveInputSchema,
   ReportSchema,
   UnseenReportCountResponseSchema,
@@ -19,6 +20,36 @@ import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
+
+async function getMatchIdForEntity(
+  db: typeof import('@/lib/db').db,
+  entityType: ReportEntityType,
+  entityId: number
+): Promise<number | undefined> {
+  switch (entityType) {
+    case ReportEntityType.Game: {
+      const game = await db.query.games.findFirst({
+        columns: { matchId: true },
+        where: eq(schema.games.id, entityId),
+      });
+      return game?.matchId;
+    }
+    case ReportEntityType.Score: {
+      const score = await db.query.gameScores.findFirst({
+        columns: { gameId: true },
+        where: eq(schema.gameScores.id, entityId),
+        with: {
+          game: {
+            columns: { matchId: true },
+          },
+        },
+      });
+      return score?.game?.matchId;
+    }
+    default:
+      return undefined;
+  }
+}
 
 async function getEntityDisplayName(
   db: typeof import('@/lib/db').db,
@@ -243,6 +274,11 @@ export const listReports = protectedProcedure
           report.entityType,
           report.entityId
         ),
+        matchId: await getMatchIdForEntity(
+          context.db,
+          report.entityType,
+          report.entityId
+        ),
         reporter: {
           id: report.reporter.id,
           player: report.reporter.player,
@@ -329,6 +365,11 @@ export const getReport = protectedProcedure
         report.entityType,
         report.entityId
       ),
+      matchId: await getMatchIdForEntity(
+        context.db,
+        report.entityType,
+        report.entityId
+      ),
       reporter: {
         id: report.reporter.id,
         player: report.reporter.player,
@@ -377,6 +418,46 @@ export const resolveReport = protectedProcedure
         adminNote: input.adminNote ?? null,
         resolvedByUserId: adminUserId,
         resolvedAt: NOW,
+      })
+      .where(eq(schema.dataReports.id, input.reportId));
+
+    return { success: true, reportId: input.reportId };
+  });
+
+export const reopenReport = protectedProcedure
+  .input(ReportReopenInputSchema)
+  .output(ReportMutationResponseSchema)
+  .route({
+    summary: 'Reopen a resolved report (admin)',
+    tags: ['reports', 'admin'],
+    method: 'PATCH',
+    path: '/reports/{reportId}/reopen',
+  })
+  .handler(async ({ input, context }) => {
+    ensureAdminSession(context.session);
+
+    const report = await context.db.query.dataReports.findFirst({
+      where: eq(schema.dataReports.id, input.reportId),
+    });
+
+    if (!report) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'Report not found',
+      });
+    }
+
+    if (report.status === ReportStatus.Pending) {
+      throw new ORPCError('BAD_REQUEST', {
+        message: 'Report is already pending',
+      });
+    }
+
+    await context.db
+      .update(schema.dataReports)
+      .set({
+        status: ReportStatus.Pending,
+        resolvedByUserId: null,
+        resolvedAt: null,
       })
       .where(eq(schema.dataReports.id, input.reportId));
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Eye, Loader2, X } from 'lucide-react';
+import { Check, Eye, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -64,15 +64,20 @@ const formatFieldName = (field: string) => {
     .trim();
 };
 
-function getEntityLink(entityType: ReportEntityType, entityId: number): string {
+function getEntityLink(
+  entityType: ReportEntityType,
+  entityId: number,
+  matchId?: number
+): string {
   switch (entityType) {
     case ReportEntityType.Tournament:
       return `/tournaments/${entityId}`;
     case ReportEntityType.Match:
       return `/matches/${entityId}`;
     case ReportEntityType.Game:
+      return matchId ? `/matches/${matchId}?gameId=${entityId}` : '#';
     case ReportEntityType.Score:
-      return '#';
+      return matchId ? `/matches/${matchId}?scoreId=${entityId}` : '#';
     default:
       return '#';
   }
@@ -87,6 +92,7 @@ export default function AdminReportsClient() {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [resolving, setResolving] = useState(false);
+  const [reopening, setReopening] = useState(false);
   const [adminNote, setAdminNote] = useState('');
 
   const fetchReports = useCallback(async () => {
@@ -140,7 +146,7 @@ export default function AdminReportsClient() {
         );
 
         toast.success(
-          `Report ${status === ReportStatus.Approved ? 'approved' : 'rejected'}`
+          `Report ${status === ReportStatus.Approved ? 'resolved' : 'denied'}`
         );
         setDetailsOpen(false);
         setSelectedReport(null);
@@ -154,6 +160,48 @@ export default function AdminReportsClient() {
     },
     [selectedReport, adminNote]
   );
+
+  const handleReopen = useCallback(async () => {
+    if (!selectedReport) return;
+
+    setReopening(true);
+    try {
+      await orpc.reports.reopen({
+        reportId: selectedReport.id,
+      });
+
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === selectedReport.id
+            ? {
+                ...r,
+                status: ReportStatus.Pending,
+                resolvedAt: null,
+                resolvedBy: null,
+              }
+            : r
+        )
+      );
+
+      setSelectedReport((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: ReportStatus.Pending,
+              resolvedAt: null,
+              resolvedBy: null,
+            }
+          : null
+      );
+
+      toast.success('Report reopened');
+    } catch (error) {
+      console.error('[admin-reports] failed to reopen report', error);
+      toast.error('Failed to reopen report');
+    } finally {
+      setReopening(false);
+    }
+  }, [selectedReport]);
 
   const getStatusBadge = (status: ReportStatus) => {
     const metadata = ReportStatusEnumHelper.getMetadata(status);
@@ -254,7 +302,8 @@ export default function AdminReportsClient() {
                         <Link
                           href={getEntityLink(
                             report.entityType,
-                            report.entityId
+                            report.entityId,
+                            report.matchId
                           )}
                           className="text-primary hover:underline"
                         >
@@ -394,7 +443,7 @@ export default function AdminReportsClient() {
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       onClick={() => handleResolve(ReportStatus.Rejected)}
                       disabled={resolving}
                     >
@@ -403,7 +452,7 @@ export default function AdminReportsClient() {
                       ) : (
                         <X className="mr-2 size-4" />
                       )}
-                      Reject
+                      Deny
                     </Button>
                     <Button
                       onClick={() => handleResolve(ReportStatus.Approved)}
@@ -415,9 +464,26 @@ export default function AdminReportsClient() {
                       ) : (
                         <Check className="mr-2 size-4" />
                       )}
-                      Approve
+                      Resolve
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {selectedReport.status !== ReportStatus.Pending && (
+                <div className="flex justify-end border-t pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleReopen}
+                    disabled={reopening}
+                  >
+                    {reopening ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="mr-2 size-4" />
+                    )}
+                    Reopen
+                  </Button>
                 </div>
               )}
 

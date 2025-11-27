@@ -28,10 +28,12 @@ export default function ScoreCard({
   score,
   player,
   won = false,
+  highlighted = false,
 }: {
   score: GameScore;
   player?: MatchPlayer;
   won?: boolean;
+  highlighted?: boolean;
 }) {
   const session = useSession();
   const isAdmin = session?.scopes?.includes(Roles.Admin);
@@ -77,8 +79,12 @@ export default function ScoreCard({
 
   return (
     <div
+      id={`score-${score.id}`}
       data-team={Team[score.team]}
-      className="team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+      className={cn(
+        'team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800',
+        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+      )}
     >
       {/* Background team color overlay */}
       <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />

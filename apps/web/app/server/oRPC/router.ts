@@ -86,6 +86,7 @@ import {
   getUnseenReportCount,
   listReports,
   markReportsViewed,
+  reopenReport,
   resolveReport,
 } from './procedures/reports/reportProcedures';
 
@@ -104,6 +105,7 @@ export const router = base.router({
     list: listReports,
     get: getReport,
     resolve: resolveReport,
+    reopen: reopenReport,
     unseenCount: getUnseenReportCount,
     markViewed: markReportsViewed,
   },
