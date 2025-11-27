@@ -633,7 +633,7 @@ export const gameAdminNotes = pgTable(
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     note: text().notNull(),
     referenceId: integer('reference_id').notNull(),
-    adminUserId: integer('admin_user_id').notNull(),
+    adminUserId: integer('admin_user_id'),
   },
   (table) => [
     index('ix_game_admin_notes_admin_user_id').using(
@@ -653,7 +653,7 @@ export const gameAdminNotes = pgTable(
       columns: [table.adminUserId],
       foreignColumns: [users.id],
       name: 'fk_game_admin_notes_users_admin_user_id',
-    }).onDelete('cascade'),
+    }).onDelete('set null'),
   ]
 );
 
@@ -674,7 +674,7 @@ export const gameScoreAdminNotes = pgTable(
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     note: text().notNull(),
     referenceId: integer('reference_id').notNull(),
-    adminUserId: integer('admin_user_id').notNull(),
+    adminUserId: integer('admin_user_id'),
   },
   (table) => [
     index('ix_game_score_admin_notes_admin_user_id').using(
@@ -694,7 +694,7 @@ export const gameScoreAdminNotes = pgTable(
       columns: [table.adminUserId],
       foreignColumns: [users.id],
       name: 'fk_game_score_admin_notes_users_admin_user_id',
-    }).onDelete('cascade'),
+    }).onDelete('set null'),
   ]
 );
 
@@ -815,7 +815,7 @@ export const matchAdminNotes = pgTable(
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     note: text().notNull(),
     referenceId: integer('reference_id').notNull(),
-    adminUserId: integer('admin_user_id').notNull(),
+    adminUserId: integer('admin_user_id'),
   },
   (table) => [
     index('ix_match_admin_notes_admin_user_id').using(
@@ -835,7 +835,7 @@ export const matchAdminNotes = pgTable(
       columns: [table.adminUserId],
       foreignColumns: [users.id],
       name: 'fk_match_admin_notes_users_admin_user_id',
-    }).onDelete('cascade'),
+    }).onDelete('set null'),
   ]
 );
 
@@ -1404,7 +1404,7 @@ export const tournamentAdminNotes = pgTable(
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     note: text().notNull(),
     referenceId: integer('reference_id').notNull(),
-    adminUserId: integer('admin_user_id').notNull(),
+    adminUserId: integer('admin_user_id'),
   },
   (table) => [
     index('ix_tournament_admin_notes_admin_user_id').using(
@@ -1424,7 +1424,7 @@ export const tournamentAdminNotes = pgTable(
       columns: [table.adminUserId],
       foreignColumns: [users.id],
       name: 'fk_tournament_admin_notes_users_admin_user_id',
-    }).onDelete('cascade'),
+    }).onDelete('set null'),
   ]
 );
 
@@ -1763,7 +1763,7 @@ export const dataReports = pgTable(
     justification: text('justification').notNull(),
     status: integer('status').default(0).notNull(),
     adminNote: text('admin_note'),
-    reporterUserId: integer('reporter_user_id').notNull(),
+    reporterUserId: integer('reporter_user_id'),
     resolvedByUserId: integer('resolved_by_user_id'),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -1791,7 +1791,7 @@ export const dataReports = pgTable(
       columns: [table.reporterUserId],
       foreignColumns: [users.id],
       name: 'fk_data_reports_users_reporter_user_id',
-    }).onDelete('cascade'),
+    }).onDelete('set null'),
     foreignKey({
       columns: [table.resolvedByUserId],
       foreignColumns: [users.id],
