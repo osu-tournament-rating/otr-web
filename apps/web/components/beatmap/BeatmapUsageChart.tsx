@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { format } from 'date-fns';
 import { useTheme } from 'next-themes';
 import {
   ComposedChart,
@@ -35,6 +36,25 @@ const getChartColors = (theme?: string) => ({
     theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
   text: theme === 'dark' ? '#d1d5db' : '#4b5563',
 });
+
+const QUARTER_START_MONTHS: Record<number, number> = {
+  1: 0, // Q1 → January
+  2: 3, // Q2 → April
+  3: 6, // Q3 → July
+  4: 9, // Q4 → October
+};
+
+const formatQuarterTick = (quarter: string): string => {
+  const match = quarter.match(/^(\d{4})-Q([1-4])$/);
+  if (!match) return quarter;
+
+  const year = parseInt(match[1], 10);
+  const quarterNum = parseInt(match[2], 10);
+  const month = QUARTER_START_MONTHS[quarterNum];
+  const date = new Date(year, month, 1);
+
+  return format(date, 'MMM yyyy');
+};
 
 export default function BeatmapUsageChart({
   data,
@@ -91,6 +111,8 @@ export default function BeatmapUsageChart({
                 tick={{ fill: colors.text, fontSize: 12 }}
                 tickLine={{ stroke: colors.grid }}
                 axisLine={{ stroke: colors.grid }}
+                tickFormatter={formatQuarterTick}
+                interval="equidistantPreserveStart"
               />
               <YAxis
                 yAxisId="left"

@@ -54,6 +54,11 @@ const navItems: NavItem[] = [
     roles: [],
   },
   {
+    title: 'Beatmaps',
+    href: '/beatmaps',
+    roles: [],
+  },
+  {
     title: 'Tournaments',
     href: '/tournaments',
     roles: [],

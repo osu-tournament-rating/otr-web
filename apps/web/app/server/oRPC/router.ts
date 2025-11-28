@@ -28,6 +28,7 @@ import {
   getPlayerTournaments,
 } from './procedures/playerProcedures';
 import { getBeatmapStats } from './procedures/beatmapProcedures';
+import { listBeatmaps } from './procedures/beatmapListProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import {
   deleteMyAccount,
@@ -176,6 +177,7 @@ export const router = base.router({
     tournaments: getPlayerTournaments,
   },
   beatmaps: {
+    list: listBeatmaps,
     stats: getBeatmapStats,
   },
   stats: {

@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, or, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';

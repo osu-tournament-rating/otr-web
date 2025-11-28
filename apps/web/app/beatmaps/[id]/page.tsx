@@ -11,7 +11,6 @@ import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
 import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
 import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
-import BeatmapAvgScoreByRatingChart from '@/components/beatmap/BeatmapAvgScoreByRatingChart';
 import BeatmapModTrendChart from '@/components/beatmap/BeatmapModTrendChart';
 import BeatmapTournamentsTable from '@/components/beatmap/BeatmapTournamentsTable';
 import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
@@ -69,9 +68,8 @@ export default async function BeatmapPage({ params }: PageProps) {
       )}
       <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-2">
         <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} />
-        <BeatmapAvgScoreByRatingChart data={beatmapStats.scoreRatingData} />
+        <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
       </div>
-      <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
       {beatmapStats.modTrend.length >= 2 && (
         <BeatmapModTrendChart data={beatmapStats.modTrend} />
       )}
