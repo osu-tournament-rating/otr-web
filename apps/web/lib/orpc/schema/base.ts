@@ -10,7 +10,11 @@ export const playerSelectSchema = rawPlayerSelectSchema.omit({
 export const userSelectSchema = createSelectSchema(schema.users);
 
 export const beatmapsetSelectSchema = createSelectSchema(schema.beatmapsets);
-export const beatmapSelectSchema = createSelectSchema(schema.beatmaps);
+
+const rawBeatmapSelectSchema = createSelectSchema(schema.beatmaps);
+export const beatmapSelectSchema = rawBeatmapSelectSchema.omit({
+  searchVector: true,
+});
 export const beatmapAttributeSelectSchema = createSelectSchema(
   schema.beatmapAttributes
 );

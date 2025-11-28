@@ -2,10 +2,11 @@
 
 import type { SearchResponse } from '@/lib/orpc/schema/search';
 import { ScrollArea } from '../ui/scroll-area';
-import { Swords, User, Trophy } from 'lucide-react';
+import { Music, Swords, User, Trophy } from 'lucide-react';
 import PlayerSearchResult from './PlayerSearchResult';
 import TournamentSearchResult from './TournamentSearchResult';
 import MatchSearchResult from './MatchSearchResult';
+import BeatmapSearchResultCard from './BeatmapSearchResult';
 
 interface SectionHeaderProps {
   icon: React.ReactNode;
@@ -35,7 +36,8 @@ export default function SearchResults({
   const hasResults =
     data.players.length > 0 ||
     data.tournaments.length > 0 ||
-    data.matches.length > 0;
+    data.matches.length > 0 ||
+    data.beatmaps.length > 0;
 
   if (!hasResults) {
     return (
@@ -106,6 +108,25 @@ export default function SearchResults({
                 .map(([key, entry]) => (
                   <MatchSearchResult
                     key={`match-search-result-${key}`}
+                    data={entry}
+                  />
+                ))}
+            </div>
+          </section>
+        )}
+
+        {data.beatmaps.length > 0 && (
+          <section className="space-y-2 sm:space-y-3">
+            <SectionHeader
+              icon={<Music className="h-4 w-4 sm:h-5 sm:w-5" />}
+              title="Beatmaps"
+            />
+            <div className="space-y-1.5 sm:space-y-2">
+              {Object.entries(data.beatmaps)
+                .slice(0, 5)
+                .map(([key, entry]) => (
+                  <BeatmapSearchResultCard
+                    key={`beatmap-search-result-${key}`}
                     data={entry}
                   />
                 ))}

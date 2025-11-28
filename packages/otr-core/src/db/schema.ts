@@ -484,6 +484,12 @@ export const beatmaps = pgTable(
       .notNull(),
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
+    searchVector: tsVector('search_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', coalesce(${beatmaps.diffName}, '')), 'A')`
+      ),
   },
   (table) => [
     index('ix_beatmaps_beatmapset_id').using(
@@ -493,6 +499,11 @@ export const beatmaps = pgTable(
     uniqueIndex('ix_beatmaps_osu_id').using(
       'btree',
       table.osuId.asc().nullsLast().op('int8_ops')
+    ),
+    index('ix_beatmaps_search_vector').using('gin', table.searchVector),
+    index('ix_beatmaps_diff_name_trgm').using(
+      'gin',
+      table.diffName.op('gin_trgm_ops')
     ),
     foreignKey({
       columns: [table.beatmapsetId],

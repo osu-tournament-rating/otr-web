@@ -3,6 +3,7 @@ import { and, asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
+  BeatmapSearchResultSchema,
   MatchSearchResultSchema,
   PlayerSearchResultSchema,
   SearchRequestSchema,
@@ -50,6 +51,7 @@ export const searchEntities = protectedProcedure
         players: [],
         tournaments: [],
         matches: [],
+        beatmaps: [],
       });
     }
 
@@ -60,6 +62,7 @@ export const searchEntities = protectedProcedure
         players: [],
         tournaments: [],
         matches: [],
+        beatmaps: [],
       });
     }
 
@@ -70,6 +73,7 @@ export const searchEntities = protectedProcedure
         players: [],
         tournaments: [],
         matches: [],
+        beatmaps: [],
       });
     }
 
@@ -144,6 +148,37 @@ export const searchEntities = protectedProcedure
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
 
+      // Beatmaps combine diffName with beatmapset artist/title for search
+      const beatmapVector = sql`
+        ${schema.beatmaps.searchVector}
+        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.artist}, '')), 'B')
+        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.title}, '')), 'B')
+      `;
+      const beatmapDiffSimilarity = buildSimilarity(schema.beatmaps.diffName);
+      const beatmapArtistSimilarity = buildSimilarity(
+        sql`coalesce(${schema.beatmapsets.artist}, '')`
+      );
+      const beatmapTitleSimilarity = buildSimilarity(
+        sql`coalesce(${schema.beatmapsets.title}, '')`
+      );
+      const beatmapSimilarity = sql`greatest(${beatmapDiffSimilarity}, ${beatmapArtistSimilarity}, ${beatmapTitleSimilarity})`;
+      const beatmapCondition = prefixTsQuery
+        ? sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapVector} @@ ${prefixTsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`
+        : sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+      const beatmapRank = prefixTsQuery
+        ? sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`
+        : sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ${beatmapSimilarity})`;
+
+      // Subqueries for beatmap popularity (on-the-fly calculation)
+      const beatmapGameCountSubquery = sql<number>`(
+        SELECT COUNT(*)::int FROM ${schema.games}
+        WHERE ${schema.games.beatmapId} = ${schema.beatmaps.id}
+      )`;
+      const beatmapTournamentCountSubquery = sql<number>`(
+        SELECT COUNT(*)::int FROM ${schema.joinPooledBeatmaps}
+        WHERE ${schema.joinPooledBeatmaps.pooledBeatmapsId} = ${schema.beatmaps.id}
+      )`;
+
       const session = context.session as
         | { dbPlayer?: { id?: number | null } | null }
         | undefined;
@@ -158,7 +193,7 @@ export const searchEntities = protectedProcedure
         friendIds = new Set(friendRows.map((row) => Number(row.friendId)));
       }
 
-      const [playerRows, tournamentRows, matchRows] = await Promise.all([
+      const [playerRows, tournamentRows, matchRows, beatmapRows] = await Promise.all([
         context.db
           .select({
             id: schema.players.id,
@@ -222,6 +257,31 @@ export const searchEntities = protectedProcedure
             asc(schema.matches.name)
           )
           .limit(DEFAULT_RESULT_LIMIT),
+        context.db
+          .select({
+            id: schema.beatmaps.id,
+            osuId: schema.beatmaps.osuId,
+            diffName: schema.beatmaps.diffName,
+            sr: schema.beatmaps.sr,
+            ruleset: schema.beatmaps.ruleset,
+            artist: schema.beatmapsets.artist,
+            title: schema.beatmapsets.title,
+            gameCount: beatmapGameCountSubquery,
+            tournamentCount: beatmapTournamentCountSubquery,
+          })
+          .from(schema.beatmaps)
+          .leftJoin(
+            schema.beatmapsets,
+            eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+          )
+          .where(beatmapCondition)
+          .orderBy(
+            desc(beatmapRank),
+            desc(beatmapGameCountSubquery),
+            desc(beatmapTournamentCountSubquery),
+            asc(schema.beatmaps.diffName)
+          )
+          .limit(DEFAULT_RESULT_LIMIT),
       ]);
 
       const players = playerRows.map((row) => {
@@ -279,10 +339,25 @@ export const searchEntities = protectedProcedure
         })
       );
 
+      const beatmaps = beatmapRows.map((row) =>
+        BeatmapSearchResultSchema.parse({
+          id: Number(row.id),
+          osuId: Number(row.osuId),
+          diffName: row.diffName,
+          sr: Number(row.sr),
+          ruleset: row.ruleset as Ruleset,
+          artist: row.artist ?? 'Unknown',
+          title: row.title ?? 'Unknown',
+          gameCount: Number(row.gameCount ?? 0),
+          tournamentCount: Number(row.tournamentCount ?? 0),
+        })
+      );
+
       return SearchResponseSchema.parse({
         players,
         tournaments,
         matches,
+        beatmaps,
       });
     } catch (error) {
       console.error('[orpc] search.query failed', error);
