@@ -673,11 +673,30 @@ const withRequestLogging = base.middleware(
   }
 );
 
+const withErrorBoundary = base.middleware(async ({ path, next }) => {
+  try {
+    return await next();
+  } catch (error) {
+    if (error instanceof ORPCError) {
+      throw error;
+    }
+
+    const procedurePath = formatProcedurePath(path);
+    console.error(`[orpc] ${procedurePath} failed with unhandled error`, error);
+
+    throw new ORPCError('INTERNAL_SERVER_ERROR', {
+      message: 'An unexpected error occurred',
+    });
+  }
+});
+
 export const publicProcedure = base
   .use(withDatabase)
   .use(withOptionalApiKey)
-  .use(withRequestLogging);
+  .use(withRequestLogging)
+  .use(withErrorBoundary);
 export const protectedProcedure = base
   .use(withDatabase)
   .use(withAuth)
-  .use(withRequestLogging);
+  .use(withRequestLogging)
+  .use(withErrorBoundary);

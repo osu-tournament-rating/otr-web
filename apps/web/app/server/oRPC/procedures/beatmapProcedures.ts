@@ -10,6 +10,9 @@ import {
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
   type BeatmapModDistribution,
+  type BeatmapPlayerDistribution,
+  type BeatmapModTrend,
+  type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
 
 import { publicProcedure } from './base';
@@ -32,7 +35,8 @@ export const getBeatmapStats = publicProcedure
     path: '/beatmaps/{id}/stats',
   })
   .handler(async ({ input, context }) => {
-    const beatmapRow = await context.db
+    try {
+      const beatmapRow = await context.db
       .select({
         id: schema.beatmaps.id,
         osuId: schema.beatmaps.osuId,
@@ -107,18 +111,27 @@ export const getBeatmapStats = publicProcedure
         firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
         lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
       })
-      .from(schema.beatmaps)
-      .leftJoin(schema.games, eq(schema.games.beatmapId, schema.beatmaps.id))
-      .leftJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-      .leftJoin(
+      .from(schema.games)
+      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+      .innerJoin(
         schema.tournaments,
+        eq(schema.tournaments.id, schema.matches.tournamentId)
+      )
+      .leftJoin(
+        schema.gameScores,
         and(
-          eq(schema.tournaments.id, schema.matches.tournamentId),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
+          eq(schema.gameScores.gameId, schema.games.id),
+          eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
         )
       )
-      .leftJoin(schema.gameScores, eq(schema.gameScores.gameId, schema.games.id))
-      .where(eq(schema.beatmaps.id, input.id));
+      .where(
+        and(
+          eq(schema.games.beatmapId, input.id),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified)
+        )
+      );
 
     const summary = {
       totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
@@ -142,16 +155,69 @@ export const getBeatmapStats = publicProcedure
       .where(
         and(
           eq(schema.games.beatmapId, input.id),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified)
         )
       )
       .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`)
       .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`);
 
-    const usageOverTime: BeatmapUsagePoint[] = usageRows.map((row) => ({
-      month: row.month,
-      gameCount: Number(row.gameCount),
-    }));
+    const poolingRows = await context.db
+      .select({
+        month: sql<string>`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`,
+        pooledCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
+      })
+      .from(schema.joinPooledBeatmaps)
+      .innerJoin(
+        schema.tournaments,
+        eq(
+          schema.tournaments.id,
+          schema.joinPooledBeatmaps.tournamentsPooledInId
+        )
+      )
+      .where(
+        and(
+          eq(schema.joinPooledBeatmaps.pooledBeatmapsId, input.id),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          sql`${schema.tournaments.startTime} IS NOT NULL`
+        )
+      )
+      .groupBy(sql`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`)
+      .orderBy(sql`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`);
+
+    const usageByMonth = new Map<string, number>();
+    for (const row of usageRows) {
+      usageByMonth.set(row.month, Number(row.gameCount));
+    }
+
+    const poolingByMonth = new Map<string, number>();
+    for (const row of poolingRows) {
+      poolingByMonth.set(row.month, Number(row.pooledCount));
+    }
+
+    const allMonths = new Set([
+      ...usageRows.map((r) => r.month),
+      ...poolingRows.map((r) => r.month),
+    ]);
+
+    const usageOverTime: BeatmapUsagePoint[] = [];
+    if (allMonths.size > 0) {
+      const sortedMonths = Array.from(allMonths).sort();
+      const startDate = new Date(sortedMonths[0] + '-01');
+      const endDate = new Date(sortedMonths[sortedMonths.length - 1] + '-01');
+
+      const current = new Date(startDate);
+      while (current <= endDate) {
+        const monthKey = current.toISOString().slice(0, 7);
+        usageOverTime.push({
+          month: monthKey,
+          gameCount: usageByMonth.get(monthKey) ?? 0,
+          pooledCount: poolingByMonth.get(monthKey) ?? 0,
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+    }
 
     const tournamentRows = await context.db
       .select({
@@ -177,7 +243,9 @@ export const getBeatmapStats = publicProcedure
       .where(
         and(
           eq(schema.games.beatmapId, input.id),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified)
         )
       )
       .groupBy(
@@ -199,8 +267,7 @@ export const getBeatmapStats = publicProcedure
         const modCounts = new Map<number, number>();
         for (const mod of row.modsUsed) {
           if (mod == null) continue;
-          const convertedMod = mod === Mods.None ? Mods.NoFail : mod;
-          modCounts.set(convertedMod, (modCounts.get(convertedMod) ?? 0) + 1);
+          modCounts.set(mod, (modCounts.get(mod) ?? 0) + 1);
         }
         let maxCount = 0;
         for (const [mod, count] of modCounts.entries()) {
@@ -243,7 +310,9 @@ export const getBeatmapStats = publicProcedure
       .where(
         and(
           eq(schema.games.beatmapId, input.id),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified)
         )
       )
       .groupBy(schema.games.mods)
@@ -260,6 +329,135 @@ export const getBeatmapStats = publicProcedure
         totalModGames > 0
           ? (Number(row.gameCount) / totalModGames) * 100
           : 0,
+    }));
+
+    const RATING_BUCKET_SIZE = 250;
+    const playerDistributionRows = await context.db
+      .select({
+        bucketMin: sql<number>`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`,
+        playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
+      })
+      .from(schema.gameScores)
+      .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+      .innerJoin(
+        schema.tournaments,
+        eq(schema.tournaments.id, schema.matches.tournamentId)
+      )
+      .innerJoin(
+        schema.playerRatings,
+        and(
+          eq(schema.playerRatings.playerId, schema.gameScores.playerId),
+          eq(schema.playerRatings.ruleset, schema.tournaments.ruleset)
+        )
+      )
+      .where(
+        and(
+          eq(schema.games.beatmapId, input.id),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified),
+          eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+        )
+      )
+      .groupBy(
+        sql`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`
+      )
+      .orderBy(
+        sql`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`
+      );
+
+    const playerDistribution: BeatmapPlayerDistribution[] =
+      playerDistributionRows.map((row) => {
+        const bucketMin = Number(row.bucketMin);
+        const bucketMax = bucketMin + RATING_BUCKET_SIZE;
+        return {
+          bucket: `${bucketMin}-${bucketMax}`,
+          bucketMin,
+          bucketMax,
+          playerCount: Number(row.playerCount),
+        };
+      });
+
+    const modTrendRows = await context.db
+      .select({
+        month: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`,
+        mods: schema.games.mods,
+        gameCount: sql<number>`COUNT(*)`,
+      })
+      .from(schema.games)
+      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+      .innerJoin(
+        schema.tournaments,
+        eq(schema.tournaments.id, schema.matches.tournamentId)
+      )
+      .where(
+        and(
+          eq(schema.games.beatmapId, input.id),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified)
+        )
+      )
+      .groupBy(
+        sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`,
+        schema.games.mods
+      )
+      .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`);
+
+    const modTrend: BeatmapModTrend[] = modTrendRows.map((row) => ({
+      month: row.month,
+      mods: row.mods,
+      gameCount: Number(row.gameCount),
+    }));
+
+    const topPerformerRows = await context.db
+      .select({
+        playerId: schema.players.id,
+        playerOsuId: schema.players.osuId,
+        playerUsername: schema.players.username,
+        playerCountry: schema.players.country,
+        playerDefaultRuleset: schema.players.defaultRuleset,
+        score: schema.gameScores.score,
+        accuracy: schema.gameScores.accuracy,
+        mods: schema.games.mods,
+        playedAt: schema.games.startTime,
+      })
+      .from(schema.gameScores)
+      .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+      .innerJoin(
+        schema.tournaments,
+        eq(schema.tournaments.id, schema.matches.tournamentId)
+      )
+      .innerJoin(
+        schema.players,
+        eq(schema.players.id, schema.gameScores.playerId)
+      )
+      .where(
+        and(
+          eq(schema.games.beatmapId, input.id),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified),
+          eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+        )
+      )
+      .orderBy(desc(schema.gameScores.score))
+      .limit(10);
+
+    const topPerformers: BeatmapTopPerformer[] = topPerformerRows.map((row) => ({
+      player: {
+        id: row.playerId,
+        osuId: row.playerOsuId,
+        username: row.playerUsername,
+        country: row.playerCountry,
+        defaultRuleset: row.playerDefaultRuleset as Ruleset,
+      },
+      score: row.score,
+      accuracy: row.accuracy ?? null,
+      mods: row.mods,
+      playedAt: row.playedAt,
     }));
 
     const response: BeatmapStatsResponse = {
@@ -287,8 +485,8 @@ export const getBeatmapStats = publicProcedure
           ? {
               id: beatmap.beatmapsetId!,
               osuId: beatmap.beatmapsetOsuId,
-              artist: beatmap.artist ?? '',
-              title: beatmap.title ?? '',
+              artist: beatmap.artist ?? 'Unknown',
+              title: beatmap.title ?? 'Unknown',
               creatorId: beatmap.creatorId,
               rankedStatus: beatmap.rankedStatus,
               rankedDate: null,
@@ -298,7 +496,7 @@ export const getBeatmapStats = publicProcedure
                   ? {
                       id: beatmap.creatorId,
                       osuId: beatmap.creatorOsuId,
-                      username: beatmap.creatorUsername ?? '',
+                      username: beatmap.creatorUsername ?? 'Unknown',
                       country: beatmap.creatorCountry ?? '',
                       defaultRuleset: (beatmap.creatorDefaultRuleset ??
                         Ruleset.Osu) as Ruleset,
@@ -312,7 +510,21 @@ export const getBeatmapStats = publicProcedure
       usageOverTime,
       tournaments,
       modDistribution,
+      playerDistribution,
+      modTrend,
+      topPerformers,
     };
 
     return BeatmapStatsResponseSchema.parse(response);
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
+      console.error('[orpc] beatmaps.stats failed', { beatmapId: input.id }, error);
+
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Failed to load beatmap statistics',
+      });
+    }
   });

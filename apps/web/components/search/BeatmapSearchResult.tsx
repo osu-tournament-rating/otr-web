@@ -27,11 +27,11 @@ export default function BeatmapSearchResultCard({
       <Link
         href={`/beatmaps/${data.id}`}
         onClick={closeDialog}
-        className="flex gap-3 p-3 sm:p-4"
+        className="flex gap-3 overflow-hidden p-3 sm:p-4"
       >
         <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded sm:h-14 sm:w-14">
           <BeatmapBackground
-            beatmapsetId={data.osuId}
+            beatmapsetId={data.beatmapsetOsuId ?? undefined}
             alt={`${displayTitle} cover`}
             className="absolute inset-0 h-full w-full object-cover"
           />

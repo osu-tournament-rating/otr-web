@@ -16,7 +16,17 @@ export default function BeatmapTournamentsList({
   tournaments,
   className,
 }: BeatmapTournamentsListProps) {
-  if (tournaments.length === 0) {
+  const sortedTournaments = [...tournaments].sort((a, b) => {
+    const dateA = a.tournament.endTime
+      ? new Date(a.tournament.endTime).getTime()
+      : 0;
+    const dateB = b.tournament.endTime
+      ? new Date(b.tournament.endTime).getTime()
+      : 0;
+    return dateB - dateA;
+  });
+
+  if (sortedTournaments.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>
@@ -47,7 +57,7 @@ export default function BeatmapTournamentsList({
         <CardTitle>Tournament Usage</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {tournaments.slice(0, 10).map((item) => (
+        {sortedTournaments.slice(0, 10).map((item) => (
           <Link
             key={item.tournament.id}
             href={`/tournaments/${item.tournament.id}`}
@@ -72,9 +82,9 @@ export default function BeatmapTournamentsList({
             </div>
           </Link>
         ))}
-        {tournaments.length > 10 && (
+        {sortedTournaments.length > 10 && (
           <p className="text-muted-foreground pt-2 text-center text-sm">
-            And {tournaments.length - 10} more tournaments...
+            And {sortedTournaments.length - 10} more tournaments...
           </p>
         )}
       </CardContent>

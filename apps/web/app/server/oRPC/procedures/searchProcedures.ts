@@ -169,14 +169,30 @@ export const searchEntities = protectedProcedure
         ? sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`
         : sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ${beatmapSimilarity})`;
 
-      // Subqueries for beatmap popularity (on-the-fly calculation)
+      // Subqueries for beatmap popularity (on-the-fly calculation, verified data only)
       const beatmapGameCountSubquery = sql<number>`(
-        SELECT COUNT(*)::int FROM ${schema.games}
-        WHERE ${schema.games.beatmapId} = ${schema.beatmaps.id}
+        SELECT COUNT(DISTINCT g.id)::int
+        FROM ${schema.games} g
+        INNER JOIN ${schema.matches} m ON m.id = g.match_id
+        INNER JOIN ${schema.tournaments} t ON t.id = m.tournament_id
+        WHERE g.beatmap_id = ${schema.beatmaps.id}
+          AND t.verification_status = ${VerificationStatus.Verified}
+          AND m.verification_status = ${VerificationStatus.Verified}
+          AND g.verification_status = ${VerificationStatus.Verified}
       )`;
       const beatmapTournamentCountSubquery = sql<number>`(
-        SELECT COUNT(*)::int FROM ${schema.joinPooledBeatmaps}
-        WHERE ${schema.joinPooledBeatmaps.pooledBeatmapsId} = ${schema.beatmaps.id}
+        SELECT COUNT(DISTINCT t.id)::int
+        FROM ${schema.joinPooledBeatmaps} jpb
+        INNER JOIN ${schema.tournaments} t ON t.id = jpb.tournaments_pooled_in_id
+        WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+          AND t.verification_status = ${VerificationStatus.Verified}
+      )`;
+
+      // Combined score: 70% text relevance + 30% log-normalized popularity
+      // Log scale prevents extremely popular beatmaps from overwhelming relevance
+      const beatmapCombinedScore = sql`(
+        (${beatmapRank}) * 0.7 +
+        (ln(COALESCE((${beatmapGameCountSubquery}), 0) + 1) / 10.0) * 0.3
       )`;
 
       const session = context.session as
@@ -266,6 +282,7 @@ export const searchEntities = protectedProcedure
             ruleset: schema.beatmaps.ruleset,
             artist: schema.beatmapsets.artist,
             title: schema.beatmapsets.title,
+            beatmapsetOsuId: schema.beatmapsets.osuId,
             gameCount: beatmapGameCountSubquery,
             tournamentCount: beatmapTournamentCountSubquery,
           })
@@ -276,9 +293,7 @@ export const searchEntities = protectedProcedure
           )
           .where(beatmapCondition)
           .orderBy(
-            desc(beatmapRank),
-            desc(beatmapGameCountSubquery),
-            desc(beatmapTournamentCountSubquery),
+            desc(beatmapCombinedScore),
             asc(schema.beatmaps.diffName)
           )
           .limit(DEFAULT_RESULT_LIMIT),
@@ -348,6 +363,7 @@ export const searchEntities = protectedProcedure
           ruleset: row.ruleset as Ruleset,
           artist: row.artist ?? 'Unknown',
           title: row.title ?? 'Unknown',
+          beatmapsetOsuId: row.beatmapsetOsuId ? Number(row.beatmapsetOsuId) : null,
           gameCount: Number(row.gameCount ?? 0),
           tournamentCount: Number(row.tournamentCount ?? 0),
         })

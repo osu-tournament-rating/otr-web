@@ -76,6 +76,7 @@ export const BeatmapSearchResultSchema = beatmapSearchBaseSchema.extend({
   ruleset: RulesetSchema,
   artist: z.string(),
   title: z.string(),
+  beatmapsetOsuId: z.number().int().nonnegative().nullable(),
   gameCount: z.number().int().nonnegative(),
   tournamentCount: z.number().int().nonnegative(),
 });
