@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
@@ -10,7 +10,7 @@ import {
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
   type BeatmapModDistribution,
-  type BeatmapPlayerDistribution,
+  type BeatmapScoreRatingPoint,
   type BeatmapModTrend,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
@@ -36,6 +36,33 @@ export const getBeatmapStats = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
+      // Resolve input ID: try osu ID first, then fallback to internal ID
+      const resolveInternalBeatmapId = async (
+        inputId: number
+      ): Promise<number> => {
+        // First: lookup by osuId
+        const byOsuId = await context.db
+          .select({ id: schema.beatmaps.id })
+          .from(schema.beatmaps)
+          .where(eq(schema.beatmaps.osuId, inputId))
+          .limit(1);
+
+        if (byOsuId[0]) return byOsuId[0].id;
+
+        // Fallback: lookup by internal id
+        const byId = await context.db
+          .select({ id: schema.beatmaps.id })
+          .from(schema.beatmaps)
+          .where(eq(schema.beatmaps.id, inputId))
+          .limit(1);
+
+        if (byId[0]) return byId[0].id;
+
+        throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
+      };
+
+      const beatmapId = await resolveInternalBeatmapId(input.id);
+
       const beatmapRow = await context.db
       .select({
         id: schema.beatmaps.id,
@@ -75,16 +102,10 @@ export const getBeatmapStats = publicProcedure
         schema.players,
         eq(schema.beatmapsets.creatorId, schema.players.id)
       )
-      .where(eq(schema.beatmaps.id, input.id))
+      .where(eq(schema.beatmaps.id, beatmapId))
       .limit(1);
 
-    if (!beatmapRow[0]) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Beatmap not found',
-      });
-    }
-
-    const beatmap = beatmapRow[0];
+    const beatmap = beatmapRow[0]!;
 
     const creatorsRows = await context.db
       .select(playerCompactColumns)
@@ -93,7 +114,7 @@ export const getBeatmapStats = publicProcedure
         schema.players,
         eq(schema.joinBeatmapCreators.creatorsId, schema.players.id)
       )
-      .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, input.id));
+      .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, beatmapId));
 
     const creators = creatorsRows.map((row) => ({
       id: row.id,
@@ -126,7 +147,7 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified)
@@ -143,7 +164,7 @@ export const getBeatmapStats = publicProcedure
 
     const usageRows = await context.db
       .select({
-        month: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`,
+        quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
         gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
       })
       .from(schema.games)
@@ -154,19 +175,21 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified)
         )
       )
-      .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`)
-      .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`);
+      .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`)
+      .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`);
 
-    const poolingRows = await context.db
+    // Get all tournaments with this beatmap pooled, with their date ranges
+    const pooledTournaments = await context.db
       .select({
-        month: sql<string>`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`,
-        pooledCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
+        tournamentId: schema.tournaments.id,
+        startTime: schema.tournaments.startTime,
+        endTime: schema.tournaments.endTime,
       })
       .from(schema.joinPooledBeatmaps)
       .innerJoin(
@@ -178,44 +201,89 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.joinPooledBeatmaps.pooledBeatmapsId, input.id),
+          eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           sql`${schema.tournaments.startTime} IS NOT NULL`
         )
-      )
-      .groupBy(sql`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`)
-      .orderBy(sql`TO_CHAR(${schema.tournaments.startTime}, 'YYYY-MM')`);
+      );
 
-    const usageByMonth = new Map<string, number>();
+    // Helper to get quarter string from date
+    const getQuarterKey = (date: Date): string => {
+      const year = date.getFullYear();
+      const quarter = Math.ceil((date.getMonth() + 1) / 3);
+      return `${year}-Q${quarter}`;
+    };
+
+    // Helper to advance to next quarter
+    const nextQuarter = (date: Date): Date => {
+      const month = date.getMonth();
+      const quarter = Math.floor(month / 3);
+      if (quarter === 3) {
+        return new Date(date.getFullYear() + 1, 0, 1);
+      }
+      return new Date(date.getFullYear(), (quarter + 1) * 3, 1);
+    };
+
+    // Expand each tournament across all quarters it spans
+    const poolingByQuarter = new Map<string, Set<number>>();
+    for (const t of pooledTournaments) {
+      if (!t.startTime) continue;
+      const start = new Date(t.startTime);
+      const end = t.endTime ? new Date(t.endTime) : start;
+
+      let current = new Date(start);
+      while (current <= end) {
+        const quarterKey = getQuarterKey(current);
+        if (!poolingByQuarter.has(quarterKey)) {
+          poolingByQuarter.set(quarterKey, new Set());
+        }
+        poolingByQuarter.get(quarterKey)!.add(t.tournamentId);
+        current = nextQuarter(current);
+      }
+    }
+
+    // Convert Sets to counts
+    const poolingCounts = new Map<string, number>();
+    for (const [quarter, tournamentIds] of poolingByQuarter) {
+      poolingCounts.set(quarter, tournamentIds.size);
+    }
+
+    const usageByQuarter = new Map<string, number>();
     for (const row of usageRows) {
-      usageByMonth.set(row.month, Number(row.gameCount));
+      usageByQuarter.set(row.quarter, Number(row.gameCount));
     }
 
-    const poolingByMonth = new Map<string, number>();
-    for (const row of poolingRows) {
-      poolingByMonth.set(row.month, Number(row.pooledCount));
-    }
-
-    const allMonths = new Set([
-      ...usageRows.map((r) => r.month),
-      ...poolingRows.map((r) => r.month),
+    const allQuarters = new Set([
+      ...usageRows.map((r) => r.quarter),
+      ...poolingCounts.keys(),
     ]);
 
-    const usageOverTime: BeatmapUsagePoint[] = [];
-    if (allMonths.size > 0) {
-      const sortedMonths = Array.from(allMonths).sort();
-      const startDate = new Date(sortedMonths[0] + '-01');
-      const endDate = new Date(sortedMonths[sortedMonths.length - 1] + '-01');
+    // Helper to parse quarter string
+    const parseQuarter = (q: string): [number, number] => {
+      const [year, qNum] = q.split('-Q');
+      return [parseInt(year, 10), parseInt(qNum, 10)];
+    };
 
-      const current = new Date(startDate);
-      while (current <= endDate) {
-        const monthKey = current.toISOString().slice(0, 7);
+    const usageOverTime: BeatmapUsagePoint[] = [];
+    if (allQuarters.size > 0) {
+      const sortedQuarters = Array.from(allQuarters).sort();
+      const [startYear, startQ] = parseQuarter(sortedQuarters[0]);
+      const [endYear, endQ] = parseQuarter(sortedQuarters[sortedQuarters.length - 1]);
+
+      let year = startYear;
+      let q = startQ;
+      while (year < endYear || (year === endYear && q <= endQ)) {
+        const quarterKey = `${year}-Q${q}`;
         usageOverTime.push({
-          month: monthKey,
-          gameCount: usageByMonth.get(monthKey) ?? 0,
-          pooledCount: poolingByMonth.get(monthKey) ?? 0,
+          quarter: quarterKey,
+          gameCount: usageByQuarter.get(quarterKey) ?? 0,
+          pooledCount: poolingCounts.get(quarterKey) ?? 0,
         });
-        current.setMonth(current.getMonth() + 1);
+        q++;
+        if (q > 4) {
+          q = 1;
+          year++;
+        }
       }
     }
 
@@ -242,7 +310,7 @@ export const getBeatmapStats = publicProcedure
       .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified)
@@ -309,7 +377,7 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified)
@@ -331,11 +399,11 @@ export const getBeatmapStats = publicProcedure
           : 0,
     }));
 
-    const RATING_BUCKET_SIZE = 250;
-    const playerDistributionRows = await context.db
+    const scoreRatingRows = await context.db
       .select({
-        bucketMin: sql<number>`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`,
-        playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
+        score: schema.gameScores.score,
+        playerRating: schema.playerRatings.rating,
+        mods: schema.gameScores.mods,
       })
       .from(schema.gameScores)
       .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
@@ -353,31 +421,21 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified),
           eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
         )
-      )
-      .groupBy(
-        sql`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`
-      )
-      .orderBy(
-        sql`FLOOR(${schema.playerRatings.rating} / ${sql.raw(String(RATING_BUCKET_SIZE))}) * ${sql.raw(String(RATING_BUCKET_SIZE))}`
       );
 
-    const playerDistribution: BeatmapPlayerDistribution[] =
-      playerDistributionRows.map((row) => {
-        const bucketMin = Number(row.bucketMin);
-        const bucketMax = bucketMin + RATING_BUCKET_SIZE;
-        return {
-          bucket: `${bucketMin}-${bucketMax}`,
-          bucketMin,
-          bucketMax,
-          playerCount: Number(row.playerCount),
-        };
-      });
+    const scoreRatingData: BeatmapScoreRatingPoint[] = scoreRatingRows.map(
+      (row) => ({
+        score: row.score,
+        playerRating: Number(row.playerRating),
+        mods: row.mods,
+      })
+    );
 
     const modTrendRows = await context.db
       .select({
@@ -393,7 +451,7 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified)
@@ -436,7 +494,7 @@ export const getBeatmapStats = publicProcedure
       )
       .where(
         and(
-          eq(schema.games.beatmapId, input.id),
+          eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
           eq(schema.games.verificationStatus, VerificationStatus.Verified),
@@ -510,7 +568,7 @@ export const getBeatmapStats = publicProcedure
       usageOverTime,
       tournaments,
       modDistribution,
-      playerDistribution,
+      scoreRatingData,
       modTrend,
       topPerformers,
     };

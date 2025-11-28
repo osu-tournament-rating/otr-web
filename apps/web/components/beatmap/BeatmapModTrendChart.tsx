@@ -29,12 +29,12 @@ interface BeatmapModTrendChartProps {
 }
 
 const MOD_COLORS: Record<string, string> = {
-  NM: '#6b7280',
-  HD: '#fbbf24',
-  HR: '#ef4444',
-  DT: '#3b82f6',
-  FM: '#8b5cf6',
-  Other: '#9ca3af',
+  NM: 'var(--chart-1)',
+  HD: 'var(--mod-hidden)',
+  HR: 'var(--mod-hard-rock)',
+  DT: 'var(--mod-double-time)',
+  FM: 'var(--mod-freemod)',
+  Other: 'var(--chart-3)',
 };
 
 const getChartColors = (theme?: string) => ({
@@ -164,7 +164,7 @@ export default function BeatmapModTrendChart({
                   type="monotone"
                   dataKey={key}
                   stackId="1"
-                  stroke={MOD_COLORS[key]}
+                  stroke="none"
                   fill={MOD_COLORS[key]}
                   fillOpacity={0.6}
                 />

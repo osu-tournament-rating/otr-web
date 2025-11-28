@@ -75,7 +75,7 @@ export default function BeatmapUsageChart({
       <CardHeader>
         <CardTitle>Usage Over Time</CardTitle>
         <CardDescription>
-          Monthly games played and tournaments pooling in verified tournaments
+          Quarterly games played and tournaments pooling in verified tournaments
         </CardDescription>
       </CardHeader>
       <CardContent className="font-sans">
@@ -87,7 +87,7 @@ export default function BeatmapUsageChart({
             >
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
-                dataKey="month"
+                dataKey="quarter"
                 tick={{ fill: colors.text, fontSize: 12 }}
                 tickLine={{ stroke: colors.grid }}
                 axisLine={{ stroke: colors.grid }}
