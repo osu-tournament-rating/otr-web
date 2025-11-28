@@ -40,7 +40,7 @@ const MOD_COLORS: Record<string, string> = {
 const getChartColors = (theme?: string) => ({
   grid:
     theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
-  text: theme === 'dark' ? '#d1d5db' : '#4b5563',
+  text: theme === 'dark' ? '#9ca3af' : '#6b7280',
 });
 
 function getModLabel(mods: number): string {
@@ -108,9 +108,10 @@ export default function BeatmapModTrendChart({
   }
 
   const modKeys = ['NM', 'HD', 'HR', 'DT', 'Other'] as const;
-  const hasData = modKeys.some((key) =>
+  const activeModKeys = modKeys.filter((key) =>
     processedData.some((d) => d[key] > 0)
   );
+  const hasData = activeModKeys.length > 0;
 
   if (!hasData) {
     return (
@@ -134,20 +135,20 @@ export default function BeatmapModTrendChart({
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={processedData}
-              margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+              margin={{ top: 25, right: 10, bottom: 5, left: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: colors.text, fontSize: 12 }}
+                tick={{ fill: colors.text, fontSize: 11 }}
                 tickLine={{ stroke: colors.grid }}
                 axisLine={{ stroke: colors.grid }}
               />
               <YAxis
-                tick={{ fill: colors.text, fontSize: 12 }}
+                tick={{ fill: colors.text, fontSize: 11 }}
                 tickLine={{ stroke: colors.grid }}
                 axisLine={{ stroke: colors.grid }}
-                width={40}
+                width={35}
               />
               <RechartsTooltip
                 contentStyle={{
@@ -157,8 +158,17 @@ export default function BeatmapModTrendChart({
                 }}
                 labelStyle={{ color: colors.text }}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              {modKeys.map((key) => (
+              <Legend
+                verticalAlign="top"
+                align="right"
+                wrapperStyle={{ fontSize: 11, color: colors.text, paddingBottom: 10 }}
+                payload={activeModKeys.map((key) => ({
+                  value: chartConfig[key].label,
+                  type: 'square' as const,
+                  color: MOD_COLORS[key],
+                }))}
+              />
+              {activeModKeys.map((key) => (
                 <Area
                   key={key}
                   type="monotone"
