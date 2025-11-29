@@ -82,6 +82,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
+    container_name: web
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -106,12 +107,23 @@ services:
       OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
       OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
       OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(\"http://localhost:3000/api/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   data-worker:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
     image: '${DATA_WORKER_IMAGE:-stagecodes/otr-data-worker:local}'
+    container_name: data-worker
     restart: unless-stopped
     depends_on:
       db:
@@ -130,6 +142,16 @@ services:
       OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
       OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
       METRICS_PORT: '9091'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(\"http://localhost:9091/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   prometheus:
     image: prom/prometheus:v3.0.1

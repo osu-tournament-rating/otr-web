@@ -183,6 +183,16 @@
           "expr": "rabbitmq_up",
           "legendFormat": "RabbitMQ",
           "refId": "B"
+        },
+        {
+          "expr": "up{job=\"web\"}",
+          "legendFormat": "Web",
+          "refId": "C"
+        },
+        {
+          "expr": "up{job=\"data-worker\"}",
+          "legendFormat": "Data Worker",
+          "refId": "D"
         }
       ],
       "title": "Service Status",
