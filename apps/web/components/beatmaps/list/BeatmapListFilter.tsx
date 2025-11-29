@@ -7,16 +7,21 @@ import { useForm } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
 import { Filter, X, Search } from 'lucide-react';
 import { useDebounce } from '@uidotdev/usehooks';
+import { Ruleset } from '@otr/core/osu';
 
 import {
   beatmapListFilterSchema,
   defaultBeatmapListFilter,
 } from '@/lib/schema';
-import { Form, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { RulesetEnumHelper } from '@/lib/enums';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import { cn } from '@/lib/utils';
 
 type FilterFormData = z.infer<typeof beatmapListFilterSchema>;
 
@@ -75,6 +80,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     const params = new URLSearchParams();
 
     if (values.q) params.set('q', values.q);
+    if (values.ruleset !== undefined) params.set('ruleset', String(values.ruleset));
     if (values.minSr !== undefined) params.set('minSr', String(values.minSr));
     if (values.maxSr !== undefined) params.set('maxSr', String(values.maxSr));
     if (values.minBpm !== undefined) params.set('minBpm', String(values.minBpm));
@@ -105,12 +111,13 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   };
 
   const handleClear = () => {
-    form.reset({ ...defaultBeatmapListFilter, q: '' });
+    form.reset({ ...defaultBeatmapListFilter, q: '', ruleset: undefined });
     setSearchQuery('');
     router.push('/beatmaps');
   };
 
   const activeFilterCount = [
+    filter.ruleset !== undefined,
     filter.minSr !== undefined || filter.maxSr !== undefined,
     filter.minBpm !== undefined || filter.maxBpm !== undefined,
     filter.minCs !== undefined || filter.maxCs !== undefined,
@@ -225,6 +232,48 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
         <PopoverContent className="w-80 p-4" align="end">
           <Form {...form}>
             <form className="space-y-4">
+              <FormField
+                control={form.control}
+                name="ruleset"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ToggleGroup
+                        className="w-full gap-2"
+                        {...field}
+                        value={field.value !== undefined ? String(field.value) : ''}
+                        onValueChange={(val) => {
+                          field.onChange(val ? Number(val) : undefined);
+                          form.handleSubmit(onSubmit)();
+                        }}
+                        type="single"
+                      >
+                        {Object.entries(RulesetEnumHelper.metadata)
+                          .filter(([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther)
+                          .map(([ruleset]) => (
+                            <ToggleGroupItem
+                              key={`ruleset-${ruleset}`}
+                              className="px-0"
+                              value={ruleset}
+                              aria-label={Ruleset[Number(ruleset)]}
+                            >
+                              <RulesetIcon
+                                ruleset={Number(ruleset)}
+                                className={cn(
+                                  'size-5',
+                                  field.value === Number(ruleset)
+                                    ? 'fill-primary'
+                                    : 'fill-foreground'
+                                )}
+                              />
+                            </ToggleGroupItem>
+                          ))}
+                      </ToggleGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
               <RangeSliderField
                 label="Star Rating"
                 minField="minSr"

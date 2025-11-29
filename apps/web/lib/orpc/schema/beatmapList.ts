@@ -19,6 +19,7 @@ export const BeatmapListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(50),
   searchQuery: z.string().trim().min(1).optional(),
+  ruleset: RulesetSchema.optional(),
   minSr: z.number().min(0).max(15).optional(),
   maxSr: z.number().min(0).max(15).optional(),
   minBpm: z.number().min(0).optional(),

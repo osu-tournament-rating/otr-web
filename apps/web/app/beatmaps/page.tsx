@@ -29,6 +29,7 @@ function createUri(
 
   if (navPage > 1) params.set('page', String(navPage));
   if (filter.q) params.set('q', filter.q);
+  if (filter.ruleset !== undefined) params.set('ruleset', String(filter.ruleset));
   if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
   if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
   if (filter.minBpm !== undefined) params.set('minBpm', String(filter.minBpm));
@@ -58,6 +59,7 @@ export default async function Page(props: {
     page: filter.page ?? 1,
     pageSize: 50,
     searchQuery: filter.q || undefined,
+    ruleset: filter.ruleset,
     minSr: filter.minSr,
     maxSr: filter.maxSr,
     minBpm: filter.minBpm,

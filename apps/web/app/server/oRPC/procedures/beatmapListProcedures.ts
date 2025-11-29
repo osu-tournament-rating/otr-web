@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { SQL, and, asc, count, desc, eq, gte, ilike, lte, or, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
@@ -70,6 +70,13 @@ export const listBeatmaps = publicProcedure
       if (input.maxHp !== undefined) filters.push(lte(schema.beatmaps.hp, input.maxHp));
       if (input.minLength !== undefined) filters.push(gte(schema.beatmaps.totalLength, input.minLength));
       if (input.maxLength !== undefined) filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
+      if (input.ruleset === Ruleset.Mania4k) {
+        filters.push(ilike(schema.beatmaps.diffName, '%[4K]%'));
+      } else if (input.ruleset === Ruleset.Mania7k) {
+        filters.push(ilike(schema.beatmaps.diffName, '%[7K]%'));
+      } else if (input.ruleset !== undefined) {
+        filters.push(eq(schema.beatmaps.ruleset, input.ruleset));
+      }
 
       if (input.minGameCount !== undefined) {
         filters.push(sql`(

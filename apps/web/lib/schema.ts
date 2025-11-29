@@ -185,6 +185,7 @@ export const defaultBeatmapListFilter = {
 export const beatmapListFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   q: z.string().catch(''),
+  ruleset: z.coerce.number().int().min(0).max(5).optional(),
   minSr: z.coerce.number().min(0).max(15).optional(),
   maxSr: z.coerce.number().min(0).max(15).optional(),
   minBpm: z.coerce.number().min(0).optional(),
