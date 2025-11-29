@@ -1,8 +1,4 @@
-export type {
-  AccessMethod,
-  ActorInfo,
-  RequestLoggingContext,
-} from './types';
+export type { AccessMethod, ActorInfo, RequestLoggingContext } from './types';
 
 export {
   resolveActor,

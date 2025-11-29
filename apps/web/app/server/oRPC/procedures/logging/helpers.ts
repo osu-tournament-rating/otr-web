@@ -1,11 +1,15 @@
-import type { ActorInfo, AccessMethod } from './types';
+import type { ActorInfo } from './types';
 
 type OsuIdValue = bigint | number | string | null | undefined;
 
 type SessionSnapshot = {
   user?: { osuId?: OsuIdValue } | null;
   dbUser?: { id?: number | null } | null;
-  dbPlayer?: { id?: number | null; osuId?: OsuIdValue; username?: string | null } | null;
+  dbPlayer?: {
+    id?: number | null;
+    osuId?: OsuIdValue;
+    username?: string | null;
+  } | null;
 };
 
 type ApiKeyActor = {
@@ -54,7 +58,9 @@ export function resolveActor(context: ActorResolutionContext): ActorInfo {
       accessMethod: 'api-key',
       userId: context.apiKey.userId,
       playerId: context.apiKeyActor.playerId,
-      osuId: context.apiKeyActor.osuId ? String(context.apiKeyActor.osuId) : null,
+      osuId: context.apiKeyActor.osuId
+        ? String(context.apiKeyActor.osuId)
+        : null,
       osuUsername: context.apiKeyActor.osuUsername,
       apiKeyId: maskApiKey(context.apiKey.id),
       apiKeyName: context.apiKey.name,
@@ -115,9 +121,7 @@ export function formatProcedurePath(path: readonly string[]): string {
   return path.length > 0 ? path.join('.') : 'unknown';
 }
 
-export function getCorrelationId(
-  context: unknown
-): string | undefined {
+export function getCorrelationId(context: unknown): string | undefined {
   if (
     context &&
     typeof context === 'object' &&

@@ -7,7 +7,6 @@ import {
   generateCorrelationId,
   extractCorrelationId,
 } from '@otr/core/logging';
-import type { Logger } from '@otr/core/logging';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
@@ -298,14 +297,6 @@ type ProcedureError =
   | boolean
   | null
   | undefined;
-
-type OsuIdValue = bigint | number | string | null | undefined;
-
-type SessionSnapshot = {
-  user?: { osuId?: OsuIdValue } | null;
-  dbUser?: { id?: number | null } | null;
-  dbPlayer?: { osuId?: OsuIdValue } | null;
-};
 
 const resolveErrorStatus = (error: ProcedureError): number => {
   if (!error) {

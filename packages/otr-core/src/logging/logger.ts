@@ -53,7 +53,7 @@ function formatLogLine(obj: Record<string, unknown>): string {
   if (obj.level != null) {
     const level =
       typeof obj.level === 'number'
-        ? PINO_LEVEL_TO_LABEL[obj.level] ?? String(obj.level)
+        ? (PINO_LEVEL_TO_LABEL[obj.level] ?? String(obj.level))
         : String(obj.level);
     parts.push(`level=${level}`);
   }
