@@ -56,7 +56,7 @@ groups:
   - name: application
     rules:
       - alert: HighErrorRate
-        expr: rate(data_worker_queue_message_errors_total[5m]) > 0.1
+        expr: rate(data_worker_queue_messages_processed_total{status="error"}[5m]) > 0.1
         for: 5m
         labels:
           severity: warning

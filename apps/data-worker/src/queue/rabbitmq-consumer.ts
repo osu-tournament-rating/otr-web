@@ -130,7 +130,9 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
       await queueMessage.nack(true);
     } finally {
       queueMessagesInFlight.labels(labels).dec();
-      queueMessageDuration.labels(labels).observe((Date.now() - startTime) / 1000);
+      queueMessageDuration
+        .labels(labels)
+        .observe((Date.now() - startTime) / 1000);
     }
   }
 }

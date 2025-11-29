@@ -24,6 +24,9 @@ scrape_configs:
 
   - job_name: 'web'
     metrics_path: '/api/metrics'
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/metrics_token
     static_configs:
       - targets: ['web:3000']
 

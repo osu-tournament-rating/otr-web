@@ -61,7 +61,9 @@ export class FixedWindowRateLimiter implements RateLimiter {
 
   async schedule<T>(task: () => Promise<T>): Promise<T> {
     this.pendingTasks++;
-    rateLimiterQueuedTasks.labels({ limiter: this.label }).set(this.pendingTasks);
+    rateLimiterQueuedTasks
+      .labels({ limiter: this.label })
+      .set(this.pendingTasks);
 
     const run = async () => {
       const waitStart = Date.now();
@@ -74,7 +76,9 @@ export class FixedWindowRateLimiter implements RateLimiter {
           .observe(waitDuration);
       }
 
-      rateLimiterRequests.labels({ limiter: this.label, status: 'allowed' }).inc();
+      rateLimiterRequests
+        .labels({ limiter: this.label, status: 'allowed' })
+        .inc();
 
       try {
         return await task();
