@@ -50,7 +50,14 @@ import {
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+};
+
+const TOURNAMENT_TABS = ['matches', 'beatmaps', 'ratings', 'stats'] as const;
+type TournamentTab = (typeof TOURNAMENT_TABS)[number];
+const DEFAULT_TAB: TournamentTab = 'matches';
 
 const tournamentPageParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -358,11 +365,19 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   );
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { id } = parseParamsOrNotFound(
     tournamentPageParamsSchema,
     await params
   );
+  const { tab: tabParam } = await searchParams;
+  const currentTab: TournamentTab = TOURNAMENT_TABS.includes(
+    tabParam as TournamentTab
+  )
+    ? (tabParam as TournamentTab)
+    : DEFAULT_TAB;
+  const createTabHref = (tab: TournamentTab) => `/tournaments/${id}?tab=${tab}`;
+
   const tournament: TournamentDetail = await fetchOrpcOrNotFound(() =>
     orpc.tournaments.get({ id })
   );
@@ -386,12 +401,20 @@ export default async function Page({ params }: PageProps) {
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <TournamentHeader tournament={tournament} />
 
-      <Tabs defaultValue="matches" className="w-full">
+      <Tabs value={currentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="matches">Matches</TabsTrigger>
-          <TabsTrigger value="beatmaps">Beatmaps</TabsTrigger>
-          <TabsTrigger value="ratings">Ratings</TabsTrigger>
-          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="matches" asChild>
+            <Link href={createTabHref('matches')}>Matches</Link>
+          </TabsTrigger>
+          <TabsTrigger value="beatmaps" asChild>
+            <Link href={createTabHref('beatmaps')}>Beatmaps</Link>
+          </TabsTrigger>
+          <TabsTrigger value="ratings" asChild>
+            <Link href={createTabHref('ratings')}>Ratings</Link>
+          </TabsTrigger>
+          <TabsTrigger value="stats" asChild>
+            <Link href={createTabHref('stats')}>Stats</Link>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="matches" className="mt-4">
