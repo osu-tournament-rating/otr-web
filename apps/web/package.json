@@ -9,7 +9,10 @@
     "start": "bun run next start",
     "lint": "bun run eslint .",
     "format": "bun run prettier . --write --ignore-unknown",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@alduino/humanizer": "^1.1.0",
@@ -72,6 +75,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.49.0",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

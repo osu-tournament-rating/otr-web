@@ -1,0 +1,328 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "o!TR Logo" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "o!TR Logo" [ref=e5]
+      - navigation "Main" [ref=e6]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Leaderboard" [ref=e10] [cursor=pointer]:
+              - /url: /leaderboard
+          - listitem [ref=e11]:
+            - button "Tournaments" [ref=e12]:
+              - generic [ref=e14]: Tournaments
+              - img [ref=e15]
+          - listitem [ref=e17]:
+            - link "Stats" [ref=e18] [cursor=pointer]:
+              - /url: /stats
+          - listitem [ref=e19]:
+            - button "Tools" [ref=e20]:
+              - generic [ref=e22]: Tools
+              - img [ref=e23]
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img
+      - link "Docs" [ref=e27] [cursor=pointer]:
+        - /url: https://docs.otr.stagec.xyz
+        - button "Docs" [ref=e28]:
+          - img
+      - link "API spec" [ref=e29] [cursor=pointer]:
+        - /url: /spec
+        - button "API spec" [ref=e30]:
+          - img
+      - link [ref=e31] [cursor=pointer]:
+        - /url: https://buymeacoffee.com/stagecodes
+        - button [ref=e32]:
+          - img
+      - button "Login" [ref=e34] [cursor=pointer]
+  - paragraph [ref=e36]: Some features are not available while signed out.
+  - main [ref=e37]:
+    - generic [ref=e39]:
+      - generic [ref=e41]:
+        - img [ref=e42]
+        - generic [ref=e48]: Tournaments
+      - generic [ref=e49]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - searchbox "Type to search for tournaments..." [ref=e54]
+            - img [ref=e55]
+          - generic [ref=e59]:
+            - button "osu!" [ref=e60] [cursor=pointer]:
+              - img
+              - text: osu!
+            - button "osu!taiko" [ref=e61] [cursor=pointer]:
+              - img
+              - text: osu!taiko
+            - button "osu!catch" [ref=e62] [cursor=pointer]:
+              - img
+              - text: osu!catch
+            - button "osu!mania 4K" [ref=e63] [cursor=pointer]:
+              - img
+              - text: osu!mania 4K
+            - button "osu!mania 7K" [ref=e64] [cursor=pointer]:
+              - img
+              - text: osu!mania 7K
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - combobox [ref=e67]:
+                - generic: End Date
+                - img
+              - combobox [ref=e68]
+            - button "Sort Ascending" [ref=e70] [cursor=pointer]:
+              - img
+        - generic [ref=e73]:
+          - link "osu!Together Cup Season 1 o!TC S1 Pre-verified osu! 2v2 90,000+ Kyomu 2025-10-17 - 2025-11-21" [ref=e75] [cursor=pointer]:
+            - /url: /tournaments/2921
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - heading "osu!Together Cup Season 1" [level=2] [ref=e79]
+                - generic [ref=e81]: o!TC S1
+              - generic [ref=e83]:
+                - generic [ref=e84]:
+                  - generic [ref=e85]:
+                    - img [ref=e86]
+                    - generic [ref=e88]: Pre-verified
+                  - generic [ref=e89]:
+                    - img [ref=e90]
+                    - generic [ref=e93]: osu!
+                  - generic [ref=e94]:
+                    - img [ref=e95]
+                    - generic [ref=e100]: 2v2
+                  - generic [ref=e101]:
+                    - img [ref=e102]
+                    - generic [ref=e106]: 90,000+
+                  - generic [ref=e107]:
+                    - img [ref=e108]
+                    - generic [ref=e111]: Kyomu
+                - generic [ref=e112]:
+                  - img [ref=e113]
+                  - generic [ref=e115]: 2025-10-17 - 2025-11-21
+          - link "osu! Collegiate League Fall 2025 Tier 3 o!CL F25 Pre-verified osu! 2v2 20,000+ MintLeaf 2025-10-11 - 2025-11-17" [ref=e117] [cursor=pointer]:
+            - /url: /tournaments/2920
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - heading "osu! Collegiate League Fall 2025 Tier 3" [level=2] [ref=e121]
+                - generic [ref=e123]: o!CL F25
+              - generic [ref=e125]:
+                - generic [ref=e126]:
+                  - generic [ref=e127]:
+                    - img [ref=e128]
+                    - generic [ref=e130]: Pre-verified
+                  - generic [ref=e131]:
+                    - img [ref=e132]
+                    - generic [ref=e135]: osu!
+                  - generic [ref=e136]:
+                    - img [ref=e137]
+                    - generic [ref=e142]: 2v2
+                  - generic [ref=e143]:
+                    - img [ref=e144]
+                    - generic [ref=e148]: 20,000+
+                  - generic [ref=e149]:
+                    - img [ref=e150]
+                    - generic [ref=e153]: MintLeaf
+                - generic [ref=e154]:
+                  - img [ref=e155]
+                  - generic [ref=e157]: 2025-10-11 - 2025-11-17
+          - link "Monodramatic World Stage MWS Rejected osu! 1v1 1,000+ SourMongoose 2025-09-24 - 2025-11-16" [ref=e159] [cursor=pointer]:
+            - /url: /tournaments/2911
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - heading "Monodramatic World Stage" [level=2] [ref=e163]
+                - generic [ref=e165]: MWS
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]:
+                    - img [ref=e170]
+                    - generic [ref=e174]: Rejected
+                  - generic [ref=e175]:
+                    - img [ref=e176]
+                    - generic [ref=e179]: osu!
+                  - generic [ref=e180]:
+                    - img [ref=e181]
+                    - generic [ref=e186]: 1v1
+                  - generic [ref=e187]:
+                    - img [ref=e188]
+                    - generic [ref=e192]: 1,000+
+                  - generic [ref=e193]:
+                    - img [ref=e194]
+                    - generic [ref=e197]: SourMongoose
+                - generic [ref=e198]:
+                  - img [ref=e199]
+                  - generic [ref=e201]: 2025-09-24 - 2025-11-16
+          - link "Pinwii's Penguin Party 2 PPP2 Verified osu! 1v1 45,000+ SourMongoose 2025-10-03 - 2025-11-16" [ref=e203] [cursor=pointer]:
+            - /url: /tournaments/2918
+            - generic [ref=e205]:
+              - generic [ref=e206]:
+                - heading "Pinwii's Penguin Party 2" [level=2] [ref=e207]
+                - generic [ref=e209]: PPP2
+              - generic [ref=e211]:
+                - generic [ref=e212]:
+                  - generic [ref=e213]:
+                    - img [ref=e214]
+                    - generic [ref=e217]: Verified
+                  - generic [ref=e218]:
+                    - img [ref=e219]
+                    - generic [ref=e222]: osu!
+                  - generic [ref=e223]:
+                    - img [ref=e224]
+                    - generic [ref=e229]: 1v1
+                  - generic [ref=e230]:
+                    - img [ref=e231]
+                    - generic [ref=e235]: 45,000+
+                  - generic [ref=e236]:
+                    - img [ref=e237]
+                    - generic [ref=e240]: SourMongoose
+                - generic [ref=e241]:
+                  - img [ref=e242]
+                  - generic [ref=e244]: 2025-10-03 - 2025-11-16
+          - link "Che Sfondo Cup CSC Rejected osu! 2v2 10,000+ SourMongoose 2025-10-17 - 2025-11-16" [ref=e246] [cursor=pointer]:
+            - /url: /tournaments/2914
+            - generic [ref=e248]:
+              - generic [ref=e249]:
+                - heading "Che Sfondo Cup" [level=2] [ref=e250]
+                - generic [ref=e252]: CSC
+              - generic [ref=e254]:
+                - generic [ref=e255]:
+                  - generic [ref=e256]:
+                    - img [ref=e257]
+                    - generic [ref=e261]: Rejected
+                  - generic [ref=e262]:
+                    - img [ref=e263]
+                    - generic [ref=e266]: osu!
+                  - generic [ref=e267]:
+                    - img [ref=e268]
+                    - generic [ref=e273]: 2v2
+                  - generic [ref=e274]:
+                    - img [ref=e275]
+                    - generic [ref=e279]: 10,000+
+                  - generic [ref=e280]:
+                    - img [ref=e281]
+                    - generic [ref=e284]: SourMongoose
+                - generic [ref=e285]:
+                  - img [ref=e286]
+                  - generic [ref=e288]: 2025-10-17 - 2025-11-16
+          - link "5 Digit Japan Tournament 2025 5JT25 Verified osu! 1v1 10,000+ SourMongoose 2025-10-10 - 2025-11-16" [ref=e290] [cursor=pointer]:
+            - /url: /tournaments/2912
+            - generic [ref=e292]:
+              - generic [ref=e293]:
+                - heading "5 Digit Japan Tournament 2025" [level=2] [ref=e294]
+                - generic [ref=e296]: 5JT25
+              - generic [ref=e298]:
+                - generic [ref=e299]:
+                  - generic [ref=e300]:
+                    - img [ref=e301]
+                    - generic [ref=e304]: Verified
+                  - generic [ref=e305]:
+                    - img [ref=e306]
+                    - generic [ref=e309]: osu!
+                  - generic [ref=e310]:
+                    - img [ref=e311]
+                    - generic [ref=e316]: 1v1
+                  - generic [ref=e317]:
+                    - img [ref=e318]
+                    - generic [ref=e322]: 10,000+
+                  - generic [ref=e323]:
+                    - img [ref=e324]
+                    - generic [ref=e327]: SourMongoose
+                - generic [ref=e328]:
+                  - img [ref=e329]
+                  - generic [ref=e331]: 2025-10-10 - 2025-11-16
+          - link "Tinwa Summer Cup 3 TSC3 Verified osu! 4v4 850+ SourMongoose 2025-10-11 - 2025-11-16" [ref=e333] [cursor=pointer]:
+            - /url: /tournaments/2915
+            - generic [ref=e335]:
+              - generic [ref=e336]:
+                - heading "Tinwa Summer Cup 3" [level=2] [ref=e337]
+                - generic [ref=e339]: TSC3
+              - generic [ref=e341]:
+                - generic [ref=e342]:
+                  - generic [ref=e343]:
+                    - img [ref=e344]
+                    - generic [ref=e347]: Verified
+                  - generic [ref=e348]:
+                    - img [ref=e349]
+                    - generic [ref=e352]: osu!
+                  - generic [ref=e353]:
+                    - img [ref=e354]
+                    - generic [ref=e359]: 4v4
+                  - generic [ref=e360]:
+                    - img [ref=e361]
+                    - generic [ref=e365]: 850+
+                  - generic [ref=e366]:
+                    - img [ref=e367]
+                    - generic [ref=e370]: SourMongoose
+                - generic [ref=e371]:
+                  - img [ref=e372]
+                  - generic [ref=e374]: 2025-10-11 - 2025-11-16
+          - link "Specter's Ohio Clash Showdown SOCS Verified osu! 1v1 6,500+ SourMongoose 2025-10-08 - 2025-11-10" [ref=e376] [cursor=pointer]:
+            - /url: /tournaments/2913
+            - generic [ref=e378]:
+              - generic [ref=e379]:
+                - heading "Specter's Ohio Clash Showdown" [level=2] [ref=e380]
+                - generic [ref=e382]: SOCS
+              - generic [ref=e384]:
+                - generic [ref=e385]:
+                  - generic [ref=e386]:
+                    - img [ref=e387]
+                    - generic [ref=e390]: Verified
+                  - generic [ref=e391]:
+                    - img [ref=e392]
+                    - generic [ref=e395]: osu!
+                  - generic [ref=e396]:
+                    - img [ref=e397]
+                    - generic [ref=e402]: 1v1
+                  - generic [ref=e403]:
+                    - img [ref=e404]
+                    - generic [ref=e408]: 6,500+
+                  - generic [ref=e409]:
+                    - img [ref=e410]
+                    - generic [ref=e413]: SourMongoose
+                - generic [ref=e414]:
+                  - img [ref=e415]
+                  - generic [ref=e417]: 2025-10-08 - 2025-11-10
+  - contentinfo [ref=e418]:
+    - generic [ref=e419]:
+      - generic [ref=e421]:
+        - generic [ref=e422]:
+          - text: About
+          - list [ref=e423]:
+            - listitem [ref=e424]:
+              - link "Docs" [ref=e425] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz
+            - listitem [ref=e426]:
+              - link "Team" [ref=e427] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz/About/Team
+        - generic [ref=e428]:
+          - text: Contact
+          - list [ref=e429]:
+            - listitem [ref=e430]:
+              - link "Discord" [ref=e431] [cursor=pointer]:
+                - /url: https://discord.gg/R53AwX2tJA
+            - listitem [ref=e432]:
+              - link "Status" [ref=e433] [cursor=pointer]:
+                - /url: https://status.stagec.xyz/status/otr
+        - generic [ref=e434]:
+          - text: Contribute
+          - list [ref=e435]:
+            - listitem [ref=e436]:
+              - link "Donate" [ref=e437] [cursor=pointer]:
+                - /url: https://buymeacoffee.com/stagecodes
+            - listitem [ref=e438]:
+              - link "GitHub" [ref=e439] [cursor=pointer]:
+                - /url: https://github.com/osu-tournament-rating
+        - generic [ref=e440]:
+          - text: Browse
+          - list [ref=e441]:
+            - listitem [ref=e442]:
+              - link "Leaderboard" [ref=e443] [cursor=pointer]:
+                - /url: /leaderboard
+            - listitem [ref=e444]:
+              - link "Tournaments" [ref=e445] [cursor=pointer]:
+                - /url: /tournaments
+      - generic [ref=e446]: © 2025 osu! Tournament Rating
+  - region "Notifications alt+T"
+  - alert [ref=e447]
+```

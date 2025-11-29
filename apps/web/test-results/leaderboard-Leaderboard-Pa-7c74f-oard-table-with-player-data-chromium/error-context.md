@@ -1,0 +1,1341 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "o!TR Logo" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "o!TR Logo" [ref=e5]
+      - navigation "Main" [ref=e6]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Leaderboard" [ref=e10] [cursor=pointer]:
+              - /url: /leaderboard
+          - listitem [ref=e11]:
+            - button "Tournaments" [ref=e12]:
+              - generic [ref=e14]: Tournaments
+              - img [ref=e15]
+          - listitem [ref=e17]:
+            - link "Stats" [ref=e18] [cursor=pointer]:
+              - /url: /stats
+          - listitem [ref=e19]:
+            - button "Tools" [ref=e20]:
+              - generic [ref=e22]: Tools
+              - img [ref=e23]
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img
+      - link "Docs" [ref=e27] [cursor=pointer]:
+        - /url: https://docs.otr.stagec.xyz
+        - button "Docs" [ref=e28]:
+          - img
+      - link "API spec" [ref=e29] [cursor=pointer]:
+        - /url: /spec
+        - button "API spec" [ref=e30]:
+          - img
+      - link [ref=e31] [cursor=pointer]:
+        - /url: https://buymeacoffee.com/stagecodes
+        - button [ref=e32]:
+          - img
+      - button "Login" [ref=e34] [cursor=pointer]
+  - paragraph [ref=e36]: Some features are not available while signed out.
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e49]: Global Leaderboard
+          - button "Filters" [ref=e51] [cursor=pointer]:
+            - img
+            - text: Filters
+        - table [ref=e55]:
+          - rowgroup [ref=e56]:
+            - row "Rank Country Player Tier Rating Tournaments Matches Win %" [ref=e57]:
+              - columnheader "Rank" [ref=e58]:
+                - generic [ref=e59]: Rank
+              - columnheader "Country" [ref=e60]
+              - columnheader "Player" [ref=e61]
+              - columnheader "Tier" [ref=e62]:
+                - generic [ref=e63]: Tier
+              - columnheader "Rating" [ref=e64]:
+                - generic [ref=e65]: Rating
+              - columnheader "Tournaments" [ref=e66]:
+                - generic [ref=e67]: Tournaments
+              - columnheader "Matches" [ref=e68]:
+                - generic [ref=e69]: Matches
+              - columnheader "Win %" [ref=e70]:
+                - generic [ref=e71]: Win %
+          - rowgroup [ref=e72]:
+            - 'row "#1 KR flag #1 worst hr player avatar worst hr player Elite Grandmaster3 2962 25 122 79%" [ref=e73]':
+              - cell "#1" [ref=e74]:
+                - generic [ref=e76]: "#1"
+              - 'cell "KR flag #1" [ref=e77]':
+                - 'link "KR flag #1" [ref=e78] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e79]
+                  - generic [ref=e80]: "#1"
+              - cell "worst hr player avatar worst hr player" [ref=e81]:
+                - generic [ref=e82]:
+                  - img "worst hr player avatar" [ref=e83]
+                  - link "worst hr player" [ref=e84] [cursor=pointer]:
+                    - /url: /players/6666?ruleset=0
+                    - paragraph [ref=e85]: worst hr player
+              - cell "Elite Grandmaster3" [ref=e86]:
+                - img "Elite Grandmaster3" [ref=e89]
+              - cell "2962" [ref=e90]:
+                - paragraph [ref=e92]: "2962"
+              - cell "25" [ref=e93]:
+                - paragraph [ref=e94]: "25"
+              - cell "122" [ref=e95]:
+                - paragraph [ref=e96]: "122"
+              - cell "79%" [ref=e97]:
+                - paragraph [ref=e98]: 79%
+            - 'row "#2 PL flag #1 MALISZEWSKI avatar MALISZEWSKI Elite Grandmaster3 2934 106 541 85%" [ref=e99]':
+              - cell "#2" [ref=e100]:
+                - generic [ref=e102]: "#2"
+              - 'cell "PL flag #1" [ref=e103]':
+                - 'link "PL flag #1" [ref=e104] [cursor=pointer]':
+                  - /url: /leaderboard?country=PL
+                  - img "PL flag" [ref=e105]
+                  - generic [ref=e106]: "#1"
+              - cell "MALISZEWSKI avatar MALISZEWSKI" [ref=e107]:
+                - generic [ref=e108]:
+                  - img "MALISZEWSKI avatar" [ref=e109]
+                  - link "MALISZEWSKI" [ref=e110] [cursor=pointer]:
+                    - /url: /players/4285?ruleset=0
+                    - paragraph [ref=e111]: MALISZEWSKI
+              - cell "Elite Grandmaster3" [ref=e112]:
+                - img "Elite Grandmaster3" [ref=e115]
+              - cell "2934" [ref=e116]:
+                - paragraph [ref=e118]: "2934"
+              - cell "106" [ref=e119]:
+                - paragraph [ref=e120]: "106"
+              - cell "541" [ref=e121]:
+                - paragraph [ref=e122]: "541"
+              - cell "85%" [ref=e123]:
+                - paragraph [ref=e124]: 85%
+            - 'row "#3 DE flag #1 criller avatar criller Elite Grandmaster3 2742 40 209 76%" [ref=e125]':
+              - cell "#3" [ref=e126]:
+                - generic [ref=e128]: "#3"
+              - 'cell "DE flag #1" [ref=e129]':
+                - 'link "DE flag #1" [ref=e130] [cursor=pointer]':
+                  - /url: /leaderboard?country=DE
+                  - img "DE flag" [ref=e131]
+                  - generic [ref=e132]: "#1"
+              - cell "criller avatar criller" [ref=e133]:
+                - generic [ref=e134]:
+                  - img "criller avatar" [ref=e135]
+                  - link "criller" [ref=e136] [cursor=pointer]:
+                    - /url: /players/5403?ruleset=0
+                    - paragraph [ref=e137]: criller
+              - cell "Elite Grandmaster3" [ref=e138]:
+                - img "Elite Grandmaster3" [ref=e141]
+              - cell "2742" [ref=e142]:
+                - paragraph [ref=e144]: "2742"
+              - cell "40" [ref=e145]:
+                - paragraph [ref=e146]: "40"
+              - cell "209" [ref=e147]:
+                - paragraph [ref=e148]: "209"
+              - cell "76%" [ref=e149]:
+                - paragraph [ref=e150]: 76%
+            - 'row "#4 AU flag #1 mrekk avatar mrekk Elite Grandmaster3 2659 36 182 77%" [ref=e151]':
+              - cell "#4" [ref=e152]:
+                - generic [ref=e154]: "#4"
+              - 'cell "AU flag #1" [ref=e155]':
+                - 'link "AU flag #1" [ref=e156] [cursor=pointer]':
+                  - /url: /leaderboard?country=AU
+                  - img "AU flag" [ref=e157]
+                  - generic [ref=e158]: "#1"
+              - cell "mrekk avatar mrekk" [ref=e159]:
+                - generic [ref=e160]:
+                  - img "mrekk avatar" [ref=e161]
+                  - link "mrekk" [ref=e162] [cursor=pointer]:
+                    - /url: /players/2904?ruleset=0
+                    - paragraph [ref=e163]: mrekk
+              - cell "Elite Grandmaster3" [ref=e164]:
+                - img "Elite Grandmaster3" [ref=e167]
+              - cell "2659" [ref=e168]:
+                - paragraph [ref=e170]: "2659"
+              - cell "36" [ref=e171]:
+                - paragraph [ref=e172]: "36"
+              - cell "182" [ref=e173]:
+                - paragraph [ref=e174]: "182"
+              - cell "77%" [ref=e175]:
+                - paragraph [ref=e176]: 77%
+            - 'row "#5 US flag #1 Utami avatar Utami Elite Grandmaster3 2657 60 317 73%" [ref=e177]':
+              - cell "#5" [ref=e178]:
+                - generic [ref=e180]: "#5"
+              - 'cell "US flag #1" [ref=e181]':
+                - 'link "US flag #1" [ref=e182] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e183]
+                  - generic [ref=e184]: "#1"
+              - cell "Utami avatar Utami" [ref=e185]:
+                - generic [ref=e186]:
+                  - img "Utami avatar" [ref=e187]
+                  - link "Utami" [ref=e188] [cursor=pointer]:
+                    - /url: /players/3853?ruleset=0
+                    - paragraph [ref=e189]: Utami
+              - cell "Elite Grandmaster3" [ref=e190]:
+                - img "Elite Grandmaster3" [ref=e193]
+              - cell "2657" [ref=e194]:
+                - paragraph [ref=e196]: "2657"
+              - cell "60" [ref=e197]:
+                - paragraph [ref=e198]: "60"
+              - cell "317" [ref=e199]:
+                - paragraph [ref=e200]: "317"
+              - cell "73%" [ref=e201]:
+                - paragraph [ref=e202]: 73%
+            - 'row "#6 US flag #2 rektygon avatar rektygon Elite Grandmaster3 2642 71 346 77%" [ref=e203]':
+              - cell "#6" [ref=e204]:
+                - generic [ref=e206]: "#6"
+              - 'cell "US flag #2" [ref=e207]':
+                - 'link "US flag #2" [ref=e208] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e209]
+                  - generic [ref=e210]: "#2"
+              - cell "rektygon avatar rektygon" [ref=e211]:
+                - generic [ref=e212]:
+                  - img "rektygon avatar" [ref=e213]
+                  - link "rektygon" [ref=e214] [cursor=pointer]:
+                    - /url: /players/825?ruleset=0
+                    - paragraph [ref=e215]: rektygon
+              - cell "Elite Grandmaster3" [ref=e216]:
+                - img "Elite Grandmaster3" [ref=e219]
+              - cell "2642" [ref=e220]:
+                - paragraph [ref=e222]: "2642"
+              - cell "71" [ref=e223]:
+                - paragraph [ref=e224]: "71"
+              - cell "346" [ref=e225]:
+                - paragraph [ref=e226]: "346"
+              - cell "77%" [ref=e227]:
+                - paragraph [ref=e228]: 77%
+            - 'row "#7 HK flag #1 mcy4 avatar mcy4 Elite Grandmaster3 2629 66 337 68%" [ref=e229]':
+              - cell "#7" [ref=e230]:
+                - generic [ref=e232]: "#7"
+              - 'cell "HK flag #1" [ref=e233]':
+                - 'link "HK flag #1" [ref=e234] [cursor=pointer]':
+                  - /url: /leaderboard?country=HK
+                  - img "HK flag" [ref=e235]
+                  - generic [ref=e236]: "#1"
+              - cell "mcy4 avatar mcy4" [ref=e237]:
+                - generic [ref=e238]:
+                  - img "mcy4 avatar" [ref=e239]
+                  - link "mcy4" [ref=e240] [cursor=pointer]:
+                    - /url: /players/1604?ruleset=0
+                    - paragraph [ref=e241]: mcy4
+              - cell "Elite Grandmaster3" [ref=e242]:
+                - img "Elite Grandmaster3" [ref=e245]
+              - cell "2629" [ref=e246]:
+                - paragraph [ref=e248]: "2629"
+              - cell "66" [ref=e249]:
+                - paragraph [ref=e250]: "66"
+              - cell "337" [ref=e251]:
+                - paragraph [ref=e252]: "337"
+              - cell "68%" [ref=e253]:
+                - paragraph [ref=e254]: 68%
+            - 'row "#8 KR flag #2 [Karcher] avatar [Karcher] Elite Grandmaster3 2612 59 306 74%" [ref=e255]':
+              - cell "#8" [ref=e256]:
+                - generic [ref=e258]: "#8"
+              - 'cell "KR flag #2" [ref=e259]':
+                - 'link "KR flag #2" [ref=e260] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e261]
+                  - generic [ref=e262]: "#2"
+              - cell "[Karcher] avatar [Karcher]" [ref=e263]:
+                - generic [ref=e264]:
+                  - img "[Karcher] avatar" [ref=e265]
+                  - link "[Karcher]" [ref=e266] [cursor=pointer]:
+                    - /url: /players/6188?ruleset=0
+                    - paragraph [ref=e267]: "[Karcher]"
+              - cell "Elite Grandmaster3" [ref=e268]:
+                - img "Elite Grandmaster3" [ref=e271]
+              - cell "2612" [ref=e272]:
+                - paragraph [ref=e274]: "2612"
+              - cell "59" [ref=e275]:
+                - paragraph [ref=e276]: "59"
+              - cell "306" [ref=e277]:
+                - paragraph [ref=e278]: "306"
+              - cell "74%" [ref=e279]:
+                - paragraph [ref=e280]: 74%
+            - 'row "#9 KR flag #3 fragranceofpage avatar fragranceofpage Elite Grandmaster3 2598 14 69 74%" [ref=e281]':
+              - cell "#9" [ref=e282]:
+                - generic [ref=e284]: "#9"
+              - 'cell "KR flag #3" [ref=e285]':
+                - 'link "KR flag #3" [ref=e286] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e287]
+                  - generic [ref=e288]: "#3"
+              - cell "fragranceofpage avatar fragranceofpage" [ref=e289]:
+                - generic [ref=e290]:
+                  - img "fragranceofpage avatar" [ref=e291]
+                  - link "fragranceofpage" [ref=e292] [cursor=pointer]:
+                    - /url: /players/17190?ruleset=0
+                    - paragraph [ref=e293]: fragranceofpage
+              - cell "Elite Grandmaster3" [ref=e294]:
+                - img "Elite Grandmaster3" [ref=e297]
+              - cell "2598" [ref=e298]:
+                - paragraph [ref=e300]: "2598"
+              - cell "14" [ref=e301]:
+                - paragraph [ref=e302]: "14"
+              - cell "69" [ref=e303]:
+                - paragraph [ref=e304]: "69"
+              - cell "74%" [ref=e305]:
+                - paragraph [ref=e306]: 74%
+            - 'row "#10 PH flag #1 enri avatar enri Elite Grandmaster3 2597 52 254 70%" [ref=e307]':
+              - cell "#10" [ref=e308]:
+                - generic [ref=e310]: "#10"
+              - 'cell "PH flag #1" [ref=e311]':
+                - 'link "PH flag #1" [ref=e312] [cursor=pointer]':
+                  - /url: /leaderboard?country=PH
+                  - img "PH flag" [ref=e313]
+                  - generic [ref=e314]: "#1"
+              - cell "enri avatar enri" [ref=e315]:
+                - generic [ref=e316]:
+                  - img "enri avatar" [ref=e317]
+                  - link "enri" [ref=e318] [cursor=pointer]:
+                    - /url: /players/5432?ruleset=0
+                    - paragraph [ref=e319]: enri
+              - cell "Elite Grandmaster3" [ref=e320]:
+                - img "Elite Grandmaster3" [ref=e323]
+              - cell "2597" [ref=e324]:
+                - paragraph [ref=e326]: "2597"
+              - cell "52" [ref=e327]:
+                - paragraph [ref=e328]: "52"
+              - cell "254" [ref=e329]:
+                - paragraph [ref=e330]: "254"
+              - cell "70%" [ref=e331]:
+                - paragraph [ref=e332]: 70%
+            - 'row "#11 KR flag #4 hyeok2044 avatar hyeok2044 Elite Grandmaster3 2584 25 123 73%" [ref=e333]':
+              - cell "#11" [ref=e334]:
+                - generic [ref=e336]: "#11"
+              - 'cell "KR flag #4" [ref=e337]':
+                - 'link "KR flag #4" [ref=e338] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e339]
+                  - generic [ref=e340]: "#4"
+              - cell "hyeok2044 avatar hyeok2044" [ref=e341]:
+                - generic [ref=e342]:
+                  - img "hyeok2044 avatar" [ref=e343]
+                  - link "hyeok2044" [ref=e344] [cursor=pointer]:
+                    - /url: /players/5413?ruleset=0
+                    - paragraph [ref=e345]: hyeok2044
+              - cell "Elite Grandmaster3" [ref=e346]:
+                - img "Elite Grandmaster3" [ref=e349]
+              - cell "2584" [ref=e350]:
+                - paragraph [ref=e352]: "2584"
+              - cell "25" [ref=e353]:
+                - paragraph [ref=e354]: "25"
+              - cell "123" [ref=e355]:
+                - paragraph [ref=e356]: "123"
+              - cell "73%" [ref=e357]:
+                - paragraph [ref=e358]: 73%
+            - 'row "#12 AU flag #2 ASecretBox avatar ASecretBox Elite Grandmaster3 2563 36 147 76%" [ref=e359]':
+              - cell "#12" [ref=e360]:
+                - generic [ref=e362]: "#12"
+              - 'cell "AU flag #2" [ref=e363]':
+                - 'link "AU flag #2" [ref=e364] [cursor=pointer]':
+                  - /url: /leaderboard?country=AU
+                  - img "AU flag" [ref=e365]
+                  - generic [ref=e366]: "#2"
+              - cell "ASecretBox avatar ASecretBox" [ref=e367]:
+                - generic [ref=e368]:
+                  - img "ASecretBox avatar" [ref=e369]
+                  - link "ASecretBox" [ref=e370] [cursor=pointer]:
+                    - /url: /players/1655?ruleset=0
+                    - paragraph [ref=e371]: ASecretBox
+              - cell "Elite Grandmaster3" [ref=e372]:
+                - img "Elite Grandmaster3" [ref=e375]
+              - cell "2563" [ref=e376]:
+                - paragraph [ref=e378]: "2563"
+              - cell "36" [ref=e379]:
+                - paragraph [ref=e380]: "36"
+              - cell "147" [ref=e381]:
+                - paragraph [ref=e382]: "147"
+              - cell "76%" [ref=e383]:
+                - paragraph [ref=e384]: 76%
+            - 'row "#13 KR flag #5 FlyingTuna avatar FlyingTuna Elite Grandmaster3 2524 56 282 82%" [ref=e385]':
+              - cell "#13" [ref=e386]:
+                - generic [ref=e388]: "#13"
+              - 'cell "KR flag #5" [ref=e389]':
+                - 'link "KR flag #5" [ref=e390] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e391]
+                  - generic [ref=e392]: "#5"
+              - cell "FlyingTuna avatar FlyingTuna" [ref=e393]:
+                - generic [ref=e394]:
+                  - img "FlyingTuna avatar" [ref=e395]
+                  - link "FlyingTuna" [ref=e396] [cursor=pointer]:
+                    - /url: /players/2182?ruleset=0
+                    - paragraph [ref=e397]: FlyingTuna
+              - cell "Elite Grandmaster3" [ref=e398]:
+                - img "Elite Grandmaster3" [ref=e401]
+              - cell "2524" [ref=e402]:
+                - paragraph [ref=e404]: "2524"
+              - cell "56" [ref=e405]:
+                - paragraph [ref=e406]: "56"
+              - cell "282" [ref=e407]:
+                - paragraph [ref=e408]: "282"
+              - cell "82%" [ref=e409]:
+                - paragraph [ref=e410]: 82%
+            - 'row "#14 PH flag #2 NathanRam1918 avatar NathanRam1918 Elite Grandmaster3 2506 41 181 62%" [ref=e411]':
+              - cell "#14" [ref=e412]:
+                - generic [ref=e414]: "#14"
+              - 'cell "PH flag #2" [ref=e415]':
+                - 'link "PH flag #2" [ref=e416] [cursor=pointer]':
+                  - /url: /leaderboard?country=PH
+                  - img "PH flag" [ref=e417]
+                  - generic [ref=e418]: "#2"
+              - cell "NathanRam1918 avatar NathanRam1918" [ref=e419]:
+                - generic [ref=e420]:
+                  - img "NathanRam1918 avatar" [ref=e421]
+                  - link "NathanRam1918" [ref=e422] [cursor=pointer]:
+                    - /url: /players/5436?ruleset=0
+                    - paragraph [ref=e423]: NathanRam1918
+              - cell "Elite Grandmaster3" [ref=e424]:
+                - img "Elite Grandmaster3" [ref=e427]
+              - cell "2506" [ref=e428]:
+                - paragraph [ref=e430]: "2506"
+              - cell "41" [ref=e431]:
+                - paragraph [ref=e432]: "41"
+              - cell "181" [ref=e433]:
+                - paragraph [ref=e434]: "181"
+              - cell "62%" [ref=e435]:
+                - paragraph [ref=e436]: 62%
+            - 'row "#15 GR flag #1 JackPaX avatar JackPaX Grandmaster1 2499 58 236 63%" [ref=e437]':
+              - cell "#15" [ref=e438]:
+                - generic [ref=e440]: "#15"
+              - 'cell "GR flag #1" [ref=e441]':
+                - 'link "GR flag #1" [ref=e442] [cursor=pointer]':
+                  - /url: /leaderboard?country=GR
+                  - img "GR flag" [ref=e443]
+                  - generic [ref=e444]: "#1"
+              - cell "JackPaX avatar JackPaX" [ref=e445]:
+                - generic [ref=e446]:
+                  - img "JackPaX avatar" [ref=e447]
+                  - link "JackPaX" [ref=e448] [cursor=pointer]:
+                    - /url: /players/9631?ruleset=0
+                    - paragraph [ref=e449]: JackPaX
+              - cell "Grandmaster1" [ref=e450]:
+                - img "Grandmaster1" [ref=e453]
+              - cell "2499" [ref=e454]:
+                - paragraph [ref=e456]: "2499"
+              - cell "58" [ref=e457]:
+                - paragraph [ref=e458]: "58"
+              - cell "236" [ref=e459]:
+                - paragraph [ref=e460]: "236"
+              - cell "63%" [ref=e461]:
+                - paragraph [ref=e462]: 63%
+            - 'row "#16 KR flag #6 Amamya Kokoro avatar Amamya Kokoro Grandmaster1 2470 54 260 70%" [ref=e463]':
+              - cell "#16" [ref=e464]:
+                - generic [ref=e466]: "#16"
+              - 'cell "KR flag #6" [ref=e467]':
+                - 'link "KR flag #6" [ref=e468] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e469]
+                  - generic [ref=e470]: "#6"
+              - cell "Amamya Kokoro avatar Amamya Kokoro" [ref=e471]:
+                - generic [ref=e472]:
+                  - img "Amamya Kokoro avatar" [ref=e473]
+                  - link "Amamya Kokoro" [ref=e474] [cursor=pointer]:
+                    - /url: /players/7167?ruleset=0
+                    - paragraph [ref=e475]: Amamya Kokoro
+              - cell "Grandmaster1" [ref=e476]:
+                - img "Grandmaster1" [ref=e479]
+              - cell "2470" [ref=e480]:
+                - paragraph [ref=e482]: "2470"
+              - cell "54" [ref=e483]:
+                - paragraph [ref=e484]: "54"
+              - cell "260" [ref=e485]:
+                - paragraph [ref=e486]: "260"
+              - cell "70%" [ref=e487]:
+                - paragraph [ref=e488]: 70%
+            - 'row "#17 CN flag #1 lolol233 avatar lolol233 Grandmaster1 2458 55 242 64%" [ref=e489]':
+              - cell "#17" [ref=e490]:
+                - generic [ref=e492]: "#17"
+              - 'cell "CN flag #1" [ref=e493]':
+                - 'link "CN flag #1" [ref=e494] [cursor=pointer]':
+                  - /url: /leaderboard?country=CN
+                  - img "CN flag" [ref=e495]
+                  - generic [ref=e496]: "#1"
+              - cell "lolol233 avatar lolol233" [ref=e497]:
+                - generic [ref=e498]:
+                  - img "lolol233 avatar" [ref=e499]
+                  - link "lolol233" [ref=e500] [cursor=pointer]:
+                    - /url: /players/2675?ruleset=0
+                    - paragraph [ref=e501]: lolol233
+              - cell "Grandmaster1" [ref=e502]:
+                - img "Grandmaster1" [ref=e505]
+              - cell "2458" [ref=e506]:
+                - paragraph [ref=e508]: "2458"
+              - cell "55" [ref=e509]:
+                - paragraph [ref=e510]: "55"
+              - cell "242" [ref=e511]:
+                - paragraph [ref=e512]: "242"
+              - cell "64%" [ref=e513]:
+                - paragraph [ref=e514]: 64%
+            - 'row "#18 RU flag #1 Chicony avatar Chicony Grandmaster1 2445 47 214 66%" [ref=e515]':
+              - cell "#18" [ref=e516]:
+                - generic [ref=e518]: "#18"
+              - 'cell "RU flag #1" [ref=e519]':
+                - 'link "RU flag #1" [ref=e520] [cursor=pointer]':
+                  - /url: /leaderboard?country=RU
+                  - img "RU flag" [ref=e521]
+                  - generic [ref=e522]: "#1"
+              - cell "Chicony avatar Chicony" [ref=e523]:
+                - generic [ref=e524]:
+                  - img "Chicony avatar" [ref=e525]
+                  - link "Chicony" [ref=e526] [cursor=pointer]:
+                    - /url: /players/6198?ruleset=0
+                    - paragraph [ref=e527]: Chicony
+              - cell "Grandmaster1" [ref=e528]:
+                - img "Grandmaster1" [ref=e531]
+              - cell "2445" [ref=e532]:
+                - paragraph [ref=e534]: "2445"
+              - cell "47" [ref=e535]:
+                - paragraph [ref=e536]: "47"
+              - cell "214" [ref=e537]:
+                - paragraph [ref=e538]: "214"
+              - cell "66%" [ref=e539]:
+                - paragraph [ref=e540]: 66%
+            - 'row "#19 US flag #3 WindowLife avatar WindowLife Grandmaster1 2431 37 176 67%" [ref=e541]':
+              - cell "#19" [ref=e542]:
+                - generic [ref=e544]: "#19"
+              - 'cell "US flag #3" [ref=e545]':
+                - 'link "US flag #3" [ref=e546] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e547]
+                  - generic [ref=e548]: "#3"
+              - cell "WindowLife avatar WindowLife" [ref=e549]:
+                - generic [ref=e550]:
+                  - img "WindowLife avatar" [ref=e551]
+                  - link "WindowLife" [ref=e552] [cursor=pointer]:
+                    - /url: /players/9235?ruleset=0
+                    - paragraph [ref=e553]: WindowLife
+              - cell "Grandmaster1" [ref=e554]:
+                - img "Grandmaster1" [ref=e557]
+              - cell "2431" [ref=e558]:
+                - paragraph [ref=e560]: "2431"
+              - cell "37" [ref=e561]:
+                - paragraph [ref=e562]: "37"
+              - cell "176" [ref=e563]:
+                - paragraph [ref=e564]: "176"
+              - cell "67%" [ref=e565]:
+                - paragraph [ref=e566]: 67%
+            - 'row "#20 RU flag #2 Welter avatar Welter Grandmaster1 2422 81 329 67%" [ref=e567]':
+              - cell "#20" [ref=e568]:
+                - generic [ref=e570]: "#20"
+              - 'cell "RU flag #2" [ref=e571]':
+                - 'link "RU flag #2" [ref=e572] [cursor=pointer]':
+                  - /url: /leaderboard?country=RU
+                  - img "RU flag" [ref=e573]
+                  - generic [ref=e574]: "#2"
+              - cell "Welter avatar Welter" [ref=e575]:
+                - generic [ref=e576]:
+                  - img "Welter avatar" [ref=e577]
+                  - link "Welter" [ref=e578] [cursor=pointer]:
+                    - /url: /players/9184?ruleset=0
+                    - paragraph [ref=e579]: Welter
+              - cell "Grandmaster1" [ref=e580]:
+                - img "Grandmaster1" [ref=e583]
+              - cell "2422" [ref=e584]:
+                - paragraph [ref=e586]: "2422"
+              - cell "81" [ref=e587]:
+                - paragraph [ref=e588]: "81"
+              - cell "329" [ref=e589]:
+                - paragraph [ref=e590]: "329"
+              - cell "67%" [ref=e591]:
+                - paragraph [ref=e592]: 67%
+            - 'row "#21 NO flag #1 NINERIK avatar NINERIK Grandmaster1 2418 67 258 66%" [ref=e593]':
+              - cell "#21" [ref=e594]:
+                - generic [ref=e596]: "#21"
+              - 'cell "NO flag #1" [ref=e597]':
+                - 'link "NO flag #1" [ref=e598] [cursor=pointer]':
+                  - /url: /leaderboard?country=NO
+                  - img "NO flag" [ref=e599]
+                  - generic [ref=e600]: "#1"
+              - cell "NINERIK avatar NINERIK" [ref=e601]:
+                - generic [ref=e602]:
+                  - img "NINERIK avatar" [ref=e603]
+                  - link "NINERIK" [ref=e604] [cursor=pointer]:
+                    - /url: /players/6717?ruleset=0
+                    - paragraph [ref=e605]: NINERIK
+              - cell "Grandmaster1" [ref=e606]:
+                - img "Grandmaster1" [ref=e609]
+              - cell "2418" [ref=e610]:
+                - paragraph [ref=e612]: "2418"
+              - cell "67" [ref=e613]:
+                - paragraph [ref=e614]: "67"
+              - cell "258" [ref=e615]:
+                - paragraph [ref=e616]: "258"
+              - cell "66%" [ref=e617]:
+                - paragraph [ref=e618]: 66%
+            - 'row "#22 US flag #4 Pezz avatar Pezz Grandmaster1 2416 72 319 69%" [ref=e619]':
+              - cell "#22" [ref=e620]:
+                - generic [ref=e622]: "#22"
+              - 'cell "US flag #4" [ref=e623]':
+                - 'link "US flag #4" [ref=e624] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e625]
+                  - generic [ref=e626]: "#4"
+              - cell "Pezz avatar Pezz" [ref=e627]:
+                - generic [ref=e628]:
+                  - img "Pezz avatar" [ref=e629]
+                  - link "Pezz" [ref=e630] [cursor=pointer]:
+                    - /url: /players/7351?ruleset=0
+                    - paragraph [ref=e631]: Pezz
+              - cell "Grandmaster1" [ref=e632]:
+                - img "Grandmaster1" [ref=e635]
+              - cell "2416" [ref=e636]:
+                - paragraph [ref=e638]: "2416"
+              - cell "72" [ref=e639]:
+                - paragraph [ref=e640]: "72"
+              - cell "319" [ref=e641]:
+                - paragraph [ref=e642]: "319"
+              - cell "69%" [ref=e643]:
+                - paragraph [ref=e644]: 69%
+            - 'row "#23 KZ flag #1 Kamensh1k avatar Kamensh1k Grandmaster1 2411 35 126 62%" [ref=e645]':
+              - cell "#23" [ref=e646]:
+                - generic [ref=e648]: "#23"
+              - 'cell "KZ flag #1" [ref=e649]':
+                - 'link "KZ flag #1" [ref=e650] [cursor=pointer]':
+                  - /url: /leaderboard?country=KZ
+                  - img "KZ flag" [ref=e651]
+                  - generic [ref=e652]: "#1"
+              - cell "Kamensh1k avatar Kamensh1k" [ref=e653]:
+                - generic [ref=e654]:
+                  - img "Kamensh1k avatar" [ref=e655]
+                  - link "Kamensh1k" [ref=e656] [cursor=pointer]:
+                    - /url: /players/7508?ruleset=0
+                    - paragraph [ref=e657]: Kamensh1k
+              - cell "Grandmaster1" [ref=e658]:
+                - img "Grandmaster1" [ref=e661]
+              - cell "2411" [ref=e662]:
+                - paragraph [ref=e664]: "2411"
+              - cell "35" [ref=e665]:
+                - paragraph [ref=e666]: "35"
+              - cell "126" [ref=e667]:
+                - paragraph [ref=e668]: "126"
+              - cell "62%" [ref=e669]:
+                - paragraph [ref=e670]: 62%
+            - 'row "#24 CA flag #1 xootynator avatar xootynator Grandmaster1 2411 79 416 74%" [ref=e671]':
+              - cell "#24" [ref=e672]:
+                - generic [ref=e674]: "#24"
+              - 'cell "CA flag #1" [ref=e675]':
+                - 'link "CA flag #1" [ref=e676] [cursor=pointer]':
+                  - /url: /leaderboard?country=CA
+                  - img "CA flag" [ref=e677]
+                  - generic [ref=e678]: "#1"
+              - cell "xootynator avatar xootynator" [ref=e679]:
+                - generic [ref=e680]:
+                  - img "xootynator avatar" [ref=e681]
+                  - link "xootynator" [ref=e682] [cursor=pointer]:
+                    - /url: /players/3204?ruleset=0
+                    - paragraph [ref=e683]: xootynator
+              - cell "Grandmaster1" [ref=e684]:
+                - img "Grandmaster1" [ref=e687]
+              - cell "2411" [ref=e688]:
+                - paragraph [ref=e690]: "2411"
+              - cell "79" [ref=e691]:
+                - paragraph [ref=e692]: "79"
+              - cell "416" [ref=e693]:
+                - paragraph [ref=e694]: "416"
+              - cell "74%" [ref=e695]:
+                - paragraph [ref=e696]: 74%
+            - 'row "#25 CN flag #2 Crystal avatar Crystal Grandmaster1 2410 76 364 67%" [ref=e697]':
+              - cell "#25" [ref=e698]:
+                - generic [ref=e700]: "#25"
+              - 'cell "CN flag #2" [ref=e701]':
+                - 'link "CN flag #2" [ref=e702] [cursor=pointer]':
+                  - /url: /leaderboard?country=CN
+                  - img "CN flag" [ref=e703]
+                  - generic [ref=e704]: "#2"
+              - cell "Crystal avatar Crystal" [ref=e705]:
+                - generic [ref=e706]:
+                  - img "Crystal avatar" [ref=e707]
+                  - link "Crystal" [ref=e708] [cursor=pointer]:
+                    - /url: /players/740?ruleset=0
+                    - paragraph [ref=e709]: Crystal
+              - cell "Grandmaster1" [ref=e710]:
+                - img "Grandmaster1" [ref=e713]
+              - cell "2410" [ref=e714]:
+                - paragraph [ref=e716]: "2410"
+              - cell "76" [ref=e717]:
+                - paragraph [ref=e718]: "76"
+              - cell "364" [ref=e719]:
+                - paragraph [ref=e720]: "364"
+              - cell "67%" [ref=e721]:
+                - paragraph [ref=e722]: 67%
+            - 'row "#26 US flag #5 TTv_UFO avatar TTv_UFO Grandmaster1 2405 10 35 63%" [ref=e723]':
+              - cell "#26" [ref=e724]:
+                - generic [ref=e726]: "#26"
+              - 'cell "US flag #5" [ref=e727]':
+                - 'link "US flag #5" [ref=e728] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e729]
+                  - generic [ref=e730]: "#5"
+              - cell "TTv_UFO avatar TTv_UFO" [ref=e731]:
+                - generic [ref=e732]:
+                  - img "TTv_UFO avatar" [ref=e733]
+                  - link "TTv_UFO" [ref=e734] [cursor=pointer]:
+                    - /url: /players/31160?ruleset=0
+                    - paragraph [ref=e735]: TTv_UFO
+              - cell "Grandmaster1" [ref=e736]:
+                - img "Grandmaster1" [ref=e739]
+              - cell "2405" [ref=e740]:
+                - paragraph [ref=e742]: "2405"
+              - cell "10" [ref=e743]:
+                - paragraph [ref=e744]: "10"
+              - cell "35" [ref=e745]:
+                - paragraph [ref=e746]: "35"
+              - cell "63%" [ref=e747]:
+                - paragraph [ref=e748]: 63%
+            - 'row "#27 PE flag #1 [MG]Arnold24x24 avatar [MG]Arnold24x24 Grandmaster2 2394 100 433 69%" [ref=e749]':
+              - cell "#27" [ref=e750]:
+                - generic [ref=e752]: "#27"
+              - 'cell "PE flag #1" [ref=e753]':
+                - 'link "PE flag #1" [ref=e754] [cursor=pointer]':
+                  - /url: /leaderboard?country=PE
+                  - img "PE flag" [ref=e755]
+                  - generic [ref=e756]: "#1"
+              - cell "[MG]Arnold24x24 avatar [MG]Arnold24x24" [ref=e757]:
+                - generic [ref=e758]:
+                  - img "[MG]Arnold24x24 avatar" [ref=e759]
+                  - link "[MG]Arnold24x24" [ref=e760] [cursor=pointer]:
+                    - /url: /players/3008?ruleset=0
+                    - paragraph [ref=e761]: "[MG]Arnold24x24"
+              - cell "Grandmaster2" [ref=e762]:
+                - img "Grandmaster2" [ref=e765]
+              - cell "2394" [ref=e766]:
+                - paragraph [ref=e768]: "2394"
+              - cell "100" [ref=e769]:
+                - paragraph [ref=e770]: "100"
+              - cell "433" [ref=e771]:
+                - paragraph [ref=e772]: "433"
+              - cell "69%" [ref=e773]:
+                - paragraph [ref=e774]: 69%
+            - 'row "#28 FR flag #1 Ekoro avatar Ekoro Grandmaster2 2392 28 140 64%" [ref=e775]':
+              - cell "#28" [ref=e776]:
+                - generic [ref=e778]: "#28"
+              - 'cell "FR flag #1" [ref=e779]':
+                - 'link "FR flag #1" [ref=e780] [cursor=pointer]':
+                  - /url: /leaderboard?country=FR
+                  - img "FR flag" [ref=e781]
+                  - generic [ref=e782]: "#1"
+              - cell "Ekoro avatar Ekoro" [ref=e783]:
+                - generic [ref=e784]:
+                  - img "Ekoro avatar" [ref=e785]
+                  - link "Ekoro" [ref=e786] [cursor=pointer]:
+                    - /url: /players/3448?ruleset=0
+                    - paragraph [ref=e787]: Ekoro
+              - cell "Grandmaster2" [ref=e788]:
+                - img "Grandmaster2" [ref=e791]
+              - cell "2392" [ref=e792]:
+                - paragraph [ref=e794]: "2392"
+              - cell "28" [ref=e795]:
+                - paragraph [ref=e796]: "28"
+              - cell "140" [ref=e797]:
+                - paragraph [ref=e798]: "140"
+              - cell "64%" [ref=e799]:
+                - paragraph [ref=e800]: 64%
+            - 'row "#29 KR flag #7 Doomsday fanboy avatar Doomsday fanboy Grandmaster2 2391 16 79 67%" [ref=e801]':
+              - cell "#29" [ref=e802]:
+                - generic [ref=e804]: "#29"
+              - 'cell "KR flag #7" [ref=e805]':
+                - 'link "KR flag #7" [ref=e806] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e807]
+                  - generic [ref=e808]: "#7"
+              - cell "Doomsday fanboy avatar Doomsday fanboy" [ref=e809]:
+                - generic [ref=e810]:
+                  - img "Doomsday fanboy avatar" [ref=e811]
+                  - link "Doomsday fanboy" [ref=e812] [cursor=pointer]:
+                    - /url: /players/5420?ruleset=0
+                    - paragraph [ref=e813]: Doomsday fanboy
+              - cell "Grandmaster2" [ref=e814]:
+                - img "Grandmaster2" [ref=e817]
+              - cell "2391" [ref=e818]:
+                - paragraph [ref=e820]: "2391"
+              - cell "16" [ref=e821]:
+                - paragraph [ref=e822]: "16"
+              - cell "79" [ref=e823]:
+                - paragraph [ref=e824]: "79"
+              - cell "67%" [ref=e825]:
+                - paragraph [ref=e826]: 67%
+            - 'row "#30 SE flag #1 scylla avatar scylla Grandmaster2 2381 82 362 65%" [ref=e827]':
+              - cell "#30" [ref=e828]:
+                - generic [ref=e830]: "#30"
+              - 'cell "SE flag #1" [ref=e831]':
+                - 'link "SE flag #1" [ref=e832] [cursor=pointer]':
+                  - /url: /leaderboard?country=SE
+                  - img "SE flag" [ref=e833]
+                  - generic [ref=e834]: "#1"
+              - cell "scylla avatar scylla" [ref=e835]:
+                - generic [ref=e836]:
+                  - img "scylla avatar" [ref=e837]
+                  - link "scylla" [ref=e838] [cursor=pointer]:
+                    - /url: /players/5464?ruleset=0
+                    - paragraph [ref=e839]: scylla
+              - cell "Grandmaster2" [ref=e840]:
+                - img "Grandmaster2" [ref=e843]
+              - cell "2381" [ref=e844]:
+                - paragraph [ref=e846]: "2381"
+              - cell "82" [ref=e847]:
+                - paragraph [ref=e848]: "82"
+              - cell "362" [ref=e849]:
+                - paragraph [ref=e850]: "362"
+              - cell "65%" [ref=e851]:
+                - paragraph [ref=e852]: 65%
+            - 'row "#31 HK flag #2 Tsuwagi avatar Tsuwagi Grandmaster2 2370 48 200 64%" [ref=e853]':
+              - cell "#31" [ref=e854]:
+                - generic [ref=e856]: "#31"
+              - 'cell "HK flag #2" [ref=e857]':
+                - 'link "HK flag #2" [ref=e858] [cursor=pointer]':
+                  - /url: /leaderboard?country=HK
+                  - img "HK flag" [ref=e859]
+                  - generic [ref=e860]: "#2"
+              - cell "Tsuwagi avatar Tsuwagi" [ref=e861]:
+                - generic [ref=e862]:
+                  - img "Tsuwagi avatar" [ref=e863]
+                  - link "Tsuwagi" [ref=e864] [cursor=pointer]:
+                    - /url: /players/2048?ruleset=0
+                    - paragraph [ref=e865]: Tsuwagi
+              - cell "Grandmaster2" [ref=e866]:
+                - img "Grandmaster2" [ref=e869]
+              - cell "2370" [ref=e870]:
+                - paragraph [ref=e872]: "2370"
+              - cell "48" [ref=e873]:
+                - paragraph [ref=e874]: "48"
+              - cell "200" [ref=e875]:
+                - paragraph [ref=e876]: "200"
+              - cell "64%" [ref=e877]:
+                - paragraph [ref=e878]: 64%
+            - 'row "#32 RU flag #3 Skrowell avatar Skrowell Grandmaster2 2365 76 327 67%" [ref=e879]':
+              - cell "#32" [ref=e880]:
+                - generic [ref=e882]: "#32"
+              - 'cell "RU flag #3" [ref=e883]':
+                - 'link "RU flag #3" [ref=e884] [cursor=pointer]':
+                  - /url: /leaderboard?country=RU
+                  - img "RU flag" [ref=e885]
+                  - generic [ref=e886]: "#3"
+              - cell "Skrowell avatar Skrowell" [ref=e887]:
+                - generic [ref=e888]:
+                  - img "Skrowell avatar" [ref=e889]
+                  - link "Skrowell" [ref=e890] [cursor=pointer]:
+                    - /url: /players/4307?ruleset=0
+                    - paragraph [ref=e891]: Skrowell
+              - cell "Grandmaster2" [ref=e892]:
+                - img "Grandmaster2" [ref=e895]
+              - cell "2365" [ref=e896]:
+                - paragraph [ref=e898]: "2365"
+              - cell "76" [ref=e899]:
+                - paragraph [ref=e900]: "76"
+              - cell "327" [ref=e901]:
+                - paragraph [ref=e902]: "327"
+              - cell "67%" [ref=e903]:
+                - paragraph [ref=e904]: 67%
+            - 'row "#33 TR flag #1 Raikouhou avatar Raikouhou Grandmaster2 2356 58 231 58%" [ref=e905]':
+              - cell "#33" [ref=e906]:
+                - generic [ref=e908]: "#33"
+              - 'cell "TR flag #1" [ref=e909]':
+                - 'link "TR flag #1" [ref=e910] [cursor=pointer]':
+                  - /url: /leaderboard?country=TR
+                  - img "TR flag" [ref=e911]
+                  - generic [ref=e912]: "#1"
+              - cell "Raikouhou avatar Raikouhou" [ref=e913]:
+                - generic [ref=e914]:
+                  - img "Raikouhou avatar" [ref=e915]
+                  - link "Raikouhou" [ref=e916] [cursor=pointer]:
+                    - /url: /players/1403?ruleset=0
+                    - paragraph [ref=e917]: Raikouhou
+              - cell "Grandmaster2" [ref=e918]:
+                - img "Grandmaster2" [ref=e921]
+              - cell "2356" [ref=e922]:
+                - paragraph [ref=e924]: "2356"
+              - cell "58" [ref=e925]:
+                - paragraph [ref=e926]: "58"
+              - cell "231" [ref=e927]:
+                - paragraph [ref=e928]: "231"
+              - cell "58%" [ref=e929]:
+                - paragraph [ref=e930]: 58%
+            - 'row "#34 US flag #6 tekkito avatar tekkito Grandmaster2 2355 103 456 68%" [ref=e931]':
+              - cell "#34" [ref=e932]:
+                - generic [ref=e934]: "#34"
+              - 'cell "US flag #6" [ref=e935]':
+                - 'link "US flag #6" [ref=e936] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e937]
+                  - generic [ref=e938]: "#6"
+              - cell "tekkito avatar tekkito" [ref=e939]:
+                - generic [ref=e940]:
+                  - img "tekkito avatar" [ref=e941]
+                  - link "tekkito" [ref=e942] [cursor=pointer]:
+                    - /url: /players/2147?ruleset=0
+                    - paragraph [ref=e943]: tekkito
+              - cell "Grandmaster2" [ref=e944]:
+                - img "Grandmaster2" [ref=e947]
+              - cell "2355" [ref=e948]:
+                - paragraph [ref=e950]: "2355"
+              - cell "103" [ref=e951]:
+                - paragraph [ref=e952]: "103"
+              - cell "456" [ref=e953]:
+                - paragraph [ref=e954]: "456"
+              - cell "68%" [ref=e955]:
+                - paragraph [ref=e956]: 68%
+            - 'row "#35 US flag #7 decaten avatar decaten Grandmaster2 2353 55 229 60%" [ref=e957]':
+              - cell "#35" [ref=e958]:
+                - generic [ref=e960]: "#35"
+              - 'cell "US flag #7" [ref=e961]':
+                - 'link "US flag #7" [ref=e962] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e963]
+                  - generic [ref=e964]: "#7"
+              - cell "decaten avatar decaten" [ref=e965]:
+                - generic [ref=e966]:
+                  - img "decaten avatar" [ref=e967]
+                  - link "decaten" [ref=e968] [cursor=pointer]:
+                    - /url: /players/5557?ruleset=0
+                    - paragraph [ref=e969]: decaten
+              - cell "Grandmaster2" [ref=e970]:
+                - img "Grandmaster2" [ref=e973]
+              - cell "2353" [ref=e974]:
+                - paragraph [ref=e976]: "2353"
+              - cell "55" [ref=e977]:
+                - paragraph [ref=e978]: "55"
+              - cell "229" [ref=e979]:
+                - paragraph [ref=e980]: "229"
+              - cell "60%" [ref=e981]:
+                - paragraph [ref=e982]: 60%
+            - 'row "#36 GB flag #1 Plasma avatar Plasma Grandmaster2 2336 18 86 66%" [ref=e983]':
+              - cell "#36" [ref=e984]:
+                - generic [ref=e986]: "#36"
+              - 'cell "GB flag #1" [ref=e987]':
+                - 'link "GB flag #1" [ref=e988] [cursor=pointer]':
+                  - /url: /leaderboard?country=GB
+                  - img "GB flag" [ref=e989]
+                  - generic [ref=e990]: "#1"
+              - cell "Plasma avatar Plasma" [ref=e991]:
+                - generic [ref=e992]:
+                  - img "Plasma avatar" [ref=e993]
+                  - link "Plasma" [ref=e994] [cursor=pointer]:
+                    - /url: /players/5469?ruleset=0
+                    - paragraph [ref=e995]: Plasma
+              - cell "Grandmaster2" [ref=e996]:
+                - img "Grandmaster2" [ref=e999]
+              - cell "2336" [ref=e1000]:
+                - paragraph [ref=e1002]: "2336"
+              - cell "18" [ref=e1003]:
+                - paragraph [ref=e1004]: "18"
+              - cell "86" [ref=e1005]:
+                - paragraph [ref=e1006]: "86"
+              - cell "66%" [ref=e1007]:
+                - paragraph [ref=e1008]: 66%
+            - 'row "#37 PL flag #2 milosz avatar milosz Grandmaster2 2334 22 87 82%" [ref=e1009]':
+              - cell "#37" [ref=e1010]:
+                - generic [ref=e1012]: "#37"
+              - 'cell "PL flag #2" [ref=e1013]':
+                - 'link "PL flag #2" [ref=e1014] [cursor=pointer]':
+                  - /url: /leaderboard?country=PL
+                  - img "PL flag" [ref=e1015]
+                  - generic [ref=e1016]: "#2"
+              - cell "milosz avatar milosz" [ref=e1017]:
+                - generic [ref=e1018]:
+                  - img "milosz avatar" [ref=e1019]
+                  - link "milosz" [ref=e1020] [cursor=pointer]:
+                    - /url: /players/16517?ruleset=0
+                    - paragraph [ref=e1021]: milosz
+              - cell "Grandmaster2" [ref=e1022]:
+                - img "Grandmaster2" [ref=e1025]
+              - cell "2334" [ref=e1026]:
+                - paragraph [ref=e1028]: "2334"
+              - cell "22" [ref=e1029]:
+                - paragraph [ref=e1030]: "22"
+              - cell "87" [ref=e1031]:
+                - paragraph [ref=e1032]: "87"
+              - cell "82%" [ref=e1033]:
+                - paragraph [ref=e1034]: 82%
+            - 'row "#38 RO flag #1 badeu avatar badeu Grandmaster2 2332 77 407 72%" [ref=e1035]':
+              - cell "#38" [ref=e1036]:
+                - generic [ref=e1038]: "#38"
+              - 'cell "RO flag #1" [ref=e1039]':
+                - 'link "RO flag #1" [ref=e1040] [cursor=pointer]':
+                  - /url: /leaderboard?country=RO
+                  - img "RO flag" [ref=e1041]
+                  - generic [ref=e1042]: "#1"
+              - cell "badeu avatar badeu" [ref=e1043]:
+                - generic [ref=e1044]:
+                  - img "badeu avatar" [ref=e1045]
+                  - link "badeu" [ref=e1046] [cursor=pointer]:
+                    - /url: /players/769?ruleset=0
+                    - paragraph [ref=e1047]: badeu
+              - cell "Grandmaster2" [ref=e1048]:
+                - img "Grandmaster2" [ref=e1051]
+              - cell "2332" [ref=e1052]:
+                - paragraph [ref=e1054]: "2332"
+              - cell "77" [ref=e1055]:
+                - paragraph [ref=e1056]: "77"
+              - cell "407" [ref=e1057]:
+                - paragraph [ref=e1058]: "407"
+              - cell "72%" [ref=e1059]:
+                - paragraph [ref=e1060]: 72%
+            - 'row "#39 CL flag #1 Mathi avatar Mathi Grandmaster2 2308 43 177 73%" [ref=e1061]':
+              - cell "#39" [ref=e1062]:
+                - generic [ref=e1064]: "#39"
+              - 'cell "CL flag #1" [ref=e1065]':
+                - 'link "CL flag #1" [ref=e1066] [cursor=pointer]':
+                  - /url: /leaderboard?country=CL
+                  - img "CL flag" [ref=e1067]
+                  - generic [ref=e1068]: "#1"
+              - cell "Mathi avatar Mathi" [ref=e1069]:
+                - generic [ref=e1070]:
+                  - img "Mathi avatar" [ref=e1071]
+                  - link "Mathi" [ref=e1072] [cursor=pointer]:
+                    - /url: /players/3011?ruleset=0
+                    - paragraph [ref=e1073]: Mathi
+              - cell "Grandmaster2" [ref=e1074]:
+                - img "Grandmaster2" [ref=e1077]
+              - cell "2308" [ref=e1078]:
+                - paragraph [ref=e1080]: "2308"
+              - cell "43" [ref=e1081]:
+                - paragraph [ref=e1082]: "43"
+              - cell "177" [ref=e1083]:
+                - paragraph [ref=e1084]: "177"
+              - cell "73%" [ref=e1085]:
+                - paragraph [ref=e1086]: 73%
+            - 'row "#40 DE flag #2 WhiteCat avatar WhiteCat Grandmaster2 2301 22 112 74%" [ref=e1087]':
+              - cell "#40" [ref=e1088]:
+                - generic [ref=e1090]: "#40"
+              - 'cell "DE flag #2" [ref=e1091]':
+                - 'link "DE flag #2" [ref=e1092] [cursor=pointer]':
+                  - /url: /leaderboard?country=DE
+                  - img "DE flag" [ref=e1093]
+                  - generic [ref=e1094]: "#2"
+              - cell "WhiteCat avatar WhiteCat" [ref=e1095]:
+                - generic [ref=e1096]:
+                  - img "WhiteCat avatar" [ref=e1097]
+                  - link "WhiteCat" [ref=e1098] [cursor=pointer]:
+                    - /url: /players/3013?ruleset=0
+                    - paragraph [ref=e1099]: WhiteCat
+              - cell "Grandmaster2" [ref=e1100]:
+                - img "Grandmaster2" [ref=e1103]
+              - cell "2301" [ref=e1104]:
+                - paragraph [ref=e1106]: "2301"
+              - cell "22" [ref=e1107]:
+                - paragraph [ref=e1108]: "22"
+              - cell "112" [ref=e1109]:
+                - paragraph [ref=e1110]: "112"
+              - cell "74%" [ref=e1111]:
+                - paragraph [ref=e1112]: 74%
+            - 'row "#41 US flag #8 Vaxei avatar Vaxei Grandmaster3 2299 10 53 92%" [ref=e1113]':
+              - cell "#41" [ref=e1114]:
+                - generic [ref=e1116]: "#41"
+              - 'cell "US flag #8" [ref=e1117]':
+                - 'link "US flag #8" [ref=e1118] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e1119]
+                  - generic [ref=e1120]: "#8"
+              - cell "Vaxei avatar Vaxei" [ref=e1121]:
+                - generic [ref=e1122]:
+                  - img "Vaxei avatar" [ref=e1123]
+                  - link "Vaxei" [ref=e1124] [cursor=pointer]:
+                    - /url: /players/334?ruleset=0
+                    - paragraph [ref=e1125]: Vaxei
+              - cell "Grandmaster3" [ref=e1126]:
+                - img "Grandmaster3" [ref=e1129]
+              - cell "2299" [ref=e1130]:
+                - paragraph [ref=e1132]: "2299"
+              - cell "10" [ref=e1133]:
+                - paragraph [ref=e1134]: "10"
+              - cell "53" [ref=e1135]:
+                - paragraph [ref=e1136]: "53"
+              - cell "92%" [ref=e1137]:
+                - paragraph [ref=e1138]: 92%
+            - 'row "#42 CL flag #2 suntanCTM avatar suntanCTM Grandmaster3 2296 65 206 62%" [ref=e1139]':
+              - cell "#42" [ref=e1140]:
+                - generic [ref=e1142]: "#42"
+              - 'cell "CL flag #2" [ref=e1143]':
+                - 'link "CL flag #2" [ref=e1144] [cursor=pointer]':
+                  - /url: /leaderboard?country=CL
+                  - img "CL flag" [ref=e1145]
+                  - generic [ref=e1146]: "#2"
+              - cell "suntanCTM avatar suntanCTM" [ref=e1147]:
+                - generic [ref=e1148]:
+                  - img "suntanCTM avatar" [ref=e1149]
+                  - link "suntanCTM" [ref=e1150] [cursor=pointer]:
+                    - /url: /players/6084?ruleset=0
+                    - paragraph [ref=e1151]: suntanCTM
+              - cell "Grandmaster3" [ref=e1152]:
+                - img "Grandmaster3" [ref=e1155]
+              - cell "2296" [ref=e1156]:
+                - paragraph [ref=e1158]: "2296"
+              - cell "65" [ref=e1159]:
+                - paragraph [ref=e1160]: "65"
+              - cell "206" [ref=e1161]:
+                - paragraph [ref=e1162]: "206"
+              - cell "62%" [ref=e1163]:
+                - paragraph [ref=e1164]: 62%
+            - 'row "#43 UA flag #1 dench avatar dench Grandmaster3 2294 22 89 57%" [ref=e1165]':
+              - cell "#43" [ref=e1166]:
+                - generic [ref=e1168]: "#43"
+              - 'cell "UA flag #1" [ref=e1169]':
+                - 'link "UA flag #1" [ref=e1170] [cursor=pointer]':
+                  - /url: /leaderboard?country=UA
+                  - img "UA flag" [ref=e1171]
+                  - generic [ref=e1172]: "#1"
+              - cell "dench avatar dench" [ref=e1173]:
+                - generic [ref=e1174]:
+                  - img "dench avatar" [ref=e1175]
+                  - link "dench" [ref=e1176] [cursor=pointer]:
+                    - /url: /players/8793?ruleset=0
+                    - paragraph [ref=e1177]: dench
+              - cell "Grandmaster3" [ref=e1178]:
+                - img "Grandmaster3" [ref=e1181]
+              - cell "2294" [ref=e1182]:
+                - paragraph [ref=e1184]: "2294"
+              - cell "22" [ref=e1185]:
+                - paragraph [ref=e1186]: "22"
+              - cell "89" [ref=e1187]:
+                - paragraph [ref=e1188]: "89"
+              - cell "57%" [ref=e1189]:
+                - paragraph [ref=e1190]: 57%
+            - 'row "#44 US flag #9 im a fancy lad avatar im a fancy lad Grandmaster3 2292 63 327 75%" [ref=e1191]':
+              - cell "#44" [ref=e1192]:
+                - generic [ref=e1194]: "#44"
+              - 'cell "US flag #9" [ref=e1195]':
+                - 'link "US flag #9" [ref=e1196] [cursor=pointer]':
+                  - /url: /leaderboard?country=US
+                  - img "US flag" [ref=e1197]
+                  - generic [ref=e1198]: "#9"
+              - cell "im a fancy lad avatar im a fancy lad" [ref=e1199]:
+                - generic [ref=e1200]:
+                  - img "im a fancy lad avatar" [ref=e1201]
+                  - link "im a fancy lad" [ref=e1202] [cursor=pointer]:
+                    - /url: /players/323?ruleset=0
+                    - paragraph [ref=e1203]: im a fancy lad
+              - cell "Grandmaster3" [ref=e1204]:
+                - img "Grandmaster3" [ref=e1207]
+              - cell "2292" [ref=e1208]:
+                - paragraph [ref=e1210]: "2292"
+              - cell "63" [ref=e1211]:
+                - paragraph [ref=e1212]: "63"
+              - cell "327" [ref=e1213]:
+                - paragraph [ref=e1214]: "327"
+              - cell "75%" [ref=e1215]:
+                - paragraph [ref=e1216]: 75%
+            - 'row "#45 RU flag #4 desuqe avatar desuqe Grandmaster3 2279 45 147 65%" [ref=e1217]':
+              - cell "#45" [ref=e1218]:
+                - generic [ref=e1220]: "#45"
+              - 'cell "RU flag #4" [ref=e1221]':
+                - 'link "RU flag #4" [ref=e1222] [cursor=pointer]':
+                  - /url: /leaderboard?country=RU
+                  - img "RU flag" [ref=e1223]
+                  - generic [ref=e1224]: "#4"
+              - cell "desuqe avatar desuqe" [ref=e1225]:
+                - generic [ref=e1226]:
+                  - img "desuqe avatar" [ref=e1227]
+                  - link "desuqe" [ref=e1228] [cursor=pointer]:
+                    - /url: /players/2973?ruleset=0
+                    - paragraph [ref=e1229]: desuqe
+              - cell "Grandmaster3" [ref=e1230]:
+                - img "Grandmaster3" [ref=e1233]
+              - cell "2279" [ref=e1234]:
+                - paragraph [ref=e1236]: "2279"
+              - cell "45" [ref=e1237]:
+                - paragraph [ref=e1238]: "45"
+              - cell "147" [ref=e1239]:
+                - paragraph [ref=e1240]: "147"
+              - cell "65%" [ref=e1241]:
+                - paragraph [ref=e1242]: 65%
+            - 'row "#46 CA flag #2 RyuK avatar RyuK Grandmaster3 2270 55 237 64%" [ref=e1243]':
+              - cell "#46" [ref=e1244]:
+                - generic [ref=e1246]: "#46"
+              - 'cell "CA flag #2" [ref=e1247]':
+                - 'link "CA flag #2" [ref=e1248] [cursor=pointer]':
+                  - /url: /leaderboard?country=CA
+                  - img "CA flag" [ref=e1249]
+                  - generic [ref=e1250]: "#2"
+              - cell "RyuK avatar RyuK" [ref=e1251]:
+                - generic [ref=e1252]:
+                  - img "RyuK avatar" [ref=e1253]
+                  - link "RyuK" [ref=e1254] [cursor=pointer]:
+                    - /url: /players/3012?ruleset=0
+                    - paragraph [ref=e1255]: RyuK
+              - cell "Grandmaster3" [ref=e1256]:
+                - img "Grandmaster3" [ref=e1259]
+              - cell "2270" [ref=e1260]:
+                - paragraph [ref=e1262]: "2270"
+              - cell "55" [ref=e1263]:
+                - paragraph [ref=e1264]: "55"
+              - cell "237" [ref=e1265]:
+                - paragraph [ref=e1266]: "237"
+              - cell "64%" [ref=e1267]:
+                - paragraph [ref=e1268]: 64%
+            - 'row "#47 CN flag #3 lolol235 avatar lolol235 Grandmaster3 2268 77 342 63%" [ref=e1269]':
+              - cell "#47" [ref=e1270]:
+                - generic [ref=e1272]: "#47"
+              - 'cell "CN flag #3" [ref=e1273]':
+                - 'link "CN flag #3" [ref=e1274] [cursor=pointer]':
+                  - /url: /leaderboard?country=CN
+                  - img "CN flag" [ref=e1275]
+                  - generic [ref=e1276]: "#3"
+              - cell "lolol235 avatar lolol235" [ref=e1277]:
+                - generic [ref=e1278]:
+                  - img "lolol235 avatar" [ref=e1279]
+                  - link "lolol235" [ref=e1280] [cursor=pointer]:
+                    - /url: /players/2274?ruleset=0
+                    - paragraph [ref=e1281]: lolol235
+              - cell "Grandmaster3" [ref=e1282]:
+                - img "Grandmaster3" [ref=e1285]
+              - cell "2268" [ref=e1286]:
+                - paragraph [ref=e1288]: "2268"
+              - cell "77" [ref=e1289]:
+                - paragraph [ref=e1290]: "77"
+              - cell "342" [ref=e1291]:
+                - paragraph [ref=e1292]: "342"
+              - cell "63%" [ref=e1293]:
+                - paragraph [ref=e1294]: 63%
+            - 'row "#48 TW flag #1 willy0214 avatar willy0214 Grandmaster3 2265 23 89 56%" [ref=e1295]':
+              - cell "#48" [ref=e1296]:
+                - generic [ref=e1298]: "#48"
+              - 'cell "TW flag #1" [ref=e1299]':
+                - 'link "TW flag #1" [ref=e1300] [cursor=pointer]':
+                  - /url: /leaderboard?country=TW
+                  - img "TW flag" [ref=e1301]
+                  - generic [ref=e1302]: "#1"
+              - cell "willy0214 avatar willy0214" [ref=e1303]:
+                - generic [ref=e1304]:
+                  - img "willy0214 avatar" [ref=e1305]
+                  - link "willy0214" [ref=e1306] [cursor=pointer]:
+                    - /url: /players/1217?ruleset=0
+                    - paragraph [ref=e1307]: willy0214
+              - cell "Grandmaster3" [ref=e1308]:
+                - img "Grandmaster3" [ref=e1311]
+              - cell "2265" [ref=e1312]:
+                - paragraph [ref=e1314]: "2265"
+              - cell "23" [ref=e1315]:
+                - paragraph [ref=e1316]: "23"
+              - cell "89" [ref=e1317]:
+                - paragraph [ref=e1318]: "89"
+              - cell "56%" [ref=e1319]:
+                - paragraph [ref=e1320]: 56%
+            - 'row "#49 KR flag #8 chocomint avatar chocomint Grandmaster3 2258 13 69 72%" [ref=e1321]':
+              - cell "#49" [ref=e1322]:
+                - generic [ref=e1324]: "#49"
+              - 'cell "KR flag #8" [ref=e1325]':
+                - 'link "KR flag #8" [ref=e1326] [cursor=pointer]':
+                  - /url: /leaderboard?country=KR
+                  - img "KR flag" [ref=e1327]
+                  - generic [ref=e1328]: "#8"
+              - cell "chocomint avatar chocomint" [ref=e1329]:
+                - generic [ref=e1330]:
+                  - img "chocomint avatar" [ref=e1331]
+                  - link "chocomint" [ref=e1332] [cursor=pointer]:
+                    - /url: /players/6782?ruleset=0
+                    - paragraph [ref=e1333]: chocomint
+              - cell "Grandmaster3" [ref=e1334]:
+                - img "Grandmaster3" [ref=e1337]
+              - cell "2258" [ref=e1338]:
+                - paragraph [ref=e1340]: "2258"
+              - cell "13" [ref=e1341]:
+                - paragraph [ref=e1342]: "13"
+              - cell "69" [ref=e1343]:
+                - paragraph [ref=e1344]: "69"
+              - cell "72%" [ref=e1345]:
+                - paragraph [ref=e1346]: 72%
+            - 'row "#50 CL flag #3 Intercambing avatar Intercambing Grandmaster3 2257 100 444 68%" [ref=e1347]':
+              - cell "#50" [ref=e1348]:
+                - generic [ref=e1350]: "#50"
+              - 'cell "CL flag #3" [ref=e1351]':
+                - 'link "CL flag #3" [ref=e1352] [cursor=pointer]':
+                  - /url: /leaderboard?country=CL
+                  - img "CL flag" [ref=e1353]
+                  - generic [ref=e1354]: "#3"
+              - cell "Intercambing avatar Intercambing" [ref=e1355]:
+                - generic [ref=e1356]:
+                  - img "Intercambing avatar" [ref=e1357]
+                  - link "Intercambing" [ref=e1358] [cursor=pointer]:
+                    - /url: /players/2062?ruleset=0
+                    - paragraph [ref=e1359]: Intercambing
+              - cell "Grandmaster3" [ref=e1360]:
+                - img "Grandmaster3" [ref=e1363]
+              - cell "2257" [ref=e1364]:
+                - paragraph [ref=e1366]: "2257"
+              - cell "100" [ref=e1367]:
+                - paragraph [ref=e1368]: "100"
+              - cell "444" [ref=e1369]:
+                - paragraph [ref=e1370]: "444"
+              - cell "68%" [ref=e1371]:
+                - paragraph [ref=e1372]: 68%
+      - navigation "pagination" [ref=e1373]:
+        - list [ref=e1374]:
+          - listitem [ref=e1375]:
+            - link "Go to previous page" [disabled] [ref=e1376]:
+              - /url: /leaderboard
+              - img
+              - generic [ref=e1377]: Previous
+          - listitem [ref=e1378]:
+            - link "1" [ref=e1379] [cursor=pointer]:
+              - /url: /leaderboard
+          - listitem [ref=e1380]:
+            - link "2" [ref=e1381] [cursor=pointer]:
+              - /url: /leaderboard?page=2
+          - listitem [ref=e1382]:
+            - link "3" [ref=e1383] [cursor=pointer]:
+              - /url: /leaderboard?page=3
+          - listitem [ref=e1384]:
+            - generic [ref=e1385]:
+              - img [ref=e1386]
+              - generic [ref=e1390]: More pages
+          - listitem [ref=e1391]:
+            - link "500" [ref=e1392] [cursor=pointer]:
+              - /url: /leaderboard?page=500
+          - listitem [ref=e1393]:
+            - link "Go to next page" [ref=e1394] [cursor=pointer]:
+              - /url: /leaderboard?page=2
+              - generic [ref=e1395]: Next
+              - img
+  - contentinfo [ref=e1396]:
+    - generic [ref=e1397]:
+      - generic [ref=e1399]:
+        - generic [ref=e1400]:
+          - text: About
+          - list [ref=e1401]:
+            - listitem [ref=e1402]:
+              - link "Docs" [ref=e1403] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz
+            - listitem [ref=e1404]:
+              - link "Team" [ref=e1405] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz/About/Team
+        - generic [ref=e1406]:
+          - text: Contact
+          - list [ref=e1407]:
+            - listitem [ref=e1408]:
+              - link "Discord" [ref=e1409] [cursor=pointer]:
+                - /url: https://discord.gg/R53AwX2tJA
+            - listitem [ref=e1410]:
+              - link "Status" [ref=e1411] [cursor=pointer]:
+                - /url: https://status.stagec.xyz/status/otr
+        - generic [ref=e1412]:
+          - text: Contribute
+          - list [ref=e1413]:
+            - listitem [ref=e1414]:
+              - link "Donate" [ref=e1415] [cursor=pointer]:
+                - /url: https://buymeacoffee.com/stagecodes
+            - listitem [ref=e1416]:
+              - link "GitHub" [ref=e1417] [cursor=pointer]:
+                - /url: https://github.com/osu-tournament-rating
+        - generic [ref=e1418]:
+          - text: Browse
+          - list [ref=e1419]:
+            - listitem [ref=e1420]:
+              - link "Leaderboard" [ref=e1421] [cursor=pointer]:
+                - /url: /leaderboard
+            - listitem [ref=e1422]:
+              - link "Tournaments" [ref=e1423] [cursor=pointer]:
+                - /url: /tournaments
+      - generic [ref=e1424]: © 2025 osu! Tournament Rating
+  - region "Notifications alt+T"
+  - alert [ref=e1425]
+```

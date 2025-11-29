@@ -1,0 +1,116 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "o!TR Logo" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "o!TR Logo" [ref=e5]
+      - navigation "Main" [ref=e6]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Leaderboard" [ref=e10] [cursor=pointer]:
+              - /url: /leaderboard
+          - listitem [ref=e11]:
+            - button "Tournaments" [ref=e12]:
+              - generic [ref=e14]: Tournaments
+              - img [ref=e15]
+          - listitem [ref=e17]:
+            - link "Stats" [ref=e18] [cursor=pointer]:
+              - /url: /stats
+          - listitem [ref=e19]:
+            - button "Tools" [ref=e20]:
+              - generic [ref=e22]: Tools
+              - img [ref=e23]
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img
+      - link "Docs" [ref=e27] [cursor=pointer]:
+        - /url: https://docs.otr.stagec.xyz
+        - button "Docs" [ref=e28]:
+          - img
+      - link "API spec" [ref=e29] [cursor=pointer]:
+        - /url: /spec
+        - button "API spec" [ref=e30]:
+          - img
+      - link [ref=e31] [cursor=pointer]:
+        - /url: https://buymeacoffee.com/stagecodes
+        - button [ref=e32]:
+          - img
+      - button "Login" [ref=e34] [cursor=pointer]
+  - paragraph [ref=e36]: Some features are not available while signed out.
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - link "View profile on osu! website" [ref=e44] [cursor=pointer]:
+            - /url: https://osu.ppy.sh/u/8155121
+            - img [ref=e45]
+          - generic [ref=e49]:
+            - button [ref=e50] [cursor=pointer]:
+              - img [ref=e51]
+            - button [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+            - button [ref=e58] [cursor=pointer]:
+              - img [ref=e59]
+            - button [ref=e62] [cursor=pointer]:
+              - img [ref=e63]
+            - button [ref=e66] [cursor=pointer]:
+              - img [ref=e67]
+        - generic [ref=e70]:
+          - heading "No Rating Data Available" [level=2] [ref=e71]
+          - paragraph [ref=e72]: This player has no rating data for the selected ruleset.
+      - generic [ref=e73]:
+        - generic [ref=e75]:
+          - img [ref=e76]
+          - generic [ref=e82]: Tournament History
+        - paragraph [ref=e84]: No tournament data available
+      - generic [ref=e85]:
+        - generic [ref=e87]:
+          - img [ref=e88]
+          - generic [ref=e92]: Pooled Beatmaps
+        - paragraph [ref=e94]: No pooled beatmaps found
+  - contentinfo [ref=e95]:
+    - generic [ref=e96]:
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - text: About
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "Docs" [ref=e102] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz
+            - listitem [ref=e103]:
+              - link "Team" [ref=e104] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz/About/Team
+        - generic [ref=e105]:
+          - text: Contact
+          - list [ref=e106]:
+            - listitem [ref=e107]:
+              - link "Discord" [ref=e108] [cursor=pointer]:
+                - /url: https://discord.gg/R53AwX2tJA
+            - listitem [ref=e109]:
+              - link "Status" [ref=e110] [cursor=pointer]:
+                - /url: https://status.stagec.xyz/status/otr
+        - generic [ref=e111]:
+          - text: Contribute
+          - list [ref=e112]:
+            - listitem [ref=e113]:
+              - link "Donate" [ref=e114] [cursor=pointer]:
+                - /url: https://buymeacoffee.com/stagecodes
+            - listitem [ref=e115]:
+              - link "GitHub" [ref=e116] [cursor=pointer]:
+                - /url: https://github.com/osu-tournament-rating
+        - generic [ref=e117]:
+          - text: Browse
+          - list [ref=e118]:
+            - listitem [ref=e119]:
+              - link "Leaderboard" [ref=e120] [cursor=pointer]:
+                - /url: /leaderboard
+            - listitem [ref=e121]:
+              - link "Tournaments" [ref=e122] [cursor=pointer]:
+                - /url: /tournaments
+      - generic [ref=e123]: © 2025 osu! Tournament Rating
+  - region "Notifications alt+T"
+  - alert [ref=e124]
+```

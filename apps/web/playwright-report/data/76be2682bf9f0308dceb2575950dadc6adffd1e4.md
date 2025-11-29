@@ -1,0 +1,202 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "o!TR Logo" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "o!TR Logo" [ref=e5]
+      - navigation "Main" [ref=e6]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Leaderboard" [ref=e10] [cursor=pointer]:
+              - /url: /leaderboard
+          - listitem [ref=e11]:
+            - button "Tournaments" [ref=e12]:
+              - generic [ref=e14]: Tournaments
+              - img [ref=e15]
+          - listitem [ref=e17]:
+            - link "Stats" [ref=e18] [cursor=pointer]:
+              - /url: /stats
+          - listitem [ref=e19]:
+            - button "Tools" [ref=e20]:
+              - generic [ref=e22]: Tools
+              - img [ref=e23]
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img
+      - link "Docs" [ref=e27] [cursor=pointer]:
+        - /url: https://docs.otr.stagec.xyz
+        - button "Docs" [ref=e28]:
+          - img
+      - link "API spec" [ref=e29] [cursor=pointer]:
+        - /url: /spec
+        - button "API spec" [ref=e30]:
+          - img
+      - link [ref=e31] [cursor=pointer]:
+        - /url: https://buymeacoffee.com/stagecodes
+        - button [ref=e32]:
+          - img
+      - button "Login" [ref=e34] [cursor=pointer]
+  - paragraph [ref=e36]: Some features are not available while signed out.
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - img [ref=e41]
+        - generic [ref=e42]:
+          - generic [ref=e43]: osu! Tournament Rating
+          - generic [ref=e44]: A community-driven platform that ranks and predicts the performance of all osu! tournament players
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - heading "Rise to the top" [level=2] [ref=e47]
+          - paragraph [ref=e48]: Join your friends on the ladder as soon as you play in a verified tournament
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - img "Bronze1" [ref=e55]
+            - generic [ref=e56]:
+              - generic [ref=e57]: Bronze
+              - generic [ref=e58]: 100+
+          - generic [ref=e59]:
+            - img "Silver1" [ref=e64]
+            - generic [ref=e65]:
+              - generic [ref=e66]: Silver
+              - generic [ref=e67]: 400+
+          - generic [ref=e68]:
+            - img "Gold1" [ref=e73]
+            - generic [ref=e74]:
+              - generic [ref=e75]: Gold
+              - generic [ref=e76]: 700+
+          - generic [ref=e77]:
+            - img "Platinum1" [ref=e82]
+            - generic [ref=e83]:
+              - generic [ref=e84]: Platinum
+              - generic [ref=e85]: 1000+
+          - generic [ref=e86]:
+            - img "Emerald1" [ref=e91]
+            - generic [ref=e92]:
+              - generic [ref=e93]: Emerald
+              - generic [ref=e94]: 1300+
+          - generic [ref=e95]:
+            - img "Diamond1" [ref=e100]
+            - generic [ref=e101]:
+              - generic [ref=e102]: Diamond
+              - generic [ref=e103]: 1600+
+          - generic [ref=e104]:
+            - img "Master1" [ref=e109]
+            - generic [ref=e110]:
+              - generic [ref=e111]: Master
+              - generic [ref=e112]: 1900+
+          - generic [ref=e113]:
+            - img "Grandmaster1" [ref=e118]
+            - generic [ref=e119]:
+              - generic [ref=e120]: Grandmaster
+              - generic [ref=e121]: 2200+
+          - generic [ref=e122]:
+            - img "Elite Grandmasterundefined" [ref=e127]
+            - generic [ref=e128]:
+              - generic [ref=e129]: Elite GM
+              - generic [ref=e130]: 2500+
+      - generic [ref=e131]:
+        - link "View Rankings Find out where you stack up against your friends... and foes" [ref=e132] [cursor=pointer]:
+          - /url: /leaderboard
+          - generic [ref=e133]:
+            - img [ref=e135]
+            - generic [ref=e141]:
+              - heading "View Rankings" [level=3] [ref=e142]
+              - paragraph [ref=e143]: Find out where you stack up against your friends... and foes
+        - link "Browse Tournaments View the latest and greatest or go back in time" [ref=e144] [cursor=pointer]:
+          - /url: /tournaments
+          - generic [ref=e145]:
+            - img [ref=e147]
+            - generic [ref=e153]:
+              - heading "Browse Tournaments" [level=3] [ref=e154]
+              - paragraph [ref=e155]: View the latest and greatest or go back in time
+        - link "Read the docs Learn the inner-workings of our rating algorithm" [ref=e156] [cursor=pointer]:
+          - /url: https://docs.otr.stagec.xyz
+          - generic [ref=e157]:
+            - img [ref=e159]
+            - generic [ref=e161]:
+              - heading "Read the docs" [level=3] [ref=e162]
+              - paragraph [ref=e163]: Learn the inner-workings of our rating algorithm
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - img [ref=e167]
+          - generic [ref=e168]:
+            - generic [ref=e169]: Rating restricted tournaments
+            - generic [ref=e170]: o!TR opens the door to an all-new level of fair competition in tournaments targeting specific skill brackets
+        - generic [ref=e171]:
+          - img [ref=e173]
+          - generic [ref=e174]:
+            - generic [ref=e175]: Verified tournaments
+            - generic [ref=e176]: Only human-verified tournament matches are included in our rating algorithm
+        - generic [ref=e177]:
+          - img [ref=e179]
+          - generic [ref=e180]:
+            - generic [ref=e181]: Stats on stats
+            - generic [ref=e182]: Powerful tools for players and teams. Compare performance, track progress, and analyze your tournament history with ease
+        - generic [ref=e183]:
+          - img [ref=e185]
+          - generic [ref=e186]:
+            - generic [ref=e187]: New updates every Tuesday
+            - generic [ref=e188]: Ratings are recalculated every Tuesday at 23:59 UTC
+        - generic [ref=e189]:
+          - img [ref=e191]
+          - generic [ref=e192]:
+            - generic [ref=e193]:
+              - generic [ref=e194]: All modes supported
+              - generic [ref=e195]: Yes, mania 4K and 7K are entirely separate rulesets
+            - generic [ref=e196]:
+              - img [ref=e197]
+              - img [ref=e200]
+              - img [ref=e203]
+              - img [ref=e206]
+              - img [ref=e209]
+        - generic [ref=e212]:
+          - img [ref=e214]
+          - generic [ref=e215]:
+            - generic [ref=e216]: Open source, open data
+            - generic [ref=e217]: Built from the ground up with transparency in mind
+  - contentinfo [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e221]:
+        - generic [ref=e222]:
+          - text: About
+          - list [ref=e223]:
+            - listitem [ref=e224]:
+              - link "Docs" [ref=e225] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz
+            - listitem [ref=e226]:
+              - link "Team" [ref=e227] [cursor=pointer]:
+                - /url: https://docs.otr.stagec.xyz/About/Team
+        - generic [ref=e228]:
+          - text: Contact
+          - list [ref=e229]:
+            - listitem [ref=e230]:
+              - link "Discord" [ref=e231] [cursor=pointer]:
+                - /url: https://discord.gg/R53AwX2tJA
+            - listitem [ref=e232]:
+              - link "Status" [ref=e233] [cursor=pointer]:
+                - /url: https://status.stagec.xyz/status/otr
+        - generic [ref=e234]:
+          - text: Contribute
+          - list [ref=e235]:
+            - listitem [ref=e236]:
+              - link "Donate" [ref=e237] [cursor=pointer]:
+                - /url: https://buymeacoffee.com/stagecodes
+            - listitem [ref=e238]:
+              - link "GitHub" [ref=e239] [cursor=pointer]:
+                - /url: https://github.com/osu-tournament-rating
+        - generic [ref=e240]:
+          - text: Browse
+          - list [ref=e241]:
+            - listitem [ref=e242]:
+              - link "Leaderboard" [ref=e243] [cursor=pointer]:
+                - /url: /leaderboard
+            - listitem [ref=e244]:
+              - link "Tournaments" [ref=e245] [cursor=pointer]:
+                - /url: /tournaments
+      - generic [ref=e246]: © 2025 osu! Tournament Rating
+  - region "Notifications alt+T"
+  - alert [ref=e247]
+```
