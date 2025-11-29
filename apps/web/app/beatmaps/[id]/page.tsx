@@ -11,7 +11,6 @@ import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
 import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
 import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
-import BeatmapModTrendChart from '@/components/beatmap/BeatmapModTrendChart';
 import BeatmapTournamentsTable from '@/components/beatmap/BeatmapTournamentsTable';
 
 type PageProps = {
@@ -69,9 +68,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} className="md:col-span-2" />
         <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} className="md:col-span-3" />
       </div>
-      {beatmapStats.modTrend.length >= 2 && (
-        <BeatmapModTrendChart data={beatmapStats.modTrend} />
-      )}
       <BeatmapTournamentsTable tournaments={beatmapStats.tournaments} />
     </div>
   );

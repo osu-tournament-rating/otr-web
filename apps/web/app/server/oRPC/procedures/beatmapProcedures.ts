@@ -11,7 +11,6 @@ import {
   type BeatmapUsagePoint,
   type BeatmapModDistribution,
   type BeatmapScoreRatingPoint,
-  type BeatmapModTrend,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
 
@@ -486,38 +485,6 @@ export const getBeatmapStats = publicProcedure
       })
     );
 
-    const modTrendRows = await context.db
-      .select({
-        month: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`,
-        mods: schema.games.mods,
-        gameCount: sql<number>`COUNT(*)`,
-      })
-      .from(schema.games)
-      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-      .innerJoin(
-        schema.tournaments,
-        eq(schema.tournaments.id, schema.matches.tournamentId)
-      )
-      .where(
-        and(
-          eq(schema.games.beatmapId, beatmapId),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
-          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-          eq(schema.games.verificationStatus, VerificationStatus.Verified)
-        )
-      )
-      .groupBy(
-        sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`,
-        schema.games.mods
-      )
-      .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-MM')`);
-
-    const modTrend: BeatmapModTrend[] = modTrendRows.map((row) => ({
-      month: row.month,
-      mods: row.mods,
-      gameCount: Number(row.gameCount),
-    }));
-
     const topPerformerRows = await context.db
       .select({
         playerId: schema.players.id,
@@ -618,7 +585,6 @@ export const getBeatmapStats = publicProcedure
       tournaments,
       modDistribution,
       scoreRatingData,
-      modTrend,
       topPerformers,
     };
 

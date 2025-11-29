@@ -46,12 +46,6 @@ export const BeatmapScoreRatingPointSchema = z.object({
   mods: z.number().int().nonnegative(),
 });
 
-export const BeatmapModTrendSchema = z.object({
-  month: z.string(),
-  mods: z.number().int().nonnegative(),
-  gameCount: z.number().int().nonnegative(),
-});
-
 export const BeatmapTopPerformerSchema = z.object({
   player: PlayerCompactSchema,
   score: z.number().int().nonnegative(),
@@ -92,7 +86,6 @@ export const BeatmapStatsResponseSchema = z.object({
   tournaments: z.array(BeatmapTournamentUsageSchema),
   modDistribution: z.array(BeatmapModDistributionSchema),
   scoreRatingData: z.array(BeatmapScoreRatingPointSchema),
-  modTrend: z.array(BeatmapModTrendSchema),
   topPerformers: z.array(BeatmapTopPerformerSchema),
 });
 
@@ -101,7 +94,6 @@ export type BeatmapTournamentUsage = z.infer<typeof BeatmapTournamentUsageSchema
 export type BeatmapUsagePoint = z.infer<typeof BeatmapUsagePointSchema>;
 export type BeatmapModDistribution = z.infer<typeof BeatmapModDistributionSchema>;
 export type BeatmapScoreRatingPoint = z.infer<typeof BeatmapScoreRatingPointSchema>;
-export type BeatmapModTrend = z.infer<typeof BeatmapModTrendSchema>;
 export type BeatmapTopPerformer = z.infer<typeof BeatmapTopPerformerSchema>;
 export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;
 export type BeatmapWithDetails = z.infer<typeof BeatmapWithDetailsSchema>;
