@@ -181,9 +181,6 @@ export default async function Page(props: {
         </Pagination>
       )}
 
-      <div className="text-muted-foreground text-center text-sm">
-        Showing {data.items.length} of {data.totalCount} beatmaps
-      </div>
     </div>
   );
 }
