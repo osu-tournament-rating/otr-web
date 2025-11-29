@@ -76,7 +76,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: '.env,docker-compose.yml'
+          source: '.env,docker-compose.yml,monitoring'
           target: ${{ secrets.REMOTE_PATH }}
 
       - name: Deploy stack via docker compose
@@ -95,7 +95,7 @@ jobs:
             export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
             cd "$REMOTE_PATH"
             docker compose --env-file .env pull web data-worker
-            docker compose --env-file .env up -d db rabbitmq
+            docker compose --env-file .env up -d db rabbitmq prometheus grafana postgres-exporter node-exporter
             docker compose --env-file .env --profile migrate run --rm migrate
             docker compose --env-file .env up -d --remove-orphans
           envs: REMOTE_PATH

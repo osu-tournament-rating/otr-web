@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
+import { orpcProcedureCalls, orpcProcedureDuration } from '@/lib/metrics';
 
 type ApiKeyActor = {
   userId: string;
@@ -673,11 +674,37 @@ const withRequestLogging = base.middleware(
   }
 );
 
+const withMetrics = base.middleware(async ({ path, next }) => {
+  const procedureName = formatProcedurePath(path);
+  const start = Date.now();
+
+  try {
+    const result = await next();
+    orpcProcedureCalls
+      .labels({ procedure: procedureName, status: 'success' })
+      .inc();
+    orpcProcedureDuration
+      .labels({ procedure: procedureName })
+      .observe((Date.now() - start) / 1000);
+    return result;
+  } catch (error) {
+    orpcProcedureCalls
+      .labels({ procedure: procedureName, status: 'error' })
+      .inc();
+    orpcProcedureDuration
+      .labels({ procedure: procedureName })
+      .observe((Date.now() - start) / 1000);
+    throw error;
+  }
+});
+
 export const publicProcedure = base
   .use(withDatabase)
   .use(withOptionalApiKey)
+  .use(withMetrics)
   .use(withRequestLogging);
 export const protectedProcedure = base
   .use(withDatabase)
   .use(withAuth)
+  .use(withMetrics)
   .use(withRequestLogging);
