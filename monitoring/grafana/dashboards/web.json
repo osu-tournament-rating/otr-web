@@ -191,7 +191,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum(increase(web_orpc_procedure_calls_total[24h]))",
+          "expr": "floor(sum(increase(web_orpc_procedure_calls_total[24h])))",
           "legendFormat": "Total Calls",
           "refId": "A"
         }
