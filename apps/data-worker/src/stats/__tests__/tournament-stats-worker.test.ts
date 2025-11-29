@@ -36,6 +36,7 @@ const noopLogger: Logger = {
   info: () => {},
   warn: () => {},
   error: () => {},
+  child: () => noopLogger,
 };
 
 const baseMessage: QueueMessage<ProcessTournamentStatsMessage> = {

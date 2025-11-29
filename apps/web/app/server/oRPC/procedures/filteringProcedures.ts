@@ -17,6 +17,7 @@ import {
 } from '@/lib/orpc/schema/filtering';
 import { publishFetchPlayerMessage } from '@/lib/queue/publishers';
 import * as schema from '@otr/core/db/schema';
+import { getCorrelationId } from './logging';
 
 type FilterReportPlayerRow = typeof schema.filterReportPlayers.$inferSelect & {
   player: typeof schema.players.$inferSelect | null;
@@ -84,9 +85,13 @@ export const filterRegistrants = protectedProcedure
     }
 
     if (seededPlayerOsuIds.length > 0) {
+      const correlationId = getCorrelationId(context);
       const publishResults = await Promise.allSettled(
         seededPlayerOsuIds.map((osuId) =>
-          publishFetchPlayerMessage({ osuPlayerId: osuId })
+          publishFetchPlayerMessage(
+            { osuPlayerId: osuId },
+            correlationId ? { metadata: { correlationId } } : undefined
+          )
         )
       );
 
@@ -94,6 +99,7 @@ export const filterRegistrants = protectedProcedure
         if (result.status === 'rejected') {
           console.error('Failed to enqueue missing player fetch', {
             osuId: seededPlayerOsuIds[index],
+            correlationId,
             error: result.reason,
           });
         }

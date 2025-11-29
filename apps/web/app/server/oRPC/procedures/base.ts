@@ -2,9 +2,21 @@ import { ORPCError, os } from '@orpc/server';
 import { APIError } from 'better-auth/api';
 import * as schema from '@otr/core/db/schema';
 import { eq } from 'drizzle-orm';
+import {
+  createLogger,
+  generateCorrelationId,
+  extractCorrelationId,
+} from '@otr/core/logging';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
+
+import type { RequestLoggingContext } from './logging/types';
+import {
+  resolveActor,
+  formatUserDescriptor,
+  formatProcedurePath,
+} from './logging/helpers';
 
 type ApiKeyActor = {
   userId: string;
@@ -46,9 +58,6 @@ type ApiKeyVerificationResponse = {
   key?: VerifiedApiKey | null;
   error?: ApiKeyVerificationErrorPayload | null;
 };
-
-const formatProcedurePath = (path: readonly string[]) =>
-  path.length > 0 ? path.join('.') : 'unknown';
 
 const maskApiKey = (value: string): string => {
   if (value.length <= 5) {
@@ -289,14 +298,6 @@ type ProcedureError =
   | null
   | undefined;
 
-type OsuIdValue = bigint | number | string | null | undefined;
-
-type SessionSnapshot = {
-  user?: { osuId?: OsuIdValue } | null;
-  dbUser?: { id?: number | null } | null;
-  dbPlayer?: { osuId?: OsuIdValue } | null;
-};
-
 const resolveErrorStatus = (error: ProcedureError): number => {
   if (!error) {
     return 500;
@@ -323,81 +324,6 @@ const resolveErrorStatus = (error: ProcedureError): number => {
   return 500;
 };
 
-const normalizeOsuId = (value: OsuIdValue) => {
-  if (typeof value === 'bigint') {
-    return value.toString();
-  }
-
-  if (typeof value === 'number' || typeof value === 'string') {
-    return String(value);
-  }
-
-  return null;
-};
-
-const formatSessionActor = (
-  session: SessionSnapshot | null | undefined
-): string => {
-  if (!session) {
-    return 'anonymous';
-  }
-
-  const parts: string[] = [];
-
-  if (session.dbUser?.id != null) {
-    parts.push(`user:${session.dbUser.id}`);
-  }
-
-  const osuId =
-    normalizeOsuId(session.user?.osuId) ??
-    normalizeOsuId(session.dbPlayer?.osuId);
-
-  if (osuId) {
-    parts.push(`osu:${osuId}`);
-  }
-
-  return parts.length > 0 ? parts.join(' ') : 'anonymous';
-};
-
-type LoggingContext = {
-  headers?: Headers;
-  session?: SessionSnapshot | null;
-  apiKey?: VerifiedApiKeyContext['apiKey'];
-  apiKeyActor?: VerifiedApiKeyContext['apiKeyActor'];
-};
-
-type LogInvocationArgs = {
-  path: readonly string[];
-  context: LoggingContext;
-  durationMs: number;
-  statusCode: number;
-  error?: ProcedureError;
-};
-
-const resolveSessionForLogging = async (
-  context: LoggingContext,
-  existingSession: SessionSnapshot | null | undefined
-): Promise<SessionSnapshot | null | undefined> => {
-  if (existingSession) {
-    return existingSession;
-  }
-
-  if (context.apiKey || context.apiKeyActor) {
-    return undefined;
-  }
-
-  if (!context.headers) {
-    return undefined;
-  }
-
-  try {
-    const session = await auth.api.getSession({ headers: context.headers });
-    return session as SessionSnapshot | null | undefined;
-  } catch {
-    return undefined;
-  }
-};
-
 const describeError = (error: ProcedureError) => {
   if (!error) {
     return 'unknown';
@@ -415,64 +341,6 @@ const describeError = (error: ProcedureError) => {
     return String(error);
   } catch {
     return 'non-stringable-error';
-  }
-};
-
-const logInvocation = async ({
-  path,
-  context,
-  durationMs,
-  statusCode,
-  error,
-}: LogInvocationArgs) => {
-  try {
-    const session = await resolveSessionForLogging(context, context.session);
-    const timestamp = new Date().toISOString();
-
-    const parts = [`procedure=${formatProcedurePath(path)}`];
-
-    let userDescriptor = formatSessionActor(session);
-    let playerDescriptor: string | null = null;
-
-    const apiKeyActor = context.apiKeyActor;
-
-    if (apiKeyActor) {
-      if (apiKeyActor.osuUsername) {
-        userDescriptor = apiKeyActor.osuUsername;
-      } else if (apiKeyActor.playerId != null) {
-        userDescriptor = `player:${apiKeyActor.playerId}`;
-      } else if (apiKeyActor.osuId != null) {
-        userDescriptor = `osu:${apiKeyActor.osuId}`;
-      } else if (context.apiKey?.userId) {
-        userDescriptor = `auth:${context.apiKey.userId}`;
-      }
-
-      if (apiKeyActor.playerId != null) {
-        playerDescriptor = String(apiKeyActor.playerId);
-      }
-    }
-
-    parts.push(`user=${JSON.stringify(userDescriptor)}`);
-
-    parts.push(`playerId=${playerDescriptor ?? 'null'}`);
-    parts.push(`code=${statusCode}`);
-
-    const roundedDuration = Math.max(0, Math.round(durationMs));
-    parts.push(`duration=${roundedDuration}ms`);
-
-    if (error) {
-      parts.push(`status=error`);
-      parts.push(`error=${describeError(error)}`);
-      console.error(`${timestamp} [oRPC]: ${parts.join(' ')}`);
-      return;
-    }
-
-    parts.push(`status=ok`);
-    console.info(`${timestamp} [oRPC]: ${parts.join(' ')}`);
-  } catch (loggingError) {
-    const timestamp = new Date().toISOString();
-    const description = describeError(loggingError as ProcedureError);
-    console.error(`${timestamp} [oRPC]: logging-failed error=${description}`);
   }
 };
 
@@ -638,34 +506,93 @@ const withAuth = base.middleware(async ({ context, next }) => {
   }
 });
 
+const withOptionalSession = base.middleware(async ({ context, next }) => {
+  try {
+    const session = await auth.api.getSession({ headers: context.headers });
+    return next({
+      context: {
+        ...context,
+        session: session ?? null,
+      },
+    });
+  } catch {
+    return next({
+      context: {
+        ...context,
+        session: null,
+      },
+    });
+  }
+});
+
+const rootLogger = createLogger('otr-web');
+
+const withLoggingContext = base.middleware(async ({ context, path, next }) => {
+  const correlationId =
+    extractCorrelationId(context.headers) ?? generateCorrelationId();
+  const procedurePath = formatProcedurePath(path);
+  const actor = resolveActor(context);
+
+  const logger = rootLogger.child({
+    correlationId,
+    procedure: procedurePath,
+  });
+
+  const loggingContext: RequestLoggingContext = {
+    correlationId,
+    actor,
+    procedurePath,
+    startTime: Date.now(),
+    logger,
+  };
+
+  return next({
+    context: {
+      ...context,
+      logging: loggingContext,
+    },
+  });
+});
+
 const withRequestLogging = base.middleware(
-  async ({ context, path, next, procedure }) => {
-    const start = Date.now();
+  async ({ context, next, procedure }) => {
+    const { logging } = context as typeof context & {
+      logging: RequestLoggingContext;
+    };
     const successStatus = resolveSuccessStatus(procedure);
 
     try {
       const result = await next();
       const resultWithStatus = result as MaybeStatus;
+      const durationMs = Date.now() - logging.startTime;
+      const statusCode = resolveSuccessStatusFromResult(
+        resultWithStatus,
+        successStatus
+      );
 
-      await logInvocation({
-        path,
-        context,
-        durationMs: Date.now() - start,
-        statusCode: resolveSuccessStatusFromResult(
-          resultWithStatus,
-          successStatus
-        ),
+      logging.logger.info('procedure completed', {
+        accessMethod: logging.actor.accessMethod,
+        user: formatUserDescriptor(logging.actor),
+        playerId: logging.actor.playerId,
+        code: statusCode,
+        duration: `${Math.round(durationMs)}ms`,
+        status: 'ok',
       });
 
       return result;
     } catch (error) {
       const procedureError = error as ProcedureError;
-      await logInvocation({
-        path,
-        context,
-        durationMs: Date.now() - start,
-        statusCode: resolveErrorStatus(procedureError),
-        error: procedureError,
+      const durationMs = Date.now() - logging.startTime;
+      const statusCode = resolveErrorStatus(procedureError);
+
+      logging.logger.error('procedure failed', {
+        accessMethod: logging.actor.accessMethod,
+        user: formatUserDescriptor(logging.actor),
+        playerId: logging.actor.playerId,
+        code: statusCode,
+        duration: `${Math.round(durationMs)}ms`,
+        status: 'error',
+        error: describeError(procedureError),
       });
 
       throw error;
@@ -676,8 +603,11 @@ const withRequestLogging = base.middleware(
 export const publicProcedure = base
   .use(withDatabase)
   .use(withOptionalApiKey)
+  .use(withOptionalSession)
+  .use(withLoggingContext)
   .use(withRequestLogging);
 export const protectedProcedure = base
   .use(withDatabase)
   .use(withAuth)
+  .use(withLoggingContext)
   .use(withRequestLogging);

@@ -12,6 +12,7 @@ const noopLogger: Logger = {
   info: () => {},
   warn: () => {},
   error: () => {},
+  child: () => noopLogger,
 };
 
 const resolveTableName = (table: unknown) => {

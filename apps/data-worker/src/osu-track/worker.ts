@@ -48,10 +48,12 @@ export class OsuTrackPlayerWorker {
   async start() {
     await this.queue.start(async (message) => {
       const envelope = message.payload;
+      const msgLogger = this.logger.child({
+        correlationId: envelope.correlationId,
+        osuPlayerId: envelope.osuPlayerId,
+      });
 
-      this.logger.info(
-        `osu!track queue received player ${envelope.osuPlayerId} (${envelope.correlationId})`
-      );
+      msgLogger.info('processing osu!track player fetch');
 
       try {
         const results: Array<{ mode: number; updates: UserStatUpdate[] }> = [];
@@ -65,9 +67,10 @@ export class OsuTrackPlayerWorker {
             })
           );
 
-          this.logger.info(
-            `osu!track fetched ${updates.length} updates for player ${envelope.osuPlayerId} mode ${mode}`
-          );
+          msgLogger.info('fetched osu!track updates', {
+            mode,
+            updateCount: updates.length,
+          });
 
           results.push({ mode, updates });
         }
@@ -78,14 +81,9 @@ export class OsuTrackPlayerWorker {
         const summary = results
           .map((entry) => `${entry.mode}:${entry.updates.length}`)
           .join(',');
-        this.logger.info(
-          `osu!track acknowledged player ${envelope.osuPlayerId} (${envelope.correlationId}) modes ${summary}`
-        );
+        msgLogger.info('osu!track player fetch completed', { modes: summary });
       } catch (error) {
-        this.logger.error('Failed to process osu!track player fetch', {
-          osuPlayerId: envelope.osuPlayerId,
-          error,
-        });
+        msgLogger.error('failed to process osu!track player fetch', { error });
         await message.nack(true);
       }
     });
