@@ -42,7 +42,7 @@ export default function BeatmapModDistributionChart({
       return [];
     }
 
-    const totalGames = modStats.reduce((sum, stat) => sum + stat.gameCount, 0);
+    const totalGames = modStats.reduce((sum, stat) => sum + stat.scoreCount, 0);
     const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
 
     const modMap = new Map<string, ProcessedEntry>();
@@ -59,7 +59,7 @@ export default function BeatmapModDistributionChart({
         label = 'NM';
       }
 
-      const count = stat.gameCount || 1;
+      const count = stat.scoreCount || 1;
 
       if (modMap.has(label)) {
         const existing = modMap.get(label)!;
@@ -87,7 +87,7 @@ export default function BeatmapModDistributionChart({
 
   const chartConfig: ChartConfig = {
     count: {
-      label: 'Games',
+      label: 'Scores',
       color: 'hsl(var(--chart-1))',
     },
   };
@@ -116,7 +116,7 @@ export default function BeatmapModDistributionChart({
               y={(viewBox.cy || 0) + 24}
               className="fill-muted-foreground"
             >
-              Games
+              Scores
             </tspan>
           </text>
         );

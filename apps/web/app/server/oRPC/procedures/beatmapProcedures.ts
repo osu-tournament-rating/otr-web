@@ -298,6 +298,7 @@ export const getBeatmapStats = publicProcedure
         tournamentEndTime: schema.tournaments.endTime,
         tournamentVerificationStatus: schema.tournaments.verificationStatus,
         tournamentIsLazer: schema.tournaments.isLazer,
+        tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
         gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
         modsUsed: sql<number[]>`array_agg(${schema.games.mods})`,
         firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
@@ -325,9 +326,51 @@ export const getBeatmapStats = publicProcedure
         schema.tournaments.startTime,
         schema.tournaments.endTime,
         schema.tournaments.verificationStatus,
-        schema.tournaments.isLazer
+        schema.tournaments.isLazer,
+        schema.tournaments.rankRangeLowerBound
       )
       .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`));
+
+    const medianRows = await context.db
+      .select({
+        tournamentId: schema.tournaments.id,
+        medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+        medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.ratingAdjustments.ratingAfter})`,
+      })
+      .from(schema.gameScores)
+      .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+      .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+      .innerJoin(
+        schema.tournaments,
+        eq(schema.tournaments.id, schema.matches.tournamentId)
+      )
+      .leftJoin(
+        schema.ratingAdjustments,
+        and(
+          eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+          eq(schema.ratingAdjustments.matchId, schema.matches.id)
+        )
+      )
+      .where(
+        and(
+          eq(schema.games.beatmapId, beatmapId),
+          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+          eq(schema.games.verificationStatus, VerificationStatus.Verified),
+          eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+        )
+      )
+      .groupBy(schema.tournaments.id);
+
+    const medianMap = new Map(
+      medianRows.map((row) => [
+        row.tournamentId,
+        {
+          medianScore: row.medianScore ? Math.round(row.medianScore) : null,
+          medianRating: row.medianRating ? Math.round(row.medianRating) : null,
+        },
+      ])
+    );
 
     const tournaments: BeatmapTournamentUsage[] = tournamentRows.map((row) => {
       let mostCommonMod = Mods.None;
@@ -346,6 +389,7 @@ export const getBeatmapStats = publicProcedure
         }
       }
 
+      const medians = medianMap.get(row.tournamentId);
       return {
         tournament: {
           id: row.tournamentId,
@@ -361,15 +405,19 @@ export const getBeatmapStats = publicProcedure
         gameCount: Number(row.gameCount),
         mostCommonMod,
         firstPlayedAt: row.firstPlayedAt,
+        rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+        medianRating: medians?.medianRating ?? null,
+        medianScore: medians?.medianScore ?? null,
       };
     });
 
     const modRows = await context.db
       .select({
-        mods: schema.games.mods,
-        gameCount: sql<number>`COUNT(*)`,
+        mods: schema.gameScores.mods,
+        scoreCount: sql<number>`COUNT(*)`,
       })
-      .from(schema.games)
+      .from(schema.gameScores)
+      .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
       .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
       .innerJoin(
         schema.tournaments,
@@ -380,22 +428,23 @@ export const getBeatmapStats = publicProcedure
           eq(schema.games.beatmapId, beatmapId),
           eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
           eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-          eq(schema.games.verificationStatus, VerificationStatus.Verified)
+          eq(schema.games.verificationStatus, VerificationStatus.Verified),
+          eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
         )
       )
-      .groupBy(schema.games.mods)
+      .groupBy(schema.gameScores.mods)
       .orderBy(desc(sql`COUNT(*)`));
 
-    const totalModGames = modRows.reduce(
-      (acc, row) => acc + Number(row.gameCount),
+    const totalModScores = modRows.reduce(
+      (acc, row) => acc + Number(row.scoreCount),
       0
     );
     const modDistribution: BeatmapModDistribution[] = modRows.map((row) => ({
       mods: row.mods,
-      gameCount: Number(row.gameCount),
+      scoreCount: Number(row.scoreCount),
       percentage:
-        totalModGames > 0
-          ? (Number(row.gameCount) / totalModGames) * 100
+        totalModScores > 0
+          ? (Number(row.scoreCount) / totalModScores) * 100
           : 0,
     }));
 

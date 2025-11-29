@@ -28,6 +28,7 @@ import {
   TableRow,
 } from '../ui/table';
 import ModIconset from '@/components/icons/ModIconset';
+import { formatRankRange } from '@/lib/utils/number';
 import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
 
 interface BeatmapTournamentsTableProps {
@@ -64,6 +65,11 @@ const columns = [
       </Link>
     ),
   }),
+  columnHelper.accessor('rankRangeLowerBound', {
+    header: 'Rank Range',
+    cell: ({ getValue }) => formatRankRange(getValue()),
+    enableSorting: false,
+  }),
   columnHelper.accessor('gameCount', {
     header: ({ column }) => (
       <Button
@@ -83,10 +89,26 @@ const columns = [
     ),
     cell: ({ getValue }) => getValue(),
   }),
+  columnHelper.accessor('medianRating', {
+    header: 'Med. Rating',
+    cell: ({ getValue }) => {
+      const value = getValue();
+      return value != null ? value.toLocaleString() : '—';
+    },
+    enableSorting: false,
+  }),
+  columnHelper.accessor('medianScore', {
+    header: 'Med. Score',
+    cell: ({ getValue }) => {
+      const value = getValue();
+      return value != null ? value.toLocaleString() : '—';
+    },
+    enableSorting: false,
+  }),
   columnHelper.accessor('mostCommonMod', {
     header: 'Mod',
     cell: ({ getValue }) => (
-      <div className="flex h-5 items-center">
+      <div className="flex h-5 flex-row items-center">
         <ModIconset mods={getValue()} iconClassName="h-5" />
       </div>
     ),
