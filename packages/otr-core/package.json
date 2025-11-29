@@ -12,9 +12,14 @@
     "./osu/*": "./src/osu/*",
     "./queues": "./src/queues/constants.ts",
     "./queues/*": "./src/queues/*",
-    "./messages/*": "./src/messages/*"
+    "./messages/*": "./src/messages/*",
+    "./logging": "./src/logging/index.ts",
+    "./logging/*": "./src/logging/*"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.44.5"
+  },
+  "dependencies": {
+    "pino": "^9.6.0"
   }
 }

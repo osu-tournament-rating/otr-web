@@ -33,31 +33,23 @@ export class TournamentStatsWorker {
     message: QueueMessage<ProcessTournamentStatsMessage>
   ) {
     const { tournamentId } = message.payload;
-    const correlationId = message.metadata.correlationId;
-
-    this.logger.info('Processing tournament stats message', {
+    const msgLogger = this.logger.child({
+      correlationId: message.metadata.correlationId,
       tournamentId,
-      correlationId,
     });
+
+    msgLogger.info('processing tournament stats');
 
     try {
       const success = await this.service.processTournamentStats(tournamentId);
 
       if (!success) {
-        this.logger.warn('Tournament statistics processing failed', {
-          tournamentId,
-          correlationId,
-        });
+        msgLogger.warn('tournament statistics processing failed');
       }
 
       await message.ack();
     } catch (error) {
-      this.logger.error('Failed to process tournament statistics', {
-        tournamentId,
-        correlationId,
-        error,
-      });
-
+      msgLogger.error('failed to process tournament statistics', { error });
       await message.nack(true);
     }
   }
