@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
-import { Filter, X, Search, ChevronDown } from 'lucide-react';
+import { Filter, X, Search } from 'lucide-react';
 import { useDebounce } from '@uidotdev/usehooks';
 
 import {
@@ -17,12 +17,6 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
 
 type FilterFormData = z.infer<typeof beatmapListFilterSchema>;
 
@@ -40,6 +34,8 @@ const defaultFilterRanges = {
   od: { min: 0, max: 11, step: 0.5 },
   hp: { min: 0, max: 10, step: 0.5 },
   length: { min: 0, max: 600, step: 15 },
+  gameCount: { min: 1, max: 500, step: 1 },
+  tournamentCount: { min: 1, max: 100, step: 1 },
 };
 
 export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
@@ -47,7 +43,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   const debouncedQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -94,6 +89,10 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     if (values.maxHp !== undefined) params.set('maxHp', String(values.maxHp));
     if (values.minLength !== undefined) params.set('minLength', String(values.minLength));
     if (values.maxLength !== undefined) params.set('maxLength', String(values.maxLength));
+    if (values.minGameCount !== undefined) params.set('minGameCount', String(values.minGameCount));
+    if (values.maxGameCount !== undefined) params.set('maxGameCount', String(values.maxGameCount));
+    if (values.minTournamentCount !== undefined) params.set('minTournamentCount', String(values.minTournamentCount));
+    if (values.maxTournamentCount !== undefined) params.set('maxTournamentCount', String(values.maxTournamentCount));
     if (values.sort !== 'gameCount') params.set('sort', values.sort);
     if (!values.descending) params.set('descending', 'false');
 
@@ -111,18 +110,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     router.push('/beatmaps');
   };
 
-  const hasAdvancedFilters =
-    filter.minCs !== undefined ||
-    filter.maxCs !== undefined ||
-    filter.minAr !== undefined ||
-    filter.maxAr !== undefined ||
-    filter.minOd !== undefined ||
-    filter.maxOd !== undefined ||
-    filter.minHp !== undefined ||
-    filter.maxHp !== undefined ||
-    filter.minLength !== undefined ||
-    filter.maxLength !== undefined;
-
   const activeFilterCount = [
     filter.minSr !== undefined || filter.maxSr !== undefined,
     filter.minBpm !== undefined || filter.maxBpm !== undefined,
@@ -131,6 +118,8 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     filter.minOd !== undefined || filter.maxOd !== undefined,
     filter.minHp !== undefined || filter.maxHp !== undefined,
     filter.minLength !== undefined || filter.maxLength !== undefined,
+    filter.minGameCount !== undefined || filter.maxGameCount !== undefined,
+    filter.minTournamentCount !== undefined || filter.maxTournamentCount !== undefined,
   ].filter(Boolean).length;
 
   const RangeSliderField = ({
@@ -250,63 +239,54 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 range={defaultFilterRanges.bpm}
               />
 
-              <Collapsible
-                open={advancedOpen || hasAdvancedFilters}
-                onOpenChange={setAdvancedOpen}
-              >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between"
-                  >
-                    Advanced Filters
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        (advancedOpen || hasAdvancedFilters) && 'rotate-180'
-                      )}
-                    />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-2">
-                  <RangeSliderField
-                    label="Circle Size (CS)"
-                    minField="minCs"
-                    maxField="maxCs"
-                    range={defaultFilterRanges.cs}
-                  />
+              <RangeSliderField
+                label="Circle Size (CS)"
+                minField="minCs"
+                maxField="maxCs"
+                range={defaultFilterRanges.cs}
+              />
 
-                  <RangeSliderField
-                    label="Approach Rate (AR)"
-                    minField="minAr"
-                    maxField="maxAr"
-                    range={defaultFilterRanges.ar}
-                  />
+              <RangeSliderField
+                label="Approach Rate (AR)"
+                minField="minAr"
+                maxField="maxAr"
+                range={defaultFilterRanges.ar}
+              />
 
-                  <RangeSliderField
-                    label="Overall Difficulty (OD)"
-                    minField="minOd"
-                    maxField="maxOd"
-                    range={defaultFilterRanges.od}
-                  />
+              <RangeSliderField
+                label="Overall Difficulty (OD)"
+                minField="minOd"
+                maxField="maxOd"
+                range={defaultFilterRanges.od}
+              />
 
-                  <RangeSliderField
-                    label="HP Drain (HP)"
-                    minField="minHp"
-                    maxField="maxHp"
-                    range={defaultFilterRanges.hp}
-                  />
+              <RangeSliderField
+                label="HP Drain (HP)"
+                minField="minHp"
+                maxField="maxHp"
+                range={defaultFilterRanges.hp}
+              />
 
-                  <RangeSliderField
-                    label="Length (seconds)"
-                    minField="minLength"
-                    maxField="maxLength"
-                    range={defaultFilterRanges.length}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
+              <RangeSliderField
+                label="Length (seconds)"
+                minField="minLength"
+                maxField="maxLength"
+                range={defaultFilterRanges.length}
+              />
+
+              <RangeSliderField
+                label="Games Played"
+                minField="minGameCount"
+                maxField="maxGameCount"
+                range={defaultFilterRanges.gameCount}
+              />
+
+              <RangeSliderField
+                label="Tournaments Pooled"
+                minField="minTournamentCount"
+                maxField="maxTournamentCount"
+                range={defaultFilterRanges.tournamentCount}
+              />
 
               <div className="flex justify-end">
                 <Button

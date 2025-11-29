@@ -146,12 +146,12 @@ export default function BeatmapModDistributionChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        <ChartContainer config={chartConfig} className="min-h-[190px] w-full">
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
           <PieChart>
             <Pie
               data={processedData}
-              innerRadius="50%"
-              outerRadius="70%"
+              innerRadius="40%"
+              outerRadius="55%"
               paddingAngle={3}
               dataKey="count"
               nameKey="label"

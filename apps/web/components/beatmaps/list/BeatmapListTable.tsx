@@ -55,6 +55,10 @@ export default function BeatmapListTable({
     if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
     if (filter.minLength !== undefined) params.set('minLength', String(filter.minLength));
     if (filter.maxLength !== undefined) params.set('maxLength', String(filter.maxLength));
+    if (filter.minGameCount !== undefined) params.set('minGameCount', String(filter.minGameCount));
+    if (filter.maxGameCount !== undefined) params.set('maxGameCount', String(filter.maxGameCount));
+    if (filter.minTournamentCount !== undefined) params.set('minTournamentCount', String(filter.minTournamentCount));
+    if (filter.maxTournamentCount !== undefined) params.set('maxTournamentCount', String(filter.maxTournamentCount));
 
     params.set('sort', field);
 
@@ -112,8 +116,11 @@ export default function BeatmapListTable({
                 <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   ID
                 </th>
-                <th className="text-muted-foreground w-[24%] px-2 py-2 text-left text-xs font-medium tracking-wider">
+                <th className="text-muted-foreground w-[20%] px-2 py-2 text-left text-xs font-medium tracking-wider">
                   Difficulty
+                </th>
+                <th className="text-muted-foreground w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider">
+                  <SortButton field="creator">Creator</SortButton>
                 </th>
                 <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
                   <SimpleTooltip content="Star Rating">
@@ -232,6 +239,12 @@ export default function BeatmapListTable({
                         </Link>
                       </div>
                     </div>
+                  </td>
+
+                  <td className="px-2 py-2">
+                    <span className="text-muted-foreground max-w-[100px] truncate text-xs">
+                      {beatmap.creator ?? 'Unknown'}
+                    </span>
                   </td>
 
                   <td className="px-2 py-2 text-center">

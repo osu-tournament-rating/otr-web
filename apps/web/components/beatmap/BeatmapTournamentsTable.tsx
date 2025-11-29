@@ -58,7 +58,7 @@ const columns = [
     cell: ({ row }) => (
       <Link
         href={`/tournaments/${row.original.tournament.id}`}
-        className="line-clamp-2 max-w-[200px] hover:underline"
+        className="line-clamp-2 hover:underline"
       >
         {row.original.tournament.name}
       </Link>
@@ -164,13 +164,13 @@ export default function BeatmapTournamentsTable({
         <CardTitle>Tournament Usage</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-lg bg-popover/50">
+        <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-b border-border/50 hover:bg-transparent"
+                  className="border-b bg-muted/50 hover:bg-muted/50"
                 >
                   {headerGroup.headers.map((header) => (
                     <TableHead
@@ -189,10 +189,12 @@ export default function BeatmapTournamentsTable({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
+              {table.getRowModel().rows.map((row, index) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border/30 transition-colors hover:bg-popover/80"
+                  className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${
+                    index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
+                  }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3">

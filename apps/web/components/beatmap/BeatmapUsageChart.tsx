@@ -138,6 +138,7 @@ export default function BeatmapUsageChart({
                   borderRadius: '6px',
                 }}
                 labelStyle={{ color: colors.text }}
+                labelFormatter={(value) => formatQuarterTick(value as string)}
                 formatter={(value: number, name: string) => [
                   value,
                   name === 'gameCount' ? 'Games Played' : 'Tournaments Pooled',

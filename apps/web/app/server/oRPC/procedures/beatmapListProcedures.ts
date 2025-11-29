@@ -46,7 +46,8 @@ export const listBeatmaps = publicProcedure
           const searchCondition = or(
             ilike(schema.beatmaps.diffName, searchPattern),
             ilike(schema.beatmapsets.artist, searchPattern),
-            ilike(schema.beatmapsets.title, searchPattern)
+            ilike(schema.beatmapsets.title, searchPattern),
+            ilike(schema.players.username, searchPattern)
           );
           if (searchCondition) {
             filters.push(searchCondition);
@@ -69,6 +70,49 @@ export const listBeatmaps = publicProcedure
       if (input.maxHp !== undefined) filters.push(lte(schema.beatmaps.hp, input.maxHp));
       if (input.minLength !== undefined) filters.push(gte(schema.beatmaps.totalLength, input.minLength));
       if (input.maxLength !== undefined) filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
+
+      if (input.minGameCount !== undefined) {
+        filters.push(sql`(
+          SELECT COUNT(g.id)
+          FROM games g
+          INNER JOIN matches m ON m.id = g.match_id
+          INNER JOIN tournaments t ON t.id = m.tournament_id
+          WHERE g.beatmap_id = ${schema.beatmaps.id}
+            AND t.verification_status = ${VerificationStatus.Verified}
+            AND m.verification_status = ${VerificationStatus.Verified}
+            AND g.verification_status = ${VerificationStatus.Verified}
+        ) >= ${input.minGameCount}`);
+      }
+      if (input.maxGameCount !== undefined) {
+        filters.push(sql`(
+          SELECT COUNT(g.id)
+          FROM games g
+          INNER JOIN matches m ON m.id = g.match_id
+          INNER JOIN tournaments t ON t.id = m.tournament_id
+          WHERE g.beatmap_id = ${schema.beatmaps.id}
+            AND t.verification_status = ${VerificationStatus.Verified}
+            AND m.verification_status = ${VerificationStatus.Verified}
+            AND g.verification_status = ${VerificationStatus.Verified}
+        ) <= ${input.maxGameCount}`);
+      }
+      if (input.minTournamentCount !== undefined) {
+        filters.push(sql`(
+          SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
+          FROM join_pooled_beatmaps jpb
+          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+            AND t.verification_status = ${VerificationStatus.Verified}
+        ) >= ${input.minTournamentCount}`);
+      }
+      if (input.maxTournamentCount !== undefined) {
+        filters.push(sql`(
+          SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
+          FROM join_pooled_beatmaps jpb
+          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+            AND t.verification_status = ${VerificationStatus.Verified}
+        ) <= ${input.maxTournamentCount}`);
+      }
 
       filters.push(
         sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
@@ -133,6 +177,7 @@ export const listBeatmaps = publicProcedure
           case 'length': return schema.beatmaps.totalLength;
           case 'tournamentCount': return verifiedTournamentCountSql;
           case 'gameCount': return verifiedGameCountSql;
+          case 'creator': return schema.players.username;
           default: return schema.beatmaps.sr;
         }
       };
@@ -153,6 +198,7 @@ export const listBeatmaps = publicProcedure
           artist: schema.beatmapsets.artist,
           title: schema.beatmapsets.title,
           beatmapsetOsuId: schema.beatmapsets.osuId,
+          creator: schema.players.username,
           verifiedTournamentCount: verifiedTournamentCountSql,
           verifiedGameCount: verifiedGameCountSql,
         })
@@ -160,6 +206,10 @@ export const listBeatmaps = publicProcedure
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+        )
+        .leftJoin(
+          schema.players,
+          eq(schema.beatmapsets.creatorId, schema.players.id)
         );
 
       const conditionedQuery = whereClause
@@ -177,6 +227,10 @@ export const listBeatmaps = publicProcedure
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+        )
+        .leftJoin(
+          schema.players,
+          eq(schema.beatmapsets.creatorId, schema.players.id)
         );
 
       const countResult = whereClause
@@ -202,6 +256,7 @@ export const listBeatmaps = publicProcedure
           hp: row.hp,
           totalLength: row.totalLength,
           beatmapsetOsuId: row.beatmapsetOsuId ?? null,
+          creator: row.creator ?? null,
           verifiedTournamentCount: Number(row.verifiedTournamentCount) || 0,
           verifiedGameCount: Number(row.verifiedGameCount) || 0,
         })

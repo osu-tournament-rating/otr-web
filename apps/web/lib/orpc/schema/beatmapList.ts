@@ -12,6 +12,7 @@ export const BeatmapListSortSchema = z.enum([
   'length',
   'tournamentCount',
   'gameCount',
+  'creator',
 ]);
 
 export const BeatmapListRequestSchema = z.object({
@@ -32,6 +33,10 @@ export const BeatmapListRequestSchema = z.object({
   maxHp: z.number().min(0).max(10).optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(0).optional(),
+  minGameCount: z.number().int().min(0).optional(),
+  maxGameCount: z.number().int().min(0).optional(),
+  minTournamentCount: z.number().int().min(0).optional(),
+  maxTournamentCount: z.number().int().min(0).optional(),
   sort: BeatmapListSortSchema.default('gameCount'),
   descending: z.boolean().default(true),
 });
@@ -51,6 +56,7 @@ export const BeatmapListItemSchema = z.object({
   hp: z.number(),
   totalLength: z.number(),
   beatmapsetOsuId: z.number().nullable(),
+  creator: z.string().nullable(),
   verifiedTournamentCount: z.number().int().nonnegative(),
   verifiedGameCount: z.number().int().nonnegative(),
 });

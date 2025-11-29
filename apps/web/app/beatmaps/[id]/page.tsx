@@ -13,7 +13,6 @@ import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistribu
 import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
 import BeatmapModTrendChart from '@/components/beatmap/BeatmapModTrendChart';
 import BeatmapTournamentsTable from '@/components/beatmap/BeatmapTournamentsTable';
-import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -66,17 +65,14 @@ export default async function BeatmapPage({ params }: PageProps) {
       {beatmapStats.usageOverTime.length >= 2 && (
         <BeatmapUsageChart data={beatmapStats.usageOverTime} />
       )}
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-2">
-        <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} />
-        <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-5 md:gap-2">
+        <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} className="md:col-span-2" />
+        <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} className="md:col-span-3" />
       </div>
       {beatmapStats.modTrend.length >= 2 && (
         <BeatmapModTrendChart data={beatmapStats.modTrend} />
       )}
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-2">
-        <BeatmapTournamentsTable tournaments={beatmapStats.tournaments} />
-        <BeatmapTopPerformersTable performers={beatmapStats.topPerformers} />
-      </div>
+      <BeatmapTournamentsTable tournaments={beatmapStats.tournaments} />
     </div>
   );
 }

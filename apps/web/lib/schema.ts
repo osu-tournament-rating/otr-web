@@ -174,6 +174,7 @@ export const beatmapListSortValues = [
   'length',
   'tournamentCount',
   'gameCount',
+  'creator',
 ] as const;
 
 export const defaultBeatmapListFilter = {
@@ -198,6 +199,10 @@ export const beatmapListFilterSchema = z.object({
   maxHp: z.coerce.number().min(0).max(10).optional(),
   minLength: z.coerce.number().int().min(0).optional(),
   maxLength: z.coerce.number().int().min(0).optional(),
+  minGameCount: z.coerce.number().int().min(0).optional(),
+  maxGameCount: z.coerce.number().int().min(0).optional(),
+  minTournamentCount: z.coerce.number().int().min(0).optional(),
+  maxTournamentCount: z.coerce.number().int().min(0).optional(),
   sort: z.enum(beatmapListSortValues).catch('gameCount'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });

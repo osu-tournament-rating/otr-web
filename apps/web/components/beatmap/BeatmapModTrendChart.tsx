@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { format } from 'date-fns';
 import { useTheme } from 'next-themes';
 import {
   AreaChart,
@@ -140,9 +141,11 @@ export default function BeatmapModTrendChart({
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: colors.text, fontSize: 11 }}
+                tick={{ fill: colors.text, fontSize: 12 }}
                 tickLine={{ stroke: colors.grid }}
                 axisLine={{ stroke: colors.grid }}
+                tickFormatter={(value) => format(new Date(value + '-01'), 'MMM yyyy')}
+                interval="equidistantPreserveStart"
               />
               <YAxis
                 tick={{ fill: colors.text, fontSize: 11 }}
