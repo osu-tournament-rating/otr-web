@@ -28,12 +28,12 @@ export class TournamentAutomationCheckWorker {
   async start() {
     await this.queue.start(async (message) => {
       const { tournamentId, overrideVerifiedState } = message.payload;
-      const correlationId = message.metadata.correlationId;
-
-      this.logger.info('Processing tournament automation check message', {
+      const msgLogger = this.logger.child({
+        correlationId: message.metadata.correlationId,
         tournamentId,
-        correlationId,
       });
+
+      msgLogger.info('processing tournament automation check');
 
       try {
         const success = await this.service.processAutomationChecks(
@@ -42,22 +42,14 @@ export class TournamentAutomationCheckWorker {
         );
 
         if (success) {
-          this.logger.info('Tournament passed automation checks', {
-            tournamentId,
-            correlationId,
-          });
+          msgLogger.info('tournament passed automation checks');
         } else {
-          this.logger.info('Tournament failed automation checks', {
-            tournamentId,
-            correlationId,
-          });
+          msgLogger.info('tournament failed automation checks');
         }
 
         await message.ack();
       } catch (error) {
-        this.logger.error('Failed to process tournament automation checks', {
-          tournamentId,
-          correlationId,
+        msgLogger.error('failed to process tournament automation checks', {
           error,
         });
         await message.nack(true);

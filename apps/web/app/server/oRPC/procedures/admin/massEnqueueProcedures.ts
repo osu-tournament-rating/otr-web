@@ -14,6 +14,7 @@ import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { getCorrelationId } from '../logging/helpers';
 import {
   publishFetchBeatmapMessage,
   publishFetchMatchMessage,
@@ -76,6 +77,7 @@ export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
     }
   })();
 
+  const correlationId = getCorrelationId(context);
   const warnings: string[] = [];
   let beatmapsUpdated = 0;
   let beatmapsSkipped = 0;
@@ -135,6 +137,7 @@ export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
             {
               metadata: {
                 priority: priorityValue,
+                ...(correlationId && { correlationId }),
               },
             }
           ),
@@ -235,6 +238,7 @@ export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
             {
               metadata: {
                 priority: priorityValue,
+                ...(correlationId && { correlationId }),
               },
             }
           ),

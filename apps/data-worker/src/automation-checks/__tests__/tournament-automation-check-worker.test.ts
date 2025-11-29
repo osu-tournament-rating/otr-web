@@ -34,6 +34,7 @@ const noopLogger: Logger = {
   info: () => {},
   warn: () => {},
   error: () => {},
+  child: () => noopLogger,
 };
 
 describe('TournamentAutomationCheckWorker', () => {

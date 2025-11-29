@@ -94,11 +94,12 @@ async function getPlayerData(
 }
 
 async function getTournaments(
-  key: string,
+  playerId: number,
   searchParams: { [key: string]: string | string[] | undefined }
 ): Promise<TournamentListItem[]> {
-  const decodedKey = decodeURIComponent(key);
-  const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
+  if (playerId <= 0) {
+    return [];
+  }
 
   const dateMin = searchParams.dateMin
     ? new Date(searchParams.dateMin as string)
@@ -119,7 +120,14 @@ async function getTournaments(
       ruleset
     );
   } catch (error) {
-    console.error('Failed to fetch player tournaments:', error);
+    const err = error as Error & { code?: string; status?: number };
+    console.error('Failed to fetch player tournaments:', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      name: err.name,
+      stack: err.stack,
+    });
     return [];
   }
 }
@@ -143,7 +151,14 @@ async function getBeatmaps(
       0
     );
   } catch (error) {
-    console.error('Failed to fetch player beatmaps:', error);
+    const err = error as Error & { code?: string; status?: number };
+    console.error('Failed to fetch player beatmaps:', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      name: err.name,
+      stack: err.stack,
+    });
     return {
       beatmaps: [],
       totalCount: 0,
@@ -174,7 +189,7 @@ export default async function PlayerPage(props: PageProps) {
     : Ruleset.Osu;
 
   // Get the list of tournaments that the player has participated in
-  const playerTournaments = await getTournaments(decodedId, {
+  const playerTournaments = await getTournaments(canonicalPlayerId, {
     ...searchParams,
     ruleset: currentRuleset.toString(),
   });
@@ -203,7 +218,7 @@ export default async function PlayerPage(props: PageProps) {
 
   // Get the list of tournament beatmaps the player has mapped
   const playerBeatmapsResponse = await getBeatmaps(
-    canonicalPlayerId ?? 0,
+    canonicalPlayerId,
     currentRuleset
   );
 

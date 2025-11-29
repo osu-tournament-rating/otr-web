@@ -279,10 +279,12 @@ export const listReports = protectedProcedure
           report.entityType,
           report.entityId
         ),
-        reporter: {
-          id: report.reporter.id,
-          player: report.reporter.player,
-        },
+        reporter: report.reporter
+          ? {
+              id: report.reporter.id,
+              player: report.reporter.player,
+            }
+          : null,
         resolvedBy: report.resolvedBy
           ? {
               id: report.resolvedBy.id,
@@ -370,10 +372,12 @@ export const getReport = protectedProcedure
         report.entityType,
         report.entityId
       ),
-      reporter: {
-        id: report.reporter.id,
-        player: report.reporter.player,
-      },
+      reporter: report.reporter
+        ? {
+            id: report.reporter.id,
+            player: report.reporter.player,
+          }
+        : null,
       resolvedBy: report.resolvedBy
         ? {
             id: report.resolvedBy.id,

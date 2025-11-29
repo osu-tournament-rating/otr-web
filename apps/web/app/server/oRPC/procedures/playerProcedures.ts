@@ -465,6 +465,8 @@ export const getPlayerTournaments = publicProcedure
         ...row,
         ruleset: row.ruleset as Ruleset,
         verificationStatus: row.verificationStatus as VerificationStatus,
+        submittedByUsername: null,
+        verifiedByUsername: null,
       })
     );
   });
@@ -765,6 +767,8 @@ export const getPlayerBeatmaps = publicProcedure
         isLazer: boolean;
         gamesPlayed: number;
         mostCommonMod: number;
+        submittedByUsername: string | null;
+        verifiedByUsername: string | null;
       }>;
     }
 
@@ -850,6 +854,8 @@ export const getPlayerBeatmaps = publicProcedure
         isLazer: row.tournamentIsLazer,
         gamesPlayed: Number(row.gamesPlayed),
         mostCommonMod: Number(mostCommonMod),
+        submittedByUsername: null,
+        verifiedByUsername: null,
       });
     }
 

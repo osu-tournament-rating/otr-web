@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { z } from 'zod';
 import { Gamepad2, BarChart3, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 import GamesListClient from '@/components/games/GamesListClient';
 import MatchCard from '@/components/matches/MatchCard';
@@ -17,7 +18,14 @@ import {
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
 
-type PageProps = { params: Promise<{ id: number }> };
+type PageProps = {
+  params: Promise<{ id: number }>;
+  searchParams: Promise<{ tab?: string }>;
+};
+
+const MATCH_TABS = ['games', 'stats'] as const;
+type MatchTab = (typeof MATCH_TABS)[number];
+const DEFAULT_TAB: MatchTab = 'games';
 
 const matchPageParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -43,8 +51,14 @@ export async function generateMetadata({
   return { title: match.name };
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { id } = parseParamsOrNotFound(matchPageParamsSchema, await params);
+  const { tab: tabParam } = await searchParams;
+  const currentTab: MatchTab = MATCH_TABS.includes(tabParam as MatchTab)
+    ? (tabParam as MatchTab)
+    : DEFAULT_TAB;
+  const createTabHref = (tab: MatchTab) => `/matches/${id}?tab=${tab}`;
+
   const match: MatchDetail = await fetchOrpcOrNotFound(() =>
     orpc.matches.get({ id })
   );
@@ -56,10 +70,14 @@ export default async function Page({ params }: PageProps) {
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <MatchCard match={match} />
 
-      <Tabs defaultValue="games" className="w-full">
+      <Tabs value={currentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="games">Games</TabsTrigger>
-          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="games" asChild>
+            <Link href={createTabHref('games')}>Games</Link>
+          </TabsTrigger>
+          <TabsTrigger value="stats" asChild>
+            <Link href={createTabHref('stats')}>Stats</Link>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="games" className="mt-4">

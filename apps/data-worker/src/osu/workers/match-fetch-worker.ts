@@ -26,11 +26,13 @@ export class MatchFetchWorker {
   async start() {
     await this.queue.start(async (message) => {
       const { osuMatchId, isLazer } = message.payload;
-      this.logger.info('Processing match fetch message', {
+      const msgLogger = this.logger.child({
+        correlationId: message.metadata.correlationId,
         osuMatchId,
         isLazer,
-        correlationId: message.metadata.correlationId,
       });
+
+      msgLogger.info('processing match fetch');
 
       try {
         const persisted = await this.service.fetchAndPersist(
@@ -39,19 +41,11 @@ export class MatchFetchWorker {
         );
 
         if (!persisted) {
-          this.logger.warn('Match fetch completed without persistence', {
-            osuMatchId,
-            isLazer,
-            correlationId: message.metadata.correlationId,
-          });
+          msgLogger.warn('match fetch completed without persistence');
         }
         await message.ack();
       } catch (error) {
-        this.logger.error('Failed to process match fetch', {
-          osuMatchId,
-          isLazer,
-          error,
-        });
+        msgLogger.error('failed to process match fetch', { error });
         await message.nack(true);
       }
     });
