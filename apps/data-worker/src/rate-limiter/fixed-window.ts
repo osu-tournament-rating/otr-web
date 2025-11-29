@@ -1,3 +1,10 @@
+import {
+  rateLimiterRequests,
+  rateLimiterQueuedTasks,
+  rateLimiterWaitDuration,
+  rateLimiterRemainingTokens,
+} from '../metrics';
+
 export interface RateLimiter {
   schedule<T>(task: () => Promise<T>): Promise<T>;
 }
@@ -31,6 +38,7 @@ export class FixedWindowRateLimiter implements RateLimiter {
 
   private windowStart = 0;
   private executedInWindow = 0;
+  private pendingTasks = 0;
   private tail: Promise<unknown> = Promise.resolve();
 
   constructor(options: FixedWindowRateLimiterOptions) {
@@ -52,12 +60,33 @@ export class FixedWindowRateLimiter implements RateLimiter {
   }
 
   async schedule<T>(task: () => Promise<T>): Promise<T> {
+    this.pendingTasks++;
+    rateLimiterQueuedTasks
+      .labels({ limiter: this.label })
+      .set(this.pendingTasks);
+
     const run = async () => {
+      const waitStart = Date.now();
       await this.ensureAvailability();
+      const waitDuration = (Date.now() - waitStart) / 1000;
+
+      if (waitDuration > 0.001) {
+        rateLimiterWaitDuration
+          .labels({ limiter: this.label })
+          .observe(waitDuration);
+      }
+
+      rateLimiterRequests
+        .labels({ limiter: this.label, status: 'allowed' })
+        .inc();
+
       try {
         return await task();
       } finally {
-        // no-op; accounting handled in ensureAvailability
+        this.pendingTasks--;
+        rateLimiterQueuedTasks
+          .labels({ limiter: this.label })
+          .set(this.pendingTasks);
       }
     };
 
@@ -84,6 +113,9 @@ export class FixedWindowRateLimiter implements RateLimiter {
 
       if (this.executedInWindow < this.requests) {
         this.executedInWindow += 1;
+        rateLimiterRemainingTokens
+          .labels({ limiter: this.label })
+          .set(this.requests - this.executedInWindow);
         this.log('Rate limiter token consumed', {
           used: this.executedInWindow,
           remaining: this.requests - this.executedInWindow,

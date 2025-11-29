@@ -9,6 +9,7 @@ import {
 } from '@otr/core';
 
 import { db } from './db';
+import { startMetricsServer } from './metrics';
 import { dataWorkerEnv } from './env';
 import { consoleLogger } from './logging/logger';
 import { RabbitMqConsumer } from './queue/rabbitmq-consumer';
@@ -43,6 +44,8 @@ import {
 import { PlayerRefetchScheduler } from './players/player-refetch-scheduler';
 
 const logger = consoleLogger;
+
+startMetricsServer();
 
 const bootstrap = async () => {
   const osuApiClient = await createOsuApiClient();

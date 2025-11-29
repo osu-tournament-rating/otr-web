@@ -18,6 +18,7 @@ import { createPlaceholderBeatmap } from './beatmapPlaceholders';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { getCorrelationId } from '../logging/helpers';
 
 const formatIdList = (ids: readonly number[], limit = 5) => {
   if (ids.length <= limit) {
@@ -326,6 +327,7 @@ export async function submitTournamentHandler({
       })
     );
 
+    const correlationId = getCorrelationId(context);
     const queueTasks: Array<{
       kind: 'match' | 'beatmap';
       id: number;
@@ -336,10 +338,10 @@ export async function submitTournamentHandler({
       queueTasks.push({
         kind: 'match',
         id: osuMatchId,
-        promise: publishFetchMatchMessage({
-          osuMatchId,
-          isLazer: input.isLazer,
-        }),
+        promise: publishFetchMatchMessage(
+          { osuMatchId, isLazer: input.isLazer },
+          correlationId ? { metadata: { correlationId } } : undefined
+        ),
       });
     });
 
@@ -347,7 +349,10 @@ export async function submitTournamentHandler({
       queueTasks.push({
         kind: 'beatmap',
         id: beatmapId,
-        promise: publishFetchBeatmapMessage({ beatmapId }),
+        promise: publishFetchBeatmapMessage(
+          { beatmapId },
+          correlationId ? { metadata: { correlationId } } : undefined
+        ),
       });
     });
 

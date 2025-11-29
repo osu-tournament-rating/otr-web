@@ -1,6 +1,11 @@
 import { type MessageEnvelope, QueuePriorityArguments } from '@otr/core';
 import { connect, type ConsumeMessage } from 'amqplib';
 import { consoleLogger, type Logger } from '../logging/logger';
+import {
+  queueMessagesProcessed,
+  queueMessageDuration,
+  queueMessagesInFlight,
+} from '../metrics/queue-metrics';
 import type { QueueConsumer, QueueMessage, QueueMessageHandler } from './types';
 
 export interface RabbitMqConsumerOptions {
@@ -112,11 +117,22 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
       },
     };
 
+    const labels = { queue: this.options.queue };
+    queueMessagesInFlight.labels(labels).inc();
+    const startTime = Date.now();
+
     try {
       await handler(queueMessage);
+      queueMessagesProcessed.labels({ ...labels, status: 'success' }).inc();
     } catch (error) {
       this.logger.error('Queue handler threw an error', { error });
+      queueMessagesProcessed.labels({ ...labels, status: 'error' }).inc();
       await queueMessage.nack(true);
+    } finally {
+      queueMessagesInFlight.labels(labels).dec();
+      queueMessageDuration
+        .labels(labels)
+        .observe((Date.now() - startTime) / 1000);
     }
   }
 }

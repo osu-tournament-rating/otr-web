@@ -10,6 +10,7 @@ import {
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { getCorrelationId } from '../logging/helpers';
 import { Ruleset } from '@otr/core/osu';
 import { createPlaceholderBeatmap } from './beatmapPlaceholders';
 import { publishFetchBeatmapMessage } from '@/lib/queue/publishers';
@@ -227,9 +228,13 @@ export async function manageTournamentBeatmapsAdminHandler({
   const warnings: string[] = [];
 
   if (beatmapsToQueue.size > 0) {
+    const correlationId = getCorrelationId(context);
     const tasks = Array.from(beatmapsToQueue).map((beatmapId) => ({
       beatmapId,
-      promise: publishFetchBeatmapMessage({ beatmapId }),
+      promise: publishFetchBeatmapMessage(
+        { beatmapId },
+        correlationId ? { metadata: { correlationId } } : undefined
+      ),
     }));
 
     const results = await Promise.allSettled(tasks.map((task) => task.promise));
