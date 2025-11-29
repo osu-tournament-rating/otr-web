@@ -32,20 +32,19 @@ export class PlayerFetchWorker {
   async start() {
     await this.queue.start(async (message) => {
       const { osuPlayerId } = message.payload;
-      this.logger.info('Processing player fetch message', {
-        osuPlayerId,
+      const msgLogger = this.logger.child({
         correlationId: message.metadata.correlationId,
+        osuPlayerId,
       });
+
+      msgLogger.info('processing player fetch');
 
       try {
         await this.service.fetchAndPersist(osuPlayerId);
         await message.ack();
         await this.events.onProcessed?.({ osuPlayerId });
       } catch (error) {
-        this.logger.error('Failed to process player fetch', {
-          osuPlayerId,
-          error,
-        });
+        msgLogger.error('failed to process player fetch', { error });
         await message.nack(true);
       }
     });
