@@ -11,7 +11,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '../ui/card';
@@ -131,7 +130,6 @@ export default function BeatmapModDistributionChart({
       <Card className={className}>
         <CardHeader className="items-center">
           <CardTitle>Mod Distribution</CardTitle>
-          <CardDescription>No mod data available</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -141,12 +139,9 @@ export default function BeatmapModDistributionChart({
     <Card className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
-        <CardDescription>
-          Displaying mods used in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of games
-        </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <PieChart>
             <Pie
               data={processedData}

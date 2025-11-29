@@ -17,7 +17,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '../ui/card';
@@ -84,7 +83,6 @@ export default function BeatmapUsageChart({
       <Card className={className}>
         <CardHeader>
           <CardTitle>Usage Over Time</CardTitle>
-          <CardDescription>Not enough data to display chart</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -94,12 +92,9 @@ export default function BeatmapUsageChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle>Usage Over Time</CardTitle>
-        <CardDescription>
-          Quarterly games played and tournaments pooling in verified tournaments
-        </CardDescription>
       </CardHeader>
       <CardContent className="font-sans">
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}

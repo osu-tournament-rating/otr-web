@@ -14,7 +14,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '../ui/card';
@@ -231,7 +230,6 @@ export default function BeatmapScoreRatingChart({
       <Card className={className}>
         <CardHeader>
           <CardTitle>Score vs Player Rating</CardTitle>
-          <CardDescription>No score data available</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -241,12 +239,9 @@ export default function BeatmapScoreRatingChart({
     <Card className={className}>
       <CardHeader>
         <CardTitle>Score vs Player Rating</CardTitle>
-        <CardDescription>
-          Performance distribution by player rating and mod selection
-        </CardDescription>
       </CardHeader>
       <CardContent className="font-sans">
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 25, right: 10, bottom: 25, left: 30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />

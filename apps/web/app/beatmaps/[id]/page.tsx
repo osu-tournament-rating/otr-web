@@ -64,9 +64,9 @@ export default async function BeatmapPage({ params }: PageProps) {
       {beatmapStats.usageOverTime.length >= 2 && (
         <BeatmapUsageChart data={beatmapStats.usageOverTime} />
       )}
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-5 md:gap-2">
-        <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} className="md:col-span-2" />
-        <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} className="md:col-span-3" />
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-2">
+        <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} />
+        <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
       </div>
       <BeatmapTournamentsTable tournaments={beatmapStats.tournaments} />
     </div>
