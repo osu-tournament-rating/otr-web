@@ -23,6 +23,7 @@ import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { getCorrelationId } from '../logging/helpers';
 import {
   GameWarningFlags,
   MatchWarningFlags,
@@ -93,6 +94,7 @@ export async function refetchTournamentMatchDataHandler({
     ).values()
   );
 
+  const correlationId = getCorrelationId(context);
   const queueTasks: Array<{
     kind: 'match' | 'beatmap';
     id: number;
@@ -103,7 +105,10 @@ export async function refetchTournamentMatchDataHandler({
     queueTasks.push({
       kind: 'match',
       id: osuMatchId,
-      promise: publishFetchMatchMessage({ osuMatchId, isLazer }),
+      promise: publishFetchMatchMessage(
+        { osuMatchId, isLazer },
+        correlationId ? { metadata: { correlationId } } : undefined
+      ),
     });
   });
 
@@ -197,6 +202,7 @@ export async function refetchTournamentBeatmapsHandler({
     );
   }
 
+  const correlationId = getCorrelationId(context);
   const queueTasks = beatmapRows
     .filter((b) => b.dataFetchStatus !== DataFetchStatus.NotFound)
     .map((b) => ({
@@ -209,6 +215,7 @@ export async function refetchTournamentBeatmapsHandler({
         {
           metadata: {
             priority: MessagePriority.High,
+            ...(correlationId && { correlationId }),
           },
         }
       ),
@@ -254,12 +261,16 @@ export async function resetTournamentAutomatedChecksHandler({
   ensureAdminSession(context.session);
 
   const warnings: string[] = [];
+  const correlationId = getCorrelationId(context);
 
   try {
-    await publishProcessTournamentAutomationCheckMessage({
-      tournamentId: input.id,
-      overrideVerifiedState: input.overrideVerifiedState ?? false,
-    });
+    await publishProcessTournamentAutomationCheckMessage(
+      {
+        tournamentId: input.id,
+        overrideVerifiedState: input.overrideVerifiedState ?? false,
+      },
+      correlationId ? { metadata: { correlationId } } : undefined
+    );
   } catch (error) {
     console.error('Failed to publish automated checks reset message', {
       tournamentId: input.id,
