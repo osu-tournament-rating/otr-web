@@ -35,29 +35,20 @@ export const getBeatmapStats = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
-      // Resolve input ID: try osu ID first, then fallback to internal ID
       const resolveInternalBeatmapId = async (
         inputId: number
       ): Promise<number> => {
-        // First: lookup by osuId
-        const byOsuId = await context.db
+        const [result] = await context.db
           .select({ id: schema.beatmaps.id })
           .from(schema.beatmaps)
           .where(eq(schema.beatmaps.osuId, inputId))
           .limit(1);
 
-        if (byOsuId[0]) return byOsuId[0].id;
+        if (!result) {
+          throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
+        }
 
-        // Fallback: lookup by internal id
-        const byId = await context.db
-          .select({ id: schema.beatmaps.id })
-          .from(schema.beatmaps)
-          .where(eq(schema.beatmaps.id, inputId))
-          .limit(1);
-
-        if (byId[0]) return byId[0].id;
-
-        throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
+        return result.id;
       };
 
       const beatmapId = await resolveInternalBeatmapId(input.id);
@@ -334,7 +325,7 @@ export const getBeatmapStats = publicProcedure
       .select({
         tournamentId: schema.tournaments.id,
         medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
-        medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.ratingAdjustments.ratingAfter})`,
+        medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
       })
       .from(schema.gameScores)
       .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
@@ -450,7 +441,7 @@ export const getBeatmapStats = publicProcedure
     const scoreRatingRows = await context.db
       .select({
         score: schema.gameScores.score,
-        playerRating: schema.playerRatings.rating,
+        playerRating: sql<number>`COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter})`,
         mods: schema.gameScores.mods,
       })
       .from(schema.gameScores)
@@ -461,10 +452,10 @@ export const getBeatmapStats = publicProcedure
         eq(schema.tournaments.id, schema.matches.tournamentId)
       )
       .innerJoin(
-        schema.playerRatings,
+        schema.ratingAdjustments,
         and(
-          eq(schema.playerRatings.playerId, schema.gameScores.playerId),
-          eq(schema.playerRatings.ruleset, schema.tournaments.ruleset)
+          eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+          eq(schema.ratingAdjustments.matchId, schema.matches.id)
         )
       )
       .where(

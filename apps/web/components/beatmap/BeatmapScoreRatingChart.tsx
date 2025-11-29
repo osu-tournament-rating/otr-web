@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ScatterChart,
   XAxis,
@@ -166,6 +166,31 @@ export default function BeatmapScoreRatingChart({
 }: BeatmapScoreRatingChartProps) {
   const { theme } = useTheme();
   const colors = getChartColors(theme);
+  const [visibleMods, setVisibleMods] = useState<Set<ModCategory>>(
+    new Set(['nm', 'hr', 'hd', 'dt', 'other'])
+  );
+
+  const handleLegendClick = (entry: { value: string }) => {
+    const modMap: Record<string, ModCategory> = {
+      'No Mod': 'nm',
+      'Hard Rock': 'hr',
+      Hidden: 'hd',
+      'Double Time': 'dt',
+      Other: 'other',
+    };
+    const mod = modMap[entry.value];
+    if (!mod) return;
+
+    setVisibleMods((prev) => {
+      const next = new Set(prev);
+      if (next.has(mod)) {
+        next.delete(mod);
+      } else {
+        next.add(mod);
+      }
+      return next;
+    });
+  };
 
   const { groupedData, densityByMod, xDomain, yDomain, xTicks, yTicks } =
     useMemo(() => {
@@ -285,14 +310,22 @@ export default function BeatmapScoreRatingChart({
               <Legend
                 verticalAlign="top"
                 align="right"
-                wrapperStyle={{ fontSize: 11, color: colors.text, paddingBottom: 10 }}
+                wrapperStyle={{
+                  fontSize: 11,
+                  color: colors.text,
+                  paddingBottom: 10,
+                  cursor: 'pointer',
+                }}
+                onClick={handleLegendClick}
                 payload={[
                   ...(groupedData.nm.length > 0
                     ? [
                         {
                           value: 'No Mod',
                           type: 'square' as const,
-                          color: 'var(--chart-1)',
+                          color: visibleMods.has('nm')
+                            ? 'var(--chart-1)'
+                            : 'rgba(128,128,128,0.3)',
                         },
                       ]
                     : []),
@@ -301,7 +334,9 @@ export default function BeatmapScoreRatingChart({
                         {
                           value: 'Hard Rock',
                           type: 'square' as const,
-                          color: 'var(--mod-hard-rock)',
+                          color: visibleMods.has('hr')
+                            ? 'var(--mod-hard-rock)'
+                            : 'rgba(128,128,128,0.3)',
                         },
                       ]
                     : []),
@@ -310,7 +345,9 @@ export default function BeatmapScoreRatingChart({
                         {
                           value: 'Hidden',
                           type: 'square' as const,
-                          color: 'var(--mod-hidden)',
+                          color: visibleMods.has('hd')
+                            ? 'var(--mod-hidden)'
+                            : 'rgba(128,128,128,0.3)',
                         },
                       ]
                     : []),
@@ -319,7 +356,9 @@ export default function BeatmapScoreRatingChart({
                         {
                           value: 'Double Time',
                           type: 'square' as const,
-                          color: 'var(--mod-double-time)',
+                          color: visibleMods.has('dt')
+                            ? 'var(--mod-double-time)'
+                            : 'rgba(128,128,128,0.3)',
                         },
                       ]
                     : []),
@@ -328,30 +367,34 @@ export default function BeatmapScoreRatingChart({
                         {
                           value: 'Other',
                           type: 'square' as const,
-                          color: 'var(--chart-3)',
+                          color: visibleMods.has('other')
+                            ? 'var(--chart-3)'
+                            : 'rgba(128,128,128,0.3)',
                         },
                       ]
                     : []),
                 ]}
               />
 
-              {(Object.keys(densityByMod) as ModCategory[]).map((mod) =>
-                densityByMod[mod]?.map((cell, i) => (
-                  <ReferenceArea
-                    key={`density-${mod}-${i}`}
-                    x1={cell.x1}
-                    x2={cell.x2}
-                    y1={cell.y1}
-                    y2={cell.y2}
-                    fill={MOD_COLORS[mod]}
-                    fillOpacity={
-                      DENSITY_MIN_OPACITY +
-                      cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
-                    }
-                    stroke="none"
-                  />
-                ))
-              )}
+              {(Object.keys(densityByMod) as ModCategory[])
+                .filter((mod) => visibleMods.has(mod))
+                .map((mod) =>
+                  densityByMod[mod]?.map((cell, i) => (
+                    <ReferenceArea
+                      key={`density-${mod}-${i}`}
+                      x1={cell.x1}
+                      x2={cell.x2}
+                      y1={cell.y1}
+                      y2={cell.y2}
+                      fill={MOD_COLORS[mod]}
+                      fillOpacity={
+                        DENSITY_MIN_OPACITY +
+                        cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
+                      }
+                      stroke="none"
+                    />
+                  ))
+                )}
             </ScatterChart>
           </ResponsiveContainer>
         </ChartContainer>

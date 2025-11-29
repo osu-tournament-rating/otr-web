@@ -25,7 +25,7 @@ export default function BeatmapSearchResultCard({
   return (
     <Card className="border-none bg-popover p-0 transition-colors hover:bg-popover/80">
       <Link
-        href={`/beatmaps/${data.id}`}
+        href={`/beatmaps/${data.osuId}`}
         onClick={closeDialog}
         className="flex gap-3 overflow-hidden p-3 sm:p-4"
       >
