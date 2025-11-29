@@ -148,6 +148,38 @@ services:
       - postgres-exporter
       - node-exporter
 
+  loki:
+    image: grafana/loki:3.4.1
+    container_name: loki
+    restart: unless-stopped
+    user: '1000:1000'
+    command:
+      - '-config.file=/etc/loki/loki-config.yaml'
+    volumes:
+      - ./monitoring/loki/data:/loki
+      - ./monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  promtail:
+    image: grafana/promtail:3.4.1
+    container_name: promtail
+    restart: unless-stopped
+    command:
+      - '-config.file=/etc/promtail/promtail-config.yaml'
+    volumes:
+      - ./monitoring/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail-positions:/tmp
+    depends_on:
+      loki:
+        condition: service_healthy
+
   grafana:
     image: grafana/grafana:11.4.0
     container_name: grafana
@@ -166,6 +198,7 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
+      - loki
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
@@ -195,3 +228,4 @@ volumes:
   rabbitmq-data:
   prometheus-data:
   grafana-data:
+  promtail-positions:
