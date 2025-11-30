@@ -122,25 +122,48 @@ export default function GameCardHeader({ game }: { game: Game }) {
           <div className="max-w-3/4 flex flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
-              <span className="font-semibold text-white">
-                {isDeletedBeatmap
-                  ? 'Unknown user'
-                  : (game.beatmap?.beatmapset?.creator?.username ??
-                    'Unknown user')}
-              </span>
+              {isDeletedBeatmap || !game.beatmap?.beatmapset?.creator ? (
+                <span className="font-semibold text-white">Unknown user</span>
+              ) : (
+                <Link
+                  href={`/players/${game.beatmap.beatmapset.creator.id}`}
+                  className="font-semibold text-white hover:underline"
+                >
+                  {game.beatmap.beatmapset.creator.username}
+                </Link>
+              )}
               <span>• Map by</span>
-              <span className="font-semibold text-white">
-                {isDeletedBeatmap
-                  ? 'Unknown creator'
-                  : game.beatmap?.creators.map((c) => c.username).join(', ') ||
-                    'Unknown creator'}
+              {isDeletedBeatmap || !game.beatmap?.creators?.length ? (
+                <span className="font-semibold text-white">Unknown creator</span>
+              ) : (
+                <span className="font-semibold text-white">
+                  {game.beatmap.creators.map((c, i) => (
+                    <span key={c.id}>
+                      {i > 0 && ', '}
+                      <Link
+                        href={`/players/${c.id}`}
+                        className="hover:underline"
+                      >
+                        {c.username}
+                      </Link>
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+            {isDeletedBeatmap ? (
+              <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
+                Deleted beatmap
               </span>
-            </span>
-            <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
-              {isDeletedBeatmap
-                ? 'Deleted beatmap'
-                : `${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [${game.beatmap?.diffName ?? 'Unknown'}]`}
-            </span>
+            ) : (
+              <Link
+                href={`/beatmaps/${game.beatmap?.osuId}`}
+                className="truncate text-sm font-bold text-white drop-shadow-sm hover:underline sm:text-xl"
+              >
+                {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [
+                {game.beatmap?.diffName ?? 'Unknown'}]
+              </Link>
+            )}
           </div>
           <ModIconset
             mods={game.mods}
