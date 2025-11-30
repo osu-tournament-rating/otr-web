@@ -1,11 +1,13 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
 import {
   BeatmapStatsRequestSchema,
   BeatmapStatsResponseSchema,
+  BeatmapTournamentMatchRequestSchema,
+  BeatmapTournamentMatchResponseSchema,
   type BeatmapStatsResponse,
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
@@ -589,6 +591,138 @@ export const getBeatmapStats = publicProcedure
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
         message: 'Failed to load beatmap statistics',
+      });
+    }
+  });
+
+export const getBeatmapTournamentMatches = publicProcedure
+  .input(BeatmapTournamentMatchRequestSchema)
+  .output(BeatmapTournamentMatchResponseSchema)
+  .route({
+    summary: 'Get matches where a beatmap was used in a tournament',
+    tags: ['public'],
+    method: 'GET',
+    path: '/beatmaps/{beatmapOsuId}/tournaments/{tournamentId}/matches',
+  })
+  .handler(async ({ input, context }) => {
+    try {
+      const [beatmapResult] = await context.db
+        .select({ id: schema.beatmaps.id })
+        .from(schema.beatmaps)
+        .where(eq(schema.beatmaps.osuId, input.beatmapOsuId))
+        .limit(1);
+
+      if (!beatmapResult) {
+        throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
+      }
+
+      const beatmapId = beatmapResult.id;
+
+      const rows = await context.db
+        .select({
+          matchId: schema.matches.id,
+          matchName: schema.matches.name,
+          matchStartTime: schema.matches.startTime,
+          gameId: schema.games.id,
+          gameMods: schema.games.mods,
+        })
+        .from(schema.games)
+        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+        .where(
+          and(
+            eq(schema.games.beatmapId, beatmapId),
+            eq(schema.matches.tournamentId, input.tournamentId),
+            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+            eq(schema.games.verificationStatus, VerificationStatus.Verified)
+          )
+        )
+        .orderBy(
+          asc(schema.matches.startTime),
+          asc(schema.matches.id),
+          asc(schema.games.startTime),
+          asc(schema.games.id)
+        );
+
+      const matchIds = [...new Set(rows.map((r) => r.matchId))];
+
+      const allMatchGames =
+        matchIds.length > 0
+          ? await context.db
+              .select({
+                matchId: schema.games.matchId,
+                gameId: schema.games.id,
+              })
+              .from(schema.games)
+              .where(
+                and(
+                  inArray(schema.games.matchId, matchIds),
+                  eq(schema.games.verificationStatus, VerificationStatus.Verified)
+                )
+              )
+              .orderBy(asc(schema.games.startTime), asc(schema.games.id))
+          : [];
+
+      const gameNumberMap = new Map<number, number>();
+      const gamesByMatch = new Map<number, number[]>();
+
+      for (const game of allMatchGames) {
+        const games = gamesByMatch.get(game.matchId) ?? [];
+        games.push(game.gameId);
+        gamesByMatch.set(game.matchId, games);
+      }
+
+      for (const [, gameIds] of gamesByMatch) {
+        gameIds.forEach((gameId, index) => {
+          gameNumberMap.set(gameId, index + 1);
+        });
+      }
+
+      const matchesMap = new Map<
+        number,
+        {
+          matchId: number;
+          matchName: string;
+          startTime: string | null;
+          games: Array<{ gameId: number; gameNumber: number; mods: number }>;
+        }
+      >();
+
+      for (const row of rows) {
+        let match = matchesMap.get(row.matchId);
+        if (!match) {
+          match = {
+            matchId: row.matchId,
+            matchName: row.matchName,
+            startTime: row.matchStartTime,
+            games: [],
+          };
+          matchesMap.set(row.matchId, match);
+        }
+
+        const gameNumber = gameNumberMap.get(row.gameId) ?? 1;
+        match.games.push({
+          gameId: row.gameId,
+          gameNumber,
+          mods: row.gameMods,
+        });
+      }
+
+      return {
+        matches: Array.from(matchesMap.values()),
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
+      console.error(
+        '[orpc] beatmaps.tournamentMatches failed',
+        { beatmapOsuId: input.beatmapOsuId, tournamentId: input.tournamentId },
+        error
+      );
+
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Failed to load tournament matches',
       });
     }
   });

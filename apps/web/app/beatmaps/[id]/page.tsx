@@ -69,7 +69,10 @@ export default async function BeatmapPage({ params }: PageProps) {
         <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} />
         <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
       </div>
-      <BeatmapTournamentsList tournaments={beatmapStats.tournaments} />
+      <BeatmapTournamentsList
+        tournaments={beatmapStats.tournaments}
+        beatmapOsuId={beatmapStats.beatmap.osuId}
+      />
       {beatmapStats.topPerformers.length > 0 && (
         <BeatmapTopPerformersTable performers={beatmapStats.topPerformers} />
       )}

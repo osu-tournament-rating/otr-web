@@ -89,6 +89,28 @@ export const BeatmapStatsResponseSchema = z.object({
   topPerformers: z.array(BeatmapTopPerformerSchema),
 });
 
+export const BeatmapTournamentMatchRequestSchema = z.object({
+  beatmapOsuId: z.number().int().positive(),
+  tournamentId: z.number().int().positive(),
+});
+
+export const BeatmapTournamentMatchGameSchema = z.object({
+  gameId: z.number().int().positive(),
+  gameNumber: z.number().int().positive(),
+  mods: z.number().int().nonnegative(),
+});
+
+export const BeatmapTournamentMatchSchema = z.object({
+  matchId: z.number().int().positive(),
+  matchName: z.string(),
+  startTime: z.string().nullable(),
+  games: z.array(BeatmapTournamentMatchGameSchema),
+});
+
+export const BeatmapTournamentMatchResponseSchema = z.object({
+  matches: z.array(BeatmapTournamentMatchSchema),
+});
+
 export type BeatmapStatsRequest = z.infer<typeof BeatmapStatsRequestSchema>;
 export type BeatmapTournamentUsage = z.infer<typeof BeatmapTournamentUsageSchema>;
 export type BeatmapUsagePoint = z.infer<typeof BeatmapUsagePointSchema>;
@@ -98,3 +120,7 @@ export type BeatmapTopPerformer = z.infer<typeof BeatmapTopPerformerSchema>;
 export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;
 export type BeatmapWithDetails = z.infer<typeof BeatmapWithDetailsSchema>;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;
+export type BeatmapTournamentMatchRequest = z.infer<typeof BeatmapTournamentMatchRequestSchema>;
+export type BeatmapTournamentMatchGame = z.infer<typeof BeatmapTournamentMatchGameSchema>;
+export type BeatmapTournamentMatch = z.infer<typeof BeatmapTournamentMatchSchema>;
+export type BeatmapTournamentMatchResponse = z.infer<typeof BeatmapTournamentMatchResponseSchema>;

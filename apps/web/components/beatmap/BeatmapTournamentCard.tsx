@@ -8,12 +8,18 @@ import { LazerBadge } from '../badges/LazerBadge';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
 import ModIconset from '../icons/ModIconset';
-import { Users, Target, Calendar, Eye, EyeOff, Gamepad2, Trophy, Star } from 'lucide-react';
+import TierIcon from '../icons/TierIcon';
+import { Users, Target, Calendar, Eye, EyeOff, Gamepad2, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
+import { orpc } from '@/lib/orpc/orpc';
+import { getTierFromRating } from '@/lib/utils/tierData';
+import type {
+  BeatmapTournamentUsage,
+  BeatmapTournamentMatch,
+} from '@/lib/orpc/schema/beatmapStats';
 
 function formatRankRangeDisplay(rankRange: number): string {
   if (rankRange === 1) return 'Open';
@@ -22,16 +28,60 @@ function formatRankRangeDisplay(rankRange: number): string {
 
 interface BeatmapTournamentCardProps {
   tournament: BeatmapTournamentUsage;
+  beatmapOsuId: number;
 }
 
 export default function BeatmapTournamentCard({
   tournament,
+  beatmapOsuId,
 }: BeatmapTournamentCardProps) {
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+  const [matches, setMatches] = useState<BeatmapTournamentMatch[]>([]);
+  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+  const [matchesLoaded, setMatchesLoaded] = useState(false);
+  const [matchesError, setMatchesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isDetailsVisible || matchesLoaded || isLoadingMatches) {
+      return;
+    }
+
+    const loadMatches = async () => {
+      setIsLoadingMatches(true);
+      setMatchesError(null);
+
+      try {
+        const response = await orpc.beatmaps.tournamentMatches({
+          beatmapOsuId,
+          tournamentId: tournament.tournament.id,
+        });
+        setMatches(response.matches);
+        setMatchesLoaded(true);
+      } catch (error) {
+        console.error('Failed to load matches', error);
+        setMatchesError('Failed to load matches');
+      } finally {
+        setIsLoadingMatches(false);
+      }
+    };
+
+    loadMatches();
+  }, [
+    isDetailsVisible,
+    matchesLoaded,
+    isLoadingMatches,
+    beatmapOsuId,
+    tournament.tournament.id,
+  ]);
 
   const endDate = tournament.tournament.endTime
     ? new Date(tournament.tournament.endTime)
     : null;
+
+  const tierInfo =
+    tournament.medianRating != null
+      ? getTierFromRating(tournament.medianRating)
+      : null;
 
   const cardContent = (
     <div className="flex flex-col gap-3">
@@ -140,7 +190,15 @@ export default function BeatmapTournamentCard({
                 Median Rating
               </span>
               <span className="flex items-center gap-1.5 text-lg font-semibold">
-                <Star className="h-4 w-4 text-amber-500" />
+                {tierInfo ? (
+                  <TierIcon
+                    tier={tierInfo.tier}
+                    subTier={tierInfo.subTier}
+                    width={20}
+                    height={20}
+                    tooltip
+                  />
+                ) : null}
                 {tournament.medianRating != null
                   ? tournament.medianRating.toLocaleString()
                   : '—'}
@@ -150,8 +208,7 @@ export default function BeatmapTournamentCard({
               <span className="text-muted-foreground text-xs uppercase tracking-wide">
                 Median Score
               </span>
-              <span className="flex items-center gap-1.5 text-lg font-semibold">
-                <Trophy className="h-4 w-4 text-amber-500" />
+              <span className="text-lg font-semibold">
                 {tournament.medianScore != null
                   ? tournament.medianScore.toLocaleString()
                   : '—'}
@@ -161,10 +218,84 @@ export default function BeatmapTournamentCard({
               <span className="text-muted-foreground text-xs uppercase tracking-wide">
                 Most Common Mod
               </span>
-              <div className="flex h-7 items-center">
-                <ModIconset mods={tournament.mostCommonMod} iconClassName="h-6" />
+              <div className="flex h-5 w-14 items-center">
+                <ModIconset
+                  mods={tournament.mostCommonMod}
+                  className="flex h-full items-center"
+                  iconClassName="h-5"
+                />
               </div>
             </div>
+          </div>
+
+          <div className="mt-4 border-t pt-4">
+            <h4 className="text-muted-foreground mb-3 text-xs uppercase tracking-wide">
+              Matches
+            </h4>
+
+            {isLoadingMatches && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+              </div>
+            )}
+
+            {matchesError && (
+              <p className="text-destructive text-sm">{matchesError}</p>
+            )}
+
+            {matchesLoaded && matches.length === 0 && (
+              <p className="text-muted-foreground text-sm">No matches found</p>
+            )}
+
+            {matchesLoaded && matches.length > 0 && (
+              <div className="space-y-2">
+                {matches.map((match) => {
+                  const firstGameId = match.games[0]?.gameId;
+                  const matchUrl = firstGameId
+                    ? `/matches/${match.matchId}?gameId=${firstGameId}`
+                    : `/matches/${match.matchId}`;
+
+                  return (
+                    <div
+                      key={match.matchId}
+                      className="bg-muted/50 flex flex-col gap-1 rounded-md p-2 text-sm"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Link
+                          href={matchUrl}
+                          className="flex-1 truncate font-medium hover:underline"
+                        >
+                          {match.matchName}
+                        </Link>
+                        {match.startTime && (
+                          <span className="text-muted-foreground shrink-0 text-xs">
+                            {format(new Date(match.startTime), 'MMM d, yyyy')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+                        {match.games.map((game) => (
+                          <Link
+                            key={game.gameId}
+                            href={`/matches/${match.matchId}?gameId=${game.gameId}`}
+                            className="flex items-center gap-1 hover:underline"
+                          >
+                            <span>Game {game.gameNumber}</span>
+                            <div className="flex h-4 items-center">
+                              <ModIconset
+                                mods={game.mods}
+                                className="flex h-full items-center"
+                                iconClassName="h-4"
+                              />
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

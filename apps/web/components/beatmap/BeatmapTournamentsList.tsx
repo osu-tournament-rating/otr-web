@@ -9,10 +9,12 @@ import BeatmapTournamentCard from './BeatmapTournamentCard';
 
 interface BeatmapTournamentsListProps {
   tournaments: BeatmapTournamentUsage[];
+  beatmapOsuId: number;
 }
 
 export default function BeatmapTournamentsList({
   tournaments,
+  beatmapOsuId,
 }: BeatmapTournamentsListProps) {
   const NUM_INITIAL_DISPLAY = 5;
   const NUM_LOAD_MORE = 25;
@@ -37,6 +39,7 @@ export default function BeatmapTournamentsList({
           <BeatmapTournamentCard
             key={tournament.tournament.id}
             tournament={tournament}
+            beatmapOsuId={beatmapOsuId}
           />
         ))}
         {tournaments.length > displayCount && (
