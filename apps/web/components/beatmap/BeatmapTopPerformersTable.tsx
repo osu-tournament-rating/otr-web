@@ -28,6 +28,7 @@ import {
 } from '../ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import ModIconset from '@/components/icons/ModIconset';
+import { formatAccuracy } from '@/lib/utils/format';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
 
 interface BeatmapTopPerformersTableProps {
@@ -74,7 +75,7 @@ const columns = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="h-auto p-0 font-semibold hover:bg-transparent"
+        className="-ml-4 h-auto p-0 font-semibold hover:bg-transparent"
       >
         Score
         {column.getIsSorted() === 'asc' ? (
@@ -93,7 +94,7 @@ const columns = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="h-auto p-0 font-semibold hover:bg-transparent"
+        className="-ml-4 h-auto p-0 font-semibold hover:bg-transparent"
       >
         Accuracy
         {column.getIsSorted() === 'asc' ? (
@@ -107,14 +108,14 @@ const columns = [
     ),
     cell: ({ getValue }) => {
       const acc = getValue();
-      return acc !== null ? `${acc.toFixed(2)}%` : '-';
+      return acc !== null ? formatAccuracy(acc) : '-';
     },
   }),
   columnHelper.accessor('mods', {
     header: 'Mods',
     cell: ({ getValue }) => (
-      <div className="flex h-5 items-center">
-        <ModIconset mods={getValue()} iconClassName="h-5" />
+      <div className="flex h-5 w-14 items-center">
+        <ModIconset mods={getValue()} className="flex h-full items-center" iconClassName="h-5" />
       </div>
     ),
     enableSorting: false,

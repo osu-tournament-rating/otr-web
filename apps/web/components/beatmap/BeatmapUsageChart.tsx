@@ -11,7 +11,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
-  ResponsiveContainer,
   Legend,
 } from 'recharts';
 import {
@@ -95,11 +94,10 @@ export default function BeatmapUsageChart({
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              data={data}
-              margin={{ top: 5, right: 50, bottom: 5, left: 0 }}
-            >
+          <ComposedChart
+            data={data}
+            margin={{ top: 5, right: 50, bottom: 5, left: 0 }}
+          >
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="quarter"
@@ -163,8 +161,7 @@ export default function BeatmapUsageChart({
                 dot={{ fill: colors.pooled, strokeWidth: 0, r: 3 }}
                 activeDot={{ r: 5, strokeWidth: 0 }}
               />
-            </ComposedChart>
-          </ResponsiveContainer>
+          </ComposedChart>
         </ChartContainer>
       </CardContent>
     </Card>

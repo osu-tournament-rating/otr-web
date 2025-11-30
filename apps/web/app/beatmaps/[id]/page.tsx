@@ -11,7 +11,8 @@ import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
 import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
 import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
-import BeatmapTournamentsTable from '@/components/beatmap/BeatmapTournamentsTable';
+import BeatmapTournamentsList from '@/components/beatmap/BeatmapTournamentsList';
+import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -68,7 +69,10 @@ export default async function BeatmapPage({ params }: PageProps) {
         <BeatmapModDistributionChart modStats={beatmapStats.modDistribution} />
         <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
       </div>
-      <BeatmapTournamentsTable tournaments={beatmapStats.tournaments} />
+      <BeatmapTournamentsList tournaments={beatmapStats.tournaments} />
+      {beatmapStats.topPerformers.length > 0 && (
+        <BeatmapTopPerformersTable performers={beatmapStats.topPerformers} />
+      )}
     </div>
   );
 }
