@@ -52,6 +52,9 @@ export const BeatmapTopPerformerSchema = z.object({
   accuracy: z.number().min(0).max(100).nullable(),
   mods: z.number().int().nonnegative(),
   playedAt: z.string().nullable(),
+  matchId: z.number().int().positive(),
+  gameId: z.number().int().positive(),
+  scoreId: z.number().int().positive(),
 });
 
 export const BeatmapStatsSummarySchema = z.object({
@@ -98,6 +101,9 @@ export const BeatmapTournamentMatchGameSchema = z.object({
   gameId: z.number().int().positive(),
   gameNumber: z.number().int().positive(),
   mods: z.number().int().nonnegative(),
+  medianRating: z.number().nullable(),
+  medianScore: z.number().int().nonnegative().nullable(),
+  playerCount: z.number().int().nonnegative(),
 });
 
 export const BeatmapTournamentMatchSchema = z.object({

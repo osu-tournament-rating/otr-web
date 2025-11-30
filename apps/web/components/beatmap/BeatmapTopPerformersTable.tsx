@@ -87,7 +87,14 @@ const columns = [
         )}
       </Button>
     ),
-    cell: ({ getValue }) => getValue().toLocaleString(),
+    cell: ({ row }) => (
+      <Link
+        href={`/matches/${row.original.matchId}?scoreId=${row.original.scoreId}`}
+        className="text-primary hover:underline"
+      >
+        {row.original.score.toLocaleString()}
+      </Link>
+    ),
   }),
   columnHelper.accessor('accuracy', {
     header: ({ column }) => (

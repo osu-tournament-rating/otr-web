@@ -489,6 +489,9 @@ export const getBeatmapStats = publicProcedure
         accuracy: schema.gameScores.accuracy,
         mods: schema.games.mods,
         playedAt: schema.games.startTime,
+        matchId: schema.matches.id,
+        gameId: schema.games.id,
+        scoreId: schema.gameScores.id,
       })
       .from(schema.gameScores)
       .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
@@ -525,6 +528,9 @@ export const getBeatmapStats = publicProcedure
       accuracy: row.accuracy ?? null,
       mods: row.mods,
       playedAt: row.playedAt,
+      matchId: row.matchId,
+      gameId: row.gameId,
+      scoreId: row.scoreId,
     }));
 
     const response: BeatmapStatsResponse = {
@@ -677,13 +683,66 @@ export const getBeatmapTournamentMatches = publicProcedure
         });
       }
 
+      const relevantGameIds = rows.map((r) => r.gameId);
+      const gameStatsRows =
+        relevantGameIds.length > 0
+          ? await context.db
+              .select({
+                gameId: schema.games.id,
+                medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+                medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+                playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
+              })
+              .from(schema.gameScores)
+              .innerJoin(
+                schema.games,
+                eq(schema.games.id, schema.gameScores.gameId)
+              )
+              .innerJoin(
+                schema.matches,
+                eq(schema.matches.id, schema.games.matchId)
+              )
+              .leftJoin(
+                schema.ratingAdjustments,
+                and(
+                  eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+                  eq(schema.ratingAdjustments.matchId, schema.matches.id)
+                )
+              )
+              .where(
+                and(
+                  inArray(schema.games.id, relevantGameIds),
+                  eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+                )
+              )
+              .groupBy(schema.games.id)
+          : [];
+
+      const gameStatsMap = new Map(
+        gameStatsRows.map((row) => [
+          row.gameId,
+          {
+            medianScore: row.medianScore ? Math.round(row.medianScore) : null,
+            medianRating: row.medianRating ? Math.round(row.medianRating) : null,
+            playerCount: Number(row.playerCount),
+          },
+        ])
+      );
+
       const matchesMap = new Map<
         number,
         {
           matchId: number;
           matchName: string;
           startTime: string | null;
-          games: Array<{ gameId: number; gameNumber: number; mods: number }>;
+          games: Array<{
+            gameId: number;
+            gameNumber: number;
+            mods: number;
+            medianRating: number | null;
+            medianScore: number | null;
+            playerCount: number;
+          }>;
         }
       >();
 
@@ -700,10 +759,14 @@ export const getBeatmapTournamentMatches = publicProcedure
         }
 
         const gameNumber = gameNumberMap.get(row.gameId) ?? 1;
+        const stats = gameStatsMap.get(row.gameId);
         match.games.push({
           gameId: row.gameId,
           gameNumber,
           mods: row.gameMods,
+          medianRating: stats?.medianRating ?? null,
+          medianScore: stats?.medianScore ?? null,
+          playerCount: stats?.playerCount ?? 0,
         });
       }
 

@@ -6,6 +6,14 @@ import Link from 'next/link';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
 import { Card } from '../ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/table';
 import RulesetIcon from '../icons/RulesetIcon';
 import ModIconset from '../icons/ModIconset';
 import TierIcon from '../icons/TierIcon';
@@ -248,52 +256,88 @@ export default function BeatmapTournamentCard({
             )}
 
             {matchesLoaded && matches.length > 0 && (
-              <div className="space-y-2">
-                {matches.map((match) => {
-                  const firstGameId = match.games[0]?.gameId;
-                  const matchUrl = firstGameId
-                    ? `/matches/${match.matchId}?gameId=${firstGameId}`
-                    : `/matches/${match.matchId}`;
-
-                  return (
-                    <div
-                      key={match.matchId}
-                      className="bg-muted/50 flex flex-col gap-1 rounded-md p-2 text-sm"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <Link
-                          href={matchUrl}
-                          className="flex-1 truncate font-medium hover:underline"
-                        >
-                          {match.matchName}
-                        </Link>
-                        {match.startTime && (
-                          <span className="text-muted-foreground shrink-0 text-xs">
-                            {format(new Date(match.startTime), 'MMM d, yyyy')}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
-                        {match.games.map((game) => (
-                          <Link
+              <div className="rounded-lg bg-popover/50">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-border/50 hover:bg-transparent">
+                      <TableHead className="font-semibold text-foreground">
+                        Match
+                      </TableHead>
+                      <TableHead className="font-semibold text-foreground">
+                        Mods
+                      </TableHead>
+                      <TableHead className="font-semibold text-foreground">
+                        Rating
+                      </TableHead>
+                      <TableHead className="font-semibold text-foreground">
+                        Score
+                      </TableHead>
+                      <TableHead className="font-semibold text-foreground">
+                        Date
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {matches.flatMap((match) =>
+                      match.games.map((game) => {
+                        const gameTierInfo =
+                          game.medianRating != null
+                            ? getTierFromRating(game.medianRating)
+                            : null;
+                        return (
+                          <TableRow
                             key={game.gameId}
-                            href={`/matches/${match.matchId}?gameId=${game.gameId}`}
-                            className="flex items-center gap-1 hover:underline"
+                            className="border-b border-border/30 transition-colors hover:bg-popover/80"
                           >
-                            <span>Game {game.gameNumber}</span>
-                            <div className="flex h-4 items-center">
-                              <ModIconset
-                                mods={game.mods}
-                                className="flex h-full items-center"
-                                iconClassName="h-4"
-                              />
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                            <TableCell className="py-2">
+                              <Link
+                                href={`/matches/${match.matchId}?gameId=${game.gameId}`}
+                                className="truncate font-medium hover:underline"
+                              >
+                                {match.matchName}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <div className="flex h-5 w-14 items-center">
+                                <ModIconset
+                                  mods={game.mods}
+                                  className="flex h-full items-center"
+                                  iconClassName="h-5"
+                                />
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <span className="flex items-center gap-1">
+                                {gameTierInfo ? (
+                                  <TierIcon
+                                    tier={gameTierInfo.tier}
+                                    subTier={gameTierInfo.subTier}
+                                    width={16}
+                                    height={16}
+                                    tooltip
+                                  />
+                                ) : null}
+                                {game.medianRating != null
+                                  ? game.medianRating.toLocaleString()
+                                  : '—'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-2">
+                              {game.medianScore != null
+                                ? game.medianScore.toLocaleString()
+                                : '—'}
+                            </TableCell>
+                            <TableCell className="py-2 text-muted-foreground">
+                              {match.startTime
+                                ? format(new Date(match.startTime), 'MMM d, yyyy')
+                                : null}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
