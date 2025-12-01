@@ -97,6 +97,7 @@ export default function SearchCommandDialog() {
         onOpenChange={setOpen}
         title="Search"
         description="Search players, tournaments, matches, and beatmaps"
+        contentClassName="md:max-w-[612px]"
       >
         <Command shouldFilter={false} loop>
           <div className="relative">
@@ -110,7 +111,7 @@ export default function SearchCommandDialog() {
             )}
           </div>
 
-          <CommandList className="max-h-[400px]">
+          <CommandList className="max-h-[400px] md:max-h-[800px]">
             {!debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-8">
                 <Search className="text-muted-foreground/30 h-10 w-10" />
