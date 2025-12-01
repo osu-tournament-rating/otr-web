@@ -129,20 +129,42 @@ export const listBeatmaps = publicProcedure
       }
       if (input.minTournamentCount !== undefined) {
         filters.push(sql`(
-          SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
-          FROM join_pooled_beatmaps jpb
-          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
+          SELECT COUNT(DISTINCT tournament_id) FROM (
+            SELECT jpb.tournaments_pooled_in_id AS tournament_id
+            FROM join_pooled_beatmaps jpb
+            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+            UNION
+            SELECT t.id AS tournament_id
+            FROM games g
+            INNER JOIN matches m ON m.id = g.match_id
+            INNER JOIN tournaments t ON t.id = m.tournament_id
+            WHERE g.beatmap_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+              AND m.verification_status = ${VerificationStatus.Verified}
+              AND g.verification_status = ${VerificationStatus.Verified}
+          ) AS combined_tournaments
         ) >= ${input.minTournamentCount}`);
       }
       if (input.maxTournamentCount !== undefined) {
         filters.push(sql`(
-          SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
-          FROM join_pooled_beatmaps jpb
-          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
+          SELECT COUNT(DISTINCT tournament_id) FROM (
+            SELECT jpb.tournaments_pooled_in_id AS tournament_id
+            FROM join_pooled_beatmaps jpb
+            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+            UNION
+            SELECT t.id AS tournament_id
+            FROM games g
+            INNER JOIN matches m ON m.id = g.match_id
+            INNER JOIN tournaments t ON t.id = m.tournament_id
+            WHERE g.beatmap_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+              AND m.verification_status = ${VerificationStatus.Verified}
+              AND g.verification_status = ${VerificationStatus.Verified}
+          ) AS combined_tournaments
         ) <= ${input.maxTournamentCount}`);
       }
 
@@ -173,11 +195,22 @@ export const listBeatmaps = publicProcedure
 
       const verifiedTournamentCountSql = sql<number>`
         COALESCE((
-          SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
-          FROM join_pooled_beatmaps jpb
-          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
+          SELECT COUNT(DISTINCT tournament_id) FROM (
+            SELECT jpb.tournaments_pooled_in_id AS tournament_id
+            FROM join_pooled_beatmaps jpb
+            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+            UNION
+            SELECT t.id AS tournament_id
+            FROM games g
+            INNER JOIN matches m ON m.id = g.match_id
+            INNER JOIN tournaments t ON t.id = m.tournament_id
+            WHERE g.beatmap_id = ${schema.beatmaps.id}
+              AND t.verification_status = ${VerificationStatus.Verified}
+              AND m.verification_status = ${VerificationStatus.Verified}
+              AND g.verification_status = ${VerificationStatus.Verified}
+          ) AS combined_tournaments
         ), 0)
       `.as('verified_tournament_count');
 
