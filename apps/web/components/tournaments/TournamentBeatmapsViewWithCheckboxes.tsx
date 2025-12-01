@@ -230,7 +230,7 @@ const BeatmapRow = memo(
           <div className="flex items-center">
             {beatmap.beatmapset?.creator ? (
               <Link
-                href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
+                href={`/players/${beatmap.beatmapset.creator.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"

@@ -411,9 +411,7 @@ export default function TournamentBeatmapsView({
                       <div className="flex items-center">
                         {beatmap.beatmapset?.creator ? (
                           <Link
-                            href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/players/${beatmap.beatmapset.creator.id}`}
                             className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
                           >
                             <User className="h-3 w-3 flex-shrink-0" />
