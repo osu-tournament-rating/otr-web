@@ -37,7 +37,7 @@ const defaultFilterRanges = {
   cs: { min: 0, max: 10, step: 0.5 },
   ar: { min: 0, max: 10, step: 0.5 },
   od: { min: 0, max: 10, step: 0.5 },
-  hp: { min: 0, max: 7, step: 0.5 },
+  hp: { min: 0, max: 10, step: 0.5 },
   length: { min: 0, max: 600, step: 15 },
   gameCount: { min: 1, max: 500, step: 1 },
   tournamentCount: { min: 1, max: 100, step: 1 },

@@ -255,6 +255,11 @@ export default function BeatmapScoreRatingChart({
         <CardHeader>
           <CardTitle>Score vs Player Rating</CardTitle>
         </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground py-8 text-center text-sm">
+            No score data available for this beatmap.
+          </p>
+        </CardContent>
       </Card>
     );
   }
