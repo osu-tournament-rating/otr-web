@@ -258,6 +258,17 @@ export const listBeatmaps = publicProcedure
         }
       };
 
+      const creatorSubquery = context.db
+        .select({
+          beatmapId: schema.joinBeatmapCreators.createdBeatmapsId,
+          creatorId: sql<number>`MIN(${schema.joinBeatmapCreators.creatorsId})`.as(
+            'creator_id'
+          ),
+        })
+        .from(schema.joinBeatmapCreators)
+        .groupBy(schema.joinBeatmapCreators.createdBeatmapsId)
+        .as('beatmap_creator');
+
       const baseQuery = context.db
         .select({
           id: schema.beatmaps.id,
@@ -283,9 +294,10 @@ export const listBeatmaps = publicProcedure
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
         )
+        .leftJoin(creatorSubquery, eq(schema.beatmaps.id, creatorSubquery.beatmapId))
         .leftJoin(
           schema.players,
-          eq(schema.beatmapsets.creatorId, schema.players.id)
+          sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
         );
 
       const conditionedQuery = whereClause
@@ -304,9 +316,10 @@ export const listBeatmaps = publicProcedure
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
         )
+        .leftJoin(creatorSubquery, eq(schema.beatmaps.id, creatorSubquery.beatmapId))
         .leftJoin(
           schema.players,
-          eq(schema.beatmapsets.creatorId, schema.players.id)
+          sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
         );
 
       const countResult = whereClause
