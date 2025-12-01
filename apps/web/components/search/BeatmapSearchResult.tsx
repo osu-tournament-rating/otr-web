@@ -23,7 +23,7 @@ export default function BeatmapSearchResultCard({
   const displayTitle = `${data.artist} - ${data.title}`;
 
   return (
-    <Card className="border-none bg-popover p-0 transition-colors hover:bg-popover/80">
+    <Card className="overflow-hidden border-none bg-popover p-0 transition-colors hover:bg-popover/80">
       <Link
         href={`/beatmaps/${data.osuId}`}
         onClick={closeDialog}
@@ -44,7 +44,7 @@ export default function BeatmapSearchResultCard({
               {highlightMatch(displayTitle, query)}
             </p>
           </div>
-          <p className="text-muted-foreground truncate text-xs sm:text-sm">
+          <p className="text-muted-foreground min-w-0 truncate text-xs sm:text-sm">
             [{highlightMatch(data.diffName, query)}]
           </p>
         </div>

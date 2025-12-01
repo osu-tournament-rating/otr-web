@@ -28,11 +28,7 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
       <div className="relative z-[3] flex flex-col gap-3 p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex w-full gap-2 sm:w-auto">
-            <Link
-              href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link href={`/beatmaps/${beatmap.osuId}`}>
               <h1 className="text-lg font-semibold leading-tight text-white drop-shadow-sm sm:text-xl md:text-2xl">
                 {beatmap.beatmapset?.artist ?? 'Unknown'} -{' '}
                 {beatmap.beatmapset?.title ?? 'Unknown'}
