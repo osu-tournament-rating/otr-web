@@ -134,16 +134,15 @@ export default function GameCardHeader({ game }: { game: Game }) {
               )}
               <span>• Map by</span>
               {isDeletedBeatmap || !game.beatmap?.creators?.length ? (
-                <span className="font-semibold text-white">Unknown creator</span>
+                <span className="font-semibold text-white">
+                  Unknown creator
+                </span>
               ) : (
                 <span className="font-semibold text-white">
                   {game.beatmap.creators.map((c, i) => (
                     <span key={c.id}>
                       {i > 0 && ', '}
-                      <Link
-                        href={`/players/${c.id}`}
-                        className=""
-                      >
+                      <Link href={`/players/${c.id}`} className="">
                         {c.username}
                       </Link>
                     </span>

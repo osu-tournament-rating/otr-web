@@ -10,12 +10,7 @@ import {
   Legend,
   ReferenceArea,
 } from 'recharts';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
 import type { BeatmapScoreRatingPoint } from '@/lib/orpc/schema/beatmapStats';
 
@@ -48,8 +43,7 @@ const getModCategory = (mods: number): ModCategory => {
 };
 
 const getChartColors = (theme?: string) => ({
-  grid:
-    theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
+  grid: theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
   text: theme === 'dark' ? '#9ca3af' : '#6b7280',
 });
 
@@ -272,132 +266,132 @@ export default function BeatmapScoreRatingChart({
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <ScatterChart margin={{ top: 25, right: 10, bottom: 25, left: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
-              <XAxis
-                type="number"
-                dataKey="playerRating"
-                name="Rating"
-                domain={xDomain}
-                ticks={xTicks}
-                tick={{ fill: colors.text, fontSize: 11 }}
-                tickLine={{ stroke: colors.grid }}
-                axisLine={{ stroke: colors.grid }}
-                tickFormatter={(v) => v.toFixed(0)}
-                label={{
-                  value: 'Player Rating',
-                  position: 'insideBottom',
-                  offset: -15,
-                  fill: colors.text,
-                  fontSize: 11,
-                }}
-              />
-              <YAxis
-                type="number"
-                dataKey="score"
-                name="Score"
-                domain={yDomain}
-                ticks={yTicks}
-                tick={{ fill: colors.text, fontSize: 11 }}
-                tickLine={{ stroke: colors.grid }}
-                axisLine={{ stroke: colors.grid }}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                label={{
-                  value: 'Score',
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: 5,
-                  fill: colors.text,
-                  fontSize: 11,
-                }}
-              />
-              <Legend
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{
-                  fontSize: 11,
-                  color: colors.text,
-                  paddingBottom: 10,
-                  cursor: 'pointer',
-                }}
-                onClick={handleLegendClick}
-                payload={[
-                  ...(groupedData.nm.length > 0
-                    ? [
-                        {
-                          value: 'No Mod',
-                          type: 'square' as const,
-                          color: visibleMods.has('nm')
-                            ? 'var(--chart-1)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.hr.length > 0
-                    ? [
-                        {
-                          value: 'Hard Rock',
-                          type: 'square' as const,
-                          color: visibleMods.has('hr')
-                            ? 'var(--mod-hard-rock)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.hd.length > 0
-                    ? [
-                        {
-                          value: 'Hidden',
-                          type: 'square' as const,
-                          color: visibleMods.has('hd')
-                            ? 'var(--mod-hidden)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.dt.length > 0
-                    ? [
-                        {
-                          value: 'Double Time',
-                          type: 'square' as const,
-                          color: visibleMods.has('dt')
-                            ? 'var(--mod-double-time)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.other.length > 0
-                    ? [
-                        {
-                          value: 'Other',
-                          type: 'square' as const,
-                          color: visibleMods.has('other')
-                            ? 'var(--chart-3)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                ]}
-              />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+            <XAxis
+              type="number"
+              dataKey="playerRating"
+              name="Rating"
+              domain={xDomain}
+              ticks={xTicks}
+              tick={{ fill: colors.text, fontSize: 11 }}
+              tickLine={{ stroke: colors.grid }}
+              axisLine={{ stroke: colors.grid }}
+              tickFormatter={(v) => v.toFixed(0)}
+              label={{
+                value: 'Player Rating',
+                position: 'insideBottom',
+                offset: -15,
+                fill: colors.text,
+                fontSize: 11,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="score"
+              name="Score"
+              domain={yDomain}
+              ticks={yTicks}
+              tick={{ fill: colors.text, fontSize: 11 }}
+              tickLine={{ stroke: colors.grid }}
+              axisLine={{ stroke: colors.grid }}
+              tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+              label={{
+                value: 'Score',
+                angle: -90,
+                position: 'insideLeft',
+                offset: 5,
+                fill: colors.text,
+                fontSize: 11,
+              }}
+            />
+            <Legend
+              verticalAlign="top"
+              align="right"
+              wrapperStyle={{
+                fontSize: 11,
+                color: colors.text,
+                paddingBottom: 10,
+                cursor: 'pointer',
+              }}
+              onClick={handleLegendClick}
+              payload={[
+                ...(groupedData.nm.length > 0
+                  ? [
+                      {
+                        value: 'No Mod',
+                        type: 'square' as const,
+                        color: visibleMods.has('nm')
+                          ? 'var(--chart-1)'
+                          : 'rgba(128,128,128,0.3)',
+                      },
+                    ]
+                  : []),
+                ...(groupedData.hr.length > 0
+                  ? [
+                      {
+                        value: 'Hard Rock',
+                        type: 'square' as const,
+                        color: visibleMods.has('hr')
+                          ? 'var(--mod-hard-rock)'
+                          : 'rgba(128,128,128,0.3)',
+                      },
+                    ]
+                  : []),
+                ...(groupedData.hd.length > 0
+                  ? [
+                      {
+                        value: 'Hidden',
+                        type: 'square' as const,
+                        color: visibleMods.has('hd')
+                          ? 'var(--mod-hidden)'
+                          : 'rgba(128,128,128,0.3)',
+                      },
+                    ]
+                  : []),
+                ...(groupedData.dt.length > 0
+                  ? [
+                      {
+                        value: 'Double Time',
+                        type: 'square' as const,
+                        color: visibleMods.has('dt')
+                          ? 'var(--mod-double-time)'
+                          : 'rgba(128,128,128,0.3)',
+                      },
+                    ]
+                  : []),
+                ...(groupedData.other.length > 0
+                  ? [
+                      {
+                        value: 'Other',
+                        type: 'square' as const,
+                        color: visibleMods.has('other')
+                          ? 'var(--chart-3)'
+                          : 'rgba(128,128,128,0.3)',
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-              {(Object.keys(densityByMod) as ModCategory[])
-                .filter((mod) => visibleMods.has(mod))
-                .map((mod) =>
-                  densityByMod[mod]?.map((cell, i) => (
-                    <ReferenceArea
-                      key={`density-${mod}-${i}`}
-                      x1={cell.x1}
-                      x2={cell.x2}
-                      y1={cell.y1}
-                      y2={cell.y2}
-                      fill={MOD_COLORS[mod]}
-                      fillOpacity={
-                        DENSITY_MIN_OPACITY +
-                        cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
-                      }
-                      stroke="none"
-                    />
-                  ))
-                )}
+            {(Object.keys(densityByMod) as ModCategory[])
+              .filter((mod) => visibleMods.has(mod))
+              .map((mod) =>
+                densityByMod[mod]?.map((cell, i) => (
+                  <ReferenceArea
+                    key={`density-${mod}-${i}`}
+                    x1={cell.x1}
+                    x2={cell.x2}
+                    y1={cell.y1}
+                    y2={cell.y2}
+                    fill={MOD_COLORS[mod]}
+                    fillOpacity={
+                      DENSITY_MIN_OPACITY +
+                      cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
+                    }
+                    stroke="none"
+                  />
+                ))
+              )}
           </ScatterChart>
         </ChartContainer>
       </CardContent>

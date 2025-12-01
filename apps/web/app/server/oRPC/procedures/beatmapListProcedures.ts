@@ -1,5 +1,17 @@
 import { ORPCError } from '@orpc/server';
-import { SQL, and, asc, count, desc, eq, gte, ilike, lte, or, sql } from 'drizzle-orm';
+import {
+  SQL,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
@@ -55,21 +67,34 @@ export const listBeatmaps = publicProcedure
         }
       }
 
-      if (input.minSr !== undefined) filters.push(gte(schema.beatmaps.sr, input.minSr));
+      if (input.minSr !== undefined)
+        filters.push(gte(schema.beatmaps.sr, input.minSr));
       const effectiveMaxSr = input.maxSr ?? DEFAULT_MAX_SR;
       filters.push(lte(schema.beatmaps.sr, effectiveMaxSr));
-      if (input.minBpm !== undefined) filters.push(gte(schema.beatmaps.bpm, input.minBpm));
-      if (input.maxBpm !== undefined) filters.push(lte(schema.beatmaps.bpm, input.maxBpm));
-      if (input.minCs !== undefined) filters.push(gte(schema.beatmaps.cs, input.minCs));
-      if (input.maxCs !== undefined) filters.push(lte(schema.beatmaps.cs, input.maxCs));
-      if (input.minAr !== undefined) filters.push(gte(schema.beatmaps.ar, input.minAr));
-      if (input.maxAr !== undefined) filters.push(lte(schema.beatmaps.ar, input.maxAr));
-      if (input.minOd !== undefined) filters.push(gte(schema.beatmaps.od, input.minOd));
-      if (input.maxOd !== undefined) filters.push(lte(schema.beatmaps.od, input.maxOd));
-      if (input.minHp !== undefined) filters.push(gte(schema.beatmaps.hp, input.minHp));
-      if (input.maxHp !== undefined) filters.push(lte(schema.beatmaps.hp, input.maxHp));
-      if (input.minLength !== undefined) filters.push(gte(schema.beatmaps.totalLength, input.minLength));
-      if (input.maxLength !== undefined) filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
+      if (input.minBpm !== undefined)
+        filters.push(gte(schema.beatmaps.bpm, input.minBpm));
+      if (input.maxBpm !== undefined)
+        filters.push(lte(schema.beatmaps.bpm, input.maxBpm));
+      if (input.minCs !== undefined)
+        filters.push(gte(schema.beatmaps.cs, input.minCs));
+      if (input.maxCs !== undefined)
+        filters.push(lte(schema.beatmaps.cs, input.maxCs));
+      if (input.minAr !== undefined)
+        filters.push(gte(schema.beatmaps.ar, input.minAr));
+      if (input.maxAr !== undefined)
+        filters.push(lte(schema.beatmaps.ar, input.maxAr));
+      if (input.minOd !== undefined)
+        filters.push(gte(schema.beatmaps.od, input.minOd));
+      if (input.maxOd !== undefined)
+        filters.push(lte(schema.beatmaps.od, input.maxOd));
+      if (input.minHp !== undefined)
+        filters.push(gte(schema.beatmaps.hp, input.minHp));
+      if (input.maxHp !== undefined)
+        filters.push(lte(schema.beatmaps.hp, input.maxHp));
+      if (input.minLength !== undefined)
+        filters.push(gte(schema.beatmaps.totalLength, input.minLength));
+      if (input.maxLength !== undefined)
+        filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
       if (input.ruleset === Ruleset.Mania4k) {
         filters.push(ilike(schema.beatmaps.diffName, '%[4K]%'));
       } else if (input.ruleset === Ruleset.Mania7k) {
@@ -175,17 +200,28 @@ export const listBeatmaps = publicProcedure
 
       const getSortColumn = () => {
         switch (sortValue) {
-          case 'sr': return schema.beatmaps.sr;
-          case 'bpm': return schema.beatmaps.bpm;
-          case 'cs': return schema.beatmaps.cs;
-          case 'ar': return schema.beatmaps.ar;
-          case 'od': return schema.beatmaps.od;
-          case 'hp': return schema.beatmaps.hp;
-          case 'length': return schema.beatmaps.totalLength;
-          case 'tournamentCount': return verifiedTournamentCountSql;
-          case 'gameCount': return verifiedGameCountSql;
-          case 'creator': return schema.players.username;
-          default: return schema.beatmaps.sr;
+          case 'sr':
+            return schema.beatmaps.sr;
+          case 'bpm':
+            return schema.beatmaps.bpm;
+          case 'cs':
+            return schema.beatmaps.cs;
+          case 'ar':
+            return schema.beatmaps.ar;
+          case 'od':
+            return schema.beatmaps.od;
+          case 'hp':
+            return schema.beatmaps.hp;
+          case 'length':
+            return schema.beatmaps.totalLength;
+          case 'tournamentCount':
+            return verifiedTournamentCountSql;
+          case 'gameCount':
+            return verifiedGameCountSql;
+          case 'creator':
+            return schema.players.username;
+          default:
+            return schema.beatmaps.sr;
         }
       };
 

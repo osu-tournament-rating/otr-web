@@ -17,7 +17,15 @@ import {
 import RulesetIcon from '../icons/RulesetIcon';
 import ModIconset from '../icons/ModIconset';
 import TierIcon from '../icons/TierIcon';
-import { Users, Target, Calendar, Eye, EyeOff, Gamepad2, Loader2 } from 'lucide-react';
+import {
+  Users,
+  Target,
+  Calendar,
+  Eye,
+  EyeOff,
+  Gamepad2,
+  Loader2,
+} from 'lucide-react';
 import { Button } from '../ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -127,14 +135,18 @@ export default function BeatmapTournamentCard({
               className="flex-shrink-0 fill-current"
             />
             <span className="truncate">
-              {RulesetEnumHelper.getMetadata(tournament.tournament.ruleset).text}
+              {
+                RulesetEnumHelper.getMetadata(tournament.tournament.ruleset)
+                  .text
+              }
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span>
-              {tournament.tournament.lobbySize}v{tournament.tournament.lobbySize}
+              {tournament.tournament.lobbySize}v
+              {tournament.tournament.lobbySize}
             </span>
           </div>
 
@@ -148,7 +160,8 @@ export default function BeatmapTournamentCard({
           <div className="flex items-center gap-1.5">
             <Gamepad2 className="h-4 w-4 flex-shrink-0" />
             <span>
-              {tournament.gameCount} {tournament.gameCount === 1 ? 'game' : 'games'}
+              {tournament.gameCount}{' '}
+              {tournament.gameCount === 1 ? 'game' : 'games'}
             </span>
           </div>
 
@@ -256,23 +269,23 @@ export default function BeatmapTournamentCard({
             )}
 
             {matchesLoaded && matches.length > 0 && (
-              <div className="rounded-lg bg-popover/50">
+              <div className="bg-popover/50 rounded-lg">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b border-border/50 hover:bg-transparent">
-                      <TableHead className="font-semibold text-foreground">
+                    <TableRow className="border-border/50 border-b hover:bg-transparent">
+                      <TableHead className="text-foreground font-semibold">
                         Match
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground">
+                      <TableHead className="text-foreground font-semibold">
                         Mods
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground">
+                      <TableHead className="text-foreground font-semibold">
                         Rating
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground">
+                      <TableHead className="text-foreground font-semibold">
                         Score
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground">
+                      <TableHead className="text-foreground font-semibold">
                         Date
                       </TableHead>
                     </TableRow>
@@ -287,7 +300,7 @@ export default function BeatmapTournamentCard({
                         return (
                           <TableRow
                             key={game.gameId}
-                            className="border-b border-border/30 transition-colors hover:bg-popover/80"
+                            className="border-border/30 hover:bg-popover/80 border-b transition-colors"
                           >
                             <TableCell className="py-2">
                               <Link
@@ -327,9 +340,12 @@ export default function BeatmapTournamentCard({
                                 ? game.medianScore.toLocaleString()
                                 : '—'}
                             </TableCell>
-                            <TableCell className="py-2 text-muted-foreground">
+                            <TableCell className="text-muted-foreground py-2">
                               {match.startTime
-                                ? format(new Date(match.startTime), 'MMM d, yyyy')
+                                ? format(
+                                    new Date(match.startTime),
+                                    'MMM d, yyyy'
+                                  )
                                 : null}
                             </TableCell>
                           </TableRow>

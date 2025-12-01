@@ -34,7 +34,9 @@ export function TournamentResultContent({
         <LazerBadge isLazer={data.isLazer} />
         <div className="flex items-center gap-1">
           <Users className="text-primary h-3.5 w-3.5 flex-shrink-0" />
-          <span className="text-xs">{data.lobbySize}v{data.lobbySize}</span>
+          <span className="text-xs">
+            {data.lobbySize}v{data.lobbySize}
+          </span>
         </div>
         <SimpleTooltip
           content={RulesetEnumHelper.getMetadata(data.ruleset).text}

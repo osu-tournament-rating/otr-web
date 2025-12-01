@@ -14,11 +14,21 @@ import {
   defaultBeatmapListFilter,
 } from '@/lib/schema';
 import { RulesetEnumHelper } from '@/lib/enums';
-import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+} from '@/components/ui/form';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { cn } from '@/lib/utils';
@@ -71,7 +81,10 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
 
   useEffect(() => {
     if (debouncedQuery !== (filter.q ?? '')) {
-      const params = buildSearchParams({ ...form.getValues(), q: debouncedQuery });
+      const params = buildSearchParams({
+        ...form.getValues(),
+        q: debouncedQuery,
+      });
       router.push(pathname + (params.size > 0 ? `?${params}` : ''));
     }
   }, [debouncedQuery, filter.q, form, pathname, router]);
@@ -80,11 +93,14 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     const params = new URLSearchParams();
 
     if (values.q) params.set('q', values.q);
-    if (values.ruleset !== undefined) params.set('ruleset', String(values.ruleset));
+    if (values.ruleset !== undefined)
+      params.set('ruleset', String(values.ruleset));
     if (values.minSr !== undefined) params.set('minSr', String(values.minSr));
     if (values.maxSr !== undefined) params.set('maxSr', String(values.maxSr));
-    if (values.minBpm !== undefined) params.set('minBpm', String(values.minBpm));
-    if (values.maxBpm !== undefined) params.set('maxBpm', String(values.maxBpm));
+    if (values.minBpm !== undefined)
+      params.set('minBpm', String(values.minBpm));
+    if (values.maxBpm !== undefined)
+      params.set('maxBpm', String(values.maxBpm));
     if (values.minCs !== undefined) params.set('minCs', String(values.minCs));
     if (values.maxCs !== undefined) params.set('maxCs', String(values.maxCs));
     if (values.minAr !== undefined) params.set('minAr', String(values.minAr));
@@ -93,12 +109,18 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     if (values.maxOd !== undefined) params.set('maxOd', String(values.maxOd));
     if (values.minHp !== undefined) params.set('minHp', String(values.minHp));
     if (values.maxHp !== undefined) params.set('maxHp', String(values.maxHp));
-    if (values.minLength !== undefined) params.set('minLength', String(values.minLength));
-    if (values.maxLength !== undefined) params.set('maxLength', String(values.maxLength));
-    if (values.minGameCount !== undefined) params.set('minGameCount', String(values.minGameCount));
-    if (values.maxGameCount !== undefined) params.set('maxGameCount', String(values.maxGameCount));
-    if (values.minTournamentCount !== undefined) params.set('minTournamentCount', String(values.minTournamentCount));
-    if (values.maxTournamentCount !== undefined) params.set('maxTournamentCount', String(values.maxTournamentCount));
+    if (values.minLength !== undefined)
+      params.set('minLength', String(values.minLength));
+    if (values.maxLength !== undefined)
+      params.set('maxLength', String(values.maxLength));
+    if (values.minGameCount !== undefined)
+      params.set('minGameCount', String(values.minGameCount));
+    if (values.maxGameCount !== undefined)
+      params.set('maxGameCount', String(values.maxGameCount));
+    if (values.minTournamentCount !== undefined)
+      params.set('minTournamentCount', String(values.minTournamentCount));
+    if (values.maxTournamentCount !== undefined)
+      params.set('maxTournamentCount', String(values.maxTournamentCount));
     if (values.sort !== 'gameCount') params.set('sort', values.sort);
     if (!values.descending) params.set('descending', 'false');
 
@@ -126,7 +148,8 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     filter.minHp !== undefined || filter.maxHp !== undefined,
     filter.minLength !== undefined || filter.maxLength !== undefined,
     filter.minGameCount !== undefined || filter.maxGameCount !== undefined,
-    filter.minTournamentCount !== undefined || filter.maxTournamentCount !== undefined,
+    filter.minTournamentCount !== undefined ||
+      filter.maxTournamentCount !== undefined,
   ].filter(Boolean).length;
 
   const RangeSliderField = ({
@@ -160,8 +183,12 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 ]}
                 onValueChange={(vals) => {
                   const [newMin, newMax] = vals;
-                  minFieldControl.onChange(newMin === range.min ? undefined : newMin);
-                  maxFieldControl.onChange(newMax === range.max ? undefined : newMax);
+                  minFieldControl.onChange(
+                    newMin === range.min ? undefined : newMin
+                  );
+                  maxFieldControl.onChange(
+                    newMax === range.max ? undefined : newMax
+                  );
                 }}
                 onPointerUp={form.handleSubmit(onSubmit)}
                 minStepsBetweenThumbs={1}
@@ -176,7 +203,9 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                   className="w-16 p-1 text-center text-xs"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    minFieldControl.onChange(val === range.min ? undefined : val);
+                    minFieldControl.onChange(
+                      val === range.min ? undefined : val
+                    );
                   }}
                   onBlur={form.handleSubmit(onSubmit)}
                 />
@@ -189,7 +218,9 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                   className="w-16 p-1 text-center text-xs"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    maxFieldControl.onChange(val === range.max ? undefined : val);
+                    maxFieldControl.onChange(
+                      val === range.max ? undefined : val
+                    );
                   }}
                   onBlur={form.handleSubmit(onSubmit)}
                 />
@@ -241,7 +272,9 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                       <ToggleGroup
                         className="w-full gap-2"
                         {...field}
-                        value={field.value !== undefined ? String(field.value) : ''}
+                        value={
+                          field.value !== undefined ? String(field.value) : ''
+                        }
                         onValueChange={(val) => {
                           field.onChange(val ? Number(val) : undefined);
                           form.handleSubmit(onSubmit)();
@@ -249,7 +282,10 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                         type="single"
                       >
                         {Object.entries(RulesetEnumHelper.metadata)
-                          .filter(([ruleset]) => Number(ruleset) !== Ruleset.ManiaOther)
+                          .filter(
+                            ([ruleset]) =>
+                              Number(ruleset) !== Ruleset.ManiaOther
+                          )
                           .map(([ruleset]) => (
                             <ToggleGroupItem
                               key={`ruleset-${ruleset}`}

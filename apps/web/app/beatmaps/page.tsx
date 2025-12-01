@@ -29,7 +29,8 @@ function createUri(
 
   if (navPage > 1) params.set('page', String(navPage));
   if (filter.q) params.set('q', filter.q);
-  if (filter.ruleset !== undefined) params.set('ruleset', String(filter.ruleset));
+  if (filter.ruleset !== undefined)
+    params.set('ruleset', String(filter.ruleset));
   if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
   if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
   if (filter.minBpm !== undefined) params.set('minBpm', String(filter.minBpm));
@@ -42,8 +43,10 @@ function createUri(
   if (filter.maxOd !== undefined) params.set('maxOd', String(filter.maxOd));
   if (filter.minHp !== undefined) params.set('minHp', String(filter.minHp));
   if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
-  if (filter.minLength !== undefined) params.set('minLength', String(filter.minLength));
-  if (filter.maxLength !== undefined) params.set('maxLength', String(filter.maxLength));
+  if (filter.minLength !== undefined)
+    params.set('minLength', String(filter.minLength));
+  if (filter.maxLength !== undefined)
+    params.set('maxLength', String(filter.maxLength));
   if (filter.sort !== 'gameCount') params.set('sort', filter.sort);
   if (!filter.descending) params.set('descending', 'false');
 
@@ -150,10 +153,7 @@ export default async function Page(props: {
           </div>
         </CardHeader>
         <CardContent>
-          <BeatmapListTable
-            beatmaps={data.items}
-            filter={filter}
-          />
+          <BeatmapListTable beatmaps={data.items} filter={filter} />
         </CardContent>
       </Card>
 
@@ -162,9 +162,15 @@ export default async function Page(props: {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href={currentPage > 1 ? createUri(filter, currentPage - 1) : createUri(filter, 1)}
+                href={
+                  currentPage > 1
+                    ? createUri(filter, currentPage - 1)
+                    : createUri(filter, 1)
+                }
                 aria-disabled={currentPage <= 1}
-                className={currentPage <= 1 ? 'cursor-not-allowed opacity-50' : ''}
+                className={
+                  currentPage <= 1 ? 'cursor-not-allowed opacity-50' : ''
+                }
               />
             </PaginationItem>
             {renderPageNumbers()}
@@ -176,13 +182,16 @@ export default async function Page(props: {
                     : createUri(filter, totalPages)
                 }
                 aria-disabled={currentPage >= totalPages}
-                className={currentPage >= totalPages ? 'cursor-not-allowed opacity-50' : ''}
+                className={
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''
+                }
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       )}
-
     </div>
   );
 }

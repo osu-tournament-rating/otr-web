@@ -1,7 +1,11 @@
 import { z } from 'zod/v4';
 
 import { beatmapSelectSchema, beatmapsetSelectSchema } from './base';
-import { CreatedUpdatedOmit, RulesetSchema, VerificationStatusSchema } from './constants';
+import {
+  CreatedUpdatedOmit,
+  RulesetSchema,
+  VerificationStatusSchema,
+} from './constants';
 import { PlayerCompactSchema } from './playerStats';
 
 export const BeatmapStatsRequestSchema = z.object({
@@ -118,15 +122,29 @@ export const BeatmapTournamentMatchResponseSchema = z.object({
 });
 
 export type BeatmapStatsRequest = z.infer<typeof BeatmapStatsRequestSchema>;
-export type BeatmapTournamentUsage = z.infer<typeof BeatmapTournamentUsageSchema>;
+export type BeatmapTournamentUsage = z.infer<
+  typeof BeatmapTournamentUsageSchema
+>;
 export type BeatmapUsagePoint = z.infer<typeof BeatmapUsagePointSchema>;
-export type BeatmapModDistribution = z.infer<typeof BeatmapModDistributionSchema>;
-export type BeatmapScoreRatingPoint = z.infer<typeof BeatmapScoreRatingPointSchema>;
+export type BeatmapModDistribution = z.infer<
+  typeof BeatmapModDistributionSchema
+>;
+export type BeatmapScoreRatingPoint = z.infer<
+  typeof BeatmapScoreRatingPointSchema
+>;
 export type BeatmapTopPerformer = z.infer<typeof BeatmapTopPerformerSchema>;
 export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;
 export type BeatmapWithDetails = z.infer<typeof BeatmapWithDetailsSchema>;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;
-export type BeatmapTournamentMatchRequest = z.infer<typeof BeatmapTournamentMatchRequestSchema>;
-export type BeatmapTournamentMatchGame = z.infer<typeof BeatmapTournamentMatchGameSchema>;
-export type BeatmapTournamentMatch = z.infer<typeof BeatmapTournamentMatchSchema>;
-export type BeatmapTournamentMatchResponse = z.infer<typeof BeatmapTournamentMatchResponseSchema>;
+export type BeatmapTournamentMatchRequest = z.infer<
+  typeof BeatmapTournamentMatchRequestSchema
+>;
+export type BeatmapTournamentMatchGame = z.infer<
+  typeof BeatmapTournamentMatchGameSchema
+>;
+export type BeatmapTournamentMatch = z.infer<
+  typeof BeatmapTournamentMatchSchema
+>;
+export type BeatmapTournamentMatchResponse = z.infer<
+  typeof BeatmapTournamentMatchResponseSchema
+>;

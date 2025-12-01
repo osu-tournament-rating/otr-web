@@ -13,12 +13,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
 import type { BeatmapUsagePoint } from '@/lib/orpc/schema/beatmapStats';
 
@@ -30,8 +25,7 @@ interface BeatmapUsageChartProps {
 const getChartColors = (theme?: string) => ({
   games: '#3b82f6',
   pooled: '#f59e0b',
-  grid:
-    theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
+  grid: theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
   text: theme === 'dark' ? '#d1d5db' : '#4b5563',
 });
 
@@ -98,69 +92,69 @@ export default function BeatmapUsageChart({
             data={data}
             margin={{ top: 5, right: 50, bottom: 5, left: 0 }}
           >
-              <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
-              <XAxis
-                dataKey="quarter"
-                tick={{ fill: colors.text, fontSize: 12 }}
-                tickLine={{ stroke: colors.grid }}
-                axisLine={{ stroke: colors.grid }}
-                tickFormatter={formatQuarterTick}
-                interval="equidistantPreserveStart"
-              />
-              <YAxis
-                yAxisId="left"
-                domain={[0, yAxisGamesMax]}
-                tick={{ fill: colors.text, fontSize: 12 }}
-                tickLine={{ stroke: colors.grid }}
-                axisLine={{ stroke: colors.grid }}
-                width={40}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                domain={[0, yAxisPooledMax]}
-                tick={{ fill: colors.pooled, fontSize: 12 }}
-                tickLine={{ stroke: colors.pooled }}
-                axisLine={{ stroke: colors.pooled }}
-                width={40}
-              />
-              <RechartsTooltip
-                contentStyle={{
-                  backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
-                  border: `1px solid ${colors.grid}`,
-                  borderRadius: '6px',
-                }}
-                labelStyle={{ color: colors.text }}
-                labelFormatter={(value) => formatQuarterTick(value as string)}
-                formatter={(value: number, name: string) => [
-                  value,
-                  name === 'gameCount' ? 'Games Played' : 'Tournaments Pooled',
-                ]}
-              />
-              <Legend
-                wrapperStyle={{ fontSize: 12 }}
-                formatter={(value) =>
-                  value === 'gameCount' ? 'Games Played' : 'Tournaments Pooled'
-                }
-              />
-              <Area
-                yAxisId="left"
-                type="monotone"
-                dataKey="gameCount"
-                fill={colors.games}
-                fillOpacity={0.3}
-                stroke={colors.games}
-                strokeWidth={2}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="pooledCount"
-                stroke={colors.pooled}
-                strokeWidth={2}
-                dot={{ fill: colors.pooled, strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, strokeWidth: 0 }}
-              />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+            <XAxis
+              dataKey="quarter"
+              tick={{ fill: colors.text, fontSize: 12 }}
+              tickLine={{ stroke: colors.grid }}
+              axisLine={{ stroke: colors.grid }}
+              tickFormatter={formatQuarterTick}
+              interval="equidistantPreserveStart"
+            />
+            <YAxis
+              yAxisId="left"
+              domain={[0, yAxisGamesMax]}
+              tick={{ fill: colors.text, fontSize: 12 }}
+              tickLine={{ stroke: colors.grid }}
+              axisLine={{ stroke: colors.grid }}
+              width={40}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              domain={[0, yAxisPooledMax]}
+              tick={{ fill: colors.pooled, fontSize: 12 }}
+              tickLine={{ stroke: colors.pooled }}
+              axisLine={{ stroke: colors.pooled }}
+              width={40}
+            />
+            <RechartsTooltip
+              contentStyle={{
+                backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+                border: `1px solid ${colors.grid}`,
+                borderRadius: '6px',
+              }}
+              labelStyle={{ color: colors.text }}
+              labelFormatter={(value) => formatQuarterTick(value as string)}
+              formatter={(value: number, name: string) => [
+                value,
+                name === 'gameCount' ? 'Games Played' : 'Tournaments Pooled',
+              ]}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: 12 }}
+              formatter={(value) =>
+                value === 'gameCount' ? 'Games Played' : 'Tournaments Pooled'
+              }
+            />
+            <Area
+              yAxisId="left"
+              type="monotone"
+              dataKey="gameCount"
+              fill={colors.games}
+              fillOpacity={0.3}
+              stroke={colors.games}
+              strokeWidth={2}
+            />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="pooledCount"
+              stroke={colors.pooled}
+              strokeWidth={2}
+              dot={{ fill: colors.pooled, strokeWidth: 0, r: 3 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
+            />
           </ComposedChart>
         </ChartContainer>
       </CardContent>

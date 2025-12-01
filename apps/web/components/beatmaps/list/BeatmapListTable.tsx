@@ -16,7 +16,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { formatDuration } from '@/lib/utils/date';
 import SimpleTooltip from '@/components/simple-tooltip';
 import BeatmapBackground from '@/components/games/BeatmapBackground';
-import type { BeatmapListItem, BeatmapListSort } from '@/lib/orpc/schema/beatmapList';
+import type {
+  BeatmapListItem,
+  BeatmapListSort,
+} from '@/lib/orpc/schema/beatmapList';
 import type { beatmapListFilterSchema } from '@/lib/schema';
 import type { z } from 'zod';
 
@@ -43,8 +46,10 @@ export default function BeatmapListTable({
     if (filter.q) params.set('q', filter.q);
     if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
     if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
-    if (filter.minBpm !== undefined) params.set('minBpm', String(filter.minBpm));
-    if (filter.maxBpm !== undefined) params.set('maxBpm', String(filter.maxBpm));
+    if (filter.minBpm !== undefined)
+      params.set('minBpm', String(filter.minBpm));
+    if (filter.maxBpm !== undefined)
+      params.set('maxBpm', String(filter.maxBpm));
     if (filter.minCs !== undefined) params.set('minCs', String(filter.minCs));
     if (filter.maxCs !== undefined) params.set('maxCs', String(filter.maxCs));
     if (filter.minAr !== undefined) params.set('minAr', String(filter.minAr));
@@ -53,12 +58,18 @@ export default function BeatmapListTable({
     if (filter.maxOd !== undefined) params.set('maxOd', String(filter.maxOd));
     if (filter.minHp !== undefined) params.set('minHp', String(filter.minHp));
     if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
-    if (filter.minLength !== undefined) params.set('minLength', String(filter.minLength));
-    if (filter.maxLength !== undefined) params.set('maxLength', String(filter.maxLength));
-    if (filter.minGameCount !== undefined) params.set('minGameCount', String(filter.minGameCount));
-    if (filter.maxGameCount !== undefined) params.set('maxGameCount', String(filter.maxGameCount));
-    if (filter.minTournamentCount !== undefined) params.set('minTournamentCount', String(filter.minTournamentCount));
-    if (filter.maxTournamentCount !== undefined) params.set('maxTournamentCount', String(filter.maxTournamentCount));
+    if (filter.minLength !== undefined)
+      params.set('minLength', String(filter.minLength));
+    if (filter.maxLength !== undefined)
+      params.set('maxLength', String(filter.maxLength));
+    if (filter.minGameCount !== undefined)
+      params.set('minGameCount', String(filter.minGameCount));
+    if (filter.maxGameCount !== undefined)
+      params.set('maxGameCount', String(filter.maxGameCount));
+    if (filter.minTournamentCount !== undefined)
+      params.set('minTournamentCount', String(filter.minTournamentCount));
+    if (filter.maxTournamentCount !== undefined)
+      params.set('maxTournamentCount', String(filter.maxTournamentCount));
 
     params.set('sort', field);
 
@@ -257,9 +268,7 @@ export default function BeatmapListTable({
                   </td>
 
                   <td className="px-2 py-2 text-center">
-                    <span className="text-xs">
-                      {Math.round(beatmap.bpm)}
-                    </span>
+                    <span className="text-xs">{Math.round(beatmap.bpm)}</span>
                   </td>
 
                   <td className="px-2 py-2 text-center">

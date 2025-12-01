@@ -12,12 +12,7 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, User } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   Table,
   TableBody,
@@ -43,7 +38,9 @@ const columns = [
     id: 'rank',
     header: '#',
     cell: ({ row }) => (
-      <span className="font-medium text-muted-foreground">#{row.index + 1}</span>
+      <span className="text-muted-foreground font-medium">
+        #{row.index + 1}
+      </span>
     ),
   }),
   columnHelper.accessor('player.username', {
@@ -122,7 +119,11 @@ const columns = [
     header: 'Mods',
     cell: ({ getValue }) => (
       <div className="flex h-5 w-14 items-center">
-        <ModIconset mods={getValue()} className="flex h-full items-center" iconClassName="h-5" />
+        <ModIconset
+          mods={getValue()}
+          className="flex h-full items-center"
+          iconClassName="h-5"
+        />
       </div>
     ),
     enableSorting: false,
@@ -167,18 +168,18 @@ export default function BeatmapTopPerformersTable({
         <CardTitle>Top Performers</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-lg bg-popover/50">
+        <div className="bg-popover/50 rounded-lg">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-b border-border/50 hover:bg-transparent"
+                  className="border-border/50 border-b hover:bg-transparent"
                 >
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="font-semibold text-foreground"
+                      className="text-foreground font-semibold"
                     >
                       {header.isPlaceholder
                         ? null
@@ -195,7 +196,7 @@ export default function BeatmapTopPerformersTable({
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border/30 transition-colors hover:bg-popover/80"
+                  className="border-border/30 hover:bg-popover/80 border-b transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3">

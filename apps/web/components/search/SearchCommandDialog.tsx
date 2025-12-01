@@ -4,7 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@uidotdev/usehooks';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { Search, LoaderCircle, User, Trophy, Swords, Music } from 'lucide-react';
+import {
+  Search,
+  LoaderCircle,
+  User,
+  Trophy,
+  Swords,
+  Music,
+} from 'lucide-react';
 
 import {
   Command,
@@ -152,7 +159,8 @@ export default function SearchCommandDialog() {
                         }
                         className={cn(
                           'h-auto cursor-pointer py-3',
-                          player.isFriend && 'bg-primary/15 data-[selected=true]:bg-primary/25'
+                          player.isFriend &&
+                            'bg-primary/15 data-[selected=true]:bg-primary/25'
                         )}
                       >
                         <PlayerResultContent
@@ -166,9 +174,7 @@ export default function SearchCommandDialog() {
 
                 {data.tournaments.length > 0 && (
                   <CommandGroup
-                    heading={
-                      <GroupHeading icon={Trophy} label="Tournaments" />
-                    }
+                    heading={<GroupHeading icon={Trophy} label="Tournaments" />}
                   >
                     {data.tournaments.map((tournament) => (
                       <CommandItem

@@ -210,103 +210,107 @@ export const searchEntities = protectedProcedure
         friendIds = new Set(friendRows.map((row) => Number(row.friendId)));
       }
 
-      const [playerRows, tournamentRows, matchRows, beatmapRows] = await Promise.all([
-        context.db
-          .select({
-            id: schema.players.id,
-            osuId: schema.players.osuId,
-            username: schema.players.username,
-            defaultRuleset: schema.players.defaultRuleset,
-            rating: schema.playerRatings.rating,
-            ratingRuleset: schema.playerRatings.ruleset,
-            globalRank: schema.playerRatings.globalRank,
-          })
-          .from(schema.players)
-          .leftJoin(
-            schema.playerRatings,
-            and(
-              eq(schema.playerRatings.playerId, schema.players.id),
-              eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
-            )
-          )
-          .where(playerCondition)
-          .orderBy(
-            desc(playerRank),
-            sql`${schema.playerRatings.rating} desc nulls last`,
-            asc(schema.players.username)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-        context.db
-          .select({
-            id: schema.tournaments.id,
-            name: schema.tournaments.name,
-            abbreviation: schema.tournaments.abbreviation,
-            ruleset: schema.tournaments.ruleset,
-            verificationStatus: schema.tournaments.verificationStatus,
-            rejectionReason: schema.tournaments.rejectionReason,
-            lobbySize: schema.tournaments.lobbySize,
-            isLazer: schema.tournaments.isLazer,
-          })
-          .from(schema.tournaments)
-          .where(tournamentCondition)
-          .orderBy(
-            desc(tournamentRank),
-            sql`${schema.tournaments.endTime} desc nulls last`,
-            asc(schema.tournaments.name)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-        context.db
-          .select({
-            id: schema.matches.id,
-            osuId: schema.matches.osuId,
-            name: schema.matches.name,
-            tournamentName: schema.tournaments.name,
-          })
-          .from(schema.matches)
-          .leftJoin(
-            schema.tournaments,
-            eq(schema.matches.tournamentId, schema.tournaments.id)
-          )
-          .where(matchCondition)
-          .orderBy(
-            desc(matchRank),
-            sql`${schema.matches.startTime} desc nulls last`,
-            asc(schema.matches.name)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-        (() => {
-          const beatmapsetCreator = alias(schema.players, 'beatmapsetCreator');
-          return context.db
+      const [playerRows, tournamentRows, matchRows, beatmapRows] =
+        await Promise.all([
+          context.db
             .select({
-              id: schema.beatmaps.id,
-              osuId: schema.beatmaps.osuId,
-              diffName: schema.beatmaps.diffName,
-              sr: schema.beatmaps.sr,
-              ruleset: schema.beatmaps.ruleset,
-              artist: schema.beatmapsets.artist,
-              title: schema.beatmapsets.title,
-              creator: beatmapsetCreator.username,
-              beatmapsetOsuId: schema.beatmapsets.osuId,
-              gameCount: beatmapGameCountSubquery,
-              tournamentCount: beatmapTournamentCountSubquery,
+              id: schema.players.id,
+              osuId: schema.players.osuId,
+              username: schema.players.username,
+              defaultRuleset: schema.players.defaultRuleset,
+              rating: schema.playerRatings.rating,
+              ratingRuleset: schema.playerRatings.ruleset,
+              globalRank: schema.playerRatings.globalRank,
             })
-            .from(schema.beatmaps)
+            .from(schema.players)
             .leftJoin(
-              schema.beatmapsets,
-              eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+              schema.playerRatings,
+              and(
+                eq(schema.playerRatings.playerId, schema.players.id),
+                eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
+              )
             )
-            .leftJoin(
-              beatmapsetCreator,
-              eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
-            )
-            .where(beatmapCondition)
+            .where(playerCondition)
             .orderBy(
-              desc(beatmapCombinedScore),
-              asc(schema.beatmaps.diffName)
+              desc(playerRank),
+              sql`${schema.playerRatings.rating} desc nulls last`,
+              asc(schema.players.username)
             )
-            .limit(DEFAULT_RESULT_LIMIT);
-        })(),
-      ]);
+            .limit(DEFAULT_RESULT_LIMIT),
+          context.db
+            .select({
+              id: schema.tournaments.id,
+              name: schema.tournaments.name,
+              abbreviation: schema.tournaments.abbreviation,
+              ruleset: schema.tournaments.ruleset,
+              verificationStatus: schema.tournaments.verificationStatus,
+              rejectionReason: schema.tournaments.rejectionReason,
+              lobbySize: schema.tournaments.lobbySize,
+              isLazer: schema.tournaments.isLazer,
+            })
+            .from(schema.tournaments)
+            .where(tournamentCondition)
+            .orderBy(
+              desc(tournamentRank),
+              sql`${schema.tournaments.endTime} desc nulls last`,
+              asc(schema.tournaments.name)
+            )
+            .limit(DEFAULT_RESULT_LIMIT),
+          context.db
+            .select({
+              id: schema.matches.id,
+              osuId: schema.matches.osuId,
+              name: schema.matches.name,
+              tournamentName: schema.tournaments.name,
+            })
+            .from(schema.matches)
+            .leftJoin(
+              schema.tournaments,
+              eq(schema.matches.tournamentId, schema.tournaments.id)
+            )
+            .where(matchCondition)
+            .orderBy(
+              desc(matchRank),
+              sql`${schema.matches.startTime} desc nulls last`,
+              asc(schema.matches.name)
+            )
+            .limit(DEFAULT_RESULT_LIMIT),
+          (() => {
+            const beatmapsetCreator = alias(
+              schema.players,
+              'beatmapsetCreator'
+            );
+            return context.db
+              .select({
+                id: schema.beatmaps.id,
+                osuId: schema.beatmaps.osuId,
+                diffName: schema.beatmaps.diffName,
+                sr: schema.beatmaps.sr,
+                ruleset: schema.beatmaps.ruleset,
+                artist: schema.beatmapsets.artist,
+                title: schema.beatmapsets.title,
+                creator: beatmapsetCreator.username,
+                beatmapsetOsuId: schema.beatmapsets.osuId,
+                gameCount: beatmapGameCountSubquery,
+                tournamentCount: beatmapTournamentCountSubquery,
+              })
+              .from(schema.beatmaps)
+              .leftJoin(
+                schema.beatmapsets,
+                eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+              )
+              .leftJoin(
+                beatmapsetCreator,
+                eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
+              )
+              .where(beatmapCondition)
+              .orderBy(
+                desc(beatmapCombinedScore),
+                asc(schema.beatmaps.diffName)
+              )
+              .limit(DEFAULT_RESULT_LIMIT);
+          })(),
+        ]);
 
       const players = playerRows.map((row) => {
         const rating =
@@ -373,7 +377,9 @@ export const searchEntities = protectedProcedure
           artist: row.artist ?? 'Unknown',
           title: row.title ?? 'Unknown',
           creator: row.creator ?? null,
-          beatmapsetOsuId: row.beatmapsetOsuId ? Number(row.beatmapsetOsuId) : null,
+          beatmapsetOsuId: row.beatmapsetOsuId
+            ? Number(row.beatmapsetOsuId)
+            : null,
           gameCount: Number(row.gameCount ?? 0),
           tournamentCount: Number(row.tournamentCount ?? 0),
         })
