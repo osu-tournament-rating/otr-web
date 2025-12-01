@@ -21,8 +21,8 @@ export function BeatmapResultContent({
   const displayTitle = `${data.artist} - ${data.title}`;
 
   return (
-    <div className="flex w-full gap-3 overflow-hidden">
-      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded sm:h-14 sm:w-14">
+    <div className="flex w-full items-center gap-3 overflow-hidden">
+      <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded">
         <BeatmapBackground
           beatmapsetId={data.beatmapsetOsuId ?? undefined}
           alt={`${displayTitle} cover`}
@@ -30,32 +30,31 @@ export function BeatmapResultContent({
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="min-w-0 truncate text-sm font-medium sm:text-base">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="min-w-0 truncate font-medium">
           {highlightMatch(displayTitle, query)}
         </span>
-        <span className="text-muted-foreground min-w-0 truncate text-xs sm:text-sm">
+        <span className="text-muted-foreground min-w-0 truncate text-xs">
           [{highlightMatch(data.diffName, query)}]
+          {data.creator && ` by ${data.creator}`}
         </span>
       </div>
 
-      <div className="flex flex-shrink-0 flex-col items-end justify-center gap-1">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Star className="text-primary h-3.5 w-3.5" />
-            <span className="text-xs font-medium">{data.sr.toFixed(2)}</span>
-          </div>
-          <SimpleTooltip
-            content={RulesetEnumHelper.getMetadata(data.ruleset).text}
-          >
-            <RulesetIcon
-              ruleset={data.ruleset}
-              width={16}
-              height={16}
-              className="fill-primary flex-shrink-0"
-            />
-          </SimpleTooltip>
+      <div className="flex flex-shrink-0 items-center gap-3">
+        <div className="flex items-center gap-1">
+          <Star className="text-primary h-3.5 w-3.5" />
+          <span className="text-xs font-medium">{data.sr.toFixed(2)}</span>
         </div>
+        <SimpleTooltip
+          content={RulesetEnumHelper.getMetadata(data.ruleset).text}
+        >
+          <RulesetIcon
+            ruleset={data.ruleset}
+            width={16}
+            height={16}
+            className="fill-primary flex-shrink-0"
+          />
+        </SimpleTooltip>
         {data.gameCount > 0 && (
           <div className="text-muted-foreground flex items-center gap-1 text-xs">
             <Gamepad2 className="h-3 w-3" />

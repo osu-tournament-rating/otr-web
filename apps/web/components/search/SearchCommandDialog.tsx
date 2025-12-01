@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { useSession } from '@/lib/hooks/useSession';
+import { cn } from '@/lib/utils';
 import {
   PlayerResultContent,
   TournamentResultContent,
@@ -97,7 +98,7 @@ export default function SearchCommandDialog() {
         onOpenChange={setOpen}
         title="Search"
         description="Search players, tournaments, matches, and beatmaps"
-        contentClassName="md:max-w-[612px]"
+        contentClassName="md:max-w-[612px] [&>button:last-child]:hidden"
       >
         <Command shouldFilter={false} loop>
           <div className="relative">
@@ -149,7 +150,10 @@ export default function SearchCommandDialog() {
                               : `/players/${player.id}`
                           )
                         }
-                        className="h-auto py-3"
+                        className={cn(
+                          'h-auto cursor-pointer py-3',
+                          player.isFriend && 'bg-primary/15 data-[selected=true]:bg-primary/25'
+                        )}
                       >
                         <PlayerResultContent
                           data={player}
@@ -173,7 +177,7 @@ export default function SearchCommandDialog() {
                         onSelect={() =>
                           handleSelect(`/tournaments/${tournament.id}`)
                         }
-                        className="h-auto py-3"
+                        className="h-auto cursor-pointer py-3"
                       >
                         <TournamentResultContent
                           data={tournament}
@@ -193,7 +197,7 @@ export default function SearchCommandDialog() {
                         key={`match-${match.id}`}
                         value={`match-${match.id}`}
                         onSelect={() => handleSelect(`/matches/${match.id}`)}
-                        className="h-auto py-3"
+                        className="h-auto cursor-pointer py-3"
                       >
                         <MatchResultContent
                           data={match}
@@ -215,7 +219,7 @@ export default function SearchCommandDialog() {
                         onSelect={() =>
                           handleSelect(`/beatmaps/${beatmap.osuId}`)
                         }
-                        className="h-auto py-3"
+                        className="h-auto cursor-pointer py-3"
                       >
                         <BeatmapResultContent
                           data={beatmap}

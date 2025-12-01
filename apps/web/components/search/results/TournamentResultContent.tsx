@@ -20,38 +20,30 @@ export function TournamentResultContent({
   query,
 }: TournamentResultContentProps) {
   return (
-    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        <div className="bg-muted/50 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10">
-          <VerificationBadge
-            verificationStatus={data.verificationStatus}
-            rejectionReason={data.rejectionReason}
-            entityType="tournament"
-          />
-        </div>
-        <span className="min-w-0 truncate text-base font-medium sm:text-lg">
-          {highlightMatch(data.name, query)}
-        </span>
-      </div>
+    <div className="flex w-full items-center gap-3">
+      <VerificationBadge
+        verificationStatus={data.verificationStatus}
+        rejectionReason={data.rejectionReason}
+        entityType="tournament"
+      />
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {highlightMatch(data.name, query)}
+      </span>
 
-      <div className="ml-10 flex flex-shrink items-center gap-3 sm:ml-0 sm:gap-4">
+      <div className="flex flex-shrink-0 items-center gap-3">
         <LazerBadge isLazer={data.isLazer} />
-
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Users className="text-primary h-4 w-4 flex-shrink-0 sm:h-4 sm:w-4" />
-          <span className="text-xs font-medium sm:text-sm">
-            {data.lobbySize}v{data.lobbySize}
-          </span>
+        <div className="flex items-center gap-1">
+          <Users className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+          <span className="text-xs">{data.lobbySize}v{data.lobbySize}</span>
         </div>
-
         <SimpleTooltip
           content={RulesetEnumHelper.getMetadata(data.ruleset).text}
         >
           <RulesetIcon
             ruleset={data.ruleset}
-            width={20}
-            height={20}
-            className="fill-primary flex-shrink-0 sm:h-5 sm:w-5"
+            width={16}
+            height={16}
+            className="fill-primary flex-shrink-0"
           />
         </SimpleTooltip>
       </div>

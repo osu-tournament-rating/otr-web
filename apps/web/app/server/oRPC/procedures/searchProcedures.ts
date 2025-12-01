@@ -1,5 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -273,30 +274,38 @@ export const searchEntities = protectedProcedure
             asc(schema.matches.name)
           )
           .limit(DEFAULT_RESULT_LIMIT),
-        context.db
-          .select({
-            id: schema.beatmaps.id,
-            osuId: schema.beatmaps.osuId,
-            diffName: schema.beatmaps.diffName,
-            sr: schema.beatmaps.sr,
-            ruleset: schema.beatmaps.ruleset,
-            artist: schema.beatmapsets.artist,
-            title: schema.beatmapsets.title,
-            beatmapsetOsuId: schema.beatmapsets.osuId,
-            gameCount: beatmapGameCountSubquery,
-            tournamentCount: beatmapTournamentCountSubquery,
-          })
-          .from(schema.beatmaps)
-          .leftJoin(
-            schema.beatmapsets,
-            eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
-          )
-          .where(beatmapCondition)
-          .orderBy(
-            desc(beatmapCombinedScore),
-            asc(schema.beatmaps.diffName)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
+        (() => {
+          const beatmapsetCreator = alias(schema.players, 'beatmapsetCreator');
+          return context.db
+            .select({
+              id: schema.beatmaps.id,
+              osuId: schema.beatmaps.osuId,
+              diffName: schema.beatmaps.diffName,
+              sr: schema.beatmaps.sr,
+              ruleset: schema.beatmaps.ruleset,
+              artist: schema.beatmapsets.artist,
+              title: schema.beatmapsets.title,
+              creator: beatmapsetCreator.username,
+              beatmapsetOsuId: schema.beatmapsets.osuId,
+              gameCount: beatmapGameCountSubquery,
+              tournamentCount: beatmapTournamentCountSubquery,
+            })
+            .from(schema.beatmaps)
+            .leftJoin(
+              schema.beatmapsets,
+              eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+            )
+            .leftJoin(
+              beatmapsetCreator,
+              eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
+            )
+            .where(beatmapCondition)
+            .orderBy(
+              desc(beatmapCombinedScore),
+              asc(schema.beatmaps.diffName)
+            )
+            .limit(DEFAULT_RESULT_LIMIT);
+        })(),
       ]);
 
       const players = playerRows.map((row) => {
@@ -363,6 +372,7 @@ export const searchEntities = protectedProcedure
           ruleset: row.ruleset as Ruleset,
           artist: row.artist ?? 'Unknown',
           title: row.title ?? 'Unknown',
+          creator: row.creator ?? null,
           beatmapsetOsuId: row.beatmapsetOsuId ? Number(row.beatmapsetOsuId) : null,
           gameCount: Number(row.gameCount ?? 0),
           tournamentCount: Number(row.tournamentCount ?? 0),

@@ -11,7 +11,6 @@ import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TRText from '@/components/rating/TRText';
-import { cn } from '@/lib/utils';
 
 interface PlayerResultContentProps {
   data: PlayerSearchResult;
@@ -20,38 +19,30 @@ interface PlayerResultContentProps {
 
 export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
   return (
-    <div
-      className={cn(
-        'flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3',
-        data.isFriend && 'bg-primary/10 -mx-2 rounded px-2 py-1'
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-          <AvatarImage
-            src={`https://a.ppy.sh/${data.osuId}`}
-            alt={`${data.username || 'Unknown user'}'s profile picture`}
-          />
-          <AvatarFallback>
-            <User className="h-4 w-4 sm:h-5 sm:w-5" />
-          </AvatarFallback>
-        </Avatar>
-        <span className="min-w-0 truncate text-base font-medium sm:text-lg">
-          {highlightMatch(data.username ?? 'Unknown user', query)}
-        </span>
-      </div>
+    <div className="flex w-full items-center gap-3">
+      <Avatar className="h-6 w-6 flex-shrink-0">
+        <AvatarImage
+          src={`https://a.ppy.sh/${data.osuId}`}
+          alt={`${data.username || 'Unknown user'}'s profile picture`}
+        />
+        <AvatarFallback>
+          <User className="h-3 w-3" />
+        </AvatarFallback>
+      </Avatar>
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {highlightMatch(data.username ?? 'Unknown user', query)}
+      </span>
 
-      <div className="ml-10 flex flex-shrink-0 items-center gap-3 sm:ml-0 sm:gap-4">
+      <div className="flex flex-shrink-0 items-center gap-3">
         {data.rating && data.tierProgress && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1">
             <TierIcon
               tier={data.tierProgress.currentTier as TierName}
               subTier={data.tierProgress.currentSubTier ?? undefined}
-              width={20}
-              height={20}
-              className="flex-shrink-0 sm:h-5 sm:w-5"
+              width={16}
+              height={16}
             />
-            <span className="flex items-baseline gap-1 text-xs font-medium sm:text-sm">
+            <span className="flex items-baseline gap-0.5 text-xs font-medium">
               {data.rating.toFixed(0)}
               <TRText />
             </span>
@@ -59,27 +50,23 @@ export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
         )}
 
         {!!data.globalRank && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Globe className="text-primary h-4 w-4 flex-shrink-0 sm:h-4 sm:w-4" />
-            <span className="text-xs font-medium sm:text-sm">
-              #{data.globalRank.toLocaleString()}
-            </span>
+          <div className="flex items-center gap-1">
+            <Globe className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-xs">#{data.globalRank.toLocaleString()}</span>
           </div>
         )}
 
         {(data.ruleset || data.ruleset === 0) && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <SimpleTooltip
-              content={RulesetEnumHelper.getMetadata(data.ruleset).text}
-            >
-              <RulesetIcon
-                ruleset={data.ruleset}
-                width={20}
-                height={20}
-                className="fill-primary flex-shrink-0 sm:h-5 sm:w-5"
-              />
-            </SimpleTooltip>
-          </div>
+          <SimpleTooltip
+            content={RulesetEnumHelper.getMetadata(data.ruleset).text}
+          >
+            <RulesetIcon
+              ruleset={data.ruleset}
+              width={16}
+              height={16}
+              className="fill-primary flex-shrink-0"
+            />
+          </SimpleTooltip>
         )}
       </div>
     </div>
