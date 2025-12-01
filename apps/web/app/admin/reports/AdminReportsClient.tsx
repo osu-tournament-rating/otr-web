@@ -305,7 +305,7 @@ export default function AdminReportsClient() {
                             report.entityId,
                             report.matchId
                           )}
-                          className="text-primary hover:underline"
+                          className="text-primary"
                         >
                           #{report.entityId}
                         </Link>

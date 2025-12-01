@@ -64,7 +64,7 @@ const columns = [
               <User className="h-3 w-3" />
             </AvatarFallback>
           </Avatar>
-          <span className="hover:underline">{player.username}</span>
+          <span>{player.username}</span>
         </Link>
       );
     },
@@ -90,7 +90,7 @@ const columns = [
     cell: ({ row }) => (
       <Link
         href={`/matches/${row.original.matchId}?scoreId=${row.original.scoreId}`}
-        className="text-primary hover:underline"
+        className="text-primary"
       >
         {row.original.score.toLocaleString()}
       </Link>

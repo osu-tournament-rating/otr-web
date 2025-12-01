@@ -104,7 +104,7 @@ export default function PlayerRatingChartTable({
               {point.match?.id && point.match?.name ? (
                 <Link
                   href={`/matches/${point.match.id}`}
-                  className="hover:text-primary hover:underline"
+                  className="hover:text-primary"
                 >
                   {point.match.name}
                 </Link>

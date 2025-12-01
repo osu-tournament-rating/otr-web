@@ -55,7 +55,7 @@ export default function PlayerTournamentMatchTable({
                     {adjustment.match ? (
                       <Link
                         href={`/matches/${adjustment.match.id}`}
-                        className="underline-offset-4 hover:underline"
+                        className=""
                       >
                         {adjustment.match.name}
                       </Link>

@@ -127,7 +127,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
               ) : (
                 <Link
                   href={`/players/${game.beatmap.beatmapset.creator.id}`}
-                  className="font-semibold text-white hover:underline"
+                  className="font-semibold text-white"
                 >
                   {game.beatmap.beatmapset.creator.username}
                 </Link>
@@ -142,7 +142,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
                       {i > 0 && ', '}
                       <Link
                         href={`/players/${c.id}`}
-                        className="hover:underline"
+                        className=""
                       >
                         {c.username}
                       </Link>
@@ -158,7 +158,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
             ) : (
               <Link
                 href={`/beatmaps/${game.beatmap?.osuId}`}
-                className="truncate text-sm font-bold text-white drop-shadow-sm hover:underline sm:text-xl"
+                className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >
                 {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [
                 {game.beatmap?.diffName ?? 'Unknown'}]

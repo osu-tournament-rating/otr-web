@@ -292,7 +292,7 @@ export default function BeatmapTournamentCard({
                             <TableCell className="py-2">
                               <Link
                                 href={`/matches/${match.matchId}?gameId=${game.gameId}`}
-                                className="truncate font-medium hover:underline"
+                                className="truncate font-medium"
                               >
                                 {match.matchName}
                               </Link>

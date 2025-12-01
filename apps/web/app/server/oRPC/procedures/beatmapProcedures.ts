@@ -487,7 +487,7 @@ export const getBeatmapStats = publicProcedure
         playerDefaultRuleset: schema.players.defaultRuleset,
         score: schema.gameScores.score,
         accuracy: schema.gameScores.accuracy,
-        mods: schema.games.mods,
+        mods: schema.gameScores.mods,
         playedAt: schema.games.startTime,
         matchId: schema.matches.id,
         gameId: schema.games.id,

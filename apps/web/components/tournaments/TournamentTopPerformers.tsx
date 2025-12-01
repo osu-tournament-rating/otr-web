@@ -93,7 +93,7 @@ export default function TournamentTopPerformers({
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/players/${stats.player.id}?ruleset=${ruleset}`}
-                  className="block truncate text-sm font-medium hover:underline"
+                  className="block truncate text-sm font-medium"
                 >
                   {stats.player.username}
                 </Link>
