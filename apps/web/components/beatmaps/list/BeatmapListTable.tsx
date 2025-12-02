@@ -10,6 +10,7 @@ import {
   Gamepad2,
   Music,
 } from 'lucide-react';
+import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -222,12 +223,22 @@ export default function BeatmapListTable({
 
                   <td className="px-2 py-2">
                     <div className="flex items-center gap-2">
-                      <div className="relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
+                      <div className="group/thumbnail relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
                         {beatmap.beatmapsetOsuId ? (
-                          <BeatmapBackground
-                            beatmapsetId={beatmap.beatmapsetOsuId}
-                            alt={`${beatmap.title} cover`}
-                          />
+                          <>
+                            <BeatmapBackground
+                              beatmapsetId={beatmap.beatmapsetOsuId}
+                              alt={`${beatmap.title} cover`}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
+                              <AudioPlayButton
+                                beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                                size="sm"
+                                variant="ghost"
+                                className="text-white hover:text-white hover:bg-white/20"
+                              />
+                            </div>
+                          </>
                         ) : (
                           <div className="bg-muted flex h-full w-full items-center justify-center">
                             <Music className="text-muted-foreground h-3 w-3" />

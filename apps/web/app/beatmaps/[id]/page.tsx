@@ -46,9 +46,47 @@ export async function generateMetadata({
   const artist = beatmapStats.beatmap.beatmapset?.artist ?? 'Unknown';
   const title = beatmapStats.beatmap.beatmapset?.title ?? 'Unknown';
   const diffName = beatmapStats.beatmap.diffName;
+  const sr = beatmapStats.beatmap.sr;
+  const bpm = beatmapStats.beatmap.bpm;
+  const mapper = beatmapStats.beatmap.creators?.[0]?.username;
+  const beatmapsetOsuId = beatmapStats.beatmap.beatmapset?.osuId;
+
+  const pageTitle = `${artist} - ${title} [${diffName}]`;
+  const description = mapper
+    ? `${sr.toFixed(2)}★ | ${bpm.toFixed(0)} BPM | Mapped by ${mapper}`
+    : `${sr.toFixed(2)}★ | ${bpm.toFixed(0)} BPM`;
+
+  const coverImage = beatmapsetOsuId
+    ? `https://assets.ppy.sh/beatmaps/${beatmapsetOsuId}/covers/cover.jpg`
+    : undefined;
 
   return {
-    title: `${artist} - ${title} [${diffName}]`,
+    title: pageTitle,
+    description,
+    openGraph: {
+      siteName: 'osu! Tournament Rating',
+      title: pageTitle,
+      description,
+      type: 'website',
+      ...(coverImage && {
+        images: [
+          {
+            url: coverImage,
+            width: 800,
+            height: 200,
+            alt: `${artist} - ${title}`,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description,
+      ...(coverImage && {
+        images: [coverImage],
+      }),
+    },
   };
 }
 
