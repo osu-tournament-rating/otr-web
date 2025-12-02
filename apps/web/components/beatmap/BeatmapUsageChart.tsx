@@ -109,6 +109,7 @@ export default function BeatmapUsageChart({
             <YAxis
               yAxisId="left"
               domain={[0, yAxisGamesMax]}
+              allowDecimals={false}
               tick={{ fill: colors.text, fontSize: 12 }}
               tickLine={{ stroke: colors.grid }}
               axisLine={{ stroke: colors.grid }}
@@ -118,6 +119,7 @@ export default function BeatmapUsageChart({
               yAxisId="right"
               orientation="right"
               domain={[0, yAxisPooledMax]}
+              allowDecimals={false}
               tick={{ fill: colors.pooled, fontSize: 12 }}
               tickLine={{ stroke: colors.pooled }}
               axisLine={{ stroke: colors.pooled }}
