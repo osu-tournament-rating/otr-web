@@ -59,6 +59,7 @@ export const getBeatmapStats = publicProcedure
         beatmapRow,
         creatorsRows,
         summaryRow,
+        pooledTournamentCountRow,
         usageRows,
         pooledTournaments,
         tournamentRows,
@@ -159,6 +160,27 @@ export const getBeatmapStats = publicProcedure
           ),
         context.db
           .select({
+            totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
+          })
+          .from(schema.joinPooledBeatmaps)
+          .innerJoin(
+            schema.tournaments,
+            eq(
+              schema.tournaments.id,
+              schema.joinPooledBeatmaps.tournamentsPooledInId
+            )
+          )
+          .where(
+            and(
+              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          ),
+        context.db
+          .select({
             quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
           })
@@ -228,24 +250,39 @@ export const getBeatmapStats = publicProcedure
             mostCommonMod: sql<number>`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
           })
-          .from(schema.tournaments)
+          .from(schema.joinPooledBeatmaps)
           .innerJoin(
-            schema.matches,
-            eq(schema.matches.tournamentId, schema.tournaments.id)
+            schema.tournaments,
+            eq(
+              schema.tournaments.id,
+              schema.joinPooledBeatmaps.tournamentsPooledInId
+            )
           )
-          .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
-          .where(
+          .leftJoin(
+            schema.matches,
             and(
-              eq(schema.games.beatmapId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              ),
+              eq(schema.matches.tournamentId, schema.tournaments.id),
               eq(
                 schema.matches.verificationStatus,
                 VerificationStatus.Verified
-              ),
+              )
+            )
+          )
+          .leftJoin(
+            schema.games,
+            and(
+              eq(schema.games.matchId, schema.matches.id),
+              eq(schema.games.beatmapId, beatmapId),
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
+            )
+          )
+          .where(
+            and(
+              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              )
             )
           )
           .groupBy(
@@ -454,7 +491,9 @@ export const getBeatmapStats = publicProcedure
 
       const summary = {
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
-        totalTournamentCount: Number(summaryRow[0]?.totalTournamentCount ?? 0),
+        totalTournamentCount: Number(
+          pooledTournamentCountRow[0]?.totalTournamentCount ?? 0
+        ),
         totalPlayerCount: Number(summaryRow[0]?.totalPlayerCount ?? 0),
         firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,
         lastPlayedAt: summaryRow[0]?.lastPlayedAt ?? null,
