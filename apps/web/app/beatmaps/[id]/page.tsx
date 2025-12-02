@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { z } from 'zod';
-import { Trophy } from 'lucide-react';
 import {
   fetchOrpcOptional,
   fetchOrpcOrNotFound,
