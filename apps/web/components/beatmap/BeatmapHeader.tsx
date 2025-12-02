@@ -3,8 +3,10 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import Link from 'next/link';
 import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import RulesetIcon from '../icons/RulesetIcon';
-import { Music, Star, Timer, User } from 'lucide-react';
+import SimpleTooltip from '../simple-tooltip';
+import { ExternalLink, Music, Star, Timer, User } from 'lucide-react';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import BeatmapBackground from '../games/BeatmapBackground';
 import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
@@ -28,7 +30,7 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
       <div className="relative z-[3] flex flex-col gap-3 p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex w-full gap-2 sm:w-auto">
-            <Link href={`/beatmaps/${beatmap.osuId}`}>
+            <div>
               <h1 className="text-lg font-semibold leading-tight text-white drop-shadow-sm sm:text-xl md:text-2xl">
                 {beatmap.beatmapset?.artist ?? 'Unknown'} -{' '}
                 {beatmap.beatmapset?.title ?? 'Unknown'}
@@ -36,8 +38,25 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
               <div className="mt-1 text-sm text-white/80">
                 [{beatmap.diffName}]
               </div>
-            </Link>
+            </div>
           </div>
+          <SimpleTooltip content="View beatmap on osu!">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 hover:bg-white/20 hover:text-white"
+            >
+              <Link
+                href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View beatmap on osu! website"
+              >
+                <ExternalLink className="h-3 w-3 text-white/70 hover:text-white" />
+              </Link>
+            </Button>
+          </SimpleTooltip>
         </div>
 
         <div className="flex flex-col gap-2 text-sm text-white/80 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">

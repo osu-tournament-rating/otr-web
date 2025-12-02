@@ -1,17 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getSortedRowModel,
-  SortingState,
 } from '@tanstack/react-table';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ArrowUp, ArrowDown, User } from 'lucide-react';
+import { Medal, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   Table,
@@ -68,22 +64,7 @@ const columns = [
     enableSorting: false,
   }),
   columnHelper.accessor('score', {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="-ml-4 h-auto p-0 font-semibold hover:bg-transparent"
-      >
-        Score
-        {column.getIsSorted() === 'asc' ? (
-          <ArrowUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === 'desc' ? (
-          <ArrowDown className="ml-2 h-4 w-4" />
-        ) : (
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        )}
-      </Button>
-    ),
+    header: 'Score',
     cell: ({ row }) => (
       <Link
         href={`/matches/${row.original.matchId}?scoreId=${row.original.scoreId}`}
@@ -92,28 +73,15 @@ const columns = [
         {row.original.score.toLocaleString()}
       </Link>
     ),
+    enableSorting: false,
   }),
   columnHelper.accessor('accuracy', {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className="-ml-4 h-auto p-0 font-semibold hover:bg-transparent"
-      >
-        Accuracy
-        {column.getIsSorted() === 'asc' ? (
-          <ArrowUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === 'desc' ? (
-          <ArrowDown className="ml-2 h-4 w-4" />
-        ) : (
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        )}
-      </Button>
-    ),
+    header: 'Accuracy',
     cell: ({ getValue }) => {
       const acc = getValue();
       return acc !== null ? formatAccuracy(acc) : '-';
     },
+    enableSorting: false,
   }),
   columnHelper.accessor('mods', {
     header: 'Mods',
@@ -134,28 +102,24 @@ export default function BeatmapTopPerformersTable({
   performers,
   className,
 }: BeatmapTopPerformersTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'score', desc: true },
-  ]);
-
   const table = useReactTable({
     data: performers,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: { sorting },
   });
 
   if (performers.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Top Performers</CardTitle>
+          <div className="flex flex-row items-center gap-2">
+            <Medal className="text-primary h-6 w-6" />
+            <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            No performance data available.
+            No score data available.
           </p>
         </CardContent>
       </Card>
@@ -165,7 +129,10 @@ export default function BeatmapTopPerformersTable({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Top Performers</CardTitle>
+        <div className="flex flex-row items-center gap-2">
+          <Medal className="text-primary h-6 w-6" />
+          <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="bg-popover/50 rounded-lg">

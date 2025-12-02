@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
 import { useTheme } from 'next-themes';
 import {
   ComposedChart,
@@ -13,6 +12,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
+import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
 import type { BeatmapUsagePoint } from '@/lib/orpc/schema/beatmapStats';
@@ -29,23 +29,22 @@ const getChartColors = (theme?: string) => ({
   text: theme === 'dark' ? '#d1d5db' : '#4b5563',
 });
 
-const QUARTER_START_MONTHS: Record<number, number> = {
-  1: 0, // Q1 → January
-  2: 3, // Q2 → April
-  3: 6, // Q3 → July
-  4: 9, // Q4 → October
+const QUARTER_RANGES: Record<number, { start: string; end: string }> = {
+  1: { start: 'Jan', end: 'Mar' },
+  2: { start: 'Apr', end: 'Jun' },
+  3: { start: 'Jul', end: 'Sep' },
+  4: { start: 'Oct', end: 'Dec' },
 };
 
 const formatQuarterTick = (quarter: string): string => {
   const match = quarter.match(/^(\d{4})-Q([1-4])$/);
   if (!match) return quarter;
 
-  const year = parseInt(match[1], 10);
+  const year = match[1];
   const quarterNum = parseInt(match[2], 10);
-  const month = QUARTER_START_MONTHS[quarterNum];
-  const date = new Date(year, month, 1);
+  const range = QUARTER_RANGES[quarterNum];
 
-  return format(date, 'MMM yyyy');
+  return `${range.start} - ${range.end} ${year}`;
 };
 
 export default function BeatmapUsageChart({
@@ -75,7 +74,10 @@ export default function BeatmapUsageChart({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Usage Over Time</CardTitle>
+          <div className="flex flex-row items-center gap-2">
+            <TrendingUp className="text-primary h-6 w-6" />
+            <CardTitle className="text-xl font-bold">Usage Over Time</CardTitle>
+          </div>
         </CardHeader>
       </Card>
     );
@@ -84,13 +86,16 @@ export default function BeatmapUsageChart({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Usage Over Time</CardTitle>
+        <div className="flex flex-row items-center gap-2">
+          <TrendingUp className="text-primary h-6 w-6" />
+          <CardTitle className="text-xl font-bold">Usage Over Time</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <ComposedChart
             data={data}
-            margin={{ top: 5, right: 50, bottom: 5, left: 0 }}
+            margin={{ top: 5, right: 30, bottom: 5, left: 10 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
             <XAxis

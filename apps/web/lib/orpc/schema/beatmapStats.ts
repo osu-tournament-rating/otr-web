@@ -28,8 +28,8 @@ export const BeatmapTournamentUsageSchema = z.object({
   mostCommonMod: z.number().int().nonnegative(),
   firstPlayedAt: z.string().nullable(),
   rankRangeLowerBound: z.number().int().positive(),
-  medianRating: z.number().nullable(),
-  medianScore: z.number().int().nonnegative().nullable(),
+  avgRating: z.number().nullable(),
+  avgScore: z.number().int().nonnegative().nullable(),
 });
 
 export const BeatmapUsagePointSchema = z.object({
@@ -105,8 +105,8 @@ export const BeatmapTournamentMatchGameSchema = z.object({
   gameId: z.number().int().positive(),
   gameNumber: z.number().int().positive(),
   mods: z.number().int().nonnegative(),
-  medianRating: z.number().nullable(),
-  medianScore: z.number().int().nonnegative().nullable(),
+  avgRating: z.number().nullable(),
+  avgScore: z.number().int().nonnegative().nullable(),
   playerCount: z.number().int().nonnegative(),
 });
 

@@ -57,8 +57,8 @@ interface DensityCell {
 
 const DENSITY_X_BINS = 20;
 const DENSITY_Y_BINS = 15;
-const DENSITY_MIN_OPACITY = 0.05;
-const DENSITY_MAX_OPACITY = 0.35;
+const DENSITY_MIN_OPACITY = 0.15;
+const DENSITY_MAX_OPACITY = 1.0;
 
 const RATING_BASE_UNIT = 100;
 const SCORE_STEP = 50000;
@@ -247,7 +247,7 @@ export default function BeatmapScoreRatingChart({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Score vs Player Rating</CardTitle>
+          <CardTitle className="text-center">Score vs Player Rating</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground py-8 text-center text-sm">
@@ -261,11 +261,11 @@ export default function BeatmapScoreRatingChart({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Score vs Player Rating</CardTitle>
+        <CardTitle className="text-center">Score vs Player Rating</CardTitle>
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <ScatterChart margin={{ top: 25, right: 10, bottom: 25, left: 30 }}>
+          <ScatterChart margin={{ top: 25, right: 20, bottom: 25, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
             <XAxis
               type="number"

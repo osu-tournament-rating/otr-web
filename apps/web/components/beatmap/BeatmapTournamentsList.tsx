@@ -20,7 +20,17 @@ export default function BeatmapTournamentsList({
   const NUM_LOAD_MORE = 25;
   const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
 
-  const displayedTournaments = tournaments.slice(0, displayCount);
+  const sortedTournaments = [...tournaments].sort((a, b) => {
+    const dateA = a.tournament.endTime
+      ? new Date(a.tournament.endTime).getTime()
+      : 0;
+    const dateB = b.tournament.endTime
+      ? new Date(b.tournament.endTime).getTime()
+      : 0;
+    return dateB - dateA;
+  });
+
+  const displayedTournaments = sortedTournaments.slice(0, displayCount);
 
   if (tournaments.length === 0) {
     return <NoResultsCard />;

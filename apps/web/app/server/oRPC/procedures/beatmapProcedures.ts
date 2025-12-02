@@ -340,11 +340,11 @@ export const getBeatmapStats = publicProcedure
         )
         .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`));
 
-      const medianRows = await context.db
+      const avgRows = await context.db
         .select({
           tournamentId: schema.tournaments.id,
-          medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
-          medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+          avgScore: sql<number>`AVG(${schema.gameScores.score})`,
+          avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
         })
         .from(schema.gameScores)
         .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
@@ -377,14 +377,12 @@ export const getBeatmapStats = publicProcedure
         )
         .groupBy(schema.tournaments.id);
 
-      const medianMap = new Map(
-        medianRows.map((row) => [
+      const avgMap = new Map(
+        avgRows.map((row) => [
           row.tournamentId,
           {
-            medianScore: row.medianScore ? Math.round(row.medianScore) : null,
-            medianRating: row.medianRating
-              ? Math.round(row.medianRating)
-              : null,
+            avgScore: row.avgScore ? Math.round(row.avgScore) : null,
+            avgRating: row.avgRating ? Math.round(row.avgRating) : null,
           },
         ])
       );
@@ -407,7 +405,7 @@ export const getBeatmapStats = publicProcedure
             }
           }
 
-          const medians = medianMap.get(row.tournamentId);
+          const avgs = avgMap.get(row.tournamentId);
           return {
             tournament: {
               id: row.tournamentId,
@@ -425,8 +423,8 @@ export const getBeatmapStats = publicProcedure
             mostCommonMod,
             firstPlayedAt: row.firstPlayedAt,
             rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-            medianRating: medians?.medianRating ?? null,
-            medianScore: medians?.medianScore ?? null,
+            avgRating: avgs?.avgRating ?? null,
+            avgScore: avgs?.avgScore ?? null,
           };
         }
       );
@@ -744,8 +742,8 @@ export const getBeatmapTournamentMatches = publicProcedure
           ? await context.db
               .select({
                 gameId: schema.games.id,
-                medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
-                medianRating: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+                avgScore: sql<number>`AVG(${schema.gameScores.score})`,
+                avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
                 playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
               })
               .from(schema.gameScores)
@@ -783,10 +781,8 @@ export const getBeatmapTournamentMatches = publicProcedure
         gameStatsRows.map((row) => [
           row.gameId,
           {
-            medianScore: row.medianScore ? Math.round(row.medianScore) : null,
-            medianRating: row.medianRating
-              ? Math.round(row.medianRating)
-              : null,
+            avgScore: row.avgScore ? Math.round(row.avgScore) : null,
+            avgRating: row.avgRating ? Math.round(row.avgRating) : null,
             playerCount: Number(row.playerCount),
           },
         ])
@@ -802,8 +798,8 @@ export const getBeatmapTournamentMatches = publicProcedure
             gameId: number;
             gameNumber: number;
             mods: number;
-            medianRating: number | null;
-            medianScore: number | null;
+            avgRating: number | null;
+            avgScore: number | null;
             playerCount: number;
           }>;
         }
@@ -827,8 +823,8 @@ export const getBeatmapTournamentMatches = publicProcedure
           gameId: row.gameId,
           gameNumber,
           mods: row.gameMods,
-          medianRating: stats?.medianRating ?? null,
-          medianScore: stats?.medianScore ?? null,
+          avgRating: stats?.avgRating ?? null,
+          avgScore: stats?.avgScore ?? null,
           playerCount: stats?.playerCount ?? 0,
         });
       }

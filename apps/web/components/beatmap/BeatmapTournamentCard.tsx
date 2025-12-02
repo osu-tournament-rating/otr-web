@@ -30,6 +30,7 @@ import { Button } from '../ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { formatUTCDate } from '@/lib/utils/date';
 import { orpc } from '@/lib/orpc/orpc';
 import { getTierFromRating } from '@/lib/utils/tierData';
 import type {
@@ -90,13 +91,16 @@ export default function BeatmapTournamentCard({
     tournament.tournament.id,
   ]);
 
+  const startDate = tournament.tournament.startTime
+    ? new Date(tournament.tournament.startTime)
+    : null;
   const endDate = tournament.tournament.endTime
     ? new Date(tournament.tournament.endTime)
     : null;
 
   const tierInfo =
-    tournament.medianRating != null
-      ? getTierFromRating(tournament.medianRating)
+    tournament.avgRating != null
+      ? getTierFromRating(tournament.avgRating)
       : null;
 
   const cardContent = (
@@ -165,11 +169,11 @@ export default function BeatmapTournamentCard({
             </span>
           </div>
 
-          {endDate && (
+          {startDate && endDate && (
             <div className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4 flex-shrink-0" />
               <span className="truncate text-xs sm:text-sm">
-                {format(endDate, 'MMM yyyy')}
+                {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
               </span>
             </div>
           )}
@@ -208,7 +212,7 @@ export default function BeatmapTournamentCard({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs uppercase tracking-wide">
-                Median Rating
+                Average Rating
               </span>
               <span className="flex items-center gap-1.5 text-lg font-semibold">
                 {tierInfo ? (
@@ -220,18 +224,18 @@ export default function BeatmapTournamentCard({
                     tooltip
                   />
                 ) : null}
-                {tournament.medianRating != null
-                  ? tournament.medianRating.toLocaleString()
+                {tournament.avgRating != null
+                  ? tournament.avgRating.toLocaleString()
                   : '—'}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs uppercase tracking-wide">
-                Median Score
+                Average Score
               </span>
               <span className="text-lg font-semibold">
-                {tournament.medianScore != null
-                  ? tournament.medianScore.toLocaleString()
+                {tournament.avgScore != null
+                  ? tournament.avgScore.toLocaleString()
                   : '—'}
               </span>
             </div>
@@ -280,10 +284,10 @@ export default function BeatmapTournamentCard({
                         Mods
                       </TableHead>
                       <TableHead className="text-foreground font-semibold">
-                        Rating
+                        Avg Rating
                       </TableHead>
                       <TableHead className="text-foreground font-semibold">
-                        Score
+                        Avg Score
                       </TableHead>
                       <TableHead className="text-foreground font-semibold">
                         Date
@@ -294,8 +298,8 @@ export default function BeatmapTournamentCard({
                     {matches.flatMap((match) =>
                       match.games.map((game) => {
                         const gameTierInfo =
-                          game.medianRating != null
-                            ? getTierFromRating(game.medianRating)
+                          game.avgRating != null
+                            ? getTierFromRating(game.avgRating)
                             : null;
                         return (
                           <TableRow
@@ -330,14 +334,14 @@ export default function BeatmapTournamentCard({
                                     tooltip
                                   />
                                 ) : null}
-                                {game.medianRating != null
-                                  ? game.medianRating.toLocaleString()
+                                {game.avgRating != null
+                                  ? game.avgRating.toLocaleString()
                                   : '—'}
                               </span>
                             </TableCell>
                             <TableCell className="py-2">
-                              {game.medianScore != null
-                                ? game.medianScore.toLocaleString()
+                              {game.avgScore != null
+                                ? game.avgScore.toLocaleString()
                                 : '—'}
                             </TableCell>
                             <TableCell className="text-muted-foreground py-2">

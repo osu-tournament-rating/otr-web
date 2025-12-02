@@ -42,14 +42,14 @@ interface BeatmapListFilterProps {
 const DEBOUNCE_DELAY = 500;
 
 const defaultFilterRanges = {
-  sr: { min: 0, max: 12, step: 0.1 },
+  sr: { min: 0, max: 12.5, step: 0.1 },
   bpm: { min: 60, max: 400, step: 5 },
   cs: { min: 0, max: 10, step: 0.5 },
   ar: { min: 0, max: 10, step: 0.5 },
   od: { min: 0, max: 10, step: 0.5 },
   hp: { min: 0, max: 10, step: 0.5 },
   length: { min: 0, max: 600, step: 15 },
-  gameCount: { min: 1, max: 500, step: 1 },
+  gameCount: { min: 0, max: 500, step: 1 },
   tournamentCount: { min: 1, max: 100, step: 1 },
 };
 
