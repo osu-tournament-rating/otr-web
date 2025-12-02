@@ -131,8 +131,6 @@ export default async function BeatmapPage({ params }: PageProps) {
             <h2 className="text-lg font-semibold">No Tournament Data</h2>
             <p className="text-muted-foreground mt-2 max-w-md text-sm">
               This beatmap has not been used in any verified tournaments yet.
-              Statistics will appear once it&apos;s played in a tracked
-              tournament.
             </p>
           </CardContent>
         </Card>
