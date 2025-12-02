@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { ExternalLink, Music, Star, Timer, User } from 'lucide-react';
-import AudioPlayButton from '@/components/audio/AudioPlayButton';
+import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import BeatmapBackground from '../games/BeatmapBackground';
 import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
@@ -41,12 +41,8 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <AudioPlayButton
-              beatmapsetOsuId={beatmap.beatmapset?.osuId}
-              size="sm"
-              className="hover:bg-white/20 text-white/70 hover:text-white"
-            />
+          <div className="flex items-center gap-2">
+            <AudioPreviewButton beatmapsetOsuId={beatmap.beatmapset?.osuId} />
             <SimpleTooltip content="View beatmap on osu!">
               <Button
                 asChild

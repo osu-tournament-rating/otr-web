@@ -7,6 +7,7 @@ import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
 import { AudioPlayerProvider } from '@/components/audio/AudioPlayerContext';
+import AudioPlayerControls from '@/components/audio/AudioPlayerControls';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
@@ -42,6 +43,7 @@ export default async function RootLayout({
                 </main>
                 <Footer />
                 <Toaster richColors />
+                <AudioPlayerControls />
               </AudioPlayerProvider>
             </SessionProvider>
           </TooltipProvider>
