@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
 import { Filter, X, Search } from 'lucide-react';
-import { useDebounce } from '@uidotdev/usehooks';
 import { Ruleset } from '@otr/core/osu';
 
 import {
@@ -39,8 +38,6 @@ interface BeatmapListFilterProps {
   filter: FilterFormData;
 }
 
-const DEBOUNCE_DELAY = 500;
-
 const defaultFilterRanges = {
   sr: { min: 0, max: 12.5, step: 0.1 },
   bpm: { min: 60, max: 400, step: 5 },
@@ -55,8 +52,6 @@ const defaultFilterRanges = {
 
 export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   const [searchQuery, setSearchQuery] = useState(filter.q ?? '');
-  const debouncedQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
-
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -78,16 +73,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     form.reset(normalizedFilter);
     setSearchQuery(filter.q ?? '');
   }, [form, normalizedFilter, filter.q]);
-
-  useEffect(() => {
-    if (debouncedQuery !== (filter.q ?? '')) {
-      const params = buildSearchParams({
-        ...form.getValues(),
-        q: debouncedQuery,
-      });
-      router.push(pathname + (params.size > 0 ? `?${params}` : ''));
-    }
-  }, [debouncedQuery, filter.q, form, pathname, router]);
 
   const buildSearchParams = (values: FilterFormData) => {
     const params = new URLSearchParams();
@@ -128,8 +113,12 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   };
 
   const onSubmit = (values: FilterFormData) => {
-    const params = buildSearchParams(values);
+    const params = buildSearchParams({
+      ...values,
+      q: searchQuery,
+    });
     router.push(pathname + (params.size > 0 ? `?${params}` : ''));
+    setIsOpen(false);
   };
 
   const handleClear = () => {
@@ -190,7 +179,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                     newMax === range.max ? undefined : newMax
                   );
                 }}
-                onPointerUp={form.handleSubmit(onSubmit)}
                 minStepsBetweenThumbs={1}
               />
               <div className="flex justify-between gap-2">
@@ -207,7 +195,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                       val === range.min ? undefined : val
                     );
                   }}
-                  onBlur={form.handleSubmit(onSubmit)}
                 />
                 <Input
                   type="number"
@@ -222,7 +209,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                       val === range.max ? undefined : val
                     );
                   }}
-                  onBlur={form.handleSubmit(onSubmit)}
                 />
               </div>
             </FormItem>
@@ -277,7 +263,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                         }
                         onValueChange={(val) => {
                           field.onChange(val ? Number(val) : undefined);
-                          form.handleSubmit(onSubmit)();
                         }}
                         type="single"
                       >
@@ -373,7 +358,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 range={defaultFilterRanges.tournamentCount}
               />
 
-              <div className="flex justify-end">
+              <div className="flex justify-between gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -382,6 +367,13 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 >
                   <X className="mr-1 h-3 w-3" />
                   Clear
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={form.handleSubmit(onSubmit)}
+                >
+                  Apply
                 </Button>
               </div>
             </form>
