@@ -173,7 +173,6 @@ function getBadgeStyles(
 ) {
   const config = statusConfig[verificationStatus];
 
-  // Override colors for warnings
   const color = hasWarnings ? 'text-orange-500' : config.color;
   const bgColor = hasWarnings ? 'bg-orange-500/20' : config.bgColor;
 
@@ -191,7 +190,7 @@ function getBadgeStyles(
     );
   }
 
-  return baseStyles;
+  return { styles: baseStyles, color };
 }
 
 function createTooltipContent(
@@ -270,7 +269,11 @@ export default function VerificationBadge({
   const warningMetadata = getWarningMetadata(warningFlags, entityType);
   const rejectionMetadata = getRejectionMetadata(rejectionReason, entityType);
 
-  const badgeStyles = getBadgeStyles(verificationStatus, hasWarnings, minimal);
+  const { styles: badgeStyles, color: iconColor } = getBadgeStyles(
+    verificationStatus,
+    hasWarnings,
+    minimal
+  );
 
   const badge = (
     <div
@@ -280,7 +283,7 @@ export default function VerificationBadge({
         displayText ? sizeConfig.padding : 'p-1'
       )}
     >
-      <Icon className={sizeConfig.icon} />
+      <Icon className={cn(sizeConfig.icon, iconColor)} />
       {displayText && (
         <span className={cn('ml-1.5 font-medium', sizeConfig.text)}>
           {statusText}

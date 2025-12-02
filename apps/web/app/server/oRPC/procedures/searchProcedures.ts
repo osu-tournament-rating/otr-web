@@ -150,10 +150,11 @@ export const searchEntities = protectedProcedure
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
 
       // Beatmaps combine diffName with beatmapset artist/title for search
+      // Artist/title get weight 'A' (highest priority), diffName gets 'C' (lower priority)
       const beatmapVector = sql`
-        ${schema.beatmaps.searchVector}
-        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.artist}, '')), 'B')
-        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.title}, '')), 'B')
+        setweight(to_tsvector('simple', coalesce(${schema.beatmaps.diffName}, '')), 'C')
+        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.artist}, '')), 'A')
+        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.title}, '')), 'A')
       `;
       const beatmapDiffSimilarity = buildSimilarity(schema.beatmaps.diffName);
       const beatmapArtistSimilarity = buildSimilarity(
@@ -170,30 +171,12 @@ export const searchEntities = protectedProcedure
         ? sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`
         : sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ${beatmapSimilarity})`;
 
-      // Subqueries for beatmap popularity (on-the-fly calculation, verified data only)
-      const beatmapGameCountSubquery = sql<number>`(
-        SELECT COUNT(DISTINCT g.id)::int
-        FROM ${schema.games} g
-        INNER JOIN ${schema.matches} m ON m.id = g.match_id
-        INNER JOIN ${schema.tournaments} t ON t.id = m.tournament_id
-        WHERE g.beatmap_id = ${schema.beatmaps.id}
-          AND t.verification_status = ${VerificationStatus.Verified}
-          AND m.verification_status = ${VerificationStatus.Verified}
-          AND g.verification_status = ${VerificationStatus.Verified}
-      )`;
-      const beatmapTournamentCountSubquery = sql<number>`(
-        SELECT COUNT(DISTINCT t.id)::int
-        FROM ${schema.joinPooledBeatmaps} jpb
-        INNER JOIN ${schema.tournaments} t ON t.id = jpb.tournaments_pooled_in_id
-        WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-          AND t.verification_status = ${VerificationStatus.Verified}
-      )`;
-
       // Combined score: 70% text relevance + 30% log-normalized popularity
+      // Uses pre-computed beatmap_stats table for performance
       // Log scale prevents extremely popular beatmaps from overwhelming relevance
       const beatmapCombinedScore = sql`(
         (${beatmapRank}) * 0.7 +
-        (ln(COALESCE((${beatmapGameCountSubquery}), 0) + 1) / 10.0) * 0.3
+        (ln(COALESCE(${schema.beatmapStats.verifiedGameCount}, 0) + 1) / 10.0) * 0.3
       )`;
 
       const session = context.session as
@@ -291,8 +274,8 @@ export const searchEntities = protectedProcedure
                 title: schema.beatmapsets.title,
                 creator: beatmapsetCreator.username,
                 beatmapsetOsuId: schema.beatmapsets.osuId,
-                gameCount: beatmapGameCountSubquery,
-                tournamentCount: beatmapTournamentCountSubquery,
+                gameCount: schema.beatmapStats.verifiedGameCount,
+                tournamentCount: schema.beatmapStats.verifiedTournamentCount,
               })
               .from(schema.beatmaps)
               .leftJoin(
@@ -302,6 +285,10 @@ export const searchEntities = protectedProcedure
               .leftJoin(
                 beatmapsetCreator,
                 eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
+              )
+              .leftJoin(
+                schema.beatmapStats,
+                eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
               )
               .where(beatmapCondition)
               .orderBy(
