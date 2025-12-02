@@ -120,7 +120,9 @@ export default async function BeatmapPage({ params }: PageProps) {
             beatmapOsuId={beatmapStats.beatmap.osuId}
           />
           {beatmapStats.topPerformers.length > 0 && (
-            <BeatmapTopPerformersTable performers={beatmapStats.topPerformers} />
+            <BeatmapTopPerformersTable
+              performers={beatmapStats.topPerformers}
+            />
           )}
         </>
       ) : (

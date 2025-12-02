@@ -125,7 +125,10 @@ export const getBeatmapStats = publicProcedure
             lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
           })
           .from(schema.games)
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -147,7 +150,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           ),
@@ -157,7 +163,10 @@ export const getBeatmapStats = publicProcedure
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
           })
           .from(schema.games)
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -169,7 +178,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           )
@@ -210,7 +222,8 @@ export const getBeatmapStats = publicProcedure
             tournamentEndTime: schema.tournaments.endTime,
             tournamentVerificationStatus: schema.tournaments.verificationStatus,
             tournamentIsLazer: schema.tournaments.isLazer,
-            tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+            tournamentRankRangeLowerBound:
+              schema.tournaments.rankRangeLowerBound,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
             mostCommonMod: sql<number>`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
@@ -228,7 +241,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           )
@@ -252,8 +268,14 @@ export const getBeatmapStats = publicProcedure
             avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
           })
           .from(schema.gameScores)
-          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -272,7 +294,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified),
               eq(
                 schema.gameScores.verificationStatus,
@@ -287,8 +312,14 @@ export const getBeatmapStats = publicProcedure
             scoreCount: sql<number>`COUNT(*)`,
           })
           .from(schema.gameScores)
-          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -300,7 +331,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified),
               eq(
                 schema.gameScores.verificationStatus,
@@ -317,8 +351,14 @@ export const getBeatmapStats = publicProcedure
             mods: schema.gameScores.mods,
           })
           .from(schema.gameScores)
-          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -337,7 +377,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified),
               eq(
                 schema.gameScores.verificationStatus,
@@ -362,8 +405,14 @@ export const getBeatmapStats = publicProcedure
             scoreId: schema.gameScores.id,
           })
           .from(schema.gameScores)
-          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
@@ -379,7 +428,10 @@ export const getBeatmapStats = publicProcedure
                 schema.tournaments.verificationStatus,
                 VerificationStatus.Verified
               ),
-              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
               eq(schema.games.verificationStatus, VerificationStatus.Verified),
               eq(
                 schema.gameScores.verificationStatus,
