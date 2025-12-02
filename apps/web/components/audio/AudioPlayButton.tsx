@@ -16,6 +16,7 @@ interface AudioPlayButtonProps {
   size?: 'sm' | 'md';
   variant?: 'ghost' | 'default';
   className?: string;
+  showTooltip?: boolean;
 }
 
 export default function AudioPlayButton({
@@ -23,6 +24,7 @@ export default function AudioPlayButton({
   size = 'md',
   variant = 'ghost',
   className,
+  showTooltip = true,
 }: AudioPlayButtonProps) {
   const { state, togglePlayPause } = useAudioPlayer();
   const isPlaying = useIsPlaying(beatmapsetOsuId);
@@ -41,18 +43,24 @@ export default function AudioPlayButton({
 
   const Icon = isLoading ? Loader2 : isPlaying ? Pause : Play;
 
+  const button = (
+    <Button
+      variant={variant}
+      size="icon"
+      className={cn(sizeConfig[size].button, className)}
+      onClick={handleClick}
+    >
+      <Icon
+        className={cn(sizeConfig[size].icon, isLoading && 'animate-spin')}
+      />
+    </Button>
+  );
+
+  if (!showTooltip) return button;
+
   return (
     <SimpleTooltip content={isPlaying ? 'Pause preview' : 'Play preview'}>
-      <Button
-        variant={variant}
-        size="icon"
-        className={cn(sizeConfig[size].button, className)}
-        onClick={handleClick}
-      >
-        <Icon
-          className={cn(sizeConfig[size].icon, isLoading && 'animate-spin')}
-        />
-      </Button>
+      {button}
     </SimpleTooltip>
   );
 }

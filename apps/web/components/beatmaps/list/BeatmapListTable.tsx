@@ -230,12 +230,13 @@ export default function BeatmapListTable({
                               beatmapsetId={beatmap.beatmapsetOsuId}
                               alt={`${beatmap.title} cover`}
                             />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
                               <AudioPlayButton
                                 beatmapsetOsuId={beatmap.beatmapsetOsuId}
                                 size="sm"
                                 variant="ghost"
                                 className="text-white hover:text-white hover:bg-white/20"
+                                showTooltip={false}
                               />
                             </div>
                           </>

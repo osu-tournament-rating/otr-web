@@ -34,14 +34,14 @@ export default function AudioPlayerControls() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-2 sm:inset-x-auto sm:bottom-4 sm:right-4">
       <div className="bg-popover border-border flex flex-col gap-2 rounded-lg border p-3 shadow-lg">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground w-10 text-xs">
             {formatTime(state.currentTime)}
           </span>
           <Slider
-            className="w-32"
+            className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             value={[state.currentTime]}
             onValueChange={handleSeek}
             max={state.duration || 100}
@@ -63,11 +63,11 @@ export default function AudioPlayerControls() {
             <Pause className="h-4 w-4" />
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 flex-shrink-0"
               onClick={toggleMute}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
@@ -78,7 +78,7 @@ export default function AudioPlayerControls() {
               )}
             </Button>
             <Slider
-              className="w-24"
+              className="min-w-0 flex-1 sm:w-24 sm:flex-none"
               value={[state.volume * 100]}
               onValueChange={handleVolumeChange}
               max={100}
@@ -89,7 +89,7 @@ export default function AudioPlayerControls() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 flex-shrink-0"
             onClick={pause}
             aria-label="Stop"
           >
