@@ -262,10 +262,7 @@ export const getBeatmapStats = publicProcedure
             schema.matches,
             and(
               eq(schema.matches.tournamentId, schema.tournaments.id),
-              eq(
-                schema.matches.verificationStatus,
-                VerificationStatus.Verified
-              )
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified)
             )
           )
           .leftJoin(
