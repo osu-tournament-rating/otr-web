@@ -49,7 +49,9 @@ export async function generateMetadata({
   const diffName = beatmapStats.beatmap.diffName;
   const sr = beatmapStats.beatmap.sr;
   const bpm = beatmapStats.beatmap.bpm;
-  const mapper = beatmapStats.beatmap.creators?.[0]?.username;
+  const mapper =
+    beatmapStats.beatmap.creators?.[0]?.username ??
+    beatmapStats.beatmap.beatmapset?.creator?.username;
   const beatmapsetOsuId = beatmapStats.beatmap.beatmapset?.osuId;
 
   const pageTitle = `${artist} - ${title} [${diffName}]`;

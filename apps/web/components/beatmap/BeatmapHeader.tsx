@@ -18,6 +18,7 @@ interface BeatmapHeaderProps {
 
 export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
   const duration = formatSecondsToMinutesSeconds(beatmap.totalLength);
+  const creator = beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
 
   return (
     <Card className="relative overflow-hidden p-0 font-sans">
@@ -91,13 +92,13 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
             <span className="truncate">{beatmap.bpm.toFixed(0)} BPM</span>
           </div>
 
-          {beatmap.creators && (
+          {creator && (
             <Link
-              href={`/players/${beatmap.creators[0].id}`}
+              href={`/players/${creator.id}`}
               className="flex items-center gap-1.5 hover:text-white"
             >
               <User className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{beatmap.creators[0].username}</span>
+              <span className="truncate">{creator.username}</span>
             </Link>
           )}
         </div>

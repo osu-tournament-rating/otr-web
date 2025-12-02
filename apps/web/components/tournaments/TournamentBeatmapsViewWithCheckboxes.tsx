@@ -228,19 +228,23 @@ const BeatmapRow = memo(
         {/* Creator */}
         <td className="px-2 py-2 text-center">
           <div className="flex items-center">
-            {beatmap.creators ? (
-              <Link
-                href={`/players/${beatmap.creators[0].id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
-              >
-                <User className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{beatmap.creators[0].username}</span>
-              </Link>
-            ) : (
-              <span className="text-muted-foreground text-xs">Unknown</span>
-            )}
+            {(() => {
+              const creator =
+                beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
+              return creator ? (
+                <Link
+                  href={`/players/${creator.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
+                >
+                  <User className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{creator.username}</span>
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-xs">Unknown</span>
+              );
+            })()}
           </div>
         </td>
       </tr>

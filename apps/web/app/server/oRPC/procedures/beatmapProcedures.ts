@@ -387,8 +387,7 @@ export const getBeatmapStats = publicProcedure
                 VerificationStatus.Verified
               )
             )
-          )
-          .limit(2000),
+          ),
         context.db
           .select({
             playerId: schema.players.id,
