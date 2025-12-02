@@ -525,7 +525,10 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, player.id),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(
+            schema.tournaments.verificationStatus,
+            VerificationStatus.Verified
+          ),
           // Filter by the tournament ruleset because mania variants reuse the same
           // beatmap ruleset (e.g., 4k/7k both map back to Mania = 3).
           input.ruleset != null
@@ -605,7 +608,10 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, player.id),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(
+            schema.tournaments.verificationStatus,
+            VerificationStatus.Verified
+          ),
           // Keep ordering scoped to the tournament ruleset so pagination stays in sync
           // when a player switches between ruleset tabs.
           input.ruleset != null
@@ -707,7 +713,10 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           inArray(schema.beatmaps.id, beatmapIds),
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+          eq(
+            schema.tournaments.verificationStatus,
+            VerificationStatus.Verified
+          ),
           // Ensure hydrated tournaments also belong to the requested ruleset.
           input.ruleset != null
             ? eq(schema.tournaments.ruleset, input.ruleset)

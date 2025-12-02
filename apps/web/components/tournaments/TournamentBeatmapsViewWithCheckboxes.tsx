@@ -236,9 +236,7 @@ const BeatmapRow = memo(
                 className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
               >
                 <User className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">
-                  {beatmap.creators[0].username}
-                </span>
+                <span className="truncate">{beatmap.creators[0].username}</span>
               </Link>
             ) : (
               <span className="text-muted-foreground text-xs">Unknown</span>

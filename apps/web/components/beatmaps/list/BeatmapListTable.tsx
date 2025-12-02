@@ -235,7 +235,7 @@ export default function BeatmapListTable({
                                 beatmapsetOsuId={beatmap.beatmapsetOsuId}
                                 size="sm"
                                 variant="ghost"
-                                className="text-white hover:text-white hover:bg-white/20"
+                                className="text-white hover:bg-white/20 hover:text-white"
                                 showTooltip={false}
                               />
                             </div>

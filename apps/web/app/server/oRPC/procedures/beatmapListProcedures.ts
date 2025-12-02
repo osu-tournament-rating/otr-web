@@ -261,9 +261,10 @@ export const listBeatmaps = publicProcedure
       const creatorSubquery = context.db
         .select({
           beatmapId: schema.joinBeatmapCreators.createdBeatmapsId,
-          creatorId: sql<number>`MIN(${schema.joinBeatmapCreators.creatorsId})`.as(
-            'creator_id'
-          ),
+          creatorId:
+            sql<number>`MIN(${schema.joinBeatmapCreators.creatorsId})`.as(
+              'creator_id'
+            ),
         })
         .from(schema.joinBeatmapCreators)
         .groupBy(schema.joinBeatmapCreators.createdBeatmapsId)
@@ -294,7 +295,10 @@ export const listBeatmaps = publicProcedure
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
         )
-        .leftJoin(creatorSubquery, eq(schema.beatmaps.id, creatorSubquery.beatmapId))
+        .leftJoin(
+          creatorSubquery,
+          eq(schema.beatmaps.id, creatorSubquery.beatmapId)
+        )
         .leftJoin(
           schema.players,
           sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
@@ -316,7 +320,10 @@ export const listBeatmaps = publicProcedure
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
         )
-        .leftJoin(creatorSubquery, eq(schema.beatmaps.id, creatorSubquery.beatmapId))
+        .leftJoin(
+          creatorSubquery,
+          eq(schema.beatmaps.id, creatorSubquery.beatmapId)
+        )
         .leftJoin(
           schema.players,
           sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
