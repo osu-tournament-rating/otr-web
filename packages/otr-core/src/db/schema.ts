@@ -513,6 +513,35 @@ export const beatmaps = pgTable(
   ]
 );
 
+export const beatmapStats = pgTable(
+  'beatmap_stats',
+  {
+    beatmapId: integer('beatmap_id')
+      .primaryKey()
+      .references(() => beatmaps.id, { onDelete: 'cascade' }),
+    verifiedGameCount: integer('verified_game_count').notNull().default(0),
+    verifiedTournamentCount: integer('verified_tournament_count')
+      .notNull()
+      .default(0),
+    hasVerifiedAppearance: boolean('has_verified_appearance')
+      .notNull()
+      .default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    index('ix_beatmap_stats_verified_game_count').using(
+      'btree',
+      table.verifiedGameCount.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_beatmap_stats_verified_tournament_count').using(
+      'btree',
+      table.verifiedTournamentCount.asc().nullsLast().op('int4_ops')
+    ),
+  ]
+);
+
 export const filterReportPlayers = pgTable(
   'filter_report_players',
   {

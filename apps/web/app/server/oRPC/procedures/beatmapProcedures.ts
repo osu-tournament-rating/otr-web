@@ -55,58 +55,343 @@ export const getBeatmapStats = publicProcedure
 
       const beatmapId = await resolveInternalBeatmapId(input.id);
 
-      const beatmapRow = await context.db
-        .select({
-          id: schema.beatmaps.id,
-          osuId: schema.beatmaps.osuId,
-          ruleset: schema.beatmaps.ruleset,
-          rankedStatus: schema.beatmaps.rankedStatus,
-          diffName: schema.beatmaps.diffName,
-          totalLength: schema.beatmaps.totalLength,
-          drainLength: schema.beatmaps.drainLength,
-          bpm: schema.beatmaps.bpm,
-          countCircle: schema.beatmaps.countCircle,
-          countSlider: schema.beatmaps.countSlider,
-          countSpinner: schema.beatmaps.countSpinner,
-          cs: schema.beatmaps.cs,
-          hp: schema.beatmaps.hp,
-          od: schema.beatmaps.od,
-          ar: schema.beatmaps.ar,
-          sr: schema.beatmaps.sr,
-          maxCombo: schema.beatmaps.maxCombo,
-          beatmapsetId: schema.beatmaps.beatmapsetId,
-          dataFetchStatus: schema.beatmaps.dataFetchStatus,
-          beatmapsetOsuId: schema.beatmapsets.osuId,
-          artist: schema.beatmapsets.artist,
-          title: schema.beatmapsets.title,
-          creatorId: schema.beatmapsets.creatorId,
-          creatorOsuId: schema.players.osuId,
-          creatorUsername: schema.players.username,
-          creatorCountry: schema.players.country,
-          creatorDefaultRuleset: schema.players.defaultRuleset,
-        })
-        .from(schema.beatmaps)
-        .leftJoin(
-          schema.beatmapsets,
-          eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
-        )
-        .leftJoin(
-          schema.players,
-          eq(schema.beatmapsets.creatorId, schema.players.id)
-        )
-        .where(eq(schema.beatmaps.id, beatmapId))
-        .limit(1);
+      const [
+        beatmapRow,
+        creatorsRows,
+        summaryRow,
+        usageRows,
+        pooledTournaments,
+        tournamentRows,
+        avgRows,
+        modRows,
+        scoreRatingRows,
+        topPerformerRows,
+      ] = await Promise.all([
+        context.db
+          .select({
+            id: schema.beatmaps.id,
+            osuId: schema.beatmaps.osuId,
+            ruleset: schema.beatmaps.ruleset,
+            rankedStatus: schema.beatmaps.rankedStatus,
+            diffName: schema.beatmaps.diffName,
+            totalLength: schema.beatmaps.totalLength,
+            drainLength: schema.beatmaps.drainLength,
+            bpm: schema.beatmaps.bpm,
+            countCircle: schema.beatmaps.countCircle,
+            countSlider: schema.beatmaps.countSlider,
+            countSpinner: schema.beatmaps.countSpinner,
+            cs: schema.beatmaps.cs,
+            hp: schema.beatmaps.hp,
+            od: schema.beatmaps.od,
+            ar: schema.beatmaps.ar,
+            sr: schema.beatmaps.sr,
+            maxCombo: schema.beatmaps.maxCombo,
+            beatmapsetId: schema.beatmaps.beatmapsetId,
+            dataFetchStatus: schema.beatmaps.dataFetchStatus,
+            beatmapsetOsuId: schema.beatmapsets.osuId,
+            artist: schema.beatmapsets.artist,
+            title: schema.beatmapsets.title,
+            creatorId: schema.beatmapsets.creatorId,
+            creatorOsuId: schema.players.osuId,
+            creatorUsername: schema.players.username,
+            creatorCountry: schema.players.country,
+            creatorDefaultRuleset: schema.players.defaultRuleset,
+          })
+          .from(schema.beatmaps)
+          .leftJoin(
+            schema.beatmapsets,
+            eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+          )
+          .leftJoin(
+            schema.players,
+            eq(schema.beatmapsets.creatorId, schema.players.id)
+          )
+          .where(eq(schema.beatmaps.id, beatmapId))
+          .limit(1),
+        context.db
+          .select(playerCompactColumns)
+          .from(schema.joinBeatmapCreators)
+          .innerJoin(
+            schema.players,
+            eq(schema.joinBeatmapCreators.creatorsId, schema.players.id)
+          )
+          .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, beatmapId)),
+        context.db
+          .select({
+            totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
+            totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
+            totalPlayerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
+            firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
+            lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
+          })
+          .from(schema.games)
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .leftJoin(
+            schema.gameScores,
+            and(
+              eq(schema.gameScores.gameId, schema.games.id),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified)
+            )
+          ),
+        context.db
+          .select({
+            quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
+            gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
+          })
+          .from(schema.games)
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified)
+            )
+          )
+          .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`)
+          .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`),
+        context.db
+          .select({
+            tournamentId: schema.tournaments.id,
+            startTime: schema.tournaments.startTime,
+            endTime: schema.tournaments.endTime,
+          })
+          .from(schema.joinPooledBeatmaps)
+          .innerJoin(
+            schema.tournaments,
+            eq(
+              schema.tournaments.id,
+              schema.joinPooledBeatmaps.tournamentsPooledInId
+            )
+          )
+          .where(
+            and(
+              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              sql`${schema.tournaments.startTime} IS NOT NULL`
+            )
+          ),
+        context.db
+          .select({
+            tournamentId: schema.tournaments.id,
+            tournamentName: schema.tournaments.name,
+            tournamentAbbreviation: schema.tournaments.abbreviation,
+            tournamentRuleset: schema.tournaments.ruleset,
+            tournamentLobbySize: schema.tournaments.lobbySize,
+            tournamentStartTime: schema.tournaments.startTime,
+            tournamentEndTime: schema.tournaments.endTime,
+            tournamentVerificationStatus: schema.tournaments.verificationStatus,
+            tournamentIsLazer: schema.tournaments.isLazer,
+            tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+            gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
+            mostCommonMod: sql<number>`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
+            firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
+          })
+          .from(schema.tournaments)
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.tournamentId, schema.tournaments.id)
+          )
+          .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified)
+            )
+          )
+          .groupBy(
+            schema.tournaments.id,
+            schema.tournaments.name,
+            schema.tournaments.abbreviation,
+            schema.tournaments.ruleset,
+            schema.tournaments.lobbySize,
+            schema.tournaments.startTime,
+            schema.tournaments.endTime,
+            schema.tournaments.verificationStatus,
+            schema.tournaments.isLazer,
+            schema.tournaments.rankRangeLowerBound
+          )
+          .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`)),
+        context.db
+          .select({
+            tournamentId: schema.tournaments.id,
+            avgScore: sql<number>`AVG(${schema.gameScores.score})`,
+            avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .leftJoin(
+            schema.ratingAdjustments,
+            and(
+              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+              eq(schema.ratingAdjustments.matchId, schema.matches.id)
+            )
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .groupBy(schema.tournaments.id),
+        context.db
+          .select({
+            mods: schema.gameScores.mods,
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .groupBy(schema.gameScores.mods)
+          .orderBy(desc(sql`COUNT(*)`)),
+        context.db
+          .select({
+            score: schema.gameScores.score,
+            playerRating: sql<number>`COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter})`,
+            mods: schema.gameScores.mods,
+          })
+          .from(schema.gameScores)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .innerJoin(
+            schema.ratingAdjustments,
+            and(
+              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+              eq(schema.ratingAdjustments.matchId, schema.matches.id)
+            )
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .limit(2000),
+        context.db
+          .select({
+            playerId: schema.players.id,
+            playerOsuId: schema.players.osuId,
+            playerUsername: schema.players.username,
+            playerCountry: schema.players.country,
+            playerDefaultRuleset: schema.players.defaultRuleset,
+            score: schema.gameScores.score,
+            accuracy: schema.gameScores.accuracy,
+            mods: schema.gameScores.mods,
+            playedAt: schema.games.startTime,
+            matchId: schema.matches.id,
+            gameId: schema.games.id,
+            scoreId: schema.gameScores.id,
+          })
+          .from(schema.gameScores)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+          .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .innerJoin(
+            schema.players,
+            eq(schema.players.id, schema.gameScores.playerId)
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .orderBy(desc(schema.gameScores.score))
+          .limit(10),
+      ]);
 
       const beatmap = beatmapRow[0]!;
-
-      const creatorsRows = await context.db
-        .select(playerCompactColumns)
-        .from(schema.joinBeatmapCreators)
-        .innerJoin(
-          schema.players,
-          eq(schema.joinBeatmapCreators.creatorsId, schema.players.id)
-        )
-        .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, beatmapId));
 
       const creators = creatorsRows.map((row) => ({
         id: row.id,
@@ -116,42 +401,6 @@ export const getBeatmapStats = publicProcedure
         defaultRuleset: row.defaultRuleset as Ruleset,
       }));
 
-      const summaryRow = await context.db
-        .select({
-          totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-          totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
-          totalPlayerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
-          firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
-          lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
-        })
-        .from(schema.games)
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .leftJoin(
-          schema.gameScores,
-          and(
-            eq(schema.gameScores.gameId, schema.games.id),
-            eq(
-              schema.gameScores.verificationStatus,
-              VerificationStatus.Verified
-            )
-          )
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified)
-          )
-        );
-
       const summary = {
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
         totalTournamentCount: Number(summaryRow[0]?.totalTournamentCount ?? 0),
@@ -159,57 +408,6 @@ export const getBeatmapStats = publicProcedure
         firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,
         lastPlayedAt: summaryRow[0]?.lastPlayedAt ?? null,
       };
-
-      const usageRows = await context.db
-        .select({
-          quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
-          gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-        })
-        .from(schema.games)
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified)
-          )
-        )
-        .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`)
-        .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`);
-
-      // Get all tournaments with this beatmap pooled, with their date ranges
-      const pooledTournaments = await context.db
-        .select({
-          tournamentId: schema.tournaments.id,
-          startTime: schema.tournaments.startTime,
-          endTime: schema.tournaments.endTime,
-        })
-        .from(schema.joinPooledBeatmaps)
-        .innerJoin(
-          schema.tournaments,
-          eq(
-            schema.tournaments.id,
-            schema.joinPooledBeatmaps.tournamentsPooledInId
-          )
-        )
-        .where(
-          and(
-            eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            sql`${schema.tournaments.startTime} IS NOT NULL`
-          )
-        );
 
       // Helper to get quarter string from date
       const getQuarterKey = (date: Date): string => {
@@ -293,90 +491,6 @@ export const getBeatmapStats = publicProcedure
         }
       }
 
-      const tournamentRows = await context.db
-        .select({
-          tournamentId: schema.tournaments.id,
-          tournamentName: schema.tournaments.name,
-          tournamentAbbreviation: schema.tournaments.abbreviation,
-          tournamentRuleset: schema.tournaments.ruleset,
-          tournamentLobbySize: schema.tournaments.lobbySize,
-          tournamentStartTime: schema.tournaments.startTime,
-          tournamentEndTime: schema.tournaments.endTime,
-          tournamentVerificationStatus: schema.tournaments.verificationStatus,
-          tournamentIsLazer: schema.tournaments.isLazer,
-          tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
-          gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-          modsUsed: sql<number[]>`array_agg(${schema.games.mods})`,
-          firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
-        })
-        .from(schema.tournaments)
-        .innerJoin(
-          schema.matches,
-          eq(schema.matches.tournamentId, schema.tournaments.id)
-        )
-        .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified)
-          )
-        )
-        .groupBy(
-          schema.tournaments.id,
-          schema.tournaments.name,
-          schema.tournaments.abbreviation,
-          schema.tournaments.ruleset,
-          schema.tournaments.lobbySize,
-          schema.tournaments.startTime,
-          schema.tournaments.endTime,
-          schema.tournaments.verificationStatus,
-          schema.tournaments.isLazer,
-          schema.tournaments.rankRangeLowerBound
-        )
-        .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`));
-
-      const avgRows = await context.db
-        .select({
-          tournamentId: schema.tournaments.id,
-          avgScore: sql<number>`AVG(${schema.gameScores.score})`,
-          avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
-        })
-        .from(schema.gameScores)
-        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .leftJoin(
-          schema.ratingAdjustments,
-          and(
-            eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-            eq(schema.ratingAdjustments.matchId, schema.matches.id)
-          )
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified),
-            eq(
-              schema.gameScores.verificationStatus,
-              VerificationStatus.Verified
-            )
-          )
-        )
-        .groupBy(schema.tournaments.id);
-
       const avgMap = new Map(
         avgRows.map((row) => [
           row.tournamentId,
@@ -389,22 +503,6 @@ export const getBeatmapStats = publicProcedure
 
       const tournaments: BeatmapTournamentUsage[] = tournamentRows.map(
         (row) => {
-          let mostCommonMod = Mods.None;
-          if (row.modsUsed && row.modsUsed.length > 0) {
-            const modCounts = new Map<number, number>();
-            for (const mod of row.modsUsed) {
-              if (mod == null) continue;
-              modCounts.set(mod, (modCounts.get(mod) ?? 0) + 1);
-            }
-            let maxCount = 0;
-            for (const [mod, count] of modCounts.entries()) {
-              if (count > maxCount) {
-                maxCount = count;
-                mostCommonMod = mod;
-              }
-            }
-          }
-
           const avgs = avgMap.get(row.tournamentId);
           return {
             tournament: {
@@ -420,7 +518,7 @@ export const getBeatmapStats = publicProcedure
               isLazer: row.tournamentIsLazer,
             },
             gameCount: Number(row.gameCount),
-            mostCommonMod,
+            mostCommonMod: row.mostCommonMod ?? Mods.None,
             firstPlayedAt: row.firstPlayedAt,
             rankRangeLowerBound: row.tournamentRankRangeLowerBound,
             avgRating: avgs?.avgRating ?? null,
@@ -428,36 +526,6 @@ export const getBeatmapStats = publicProcedure
           };
         }
       );
-
-      const modRows = await context.db
-        .select({
-          mods: schema.gameScores.mods,
-          scoreCount: sql<number>`COUNT(*)`,
-        })
-        .from(schema.gameScores)
-        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified),
-            eq(
-              schema.gameScores.verificationStatus,
-              VerificationStatus.Verified
-            )
-          )
-        )
-        .groupBy(schema.gameScores.mods)
-        .orderBy(desc(sql`COUNT(*)`));
 
       const totalModScores = modRows.reduce(
         (acc, row) => acc + Number(row.scoreCount),
@@ -472,42 +540,6 @@ export const getBeatmapStats = publicProcedure
             : 0,
       }));
 
-      const scoreRatingRows = await context.db
-        .select({
-          score: schema.gameScores.score,
-          playerRating: sql<number>`COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter})`,
-          mods: schema.gameScores.mods,
-        })
-        .from(schema.gameScores)
-        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .innerJoin(
-          schema.ratingAdjustments,
-          and(
-            eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-            eq(schema.ratingAdjustments.matchId, schema.matches.id)
-          )
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified),
-            eq(
-              schema.gameScores.verificationStatus,
-              VerificationStatus.Verified
-            )
-          )
-        );
-
       const scoreRatingData: BeatmapScoreRatingPoint[] = scoreRatingRows.map(
         (row) => ({
           score: row.score,
@@ -515,50 +547,6 @@ export const getBeatmapStats = publicProcedure
           mods: row.mods,
         })
       );
-
-      const topPerformerRows = await context.db
-        .select({
-          playerId: schema.players.id,
-          playerOsuId: schema.players.osuId,
-          playerUsername: schema.players.username,
-          playerCountry: schema.players.country,
-          playerDefaultRuleset: schema.players.defaultRuleset,
-          score: schema.gameScores.score,
-          accuracy: schema.gameScores.accuracy,
-          mods: schema.gameScores.mods,
-          playedAt: schema.games.startTime,
-          matchId: schema.matches.id,
-          gameId: schema.games.id,
-          scoreId: schema.gameScores.id,
-        })
-        .from(schema.gameScores)
-        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .innerJoin(
-          schema.tournaments,
-          eq(schema.tournaments.id, schema.matches.tournamentId)
-        )
-        .innerJoin(
-          schema.players,
-          eq(schema.players.id, schema.gameScores.playerId)
-        )
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(
-              schema.tournaments.verificationStatus,
-              VerificationStatus.Verified
-            ),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified),
-            eq(
-              schema.gameScores.verificationStatus,
-              VerificationStatus.Verified
-            )
-          )
-        )
-        .orderBy(desc(schema.gameScores.score))
-        .limit(10);
 
       const topPerformers: BeatmapTopPerformer[] = topPerformerRows.map(
         (row) => ({

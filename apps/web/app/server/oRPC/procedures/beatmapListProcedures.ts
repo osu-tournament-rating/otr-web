@@ -13,7 +13,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import { Ruleset } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
@@ -104,128 +104,45 @@ export const listBeatmaps = publicProcedure
       }
 
       if (input.minGameCount !== undefined) {
-        filters.push(sql`(
-          SELECT COUNT(g.id)
-          FROM games g
-          INNER JOIN matches m ON m.id = g.match_id
-          INNER JOIN tournaments t ON t.id = m.tournament_id
-          WHERE g.beatmap_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
-            AND m.verification_status = ${VerificationStatus.Verified}
-            AND g.verification_status = ${VerificationStatus.Verified}
-        ) >= ${input.minGameCount}`);
+        filters.push(
+          gte(
+            sql`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`,
+            input.minGameCount
+          )
+        );
       }
       if (input.maxGameCount !== undefined) {
-        filters.push(sql`(
-          SELECT COUNT(g.id)
-          FROM games g
-          INNER JOIN matches m ON m.id = g.match_id
-          INNER JOIN tournaments t ON t.id = m.tournament_id
-          WHERE g.beatmap_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
-            AND m.verification_status = ${VerificationStatus.Verified}
-            AND g.verification_status = ${VerificationStatus.Verified}
-        ) <= ${input.maxGameCount}`);
+        filters.push(
+          lte(
+            sql`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`,
+            input.maxGameCount
+          )
+        );
       }
       if (input.minTournamentCount !== undefined) {
-        filters.push(sql`(
-          SELECT COUNT(DISTINCT tournament_id) FROM (
-            SELECT jpb.tournaments_pooled_in_id AS tournament_id
-            FROM join_pooled_beatmaps jpb
-            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-            UNION
-            SELECT t.id AS tournament_id
-            FROM games g
-            INNER JOIN matches m ON m.id = g.match_id
-            INNER JOIN tournaments t ON t.id = m.tournament_id
-            WHERE g.beatmap_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-              AND m.verification_status = ${VerificationStatus.Verified}
-              AND g.verification_status = ${VerificationStatus.Verified}
-          ) AS combined_tournaments
-        ) >= ${input.minTournamentCount}`);
+        filters.push(
+          gte(
+            sql`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`,
+            input.minTournamentCount
+          )
+        );
       }
       if (input.maxTournamentCount !== undefined) {
-        filters.push(sql`(
-          SELECT COUNT(DISTINCT tournament_id) FROM (
-            SELECT jpb.tournaments_pooled_in_id AS tournament_id
-            FROM join_pooled_beatmaps jpb
-            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-            UNION
-            SELECT t.id AS tournament_id
-            FROM games g
-            INNER JOIN matches m ON m.id = g.match_id
-            INNER JOIN tournaments t ON t.id = m.tournament_id
-            WHERE g.beatmap_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-              AND m.verification_status = ${VerificationStatus.Verified}
-              AND g.verification_status = ${VerificationStatus.Verified}
-          ) AS combined_tournaments
-        ) <= ${input.maxTournamentCount}`);
+        filters.push(
+          lte(
+            sql`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`,
+            input.maxTournamentCount
+          )
+        );
       }
 
       filters.push(
         sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
       );
 
-      const hasVerifiedAppearanceSql = sql`(
-        EXISTS (
-          SELECT 1 FROM games g
-          INNER JOIN matches m ON m.id = g.match_id
-          INNER JOIN tournaments t ON t.id = m.tournament_id
-          WHERE g.beatmap_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
-            AND m.verification_status = ${VerificationStatus.Verified}
-            AND g.verification_status = ${VerificationStatus.Verified}
-        )
-        OR EXISTS (
-          SELECT 1 FROM join_pooled_beatmaps jpb
-          INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-          WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
-        )
-      )`;
-      filters.push(hasVerifiedAppearanceSql);
+      filters.push(eq(schema.beatmapStats.hasVerifiedAppearance, true));
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
-
-      const verifiedTournamentCountSql = sql<number>`
-        COALESCE((
-          SELECT COUNT(DISTINCT tournament_id) FROM (
-            SELECT jpb.tournaments_pooled_in_id AS tournament_id
-            FROM join_pooled_beatmaps jpb
-            INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-            WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-            UNION
-            SELECT t.id AS tournament_id
-            FROM games g
-            INNER JOIN matches m ON m.id = g.match_id
-            INNER JOIN tournaments t ON t.id = m.tournament_id
-            WHERE g.beatmap_id = ${schema.beatmaps.id}
-              AND t.verification_status = ${VerificationStatus.Verified}
-              AND m.verification_status = ${VerificationStatus.Verified}
-              AND g.verification_status = ${VerificationStatus.Verified}
-          ) AS combined_tournaments
-        ), 0)
-      `.as('verified_tournament_count');
-
-      const verifiedGameCountSql = sql<number>`
-        COALESCE((
-          SELECT COUNT(g.id)
-          FROM games g
-          INNER JOIN matches m ON m.id = g.match_id
-          INNER JOIN tournaments t ON t.id = m.tournament_id
-          WHERE g.beatmap_id = ${schema.beatmaps.id}
-            AND t.verification_status = ${VerificationStatus.Verified}
-            AND m.verification_status = ${VerificationStatus.Verified}
-            AND g.verification_status = ${VerificationStatus.Verified}
-        ), 0)
-      `.as('verified_game_count');
 
       const sortValue = input.sort ?? 'sr';
       const isDescending = input.descending ?? true;
@@ -248,9 +165,9 @@ export const listBeatmaps = publicProcedure
           case 'length':
             return schema.beatmaps.totalLength;
           case 'tournamentCount':
-            return verifiedTournamentCountSql;
+            return schema.beatmapStats.verifiedTournamentCount;
           case 'gameCount':
-            return verifiedGameCountSql;
+            return schema.beatmapStats.verifiedGameCount;
           case 'creator':
             return schema.players.username;
           default:
@@ -287,10 +204,20 @@ export const listBeatmaps = publicProcedure
           title: schema.beatmapsets.title,
           beatmapsetOsuId: schema.beatmapsets.osuId,
           creator: schema.players.username,
-          verifiedTournamentCount: verifiedTournamentCountSql,
-          verifiedGameCount: verifiedGameCountSql,
+          verifiedTournamentCount:
+            sql<number>`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`.as(
+              'verified_tournament_count'
+            ),
+          verifiedGameCount:
+            sql<number>`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`.as(
+              'verified_game_count'
+            ),
         })
         .from(schema.beatmaps)
+        .innerJoin(
+          schema.beatmapStats,
+          eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
+        )
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
@@ -316,6 +243,10 @@ export const listBeatmaps = publicProcedure
       const countQuery = context.db
         .select({ count: count() })
         .from(schema.beatmaps)
+        .innerJoin(
+          schema.beatmapStats,
+          eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
+        )
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
