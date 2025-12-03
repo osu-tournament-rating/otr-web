@@ -74,6 +74,21 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     setSearchQuery(filter.q ?? '');
   }, [form, normalizedFilter, filter.q]);
 
+  useEffect(() => {
+    const currentQ = filter.q ?? '';
+    if (searchQuery === currentQ) return;
+
+    const timer = setTimeout(() => {
+      const params = buildSearchParams({
+        ...form.getValues(),
+        q: searchQuery,
+      });
+      router.push(pathname + (params.size > 0 ? `?${params}` : ''));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, filter.q, form, pathname, router]);
+
   const buildSearchParams = (values: FilterFormData) => {
     const params = new URLSearchParams();
 
