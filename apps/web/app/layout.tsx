@@ -6,6 +6,8 @@ import React from 'react';
 import './globals.css';
 import Footer from '@/components/footer/Footer';
 import SessionProvider from '@/components/session-provider';
+import { AudioPlayerProvider } from '@/components/audio/AudioPlayerContext';
+import AudioPlayerControls from '@/components/audio/AudioPlayerControls';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
@@ -34,12 +36,15 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <TooltipProvider>
             <SessionProvider user={session}>
-              <Header />
-              <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
-                {children}
-              </main>
-              <Footer />
-              <Toaster richColors />
+              <AudioPlayerProvider>
+                <Header />
+                <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
+                  {children}
+                </main>
+                <Footer />
+                <Toaster richColors />
+                <AudioPlayerControls />
+              </AudioPlayerProvider>
             </SessionProvider>
           </TooltipProvider>
         </ThemeProvider>

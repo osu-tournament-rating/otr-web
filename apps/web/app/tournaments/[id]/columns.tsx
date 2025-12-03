@@ -112,10 +112,7 @@ export const columns = [
     },
     cell: ({ getValue, row }) => (
       <div className="max-w-[500px] text-wrap">
-        <Link
-          href={`/matches/${row.original.id}`}
-          className="break-words hover:underline"
-        >
+        <Link href={`/matches/${row.original.id}`} className="break-words">
           {getValue() || `Match ${row.original.id}`}
         </Link>
         {/* Mobile-only additional info */}

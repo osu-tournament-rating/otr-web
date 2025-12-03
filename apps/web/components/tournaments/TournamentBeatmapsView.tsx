@@ -291,9 +291,7 @@ export default function TournamentBeatmapsView({
                     {/* osu! ID */}
                     <td className="px-2 py-2 text-center">
                       <Link
-                        href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`/beatmaps/${beatmap.osuId}`}
                         className="text-muted-foreground hover:text-primary text-xs transition-colors"
                       >
                         {beatmap.osuId}
@@ -320,9 +318,7 @@ export default function TournamentBeatmapsView({
                         {/* Song details */}
                         <div className="min-w-0 flex-1">
                           <Link
-                            href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/beatmaps/${beatmap.osuId}`}
                             className="hover:text-primary block transition-colors"
                           >
                             <p className="max-w-[160px] truncate text-xs font-medium">
@@ -415,9 +411,7 @@ export default function TournamentBeatmapsView({
                       <div className="flex items-center">
                         {beatmap.beatmapset?.creator ? (
                           <Link
-                            href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/players/${beatmap.beatmapset.creator.id}`}
                             className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
                           >
                             <User className="h-3 w-3 flex-shrink-0" />

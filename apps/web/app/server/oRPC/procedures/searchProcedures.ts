@@ -1,37 +1,28 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 import * as schema from '@otr/core/db/schema';
 import {
+  BeatmapSearchResultSchema,
   MatchSearchResultSchema,
   PlayerSearchResultSchema,
   SearchRequestSchema,
   SearchResponseSchema,
   TournamentSearchResultSchema,
 } from '@/lib/orpc/schema/search';
+import {
+  buildBeatmapSearchExpressions,
+  buildSimilarity,
+  parseSearchTerm,
+  SIMILARITY_THRESHOLD,
+} from '@/lib/orpc/queries/search';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from './base';
 
 const DEFAULT_RESULT_LIMIT = 5;
-const SIMILARITY_THRESHOLD = 0.3;
-
-const normalizeSearchTerm = (value: string) =>
-  value
-    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const buildPrefixQuery = (tokens: readonly string[]) =>
-  tokens.length === 0
-    ? null
-    : tokens
-        .map((token) => {
-          const safeToken = token.replace(/'/g, "''");
-          return `'${safeToken}':*`;
-        })
-        .join(' & ');
 
 export const searchEntities = protectedProcedure
   .input(SearchRequestSchema)
@@ -43,78 +34,57 @@ export const searchEntities = protectedProcedure
     path: '/search',
   })
   .handler(async ({ input, context }) => {
-    const term = input.searchKey.trim();
+    const emptyResponse = SearchResponseSchema.parse({
+      players: [],
+      tournaments: [],
+      matches: [],
+      beatmaps: [],
+    });
 
-    if (!term) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-      });
+    const parsed = parseSearchTerm(input.searchKey);
+    if (!parsed) {
+      return emptyResponse;
     }
 
-    const normalizedTerm = normalizeSearchTerm(term);
+    const {
+      normalizedTerm,
+      tsQuery,
+      prefixTsQuery,
+      primaryToken,
+      hasDistinctPrimaryToken,
+    } = parsed;
 
-    if (!normalizedTerm) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-      });
-    }
-
-    const tokens = normalizedTerm.split(/\s+/).filter(Boolean);
-
-    if (tokens.length === 0) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-      });
-    }
-
-    const prefixQueryText = buildPrefixQuery(tokens);
-    // Use the plain parser for natural-language matches and a prefix query so users can search by partial tokens.
-    const tsQuery = sql`plainto_tsquery('simple', ${normalizedTerm})`;
-    const prefixTsQuery = prefixQueryText
-      ? sql`to_tsquery('simple', ${prefixQueryText})`
-      : null;
-
-    const primaryToken = tokens[0] ?? normalizedTerm;
-    const hasDistinctPrimaryToken = primaryToken !== normalizedTerm;
-    const buildSimilarity = (column: AnyColumn | SQL) =>
-      hasDistinctPrimaryToken
-        ? sql`greatest(similarity(${column}, ${normalizedTerm}), similarity(${column}, ${primaryToken}))`
-        : sql`similarity(${column}, ${normalizedTerm})`;
+    const similarity = (column: AnyColumn | SQL) =>
+      buildSimilarity(
+        column,
+        normalizedTerm,
+        primaryToken,
+        hasDistinctPrimaryToken
+      );
 
     try {
       const playerVector = schema.players.searchVector;
-      const playerSimilarity = buildSimilarity(schema.players.username);
-      // Players match if they satisfy either the full-term or prefix query; the dual check helps partial matches without sacrificing exact ones.
+      const playerSimilarity = similarity(schema.players.username);
       const playerCondition = prefixTsQuery
         ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${playerVector} @@ ${tsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Rank players by whichever query produced the highest score so prefix hits can bubble above weaker full-term matches.
       const playerRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ts_rank_cd(${playerVector}, ${prefixTsQuery}), ${playerSimilarity})`
         : sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ${playerSimilarity})`;
 
       const tournamentVector = schema.tournaments.searchVector;
-      const tournamentNameSimilarity = buildSimilarity(schema.tournaments.name);
-      const tournamentAbbreviationSimilarity = buildSimilarity(
+      const tournamentNameSimilarity = similarity(schema.tournaments.name);
+      const tournamentAbbreviationSimilarity = similarity(
         schema.tournaments.abbreviation
       );
       const tournamentSimilarity = sql`greatest(${tournamentNameSimilarity}, ${tournamentAbbreviationSimilarity})`;
-      // Apply the same full vs prefix matching strategy for tournaments to keep behavior consistent across entities.
       const tournamentCondition = prefixTsQuery
         ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Favor the strongest relevance score from either query path when ordering tournament results.
       const tournamentRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ts_rank_cd(${tournamentVector}, ${prefixTsQuery}), ${tournamentSimilarity})`
         : sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ${tournamentSimilarity})`;
 
-      // Matches stitch in tournament metadata to boost relevance when users search by tourney identifiers or abbreviations.
       const matchVector = sql`
         ${schema.matches.searchVector}
         || setweight(to_tsvector('simple', coalesce(${schema.tournaments.name}, '')), 'B')
@@ -127,22 +97,24 @@ export const searchEntities = protectedProcedure
         )
         || setweight(to_tsvector('simple', coalesce(${schema.tournaments.abbreviation}, '')), 'D')
       `;
-      const matchNameSimilarity = buildSimilarity(schema.matches.name);
-      const matchTournamentNameSimilarity = buildSimilarity(
+      const matchNameSimilarity = similarity(schema.matches.name);
+      const matchTournamentNameSimilarity = similarity(
         sql`coalesce(${schema.tournaments.name}, '')`
       );
-      const matchTournamentAbbreviationSimilarity = buildSimilarity(
+      const matchTournamentAbbreviationSimilarity = similarity(
         sql`coalesce(${schema.tournaments.abbreviation}, '')`
       );
       const matchSimilarity = sql`greatest(${matchNameSimilarity}, ${matchTournamentNameSimilarity}, ${matchTournamentAbbreviationSimilarity})`;
-      // Allow either query to satisfy the match vector so partial tournament text still finds the right match records.
       const matchCondition = prefixTsQuery
         ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${matchVector} @@ ${tsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Rank matches using the highest relevance from the two query shapes to reflect the most confident hit.
       const matchRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
+
+      const beatmapSearch = buildBeatmapSearchExpressions(input.searchKey)!;
+      const { condition: beatmapCondition, rank: beatmapCombinedScore } =
+        beatmapSearch;
 
       const session = context.session as
         | { dbPlayer?: { id?: number | null } | null }
@@ -158,71 +130,111 @@ export const searchEntities = protectedProcedure
         friendIds = new Set(friendRows.map((row) => Number(row.friendId)));
       }
 
-      const [playerRows, tournamentRows, matchRows] = await Promise.all([
-        context.db
-          .select({
-            id: schema.players.id,
-            osuId: schema.players.osuId,
-            username: schema.players.username,
-            defaultRuleset: schema.players.defaultRuleset,
-            rating: schema.playerRatings.rating,
-            ratingRuleset: schema.playerRatings.ruleset,
-            globalRank: schema.playerRatings.globalRank,
-          })
-          .from(schema.players)
-          .leftJoin(
-            schema.playerRatings,
-            and(
-              eq(schema.playerRatings.playerId, schema.players.id),
-              eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
+      const [playerRows, tournamentRows, matchRows, beatmapRows] =
+        await Promise.all([
+          context.db
+            .select({
+              id: schema.players.id,
+              osuId: schema.players.osuId,
+              username: schema.players.username,
+              defaultRuleset: schema.players.defaultRuleset,
+              rating: schema.playerRatings.rating,
+              ratingRuleset: schema.playerRatings.ruleset,
+              globalRank: schema.playerRatings.globalRank,
+            })
+            .from(schema.players)
+            .leftJoin(
+              schema.playerRatings,
+              and(
+                eq(schema.playerRatings.playerId, schema.players.id),
+                eq(schema.playerRatings.ruleset, schema.players.defaultRuleset)
+              )
             )
-          )
-          .where(playerCondition)
-          .orderBy(
-            desc(playerRank),
-            sql`${schema.playerRatings.rating} desc nulls last`,
-            asc(schema.players.username)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-        context.db
-          .select({
-            id: schema.tournaments.id,
-            name: schema.tournaments.name,
-            abbreviation: schema.tournaments.abbreviation,
-            ruleset: schema.tournaments.ruleset,
-            verificationStatus: schema.tournaments.verificationStatus,
-            rejectionReason: schema.tournaments.rejectionReason,
-            lobbySize: schema.tournaments.lobbySize,
-            isLazer: schema.tournaments.isLazer,
-          })
-          .from(schema.tournaments)
-          .where(tournamentCondition)
-          .orderBy(
-            desc(tournamentRank),
-            sql`${schema.tournaments.endTime} desc nulls last`,
-            asc(schema.tournaments.name)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-        context.db
-          .select({
-            id: schema.matches.id,
-            osuId: schema.matches.osuId,
-            name: schema.matches.name,
-            tournamentName: schema.tournaments.name,
-          })
-          .from(schema.matches)
-          .leftJoin(
-            schema.tournaments,
-            eq(schema.matches.tournamentId, schema.tournaments.id)
-          )
-          .where(matchCondition)
-          .orderBy(
-            desc(matchRank),
-            sql`${schema.matches.startTime} desc nulls last`,
-            asc(schema.matches.name)
-          )
-          .limit(DEFAULT_RESULT_LIMIT),
-      ]);
+            .where(playerCondition)
+            .orderBy(
+              desc(playerRank),
+              sql`${schema.playerRatings.rating} desc nulls last`,
+              asc(schema.players.username)
+            )
+            .limit(DEFAULT_RESULT_LIMIT),
+          context.db
+            .select({
+              id: schema.tournaments.id,
+              name: schema.tournaments.name,
+              abbreviation: schema.tournaments.abbreviation,
+              ruleset: schema.tournaments.ruleset,
+              verificationStatus: schema.tournaments.verificationStatus,
+              rejectionReason: schema.tournaments.rejectionReason,
+              lobbySize: schema.tournaments.lobbySize,
+              isLazer: schema.tournaments.isLazer,
+            })
+            .from(schema.tournaments)
+            .where(tournamentCondition)
+            .orderBy(
+              desc(tournamentRank),
+              sql`${schema.tournaments.endTime} desc nulls last`,
+              asc(schema.tournaments.name)
+            )
+            .limit(DEFAULT_RESULT_LIMIT),
+          context.db
+            .select({
+              id: schema.matches.id,
+              osuId: schema.matches.osuId,
+              name: schema.matches.name,
+              tournamentName: schema.tournaments.name,
+            })
+            .from(schema.matches)
+            .leftJoin(
+              schema.tournaments,
+              eq(schema.matches.tournamentId, schema.tournaments.id)
+            )
+            .where(matchCondition)
+            .orderBy(
+              desc(matchRank),
+              sql`${schema.matches.startTime} desc nulls last`,
+              asc(schema.matches.name)
+            )
+            .limit(DEFAULT_RESULT_LIMIT),
+          (() => {
+            const beatmapsetCreator = alias(
+              schema.players,
+              'beatmapsetCreator'
+            );
+            return context.db
+              .select({
+                id: schema.beatmaps.id,
+                osuId: schema.beatmaps.osuId,
+                diffName: schema.beatmaps.diffName,
+                sr: schema.beatmaps.sr,
+                ruleset: schema.beatmaps.ruleset,
+                artist: schema.beatmapsets.artist,
+                title: schema.beatmapsets.title,
+                creator: beatmapsetCreator.username,
+                beatmapsetOsuId: schema.beatmapsets.osuId,
+                gameCount: schema.beatmapStats.verifiedGameCount,
+                tournamentCount: schema.beatmapStats.verifiedTournamentCount,
+              })
+              .from(schema.beatmaps)
+              .leftJoin(
+                schema.beatmapsets,
+                eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
+              )
+              .leftJoin(
+                beatmapsetCreator,
+                eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
+              )
+              .leftJoin(
+                schema.beatmapStats,
+                eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
+              )
+              .where(beatmapCondition)
+              .orderBy(
+                desc(beatmapCombinedScore),
+                asc(schema.beatmaps.diffName)
+              )
+              .limit(DEFAULT_RESULT_LIMIT);
+          })(),
+        ]);
 
       const players = playerRows.map((row) => {
         const rating =
@@ -279,10 +291,29 @@ export const searchEntities = protectedProcedure
         })
       );
 
+      const beatmaps = beatmapRows.map((row) =>
+        BeatmapSearchResultSchema.parse({
+          id: Number(row.id),
+          osuId: Number(row.osuId),
+          diffName: row.diffName,
+          sr: Number(row.sr),
+          ruleset: row.ruleset as Ruleset,
+          artist: row.artist ?? 'Unknown',
+          title: row.title ?? 'Unknown',
+          creator: row.creator ?? null,
+          beatmapsetOsuId: row.beatmapsetOsuId
+            ? Number(row.beatmapsetOsuId)
+            : null,
+          gameCount: Number(row.gameCount ?? 0),
+          tournamentCount: Number(row.tournamentCount ?? 0),
+        })
+      );
+
       return SearchResponseSchema.parse({
         players,
         tournaments,
         matches,
+        beatmaps,
       });
     } catch (error) {
       console.error('[orpc] search.query failed', error);

@@ -109,7 +109,7 @@ export default function PlayerBeatmapTournamentTable({
                       <TableCell className="py-2">
                         <Link
                           href={`/tournaments/${tournament.id}`}
-                          className="hover:underline"
+                          className=""
                         >
                           {tournament.name}
                         </Link>

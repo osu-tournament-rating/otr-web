@@ -183,11 +183,10 @@ services:
     image: grafana/loki:3.4.1
     container_name: loki
     restart: unless-stopped
-    user: '1000:1000'
     command:
       - '-config.file=/etc/loki/loki-config.yaml'
     volumes:
-      - ./monitoring/loki/data:/loki
+      - loki-data:/loki
       - ./monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     healthcheck:
       test:
@@ -264,3 +263,4 @@ volumes:
   prometheus-data:
   grafana-data:
   promtail-positions:
+  loki-data:

@@ -119,9 +119,7 @@ const BeatmapRow = memo(
         {/* osu! ID */}
         <td className="px-2 py-2 text-center">
           <Link
-            href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`/beatmaps/${beatmap.osuId}`}
             className="text-muted-foreground hover:text-primary text-xs transition-colors"
           >
             {beatmap.osuId}
@@ -148,9 +146,7 @@ const BeatmapRow = memo(
             {/* Song details */}
             <div className="min-w-0 flex-1">
               <Link
-                href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`/beatmaps/${beatmap.osuId}`}
                 className="hover:text-primary block transition-colors"
               >
                 <p className="max-w-[160px] truncate text-xs font-medium">
@@ -232,21 +228,23 @@ const BeatmapRow = memo(
         {/* Creator */}
         <td className="px-2 py-2 text-center">
           <div className="flex items-center">
-            {beatmap.beatmapset?.creator ? (
-              <Link
-                href={`https://osu.ppy.sh/users/${beatmap.beatmapset.creator.osuId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
-              >
-                <User className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">
-                  {beatmap.beatmapset.creator.username}
-                </span>
-              </Link>
-            ) : (
-              <span className="text-muted-foreground text-xs">Unknown</span>
-            )}
+            {(() => {
+              const creator =
+                beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
+              return creator ? (
+                <Link
+                  href={`/players/${creator.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
+                >
+                  <User className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{creator.username}</span>
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-xs">Unknown</span>
+              );
+            })()}
           </div>
         </td>
       </tr>

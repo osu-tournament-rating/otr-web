@@ -37,7 +37,7 @@ export default function ModIconset({
               : 'not-first:-ml-4 peer-hover:not-first:-ml-2 hover:not-first:-ml-2',
             iconClassName
           )}
-          style={{ zIndex: idx }}
+          style={{ zIndex: metadata.length - idx }}
         >
           <Image src={`/icons/mods/Mod${mod}.svg`} alt={`mod-${mod}`} fill />
         </div>

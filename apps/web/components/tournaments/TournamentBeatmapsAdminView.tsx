@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useSession } from '@/lib/hooks/useSession';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { orpc } from '@/lib/orpc/orpc';
@@ -342,14 +343,12 @@ export default function TournamentBeatmapsAdminView({
                             className="hover:bg-muted/50 rounded px-2 py-1 text-sm"
                           >
                             <div className="flex items-start gap-2">
-                              <a
-                                href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <Link
+                                href={`/beatmaps/${beatmap.osuId}`}
                                 className="text-muted-foreground hover:text-primary min-w-[3rem] underline decoration-dotted underline-offset-2"
                               >
                                 #{beatmap.osuId || beatmapId}
-                              </a>
+                              </Link>
                               <div className="flex-1">
                                 <span
                                   className={

@@ -1,0 +1,3 @@
+ALTER TABLE "beatmaps" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', coalesce("beatmaps"."diff_name", '')), 'A')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX "ix_beatmaps_search_vector" ON "beatmaps" USING gin ("search_vector");--> statement-breakpoint
+CREATE INDEX "ix_beatmaps_diff_name_trgm" ON "beatmaps" USING gin ("diff_name" gin_trgm_ops);

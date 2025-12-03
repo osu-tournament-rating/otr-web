@@ -156,14 +156,8 @@ export default function ScoreCard({
           {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
             <ModIconset
-              className="team-flex-row flex h-full max-w-20 items-center justify-end"
-              iconClassName={cn(
-                'max-h-6',
-                // Clear left margin
-                'md:group-data-[team="Blue"]:not-first:ml-0 md:group-data-[team="Blue"]:peer-hover:not-first:ml-0 md:group-data-[team="Blue"]:hover:not-first:ml-0',
-                // Add right margin
-                'md:group-data-[team="Blue"]:not-first:-mr-4 md:group-data-[team="Blue"]:peer-hover:not-first:-mr-2 md:group-data-[team="Blue"]:hover:not-first:-mr-2'
-              )}
+              className="flex h-full max-w-20 items-center justify-end"
+              iconClassName="max-h-6"
               mods={score.mods}
             />
             <Image

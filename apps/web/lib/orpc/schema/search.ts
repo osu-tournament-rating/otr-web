@@ -1,6 +1,7 @@
 import { z } from 'zod/v4';
 
 import {
+  beatmapSelectSchema,
   matchSelectSchema,
   playerRatingSelectSchema,
   playerSelectSchema,
@@ -63,10 +64,29 @@ export const MatchSearchResultSchema = matchSearchBaseSchema
     tournamentName: z.string(),
   });
 
+const beatmapSearchBaseSchema = beatmapSelectSchema.pick({
+  id: true,
+  osuId: true,
+  diffName: true,
+  sr: true,
+  ruleset: true,
+});
+
+export const BeatmapSearchResultSchema = beatmapSearchBaseSchema.extend({
+  ruleset: RulesetSchema,
+  artist: z.string(),
+  title: z.string(),
+  creator: z.string().nullable(),
+  beatmapsetOsuId: z.number().int().nonnegative().nullable(),
+  gameCount: z.number().int().nonnegative(),
+  tournamentCount: z.number().int().nonnegative(),
+});
+
 export const SearchResponseSchema = z.object({
   players: PlayerSearchResultSchema.array(),
   tournaments: TournamentSearchResultSchema.array(),
   matches: MatchSearchResultSchema.array(),
+  beatmaps: BeatmapSearchResultSchema.array(),
 });
 
 export type SearchRequest = z.infer<typeof SearchRequestSchema>;
@@ -75,4 +95,5 @@ export type TournamentSearchResult = z.infer<
   typeof TournamentSearchResultSchema
 >;
 export type MatchSearchResult = z.infer<typeof MatchSearchResultSchema>;
+export type BeatmapSearchResult = z.infer<typeof BeatmapSearchResultSchema>;
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;

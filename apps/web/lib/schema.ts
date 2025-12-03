@@ -163,3 +163,47 @@ export const leaderboardFilterSchema = z.object({
   friend: z.coerce.boolean().optional(),
   userId: z.coerce.number().min(1).optional(),
 });
+
+export const beatmapListSortValues = [
+  'sr',
+  'bpm',
+  'cs',
+  'ar',
+  'od',
+  'hp',
+  'length',
+  'tournamentCount',
+  'gameCount',
+  'creator',
+] as const;
+
+export const defaultBeatmapListFilter = {
+  sort: 'gameCount' as const,
+  descending: true,
+};
+
+export const beatmapListFilterSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  q: z.string().catch(''),
+  ruleset: z.coerce.number().int().min(0).max(5).optional(),
+  minSr: z.coerce.number().min(0).max(15).optional(),
+  maxSr: z.coerce.number().min(0).max(15).optional(),
+  minBpm: z.coerce.number().min(0).optional(),
+  maxBpm: z.coerce.number().min(0).optional(),
+  minCs: z.coerce.number().min(0).max(10).optional(),
+  maxCs: z.coerce.number().min(0).max(10).optional(),
+  minAr: z.coerce.number().min(0).max(11).optional(),
+  maxAr: z.coerce.number().min(0).max(11).optional(),
+  minOd: z.coerce.number().min(0).max(11).optional(),
+  maxOd: z.coerce.number().min(0).max(11).optional(),
+  minHp: z.coerce.number().min(0).max(10).optional(),
+  maxHp: z.coerce.number().min(0).max(10).optional(),
+  minLength: z.coerce.number().int().min(0).optional(),
+  maxLength: z.coerce.number().int().min(0).optional(),
+  minGameCount: z.coerce.number().int().min(0).optional(),
+  maxGameCount: z.coerce.number().int().min(0).optional(),
+  minTournamentCount: z.coerce.number().int().min(0).optional(),
+  maxTournamentCount: z.coerce.number().int().min(0).optional(),
+  sort: z.enum(beatmapListSortValues).catch('gameCount'),
+  descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
+});

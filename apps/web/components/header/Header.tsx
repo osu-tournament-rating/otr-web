@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import ProfileCard from '../profile/ProfileCard';
-import SearchDialog from '../search/SearchDialog';
+import SearchCommandDialog from '../search/SearchCommandDialog';
 import { DialogTitle } from '../ui/dialog';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
@@ -72,6 +72,11 @@ const navItems: NavItem[] = [
         roles: [],
       },
     ],
+  },
+  {
+    title: 'Beatmaps',
+    href: '/beatmaps',
+    roles: [],
   },
   {
     title: 'Stats',
@@ -138,7 +143,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <SearchDialog />
+          <SearchCommandDialog />
           <ModeToggle />
           <DocsButton />
           <SpecButton />
