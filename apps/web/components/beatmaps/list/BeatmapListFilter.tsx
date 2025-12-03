@@ -130,13 +130,25 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
       params.set('minLength', String(values.minLength));
     if (values.maxLength !== undefined && values.maxLength !== r.length.max)
       params.set('maxLength', String(values.maxLength));
-    if (values.minGameCount !== undefined && values.minGameCount !== r.gameCount.min)
+    if (
+      values.minGameCount !== undefined &&
+      values.minGameCount !== r.gameCount.min
+    )
       params.set('minGameCount', String(values.minGameCount));
-    if (values.maxGameCount !== undefined && values.maxGameCount !== r.gameCount.max)
+    if (
+      values.maxGameCount !== undefined &&
+      values.maxGameCount !== r.gameCount.max
+    )
       params.set('maxGameCount', String(values.maxGameCount));
-    if (values.minTournamentCount !== undefined && values.minTournamentCount !== r.tournamentCount.min)
+    if (
+      values.minTournamentCount !== undefined &&
+      values.minTournamentCount !== r.tournamentCount.min
+    )
       params.set('minTournamentCount', String(values.minTournamentCount));
-    if (values.maxTournamentCount !== undefined && values.maxTournamentCount !== r.tournamentCount.max)
+    if (
+      values.maxTournamentCount !== undefined &&
+      values.maxTournamentCount !== r.tournamentCount.max
+    )
       params.set('maxTournamentCount', String(values.maxTournamentCount));
     if (values.sort !== 'gameCount') params.set('sort', values.sort);
     if (!values.descending) params.set('descending', 'false');
@@ -176,10 +188,14 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
       (filter.maxHp !== undefined && filter.maxHp !== r.hp.max),
     (filter.minLength !== undefined && filter.minLength !== r.length.min) ||
       (filter.maxLength !== undefined && filter.maxLength !== r.length.max),
-    (filter.minGameCount !== undefined && filter.minGameCount !== r.gameCount.min) ||
-      (filter.maxGameCount !== undefined && filter.maxGameCount !== r.gameCount.max),
-    (filter.minTournamentCount !== undefined && filter.minTournamentCount !== r.tournamentCount.min) ||
-      (filter.maxTournamentCount !== undefined && filter.maxTournamentCount !== r.tournamentCount.max),
+    (filter.minGameCount !== undefined &&
+      filter.minGameCount !== r.gameCount.min) ||
+      (filter.maxGameCount !== undefined &&
+        filter.maxGameCount !== r.gameCount.max),
+    (filter.minTournamentCount !== undefined &&
+      filter.minTournamentCount !== r.tournamentCount.min) ||
+      (filter.maxTournamentCount !== undefined &&
+        filter.maxTournamentCount !== r.tournamentCount.max),
   ].filter(Boolean).length;
 
   const RangeSliderField = ({

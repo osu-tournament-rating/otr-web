@@ -55,7 +55,12 @@ export const searchEntities = protectedProcedure
     } = parsed;
 
     const similarity = (column: AnyColumn | SQL) =>
-      buildSimilarity(column, normalizedTerm, primaryToken, hasDistinctPrimaryToken);
+      buildSimilarity(
+        column,
+        normalizedTerm,
+        primaryToken,
+        hasDistinctPrimaryToken
+      );
 
     try {
       const playerVector = schema.players.searchVector;

@@ -49,7 +49,9 @@ export const listBeatmaps = publicProcedure
       let searchRank: SQL<number> | null = null;
 
       if (input.searchQuery) {
-        const searchExpressions = buildBeatmapSearchExpressions(input.searchQuery);
+        const searchExpressions = buildBeatmapSearchExpressions(
+          input.searchQuery
+        );
         if (searchExpressions) {
           filters.push(searchExpressions.condition);
           searchRank = searchExpressions.rank;
