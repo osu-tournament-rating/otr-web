@@ -1,25 +1,40 @@
--- Pre-computed beatmap statistics to eliminate correlated subqueries in beatmaps.list
--- Triggers maintain this table automatically when games/matches/tournaments change
-
-CREATE TABLE IF NOT EXISTS "beatmap_stats" (
-  "beatmap_id" integer PRIMARY KEY NOT NULL,
-  "verified_game_count" integer DEFAULT 0 NOT NULL,
-  "verified_tournament_count" integer DEFAULT 0 NOT NULL,
-  "has_verified_appearance" boolean DEFAULT false NOT NULL,
-  "updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE "beatmap_stats" (
+	"beatmap_id" integer PRIMARY KEY NOT NULL,
+	"verified_game_count" integer DEFAULT 0 NOT NULL,
+	"verified_tournament_count" integer DEFAULT 0 NOT NULL,
+	"has_verified_appearance" boolean DEFAULT false NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-
-ALTER TABLE "beatmap_stats"
-  ADD CONSTRAINT "beatmap_stats_beatmap_id_beatmaps_id_fk"
-  FOREIGN KEY ("beatmap_id") REFERENCES "public"."beatmaps"("id")
-  ON DELETE CASCADE ON UPDATE NO ACTION;
-
-CREATE INDEX IF NOT EXISTS "ix_beatmap_stats_verified_game_count"
-  ON "beatmap_stats" USING btree ("verified_game_count" ASC NULLS LAST);
-
-CREATE INDEX IF NOT EXISTS "ix_beatmap_stats_verified_tournament_count"
-  ON "beatmap_stats" USING btree ("verified_tournament_count" ASC NULLS LAST);
-
+--> statement-breakpoint
+ALTER TABLE "data_reports" DROP CONSTRAINT "fk_data_reports_users_reporter_user_id";
+--> statement-breakpoint
+ALTER TABLE "game_admin_notes" DROP CONSTRAINT "fk_game_admin_notes_users_admin_user_id";
+--> statement-breakpoint
+ALTER TABLE "game_score_admin_notes" DROP CONSTRAINT "fk_game_score_admin_notes_users_admin_user_id";
+--> statement-breakpoint
+ALTER TABLE "match_admin_notes" DROP CONSTRAINT "fk_match_admin_notes_users_admin_user_id";
+--> statement-breakpoint
+ALTER TABLE "tournament_admin_notes" DROP CONSTRAINT "fk_tournament_admin_notes_users_admin_user_id";
+--> statement-breakpoint
+ALTER TABLE "data_reports" ALTER COLUMN "reporter_user_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "game_admin_notes" ALTER COLUMN "admin_user_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "game_score_admin_notes" ALTER COLUMN "admin_user_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "match_admin_notes" ALTER COLUMN "admin_user_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "tournament_admin_notes" ALTER COLUMN "admin_user_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "beatmapsets" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', coalesce("beatmapsets"."artist", '')), 'A') || setweight(to_tsvector('simple', coalesce("beatmapsets"."title", '')), 'A')) STORED NOT NULL;--> statement-breakpoint
+ALTER TABLE "beatmap_stats" ADD CONSTRAINT "beatmap_stats_beatmap_id_beatmaps_id_fk" FOREIGN KEY ("beatmap_id") REFERENCES "public"."beatmaps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "ix_beatmap_stats_verified_game_count" ON "beatmap_stats" USING btree ("verified_game_count" int4_ops);--> statement-breakpoint
+CREATE INDEX "ix_beatmap_stats_verified_tournament_count" ON "beatmap_stats" USING btree ("verified_tournament_count" int4_ops);--> statement-breakpoint
+ALTER TABLE "data_reports" ADD CONSTRAINT "fk_data_reports_users_reporter_user_id" FOREIGN KEY ("reporter_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "game_admin_notes" ADD CONSTRAINT "fk_game_admin_notes_users_admin_user_id" FOREIGN KEY ("admin_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "game_score_admin_notes" ADD CONSTRAINT "fk_game_score_admin_notes_users_admin_user_id" FOREIGN KEY ("admin_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "match_admin_notes" ADD CONSTRAINT "fk_match_admin_notes_users_admin_user_id" FOREIGN KEY ("admin_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tournament_admin_notes" ADD CONSTRAINT "fk_tournament_admin_notes_users_admin_user_id" FOREIGN KEY ("admin_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "ix_beatmapsets_search_vector" ON "beatmapsets" USING gin ("search_vector");--> statement-breakpoint
+CREATE INDEX "ix_beatmapsets_artist_trgm" ON "beatmapsets" USING gin ("artist" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX "ix_beatmapsets_title_trgm" ON "beatmapsets" USING gin ("title" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX "ix_game_scores_game_verification" ON "game_scores" USING btree ("game_id" int4_ops,"verification_status" int4_ops);--> statement-breakpoint
+CREATE INDEX "ix_games_beatmap_verification" ON "games" USING btree ("beatmap_id" int4_ops,"verification_status" int4_ops);
 
 -- Recalculates stats for a single beatmap
 -- verification_status = 4 = VerificationStatus.Verified
@@ -266,11 +281,3 @@ ON CONFLICT (beatmap_id) DO UPDATE SET
   verified_tournament_count = EXCLUDED.verified_tournament_count,
   has_verified_appearance = EXCLUDED.has_verified_appearance,
   updated_at = EXCLUDED.updated_at;
-
-
--- Composite indexes for query performance
-CREATE INDEX IF NOT EXISTS ix_games_beatmap_verification
-  ON games(beatmap_id, verification_status);
-
-CREATE INDEX IF NOT EXISTS ix_game_scores_game_verification
-  ON game_scores(game_id, verification_status);

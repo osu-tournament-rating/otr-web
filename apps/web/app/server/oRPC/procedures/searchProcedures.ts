@@ -149,13 +149,9 @@ export const searchEntities = protectedProcedure
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
 
-      // Beatmaps combine diffName with beatmapset artist/title for search
-      // Artist/title get weight 'A' (highest priority), diffName gets 'C' (lower priority)
-      const beatmapVector = sql`
-        setweight(to_tsvector('simple', coalesce(${schema.beatmaps.diffName}, '')), 'C')
-        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.artist}, '')), 'A')
-        || setweight(to_tsvector('simple', coalesce(${schema.beatmapsets.title}, '')), 'A')
-      `;
+      // Beatmaps combine diffName (from beatmaps.search_vector) with artist/title (from beatmapsets.search_vector)
+      // Both are pre-computed generated columns with GIN indexes for fast full-text search
+      const beatmapVector = sql`${schema.beatmaps.searchVector} || ${schema.beatmapsets.searchVector}`;
       const beatmapDiffSimilarity = buildSimilarity(schema.beatmaps.diffName);
       const beatmapArtistSimilarity = buildSimilarity(
         sql`coalesce(${schema.beatmapsets.artist}, '')`

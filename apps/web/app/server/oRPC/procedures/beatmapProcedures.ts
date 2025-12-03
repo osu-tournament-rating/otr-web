@@ -679,6 +679,7 @@ export const getBeatmapStats = publicProcedure
             ? {
                 id: beatmap.beatmapsetId!,
                 osuId: beatmap.beatmapsetOsuId,
+                searchVector: '',
                 artist: beatmap.artist ?? 'Unknown',
                 title: beatmap.title ?? 'Unknown',
                 creatorId: beatmap.creatorId,

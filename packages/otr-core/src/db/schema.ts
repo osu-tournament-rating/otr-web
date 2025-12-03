@@ -174,6 +174,12 @@ export const beatmapsets = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updated: timestamp({ withTimezone: true, mode: 'string' }),
+    searchVector: tsVector('search_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', coalesce(${beatmapsets.artist}, '')), 'A') || setweight(to_tsvector('simple', coalesce(${beatmapsets.title}, '')), 'A')`
+      ),
   },
   (table) => [
     index('ix_beatmapsets_creator_id').using(
@@ -183,6 +189,15 @@ export const beatmapsets = pgTable(
     uniqueIndex('ix_beatmapsets_osu_id').using(
       'btree',
       table.osuId.asc().nullsLast().op('int8_ops')
+    ),
+    index('ix_beatmapsets_search_vector').using('gin', table.searchVector),
+    index('ix_beatmapsets_artist_trgm').using(
+      'gin',
+      table.artist.op('gin_trgm_ops')
+    ),
+    index('ix_beatmapsets_title_trgm').using(
+      'gin',
+      table.title.op('gin_trgm_ops')
     ),
     foreignKey({
       columns: [table.creatorId],
@@ -385,6 +400,11 @@ export const gameScores = pgTable(
       'btree',
       table.playerId.asc().nullsLast().op('int4_ops'),
       table.gameId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_game_scores_game_verification').using(
+      'btree',
+      table.gameId.asc().nullsLast().op('int4_ops'),
+      table.verificationStatus.asc().nullsLast().op('int4_ops')
     ),
     foreignKey({
       columns: [table.gameId],
@@ -642,6 +662,11 @@ export const games = pgTable(
     index('ix_games_start_time').using(
       'btree',
       table.startTime.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('ix_games_beatmap_verification').using(
+      'btree',
+      table.beatmapId.asc().nullsLast().op('int4_ops'),
+      table.verificationStatus.asc().nullsLast().op('int4_ops')
     ),
     foreignKey({
       columns: [table.beatmapId],
