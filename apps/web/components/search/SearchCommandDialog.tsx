@@ -119,7 +119,7 @@ export default function SearchCommandDialog() {
             )}
           </div>
 
-          <CommandList className="max-h-[400px] md:max-h-[800px]">
+          <CommandList className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]">
             {!debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-8">
                 <Search className="text-muted-foreground/30 h-10 w-10" />
