@@ -47,6 +47,14 @@ function createUri(
     params.set('minLength', String(filter.minLength));
   if (filter.maxLength !== undefined)
     params.set('maxLength', String(filter.maxLength));
+  if (filter.minGameCount !== undefined)
+    params.set('minGameCount', String(filter.minGameCount));
+  if (filter.maxGameCount !== undefined)
+    params.set('maxGameCount', String(filter.maxGameCount));
+  if (filter.minTournamentCount !== undefined)
+    params.set('minTournamentCount', String(filter.minTournamentCount));
+  if (filter.maxTournamentCount !== undefined)
+    params.set('maxTournamentCount', String(filter.maxTournamentCount));
   if (filter.sort !== 'gameCount') params.set('sort', filter.sort);
   if (!filter.descending) params.set('descending', 'false');
 
@@ -77,6 +85,10 @@ export default async function Page(props: {
     maxHp: filter.maxHp,
     minLength: filter.minLength,
     maxLength: filter.maxLength,
+    minGameCount: filter.minGameCount,
+    maxGameCount: filter.maxGameCount,
+    minTournamentCount: filter.minTournamentCount,
+    maxTournamentCount: filter.maxTournamentCount,
     sort: filter.sort,
     descending: filter.descending,
   });
