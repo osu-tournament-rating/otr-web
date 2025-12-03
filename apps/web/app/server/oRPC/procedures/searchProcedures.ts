@@ -11,29 +11,18 @@ import {
   SearchResponseSchema,
   TournamentSearchResultSchema,
 } from '@/lib/orpc/schema/search';
+import {
+  buildBeatmapSearchExpressions,
+  buildSimilarity,
+  parseSearchTerm,
+  SIMILARITY_THRESHOLD,
+} from '@/lib/orpc/queries/search';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from './base';
 
 const DEFAULT_RESULT_LIMIT = 5;
-const SIMILARITY_THRESHOLD = 0.3;
-
-const normalizeSearchTerm = (value: string) =>
-  value
-    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const buildPrefixQuery = (tokens: readonly string[]) =>
-  tokens.length === 0
-    ? null
-    : tokens
-        .map((token) => {
-          const safeToken = token.replace(/'/g, "''");
-          return `'${safeToken}':*`;
-        })
-        .join(' & ');
 
 export const searchEntities = protectedProcedure
   .input(SearchRequestSchema)
@@ -45,81 +34,52 @@ export const searchEntities = protectedProcedure
     path: '/search',
   })
   .handler(async ({ input, context }) => {
-    const term = input.searchKey.trim();
+    const emptyResponse = SearchResponseSchema.parse({
+      players: [],
+      tournaments: [],
+      matches: [],
+      beatmaps: [],
+    });
 
-    if (!term) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-        beatmaps: [],
-      });
+    const parsed = parseSearchTerm(input.searchKey);
+    if (!parsed) {
+      return emptyResponse;
     }
 
-    const normalizedTerm = normalizeSearchTerm(term);
+    const {
+      normalizedTerm,
+      tsQuery,
+      prefixTsQuery,
+      primaryToken,
+      hasDistinctPrimaryToken,
+    } = parsed;
 
-    if (!normalizedTerm) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-        beatmaps: [],
-      });
-    }
-
-    const tokens = normalizedTerm.split(/\s+/).filter(Boolean);
-
-    if (tokens.length === 0) {
-      return SearchResponseSchema.parse({
-        players: [],
-        tournaments: [],
-        matches: [],
-        beatmaps: [],
-      });
-    }
-
-    const prefixQueryText = buildPrefixQuery(tokens);
-    // Use the plain parser for natural-language matches and a prefix query so users can search by partial tokens.
-    const tsQuery = sql`plainto_tsquery('simple', ${normalizedTerm})`;
-    const prefixTsQuery = prefixQueryText
-      ? sql`to_tsquery('simple', ${prefixQueryText})`
-      : null;
-
-    const primaryToken = tokens[0] ?? normalizedTerm;
-    const hasDistinctPrimaryToken = primaryToken !== normalizedTerm;
-    const buildSimilarity = (column: AnyColumn | SQL) =>
-      hasDistinctPrimaryToken
-        ? sql`greatest(similarity(${column}, ${normalizedTerm}), similarity(${column}, ${primaryToken}))`
-        : sql`similarity(${column}, ${normalizedTerm})`;
+    const similarity = (column: AnyColumn | SQL) =>
+      buildSimilarity(column, normalizedTerm, primaryToken, hasDistinctPrimaryToken);
 
     try {
       const playerVector = schema.players.searchVector;
-      const playerSimilarity = buildSimilarity(schema.players.username);
-      // Players match if they satisfy either the full-term or prefix query; the dual check helps partial matches without sacrificing exact ones.
+      const playerSimilarity = similarity(schema.players.username);
       const playerCondition = prefixTsQuery
         ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${playerVector} @@ ${tsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Rank players by whichever query produced the highest score so prefix hits can bubble above weaker full-term matches.
       const playerRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ts_rank_cd(${playerVector}, ${prefixTsQuery}), ${playerSimilarity})`
         : sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ${playerSimilarity})`;
 
       const tournamentVector = schema.tournaments.searchVector;
-      const tournamentNameSimilarity = buildSimilarity(schema.tournaments.name);
-      const tournamentAbbreviationSimilarity = buildSimilarity(
+      const tournamentNameSimilarity = similarity(schema.tournaments.name);
+      const tournamentAbbreviationSimilarity = similarity(
         schema.tournaments.abbreviation
       );
       const tournamentSimilarity = sql`greatest(${tournamentNameSimilarity}, ${tournamentAbbreviationSimilarity})`;
-      // Apply the same full vs prefix matching strategy for tournaments to keep behavior consistent across entities.
       const tournamentCondition = prefixTsQuery
         ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Favor the strongest relevance score from either query path when ordering tournament results.
       const tournamentRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ts_rank_cd(${tournamentVector}, ${prefixTsQuery}), ${tournamentSimilarity})`
         : sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ${tournamentSimilarity})`;
 
-      // Matches stitch in tournament metadata to boost relevance when users search by tourney identifiers or abbreviations.
       const matchVector = sql`
         ${schema.matches.searchVector}
         || setweight(to_tsvector('simple', coalesce(${schema.tournaments.name}, '')), 'B')
@@ -132,48 +92,24 @@ export const searchEntities = protectedProcedure
         )
         || setweight(to_tsvector('simple', coalesce(${schema.tournaments.abbreviation}, '')), 'D')
       `;
-      const matchNameSimilarity = buildSimilarity(schema.matches.name);
-      const matchTournamentNameSimilarity = buildSimilarity(
+      const matchNameSimilarity = similarity(schema.matches.name);
+      const matchTournamentNameSimilarity = similarity(
         sql`coalesce(${schema.tournaments.name}, '')`
       );
-      const matchTournamentAbbreviationSimilarity = buildSimilarity(
+      const matchTournamentAbbreviationSimilarity = similarity(
         sql`coalesce(${schema.tournaments.abbreviation}, '')`
       );
       const matchSimilarity = sql`greatest(${matchNameSimilarity}, ${matchTournamentNameSimilarity}, ${matchTournamentAbbreviationSimilarity})`;
-      // Allow either query to satisfy the match vector so partial tournament text still finds the right match records.
       const matchCondition = prefixTsQuery
         ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`
         : sql`(${matchVector} @@ ${tsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      // Rank matches using the highest relevance from the two query shapes to reflect the most confident hit.
       const matchRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
 
-      // Beatmaps combine diffName (from beatmaps.search_vector) with artist/title (from beatmapsets.search_vector)
-      // Both are pre-computed generated columns with GIN indexes for fast full-text search
-      const beatmapVector = sql`${schema.beatmaps.searchVector} || ${schema.beatmapsets.searchVector}`;
-      const beatmapDiffSimilarity = buildSimilarity(schema.beatmaps.diffName);
-      const beatmapArtistSimilarity = buildSimilarity(
-        sql`coalesce(${schema.beatmapsets.artist}, '')`
-      );
-      const beatmapTitleSimilarity = buildSimilarity(
-        sql`coalesce(${schema.beatmapsets.title}, '')`
-      );
-      const beatmapSimilarity = sql`greatest(${beatmapDiffSimilarity}, ${beatmapArtistSimilarity}, ${beatmapTitleSimilarity})`;
-      const beatmapCondition = prefixTsQuery
-        ? sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapVector} @@ ${prefixTsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`
-        : sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`;
-      const beatmapRank = prefixTsQuery
-        ? sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`
-        : sql`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ${beatmapSimilarity})`;
-
-      // Combined score: 70% text relevance + 30% log-normalized popularity
-      // Uses pre-computed beatmap_stats table for performance
-      // Log scale prevents extremely popular beatmaps from overwhelming relevance
-      const beatmapCombinedScore = sql`(
-        (${beatmapRank}) * 0.7 +
-        (ln(COALESCE(${schema.beatmapStats.verifiedGameCount}, 0) + 1) / 10.0) * 0.3
-      )`;
+      const beatmapSearch = buildBeatmapSearchExpressions(input.searchKey)!;
+      const { condition: beatmapCondition, rank: beatmapCombinedScore } =
+        beatmapSearch;
 
       const session = context.session as
         | { dbPlayer?: { id?: number | null } | null }

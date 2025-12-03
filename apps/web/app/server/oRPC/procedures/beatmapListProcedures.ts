@@ -9,7 +9,6 @@ import {
   gte,
   ilike,
   lte,
-  or,
   sql,
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
@@ -21,15 +20,12 @@ import {
   BeatmapListResponseSchema,
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
+import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
 import { publicProcedure } from './base';
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_MAX_SR = 200;
-const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
-
-const escapeLikePattern = (value: string) =>
-  value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
 
 export const listBeatmaps = publicProcedure
   .input(BeatmapListRequestSchema)
@@ -50,20 +46,13 @@ export const listBeatmaps = publicProcedure
       const offset = (page - 1) * pageSize;
 
       const filters: SQL<unknown>[] = [];
+      let searchRank: SQL<number> | null = null;
 
       if (input.searchQuery) {
-        const searchTerm = input.searchQuery.trim();
-        if (searchTerm.length > 0) {
-          const searchPattern = `%${escapeLikePattern(searchTerm)}%`;
-          const searchCondition = or(
-            ilike(schema.beatmaps.diffName, searchPattern),
-            ilike(schema.beatmapsets.artist, searchPattern),
-            ilike(schema.beatmapsets.title, searchPattern),
-            ilike(schema.players.username, searchPattern)
-          );
-          if (searchCondition) {
-            filters.push(searchCondition);
-          }
+        const searchExpressions = buildBeatmapSearchExpressions(input.searchQuery);
+        if (searchExpressions) {
+          filters.push(searchExpressions.condition);
+          searchRank = searchExpressions.rank;
         }
       }
 
@@ -236,7 +225,11 @@ export const listBeatmaps = publicProcedure
         : baseQuery;
 
       const rows = await conditionedQuery
-        .orderBy(direction(getSortColumn()), direction(schema.beatmaps.id))
+        .orderBy(
+          ...(searchRank
+            ? [desc(searchRank), asc(schema.beatmaps.diffName)]
+            : [direction(getSortColumn()), direction(schema.beatmaps.id)])
+        )
         .limit(pageSize)
         .offset(offset);
 

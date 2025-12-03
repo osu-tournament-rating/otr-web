@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
-import { Filter, X, Search } from 'lucide-react';
+import { Filter, X, Search, Loader2 } from 'lucide-react';
 import { Ruleset } from '@otr/core/osu';
 
 import {
@@ -52,6 +52,7 @@ const defaultFilterRanges = {
 
 export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   const [searchQuery, setSearchQuery] = useState(filter.q ?? '');
+  const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -72,54 +73,70 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   useEffect(() => {
     form.reset(normalizedFilter);
     setSearchQuery(filter.q ?? '');
+    setIsSearching(false);
   }, [form, normalizedFilter, filter.q]);
 
   useEffect(() => {
     const currentQ = filter.q ?? '';
-    if (searchQuery === currentQ) return;
+    if (searchQuery === currentQ) {
+      setIsSearching(false);
+      return;
+    }
 
+    setIsSearching(true);
     const timer = setTimeout(() => {
       const params = buildSearchParams({
         ...form.getValues(),
         q: searchQuery,
       });
       router.push(pathname + (params.size > 0 ? `?${params}` : ''));
-    }, 300);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [searchQuery, filter.q, form, pathname, router]);
 
   const buildSearchParams = (values: FilterFormData) => {
     const params = new URLSearchParams();
+    const r = defaultFilterRanges;
 
     if (values.q) params.set('q', values.q);
     if (values.ruleset !== undefined)
       params.set('ruleset', String(values.ruleset));
-    if (values.minSr !== undefined) params.set('minSr', String(values.minSr));
-    if (values.maxSr !== undefined) params.set('maxSr', String(values.maxSr));
-    if (values.minBpm !== undefined)
+    if (values.minSr !== undefined && values.minSr !== r.sr.min)
+      params.set('minSr', String(values.minSr));
+    if (values.maxSr !== undefined && values.maxSr !== r.sr.max)
+      params.set('maxSr', String(values.maxSr));
+    if (values.minBpm !== undefined && values.minBpm !== r.bpm.min)
       params.set('minBpm', String(values.minBpm));
-    if (values.maxBpm !== undefined)
+    if (values.maxBpm !== undefined && values.maxBpm !== r.bpm.max)
       params.set('maxBpm', String(values.maxBpm));
-    if (values.minCs !== undefined) params.set('minCs', String(values.minCs));
-    if (values.maxCs !== undefined) params.set('maxCs', String(values.maxCs));
-    if (values.minAr !== undefined) params.set('minAr', String(values.minAr));
-    if (values.maxAr !== undefined) params.set('maxAr', String(values.maxAr));
-    if (values.minOd !== undefined) params.set('minOd', String(values.minOd));
-    if (values.maxOd !== undefined) params.set('maxOd', String(values.maxOd));
-    if (values.minHp !== undefined) params.set('minHp', String(values.minHp));
-    if (values.maxHp !== undefined) params.set('maxHp', String(values.maxHp));
-    if (values.minLength !== undefined)
+    if (values.minCs !== undefined && values.minCs !== r.cs.min)
+      params.set('minCs', String(values.minCs));
+    if (values.maxCs !== undefined && values.maxCs !== r.cs.max)
+      params.set('maxCs', String(values.maxCs));
+    if (values.minAr !== undefined && values.minAr !== r.ar.min)
+      params.set('minAr', String(values.minAr));
+    if (values.maxAr !== undefined && values.maxAr !== r.ar.max)
+      params.set('maxAr', String(values.maxAr));
+    if (values.minOd !== undefined && values.minOd !== r.od.min)
+      params.set('minOd', String(values.minOd));
+    if (values.maxOd !== undefined && values.maxOd !== r.od.max)
+      params.set('maxOd', String(values.maxOd));
+    if (values.minHp !== undefined && values.minHp !== r.hp.min)
+      params.set('minHp', String(values.minHp));
+    if (values.maxHp !== undefined && values.maxHp !== r.hp.max)
+      params.set('maxHp', String(values.maxHp));
+    if (values.minLength !== undefined && values.minLength !== r.length.min)
       params.set('minLength', String(values.minLength));
-    if (values.maxLength !== undefined)
+    if (values.maxLength !== undefined && values.maxLength !== r.length.max)
       params.set('maxLength', String(values.maxLength));
-    if (values.minGameCount !== undefined)
+    if (values.minGameCount !== undefined && values.minGameCount !== r.gameCount.min)
       params.set('minGameCount', String(values.minGameCount));
-    if (values.maxGameCount !== undefined)
+    if (values.maxGameCount !== undefined && values.maxGameCount !== r.gameCount.max)
       params.set('maxGameCount', String(values.maxGameCount));
-    if (values.minTournamentCount !== undefined)
+    if (values.minTournamentCount !== undefined && values.minTournamentCount !== r.tournamentCount.min)
       params.set('minTournamentCount', String(values.minTournamentCount));
-    if (values.maxTournamentCount !== undefined)
+    if (values.maxTournamentCount !== undefined && values.maxTournamentCount !== r.tournamentCount.max)
       params.set('maxTournamentCount', String(values.maxTournamentCount));
     if (values.sort !== 'gameCount') params.set('sort', values.sort);
     if (!values.descending) params.set('descending', 'false');
@@ -142,18 +159,27 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     router.push('/beatmaps');
   };
 
+  const r = defaultFilterRanges;
   const activeFilterCount = [
     filter.ruleset !== undefined,
-    filter.minSr !== undefined || filter.maxSr !== undefined,
-    filter.minBpm !== undefined || filter.maxBpm !== undefined,
-    filter.minCs !== undefined || filter.maxCs !== undefined,
-    filter.minAr !== undefined || filter.maxAr !== undefined,
-    filter.minOd !== undefined || filter.maxOd !== undefined,
-    filter.minHp !== undefined || filter.maxHp !== undefined,
-    filter.minLength !== undefined || filter.maxLength !== undefined,
-    filter.minGameCount !== undefined || filter.maxGameCount !== undefined,
-    filter.minTournamentCount !== undefined ||
-      filter.maxTournamentCount !== undefined,
+    (filter.minSr !== undefined && filter.minSr !== r.sr.min) ||
+      (filter.maxSr !== undefined && filter.maxSr !== r.sr.max),
+    (filter.minBpm !== undefined && filter.minBpm !== r.bpm.min) ||
+      (filter.maxBpm !== undefined && filter.maxBpm !== r.bpm.max),
+    (filter.minCs !== undefined && filter.minCs !== r.cs.min) ||
+      (filter.maxCs !== undefined && filter.maxCs !== r.cs.max),
+    (filter.minAr !== undefined && filter.minAr !== r.ar.min) ||
+      (filter.maxAr !== undefined && filter.maxAr !== r.ar.max),
+    (filter.minOd !== undefined && filter.minOd !== r.od.min) ||
+      (filter.maxOd !== undefined && filter.maxOd !== r.od.max),
+    (filter.minHp !== undefined && filter.minHp !== r.hp.min) ||
+      (filter.maxHp !== undefined && filter.maxHp !== r.hp.max),
+    (filter.minLength !== undefined && filter.minLength !== r.length.min) ||
+      (filter.maxLength !== undefined && filter.maxLength !== r.length.max),
+    (filter.minGameCount !== undefined && filter.minGameCount !== r.gameCount.min) ||
+      (filter.maxGameCount !== undefined && filter.maxGameCount !== r.gameCount.max),
+    (filter.minTournamentCount !== undefined && filter.minTournamentCount !== r.tournamentCount.min) ||
+      (filter.maxTournamentCount !== undefined && filter.maxTournamentCount !== r.tournamentCount.max),
   ].filter(Boolean).length;
 
   const RangeSliderField = ({
@@ -187,12 +213,8 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 ]}
                 onValueChange={(vals) => {
                   const [newMin, newMax] = vals;
-                  minFieldControl.onChange(
-                    newMin === range.min ? undefined : newMin
-                  );
-                  maxFieldControl.onChange(
-                    newMax === range.max ? undefined : newMax
-                  );
+                  minFieldControl.onChange(newMin);
+                  maxFieldControl.onChange(newMax);
                 }}
                 minStepsBetweenThumbs={1}
               />
@@ -206,9 +228,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                   className="w-16 p-1 text-center text-xs"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    minFieldControl.onChange(
-                      val === range.min ? undefined : val
-                    );
+                    minFieldControl.onChange(val);
                   }}
                 />
                 <Input
@@ -220,9 +240,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                   className="w-16 p-1 text-center text-xs"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    maxFieldControl.onChange(
-                      val === range.max ? undefined : val
-                    );
+                    maxFieldControl.onChange(val);
                   }}
                 />
               </div>
@@ -243,7 +261,11 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
           placeholder="Search beatmaps..."
           className="border-border bg-card focus:border-primary h-9 w-48 rounded-lg border pl-8 text-sm md:w-64"
         />
-        <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
+        {isSearching ? (
+          <Loader2 className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+        ) : (
+          <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
+        )}
       </div>
 
       <Popover open={isOpen} onOpenChange={setIsOpen}>
