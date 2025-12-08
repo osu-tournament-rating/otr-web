@@ -1,4 +1,4 @@
-import { orpc } from '@/lib/orpc/orpc';
+import { getTournamentCached } from '@/lib/orpc/queries/tournament';
 import {
   AdminNoteRouteTarget,
   ReportEntityType,
@@ -73,7 +73,7 @@ export async function generateMetadata({
   }
 
   const tournament = await fetchOrpcOptional(() =>
-    orpc.tournaments.get({ id: parsedParams.data.id })
+    getTournamentCached(parsedParams.data.id)
   );
 
   if (!tournament) {
@@ -379,7 +379,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const createTabHref = (tab: TournamentTab) => `/tournaments/${id}?tab=${tab}`;
 
   const tournament: TournamentDetail = await fetchOrpcOrNotFound(() =>
-    orpc.tournaments.get({ id })
+    getTournamentCached(id)
   );
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = tournament.pooledBeatmaps ?? [];

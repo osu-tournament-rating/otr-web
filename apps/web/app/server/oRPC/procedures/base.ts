@@ -34,6 +34,7 @@ type VerifiedApiKeyContext = {
 const base = os.$context<
   {
     headers: Headers;
+    requestUrl?: string;
   } & VerifiedApiKeyContext
 >();
 
@@ -528,21 +529,38 @@ const withOptionalSession = base.middleware(async ({ context, next }) => {
 
 const rootLogger = createLogger('otr-web');
 
+const extractRequestPath = (requestUrl?: string): string | null => {
+  if (!requestUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(requestUrl);
+    const search = url.search;
+    return search ? `${url.pathname}${search}` : url.pathname;
+  } catch {
+    return null;
+  }
+};
+
 const withLoggingContext = base.middleware(async ({ context, path, next }) => {
   const correlationId =
     extractCorrelationId(context.headers) ?? generateCorrelationId();
   const procedurePath = formatProcedurePath(path);
   const actor = resolveActor(context);
+  const requestPath = extractRequestPath(context.requestUrl);
 
   const logger = rootLogger.child({
     correlationId,
     procedure: procedurePath,
+    path: requestPath,
   });
 
   const loggingContext: RequestLoggingContext = {
     correlationId,
     actor,
     procedurePath,
+    requestPath,
     startTime: Date.now(),
     logger,
   };
@@ -555,12 +573,25 @@ const withLoggingContext = base.middleware(async ({ context, path, next }) => {
   });
 });
 
+const formatInputForLogging = (input: unknown): string | null => {
+  if (input === undefined || input === null) {
+    return null;
+  }
+  try {
+    const str = JSON.stringify(input);
+    return str.length > 200 ? str.slice(0, 200) + '...' : str;
+  } catch {
+    return '[unserializable]';
+  }
+};
+
 const withRequestLogging = base.middleware(
-  async ({ context, next, procedure }) => {
+  async ({ context, next, procedure }, input: unknown) => {
     const { logging } = context as typeof context & {
       logging: RequestLoggingContext;
     };
     const successStatus = resolveSuccessStatus(procedure);
+    const inputStr = formatInputForLogging(input);
 
     try {
       const result = await next();
@@ -578,6 +609,7 @@ const withRequestLogging = base.middleware(
         code: statusCode,
         duration: `${Math.round(durationMs)}ms`,
         status: 'ok',
+        input: inputStr,
       });
 
       return result;
@@ -586,7 +618,7 @@ const withRequestLogging = base.middleware(
       const durationMs = Date.now() - logging.startTime;
       const statusCode = resolveErrorStatus(procedureError);
 
-      logging.logger.error('procedure failed', {
+      const logContext = {
         accessMethod: logging.actor.accessMethod,
         user: formatUserDescriptor(logging.actor),
         playerId: logging.actor.playerId,
@@ -594,7 +626,14 @@ const withRequestLogging = base.middleware(
         duration: `${Math.round(durationMs)}ms`,
         status: 'error',
         error: describeError(procedureError),
-      });
+        input: inputStr,
+      };
+
+      if (statusCode === 404) {
+        logging.logger.debug('procedure not found', logContext);
+      } else {
+        logging.logger.warn('procedure failed', logContext);
+      }
 
       throw error;
     }
