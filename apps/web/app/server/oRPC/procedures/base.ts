@@ -632,7 +632,7 @@ const withRequestLogging = base.middleware(
       if (statusCode === 404) {
         logging.logger.debug('procedure not found', logContext);
       } else {
-        logging.logger.error('procedure failed', logContext);
+        logging.logger.warn('procedure failed', logContext);
       }
 
       throw error;
