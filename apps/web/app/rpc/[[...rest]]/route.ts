@@ -7,7 +7,8 @@ async function handleRequest(request: Request) {
   const { response } = await handler.handle(request, {
     prefix: '/rpc',
     context: {
-      headers: request.headers, // Pass request headers as initial context
+      headers: request.headers,
+      requestUrl: request.url,
     },
   });
 

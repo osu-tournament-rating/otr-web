@@ -34,6 +34,7 @@ const noopLogger: Logger = {
   info: () => {},
   warn: () => {},
   error: () => {},
+  debug: () => {},
   child: () => noopLogger,
 };
 

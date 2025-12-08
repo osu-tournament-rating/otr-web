@@ -16,6 +16,7 @@ export interface RequestLoggingContext {
   correlationId: string;
   actor: ActorInfo;
   procedurePath: string;
+  requestPath: string | null;
   startTime: number;
   logger: Logger;
 }

@@ -128,6 +128,14 @@ class PinoLoggerWrapper implements Logger {
     this.pinoInstance = pinoInstance;
   }
 
+  debug(message: string, context?: LogContext): void {
+    if (context) {
+      this.pinoInstance.debug(context, message);
+    } else {
+      this.pinoInstance.debug(message);
+    }
+  }
+
   info(message: string, context?: LogContext): void {
     if (context) {
       this.pinoInstance.info(context, message);

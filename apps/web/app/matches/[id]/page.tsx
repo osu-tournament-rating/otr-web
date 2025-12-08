@@ -9,7 +9,7 @@ import MatchCard from '@/components/matches/MatchCard';
 import MatchStatsView from '@/components/matches/MatchStatsView';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { orpc } from '@/lib/orpc/orpc';
+import { getMatchCached } from '@/lib/orpc/queries/match';
 import { MatchDetail } from '@/lib/orpc/schema/match';
 import { VerificationStatus } from '@otr/core/osu';
 import {
@@ -41,7 +41,7 @@ export async function generateMetadata({
   }
 
   const match = await fetchOrpcOptional(() =>
-    orpc.matches.get({ id: parsedParams.data.id })
+    getMatchCached(parsedParams.data.id)
   );
 
   if (!match) {
@@ -60,7 +60,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const createTabHref = (tab: MatchTab) => `/matches/${id}?tab=${tab}`;
 
   const match: MatchDetail = await fetchOrpcOrNotFound(() =>
-    orpc.matches.get({ id })
+    getMatchCached(id)
   );
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;

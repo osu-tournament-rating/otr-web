@@ -5,7 +5,7 @@ import {
   fetchOrpcOrNotFound,
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
-import { orpc } from '@/lib/orpc/orpc';
+import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import { Card, CardContent } from '@/components/ui/card';
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
 import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
@@ -35,7 +35,7 @@ export async function generateMetadata({
   }
 
   const beatmapStats = await fetchOrpcOptional(() =>
-    orpc.beatmaps.stats({ id: parsedParams.data.id })
+    getBeatmapStatsCached(parsedParams.data.id)
   );
 
   if (!beatmapStats) {
@@ -96,7 +96,7 @@ export async function generateMetadata({
 export default async function BeatmapPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(beatmapPageParamsSchema, await params);
   const beatmapStats = await fetchOrpcOrNotFound(() =>
-    orpc.beatmaps.stats({ id })
+    getBeatmapStatsCached(id)
   );
 
   const hasData = beatmapStats.tournaments.length > 0;
