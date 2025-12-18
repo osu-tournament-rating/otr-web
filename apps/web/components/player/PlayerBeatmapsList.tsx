@@ -57,6 +57,7 @@ export default function PlayerBeatmapsList({
     try {
       const response = await orpc.players.beatmaps({
         id: playerId,
+        keyType: 'otr',
         ruleset,
         offset: beatmaps.length,
         limit: LOAD_MORE_COUNT,
