@@ -29,24 +29,60 @@ import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
 
+const KeyTypeSchema = z.enum(['otr', 'osu']).default('otr');
+
+async function resolvePlayerId(
+  db: DatabaseClient,
+  id: number,
+  keyType: 'otr' | 'osu'
+): Promise<number> {
+  if (keyType === 'otr') {
+    const player = await db.query.players.findFirst({
+      where: (players, { eq }) => eq(players.id, id),
+      columns: { id: true },
+    });
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
+    return player.id;
+  }
+
+  const player = await db.query.players.findFirst({
+    where: (players, { eq }) => eq(players.osuId, id),
+    columns: { id: true },
+  });
+  if (!player) {
+    throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+  }
+  return player.id;
+}
+
 export const getPlayer = publicProcedure
   .input(
     z.object({
       id: z.number().int().positive(),
+      keyType: KeyTypeSchema,
     })
   )
   .output(PlayerSchema)
   .route({
     summary: 'Get player details',
+    description:
+      'Fetch player information by ID.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /players/123`\n' +
+      '- By osu! ID: `GET /players/4504101?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}',
   })
   .handler(async ({ input, context }) => {
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
+
     const player = await context.db
       .select()
       .from(schema.players)
-      .where(eq(schema.players.id, input.id))
+      .where(eq(schema.players.id, playerId))
       .limit(1);
 
     if (!player[0]) {
@@ -412,6 +448,7 @@ export const getPlayerTournaments = publicProcedure
   .input(
     z.object({
       id: z.number().int().positive(),
+      keyType: KeyTypeSchema,
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
       dateMax: z.string().optional(),
@@ -420,25 +457,23 @@ export const getPlayerTournaments = publicProcedure
   .output(TournamentListItemSchema.array())
   .route({
     summary: 'List player tournaments',
+    description:
+      'List tournaments a player has participated in.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /players/123/tournaments`\n' +
+      '- By osu! ID: `GET /players/4504101/tournaments?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/tournaments',
   })
   .handler(async ({ input, context }) => {
-    const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.id),
-      columns: { id: true },
-    });
-
-    if (!player) {
-      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
-    }
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const filters = [
       sql`${schema.tournaments.id} IN (
         SELECT DISTINCT ${schema.playerTournamentStats.tournamentId}
         FROM ${schema.playerTournamentStats}
-        WHERE ${schema.playerTournamentStats.playerId} = ${player.id}
+        WHERE ${schema.playerTournamentStats.playerId} = ${playerId}
       )`,
     ];
 
@@ -476,23 +511,17 @@ export const getPlayerBeatmaps = publicProcedure
   .output(PlayerBeatmapsResponseSchema)
   .route({
     summary: 'List player beatmaps',
+    description:
+      'List beatmaps created by a player.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /players/123/beatmaps`\n' +
+      '- By osu! ID: `GET /players/4504101/beatmaps?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/beatmaps',
   })
   .handler(async ({ input, context }) => {
-    const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.id),
-      columns: {
-        id: true,
-      },
-    });
-
-    if (!player) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Player not found',
-      });
-    }
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const DEFAULT_LIMIT = 25;
     const MAX_LIMIT = 50;
@@ -524,7 +553,7 @@ export const getPlayerBeatmaps = publicProcedure
       )
       .where(
         and(
-          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          eq(schema.joinBeatmapCreators.creatorsId, playerId),
           eq(
             schema.tournaments.verificationStatus,
             VerificationStatus.Verified
@@ -607,7 +636,7 @@ export const getPlayerBeatmaps = publicProcedure
       )
       .where(
         and(
-          eq(schema.joinBeatmapCreators.creatorsId, player.id),
+          eq(schema.joinBeatmapCreators.creatorsId, playerId),
           eq(
             schema.tournaments.verificationStatus,
             VerificationStatus.Verified
@@ -916,6 +945,7 @@ export const getPlayerStats = publicProcedure
   .input(
     z.object({
       id: z.number().int().positive(),
+      keyType: KeyTypeSchema,
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
       dateMax: z.string().optional(),
@@ -924,13 +954,20 @@ export const getPlayerStats = publicProcedure
   .output(PlayerStatsSchema)
   .route({
     summary: 'Get player stats',
+    description:
+      'Fetch comprehensive player statistics including ratings, match history, and mod usage.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /players/123/stats`\n' +
+      '- By osu! ID: `GET /players/4504101/stats?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/stats',
   })
   .handler(async ({ input, context }) => {
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
+
     const player = await context.db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, input.id),
+      where: (players, { eq }) => eq(players.id, playerId),
     });
 
     if (!player) {

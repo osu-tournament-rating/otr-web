@@ -22,6 +22,7 @@ export async function getPlayerTournaments({
 }: PlayerTournamentsRequest): Promise<TournamentListItem[]> {
   return orpc.players.tournaments({
     id,
+    keyType: 'otr',
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
     ruleset,
