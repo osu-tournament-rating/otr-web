@@ -10,7 +10,7 @@ import {
   ensureBeatmapPlaceholder,
   updateBeatmapStatus,
 } from '../beatmap-store';
-import { getOrCreatePlayerId } from '../player-store';
+import { getOrCreatePlayerId, getPlayerFetchStatus } from '../player-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
@@ -146,8 +146,16 @@ export class BeatmapFetchService {
       }
 
       // Enqueue player fetch messages for background processing
+      // Skip if player is already being fetched (status === Fetching)
       for (const userId of userIds) {
         try {
+          const status = await getPlayerFetchStatus(tx, userId);
+          if (status === DataFetchStatus.Fetching) {
+            this.logger.debug('Skipping player enqueue - already fetching', {
+              userId,
+            });
+            continue;
+          }
           await this.publishPlayerFetch(userId);
         } catch (error) {
           this.logger.error('Failed to enqueue player fetch', {

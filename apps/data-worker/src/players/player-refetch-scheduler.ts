@@ -1,7 +1,8 @@
-import { asc, isNull, lt, or } from 'drizzle-orm';
+import { asc, isNull, lt, ne, or } from 'drizzle-orm';
 import type { FetchOsuMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
@@ -149,11 +150,12 @@ export class PlayerRefetchScheduler {
   }
 
   private async runOsuRefetch() {
-    const cutoffIso = this.calculateCutoff(this.config.osu.outdatedDays);
+    // Select ALL players, not just outdated ones - maximize API usage within rate limits
+    // Skip players that are currently being fetched (status === Fetching)
     const players = await this.db
       .select({ osuPlayerId: schema.players.osuId })
       .from(schema.players)
-      .where(lt(schema.players.osuLastFetch, cutoffIso))
+      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
       .orderBy(asc(schema.players.osuLastFetch))
       .limit(this.batchSize);
 
