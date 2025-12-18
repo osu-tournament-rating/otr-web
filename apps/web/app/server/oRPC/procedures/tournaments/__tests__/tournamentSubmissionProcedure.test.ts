@@ -161,12 +161,14 @@ const createErrors = () => ({
 
 const noopPublishers: QueuePublisherRegistry = {
   fetchBeatmap: async ({ beatmapId }) => ({
+    type: 'beatmap' as const,
     beatmapId,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
   fetchMatch: async ({ osuMatchId, isLazer }) => ({
+    type: 'match' as const,
     osuMatchId,
     isLazer,
     requestedAt: new Date().toISOString(),
@@ -174,6 +176,7 @@ const noopPublishers: QueuePublisherRegistry = {
     priority: MessagePriority.Normal,
   }),
   fetchPlayer: async ({ osuPlayerId }) => ({
+    type: 'player' as const,
     osuPlayerId,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',

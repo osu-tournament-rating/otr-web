@@ -1,5 +1,5 @@
 import { asc, isNull, lt, or } from 'drizzle-orm';
-import type { FetchPlayerMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
+import type { FetchOsuMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
 
@@ -32,7 +32,7 @@ type QueuePublisherContract<TMessage> = Pick<
 interface PlayerRefetchSchedulerOptions {
   db: DatabaseClient;
   logger: Logger;
-  osuPublisher: QueuePublisherContract<FetchPlayerMessage>;
+  osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   config: SchedulerConfig;
   batchSize?: number;
@@ -41,7 +41,7 @@ interface PlayerRefetchSchedulerOptions {
 export class PlayerRefetchScheduler {
   private readonly db: DatabaseClient;
   private readonly logger: Logger;
-  private readonly osuPublisher: QueuePublisherContract<FetchPlayerMessage>;
+  private readonly osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   private readonly osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   private readonly config: SchedulerConfig;
   private readonly batchSize: number;
@@ -164,7 +164,7 @@ export class PlayerRefetchScheduler {
       intervalMinutes: this.config.osu.intervalMinutes,
       publish: async (osuPlayerId) => {
         await this.osuPublisher.publish(
-          { osuPlayerId },
+          { type: 'player', osuPlayerId },
           { metadata: { priority: MessagePriority.Low } }
         );
       },

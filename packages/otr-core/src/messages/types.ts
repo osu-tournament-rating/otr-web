@@ -5,19 +5,46 @@ import type { MessageMetadata } from './values';
  */
 export type MessageEnvelope<TPayload> = MessageMetadata & TPayload;
 
-export type FetchBeatmapMessage = MessageEnvelope<{
+/**
+ * Discriminated payload types for the unified osu! API queue.
+ * The `type` field enables routing to the appropriate handler.
+ */
+export type FetchBeatmapPayload = {
+  type: 'beatmap';
   beatmapId: number;
   skipAutomationChecks?: boolean;
-}>;
+};
 
-export type FetchMatchMessage = MessageEnvelope<{
+export type FetchMatchPayload = {
+  type: 'match';
   osuMatchId: number;
   isLazer: boolean;
-}>;
+};
 
-export type FetchPlayerMessage = MessageEnvelope<{
+export type FetchPlayerPayload = {
+  type: 'player';
   osuPlayerId: number;
-}>;
+};
+
+/**
+ * Union of all osu! API payloads for the unified queue.
+ */
+export type OsuApiPayload =
+  | FetchBeatmapPayload
+  | FetchMatchPayload
+  | FetchPlayerPayload;
+
+/**
+ * Unified message type for the `data.osu` queue.
+ */
+export type FetchOsuMessage = MessageEnvelope<OsuApiPayload>;
+
+/**
+ * Legacy type aliases for backwards compatibility.
+ */
+export type FetchBeatmapMessage = MessageEnvelope<FetchBeatmapPayload>;
+export type FetchMatchMessage = MessageEnvelope<FetchMatchPayload>;
+export type FetchPlayerMessage = MessageEnvelope<FetchPlayerPayload>;
 
 export type FetchPlayerOsuTrackMessage = MessageEnvelope<{
   osuPlayerId: number;
@@ -33,9 +60,7 @@ export type ProcessTournamentStatsMessage = MessageEnvelope<{
 }>;
 
 export type KnownQueueMessage =
-  | FetchBeatmapMessage
-  | FetchMatchMessage
-  | FetchPlayerMessage
+  | FetchOsuMessage
   | FetchPlayerOsuTrackMessage
   | ProcessTournamentAutomationCheckMessage
   | ProcessTournamentStatsMessage;

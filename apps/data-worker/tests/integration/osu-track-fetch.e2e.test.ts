@@ -38,9 +38,11 @@ class TestQueue implements QueueConsumer<FetchPlayerOsuTrackMessage> {
 }
 
 const noopLogger: Logger = {
+  debug: () => {},
   info: () => {},
   warn: () => {},
   error: () => {},
+  child: () => noopLogger,
 };
 
 describe('osu!track end-to-end', () => {
