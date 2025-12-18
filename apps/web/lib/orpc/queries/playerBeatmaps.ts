@@ -9,12 +9,14 @@ import {
 
 export async function getPlayerBeatmaps({
   id,
+  keyType = 'otr',
   ruleset,
   limit,
   offset,
 }: PlayerBeatmapsRequest): Promise<PlayerBeatmapsResponse> {
   return orpc.players.beatmaps({
     id,
+    keyType,
     ruleset,
     limit,
     offset,
@@ -30,6 +32,7 @@ export const getPlayerBeatmapsCached = cache(
   ) =>
     getPlayerBeatmaps({
       id: playerId,
+      keyType: 'otr',
       ruleset,
       limit,
       offset,

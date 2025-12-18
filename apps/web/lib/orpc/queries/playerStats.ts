@@ -22,6 +22,7 @@ export async function getPlayerStats({
 }: PlayerStatsRequest): Promise<PlayerStatsResponse> {
   return orpc.players.stats({
     id,
+    keyType: 'otr',
     dateMin: toISOStringOrUndefined(dateMin),
     dateMax: toISOStringOrUndefined(dateMax),
     ruleset,
