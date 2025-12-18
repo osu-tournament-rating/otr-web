@@ -1,10 +1,9 @@
 import type { MessageEnvelope, MessageMetadata } from '@otr/core';
 
-export type QueueMessagePayload<TMessage> = TMessage extends MessageEnvelope<
-  infer P
->
-  ? P
-  : Omit<TMessage, keyof MessageMetadata>;
+export type QueueMessagePayload<TMessage> =
+  TMessage extends MessageEnvelope<infer P>
+    ? P
+    : Omit<TMessage, keyof MessageMetadata>;
 
 export interface QueueMessage<TPayload> {
   payload: TPayload;

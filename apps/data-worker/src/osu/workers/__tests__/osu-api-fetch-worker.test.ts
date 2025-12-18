@@ -33,8 +33,9 @@ const createMockMessage = (
 const createMockConsumer = (): QueueConsumer<FetchOsuMessage> & {
   emit: (message: QueueMessage<FetchOsuMessage>) => Promise<void>;
 } => {
-  let handler: ((message: QueueMessage<FetchOsuMessage>) => Promise<void>) | null =
-    null;
+  let handler:
+    | ((message: QueueMessage<FetchOsuMessage>) => Promise<void>)
+    | null = null;
 
   return {
     start: mock(async (h) => {

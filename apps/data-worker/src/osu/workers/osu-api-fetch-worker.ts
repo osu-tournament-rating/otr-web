@@ -11,7 +11,9 @@ type MatchFetchServiceContract = Pick<MatchFetchService, 'fetchAndPersist'>;
 type PlayerFetchServiceContract = Pick<PlayerFetchService, 'fetchAndPersist'>;
 
 interface OsuApiFetchWorkerEvents {
-  onPlayerProcessed?: (details: { osuPlayerId: number }) => Promise<void> | void;
+  onPlayerProcessed?: (details: {
+    osuPlayerId: number;
+  }) => Promise<void> | void;
 }
 
 interface OsuApiFetchWorkerOptions extends OsuApiFetchWorkerEvents {
@@ -59,19 +61,30 @@ export class OsuApiFetchWorker {
     });
   }
 
-  private async routeMessage(payload: OsuApiPayload, msgLogger: Logger): Promise<void> {
+  private async routeMessage(
+    payload: OsuApiPayload,
+    msgLogger: Logger
+  ): Promise<void> {
     switch (payload.type) {
       case 'beatmap': {
         const { beatmapId, skipAutomationChecks } = payload;
-        msgLogger.info('processing beatmap fetch', { beatmapId, skipAutomationChecks });
-        await this.beatmapService.fetchAndPersist(beatmapId, { skipAutomationChecks });
+        msgLogger.info('processing beatmap fetch', {
+          beatmapId,
+          skipAutomationChecks,
+        });
+        await this.beatmapService.fetchAndPersist(beatmapId, {
+          skipAutomationChecks,
+        });
         break;
       }
 
       case 'match': {
         const { osuMatchId, isLazer } = payload;
         msgLogger.info('processing match fetch', { osuMatchId, isLazer });
-        const persisted = await this.matchService.fetchAndPersist(osuMatchId, isLazer);
+        const persisted = await this.matchService.fetchAndPersist(
+          osuMatchId,
+          isLazer
+        );
         if (!persisted) {
           msgLogger.warn('match fetch completed without persistence');
         }
