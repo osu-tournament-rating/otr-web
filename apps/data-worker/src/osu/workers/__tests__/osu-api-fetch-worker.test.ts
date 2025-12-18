@@ -6,6 +6,7 @@ import type { Logger } from '../../../logging/logger';
 import type { QueueConsumer, QueueMessage } from '../../../queue/types';
 
 const createMockLogger = (): Logger => ({
+  debug: mock(() => {}),
   info: mock(() => {}),
   warn: mock(() => {}),
   error: mock(() => {}),
@@ -15,16 +16,19 @@ const createMockLogger = (): Logger => ({
 const createMockMessage = (
   payload: OsuApiPayload,
   correlationId = 'test-correlation-id'
-): QueueMessage<FetchOsuMessage> => ({
-  metadata: {
+): QueueMessage<FetchOsuMessage> => {
+  const metadata = {
     requestedAt: new Date().toISOString(),
     correlationId,
     priority: MessagePriority.Normal,
-  },
-  payload,
-  ack: mock(() => Promise.resolve()),
-  nack: mock(() => Promise.resolve()),
-});
+  };
+  return {
+    metadata,
+    payload: { ...metadata, ...payload },
+    ack: mock(() => Promise.resolve()),
+    nack: mock(() => Promise.resolve()),
+  };
+};
 
 const createMockConsumer = (): QueueConsumer<FetchOsuMessage> & {
   emit: (message: QueueMessage<FetchOsuMessage>) => Promise<void>;
@@ -51,9 +55,9 @@ describe('OsuApiFetchWorker', () => {
     it('routes beatmap fetch messages to beatmapService', async () => {
       const consumer = createMockConsumer();
       const logger = createMockLogger();
-      const fetchAndPersistBeatmap = mock(() => Promise.resolve());
+      const fetchAndPersistBeatmap = mock(() => Promise.resolve(true));
       const fetchAndPersistMatch = mock(() => Promise.resolve(true));
-      const fetchAndPersistPlayer = mock(() => Promise.resolve());
+      const fetchAndPersistPlayer = mock(() => Promise.resolve(true));
 
       const worker = new OsuApiFetchWorker({
         queue: consumer,
@@ -78,13 +82,13 @@ describe('OsuApiFetchWorker', () => {
     it('passes skipAutomationChecks option', async () => {
       const consumer = createMockConsumer();
       const logger = createMockLogger();
-      const fetchAndPersistBeatmap = mock(() => Promise.resolve());
+      const fetchAndPersistBeatmap = mock(() => Promise.resolve(true));
 
       const worker = new OsuApiFetchWorker({
         queue: consumer,
         beatmapService: { fetchAndPersist: fetchAndPersistBeatmap },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
-        playerService: { fetchAndPersist: mock(() => Promise.resolve()) },
+        playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
       });
 
@@ -111,9 +115,9 @@ describe('OsuApiFetchWorker', () => {
 
       const worker = new OsuApiFetchWorker({
         queue: consumer,
-        beatmapService: { fetchAndPersist: mock(() => Promise.resolve()) },
+        beatmapService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         matchService: { fetchAndPersist: fetchAndPersistMatch },
-        playerService: { fetchAndPersist: mock(() => Promise.resolve()) },
+        playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
       });
 
@@ -135,12 +139,12 @@ describe('OsuApiFetchWorker', () => {
     it('routes player fetch messages to playerService', async () => {
       const consumer = createMockConsumer();
       const logger = createMockLogger();
-      const fetchAndPersistPlayer = mock(() => Promise.resolve());
+      const fetchAndPersistPlayer = mock(() => Promise.resolve(true));
       const onPlayerProcessed = mock(() => Promise.resolve());
 
       const worker = new OsuApiFetchWorker({
         queue: consumer,
-        beatmapService: { fetchAndPersist: mock(() => Promise.resolve()) },
+        beatmapService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
         logger,
@@ -170,7 +174,7 @@ describe('OsuApiFetchWorker', () => {
         queue: consumer,
         beatmapService: { fetchAndPersist: fetchAndPersistBeatmap },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
-        playerService: { fetchAndPersist: mock(() => Promise.resolve()) },
+        playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
       });
 

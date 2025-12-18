@@ -194,6 +194,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
+          type: 'beatmap' as const,
           beatmapId,
           requestedAt: new Date().toISOString(),
           correlationId: 'test',
@@ -237,6 +238,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
+          type: 'beatmap' as const,
           beatmapId,
           requestedAt: new Date().toISOString(),
           correlationId: 'test',

@@ -1,4 +1,10 @@
-import type { MessageMetadata } from '@otr/core';
+import type { MessageEnvelope, MessageMetadata } from '@otr/core';
+
+export type QueueMessagePayload<TMessage> = TMessage extends MessageEnvelope<
+  infer P
+>
+  ? P
+  : Omit<TMessage, keyof MessageMetadata>;
 
 export interface QueueMessage<TPayload> {
   payload: TPayload;
@@ -15,11 +21,6 @@ export interface QueueConsumer<TPayload> {
   start(handler: QueueMessageHandler<TPayload>): Promise<void>;
   stop(): Promise<void>;
 }
-
-export type QueueMessagePayload<TMessage> = Omit<
-  TMessage,
-  keyof MessageMetadata
->;
 
 export interface QueuePublishOptions {
   metadata?: Partial<MessageMetadata>;
