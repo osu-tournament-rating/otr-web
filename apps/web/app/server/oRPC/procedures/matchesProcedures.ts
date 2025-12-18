@@ -1,13 +1,13 @@
 import { ORPCError } from '@orpc/server';
 import { alias } from 'drizzle-orm/pg-core';
 import { asc, desc, eq, inArray } from 'drizzle-orm';
+import { z } from 'zod/v4';
 
 import * as schema from '@otr/core/db/schema';
 import { AdminNoteSchema, AdminNoteUserSchema } from '@/lib/orpc/schema/common';
 import {
   GameScoreSchema,
   MatchDetailSchema,
-  MatchIdInputSchema,
   MatchRoster,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
@@ -22,6 +22,7 @@ import {
 } from '@otr/core/osu';
 
 import { publicProcedure } from './base';
+import { KeyTypeSchema, resolveMatchId } from './shared/keyType';
 
 const MODS_FREE_MOD_ALLOWED = 522_171_579;
 
@@ -141,15 +142,27 @@ function deriveWinRecord(matchId: number, rosters: MatchRoster[]) {
 }
 
 export const getMatch = publicProcedure
-  .input(MatchIdInputSchema)
+  .input(
+    z.object({
+      id: z.number().int().positive(),
+      keyType: KeyTypeSchema,
+    })
+  )
   .output(MatchDetailSchema)
   .route({
     summary: 'Get match details',
+    description:
+      'Fetch match details by ID.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /matches/123`\n' +
+      '- By osu! ID: `GET /matches/114455667?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/matches/{id}',
   })
   .handler(async ({ input, context }) => {
+    const matchId = await resolveMatchId(context.db, input.id, input.keyType);
+
     const [matchRow] = await context.db
       .select({
         id: schema.matches.id,
@@ -173,7 +186,7 @@ export const getMatch = publicProcedure
         schema.tournaments,
         eq(schema.tournaments.id, schema.matches.tournamentId)
       )
-      .where(eq(schema.matches.id, input.id))
+      .where(eq(schema.matches.id, matchId))
       .limit(1);
 
     if (!matchRow) {
@@ -181,8 +194,6 @@ export const getMatch = publicProcedure
         message: `Match ${input.id} not found`,
       });
     }
-
-    const matchId = matchRow.id;
 
     const verifierUser = alias(schema.users, 'verifierUser');
     const verifierPlayer = alias(schema.players, 'verifierPlayer');

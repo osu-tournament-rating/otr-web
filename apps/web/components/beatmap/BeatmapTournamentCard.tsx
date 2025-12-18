@@ -69,7 +69,8 @@ export default function BeatmapTournamentCard({
 
       try {
         const response = await orpc.beatmaps.tournamentMatches({
-          beatmapOsuId,
+          beatmapId: beatmapOsuId,
+          keyType: 'osu',
           tournamentId: tournament.tournament.id,
         });
         setMatches(response.matches);

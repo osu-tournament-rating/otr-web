@@ -95,7 +95,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
 
     try {
       const fetchedMatches = await Promise.all(
-        uniqueIds.map((id) => orpc.matches.get({ id }))
+        uniqueIds.map((id) => orpc.matches.get({ id, keyType: 'otr' }))
       );
       setChildMatches(fetchedMatches);
     } catch (err) {

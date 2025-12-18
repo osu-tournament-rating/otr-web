@@ -28,34 +28,7 @@ import {
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
-
-const KeyTypeSchema = z.enum(['otr', 'osu']).default('otr');
-
-async function resolvePlayerId(
-  db: DatabaseClient,
-  id: number,
-  keyType: 'otr' | 'osu'
-): Promise<number> {
-  if (keyType === 'otr') {
-    const player = await db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, id),
-      columns: { id: true },
-    });
-    if (!player) {
-      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
-    }
-    return player.id;
-  }
-
-  const player = await db.query.players.findFirst({
-    where: (players, { eq }) => eq(players.osuId, id),
-    columns: { id: true },
-  });
-  if (!player) {
-    throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
-  }
-  return player.id;
-}
+import { KeyTypeSchema, resolvePlayerId } from './shared/keyType';
 
 export const getPlayer = publicProcedure
   .input(

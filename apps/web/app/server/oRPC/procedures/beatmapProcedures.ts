@@ -1,12 +1,11 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { z } from 'zod/v4';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
 import {
-  BeatmapStatsRequestSchema,
   BeatmapStatsResponseSchema,
-  BeatmapTournamentMatchRequestSchema,
   BeatmapTournamentMatchResponseSchema,
   type BeatmapStatsResponse,
   type BeatmapTournamentUsage,
@@ -17,6 +16,7 @@ import {
 } from '@/lib/orpc/schema/beatmapStats';
 
 import { publicProcedure } from './base';
+import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
 
 const playerCompactColumns = {
   id: schema.players.id,
@@ -27,33 +27,31 @@ const playerCompactColumns = {
 } as const;
 
 export const getBeatmapStats = publicProcedure
-  .input(BeatmapStatsRequestSchema)
+  .input(
+    z.object({
+      id: z.number().int().positive(),
+      keyType: KeyTypeSchema,
+    })
+  )
   .output(BeatmapStatsResponseSchema)
   .route({
     summary: 'Get beatmap statistics',
+    description:
+      'Fetch beatmap statistics by ID.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /beatmaps/123/stats`\n' +
+      '- By osu! ID: `GET /beatmaps/4504101/stats?keyType=osu`',
     tags: ['public'],
     method: 'GET',
     path: '/beatmaps/{id}/stats',
   })
   .handler(async ({ input, context }) => {
     try {
-      const resolveInternalBeatmapId = async (
-        inputId: number
-      ): Promise<number> => {
-        const [result] = await context.db
-          .select({ id: schema.beatmaps.id })
-          .from(schema.beatmaps)
-          .where(eq(schema.beatmaps.osuId, inputId))
-          .limit(1);
-
-        if (!result) {
-          throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
-        }
-
-        return result.id;
-      };
-
-      const beatmapId = await resolveInternalBeatmapId(input.id);
+      const beatmapId = await resolveBeatmapId(
+        context.db,
+        input.id,
+        input.keyType
+      );
 
       const [
         beatmapRow,
@@ -728,27 +726,32 @@ export const getBeatmapStats = publicProcedure
   });
 
 export const getBeatmapTournamentMatches = publicProcedure
-  .input(BeatmapTournamentMatchRequestSchema)
+  .input(
+    z.object({
+      beatmapId: z.number().int().positive(),
+      keyType: KeyTypeSchema,
+      tournamentId: z.number().int().positive(),
+    })
+  )
   .output(BeatmapTournamentMatchResponseSchema)
   .route({
     summary: 'Get matches where a beatmap was used in a tournament',
+    description:
+      'Fetch matches where a beatmap was played in a specific tournament.\n\n' +
+      '**Examples:**\n' +
+      '- By o!TR ID: `GET /beatmaps/123/tournaments/456/matches`\n' +
+      '- By osu! ID: `GET /beatmaps/4504101/tournaments/456/matches?keyType=osu`',
     tags: ['public'],
     method: 'GET',
-    path: '/beatmaps/{beatmapOsuId}/tournaments/{tournamentId}/matches',
+    path: '/beatmaps/{beatmapId}/tournaments/{tournamentId}/matches',
   })
   .handler(async ({ input, context }) => {
     try {
-      const [beatmapResult] = await context.db
-        .select({ id: schema.beatmaps.id })
-        .from(schema.beatmaps)
-        .where(eq(schema.beatmaps.osuId, input.beatmapOsuId))
-        .limit(1);
-
-      if (!beatmapResult) {
-        throw new ORPCError('NOT_FOUND', { message: 'Beatmap not found' });
-      }
-
-      const beatmapId = beatmapResult.id;
+      const beatmapId = await resolveBeatmapId(
+        context.db,
+        input.beatmapId,
+        input.keyType
+      );
 
       const rows = await context.db
         .select({
@@ -915,7 +918,7 @@ export const getBeatmapTournamentMatches = publicProcedure
 
       console.error(
         '[orpc] beatmaps.tournamentMatches failed',
-        { beatmapOsuId: input.beatmapOsuId, tournamentId: input.tournamentId },
+        { beatmapId: input.beatmapId, tournamentId: input.tournamentId },
         error
       );
 
