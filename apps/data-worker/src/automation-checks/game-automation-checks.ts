@@ -15,7 +15,7 @@ import {
   isPreVerifiedOrVerified,
 } from './utils';
 
-const VALID_TEAM_TYPES = [TeamType.TeamVs, TeamType.HeadToHead];
+const VALID_TEAM_TYPES = [TeamType.TeamVs];
 const VALID_SCORING_TYPES = [ScoringType.ScoreV2, ScoringType.Lazer];
 
 export interface GameAutomationChecksOptions {

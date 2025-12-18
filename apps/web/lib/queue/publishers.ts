@@ -1,22 +1,35 @@
 import { RabbitMqPublisher } from '@/lib/queue';
-import type {
-  QueueMessagePayload,
-  QueuePublishOptions,
-  QueuePublisher,
-} from '@/lib/queue/types';
+import type { QueuePublishOptions, QueuePublisher } from '@/lib/queue/types';
 import {
   QueueConstants,
-  type FetchBeatmapMessage,
-  type FetchMatchMessage,
-  type FetchPlayerMessage,
+  type FetchBeatmapPayload,
+  type FetchMatchPayload,
+  type FetchOsuMessage,
+  type FetchPlayerPayload,
   type FetchPlayerOsuTrackMessage,
   type ProcessTournamentAutomationCheckMessage,
 } from '@otr/core';
 
+/**
+ * Public API payload types - omit `type` field since it's added internally.
+ */
+type FetchBeatmapInput = Omit<FetchBeatmapPayload, 'type'>;
+type FetchMatchInput = Omit<FetchMatchPayload, 'type'>;
+type FetchPlayerInput = Omit<FetchPlayerPayload, 'type'>;
+
 export interface QueuePublisherRegistry {
-  fetchBeatmap: QueuePublisher<FetchBeatmapMessage>['publish'];
-  fetchMatch: QueuePublisher<FetchMatchMessage>['publish'];
-  fetchPlayer: QueuePublisher<FetchPlayerMessage>['publish'];
+  fetchBeatmap: (
+    payload: FetchBeatmapInput,
+    options?: QueuePublishOptions
+  ) => Promise<FetchOsuMessage>;
+  fetchMatch: (
+    payload: FetchMatchInput,
+    options?: QueuePublishOptions
+  ) => Promise<FetchOsuMessage>;
+  fetchPlayer: (
+    payload: FetchPlayerInput,
+    options?: QueuePublishOptions
+  ) => Promise<FetchOsuMessage>;
   fetchPlayerOsuTrack: QueuePublisher<FetchPlayerOsuTrackMessage>['publish'];
   processAutomationCheck: QueuePublisher<ProcessTournamentAutomationCheckMessage>['publish'];
 }
@@ -31,24 +44,14 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
     throw new Error('RABBITMQ_AMQP_URL is not configured');
   }
 
-  const beatmapPublisher = new RabbitMqPublisher<FetchBeatmapMessage>({
+  const osuPublisher = new RabbitMqPublisher<FetchOsuMessage>({
     url: amqpUrl,
-    queue: QueueConstants.osu.beatmaps,
-  });
-
-  const matchPublisher = new RabbitMqPublisher<FetchMatchMessage>({
-    url: amqpUrl,
-    queue: QueueConstants.osu.matches,
-  });
-
-  const playerPublisher = new RabbitMqPublisher<FetchPlayerMessage>({
-    url: amqpUrl,
-    queue: QueueConstants.osu.players,
+    queue: QueueConstants.osu,
   });
 
   const osuTrackPublisher = new RabbitMqPublisher<FetchPlayerOsuTrackMessage>({
     url: amqpUrl,
-    queue: QueueConstants.osuTrack.players,
+    queue: QueueConstants.osuTrack,
   });
 
   const automationPublisher =
@@ -59,10 +62,11 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
 
   return {
     fetchBeatmap: (payload, options) =>
-      beatmapPublisher.publish(payload, options),
-    fetchMatch: (payload, options) => matchPublisher.publish(payload, options),
+      osuPublisher.publish({ type: 'beatmap', ...payload }, options),
+    fetchMatch: (payload, options) =>
+      osuPublisher.publish({ type: 'match', ...payload }, options),
     fetchPlayer: (payload, options) =>
-      playerPublisher.publish(payload, options),
+      osuPublisher.publish({ type: 'player', ...payload }, options),
     fetchPlayerOsuTrack: (payload, options) =>
       osuTrackPublisher.publish(payload, options),
     processAutomationCheck: (payload, options) =>
@@ -83,27 +87,27 @@ const getQueuePublishers = (): QueuePublisherRegistry => {
 };
 
 export const publishFetchBeatmapMessage = (
-  payload: QueueMessagePayload<FetchBeatmapMessage>,
+  payload: FetchBeatmapInput,
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchBeatmap(payload, options);
 
 export const publishFetchMatchMessage = (
-  payload: QueueMessagePayload<FetchMatchMessage>,
+  payload: FetchMatchInput,
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchMatch(payload, options);
 
 export const publishFetchPlayerMessage = (
-  payload: QueueMessagePayload<FetchPlayerMessage>,
+  payload: FetchPlayerInput,
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchPlayer(payload, options);
 
 export const publishFetchPlayerOsuTrackMessage = (
-  payload: QueueMessagePayload<FetchPlayerOsuTrackMessage>,
+  payload: { osuPlayerId: number },
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchPlayerOsuTrack(payload, options);
 
 export const publishProcessTournamentAutomationCheckMessage = (
-  payload: QueueMessagePayload<ProcessTournamentAutomationCheckMessage>,
+  payload: { tournamentId: number; overrideVerifiedState: boolean },
   options?: QueuePublishOptions
 ) => getQueuePublishers().processAutomationCheck(payload, options);
 

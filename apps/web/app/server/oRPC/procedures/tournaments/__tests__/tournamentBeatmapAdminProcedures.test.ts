@@ -144,12 +144,14 @@ const createAdminSession = (): AdminSession => ({
 
 const noopQueuePublishers: QueuePublisherRegistry = {
   fetchBeatmap: async ({ beatmapId }) => ({
+    type: 'beatmap' as const,
     beatmapId,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
   fetchMatch: async ({ osuMatchId }) => ({
+    type: 'match' as const,
     osuMatchId,
     isLazer: false,
     requestedAt: new Date().toISOString(),
@@ -157,6 +159,7 @@ const noopQueuePublishers: QueuePublisherRegistry = {
     priority: MessagePriority.Normal,
   }),
   fetchPlayer: async ({ osuPlayerId }) => ({
+    type: 'player' as const,
     osuPlayerId,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
@@ -191,6 +194,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
+          type: 'beatmap' as const,
           beatmapId,
           requestedAt: new Date().toISOString(),
           correlationId: 'test',
@@ -234,6 +238,7 @@ describe('manageTournamentBeatmapsAdminHandler', () => {
       fetchBeatmap: async ({ beatmapId }) => {
         queuedBeatmaps.push(beatmapId);
         return {
+          type: 'beatmap' as const,
           beatmapId,
           requestedAt: new Date().toISOString(),
           correlationId: 'test',
