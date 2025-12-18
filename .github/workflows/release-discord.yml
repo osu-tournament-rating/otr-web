@@ -14,9 +14,9 @@ jobs:
       - uses: SethCohen/github-releases-to-discord@v1
         with:
           webhook_url: ${{ secrets.CHANGELOG_WEBHOOK_URL }}
-          color: "2105893"
-          username: "o!TR Releases"
-          content: "||@changelog||"
-          footer_title: "Changelog"
+          color: '2105893'
+          username: 'o!TR Releases'
+          content: '||@changelog||'
+          footer_title: 'Changelog'
           footer_timestamp: true
           reduce_headings: true
