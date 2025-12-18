@@ -77,11 +77,7 @@ export const getPlayer = publicProcedure
     path: '/players/{id}',
   })
   .handler(async ({ input, context }) => {
-    const playerId = await resolvePlayerId(
-      context.db,
-      input.id,
-      input.keyType
-    );
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const player = await context.db
       .select()
@@ -471,11 +467,7 @@ export const getPlayerTournaments = publicProcedure
     path: '/players/{id}/tournaments',
   })
   .handler(async ({ input, context }) => {
-    const playerId = await resolvePlayerId(
-      context.db,
-      input.id,
-      input.keyType
-    );
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const filters = [
       sql`${schema.tournaments.id} IN (
@@ -529,11 +521,7 @@ export const getPlayerBeatmaps = publicProcedure
     path: '/players/{id}/beatmaps',
   })
   .handler(async ({ input, context }) => {
-    const playerId = await resolvePlayerId(
-      context.db,
-      input.id,
-      input.keyType
-    );
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const DEFAULT_LIMIT = 25;
     const MAX_LIMIT = 50;
@@ -976,11 +964,7 @@ export const getPlayerStats = publicProcedure
     path: '/players/{id}/stats',
   })
   .handler(async ({ input, context }) => {
-    const playerId = await resolvePlayerId(
-      context.db,
-      input.id,
-      input.keyType
-    );
+    const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
     const player = await context.db.query.players.findFirst({
       where: (players, { eq }) => eq(players.id, playerId),
