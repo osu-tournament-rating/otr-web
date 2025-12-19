@@ -1,0 +1,1 @@
+ALTER TABLE "players" ADD COLUMN "data_fetch_status" integer DEFAULT 0 NOT NULL;

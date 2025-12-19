@@ -3,11 +3,13 @@ import type { API } from 'osu-api-v2-js';
 
 import { withNotFoundHandling } from '../api-helpers';
 import { convertRuleset } from '../conversions';
+import { ensurePlayerPlaceholder, updatePlayerStatus } from '../player-store';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
 import type { RateLimiter } from '../../rate-limiter';
 import * as schema from '@otr/core/db/schema';
 import { Ruleset } from '@otr/core/osu/enums';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 const FETCHABLE_RULESETS = [
   Ruleset.Osu,
@@ -44,8 +46,25 @@ export class PlayerFetchService {
   }
 
   async fetchAndPersist(osuPlayerId: number): Promise<boolean> {
-    const player = await this.getOrCreatePlayer(osuPlayerId);
     const nowIso = new Date().toISOString();
+
+    const playerRecord = await ensurePlayerPlaceholder(
+      this.db,
+      osuPlayerId,
+      DataFetchStatus.Fetching,
+      nowIso
+    );
+
+    const playerId = playerRecord.id;
+
+    if (playerRecord.dataFetchStatus !== DataFetchStatus.Fetching) {
+      await updatePlayerStatus(
+        this.db,
+        playerId,
+        DataFetchStatus.Fetching,
+        nowIso
+      );
+    }
 
     let processed = false;
 
@@ -60,11 +79,17 @@ export class PlayerFetchService {
           osuPlayerId,
           ruleset,
         });
+        await updatePlayerStatus(
+          this.db,
+          playerId,
+          DataFetchStatus.NotFound,
+          nowIso
+        );
         return false;
       }
 
       if (!processed) {
-        await this.updatePlayerCore(player.id, apiUser, nowIso);
+        await this.updatePlayerCore(playerId, apiUser, nowIso);
         processed = true;
       }
 
@@ -72,45 +97,30 @@ export class PlayerFetchService {
         continue;
       }
 
-      await this.updateRulesetData(player.id, ruleset, apiUser, nowIso);
+      await this.updateRulesetData(playerId, ruleset, apiUser, nowIso);
     }
 
     if (!processed) {
       this.logger.warn('osu! API returned no statistics for player', {
         osuPlayerId,
       });
+      await updatePlayerStatus(
+        this.db,
+        playerId,
+        DataFetchStatus.NotFound,
+        nowIso
+      );
       return false;
     }
 
+    await updatePlayerStatus(
+      this.db,
+      playerId,
+      DataFetchStatus.Fetched,
+      nowIso
+    );
+
     return true;
-  }
-
-  private async getOrCreatePlayer(
-    osuPlayerId: number
-  ): Promise<{ id: number }> {
-    const existing = await this.db.query.players.findFirst({
-      where: eq(schema.players.osuId, osuPlayerId),
-      columns: {
-        id: true,
-      },
-    });
-
-    if (existing) {
-      return existing;
-    }
-
-    const [inserted] = await this.db
-      .insert(schema.players)
-      .values({
-        osuId: osuPlayerId,
-      })
-      .returning({ id: schema.players.id });
-
-    if (!inserted) {
-      throw new Error('Failed to create player record');
-    }
-
-    return inserted;
   }
 
   private async updatePlayerCore(

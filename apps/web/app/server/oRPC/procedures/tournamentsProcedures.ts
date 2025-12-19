@@ -350,6 +350,7 @@ export const getTournament = publicProcedure
           beatmapsetCreatorOsuLastFetch: beatmapsetCreator.osuLastFetch,
           beatmapsetCreatorOsuTrackLastFetch:
             beatmapsetCreator.osuTrackLastFetch,
+          beatmapsetCreatorDataFetchStatus: beatmapsetCreator.dataFetchStatus,
         })
         .from(schema.joinPooledBeatmaps)
         .innerJoin(
@@ -381,6 +382,7 @@ export const getTournament = publicProcedure
               defaultRuleset: schema.players.defaultRuleset,
               osuLastFetch: schema.players.osuLastFetch,
               osuTrackLastFetch: schema.players.osuTrackLastFetch,
+              dataFetchStatus: schema.players.dataFetchStatus,
             })
             .from(schema.joinBeatmapCreators)
             .innerJoin(
@@ -402,6 +404,7 @@ export const getTournament = publicProcedure
           defaultRuleset: Ruleset;
           osuLastFetch: string;
           osuTrackLastFetch: string;
+          dataFetchStatus: number;
         }[]
       >();
 
@@ -416,6 +419,7 @@ export const getTournament = publicProcedure
           defaultRuleset: creator.defaultRuleset as Ruleset,
           osuLastFetch: creator.osuLastFetch,
           osuTrackLastFetch: creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
+          dataFetchStatus: creator.dataFetchStatus ?? 0,
         });
         creatorsByBeatmapId.set(beatmapId, current);
       }
@@ -600,6 +604,7 @@ export const getTournament = publicProcedure
           statsPlayerDefaultRuleset: schema.players.defaultRuleset,
           statsPlayerOsuLastFetch: schema.players.osuLastFetch,
           statsPlayerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
+          statsPlayerDataFetchStatus: schema.players.dataFetchStatus,
 
           // correlated subqueries as raw SQL
           ratingBefore: sql<number>`
@@ -664,6 +669,7 @@ export const getTournament = publicProcedure
                 osuLastFetch: stat.statsPlayerOsuLastFetch,
                 osuTrackLastFetch:
                   stat.statsPlayerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
+                dataFetchStatus: stat.statsPlayerDataFetchStatus ?? 0,
               }
             : {
                 id: -1,
@@ -673,6 +679,7 @@ export const getTournament = publicProcedure
                 defaultRuleset: Ruleset.Osu,
                 osuLastFetch: '2007-09-17 00:00:00',
                 osuTrackLastFetch: '2007-09-17 00:00:00',
+                dataFetchStatus: 0,
               },
       }));
 
@@ -693,6 +700,7 @@ export const getTournament = publicProcedure
                 osuTrackLastFetch:
                   beatmap.beatmapsetCreatorOsuTrackLastFetch ??
                   '2007-09-17 00:00:00',
+                dataFetchStatus: beatmap.beatmapsetCreatorDataFetchStatus ?? 0,
               };
 
         const beatmapset =
@@ -720,6 +728,7 @@ export const getTournament = publicProcedure
             osuLastFetch: creator.osuLastFetch,
             osuTrackLastFetch:
               creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
+            dataFetchStatus: creator.dataFetchStatus ?? 0,
           })
         );
 
