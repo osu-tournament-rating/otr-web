@@ -33,7 +33,7 @@ import { KeyTypeSchema, resolvePlayerId } from './shared/keyType';
 export const getPlayer = publicProcedure
   .input(
     z.object({
-      id: z.number().int().positive(),
+      id: z.union([z.number().int().positive(), z.string().min(1)]),
       keyType: KeyTypeSchema,
     })
   )
@@ -44,7 +44,8 @@ export const getPlayer = publicProcedure
       'Fetch player information by ID.\n\n' +
       '**Examples:**\n' +
       '- By o!TR ID: `GET /players/123`\n' +
-      '- By osu! ID: `GET /players/4504101?keyType=osu`',
+      '- By osu! ID: `GET /players/4504101?keyType=osu`\n' +
+      '- By username: `GET /players/Stage?keyType=username`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}',
@@ -420,7 +421,7 @@ const buildMatchAggregates = (
 export const getPlayerTournaments = publicProcedure
   .input(
     z.object({
-      id: z.number().int().positive(),
+      id: z.union([z.number().int().positive(), z.string().min(1)]),
       keyType: KeyTypeSchema,
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
@@ -434,7 +435,8 @@ export const getPlayerTournaments = publicProcedure
       'List tournaments a player has participated in.\n\n' +
       '**Examples:**\n' +
       '- By o!TR ID: `GET /players/123/tournaments`\n' +
-      '- By osu! ID: `GET /players/4504101/tournaments?keyType=osu`',
+      '- By osu! ID: `GET /players/4504101/tournaments?keyType=osu`\n' +
+      '- By username: `GET /players/Stage/tournaments?keyType=username`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/tournaments',
@@ -488,7 +490,8 @@ export const getPlayerBeatmaps = publicProcedure
       'List beatmaps created by a player.\n\n' +
       '**Examples:**\n' +
       '- By o!TR ID: `GET /players/123/beatmaps`\n' +
-      '- By osu! ID: `GET /players/4504101/beatmaps?keyType=osu`',
+      '- By osu! ID: `GET /players/4504101/beatmaps?keyType=osu`\n' +
+      '- By username: `GET /players/Stage/beatmaps?keyType=username`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/beatmaps',
@@ -917,7 +920,7 @@ export const getPlayerBeatmaps = publicProcedure
 export const getPlayerStats = publicProcedure
   .input(
     z.object({
-      id: z.number().int().positive(),
+      id: z.union([z.number().int().positive(), z.string().min(1)]),
       keyType: KeyTypeSchema,
       ruleset: z.number().int().optional(),
       dateMin: z.string().optional(),
@@ -931,7 +934,8 @@ export const getPlayerStats = publicProcedure
       'Fetch comprehensive player statistics including ratings, match history, and mod usage.\n\n' +
       '**Examples:**\n' +
       '- By o!TR ID: `GET /players/123/stats`\n' +
-      '- By osu! ID: `GET /players/4504101/stats?keyType=osu`',
+      '- By osu! ID: `GET /players/4504101/stats?keyType=osu`\n' +
+      '- By username: `GET /players/Stage/stats?keyType=username`',
     tags: ['public'],
     method: 'GET',
     path: '/players/{id}/stats',
