@@ -17,6 +17,7 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import SingleModIcon from '@/components/icons/SingleModIcon';
 import { useState, useMemo } from 'react';
 import BeatmapBackground from '../games/BeatmapBackground';
+import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import {
   TournamentBeatmap,
   TournamentMatchGame,
@@ -302,12 +303,23 @@ export default function TournamentBeatmapsView({
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-2">
                         {/* Thumbnail */}
-                        <div className="relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
+                        <div className="group/thumbnail relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
                           {beatmap.beatmapset?.osuId ? (
-                            <BeatmapBackground
-                              beatmapsetId={beatmap.beatmapset?.osuId}
-                              alt={`${beatmap.beatmapset?.title} cover`}
-                            />
+                            <>
+                              <BeatmapBackground
+                                beatmapsetId={beatmap.beatmapset.osuId}
+                                alt={`${beatmap.beatmapset?.title} cover`}
+                              />
+                              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
+                                <AudioPlayButton
+                                  beatmapsetOsuId={beatmap.beatmapset.osuId}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-white hover:bg-white/20 hover:text-white"
+                                  showTooltip={false}
+                                />
+                              </div>
+                            </>
                           ) : (
                             <div className="bg-muted flex h-full w-full items-center justify-center">
                               <Music className="text-muted-foreground h-3 w-3" />
