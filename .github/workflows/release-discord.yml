@@ -16,7 +16,7 @@ jobs:
           webhook_url: ${{ secrets.CHANGELOG_WEBHOOK_URL }}
           color: '2105893'
           username: 'o!TR Releases'
-          content: '||@changelog||'
+          content: '||<@&1233868955693875280>||'
           footer_title: 'Changelog'
           footer_timestamp: true
           reduce_headings: true
