@@ -16,7 +16,7 @@ import {
   type PlayerFrequency,
   type PlayerRatingAdjustment,
 } from '@/lib/orpc/schema/playerStats';
-import { TournamentListItemSchema } from '@/lib/orpc/schema/tournament';
+import { PlayerTournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
   Mods,
@@ -428,7 +428,7 @@ export const getPlayerTournaments = publicProcedure
       dateMax: z.string().optional(),
     })
   )
-  .output(TournamentListItemSchema.array())
+  .output(PlayerTournamentListItemSchema.array())
   .route({
     summary: 'List player tournaments',
     description:
@@ -444,13 +444,7 @@ export const getPlayerTournaments = publicProcedure
   .handler(async ({ input, context }) => {
     const playerId = await resolvePlayerId(context.db, input.id, input.keyType);
 
-    const filters = [
-      sql`${schema.tournaments.id} IN (
-        SELECT DISTINCT ${schema.playerTournamentStats.tournamentId}
-        FROM ${schema.playerTournamentStats}
-        WHERE ${schema.playerTournamentStats.playerId} = ${playerId}
-      )`,
-    ];
+    const filters = [eq(schema.playerTournamentStats.playerId, playerId)];
 
     if (input.ruleset != null) {
       filters.push(eq(schema.tournaments.ruleset, input.ruleset));
@@ -464,14 +458,22 @@ export const getPlayerTournaments = publicProcedure
       filters.push(lte(schema.tournaments.endTime, input.dateMax));
     }
 
-    const tournamentRows = await context.db
-      .select(tournamentListItemColumns)
-      .from(schema.tournaments)
-      .where(sql.join(filters, sql` AND `))
+    const rows = await context.db
+      .select({
+        ...tournamentListItemColumns,
+        matchesWon: schema.playerTournamentStats.matchesWon,
+        matchesLost: schema.playerTournamentStats.matchesLost,
+      })
+      .from(schema.playerTournamentStats)
+      .innerJoin(
+        schema.tournaments,
+        eq(schema.playerTournamentStats.tournamentId, schema.tournaments.id)
+      )
+      .where(and(...filters))
       .orderBy(desc(schema.tournaments.endTime));
 
-    return tournamentRows.map((row) =>
-      TournamentListItemSchema.parse({
+    return rows.map((row) =>
+      PlayerTournamentListItemSchema.parse({
         ...row,
         ruleset: row.ruleset as Ruleset,
         verificationStatus: row.verificationStatus as VerificationStatus,
@@ -1000,11 +1002,24 @@ export const getPlayerStats = publicProcedure
         ...ratingAdjustmentSummaryColumns,
         matchName: schema.matches.name,
         tournamentId: schema.matches.tournamentId,
+        gamesWon: schema.playerMatchStats.gamesWon,
+        gamesLost: schema.playerMatchStats.gamesLost,
+        matchWon: schema.playerMatchStats.won,
       })
       .from(schema.ratingAdjustments)
       .leftJoin(
         schema.matches,
         eq(schema.matches.id, schema.ratingAdjustments.matchId)
+      )
+      .leftJoin(
+        schema.playerMatchStats,
+        and(
+          eq(schema.playerMatchStats.matchId, schema.ratingAdjustments.matchId),
+          eq(
+            schema.playerMatchStats.playerId,
+            schema.ratingAdjustments.playerId
+          )
+        )
       )
       .where(and(...adjustmentFilters))
       .orderBy(asc(schema.ratingAdjustments.timestamp));
@@ -1216,6 +1231,9 @@ const mapRatingAdjustments = (
     RatingAdjustmentSummary & {
       matchName: string | null;
       tournamentId: number | null;
+      gamesWon: number | null;
+      gamesLost: number | null;
+      matchWon: boolean | null;
     }
   >
 ): PlayerRatingAdjustment[] =>
@@ -1238,4 +1256,7 @@ const mapRatingAdjustments = (
             tournamentId: row.tournamentId ?? null,
           }
         : null,
+    gamesWon: row.gamesWon,
+    gamesLost: row.gamesLost,
+    matchWon: row.matchWon,
   }));

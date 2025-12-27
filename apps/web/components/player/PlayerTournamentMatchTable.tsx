@@ -12,6 +12,8 @@ import {
 import { format } from 'date-fns';
 import Link from 'next/link';
 import RatingDelta from '@/components/rating/RatingDelta';
+import SimpleTooltip from '@/components/simple-tooltip';
+import { HelpCircle } from 'lucide-react';
 
 const RATING_PRECISION = {
   DISPLAY: 0,
@@ -36,6 +38,14 @@ export default function PlayerTournamentMatchTable({
             <TableRow>
               <TableHead className="bg-muted/50">Date</TableHead>
               <TableHead className="bg-muted/50">Match</TableHead>
+              <TableHead className="bg-muted/50 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  Games (W-L)
+                  <SimpleTooltip content="Win-loss record for games this player participated in, not the entire team">
+                    <HelpCircle className="h-4 w-4" />
+                  </SimpleTooltip>
+                </div>
+              </TableHead>
               <TableHead className="bg-muted/50 text-center">Before</TableHead>
               <TableHead className="bg-muted/50 text-center">After</TableHead>
               <TableHead className="bg-muted/50 text-center">Change</TableHead>
@@ -65,6 +75,16 @@ export default function PlayerTournamentMatchTable({
                       </span>
                     )}
                   </TableCell>
+                  <TableCell className="py-2 text-center text-xs sm:text-sm">
+                    {adjustment.gamesWon != null &&
+                    adjustment.gamesLost != null ? (
+                      <span>
+                        {adjustment.gamesWon}-{adjustment.gamesLost}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground py-2 text-center text-xs sm:text-sm">
                     {adjustment.ratingBefore.toFixed(RATING_PRECISION.DISPLAY)}
                   </TableCell>
@@ -79,7 +99,7 @@ export default function PlayerTournamentMatchTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground h-24 text-center"
                 >
                   No matches found.

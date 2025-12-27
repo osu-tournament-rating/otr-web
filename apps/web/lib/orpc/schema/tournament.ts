@@ -58,6 +58,11 @@ export const TournamentListItemSchema = tournamentSelectSchema
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
 
+export const PlayerTournamentListItemSchema = TournamentListItemSchema.extend({
+  matchesWon: z.number().int(),
+  matchesLost: z.number().int(),
+});
+
 export const TournamentAdminNoteSchema = AdminNoteSchema;
 
 const AdminNoteContentSchema = z.string().trim().min(1);
@@ -223,6 +228,9 @@ export type { VerificationStatusValue };
 
 export type TournamentListRequest = z.infer<typeof TournamentListRequestSchema>;
 export type TournamentListItem = z.infer<typeof TournamentListItemSchema>;
+export type PlayerTournamentListItem = z.infer<
+  typeof PlayerTournamentListItemSchema
+>;
 export type TournamentAdminNote = z.infer<typeof TournamentAdminNoteSchema>;
 export type TournamentAdminNoteCreateInput = z.infer<
   typeof TournamentAdminNoteCreateInputSchema
