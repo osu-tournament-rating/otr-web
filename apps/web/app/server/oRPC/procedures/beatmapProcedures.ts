@@ -59,7 +59,6 @@ export const getBeatmapStats = publicProcedure
         summaryRow,
         pooledTournamentCountRow,
         usageRows,
-        pooledTournaments,
         tournamentRows,
         avgRows,
         modRows,
@@ -207,30 +206,6 @@ export const getBeatmapStats = publicProcedure
           )
           .groupBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`)
           .orderBy(sql`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`),
-        context.db
-          .select({
-            tournamentId: schema.tournaments.id,
-            startTime: schema.tournaments.startTime,
-            endTime: schema.tournaments.endTime,
-          })
-          .from(schema.joinPooledBeatmaps)
-          .innerJoin(
-            schema.tournaments,
-            eq(
-              schema.tournaments.id,
-              schema.joinPooledBeatmaps.tournamentsPooledInId
-            )
-          )
-          .where(
-            and(
-              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              sql`${schema.tournaments.startTime} IS NOT NULL`
-            )
-          ),
         context.db
           .select({
             tournamentId: schema.tournaments.id,
@@ -501,32 +476,23 @@ export const getBeatmapStats = publicProcedure
         return `${year}-Q${quarter}`;
       };
 
-      // Helper to advance to next quarter
-      const nextQuarter = (date: Date): Date => {
-        const month = date.getMonth();
-        const quarter = Math.floor(month / 3);
-        if (quarter === 3) {
-          return new Date(date.getFullYear() + 1, 0, 1);
-        }
-        return new Date(date.getFullYear(), (quarter + 1) * 3, 1);
-      };
-
-      // Expand each tournament across all quarters it spans
+      // Count each tournament in the quarter when the beatmap was first played
+      // (or fall back to tournament start date if never played)
       const poolingByQuarter = new Map<string, Set<number>>();
-      for (const t of pooledTournaments) {
-        if (!t.startTime) continue;
-        const start = new Date(t.startTime);
-        const end = t.endTime ? new Date(t.endTime) : start;
+      for (const t of tournamentRows) {
+        const dateToUse = t.firstPlayedAt
+          ? new Date(t.firstPlayedAt)
+          : t.tournamentStartTime
+            ? new Date(t.tournamentStartTime)
+            : null;
 
-        let current = new Date(start);
-        while (current <= end) {
-          const quarterKey = getQuarterKey(current);
-          if (!poolingByQuarter.has(quarterKey)) {
-            poolingByQuarter.set(quarterKey, new Set());
-          }
-          poolingByQuarter.get(quarterKey)!.add(t.tournamentId);
-          current = nextQuarter(current);
+        if (!dateToUse) continue;
+
+        const quarterKey = getQuarterKey(dateToUse);
+        if (!poolingByQuarter.has(quarterKey)) {
+          poolingByQuarter.set(quarterKey, new Set());
         }
+        poolingByQuarter.get(quarterKey)!.add(t.tournamentId);
       }
 
       // Convert Sets to counts
