@@ -17,8 +17,7 @@ export interface OsuTrackPlayerWorkerEvents {
   onProcessed?: (details: { osuPlayerId: number }) => Promise<void> | void;
 }
 
-export interface OsuTrackPlayerWorkerOptions
-  extends OsuTrackPlayerWorkerEvents {
+export interface OsuTrackPlayerWorkerOptions extends OsuTrackPlayerWorkerEvents {
   queue: QueueConsumer<FetchPlayerOsuTrackMessage>;
   client: OsuTrackClient;
   rateLimiter: RateLimiter;
