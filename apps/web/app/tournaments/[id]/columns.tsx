@@ -9,9 +9,24 @@ import {
 import { createColumnHelper } from '@tanstack/react-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { formatUTCDateFull } from '@/lib/utils/date';
 import { TournamentMatchGame } from '@/lib/orpc/schema/tournament';
+
+export type AdminNotePreview = {
+  note: string;
+  adminUsername: string;
+  created: string;
+};
+
+export type GameWithNotes = Pick<
+  TournamentMatchGame,
+  'verificationStatus' | 'warningFlags' | 'startTime' | 'rejectionReason'
+> & {
+  id: number;
+  adminNotes: AdminNotePreview[];
+};
 
 export type MatchRow = {
   id: number;
@@ -23,10 +38,8 @@ export type MatchRow = {
     verifiedByUsername: string | null;
   };
   startDate: string;
-  games: Pick<
-    TournamentMatchGame,
-    'verificationStatus' | 'warningFlags' | 'startTime' | 'rejectionReason'
-  >[];
+  games: GameWithNotes[];
+  matchAdminNotes: AdminNotePreview[];
 };
 
 const columnHelper = createColumnHelper<MatchRow>();
@@ -110,21 +123,79 @@ export const columns = [
         </Button>
       );
     },
-    cell: ({ getValue, row }) => (
-      <div className="max-w-[500px] text-wrap">
-        <Link href={`/matches/${row.original.id}`} className="break-words">
-          {getValue() || `Match ${row.original.id}`}
-        </Link>
-        {/* Mobile-only additional info */}
-        <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
-          <div className="flex items-center gap-2">
-            <span>{new Date(row.original.startDate).toLocaleDateString()}</span>
-            <span>•</span>
-            <span>{row.original.games.length} games</span>
+    cell: ({ getValue, row }) => {
+      const matchNotes = row.original.matchAdminNotes;
+      const games = row.original.games;
+      const gamesWithNotes = games.filter((g) => g.adminNotes.length > 0);
+
+      const hasMatchNotes = matchNotes.length > 0;
+      const hasGameNotes = gamesWithNotes.length > 0;
+      const hasAnyNotes = hasMatchNotes || hasGameNotes;
+
+      const tooltipContent = hasAnyNotes ? (
+        <div className="max-w-xs space-y-2 text-xs">
+          {hasMatchNotes && (
+            <div>
+              <div className="mb-1 font-semibold text-yellow-600 dark:text-yellow-400">
+                Match Notes
+              </div>
+              {matchNotes.map((note, idx) => (
+                <div key={idx} className="mb-1 last:mb-0">
+                  <div className="text-neutral-200">{note.note}</div>
+                  <div className="text-neutral-400">— {note.adminUsername}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {hasGameNotes && (
+            <div>
+              <div className="mb-1 font-semibold text-purple-600 dark:text-purple-400">
+                Game Notes
+              </div>
+              {gamesWithNotes.map((game) =>
+                game.adminNotes.map((note, idx) => (
+                  <div key={`${game.id}-${idx}`} className="mb-1 last:mb-0">
+                    <div className="text-neutral-200">{note.note}</div>
+                    <div className="text-neutral-400">— {note.adminUsername}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      ) : null;
+
+      return (
+        <div className="max-w-[500px] text-wrap">
+          <div className="flex items-center gap-1.5">
+            <Link href={`/matches/${row.original.id}`} className="break-words">
+              {getValue() || `Match ${row.original.id}`}
+            </Link>
+            {hasAnyNotes && tooltipContent && (
+              <SimpleTooltip content={tooltipContent} side="right" align="start">
+                <div className="relative flex-shrink-0">
+                  <StickyNote className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                  {hasMatchNotes && (
+                    <div className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400" />
+                  )}
+                  {hasGameNotes && (
+                    <div className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
+                  )}
+                </div>
+              </SimpleTooltip>
+            )}
+          </div>
+          {/* Mobile-only additional info */}
+          <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
+            <div className="flex items-center gap-2">
+              <span>{new Date(row.original.startDate).toLocaleDateString()}</span>
+              <span>•</span>
+              <span>{row.original.games.length} games</span>
+            </div>
           </div>
         </div>
-      </div>
-    ),
+      );
+    },
   }),
   columnHelper.accessor('games', {
     id: 'pips',

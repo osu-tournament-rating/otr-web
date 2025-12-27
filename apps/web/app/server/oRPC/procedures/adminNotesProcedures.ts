@@ -53,13 +53,13 @@ type DrizzleDatabase = DatabaseClient;
 
 type AdminNote = ReturnType<(typeof AdminNoteSchema)['parse']>;
 
-type AdminNoteTable =
+export type AdminNoteTable =
   | typeof schema.tournamentAdminNotes
   | typeof schema.matchAdminNotes
   | typeof schema.gameAdminNotes
   | typeof schema.gameScoreAdminNotes;
 
-type AdminNoteRow = {
+export type AdminNoteRow = {
   id: number;
   referenceId: number;
   note: string;
@@ -77,7 +77,7 @@ type AdminNoteRow = {
   playerDataFetchStatus: number | null;
 };
 
-const selectAdminNoteFields = (table: AdminNoteTable) => ({
+export const selectAdminNoteFields = (table: AdminNoteTable) => ({
   id: table.id,
   referenceId: table.referenceId,
   note: table.note,
@@ -95,7 +95,7 @@ const selectAdminNoteFields = (table: AdminNoteTable) => ({
   playerDataFetchStatus: schema.players.dataFetchStatus,
 });
 
-const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
+export const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
   const base: Pick<
     AdminNote,
     'id' | 'referenceId' | 'note' | 'created' | 'updated'

@@ -83,6 +83,7 @@ const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
   isFreeMod: z.boolean(),
   beatmap: MatchBeatmapSchema.nullable(),
   adminNotes: z.array(AdminNoteSchema).default([]),
+  hasAdminNotes: z.boolean().optional(),
   scores: z.array(GameScoreSchema).default([]),
 });
 export const GameSchema = gameBaseSchema;
@@ -134,6 +135,7 @@ const matchBaseSchema = matchSelectSchema.omit(CreatedUpdatedOmit).extend({
   playerMatchStats: z.array(PlayerMatchStatsSchema).default([]),
   ratingAdjustments: z.array(RatingAdjustmentSchema).default([]),
   adminNotes: z.array(AdminNoteSchema).default([]),
+  hasAdminNotes: z.boolean().optional(),
   tournament: MatchTournamentSchema.nullable().default(null),
   winRecord: MatchWinRecordSchema.nullable().default(null),
   rosters: z.array(MatchRosterSchema).default([]),
