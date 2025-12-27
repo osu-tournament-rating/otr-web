@@ -21,9 +21,9 @@ export interface RabbitMqPublisherOptions {
   connectionFactory?: () => Promise<AmqpConnection>;
 }
 
-export class RabbitMqPublisher<
-  TMessage extends MessageEnvelope<unknown>,
-> implements QueuePublisher<TMessage> {
+export class RabbitMqPublisher<TMessage extends MessageEnvelope<unknown>>
+  implements QueuePublisher<TMessage>
+{
   private readonly queue: string;
   private readonly createConnection: () => Promise<AmqpConnection>;
   private readonly assertQueueOptions: Options.AssertQueue | undefined;

@@ -156,7 +156,9 @@ export const columns = [
                 game.adminNotes.map((note, idx) => (
                   <div key={`${game.id}-${idx}`} className="mb-1 last:mb-0">
                     <div className="text-neutral-200">{note.note}</div>
-                    <div className="text-neutral-400">— {note.adminUsername}</div>
+                    <div className="text-neutral-400">
+                      — {note.adminUsername}
+                    </div>
                   </div>
                 ))
               )}
@@ -172,7 +174,11 @@ export const columns = [
               {getValue() || `Match ${row.original.id}`}
             </Link>
             {hasAnyNotes && tooltipContent && (
-              <SimpleTooltip content={tooltipContent} side="right" align="start">
+              <SimpleTooltip
+                content={tooltipContent}
+                side="right"
+                align="start"
+              >
                 <div className="relative flex-shrink-0">
                   <StickyNote className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
                   {hasMatchNotes && (
@@ -188,7 +194,9 @@ export const columns = [
           {/* Mobile-only additional info */}
           <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
             <div className="flex items-center gap-2">
-              <span>{new Date(row.original.startDate).toLocaleDateString()}</span>
+              <span>
+                {new Date(row.original.startDate).toLocaleDateString()}
+              </span>
               <span>•</span>
               <span>{row.original.games.length} games</span>
             </div>
