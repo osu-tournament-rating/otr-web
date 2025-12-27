@@ -1,7 +1,7 @@
 import { cache } from 'react';
 
 import { orpc } from '@/lib/orpc/orpc';
-import type { TournamentListItem } from '@/lib/orpc/schema/tournament';
+import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 
 export type PlayerTournamentsRequest = {
@@ -19,7 +19,7 @@ export async function getPlayerTournaments({
   dateMin,
   dateMax,
   ruleset,
-}: PlayerTournamentsRequest): Promise<TournamentListItem[]> {
+}: PlayerTournamentsRequest): Promise<PlayerTournamentListItem[]> {
   return orpc.players.tournaments({
     id,
     keyType: 'otr',

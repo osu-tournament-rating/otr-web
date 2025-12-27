@@ -12,7 +12,7 @@ import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerStatsCached } from '@/lib/orpc/queries/playerStats';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
 import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
-import { TournamentListItem } from '@/lib/orpc/schema/tournament';
+import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -96,7 +96,7 @@ async function getPlayerData(
 async function getTournaments(
   playerId: number,
   searchParams: { [key: string]: string | string[] | undefined }
-): Promise<TournamentListItem[]> {
+): Promise<PlayerTournamentListItem[]> {
   if (playerId <= 0) {
     return [];
   }

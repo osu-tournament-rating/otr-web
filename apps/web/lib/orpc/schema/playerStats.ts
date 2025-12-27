@@ -58,6 +58,9 @@ export const PlayerRatingAdjustmentSchema = ratingAdjustmentBaseSchema.extend({
   ratingDelta: z.number(),
   volatilityDelta: z.number(),
   match: PlayerMatchReferenceSchema.nullable(),
+  gamesWon: z.number().int().nonnegative().nullable(),
+  gamesLost: z.number().int().nonnegative().nullable(),
+  matchWon: z.boolean().nullable(),
 });
 
 const playerRatingBaseSchema = playerRatingSelectSchema

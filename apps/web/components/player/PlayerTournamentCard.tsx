@@ -6,14 +6,14 @@ import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
-import { Users, Target, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Users, Target, Calendar, Eye, EyeOff, Swords } from 'lucide-react';
 import RatingDelta from '../rating/RatingDelta';
 import { Button } from '../ui/button';
 import { useState } from 'react';
 import PlayerTournamentMatchTable from './PlayerTournamentMatchTable';
 import { cn } from '@/lib/utils';
 import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
-import { TournamentListItem } from '@/lib/orpc/schema/tournament';
+import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
 
 function formatRankRangeDisplay(rankRange: number): string {
   if (rankRange === 1) return 'Open';
@@ -21,7 +21,7 @@ function formatRankRangeDisplay(rankRange: number): string {
 }
 
 interface PlayerTournamentCardProps {
-  tournament: TournamentListItem;
+  tournament: PlayerTournamentListItem;
   adjustments: PlayerRatingAdjustment[];
 }
 
@@ -58,6 +58,12 @@ export default function PlayerTournamentCard({
           <span className="text-muted-foreground font-mono text-sm">
             {tournament.abbreviation}
           </span>
+          <div className="text-muted-foreground flex items-center gap-1 text-sm">
+            <Swords className="h-4 w-4" />
+            <span>
+              {tournament.matchesWon}-{tournament.matchesLost}
+            </span>
+          </div>
           <RatingDelta delta={totalRatingDelta} />
         </div>
       </div>
