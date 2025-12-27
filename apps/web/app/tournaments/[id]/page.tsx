@@ -104,10 +104,21 @@ function generateTableData(matches: TournamentMatch[]): MatchRow[] {
       ? new Date(match.startTime).toISOString()
       : new Date().toISOString(),
     games: (match.games ?? []).map((game) => ({
+      id: game.id,
       verificationStatus: game.verificationStatus,
       warningFlags: game.warningFlags,
       startTime: game.startTime,
       rejectionReason: game.rejectionReason,
+      adminNotes: (game.adminNotes ?? []).map((note) => ({
+        note: note.note,
+        adminUsername: note.adminUser?.player?.username ?? 'Unknown',
+        created: note.created,
+      })),
+    })),
+    matchAdminNotes: (match.adminNotes ?? []).map((note) => ({
+      note: note.note,
+      adminUsername: note.adminUser?.player?.username ?? 'Unknown',
+      created: note.created,
     })),
   }));
 }

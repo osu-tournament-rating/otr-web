@@ -24,7 +24,12 @@ import {
   TournamentIdInputSchema,
 } from '@/lib/orpc/schema/tournament';
 
-import { fetchTournamentAdminNotes } from './adminNotesProcedures';
+import {
+  fetchTournamentAdminNotes,
+  selectAdminNoteFields,
+  mapAdminNoteRow,
+  type AdminNoteRow,
+} from './adminNotesProcedures';
 
 import { publicProcedure } from './base';
 import {
@@ -513,6 +518,54 @@ export const getTournament = publicProcedure
         gamesByMatchId.set(game.matchId, items);
       }
 
+      const matchAdminNotesRows = matchIds.length
+        ? await context.db
+            .select(selectAdminNoteFields(schema.matchAdminNotes))
+            .from(schema.matchAdminNotes)
+            .leftJoin(
+              schema.users,
+              eq(schema.users.id, schema.matchAdminNotes.adminUserId)
+            )
+            .leftJoin(
+              schema.players,
+              eq(schema.players.id, schema.users.playerId)
+            )
+            .where(inArray(schema.matchAdminNotes.referenceId, matchIds))
+            .orderBy(desc(schema.matchAdminNotes.created))
+        : [];
+
+      type AdminNote = ReturnType<typeof mapAdminNoteRow>;
+      const matchAdminNotesByMatchId = new Map<number, AdminNote[]>();
+      for (const row of matchAdminNotesRows as AdminNoteRow[]) {
+        const notes = matchAdminNotesByMatchId.get(row.referenceId) ?? [];
+        notes.push(mapAdminNoteRow(row));
+        matchAdminNotesByMatchId.set(row.referenceId, notes);
+      }
+
+      const gameIds = gameRows.map((g) => g.id);
+      const gameAdminNotesRows = gameIds.length
+        ? await context.db
+            .select(selectAdminNoteFields(schema.gameAdminNotes))
+            .from(schema.gameAdminNotes)
+            .leftJoin(
+              schema.users,
+              eq(schema.users.id, schema.gameAdminNotes.adminUserId)
+            )
+            .leftJoin(
+              schema.players,
+              eq(schema.players.id, schema.users.playerId)
+            )
+            .where(inArray(schema.gameAdminNotes.referenceId, gameIds))
+            .orderBy(desc(schema.gameAdminNotes.created))
+        : [];
+
+      const gameAdminNotesByGameId = new Map<number, AdminNote[]>();
+      for (const row of gameAdminNotesRows as AdminNoteRow[]) {
+        const notes = gameAdminNotesByGameId.get(row.referenceId) ?? [];
+        notes.push(mapAdminNoteRow(row));
+        gameAdminNotesByGameId.set(row.referenceId, notes);
+      }
+
       const normalizedMatches = matchRows.map((match) => ({
         id: match.id,
         osuId: match.osuId,
@@ -528,6 +581,7 @@ export const getTournament = publicProcedure
         verifiedByUserId: match.verifiedByUserId ?? null,
         verifiedByUsername: match.verifiedByUsername ?? null,
         dataFetchStatus: match.dataFetchStatus,
+        adminNotes: matchAdminNotesByMatchId.get(match.id) ?? [],
         games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
           id: game.id,
           osuId: game.osuId,
@@ -547,6 +601,7 @@ export const getTournament = publicProcedure
           // i.e. mods set at the game level = generally no freemod allowed.
           // Need to investigate.
           isFreeMod: (game.mods & Mods.FreeModAllowed) === Mods.FreeModAllowed,
+          adminNotes: gameAdminNotesByGameId.get(game.id) ?? [],
           beatmap:
             game.beatmapDbId != null && game.beatmapOsuId != null
               ? {
