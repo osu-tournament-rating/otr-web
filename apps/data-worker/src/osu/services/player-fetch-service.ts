@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { API } from 'osu-api-v2-js';
 
-import { withNotFoundHandling } from '../api-helpers';
+import { withApiErrorHandling } from '../api-helpers';
 import { convertRuleset } from '../conversions';
 import { ensurePlayerPlaceholder, updatePlayerStatus } from '../player-store';
 import type { DatabaseClient } from '../../db';
@@ -70,11 +70,28 @@ export class PlayerFetchService {
 
     for (const ruleset of FETCHABLE_RULESETS) {
       const apiRuleset = ruleset as number;
-      const apiUser = await this.rateLimiter.schedule(() =>
-        withNotFoundHandling(() => this.api.getUser(osuPlayerId, apiRuleset))
+      const result = await this.rateLimiter.schedule(() =>
+        withApiErrorHandling(() => this.api.getUser(osuPlayerId, apiRuleset))
       );
 
-      if (!apiUser) {
+      if (result.status === 'unauthorized') {
+        this.logger.error(
+          'Unauthorized fetching player - check API credentials',
+          {
+            osuPlayerId,
+            ruleset,
+          }
+        );
+        await updatePlayerStatus(
+          this.db,
+          playerId,
+          DataFetchStatus.Error,
+          nowIso
+        );
+        return false;
+      }
+
+      if (result.status === 'not_found') {
         this.logger.warn('osu! API returned no data for player', {
           osuPlayerId,
           ruleset,
@@ -87,6 +104,8 @@ export class PlayerFetchService {
         );
         return false;
       }
+
+      const apiUser = result.data;
 
       if (!processed) {
         await this.updatePlayerCore(playerId, apiUser, nowIso);

@@ -13,3 +13,27 @@ export const withNotFoundHandling = async <T>(
     throw error;
   }
 };
+
+export type ApiCallResult<T> =
+  | { status: 'success'; data: T }
+  | { status: 'not_found' }
+  | { status: 'unauthorized' };
+
+export const withApiErrorHandling = async <T>(
+  invoke: () => Promise<T>
+): Promise<ApiCallResult<T>> => {
+  try {
+    const data = await invoke();
+    return { status: 'success', data };
+  } catch (error) {
+    if (error instanceof APIError) {
+      if (error.status_code === 404) {
+        return { status: 'not_found' };
+      }
+      if (error.status_code === 401 || error.status_code === 403) {
+        return { status: 'unauthorized' };
+      }
+    }
+    throw error;
+  }
+};
