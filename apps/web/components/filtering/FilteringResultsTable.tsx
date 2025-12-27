@@ -97,7 +97,7 @@ export default function FilteringResultsTable({
         cell: ({ getValue }) => (
           <NumericCell
             value={getValue() as number | undefined | null}
-            format={(v) => v.toFixed(0)}
+            format={(v) => v.toFixed(2)}
           />
         ),
       },
@@ -109,7 +109,7 @@ export default function FilteringResultsTable({
         cell: ({ getValue }) => (
           <NumericCell
             value={getValue() as number | undefined | null}
-            format={(v) => v.toFixed(0)}
+            format={(v) => v.toFixed(2)}
           />
         ),
       },
