@@ -8,10 +8,10 @@ export const BeatmapTournamentListItemSchema = TournamentListItemSchema.extend({
   mostCommonMod: z.number().int().nonnegative().default(Mods.None),
 });
 
-const KeyTypeSchema = z.enum(['otr', 'osu']).default('otr');
+const KeyTypeSchema = z.enum(['otr', 'osu', 'username']).default('otr');
 
 export const PlayerBeatmapsRequestSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.union([z.number().int().positive(), z.string().min(1)]),
   keyType: KeyTypeSchema,
   ruleset: RulesetSchema.optional(),
   limit: z.number().int().positive().max(50).optional(),

@@ -6,7 +6,7 @@ import {
   updateBeatmapStatus,
 } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
-import { withNotFoundHandling } from '../api-helpers';
+import { withApiErrorHandling } from '../api-helpers';
 import {
   convertModsToFlags,
   convertScoreGrade,
@@ -84,11 +84,22 @@ export class RoomFetchService {
       .set({ dataFetchStatus: DataFetchStatus.Fetching, updated: nowIso })
       .where(eq(schema.matches.id, matchRow.id));
 
-    const roomData = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() => this.api.getRoomEvents(roomId))
+    const roomResult = await this.rateLimiter.schedule(() =>
+      withApiErrorHandling(() => this.api.getRoomEvents(roomId))
     );
 
-    if (!roomData) {
+    if (roomResult.status === 'unauthorized') {
+      this.logger.error('Unauthorized fetching room - check API credentials', {
+        roomId,
+      });
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.Error
+      );
+      return false;
+    }
+
+    if (roomResult.status === 'not_found') {
       await this.dataCompletion.updateMatchFetchStatus(
         matchRow.id,
         DataFetchStatus.NotFound
@@ -97,7 +108,7 @@ export class RoomFetchService {
       return false;
     }
 
-    const { room, events, playlist_items, users } = roomData;
+    const { room, events, playlist_items, users } = roomResult.data;
 
     if (!room || !events) {
       this.logger.warn('Invalid room data structure', { roomId });

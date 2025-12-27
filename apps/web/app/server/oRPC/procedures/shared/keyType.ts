@@ -5,17 +5,30 @@ import { z } from 'zod/v4';
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';
 
-export const KeyTypeSchema = z.enum(['otr', 'osu']).default('otr');
+export const KeyTypeSchema = z.enum(['otr', 'osu', 'username']).default('otr');
 export type KeyType = z.infer<typeof KeyTypeSchema>;
 
 export async function resolvePlayerId(
   db: DatabaseClient,
-  id: number,
+  id: number | string,
   keyType: KeyType
 ): Promise<number> {
+  if (keyType === 'username') {
+    const username = String(id);
+    const player = await db.query.players.findFirst({
+      where: (players, { ilike }) => ilike(players.username, username),
+      columns: { id: true },
+    });
+    if (!player) {
+      throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+    }
+    return player.id;
+  }
+
+  const numericId = Number(id);
   if (keyType === 'otr') {
     const player = await db.query.players.findFirst({
-      where: (players, { eq }) => eq(players.id, id),
+      where: (players, { eq }) => eq(players.id, numericId),
       columns: { id: true },
     });
     if (!player) {
@@ -25,7 +38,7 @@ export async function resolvePlayerId(
   }
 
   const player = await db.query.players.findFirst({
-    where: (players, { eq }) => eq(players.osuId, id),
+    where: (players, { eq }) => eq(players.osuId, numericId),
     columns: { id: true },
   });
   if (!player) {
