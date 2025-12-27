@@ -7,7 +7,7 @@ import {
 } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import { RoomFetchService } from './room-fetch-service';
-import { withNotFoundHandling } from '../api-helpers';
+import { withApiErrorHandling, type ApiCallResult } from '../api-helpers';
 import {
   calculateScoreWithMods,
   convertModsToFlags,
@@ -142,8 +142,20 @@ export class MatchFetchService {
       .set({ dataFetchStatus: DataFetchStatus.Fetching, updated: nowIso })
       .where(eq(schema.matches.id, matchRow.id));
 
-    const paged = await this.fetchFullMatch(osuMatchId);
-    if (!paged) {
+    const matchResult = await this.fetchFullMatch(osuMatchId);
+
+    if (matchResult.status === 'unauthorized') {
+      this.logger.error('Unauthorized fetching match - check API credentials', {
+        osuMatchId,
+      });
+      await this.dataCompletion.updateMatchFetchStatus(
+        matchRow.id,
+        DataFetchStatus.Error
+      );
+      return false;
+    }
+
+    if (matchResult.status === 'not_found') {
       await this.dataCompletion.updateMatchFetchStatus(
         matchRow.id,
         DataFetchStatus.NotFound
@@ -152,7 +164,7 @@ export class MatchFetchService {
       return false;
     }
 
-    const { initialMatch, allEvents, allUsers } = paged;
+    const { initialMatch, allEvents, allUsers } = matchResult.data;
 
     const beatmapsToQueue = new Map<number, { beatmapDbId: number }>();
 
@@ -338,19 +350,22 @@ export class MatchFetchService {
     return true;
   }
 
-  private async fetchFullMatch(osuMatchId: number): Promise<{
-    initialMatch: Match;
-    allEvents: NonNullable<Match['events']>;
-    allUsers: Map<number, { username?: string; country?: string }>;
-  } | null> {
-    // Initial fetch to get match info and the boundary event ids
-    const initialMatch = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() => this.api.getMatch(osuMatchId))
+  private async fetchFullMatch(osuMatchId: number): Promise<
+    ApiCallResult<{
+      initialMatch: Match;
+      allEvents: NonNullable<Match['events']>;
+      allUsers: Map<number, { username?: string; country?: string }>;
+    }>
+  > {
+    const initialResult = await this.rateLimiter.schedule(() =>
+      withApiErrorHandling(() => this.api.getMatch(osuMatchId))
     );
 
-    if (!initialMatch) {
-      return null;
+    if (initialResult.status !== 'success') {
+      return initialResult;
     }
+
+    const initialMatch = initialResult.data;
 
     // Aggregate all events and users across pages without wasting calls
     const allEventsById = new Map<
@@ -402,9 +417,13 @@ export class MatchFetchService {
           ? { before: minSeenId, limit }
           : { after: firstEventId - 1, limit };
 
-        const page = await this.rateLimiter.schedule(() =>
-          withNotFoundHandling(() => this.api.getMatch(osuMatchId, query))
+        const pageResult = await this.rateLimiter.schedule(() =>
+          withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
         );
+        if (pageResult.status !== 'success') {
+          return pageResult;
+        }
+        const page = pageResult.data;
         const { added } = addPage(page);
         if (added > 0) {
           progressed = true;
@@ -420,9 +439,13 @@ export class MatchFetchService {
           ? { after: maxSeenId, limit }
           : { before: latestEventId + 1, limit };
 
-        const page = await this.rateLimiter.schedule(() =>
-          withNotFoundHandling(() => this.api.getMatch(osuMatchId, query))
+        const pageResult = await this.rateLimiter.schedule(() =>
+          withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
         );
+        if (pageResult.status !== 'success') {
+          return pageResult;
+        }
+        const page = pageResult.data;
         const { added } = addPage(page);
         if (added > 0) {
           progressed = true;
@@ -443,7 +466,7 @@ export class MatchFetchService {
       (a, b) => a.id - b.id
     );
 
-    return { initialMatch, allEvents, allUsers };
+    return { status: 'success', data: { initialMatch, allEvents, allUsers } };
   }
 
   private async processScores(options: {

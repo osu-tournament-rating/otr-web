@@ -1,6 +1,6 @@
 import type { API } from 'osu-api-v2-js';
 
-import { withNotFoundHandling } from '../api-helpers';
+import { withApiErrorHandling } from '../api-helpers';
 import {
   convertBeatmapRankStatus,
   convertRuleset,
@@ -68,11 +68,26 @@ export class BeatmapFetchService {
       );
     }
 
-    const apiBeatmap = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() => this.api.getBeatmap(osuBeatmapId))
+    const beatmapResult = await this.rateLimiter.schedule(() =>
+      withApiErrorHandling(() => this.api.getBeatmap(osuBeatmapId))
     );
 
-    if (!apiBeatmap) {
+    if (beatmapResult.status === 'unauthorized') {
+      this.logger.error(
+        'Unauthorized fetching beatmap - check API credentials',
+        {
+          osuBeatmapId,
+        }
+      );
+      await this.dataCompletion.updateBeatmapFetchStatus(
+        beatmapId,
+        DataFetchStatus.Error,
+        { skipAutomationChecks: options?.skipAutomationChecks }
+      );
+      return false;
+    }
+
+    if (beatmapResult.status === 'not_found') {
       await this.dataCompletion.updateBeatmapFetchStatus(
         beatmapId,
         DataFetchStatus.NotFound,
@@ -82,13 +97,31 @@ export class BeatmapFetchService {
       return false;
     }
 
-    const apiBeatmapset = await this.rateLimiter.schedule(() =>
-      withNotFoundHandling(() =>
+    const apiBeatmap = beatmapResult.data;
+
+    const beatmapsetResult = await this.rateLimiter.schedule(() =>
+      withApiErrorHandling(() =>
         this.api.getBeatmapset(apiBeatmap.beatmapset_id)
       )
     );
 
-    if (!apiBeatmapset) {
+    if (beatmapsetResult.status === 'unauthorized') {
+      this.logger.error(
+        'Unauthorized fetching beatmapset - check API credentials',
+        {
+          osuBeatmapId,
+          beatmapsetId: apiBeatmap.beatmapset_id,
+        }
+      );
+      await this.dataCompletion.updateBeatmapFetchStatus(
+        beatmapId,
+        DataFetchStatus.Error,
+        { skipAutomationChecks: options?.skipAutomationChecks }
+      );
+      return false;
+    }
+
+    if (beatmapsetResult.status === 'not_found') {
       await this.dataCompletion.updateBeatmapFetchStatus(
         beatmapId,
         DataFetchStatus.NotFound,
@@ -100,6 +133,8 @@ export class BeatmapFetchService {
       });
       return false;
     }
+
+    const apiBeatmapset = beatmapsetResult.data;
 
     const result = await this.db.transaction(async (tx) => {
       const creatorId = await getOrCreatePlayerId(tx, apiBeatmapset.user_id, {
