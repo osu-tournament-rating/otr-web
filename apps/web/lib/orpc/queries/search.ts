@@ -3,6 +3,21 @@ import * as schema from '@otr/core/db/schema';
 
 export const SIMILARITY_THRESHOLD = 0.3;
 
+export function parseOsuIdCandidate(term: string): number | null {
+  const trimmed = term.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+
+  const parsed = Number(trimmed);
+  if (
+    !Number.isFinite(parsed) ||
+    parsed <= 0 ||
+    parsed > Number.MAX_SAFE_INTEGER
+  ) {
+    return null;
+  }
+  return parsed;
+}
+
 export const normalizeSearchTerm = (value: string) =>
   value
     .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
@@ -77,7 +92,20 @@ export function buildBeatmapSearchExpressions(
   searchTerm: string
 ): BeatmapSearchExpressions | null {
   const parsed = parseSearchTerm(searchTerm);
-  if (!parsed) return null;
+  const osuIdCandidate = parseOsuIdCandidate(searchTerm);
+
+  if (!parsed && osuIdCandidate === null) return null;
+
+  const popularityScore = sql`(
+    sqrt(COALESCE(${schema.beatmapStats.verifiedGameCount}, 0) + 1) +
+    sqrt(COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0) + 1) * 2
+  )`;
+
+  if (!parsed && osuIdCandidate !== null) {
+    const condition = sql`${schema.beatmaps.osuId} = ${osuIdCandidate}`;
+    const rank = sql<number>`1000 + (${popularityScore} / 20.0) * 0.5`;
+    return { condition, rank };
+  }
 
   const {
     normalizedTerm,
@@ -85,7 +113,7 @@ export function buildBeatmapSearchExpressions(
     prefixTsQuery,
     primaryToken,
     hasDistinctPrimaryToken,
-  } = parsed;
+  } = parsed!;
 
   const beatmapVector = sql`${schema.beatmaps.searchVector} || ${schema.beatmapsets.searchVector}`;
 
@@ -109,20 +137,26 @@ export function buildBeatmapSearchExpressions(
   );
   const beatmapSimilarity = sql`greatest(${beatmapDiffSimilarity}, ${beatmapArtistSimilarity}, ${beatmapTitleSimilarity})`;
 
-  const condition = prefixTsQuery
+  const textCondition = prefixTsQuery
     ? sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapVector} @@ ${prefixTsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`
     : sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+
+  const condition =
+    osuIdCandidate !== null
+      ? sql`(${schema.beatmaps.osuId} = ${osuIdCandidate} OR ${textCondition})`
+      : textCondition;
 
   const beatmapRank = prefixTsQuery
     ? sql<number>`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`
     : sql<number>`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ${beatmapSimilarity})`;
 
-  const popularityScore = sql`(
-    sqrt(COALESCE(${schema.beatmapStats.verifiedGameCount}, 0) + 1) +
-    sqrt(COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0) + 1) * 2
-  )`;
+  const osuIdBoost =
+    osuIdCandidate !== null
+      ? sql`CASE WHEN ${schema.beatmaps.osuId} = ${osuIdCandidate} THEN 1000 ELSE 0 END`
+      : sql`0`;
 
   const rank = sql<number>`(
+    ${osuIdBoost} +
     (${beatmapRank}) * 0.5 +
     (${popularityScore} / 20.0) * 0.5
   )`;
