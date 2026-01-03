@@ -10,8 +10,7 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import type { Metadata } from 'next';
 import { z } from 'zod';
-import { MatchRow, columns } from './columns';
-import TournamentDataTable from './data-table';
+import { MatchRow } from './columns';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -37,6 +36,7 @@ import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
+import TournamentMatchesAdminView from '@/components/tournaments/TournamentMatchesAdminView';
 import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
 import ReportButton from '@/components/reports/ReportButton';
 import { TournamentReportableFields } from '@/lib/orpc/schema/report';
@@ -437,8 +437,12 @@ export default async function Page({ params, searchParams }: PageProps) {
                 ({tableData.length})
               </span>
             </div>
-            {/* @ts-expect-error Column def type doesnt work :/ */}
-            <TournamentDataTable columns={columns} data={tableData} />
+            <TournamentMatchesAdminView
+              tournamentId={tournament.id}
+              tournamentName={tournament.name}
+              matches={tableData}
+              isLazer={tournament.isLazer}
+            />
           </Card>
         </TabsContent>
 
