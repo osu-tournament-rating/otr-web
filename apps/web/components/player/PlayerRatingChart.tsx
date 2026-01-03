@@ -135,7 +135,9 @@ export default function PlayerRatingChart({
   const filteredData = useMemo(() => {
     if (!showDecay) {
       return adjustments.filter(
-        (point) => point.adjustmentType !== RatingAdjustmentType.Decay
+        (point) =>
+          point.adjustmentType !== RatingAdjustmentType.Decay &&
+          point.adjustmentType !== RatingAdjustmentType.VolatilityDecay
       );
     }
     return adjustments;

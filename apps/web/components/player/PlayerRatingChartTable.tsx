@@ -24,6 +24,7 @@ function getAdjustmentTypeColor(
 ): string {
   switch (type) {
     case RatingAdjustmentType.Decay:
+    case RatingAdjustmentType.VolatilityDecay:
       return 'bg-accent';
     case RatingAdjustmentType.Match:
       return delta > 0 ? 'bg-success' : 'bg-destructive';

@@ -314,6 +314,11 @@ export const RatingAdjustmentTypeEnumhelper: IEnumHelper<RatingAdjustmentType> =
         description:
           'Adjustment in rating based on performance in a tournament match',
       },
+      [RatingAdjustmentType.VolatilityDecay]: {
+        text: 'Volatility Decay',
+        description:
+          'Rating adjustment created as a result of volatility decay',
+      },
     },
   };
 
