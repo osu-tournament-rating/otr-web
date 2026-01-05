@@ -202,6 +202,48 @@ export const TournamentRefetchBeatmapDataResponseSchema = z.object({
   warnings: z.array(z.string().min(1)).optional(),
 });
 
+const MatchOsuIdSchema = z.number().int().min(1).max(2_000_000_000);
+const MatchIdSchema = z.number().int().positive();
+
+export const TournamentMatchAdminMutationInputSchema = z
+  .object({
+    tournamentId: z.number().int().positive(),
+    addMatchOsuIds: z
+      .array(
+        z.object({
+          osuId: MatchOsuIdSchema,
+          isLazer: z.boolean().default(false),
+        })
+      )
+      .default([]),
+    removeMatchIds: z.array(MatchIdSchema).default([]),
+  })
+  .check((ctx) => {
+    const {
+      value: { addMatchOsuIds, removeMatchIds },
+      issues,
+    } = ctx;
+
+    if (addMatchOsuIds.length > 0 || removeMatchIds.length > 0) {
+      return;
+    }
+
+    issues.push({
+      code: 'custom',
+      message: 'At least one match must be provided to add or remove',
+      path: ['addMatchOsuIds'],
+      input: addMatchOsuIds,
+    });
+  });
+
+export const TournamentMatchAdminMutationResponseSchema = z.object({
+  success: z.boolean(),
+  addedCount: z.number().int().nonnegative(),
+  skippedCount: z.number().int().nonnegative(),
+  removedCount: z.number().int().nonnegative(),
+  warnings: z.array(z.string().min(1)).optional(),
+});
+
 export type TournamentAdminUpdateInput = z.infer<
   typeof TournamentAdminUpdateInputSchema
 >;
@@ -246,3 +288,9 @@ export type TournamentMatch = z.infer<typeof TournamentMatchSchema>;
 export type TournamentPlayerStats = z.infer<typeof TournamentPlayerStatsSchema>;
 export type TournamentBeatmap = z.infer<typeof TournamentBeatmapSchema>;
 export type TournamentDetail = z.infer<typeof TournamentDetailSchema>;
+export type TournamentMatchAdminMutationInput = z.infer<
+  typeof TournamentMatchAdminMutationInputSchema
+>;
+export type TournamentMatchAdminMutationResponse = z.infer<
+  typeof TournamentMatchAdminMutationResponseSchema
+>;

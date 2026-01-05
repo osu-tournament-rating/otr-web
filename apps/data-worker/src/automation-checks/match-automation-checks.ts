@@ -199,24 +199,19 @@ export class MatchAutomationChecks {
   }
 
   private applyBeatmapWarning(match: AutomationMatch) {
-    const games = [...match.games].sort((a, b) => {
-      const startA = a.startTime ?? '';
-      const startB = b.startTime ?? '';
-      return startA.localeCompare(startB);
-    });
+    const unpooledBeatmapIds = new Set<number>();
 
-    if (games.length < 3) {
-      return;
+    for (const game of match.games) {
+      if (
+        (game.rejectionReason & GameRejectionReason.BeatmapNotPooled) ===
+          GameRejectionReason.BeatmapNotPooled &&
+        game.beatmap
+      ) {
+        unpooledBeatmapIds.add(game.beatmap.osuId);
+      }
     }
 
-    const extraGames = games.slice(2);
-    if (
-      extraGames.some(
-        (game) =>
-          (game.rejectionReason & GameRejectionReason.BeatmapNotPooled) ===
-          GameRejectionReason.BeatmapNotPooled
-      )
-    ) {
+    if (unpooledBeatmapIds.size > 2) {
       match.warningFlags = addWarningFlag(
         match.warningFlags,
         MatchWarningFlags.UnexpectedBeatmapsFound

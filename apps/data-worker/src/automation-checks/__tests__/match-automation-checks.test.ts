@@ -91,12 +91,19 @@ describe('MatchAutomationChecks', () => {
     ).not.toBe(0);
   });
 
-  it('adds warning when beatmaps outside first two games are not pooled', () => {
+  it('adds warning when more than two unique beatmaps are not pooled', () => {
     const games = [
-      createGame({}),
-      createGame({}),
       createGame({
         rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 1, osuId: 1001 },
+      }),
+      createGame({
+        rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 2, osuId: 1002 },
+      }),
+      createGame({
+        rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 3, osuId: 1003 },
       }),
     ];
     const match = createMatch({ games });
@@ -107,6 +114,31 @@ describe('MatchAutomationChecks', () => {
     expect(
       match.warningFlags & MatchWarningFlags.UnexpectedBeatmapsFound
     ).not.toBe(0);
+  });
+
+  it('does not warn when replayed warmup results in only two unique unpooled beatmaps', () => {
+    const games = [
+      createGame({
+        rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 1, osuId: 1001 },
+      }),
+      createGame({
+        rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 2, osuId: 1001 },
+      }),
+      createGame({
+        rejectionReason: GameRejectionReason.BeatmapNotPooled,
+        beatmap: { id: 3, osuId: 1002 },
+      }),
+    ];
+    const match = createMatch({ games });
+    const tournament = createTournament({ matches: [match] });
+
+    checker.process(match, tournament);
+
+    expect(match.warningFlags & MatchWarningFlags.UnexpectedBeatmapsFound).toBe(
+      0
+    );
   });
 
   it('detects overlapping rosters across games', () => {
