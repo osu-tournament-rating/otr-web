@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { PlatformStats } from '@/lib/orpc/schema/stats';
 import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
@@ -6,6 +9,8 @@ import { Ruleset } from '@otr/core/osu';
 import TournamentsByYearChart from './TournamentsByYearChart';
 import TournamentsByRulesetChart from './TournamentsByRulesetChart';
 import TournamentsByLobbySizeChart from './TournamentsByLobbySizeChart';
+import { useSession } from '@/lib/hooks/useSession';
+import { orpc } from '@/lib/orpc/orpc';
 
 interface StatsPageContentProps {
   stats: PlatformStats;
@@ -13,6 +18,33 @@ interface StatsPageContentProps {
 
 export default function StatsPageContent({ stats }: StatsPageContentProps) {
   const { tournamentStats, ratingStats } = stats;
+  const session = useSession();
+  const [userRatings, setUserRatings] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    if (!session?.player.id) {
+      setUserRatings({});
+      return;
+    }
+
+    const rulesets = Object.keys(ratingStats.ratingsByRuleset)
+      .map((k) => parseInt(k, 10))
+      .filter((r) => r !== Ruleset.ManiaOther);
+
+    Promise.all(
+      rulesets.map((ruleset) =>
+        orpc.players.stats({ id: session.player.id, keyType: 'otr', ruleset })
+      )
+    ).then((results) => {
+      const ratings: Record<number, number> = {};
+      results.forEach((result) => {
+        if (result.rating) {
+          ratings[result.ruleset] = result.rating.rating;
+        }
+      });
+      setUserRatings(ratings);
+    });
+  }, [session?.player.id, ratingStats.ratingsByRuleset]);
 
   return (
     <div className="container mx-auto flex flex-col gap-6 py-6">
@@ -51,6 +83,7 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
               key={rulesetKey}
               ruleset={parseInt(rulesetKey, 10) as Ruleset}
               ratings={ratings}
+              userRating={userRatings[parseInt(rulesetKey, 10)]}
             />
           ))}
       </div>

@@ -6,6 +6,7 @@ import {
   Cell,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   TooltipProps,
@@ -112,6 +113,7 @@ export default function RatingDistributionChart({
   ratings,
   ruleset,
   className,
+  userRating,
 }: RatingDistributionChartProps) {
   const rulesetInfo = RulesetEnumHelper.getMetadata(ruleset);
   const { chartData, tierData, isEmpty } = useRatingDistribution({ ratings });
@@ -233,6 +235,24 @@ export default function RatingDistributionChart({
               dot={false}
               yAxisId="right"
             />
+            {userRating !== undefined && (
+              <ReferenceLine
+                x={
+                  Math.floor(userRating / CHART_CONSTANTS.BUCKET_SIZE) *
+                  CHART_CONSTANTS.BUCKET_SIZE
+                }
+                stroke={CHART_COLORS.primary}
+                strokeDasharray="4 4"
+                strokeWidth={2}
+                label={{
+                  value: 'You',
+                  position: 'top',
+                  fill: CHART_COLORS.primary,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </CardContent>
