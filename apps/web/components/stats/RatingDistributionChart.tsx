@@ -241,13 +241,14 @@ export default function RatingDistributionChart({
                   Math.floor(userRating / CHART_CONSTANTS.BUCKET_SIZE) *
                   CHART_CONSTANTS.BUCKET_SIZE
                 }
-                stroke={CHART_COLORS.primary}
+                yAxisId="left"
+                stroke="#22c55e"
                 strokeDasharray="4 4"
                 strokeWidth={2}
                 label={{
                   value: 'You',
                   position: 'top',
-                  fill: CHART_COLORS.primary,
+                  fill: '#22c55e',
                   fontSize: 12,
                   fontWeight: 600,
                 }}
