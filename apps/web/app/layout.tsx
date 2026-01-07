@@ -1,3 +1,4 @@
+import StagingBanner from '@/components/banner/StagingBanner';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
@@ -38,6 +39,7 @@ export default async function RootLayout({
             <SessionProvider user={session}>
               <AudioPlayerProvider>
                 <Header />
+                <StagingBanner />
                 <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
                   {children}
                 </main>
