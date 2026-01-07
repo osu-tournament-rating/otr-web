@@ -101,6 +101,7 @@ export enum RatingAdjustmentType {
   Initial = 0,
   Decay = 1,
   Match = 2,
+  VolatilityDecay = 3,
 }
 
 export enum Roles {

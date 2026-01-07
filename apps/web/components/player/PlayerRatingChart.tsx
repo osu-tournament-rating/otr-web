@@ -133,13 +133,22 @@ export default function PlayerRatingChart({
   const { showDecay } = filterValues;
 
   const filteredData = useMemo(() => {
-    if (!showDecay) {
-      return adjustments.filter(
-        (point) => point.adjustmentType !== RatingAdjustmentType.Decay
-      );
-    }
-    return adjustments;
-  }, [adjustments, showDecay]);
+    return adjustments.filter((point) => {
+      if (
+        activeTab === 'rating' &&
+        point.adjustmentType === RatingAdjustmentType.VolatilityDecay
+      ) {
+        return false;
+      }
+      if (!showDecay) {
+        return (
+          point.adjustmentType !== RatingAdjustmentType.Decay &&
+          point.adjustmentType !== RatingAdjustmentType.VolatilityDecay
+        );
+      }
+      return true;
+    });
+  }, [adjustments, showDecay, activeTab]);
 
   const dailyData = useMemo(() => {
     const dailyMap = new Map<string, PlayerRatingAdjustment>();
