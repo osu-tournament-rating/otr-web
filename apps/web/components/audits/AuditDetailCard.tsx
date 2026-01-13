@@ -55,7 +55,7 @@ export default function AuditDetailCard({ audit }: { audit: AuditRecord }) {
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-muted-foreground text-sm">Performed by</p>
+            <p className="text-muted-foreground text-sm">User</p>
             <div className="mt-1">
               <AuditActorBadge actor={audit.actor} />
             </div>
@@ -68,11 +68,11 @@ export default function AuditDetailCard({ audit }: { audit: AuditRecord }) {
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Audit ID</p>
-            <p className="mt-1 text-sm font-mono">{audit.id}</p>
+            <p className="mt-1 font-mono text-sm">{audit.id}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Entity ID</p>
-            <p className="mt-1 text-sm font-mono">
+            <p className="mt-1 font-mono text-sm">
               {audit.referenceId ?? audit.referenceIdLock}
               {!audit.referenceId && (
                 <span className="text-muted-foreground ml-2">(deleted)</span>
