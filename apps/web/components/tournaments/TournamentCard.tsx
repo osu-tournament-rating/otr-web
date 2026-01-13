@@ -1,9 +1,9 @@
 import { RulesetEnumHelper } from '@/lib/enums';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { AdminNoteRouteTarget } from '@otr/core/osu';
+import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';
 import Link from 'next/link';
-import { Users, Target, Calendar, UserPlus } from 'lucide-react';
+import { Users, Target, Calendar, UserPlus, History } from 'lucide-react';
 
 import {
   TournamentAdminNote,
@@ -15,6 +15,7 @@ import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
 import RulesetIcon from '../icons/RulesetIcon';
+import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import TournamentAdminView from './TournamentAdminView';
 import SimpleTooltip from '../simple-tooltip';
@@ -72,6 +73,15 @@ export default function TournamentCard({
                 entityId={tournament.id}
                 entityDisplayName={tournament.name}
               />
+              <SimpleTooltip content="View audit logs">
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                  <Link
+                    href={`/audits?entityType=${ReportEntityType.Tournament}&referenceId=${tournament.id}`}
+                  >
+                    <History className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </SimpleTooltip>
               {canShowAdminControls && (
                 <TournamentAdminView tournament={tournament} />
               )}

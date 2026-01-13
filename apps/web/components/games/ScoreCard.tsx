@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { History } from 'lucide-react';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
@@ -23,6 +24,8 @@ import CountryFlag from '../shared/CountryFlag';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import ModIconset from '../icons/ModIconset';
 import ScoreTeamColorBar from './ScoreTeamColorBar';
+import SimpleTooltip from '../simple-tooltip';
+import { Button } from '../ui/button';
 
 export default function ScoreCard({
   score,
@@ -118,6 +121,17 @@ export default function ScoreCard({
                   team: String(score.team),
                 }}
               />
+            </div>
+            <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3">
+              <SimpleTooltip content="View audit logs">
+                <Button asChild variant="ghost" size="icon">
+                  <Link
+                    href={`/audits?entityType=${ReportEntityType.Score}&referenceId=${score.id}`}
+                  >
+                    <History />
+                  </Link>
+                </Button>
+              </SimpleTooltip>
             </div>
             {showAdminControls && (
               <div className="relative flex items-center gap-0.5">

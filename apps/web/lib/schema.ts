@@ -221,6 +221,7 @@ export const auditListFilterSchema = z.object({
   entityType: numericEnumValueSchema(ReportEntityType).optional(),
   userActionsOnly: z.union([z.boolean(), booleanStringSchema]).catch(false),
   actionUserId: z.coerce.number().int().optional(),
+  referenceId: z.coerce.number().int().optional(),
   sort: z.enum(auditSortValues).catch('created'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });

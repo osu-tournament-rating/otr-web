@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import React, { Fragment } from 'react';
-import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
+import { ExternalLink, Users, Gamepad2, History } from 'lucide-react';
 
 import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
@@ -125,6 +125,20 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entityDisplayName={match.name}
                 darkMode={true}
               />
+              <SimpleTooltip content="View audit logs">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 hover:bg-white/20 hover:text-white"
+                >
+                  <Link
+                    href={`/audits?entityType=${ReportEntityType.Match}&referenceId=${match.id}`}
+                  >
+                    <History className="h-3 w-3 text-white/70 hover:text-white" />
+                  </Link>
+                </Button>
+              </SimpleTooltip>
               <MatchAdminView match={match} />
             </div>
           </div>

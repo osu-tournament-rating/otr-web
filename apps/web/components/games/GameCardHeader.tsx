@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, History } from 'lucide-react';
 
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
 import { Game } from '@/lib/orpc/schema/match';
@@ -114,6 +114,20 @@ export default function GameCardHeader({ game }: { game: Game }) {
               entityId={game.id}
               darkMode={true}
             />
+            <SimpleTooltip content="View audit logs">
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 hover:bg-white/20 hover:text-white"
+              >
+                <Link
+                  href={`/audits?entityType=${ReportEntityType.Game}&referenceId=${game.id}`}
+                >
+                  <History className="h-3 w-3 text-white/70 hover:text-white" />
+                </Link>
+              </Button>
+            </SimpleTooltip>
             <GameAdminView game={game} />
           </div>
         </div>
