@@ -1,20 +1,28 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
+import Link from 'next/link';
 
 import { AuditActionType, ReportEntityType } from '@otr/core/osu';
 
 import { Card } from '@/components/ui/card';
 
-import AuditActorBadge from './AuditActorBadge';
 import AuditActionBadge from './AuditActionBadge';
+import AuditActorBadge from './AuditActorBadge';
 import AuditChangesDisplay from './AuditChangesDisplay';
-import AuditEntityLink from './AuditEntityLink';
+import AuditEntityBadge from './AuditEntityBadge';
 
 const ACTION_VERBS = {
   [AuditActionType.Insert]: 'created',
   [AuditActionType.Update]: 'updated',
   [AuditActionType.Delete]: 'deleted',
+} as const;
+
+const ENTITY_TYPE_PATHS = {
+  [ReportEntityType.Tournament]: 'tournament',
+  [ReportEntityType.Match]: 'match',
+  [ReportEntityType.Game]: 'game',
+  [ReportEntityType.Score]: 'score',
 } as const;
 
 type ChangeValue = {
@@ -45,32 +53,36 @@ type AuditRecord = {
 
 export default function AuditListItem({ audit }: { audit: AuditRecord }) {
   const actionVerb = ACTION_VERBS[audit.actionType];
+  const auditUrl = `/audits/${ENTITY_TYPE_PATHS[audit.entityType]}/${audit.id}`;
 
   return (
-    <Card className="p-4 transition-colors hover:bg-accent/30">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+    <Card className="hover:bg-accent/30 relative p-4 transition-colors">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="relative z-10">
             <AuditActorBadge actor={audit.actor} />
-            <span className="text-muted-foreground">{actionVerb}</span>
-            <AuditEntityLink
-              auditId={audit.id}
-              entityType={audit.entityType}
-              entityDisplayName={audit.entityDisplayName}
-            />
-          </div>
+          </span>
+          <span className="text-muted-foreground">{actionVerb}</span>
+          <Link
+            href={auditUrl}
+            className="font-semibold after:absolute after:inset-0"
+          >
+            {audit.entityDisplayName}
+          </Link>
+        </div>
 
-          {audit.actionType === AuditActionType.Update && audit.changes && (
-            <AuditChangesDisplay changes={audit.changes} maxItems={3} />
-          )}
+        {audit.actionType === AuditActionType.Update && audit.changes && (
+          <AuditChangesDisplay changes={audit.changes} maxItems={3} />
+        )}
 
+        <div className="flex items-center justify-between">
           <p className="text-muted-foreground text-xs">
             {formatDistanceToNow(new Date(audit.created), { addSuffix: true })}
           </p>
-        </div>
-
-        <div className="shrink-0">
-          <AuditActionBadge actionType={audit.actionType} />
+          <div className="flex items-center gap-2">
+            <AuditEntityBadge entityType={audit.entityType} />
+            <AuditActionBadge actionType={audit.actionType} />
+          </div>
         </div>
       </div>
     </Card>

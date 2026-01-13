@@ -1,5 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 
+import { VerificationStatus } from '@otr/core/osu';
+
 type ChangeValue = {
   originalValue: unknown;
   newValue: unknown;
@@ -7,7 +9,22 @@ type ChangeValue = {
 
 type Changes = Record<string, ChangeValue>;
 
-function formatValue(value: unknown): string {
+const VERIFICATION_STATUS_LABELS: Record<number, string> = {
+  [VerificationStatus.None]: 'None',
+  [VerificationStatus.PreRejected]: 'Pre-Rejected',
+  [VerificationStatus.PreVerified]: 'Pre-Verified',
+  [VerificationStatus.Rejected]: 'Rejected',
+  [VerificationStatus.Verified]: 'Verified',
+};
+
+function formatValue(value: unknown, fieldName?: string): string {
+  if (
+    fieldName?.toLowerCase() === 'verification_status' &&
+    typeof value === 'number'
+  ) {
+    return VERIFICATION_STATUS_LABELS[value] ?? String(value);
+  }
+
   if (value === null || value === undefined) {
     return '(none)';
   }
@@ -74,11 +91,11 @@ export default function AuditChangesDisplay({
           <span className="font-semibold">{formatFieldName(field)}</span>
           <span className="text-muted-foreground">from</span>
           <span className="rounded bg-red-500/10 px-1.5 py-0.5 font-semibold text-red-700 dark:text-red-400">
-            {formatValue(originalValue)}
+            {formatValue(originalValue, field)}
           </span>
           <ArrowRight className="text-muted-foreground h-3 w-3" />
           <span className="rounded bg-green-500/10 px-1.5 py-0.5 font-semibold text-green-700 dark:text-green-400">
-            {formatValue(newValue)}
+            {formatValue(newValue, field)}
           </span>
         </div>
       ))}
