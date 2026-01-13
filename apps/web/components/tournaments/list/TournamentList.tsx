@@ -140,7 +140,7 @@ export default function TournamentList({
   }
 
   return (
-    <div ref={listRef}>
+    <div ref={listRef} className="pb-3">
       <div
         className="relative w-full"
         style={{
