@@ -1,15 +1,21 @@
 'use client';
 
 import { format } from 'date-fns';
-import useSWR from 'swr';
+import useSWRInfinite, { SWRInfiniteKeyLoader } from 'swr/infinite';
+import { Fetcher } from 'swr';
 import { cn } from '@/lib/utils';
 
 import { AuditActionType, ReportEntityType } from '@otr/core/osu';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
-import { AuditRecord } from '@/lib/orpc/schema/audit';
+import {
+  AuditEntityHistoryInput,
+  AuditListResponse,
+  AuditRecord,
+} from '@/lib/orpc/schema/audit';
 
 import AuditActorBadge from './AuditActorBadge';
 import AuditActionBadge from './AuditActionBadge';
@@ -21,22 +27,11 @@ const ACTION_COLORS = {
   [AuditActionType.Delete]: 'bg-red-500 dark:bg-red-600',
 } as const;
 
-function TimelineItem({
-  audit,
-  isHighlighted,
-}: {
-  audit: AuditRecord;
-  isHighlighted: boolean;
-}) {
+function TimelineItem({ audit }: { audit: AuditRecord }) {
   const dotColor = ACTION_COLORS[audit.actionType];
 
   return (
-    <div
-      className={cn(
-        'relative flex gap-4 first:pt-0 last:pb-0',
-        isHighlighted && 'bg-primary/5 -mx-4 rounded-lg px-4'
-      )}
-    >
+    <div className="relative flex gap-4 first:pt-0 last:pb-0">
       <div className="flex flex-col items-center">
         <div className={cn('h-3 w-3 rounded-full', dotColor)} />
         <div className="bg-border w-px flex-1" />
@@ -45,9 +40,6 @@ function TimelineItem({
         <div className="flex flex-wrap items-center gap-2">
           <AuditActorBadge actor={audit.actor} />
           <AuditActionBadge actionType={audit.actionType} />
-          {isHighlighted && (
-            <span className="text-primary text-xs font-medium">(current)</span>
-          )}
         </div>
         <p className="text-muted-foreground text-xs">
           {format(new Date(audit.created), 'PPpp')}
@@ -60,27 +52,53 @@ function TimelineItem({
   );
 }
 
+const INITIAL_PAGE_SIZE = 20;
+const LOAD_MORE_SIZE = 100;
+
+const fetcher = (): Fetcher<AuditListResponse, AuditEntityHistoryInput> => {
+  return async (params) => await orpc.audits.history(params);
+};
+
+const getKey = (
+  entityType: ReportEntityType,
+  referenceIdLock: number
+): SWRInfiniteKeyLoader<AuditListResponse, AuditEntityHistoryInput | null> => {
+  return (index, previous) => {
+    if (previous && !previous.hasMore) {
+      return null;
+    }
+
+    const cursor =
+      index === 0 ? undefined : (previous?.nextCursor ?? undefined);
+    const limit = index === 0 ? INITIAL_PAGE_SIZE : LOAD_MORE_SIZE;
+
+    return {
+      entityType,
+      referenceIdLock,
+      cursor,
+      limit,
+    };
+  };
+};
+
 export default function AuditTimeline({
   entityType,
   referenceIdLock,
-  currentAuditId,
 }: {
   entityType: ReportEntityType;
   referenceIdLock: number;
-  currentAuditId: number;
 }) {
-  const { data, error, isLoading } = useSWR(
-    ['audit-history', entityType, referenceIdLock],
-    () =>
-      orpc.audits.history({
-        entityType,
-        referenceIdLock,
-        limit: 50,
-      }),
+  const { data, error, isLoading, setSize, isValidating } = useSWRInfinite(
+    getKey(entityType, referenceIdLock),
+    fetcher(),
     {
       revalidateOnFocus: false,
+      revalidateFirstPage: false,
     }
   );
+
+  const audits: AuditRecord[] = data ? data.flatMap((d) => d.audits) : [];
+  const hasMore = data?.at(-1)?.hasMore ?? false;
 
   return (
     <Card>
@@ -108,25 +126,26 @@ export default function AuditTimeline({
           </p>
         )}
 
-        {data && data.audits.length === 0 && (
+        {data && audits.length === 0 && (
           <p className="text-muted-foreground text-sm">
             No audit history found.
           </p>
         )}
 
-        {data && data.audits.length > 0 && (
+        {data && audits.length > 0 && (
           <div>
-            {data.audits.map((audit) => (
-              <TimelineItem
-                key={audit.id}
-                audit={audit}
-                isHighlighted={audit.id === currentAuditId}
-              />
+            {audits.map((audit) => (
+              <TimelineItem key={audit.id} audit={audit} />
             ))}
-            {data.hasMore && (
-              <p className="text-muted-foreground mt-4 text-center text-xs">
-                More history available...
-              </p>
+            {hasMore && (
+              <Button
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => setSize((size) => size + 1)}
+                disabled={isValidating}
+              >
+                {isValidating ? 'Loading...' : 'Show more'}
+              </Button>
             )}
           </div>
         )}

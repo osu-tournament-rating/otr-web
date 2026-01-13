@@ -86,7 +86,6 @@ export default async function AuditDetailPage({
       <AuditTimeline
         entityType={entityType}
         referenceIdLock={detail.audit.referenceIdLock}
-        currentAuditId={id}
       />
     </div>
   );
