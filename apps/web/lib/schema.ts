@@ -70,6 +70,7 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verified: false,
   sort: TournamentQuerySortType.EndTime,
   descending: true,
+  // Arrays are used for multi-select
   verificationStatus: [],
   lobbySize: [],
   minRankRange: 1,
