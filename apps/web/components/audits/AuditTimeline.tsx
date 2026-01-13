@@ -13,14 +13,12 @@ import { AuditRecord } from '@/lib/orpc/schema/audit';
 
 import AuditActorBadge from './AuditActorBadge';
 import AuditActionBadge from './AuditActionBadge';
+import AuditChangesDisplay from './AuditChangesDisplay';
 
 const ACTION_COLORS = {
-  [AuditActionType.Insert]:
-    'bg-green-500 dark:bg-green-600',
-  [AuditActionType.Update]:
-    'bg-blue-500 dark:bg-blue-600',
-  [AuditActionType.Delete]:
-    'bg-red-500 dark:bg-red-600',
+  [AuditActionType.Insert]: 'bg-green-500 dark:bg-green-600',
+  [AuditActionType.Update]: 'bg-blue-500 dark:bg-blue-600',
+  [AuditActionType.Delete]: 'bg-red-500 dark:bg-red-600',
 } as const;
 
 function TimelineItem({
@@ -35,8 +33,8 @@ function TimelineItem({
   return (
     <div
       className={cn(
-        'relative flex gap-4 pb-6 last:pb-0',
-        isHighlighted && 'bg-primary/5 -mx-4 rounded-lg px-4 py-2'
+        'relative flex gap-4 first:pt-0 last:pb-0',
+        isHighlighted && 'bg-primary/5 -mx-4 rounded-lg px-4'
       )}
     >
       <div className="flex flex-col items-center">
@@ -54,11 +52,8 @@ function TimelineItem({
         <p className="text-muted-foreground text-xs">
           {format(new Date(audit.created), 'PPpp')}
         </p>
-        {audit.changes && Object.keys(audit.changes).length > 0 && (
-          <p className="text-muted-foreground text-xs">
-            {Object.keys(audit.changes).length} field
-            {Object.keys(audit.changes).length !== 1 ? 's' : ''} changed
-          </p>
+        {audit.actionType === AuditActionType.Update && audit.changes && (
+          <AuditChangesDisplay changes={audit.changes} maxItems={2} />
         )}
       </div>
     </div>
@@ -114,7 +109,9 @@ export default function AuditTimeline({
         )}
 
         {data && data.audits.length === 0 && (
-          <p className="text-muted-foreground text-sm">No audit history found.</p>
+          <p className="text-muted-foreground text-sm">
+            No audit history found.
+          </p>
         )}
 
         {data && data.audits.length > 0 && (
