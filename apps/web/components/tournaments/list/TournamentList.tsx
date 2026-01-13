@@ -35,11 +35,19 @@ const serializeFilter = (
     : undefined,
   dateMin: toDateParam(filter.dateMin),
   dateMax: toDateParam(filter.dateMax),
-  verificationStatus: filter.verificationStatus,
+  verificationStatus:
+    filter.verificationStatus && filter.verificationStatus.length > 0
+      ? filter.verificationStatus
+      : undefined,
   rejectionReason: filter.rejectionReason,
   submittedBy: filter.submittedBy,
   verifiedBy: filter.verifiedBy,
-  lobbySize: filter.lobbySize,
+  lobbySize:
+    filter.lobbySize && filter.lobbySize.length > 0
+      ? filter.lobbySize
+      : undefined,
+  minRankRange: filter.minRankRange,
+  maxRankRange: filter.maxRankRange,
   sort: filter.sort,
   descending: filter.descending,
 });
