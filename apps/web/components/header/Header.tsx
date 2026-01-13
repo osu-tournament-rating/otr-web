@@ -5,6 +5,7 @@ import {
   ChevronDown,
   FileText,
   Filter,
+  History,
   LucideIcon,
   Trophy,
   Upload,
@@ -85,9 +86,15 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Tools',
-    href: '/tools/filter',
+    href: '/audits',
     roles: [],
     dropdown: [
+      {
+        title: 'Audit Logs',
+        href: '/audits',
+        icon: History,
+        roles: [],
+      },
       {
         title: 'Registrant Filtering',
         href: '/tools/filter',

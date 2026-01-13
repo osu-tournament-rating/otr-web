@@ -1,5 +1,6 @@
 import {
   AdminNoteRouteTarget,
+  AuditActionType,
   FilteringFailReason,
   GameRejectionReason,
   GameWarningFlags,
@@ -252,6 +253,25 @@ export const AdminNoteRouteTargetEnumHelper: IEnumHelper<AdminNoteRouteTarget> =
       },
     },
   };
+
+export const AuditActionTypeEnumHelper: IEnumHelper<AuditActionType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [AuditActionType.Insert]: {
+      text: 'Created',
+      description: 'Entity was created',
+    },
+    [AuditActionType.Update]: {
+      text: 'Updated',
+      description: 'Entity was modified',
+    },
+    [AuditActionType.Delete]: {
+      text: 'Deleted',
+      description: 'Entity was removed',
+    },
+  },
+};
 
 export const RulesetEnumHelper: IEnumHelper<Ruleset> = {
   ...defaultEnumHelper(),

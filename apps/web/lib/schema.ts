@@ -4,6 +4,7 @@ import {
   MatchRejectionReason,
   MatchWarningFlags,
   Mods,
+  ReportEntityType,
   Ruleset,
   ScoreGrade,
   ScoreRejectionReason,
@@ -205,5 +206,21 @@ export const beatmapListFilterSchema = z.object({
   minTournamentCount: z.coerce.number().int().min(0).optional(),
   maxTournamentCount: z.coerce.number().int().min(0).optional(),
   sort: z.enum(beatmapListSortValues).catch('gameCount'),
+  descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
+});
+
+export const auditSortValues = ['created', 'id'] as const;
+
+export const defaultAuditListFilter = {
+  sort: 'created' as const,
+  descending: true,
+  userActionsOnly: false,
+};
+
+export const auditListFilterSchema = z.object({
+  entityType: numericEnumValueSchema(ReportEntityType).optional(),
+  userActionsOnly: z.union([z.boolean(), booleanStringSchema]).catch(false),
+  actionUserId: z.coerce.number().int().optional(),
+  sort: z.enum(auditSortValues).catch('created'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });

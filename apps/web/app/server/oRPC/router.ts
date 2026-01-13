@@ -95,6 +95,11 @@ import {
   reopenReport,
   resolveReport,
 } from './procedures/reports/reportProcedures';
+import {
+  getAudit,
+  getEntityHistory,
+  listAudits,
+} from './procedures/audits/auditProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -114,6 +119,11 @@ export const router = base.router({
     reopen: reopenReport,
     unseenCount: getUnseenReportCount,
     markViewed: markReportsViewed,
+  },
+  audits: {
+    list: listAudits,
+    get: getAudit,
+    history: getEntityHistory,
   },
   user: {
     get: getUser,

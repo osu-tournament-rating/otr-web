@@ -7,6 +7,12 @@ export enum AdminNoteRouteTarget {
   Tournament = 'tournament',
 }
 
+export enum AuditActionType {
+  Insert = 0,
+  Update = 1,
+  Delete = 2,
+}
+
 export enum FilteringFailReason {
   None = 0,
   MinRating = 1,
