@@ -70,6 +70,11 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verified: false,
   sort: TournamentQuerySortType.EndTime,
   descending: true,
+  // Arrays are used for multi-select
+  verificationStatus: [],
+  lobbySize: [],
+  minRankRange: 1,
+  maxRankRange: 1000000,
 };
 
 export const tournamentListFilterSchema = z.object({
@@ -78,11 +83,27 @@ export const tournamentListFilterSchema = z.object({
   searchQuery: z.string().catch(''),
   dateMin: z.coerce.date().optional(),
   dateMax: z.coerce.date().optional(),
-  verificationStatus: numericEnumValueSchema(VerificationStatus).optional(),
+  verificationStatus: z.preprocess(
+    (val) => {
+      if (Array.isArray(val)) return val.map(Number);
+      if (val !== undefined && val !== null && val !== '') return [Number(val)];
+      return undefined;
+    },
+    z.array(numericEnumValueSchema(VerificationStatus)).optional()
+  ),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
   submittedBy: z.coerce.number().optional(),
   verifiedBy: z.coerce.number().optional(),
-  lobbySize: z.coerce.number().min(1).max(8).optional(),
+  lobbySize: z.preprocess(
+    (val) => {
+      if (Array.isArray(val)) return val.map(Number);
+      if (val !== undefined && val !== null && val !== '') return [Number(val)];
+      return undefined;
+    },
+    z.array(z.coerce.number().min(1).max(8)).optional()
+  ),
+  minRankRange: z.coerce.number().min(1).optional(),
+  maxRankRange: z.coerce.number().min(1).optional(),
   sort: numericEnumValueSchema(TournamentQuerySortType).catch(
     TournamentQuerySortType.EndTime
   ),

@@ -83,9 +83,12 @@ export const listTournaments = publicProcedure
         filters.push(eq(schema.tournaments.ruleset, input.ruleset));
       }
 
-      if (input.verificationStatus !== undefined) {
+      if (input.verificationStatus && input.verificationStatus.length > 0) {
         filters.push(
-          eq(schema.tournaments.verificationStatus, input.verificationStatus)
+          inArray(
+            schema.tournaments.verificationStatus,
+            input.verificationStatus
+          )
         );
       }
 
@@ -105,8 +108,20 @@ export const listTournaments = publicProcedure
         filters.push(eq(schema.tournaments.verifiedByUserId, input.verifiedBy));
       }
 
-      if (input.lobbySize !== undefined) {
-        filters.push(eq(schema.tournaments.lobbySize, input.lobbySize));
+      if (input.lobbySize && input.lobbySize.length > 0) {
+        filters.push(inArray(schema.tournaments.lobbySize, input.lobbySize));
+      }
+
+      if (input.minRankRange !== undefined) {
+        filters.push(
+          gte(schema.tournaments.rankRangeLowerBound, input.minRankRange)
+        );
+      }
+
+      if (input.maxRankRange !== undefined) {
+        filters.push(
+          lte(schema.tournaments.rankRangeLowerBound, input.maxRankRange)
+        );
       }
 
       if (input.dateMin) {
