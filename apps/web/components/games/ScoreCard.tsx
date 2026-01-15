@@ -122,17 +122,18 @@ export default function ScoreCard({
                 }}
               />
             </div>
-            <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3">
-              <SimpleTooltip content="View audit logs">
-                <Button asChild variant="ghost" size="icon">
-                  <Link
-                    href={`/audits?entityType=${ReportEntityType.Score}&referenceId=${score.id}`}
-                  >
-                    <History />
-                  </Link>
-                </Button>
-              </SimpleTooltip>
-            </div>
+            <SimpleTooltip content="View audit logs">
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
+              >
+                <Link href={`/scores/${score.id}/audits`}>
+                  <History className="h-3 w-3 text-neutral-600 dark:text-neutral-400" />
+                </Link>
+              </Button>
+            </SimpleTooltip>
             {showAdminControls && (
               <div className="relative flex items-center gap-0.5">
                 <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">

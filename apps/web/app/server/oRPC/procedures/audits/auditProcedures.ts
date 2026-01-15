@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, asc, eq, isNotNull, lt, gt } from 'drizzle-orm';
+import { and, desc, asc, eq, isNotNull, lt, gt, count, max } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType } from '@otr/core/osu/enums';
@@ -12,6 +12,11 @@ import {
   AuditEntityHistoryInputSchema,
   AuditEntityType,
   AuditRecord,
+  GetEntityStateInputSchema,
+  AuditEntityStateSchema,
+  ListRecentlyAuditedEntitiesInputSchema,
+  ListRecentlyAuditedEntitiesResponseSchema,
+  RecentlyAuditedEntity,
 } from '@/lib/orpc/schema/audit';
 
 import { publicProcedure } from '../base';
@@ -356,8 +361,16 @@ export const listAudits = publicProcedure
     path: '/audits',
   })
   .handler(async ({ input, context }) => {
-    const { entityType, cursor, limit, descending, sort, userActionsOnly, actionUserId, referenceId } =
-      input;
+    const {
+      entityType,
+      cursor,
+      limit,
+      descending,
+      sort,
+      userActionsOnly,
+      actionUserId,
+      referenceId,
+    } = input;
 
     let tableResults: { audits: RawAuditRow[]; entityType: AuditEntityType }[];
 
@@ -519,5 +532,104 @@ export const getEntityHistory = publicProcedure
       audits: enrichedAudits,
       nextCursor,
       hasMore,
+    };
+  });
+
+export const getEntityState = publicProcedure
+  .input(GetEntityStateInputSchema)
+  .output(AuditEntityStateSchema)
+  .route({
+    summary: 'Get current state of an entity by its ID',
+    tags: ['audits'],
+    method: 'GET',
+    path: '/audits/entity-state/{entityType}/{referenceIdLock}',
+  })
+  .handler(async ({ input, context }) => {
+    const { entityType, referenceIdLock } = input;
+
+    const [entityState, entityDisplayName] = await Promise.all([
+      getEntityCurrentState(context.db, entityType, referenceIdLock),
+      getEntityDisplayName(
+        context.db,
+        entityType,
+        referenceIdLock,
+        referenceIdLock
+      ),
+    ]);
+
+    return {
+      exists: entityState.exists,
+      data: entityState.data,
+      entityType,
+      entityDisplayName,
+    };
+  });
+
+async function queryRecentlyAuditedEntities(
+  db: DbClient,
+  entityType: AuditEntityType,
+  limit: number
+): Promise<RecentlyAuditedEntity[]> {
+  const table = AUDIT_TABLES[entityType];
+
+  const results = await db
+    .select({
+      referenceIdLock: table.referenceIdLock,
+      lastAuditDate: max(table.created),
+      auditCount: count(),
+    })
+    .from(table)
+    .groupBy(table.referenceIdLock)
+    .orderBy(desc(max(table.created)))
+    .limit(limit);
+
+  const enriched = await Promise.all(
+    results.map(async (row) => {
+      const displayName = await getEntityDisplayName(
+        db,
+        entityType,
+        row.referenceIdLock,
+        row.referenceIdLock
+      );
+      return {
+        referenceIdLock: row.referenceIdLock,
+        entityDisplayName: displayName,
+        lastAuditDate: row.lastAuditDate ?? new Date().toISOString(),
+        auditCount: row.auditCount,
+      };
+    })
+  );
+
+  return enriched;
+}
+
+export const listRecentlyAuditedEntities = publicProcedure
+  .input(ListRecentlyAuditedEntitiesInputSchema)
+  .output(ListRecentlyAuditedEntitiesResponseSchema)
+  .route({
+    summary: 'List recently audited entities grouped by type',
+    tags: ['audits'],
+    method: 'GET',
+    path: '/audits/recent-entities',
+  })
+  .handler(async ({ input, context }) => {
+    const { limit } = input;
+
+    const [tournaments, matches, games, scores] = await Promise.all([
+      queryRecentlyAuditedEntities(
+        context.db,
+        ReportEntityType.Tournament,
+        limit
+      ),
+      queryRecentlyAuditedEntities(context.db, ReportEntityType.Match, limit),
+      queryRecentlyAuditedEntities(context.db, ReportEntityType.Game, limit),
+      queryRecentlyAuditedEntities(context.db, ReportEntityType.Score, limit),
+    ]);
+
+    return {
+      tournaments,
+      matches,
+      games,
+      scores,
     };
   });

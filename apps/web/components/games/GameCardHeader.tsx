@@ -121,9 +121,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 size="icon"
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
-                <Link
-                  href={`/audits?entityType=${ReportEntityType.Game}&referenceId=${game.id}`}
-                >
+                <Link href={`/games/${game.id}/audits`}>
                   <History className="h-3 w-3 text-white/70 hover:text-white" />
                 </Link>
               </Button>

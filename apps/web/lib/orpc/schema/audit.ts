@@ -35,6 +35,29 @@ export const AuditEntityHistoryInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(50),
 });
 
+export const GetEntityStateInputSchema = z.object({
+  entityType: AuditEntityTypeSchema,
+  referenceIdLock: z.number().int().positive(),
+});
+
+export const RecentlyAuditedEntitySchema = z.object({
+  referenceIdLock: z.number().int().positive(),
+  entityDisplayName: z.string(),
+  lastAuditDate: z.string(),
+  auditCount: z.number().int(),
+});
+
+export const ListRecentlyAuditedEntitiesInputSchema = z.object({
+  limit: z.number().int().min(1).max(20).default(10),
+});
+
+export const ListRecentlyAuditedEntitiesResponseSchema = z.object({
+  tournaments: z.array(RecentlyAuditedEntitySchema),
+  matches: z.array(RecentlyAuditedEntitySchema),
+  games: z.array(RecentlyAuditedEntitySchema),
+  scores: z.array(RecentlyAuditedEntitySchema),
+});
+
 const auditPlayerSchema = z.object({
   id: z.number().int().positive(),
   osuId: z.number().int().positive(),
@@ -91,6 +114,14 @@ export type AuditListInput = z.infer<typeof AuditListInputSchema>;
 export type AuditGetInput = z.infer<typeof AuditGetInputSchema>;
 export type AuditEntityHistoryInput = z.infer<
   typeof AuditEntityHistoryInputSchema
+>;
+export type GetEntityStateInput = z.infer<typeof GetEntityStateInputSchema>;
+export type RecentlyAuditedEntity = z.infer<typeof RecentlyAuditedEntitySchema>;
+export type ListRecentlyAuditedEntitiesInput = z.infer<
+  typeof ListRecentlyAuditedEntitiesInputSchema
+>;
+export type ListRecentlyAuditedEntitiesResponse = z.infer<
+  typeof ListRecentlyAuditedEntitiesResponseSchema
 >;
 export type AuditRecord = z.infer<typeof AuditRecordSchema>;
 export type AuditListResponse = z.infer<typeof AuditListResponseSchema>;

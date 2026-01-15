@@ -22,7 +22,9 @@ export default function AuditActorBadge({ actor }: { actor: AuditActor }) {
             <Bot className="h-3 w-3" />
           </AvatarFallback>
         </Avatar>
-        <span className="text-muted-foreground text-sm font-medium">System</span>
+        <span className="text-muted-foreground text-sm font-medium">
+          System
+        </span>
       </div>
     );
   }

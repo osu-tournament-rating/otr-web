@@ -51,7 +51,8 @@ const getKey = (
       return null;
     }
 
-    const cursor = index === 0 ? undefined : previous?.nextCursor ?? undefined;
+    const cursor =
+      index === 0 ? undefined : (previous?.nextCursor ?? undefined);
     return serializeFilter(filter, cursor);
   };
 };

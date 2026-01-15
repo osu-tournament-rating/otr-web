@@ -18,11 +18,11 @@ const ACTION_VERBS = {
   [AuditActionType.Delete]: 'deleted',
 } as const;
 
-const ENTITY_TYPE_PATHS = {
-  [ReportEntityType.Tournament]: 'tournament',
-  [ReportEntityType.Match]: 'match',
-  [ReportEntityType.Game]: 'game',
-  [ReportEntityType.Score]: 'score',
+const ENTITY_AUDIT_PATHS = {
+  [ReportEntityType.Tournament]: (id: number) => `/tournaments/${id}/audits`,
+  [ReportEntityType.Match]: (id: number) => `/matches/${id}/audits`,
+  [ReportEntityType.Game]: (id: number) => `/games/${id}/audits`,
+  [ReportEntityType.Score]: (id: number) => `/scores/${id}/audits`,
 } as const;
 
 type ChangeValue = {
@@ -53,7 +53,7 @@ type AuditRecord = {
 
 export default function AuditListItem({ audit }: { audit: AuditRecord }) {
   const actionVerb = ACTION_VERBS[audit.actionType];
-  const auditUrl = `/audits/${ENTITY_TYPE_PATHS[audit.entityType]}/${audit.id}`;
+  const auditUrl = ENTITY_AUDIT_PATHS[audit.entityType](audit.referenceIdLock);
 
   return (
     <Card className="hover:bg-accent/30 relative p-4 transition-colors">

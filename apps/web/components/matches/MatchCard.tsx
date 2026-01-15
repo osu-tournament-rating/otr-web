@@ -132,9 +132,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   size="icon"
                   className="h-6 w-6 hover:bg-white/20 hover:text-white"
                 >
-                  <Link
-                    href={`/audits?entityType=${ReportEntityType.Match}&referenceId=${match.id}`}
-                  >
+                  <Link href={`/matches/${match.id}/audits`}>
                     <History className="h-3 w-3 text-white/70 hover:text-white" />
                   </Link>
                 </Button>

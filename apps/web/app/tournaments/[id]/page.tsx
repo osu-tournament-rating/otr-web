@@ -1,9 +1,5 @@
 import { getTournamentCached } from '@/lib/orpc/queries/tournament';
-import {
-  AdminNoteRouteTarget,
-  ReportEntityType,
-  VerificationStatus,
-} from '@otr/core/osu';
+import { VerificationStatus } from '@otr/core/osu';
 import {
   TournamentDetail,
   TournamentMatch,
@@ -17,31 +13,17 @@ import {
   Users,
   Gamepad2,
   Calendar,
-  Target,
   Swords,
   Zap,
   BarChart3,
   Award,
   Music,
-  ExternalLink,
-  UserPlus,
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
-import { formatUTCDate } from '@/lib/utils/date';
-import { formatRankRange } from '@/lib/utils/number';
-import { RulesetEnumHelper } from '@/lib/enums';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import { LazerBadge } from '@/components/badges/LazerBadge';
-import AdminNoteView from '@/components/admin-notes/AdminNoteView';
-import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
-import RulesetIcon from '@/components/icons/RulesetIcon';
+import TournamentCard from '@/components/tournaments/TournamentCard';
 import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
 import TournamentMatchesAdminView from '@/components/tournaments/TournamentMatchesAdminView';
 import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
-import ReportButton from '@/components/reports/ReportButton';
-import { TournamentReportableFields } from '@/lib/orpc/schema/report';
-import { Button } from '@/components/ui/button';
-import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
 import TournamentRatingsView from '@/components/tournaments/TournamentRatingsView';
 import {
@@ -134,159 +116,6 @@ function calculateDuration(
 
   if (diffDays === 1) return '1 day';
   return `${diffDays} days`;
-}
-
-function formatRankRangeDisplay(rankRange: number): string {
-  if (rankRange === 1) return 'Open';
-  return formatRankRange(rankRange);
-}
-
-function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
-  const startDate = tournament.startTime
-    ? new Date(tournament.startTime)
-    : null;
-  const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
-
-  return (
-    <Card className="p-4 font-sans sm:p-6">
-      <div className="flex flex-col gap-4">
-        {/* Top row - verification badge, abbreviation, and admin actions */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Verification badge - will be on its own line on mobile */}
-          <VerificationBadge
-            verificationStatus={tournament.verificationStatus}
-            rejectionReason={tournament.rejectionReason}
-            entityType="tournament"
-            displayText={true}
-            verifierUsername={tournament.verifiedByUsername ?? undefined}
-          />
-
-          {/* Abbreviation and admin actions */}
-          <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="text-muted-foreground font-mono text-sm">
-              {tournament.abbreviation}
-            </span>
-            <div className="flex gap-2">
-              <ReportButton
-                entityType={ReportEntityType.Tournament}
-                entityId={tournament.id}
-                entityDisplayName={tournament.name}
-                reportableFields={TournamentReportableFields}
-                currentValues={{
-                  name: tournament.name,
-                  abbreviation: tournament.abbreviation,
-                  forumUrl: tournament.forumUrl,
-                  rankRangeLowerBound: String(tournament.rankRangeLowerBound),
-                  lobbySize: String(tournament.lobbySize),
-                  startTime: tournament.startTime ?? '',
-                  endTime: tournament.endTime ?? '',
-                }}
-              />
-              <AdminNoteView
-                notes={tournament.adminNotes ?? []}
-                entity={AdminNoteRouteTarget.Tournament}
-                entityId={tournament.id}
-                entityDisplayName={tournament.name}
-              />
-              <TournamentAdminView tournament={tournament} />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-row items-center gap-2">
-          {/* Tournament name */}
-          <h1 className="text-xl font-bold leading-tight sm:text-2xl md:text-3xl">
-            {tournament.name}
-          </h1>
-          <SimpleTooltip content="View tournament on osu! website">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
-            >
-              <Link
-                href={tournament.forumUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="View tournament on osu! website"
-              >
-                <ExternalLink className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
-              </Link>
-            </Button>
-          </SimpleTooltip>
-        </div>
-
-        {/* Tournament metadata */}
-        <div className="text-muted-foreground flex flex-col gap-2 text-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
-              <LazerBadge isLazer={tournament.isLazer} />
-
-              <div className="flex items-center gap-1.5">
-                <RulesetIcon
-                  ruleset={tournament.ruleset}
-                  width={16}
-                  height={16}
-                  className="flex-shrink-0 fill-current"
-                />
-                <span className="truncate">
-                  {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Users className="h-4 w-4 flex-shrink-0" />
-                <span>
-                  {tournament.lobbySize}v{tournament.lobbySize}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Target className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">
-                  {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
-                </span>
-              </div>
-
-              {tournament.submittedByUsername && (
-                <SimpleTooltip content="Submitter">
-                  <div className="hidden items-center gap-1.5 sm:flex">
-                    <UserPlus className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate text-xs sm:text-sm">
-                      {tournament.submittedByUsername}
-                    </span>
-                  </div>
-                </SimpleTooltip>
-              )}
-            </div>
-
-            {startDate && endDate && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate text-xs sm:text-sm">
-                  {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {tournament.submittedByUsername && (
-            <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
-              <SimpleTooltip content="Submitter">
-                <div className="flex items-center gap-1.5">
-                  <UserPlus className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate text-xs sm:text-sm">
-                    {tournament.submittedByUsername}
-                  </span>
-                </div>
-              </SimpleTooltip>
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
 }
 
 function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
@@ -410,7 +239,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <TournamentHeader tournament={tournament} />
+      <TournamentCard tournament={tournament} variant="detail" />
 
       <Tabs value={currentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">

@@ -80,7 +80,9 @@ const useUrlSync = (
 
       if (
         value === undefined ||
-        defaultAuditListFilter[filterKey as keyof typeof defaultAuditListFilter] === value ||
+        defaultAuditListFilter[
+          filterKey as keyof typeof defaultAuditListFilter
+        ] === value ||
         (typeof value === 'string' && value.trim() === '')
       ) {
         return;
@@ -121,7 +123,9 @@ export default function AuditListFilter({ filter }: AuditListFilterProps) {
               render={({ field }) => (
                 <FormItem>
                   <Select
-                    value={field.value !== undefined ? String(field.value) : 'all'}
+                    value={
+                      field.value !== undefined ? String(field.value) : 'all'
+                    }
                     onValueChange={(val) =>
                       field.onChange(val === 'all' ? undefined : Number(val))
                     }
@@ -229,7 +233,9 @@ export default function AuditListFilter({ filter }: AuditListFilterProps) {
                       </FormControl>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{field.value ? 'Sort Ascending' : 'Sort Descending'}</p>
+                      <p>
+                        {field.value ? 'Sort Ascending' : 'Sort Descending'}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </FormItem>

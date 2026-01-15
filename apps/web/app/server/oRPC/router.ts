@@ -98,7 +98,9 @@ import {
 import {
   getAudit,
   getEntityHistory,
+  getEntityState,
   listAudits,
+  listRecentlyAuditedEntities,
 } from './procedures/audits/auditProcedures';
 
 export interface InitialContext {
@@ -124,6 +126,8 @@ export const router = base.router({
     list: listAudits,
     get: getAudit,
     history: getEntityHistory,
+    entityState: getEntityState,
+    recentEntities: listRecentlyAuditedEntities,
   },
   user: {
     get: getUser,

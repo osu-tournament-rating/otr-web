@@ -8,11 +8,13 @@ import { cn } from '@/lib/utils';
 const actionConfig = {
   [AuditActionType.Insert]: {
     icon: Plus,
-    className: 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30',
+    className:
+      'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30',
   },
   [AuditActionType.Update]: {
     icon: Pencil,
-    className: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+    className:
+      'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
   },
   [AuditActionType.Delete]: {
     icon: Trash2,
