@@ -143,7 +143,11 @@ export const TournamentAuditListInputSchema = z.object({
   cursor: z.number().int().optional(),
   limit: z.number().int().min(1).max(100).default(50),
   searchQuery: z.string().optional(),
-  changedProperties: z.array(z.string()).optional(),
+  changedProperties: z
+    .array(
+      z.object({ property: z.string(), entityType: AuditEntityTypeSchema })
+    )
+    .optional(),
   entityTypesWithChanges: z.array(AuditEntityTypeSchema).optional(),
   userActionsOnly: z.boolean().default(false),
   actionUserId: z.number().int().optional(),
@@ -164,7 +168,11 @@ export const TournamentTimelineInputSchema = z.object({
   entityTypes: z.array(AuditEntityTypeSchema).optional(),
   excludeSystemActions: z.boolean().default(false),
   excludeVerificationChanges: z.boolean().default(false),
-  changedProperties: z.array(z.string()).optional(),
+  changedProperties: z
+    .array(
+      z.object({ property: z.string(), entityType: AuditEntityTypeSchema })
+    )
+    .optional(),
   actionTypes: z.array(AuditActionTypeSchema).optional(),
 });
 
@@ -183,6 +191,11 @@ export const FilterPropertySchema = z.object({
   name: z.string(),
   entityType: AuditEntityTypeSchema,
   changeCount: z.number().int(),
+});
+
+export const PropertyFilterSchema = z.object({
+  property: z.string(),
+  entityType: AuditEntityTypeSchema,
 });
 
 export const FilterOptionsResponseSchema = z.object({
@@ -208,4 +221,5 @@ export type TournamentTimelineResponse = z.infer<
   typeof TournamentTimelineResponseSchema
 >;
 export type FilterProperty = z.infer<typeof FilterPropertySchema>;
+export type PropertyFilter = z.infer<typeof PropertyFilterSchema>;
 export type FilterOptionsResponse = z.infer<typeof FilterOptionsResponseSchema>;

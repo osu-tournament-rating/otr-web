@@ -10,11 +10,6 @@ import {
   count,
   max,
   sql,
-  inArray,
-  ilike,
-  gte,
-  lte,
-  or,
 } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
@@ -656,6 +651,34 @@ export const listRecentlyAuditedEntities = publicProcedure
     };
   });
 
+type PropertyFilter = { property: string; entityType: number };
+
+function buildEntityPropertyFilter(
+  changedProperties: PropertyFilter[] | undefined,
+  entityType: number
+): { variants: string[]; hasPropForEntity: boolean } {
+  if (!changedProperties || changedProperties.length === 0) {
+    return { variants: [], hasPropForEntity: false };
+  }
+
+  const propsForEntity = changedProperties.filter(
+    (p) => p.entityType === entityType
+  );
+  if (propsForEntity.length === 0) {
+    return { variants: [], hasPropForEntity: false };
+  }
+
+  const allVariants: string[] = [];
+  for (const { property } of propsForEntity) {
+    allVariants.push(property);
+    const pascalCase = property.charAt(0).toUpperCase() + property.slice(1);
+    if (pascalCase !== property) {
+      allVariants.push(pascalCase);
+    }
+  }
+  return { variants: allVariants, hasPropForEntity: true };
+}
+
 export const listTournamentsWithAuditSummary = publicProcedure
   .input(TournamentAuditListInputSchema)
   .output(TournamentAuditListResponseSchema)
@@ -670,6 +693,7 @@ export const listTournamentsWithAuditSummary = publicProcedure
       cursor,
       limit,
       searchQuery,
+      changedProperties,
       userActionsOnly,
       actionUserId,
       activityAfter,
@@ -678,269 +702,187 @@ export const listTournamentsWithAuditSummary = publicProcedure
 
     const db = context.db;
 
-    const tournamentIds = await db
-      .selectDistinct({ id: schema.tournaments.id })
-      .from(schema.tournaments)
-      .innerJoin(
-        schema.tournamentAudits,
-        eq(schema.tournamentAudits.referenceIdLock, schema.tournaments.id)
-      );
-
-    const tournamentsWithMatchAudits = await db
-      .selectDistinct({ id: schema.tournaments.id })
-      .from(schema.tournaments)
-      .innerJoin(
-        schema.matches,
-        eq(schema.matches.tournamentId, schema.tournaments.id)
-      )
-      .innerJoin(
-        schema.matchAudits,
-        eq(schema.matchAudits.referenceIdLock, schema.matches.id)
-      );
-
-    const tournamentsWithGameAudits = await db
-      .selectDistinct({ id: schema.tournaments.id })
-      .from(schema.tournaments)
-      .innerJoin(
-        schema.matches,
-        eq(schema.matches.tournamentId, schema.tournaments.id)
-      )
-      .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
-      .innerJoin(
-        schema.gameAudits,
-        eq(schema.gameAudits.referenceIdLock, schema.games.id)
-      );
-
-    const tournamentsWithScoreAudits = await db
-      .selectDistinct({ id: schema.tournaments.id })
-      .from(schema.tournaments)
-      .innerJoin(
-        schema.matches,
-        eq(schema.matches.tournamentId, schema.tournaments.id)
-      )
-      .innerJoin(schema.games, eq(schema.games.matchId, schema.matches.id))
-      .innerJoin(
-        schema.gameScores,
-        eq(schema.gameScores.gameId, schema.games.id)
-      )
-      .innerJoin(
-        schema.gameScoreAudits,
-        eq(schema.gameScoreAudits.referenceIdLock, schema.gameScores.id)
-      );
-
-    const allTournamentIdsWithAudits = new Set([
-      ...tournamentIds.map((t) => t.id),
-      ...tournamentsWithMatchAudits.map((t) => t.id),
-      ...tournamentsWithGameAudits.map((t) => t.id),
-      ...tournamentsWithScoreAudits.map((t) => t.id),
-    ]);
-
-    if (allTournamentIdsWithAudits.size === 0) {
-      return { tournaments: [], nextCursor: null, hasMore: false };
-    }
-
-    const tournamentIdsArray = Array.from(allTournamentIdsWithAudits);
-    const conditions = [inArray(schema.tournaments.id, tournamentIdsArray)];
-
-    if (searchQuery) {
-      conditions.push(
-        or(
-          ilike(schema.tournaments.name, `%${searchQuery}%`),
-          ilike(schema.tournaments.abbreviation, `%${searchQuery}%`)
-        )!
-      );
-    }
-
-    if (cursor) {
-      conditions.push(lt(schema.tournaments.id, cursor));
-    }
-
-    const tournamentsResult = await db
-      .select({
-        id: schema.tournaments.id,
-        name: schema.tournaments.name,
-        abbreviation: schema.tournaments.abbreviation,
-      })
-      .from(schema.tournaments)
-      .where(and(...conditions))
-      .orderBy(desc(schema.tournaments.id))
-      .limit(limit + 1);
-
-    const hasMore = tournamentsResult.length > limit;
-    const tournamentsToReturn = tournamentsResult.slice(0, limit);
-
-    const summaries = await Promise.all(
-      tournamentsToReturn.map(async (tournament) => {
-        const matchIdsForTournament = await db
-          .select({ id: schema.matches.id })
-          .from(schema.matches)
-          .where(eq(schema.matches.tournamentId, tournament.id));
-
-        const gameIdsForTournament =
-          matchIdsForTournament.length > 0
-            ? await db
-                .select({ id: schema.games.id })
-                .from(schema.games)
-                .where(
-                  inArray(
-                    schema.games.matchId,
-                    matchIdsForTournament.map((m) => m.id)
-                  )
-                )
-            : [];
-
-        const scoreIdsForTournament =
-          gameIdsForTournament.length > 0
-            ? await db
-                .select({ id: schema.gameScores.id })
-                .from(schema.gameScores)
-                .where(
-                  inArray(
-                    schema.gameScores.gameId,
-                    gameIdsForTournament.map((g) => g.id)
-                  )
-                )
-            : [];
-
-        const baseConditions = (
-          table: typeof schema.tournamentAudits,
-          entityIds: number[]
-        ) => {
-          const conds = [];
-          if (entityIds.length > 0) {
-            conds.push(inArray(table.referenceIdLock, entityIds));
-          } else {
-            conds.push(sql`false`);
-          }
-          if (userActionsOnly) {
-            conds.push(isNotNull(table.actionUserId));
-          }
-          if (actionUserId !== undefined) {
-            conds.push(eq(table.actionUserId, actionUserId));
-          }
-          if (activityAfter) {
-            conds.push(gte(table.created, activityAfter));
-          }
-          if (activityBefore) {
-            conds.push(lte(table.created, activityBefore));
-          }
-          return conds;
-        };
-
-        const [tournamentAuditCount] = await db
-          .select({ count: count() })
-          .from(schema.tournamentAudits)
-          .where(
-            and(...baseConditions(schema.tournamentAudits, [tournament.id]))
-          );
-
-        const [matchAuditCount] =
-          matchIdsForTournament.length > 0
-            ? await db
-                .select({ count: count() })
-                .from(schema.matchAudits)
-                .where(
-                  and(
-                    ...baseConditions(
-                      schema.matchAudits as unknown as unknown as typeof schema.tournamentAudits,
-                      matchIdsForTournament.map((m) => m.id)
-                    )
-                  )
-                )
-            : [{ count: 0 }];
-
-        const [gameAuditCount] =
-          gameIdsForTournament.length > 0
-            ? await db
-                .select({ count: count() })
-                .from(schema.gameAudits)
-                .where(
-                  and(
-                    ...baseConditions(
-                      schema.gameAudits as unknown as unknown as typeof schema.tournamentAudits,
-                      gameIdsForTournament.map((g) => g.id)
-                    )
-                  )
-                )
-            : [{ count: 0 }];
-
-        const [scoreAuditCount] =
-          scoreIdsForTournament.length > 0
-            ? await db
-                .select({ count: count() })
-                .from(schema.gameScoreAudits)
-                .where(
-                  and(
-                    ...baseConditions(
-                      schema.gameScoreAudits as unknown as unknown as typeof schema.tournamentAudits,
-                      scoreIdsForTournament.map((s) => s.id)
-                    )
-                  )
-                )
-            : [{ count: 0 }];
-
-        const lastActivityResults = await Promise.all([
-          db
-            .select({ latest: max(schema.tournamentAudits.created) })
-            .from(schema.tournamentAudits)
-            .where(eq(schema.tournamentAudits.referenceIdLock, tournament.id)),
-          matchIdsForTournament.length > 0
-            ? db
-                .select({ latest: max(schema.matchAudits.created) })
-                .from(schema.matchAudits)
-                .where(
-                  inArray(
-                    schema.matchAudits.referenceIdLock,
-                    matchIdsForTournament.map((m) => m.id)
-                  )
-                )
-            : [{ latest: null }],
-          gameIdsForTournament.length > 0
-            ? db
-                .select({ latest: max(schema.gameAudits.created) })
-                .from(schema.gameAudits)
-                .where(
-                  inArray(
-                    schema.gameAudits.referenceIdLock,
-                    gameIdsForTournament.map((g) => g.id)
-                  )
-                )
-            : [{ latest: null }],
-          scoreIdsForTournament.length > 0
-            ? db
-                .select({ latest: max(schema.gameScoreAudits.created) })
-                .from(schema.gameScoreAudits)
-                .where(
-                  inArray(
-                    schema.gameScoreAudits.referenceIdLock,
-                    scoreIdsForTournament.map((s) => s.id)
-                  )
-                )
-            : [{ latest: null }],
-        ]);
-
-        const latestDates = lastActivityResults
-          .flat()
-          .map((r) => r.latest)
-          .filter(Boolean) as string[];
-
-        const lastActivity =
-          latestDates.length > 0
-            ? latestDates.sort().reverse()[0]
-            : new Date().toISOString();
-
-        return {
-          id: tournament.id,
-          name: tournament.name,
-          abbreviation: tournament.abbreviation,
-          tournamentChanges: tournamentAuditCount?.count ?? 0,
-          matchChanges: matchAuditCount?.count ?? 0,
-          gameChanges: gameAuditCount?.count ?? 0,
-          scoreChanges: scoreAuditCount?.count ?? 0,
-          lastActivity,
-        };
-      })
+    const tournamentProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Tournament
     );
+    const matchProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Match
+    );
+    const gameProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Game
+    );
+    const scoreProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Score
+    );
+
+    const hasAnyPropertyFilter =
+      tournamentProps.hasPropForEntity ||
+      matchProps.hasPropForEntity ||
+      gameProps.hasPropForEntity ||
+      scoreProps.hasPropForEntity;
+
+    const buildPropertyCondition = (
+      variants: string[],
+      hasProp: boolean,
+      hasAnyFilter: boolean
+    ) => {
+      if (!hasAnyFilter) return sql`TRUE`;
+      if (!hasProp) return sql`FALSE`;
+      return sql`changes ?| ARRAY[${sql.join(
+        variants.map((v) => sql`${v}`),
+        sql`, `
+      )}]`;
+    };
+
+    const tournamentPropCond = buildPropertyCondition(
+      tournamentProps.variants,
+      tournamentProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const matchPropCond = buildPropertyCondition(
+      matchProps.variants,
+      matchProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const gamePropCond = buildPropertyCondition(
+      gameProps.variants,
+      gameProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const scorePropCond = buildPropertyCondition(
+      scoreProps.variants,
+      scoreProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+
+    const userFilterCond = userActionsOnly
+      ? sql`action_user_id IS NOT NULL`
+      : sql`TRUE`;
+    const actionUserIdCond =
+      actionUserId !== undefined
+        ? sql`action_user_id = ${actionUserId}`
+        : sql`TRUE`;
+    const activityAfterCond = activityAfter
+      ? sql`created >= ${activityAfter}`
+      : sql`TRUE`;
+    const activityBeforeCond = activityBefore
+      ? sql`created <= ${activityBefore}`
+      : sql`TRUE`;
+
+    const baseFilters = sql`
+      action_type != 0
+      AND ${userFilterCond}
+      AND ${actionUserIdCond}
+      AND ${activityAfterCond}
+      AND ${activityBeforeCond}
+    `;
+
+    const searchCond = searchQuery
+      ? sql`(t.name ILIKE ${'%' + searchQuery + '%'} OR t.abbreviation ILIKE ${'%' + searchQuery + '%'})`
+      : sql`TRUE`;
+    const cursorCond = cursor ? sql`t.id < ${cursor}` : sql`TRUE`;
+
+    const query = sql`
+      WITH filtered_audits AS (
+        SELECT 0 AS entity_type, reference_id_lock AS tournament_id, created
+        FROM tournament_audits
+        WHERE ${baseFilters} AND ${tournamentPropCond}
+
+        UNION ALL
+
+        SELECT 1 AS entity_type, m.tournament_id, ma.created
+        FROM match_audits ma
+        JOIN matches m ON ma.reference_id_lock = m.id
+        WHERE ma.action_type != 0
+          AND ${userActionsOnly ? sql`ma.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${actionUserId !== undefined ? sql`ma.action_user_id = ${actionUserId}` : sql`TRUE`}
+          AND ${activityAfter ? sql`ma.created >= ${activityAfter}` : sql`TRUE`}
+          AND ${activityBefore ? sql`ma.created <= ${activityBefore}` : sql`TRUE`}
+          AND ${matchPropCond}
+
+        UNION ALL
+
+        SELECT 2 AS entity_type, m.tournament_id, ga.created
+        FROM game_audits ga
+        JOIN games g ON ga.reference_id_lock = g.id
+        JOIN matches m ON g.match_id = m.id
+        WHERE ga.action_type != 0
+          AND ${userActionsOnly ? sql`ga.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${actionUserId !== undefined ? sql`ga.action_user_id = ${actionUserId}` : sql`TRUE`}
+          AND ${activityAfter ? sql`ga.created >= ${activityAfter}` : sql`TRUE`}
+          AND ${activityBefore ? sql`ga.created <= ${activityBefore}` : sql`TRUE`}
+          AND ${gamePropCond}
+
+        UNION ALL
+
+        SELECT 3 AS entity_type, m.tournament_id, sa.created
+        FROM game_score_audits sa
+        JOIN game_scores gs ON sa.reference_id_lock = gs.id
+        JOIN games g ON gs.game_id = g.id
+        JOIN matches m ON g.match_id = m.id
+        WHERE sa.action_type != 0
+          AND ${userActionsOnly ? sql`sa.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${actionUserId !== undefined ? sql`sa.action_user_id = ${actionUserId}` : sql`TRUE`}
+          AND ${activityAfter ? sql`sa.created >= ${activityAfter}` : sql`TRUE`}
+          AND ${activityBefore ? sql`sa.created <= ${activityBefore}` : sql`TRUE`}
+          AND ${scorePropCond}
+      ),
+      tournament_summary AS (
+        SELECT
+          tournament_id,
+          COUNT(*) FILTER (WHERE entity_type = 0) AS tournament_changes,
+          COUNT(*) FILTER (WHERE entity_type = 1) AS match_changes,
+          COUNT(*) FILTER (WHERE entity_type = 2) AS game_changes,
+          COUNT(*) FILTER (WHERE entity_type = 3) AS score_changes,
+          MAX(created) AS last_activity
+        FROM filtered_audits
+        GROUP BY tournament_id
+      )
+      SELECT
+        t.id,
+        t.name,
+        t.abbreviation,
+        COALESCE(ts.tournament_changes, 0)::int AS tournament_changes,
+        COALESCE(ts.match_changes, 0)::int AS match_changes,
+        COALESCE(ts.game_changes, 0)::int AS game_changes,
+        COALESCE(ts.score_changes, 0)::int AS score_changes,
+        COALESCE(ts.last_activity::text, NOW()::text) AS last_activity
+      FROM tournaments t
+      JOIN tournament_summary ts ON t.id = ts.tournament_id
+      WHERE ${searchCond} AND ${cursorCond}
+      ORDER BY t.id DESC
+      LIMIT ${limit + 1}
+    `;
+
+    const results = await db.execute(query);
+    const rows = results.rows as Array<{
+      id: number;
+      name: string;
+      abbreviation: string | null;
+      tournament_changes: number;
+      match_changes: number;
+      game_changes: number;
+      score_changes: number;
+      last_activity: string;
+    }>;
+
+    const hasMore = rows.length > limit;
+    const tournamentsToReturn = rows.slice(0, limit);
+
+    const summaries = tournamentsToReturn.map((row) => ({
+      id: row.id,
+      name: row.name,
+      abbreviation: row.abbreviation,
+      tournamentChanges: row.tournament_changes,
+      matchChanges: row.match_changes,
+      gameChanges: row.game_changes,
+      scoreChanges: row.score_changes,
+      lastActivity: row.last_activity,
+    }));
 
     const nextCursor =
       hasMore && summaries.length > 0
@@ -977,266 +919,265 @@ export const getTournamentAuditTimeline = publicProcedure
 
     const db = context.db;
 
-    const matchIds = await db
-      .select({ id: schema.matches.id })
-      .from(schema.matches)
-      .where(eq(schema.matches.tournamentId, tournamentId));
+    const tournamentProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Tournament
+    );
+    const matchProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Match
+    );
+    const gameProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Game
+    );
+    const scoreProps = buildEntityPropertyFilter(
+      changedProperties,
+      ReportEntityType.Score
+    );
 
-    const gameIds =
-      matchIds.length > 0
-        ? await db
-            .select({ id: schema.games.id, matchId: schema.games.matchId })
-            .from(schema.games)
-            .where(
-              inArray(
-                schema.games.matchId,
-                matchIds.map((m) => m.id)
-              )
-            )
-        : [];
+    const hasAnyPropertyFilter =
+      tournamentProps.hasPropForEntity ||
+      matchProps.hasPropForEntity ||
+      gameProps.hasPropForEntity ||
+      scoreProps.hasPropForEntity;
 
-    const scoreIds =
-      gameIds.length > 0
-        ? await db
-            .select({
-              id: schema.gameScores.id,
-              gameId: schema.gameScores.gameId,
-            })
-            .from(schema.gameScores)
-            .where(
-              inArray(
-                schema.gameScores.gameId,
-                gameIds.map((g) => g.id)
-              )
-            )
-        : [];
-
-    const gameIdToMatchId = new Map(gameIds.map((g) => [g.id, g.matchId]));
-    const scoreIdToGameId = new Map(scoreIds.map((s) => [s.id, s.gameId]));
-
-    type TimelineAudit = RawAuditRow & {
-      entityType: AuditEntityType;
-      parentEntityId: number | null;
+    const buildPropertyCondition = (
+      variants: string[],
+      hasProp: boolean,
+      hasAnyFilter: boolean
+    ) => {
+      if (!hasAnyFilter) return sql`TRUE`;
+      if (!hasProp) return sql`FALSE`;
+      return sql`changes ?| ARRAY[${sql.join(
+        variants.map((v) => sql`${v}`),
+        sql`, `
+      )}]`;
     };
 
-    const allAudits: TimelineAudit[] = [];
+    const tournamentPropCond = buildPropertyCondition(
+      tournamentProps.variants,
+      tournamentProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const matchPropCond = buildPropertyCondition(
+      matchProps.variants,
+      matchProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const gamePropCond = buildPropertyCondition(
+      gameProps.variants,
+      gameProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
+    const scorePropCond = buildPropertyCondition(
+      scoreProps.variants,
+      scoreProps.hasPropForEntity,
+      hasAnyPropertyFilter
+    );
 
-    const shouldIncludeEntityType = (type: AuditEntityType) =>
+    const shouldIncludeEntityType = (type: number) =>
       !entityTypes || entityTypes.length === 0 || entityTypes.includes(type);
 
-    const buildConditions = (
-      table: typeof schema.tournamentAudits,
-      entityIds: number[]
-    ) => {
-      const conds = [];
-      if (entityIds.length > 0) {
-        conds.push(inArray(table.referenceIdLock, entityIds));
-      } else {
-        return null;
-      }
-      if (excludeSystemActions) {
-        conds.push(isNotNull(table.actionUserId));
-      }
-      if (actionTypes && actionTypes.length > 0) {
-        conds.push(inArray(table.actionType, actionTypes));
-      }
-      if (cursor) {
-        conds.push(lt(table.id, cursor));
-      }
-      return conds;
-    };
+    const includeTournament = shouldIncludeEntityType(
+      ReportEntityType.Tournament
+    );
+    const includeMatch = shouldIncludeEntityType(ReportEntityType.Match);
+    const includeGame = shouldIncludeEntityType(ReportEntityType.Game);
+    const includeScore = shouldIncludeEntityType(ReportEntityType.Score);
 
-    if (shouldIncludeEntityType(ReportEntityType.Tournament)) {
-      const conds = buildConditions(schema.tournamentAudits, [tournamentId]);
-      if (conds) {
-        const tournamentAudits = await db
-          .select({
-            id: schema.tournamentAudits.id,
-            created: schema.tournamentAudits.created,
-            referenceIdLock: schema.tournamentAudits.referenceIdLock,
-            referenceId: schema.tournamentAudits.referenceId,
-            actionUserId: schema.tournamentAudits.actionUserId,
-            actionType: schema.tournamentAudits.actionType,
-            changes: schema.tournamentAudits.changes,
-          })
-          .from(schema.tournamentAudits)
-          .where(and(...conds))
-          .orderBy(desc(schema.tournamentAudits.id))
-          .limit(limit + 1);
+    const systemActionCond = excludeSystemActions
+      ? sql`action_user_id IS NOT NULL`
+      : sql`TRUE`;
 
-        allAudits.push(
-          ...tournamentAudits.map((a) => ({
-            ...a,
-            entityType: ReportEntityType.Tournament as AuditEntityType,
-            parentEntityId: null,
-          }))
-        );
-      }
-    }
+    const actionTypeCond =
+      actionTypes && actionTypes.length > 0
+        ? sql`action_type = ANY(ARRAY[${sql.join(
+            actionTypes.map((t) => sql`${t}`),
+            sql`, `
+          )}])`
+        : sql`TRUE`;
 
-    if (
-      shouldIncludeEntityType(ReportEntityType.Match) &&
-      matchIds.length > 0
-    ) {
-      const conds = buildConditions(
-        schema.matchAudits as unknown as typeof schema.tournamentAudits,
-        matchIds.map((m) => m.id)
-      );
-      if (conds) {
-        const matchAuditsResult = await db
-          .select({
-            id: schema.matchAudits.id,
-            created: schema.matchAudits.created,
-            referenceIdLock: schema.matchAudits.referenceIdLock,
-            referenceId: schema.matchAudits.referenceId,
-            actionUserId: schema.matchAudits.actionUserId,
-            actionType: schema.matchAudits.actionType,
-            changes: schema.matchAudits.changes,
-          })
-          .from(schema.matchAudits)
-          .where(and(...conds))
-          .orderBy(desc(schema.matchAudits.id))
-          .limit(limit + 1);
+    const cursorCond = cursor ? sql`id < ${cursor}` : sql`TRUE`;
 
-        allAudits.push(
-          ...matchAuditsResult.map((a) => ({
-            ...a,
-            entityType: ReportEntityType.Match as AuditEntityType,
-            parentEntityId: tournamentId,
-          }))
-        );
-      }
-    }
+    const verificationExcludeCond = excludeVerificationChanges
+      ? sql`NOT (
+          jsonb_typeof(changes) = 'object'
+          AND (
+            (changes ?& ARRAY['verificationStatus'] AND jsonb_object_keys(changes)::text[] = ARRAY['verificationStatus'])
+            OR (changes ?& ARRAY['VerificationStatus'] AND jsonb_object_keys(changes)::text[] = ARRAY['VerificationStatus'])
+          )
+        )`
+      : sql`TRUE`;
 
-    if (shouldIncludeEntityType(ReportEntityType.Game) && gameIds.length > 0) {
-      const conds = buildConditions(
-        schema.gameAudits as unknown as typeof schema.tournamentAudits,
-        gameIds.map((g) => g.id)
-      );
-      if (conds) {
-        const gameAuditsResult = await db
-          .select({
-            id: schema.gameAudits.id,
-            created: schema.gameAudits.created,
-            referenceIdLock: schema.gameAudits.referenceIdLock,
-            referenceId: schema.gameAudits.referenceId,
-            actionUserId: schema.gameAudits.actionUserId,
-            actionType: schema.gameAudits.actionType,
-            changes: schema.gameAudits.changes,
-          })
-          .from(schema.gameAudits)
-          .where(and(...conds))
-          .orderBy(desc(schema.gameAudits.id))
-          .limit(limit + 1);
+    const query = sql`
+      WITH all_audits AS (
+        SELECT
+          ta.id,
+          0 AS entity_type,
+          ta.created,
+          ta.reference_id_lock,
+          ta.reference_id,
+          ta.action_user_id,
+          ta.action_type,
+          ta.changes,
+          NULL::int AS parent_entity_id
+        FROM tournament_audits ta
+        WHERE ta.reference_id_lock = ${tournamentId}
+          AND ta.action_type != 0
+          AND ${includeTournament ? sql`TRUE` : sql`FALSE`}
+          AND ${systemActionCond}
+          AND ${actionTypeCond}
+          AND ${tournamentPropCond}
 
-        allAudits.push(
-          ...gameAuditsResult.map((a) => ({
-            ...a,
-            entityType: ReportEntityType.Game as AuditEntityType,
-            parentEntityId: gameIdToMatchId.get(a.referenceIdLock) ?? null,
-          }))
-        );
-      }
-    }
+        UNION ALL
 
-    if (
-      shouldIncludeEntityType(ReportEntityType.Score) &&
-      scoreIds.length > 0
-    ) {
-      const conds = buildConditions(
-        schema.gameScoreAudits as unknown as typeof schema.tournamentAudits,
-        scoreIds.map((s) => s.id)
-      );
-      if (conds) {
-        const scoreAuditsResult = await db
-          .select({
-            id: schema.gameScoreAudits.id,
-            created: schema.gameScoreAudits.created,
-            referenceIdLock: schema.gameScoreAudits.referenceIdLock,
-            referenceId: schema.gameScoreAudits.referenceId,
-            actionUserId: schema.gameScoreAudits.actionUserId,
-            actionType: schema.gameScoreAudits.actionType,
-            changes: schema.gameScoreAudits.changes,
-          })
-          .from(schema.gameScoreAudits)
-          .where(and(...conds))
-          .orderBy(desc(schema.gameScoreAudits.id))
-          .limit(limit + 1);
+        SELECT
+          ma.id,
+          1 AS entity_type,
+          ma.created,
+          ma.reference_id_lock,
+          ma.reference_id,
+          ma.action_user_id,
+          ma.action_type,
+          ma.changes,
+          ${tournamentId}::int AS parent_entity_id
+        FROM match_audits ma
+        JOIN matches m ON ma.reference_id_lock = m.id
+        WHERE m.tournament_id = ${tournamentId}
+          AND ma.action_type != 0
+          AND ${includeMatch ? sql`TRUE` : sql`FALSE`}
+          AND ${excludeSystemActions ? sql`ma.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${
+            actionTypes && actionTypes.length > 0
+              ? sql`ma.action_type = ANY(ARRAY[${sql.join(
+                  actionTypes.map((t) => sql`${t}`),
+                  sql`, `
+                )}])`
+              : sql`TRUE`
+          }
+          AND ${matchPropCond}
 
-        allAudits.push(
-          ...scoreAuditsResult.map((a) => ({
-            ...a,
-            entityType: ReportEntityType.Score as AuditEntityType,
-            parentEntityId: scoreIdToGameId.get(a.referenceIdLock) ?? null,
-          }))
-        );
-      }
-    }
+        UNION ALL
 
-    let filteredAudits = allAudits;
+        SELECT
+          ga.id,
+          2 AS entity_type,
+          ga.created,
+          ga.reference_id_lock,
+          ga.reference_id,
+          ga.action_user_id,
+          ga.action_type,
+          ga.changes,
+          g.match_id AS parent_entity_id
+        FROM game_audits ga
+        JOIN games g ON ga.reference_id_lock = g.id
+        JOIN matches m ON g.match_id = m.id
+        WHERE m.tournament_id = ${tournamentId}
+          AND ga.action_type != 0
+          AND ${includeGame ? sql`TRUE` : sql`FALSE`}
+          AND ${excludeSystemActions ? sql`ga.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${
+            actionTypes && actionTypes.length > 0
+              ? sql`ga.action_type = ANY(ARRAY[${sql.join(
+                  actionTypes.map((t) => sql`${t}`),
+                  sql`, `
+                )}])`
+              : sql`TRUE`
+          }
+          AND ${gamePropCond}
 
-    if (excludeVerificationChanges) {
-      filteredAudits = filteredAudits.filter((a) => {
-        if (!a.changes || typeof a.changes !== 'object') return true;
-        const changes = a.changes as Record<string, unknown>;
-        const keys = Object.keys(changes);
-        return !(
-          keys.length === 1 &&
-          (keys[0] === 'verificationStatus' || keys[0] === 'VerificationStatus')
-        );
-      });
-    }
+        UNION ALL
 
-    if (changedProperties && changedProperties.length > 0) {
-      const propsLower = changedProperties.map((p) => p.toLowerCase());
-      filteredAudits = filteredAudits.filter((a) => {
-        if (!a.changes || typeof a.changes !== 'object') return false;
-        const changes = a.changes as Record<string, unknown>;
-        const keys = Object.keys(changes).map((k) => k.toLowerCase());
-        return propsLower.some((p) => keys.includes(p));
-      });
-    }
+        SELECT
+          sa.id,
+          3 AS entity_type,
+          sa.created,
+          sa.reference_id_lock,
+          sa.reference_id,
+          sa.action_user_id,
+          sa.action_type,
+          sa.changes,
+          gs.game_id AS parent_entity_id
+        FROM game_score_audits sa
+        JOIN game_scores gs ON sa.reference_id_lock = gs.id
+        JOIN games g ON gs.game_id = g.id
+        JOIN matches m ON g.match_id = m.id
+        WHERE m.tournament_id = ${tournamentId}
+          AND sa.action_type != 0
+          AND ${includeScore ? sql`TRUE` : sql`FALSE`}
+          AND ${excludeSystemActions ? sql`sa.action_user_id IS NOT NULL` : sql`TRUE`}
+          AND ${
+            actionTypes && actionTypes.length > 0
+              ? sql`sa.action_type = ANY(ARRAY[${sql.join(
+                  actionTypes.map((t) => sql`${t}`),
+                  sql`, `
+                )}])`
+              : sql`TRUE`
+          }
+          AND ${scorePropCond}
+      )
+      SELECT *
+      FROM all_audits
+      WHERE ${cursorCond}
+        AND ${verificationExcludeCond}
+      ORDER BY id DESC
+      LIMIT ${limit + 1}
+    `;
 
-    filteredAudits.sort((a, b) => b.id - a.id);
-    const hasMore = filteredAudits.length > limit;
-    const auditsToReturn = filteredAudits.slice(0, limit);
+    const results = await db.execute(query);
+    const rows = results.rows as Array<{
+      id: number;
+      entity_type: number;
+      created: string;
+      reference_id_lock: number;
+      reference_id: number | null;
+      action_user_id: number | null;
+      action_type: number;
+      changes: unknown;
+      parent_entity_id: number | null;
+    }>;
+
+    const hasMore = rows.length > limit;
+    const auditsToReturn = rows.slice(0, limit);
 
     const enrichedAudits: TournamentTimelineAudit[] = await Promise.all(
-      auditsToReturn.map(async (audit) => {
+      auditsToReturn.map(async (row) => {
+        const entityType = row.entity_type as AuditEntityType;
         const [actor, entityDisplayName, parentEntityName] = await Promise.all([
-          enrichAuditWithActor(db, audit.actionUserId),
+          enrichAuditWithActor(db, row.action_user_id),
           getEntityDisplayName(
             db,
-            audit.entityType,
-            audit.referenceId,
-            audit.referenceIdLock
+            entityType,
+            row.reference_id,
+            row.reference_id_lock
           ),
-          audit.parentEntityId
+          row.parent_entity_id
             ? getEntityDisplayName(
                 db,
-                audit.entityType === ReportEntityType.Match
+                entityType === ReportEntityType.Match
                   ? ReportEntityType.Tournament
-                  : audit.entityType === ReportEntityType.Game
+                  : entityType === ReportEntityType.Game
                     ? ReportEntityType.Match
                     : ReportEntityType.Game,
-                audit.parentEntityId,
-                audit.parentEntityId
+                row.parent_entity_id,
+                row.parent_entity_id
               )
             : null,
         ]);
 
         return {
-          id: audit.id,
-          entityType: audit.entityType,
-          created: audit.created,
-          referenceIdLock: audit.referenceIdLock,
-          referenceId: audit.referenceId,
-          actionUserId: audit.actionUserId,
-          actionType: audit.actionType,
-          changes: normalizeChanges(audit.changes),
+          id: row.id,
+          entityType,
+          created: row.created,
+          referenceIdLock: row.reference_id_lock,
+          referenceId: row.reference_id,
+          actionUserId: row.action_user_id,
+          actionType: row.action_type,
+          changes: normalizeChanges(row.changes),
           actor,
           entityDisplayName,
-          parentEntityId: audit.parentEntityId,
+          parentEntityId: row.parent_entity_id,
           parentEntityName,
         };
       })

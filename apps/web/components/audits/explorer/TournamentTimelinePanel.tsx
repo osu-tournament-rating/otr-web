@@ -7,6 +7,7 @@ import useSWRInfinite from 'swr/infinite';
 
 import { orpc } from '@/lib/orpc/orpc';
 import {
+  PropertyFilter,
   TournamentTimelineAudit,
   TournamentTimelineInput,
 } from '@/lib/orpc/schema/audit';
@@ -34,6 +35,7 @@ interface TimelineFilter {
 
 interface TournamentTimelinePanelProps {
   tournamentId: number | null;
+  changedProperties?: PropertyFilter[];
 }
 
 const PAGE_SIZE = 50;
@@ -44,7 +46,11 @@ const ENTITY_TYPES = [
   { value: '3', label: 'Score' },
 ];
 
-function getKey(tournamentId: number, filter: TimelineFilter) {
+function getKey(
+  tournamentId: number,
+  filter: TimelineFilter,
+  changedProperties?: PropertyFilter[]
+) {
   return (
     pageIndex: number,
     previousPageData: {
@@ -63,12 +69,14 @@ function getKey(tournamentId: number, filter: TimelineFilter) {
       entityTypes: filter.entityTypes,
       excludeSystemActions: filter.excludeSystemActions,
       excludeVerificationChanges: filter.excludeVerificationChanges,
+      changedProperties,
     };
   };
 }
 
 export default function TournamentTimelinePanel({
   tournamentId,
+  changedProperties,
 }: TournamentTimelinePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -79,7 +87,9 @@ export default function TournamentTimelinePanel({
 
   const { data, size, setSize, isLoading, isValidating, mutate } =
     useSWRInfinite(
-      tournamentId ? getKey(tournamentId, filter) : () => null,
+      tournamentId
+        ? getKey(tournamentId, filter, changedProperties)
+        : () => null,
       (params) =>
         orpc.audits.tournamentTimeline(params as TournamentTimelineInput),
       {
@@ -90,7 +100,7 @@ export default function TournamentTimelinePanel({
 
   useEffect(() => {
     mutate();
-  }, [filter, mutate]);
+  }, [filter, changedProperties, mutate]);
 
   const audits = data?.flatMap((page) => page.audits) ?? [];
   const hasMore = data?.[data.length - 1]?.hasMore ?? false;

@@ -3,11 +3,25 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useTransition } from 'react';
 
-import { FilterOptionsResponse } from '@/lib/orpc/schema/audit';
+import { FilterOptionsResponse, PropertyFilter } from '@/lib/orpc/schema/audit';
 import AuditExplorerLayout from './AuditExplorerLayout';
 import AuditFilterBuilder, { AuditExplorerFilter } from './AuditFilterBuilder';
 import TournamentAuditTable from './TournamentAuditTable';
 import TournamentTimelinePanel from './TournamentTimelinePanel';
+
+function parsePropertyFilters(
+  propsParam: string | null
+): PropertyFilter[] | undefined {
+  if (!propsParam) return undefined;
+  const parsed = propsParam
+    .split(',')
+    .map((p) => {
+      const [property, entityTypeStr] = p.split(':');
+      return { property, entityType: parseInt(entityTypeStr, 10) };
+    })
+    .filter((p) => p.property && !isNaN(p.entityType));
+  return parsed.length > 0 ? parsed : undefined;
+}
 
 interface AuditExplorerProps {
   filterOptions: FilterOptionsResponse;
@@ -27,7 +41,7 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
 
     return {
       searchQuery: q ?? undefined,
-      changedProperties: props ? props.split(',') : undefined,
+      changedProperties: parsePropertyFilters(props),
       userActionsOnly: userOnly === 'true',
       selectedTournamentId: tid ? parseInt(tid, 10) : undefined,
     };
@@ -85,6 +99,7 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
         panel={
           <TournamentTimelinePanel
             tournamentId={filter.selectedTournamentId ?? null}
+            changedProperties={filter.changedProperties}
           />
         }
       />

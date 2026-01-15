@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { useDebounce } from '@uidotdev/usehooks';
 
-import { FilterProperty } from '@/lib/orpc/schema/audit';
+import { FilterProperty, PropertyFilter } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,7 @@ import AuditEntityBadge from '../AuditEntityBadge';
 
 export interface AuditExplorerFilter {
   searchQuery?: string;
-  changedProperties?: string[];
+  changedProperties?: PropertyFilter[];
   userActionsOnly?: boolean;
   selectedTournamentId?: number;
 }
@@ -41,6 +41,10 @@ export interface AuditExplorerFilter {
 interface AuditFilterBuilderProps {
   filter: AuditExplorerFilter;
   filterOptions: { properties: FilterProperty[] };
+}
+
+function serializePropertyFilters(filters: PropertyFilter[]): string {
+  return filters.map((f) => `${f.property}:${f.entityType}`).join(',');
 }
 
 export default function AuditFilterBuilder({
@@ -65,7 +69,10 @@ export default function AuditFilterBuilder({
         params.set('q', newFilter.searchQuery);
       }
       if (newFilter.changedProperties?.length) {
-        params.set('props', newFilter.changedProperties.join(','));
+        params.set(
+          'props',
+          serializePropertyFilters(newFilter.changedProperties)
+        );
       }
       if (newFilter.userActionsOnly) {
         params.set('userOnly', 'true');
@@ -93,12 +100,29 @@ export default function AuditFilterBuilder({
     setSearchValue(value);
   };
 
-  const handlePropertyToggle = (property: string) => {
+  const handlePropertyToggle = (prop: FilterProperty) => {
     const current = filter.changedProperties ?? [];
-    const updated = current.includes(property)
-      ? current.filter((p) => p !== property)
-      : [...current, property];
+    const existingIndex = current.findIndex(
+      (p) => p.property === prop.name && p.entityType === prop.entityType
+    );
+
+    let updated: PropertyFilter[];
+    if (existingIndex >= 0) {
+      updated = current.filter((_, i) => i !== existingIndex);
+    } else {
+      updated = [
+        ...current,
+        { property: prop.name, entityType: prop.entityType },
+      ];
+    }
+
     updateUrl({ changedProperties: updated.length > 0 ? updated : undefined });
+  };
+
+  const isPropertySelected = (prop: FilterProperty): boolean => {
+    return (filter.changedProperties ?? []).some(
+      (p) => p.property === prop.name && p.entityType === prop.entityType
+    );
   };
 
   const handleUserActionsToggle = () => {
@@ -106,9 +130,9 @@ export default function AuditFilterBuilder({
   };
 
   const handleClearProperty = useCallback(
-    (property: string) => {
+    (property: string, entityType: number) => {
       const updated = (filter.changedProperties ?? []).filter(
-        (p) => p !== property
+        (p) => !(p.property === property && p.entityType === entityType)
       );
       updateUrl({
         changedProperties: updated.length > 0 ? updated : undefined,
@@ -131,6 +155,7 @@ export default function AuditFilterBuilder({
       type: string;
       label: string;
       value: string;
+      entityType?: number;
       onRemove: () => void;
     }[] = [];
 
@@ -150,8 +175,9 @@ export default function AuditFilterBuilder({
       filters.push({
         type: 'property',
         label: 'Property',
-        value: prop,
-        onRemove: () => handleClearProperty(prop),
+        value: prop.property,
+        entityType: prop.entityType,
+        onRemove: () => handleClearProperty(prop.property, prop.entityType),
       });
     });
 
@@ -201,13 +227,11 @@ export default function AuditFilterBuilder({
                 <CommandGroup>
                   {filterOptions.properties.slice(0, 50).map((prop) => (
                     <CommandItem
-                      key={prop.name}
-                      onSelect={() => handlePropertyToggle(prop.name)}
+                      key={`${prop.name}-${prop.entityType}`}
+                      onSelect={() => handlePropertyToggle(prop)}
                     >
                       <Checkbox
-                        checked={(filter.changedProperties ?? []).includes(
-                          prop.name
-                        )}
+                        checked={isPropertySelected(prop)}
                         className="mr-2"
                       />
                       <span className="flex-1">{prop.name}</span>
@@ -240,12 +264,15 @@ export default function AuditFilterBuilder({
         <div className="flex flex-wrap gap-2">
           {activeFilters.map((af, idx) => (
             <Badge
-              key={`${af.type}-${af.value}-${idx}`}
+              key={`${af.type}-${af.value}-${af.entityType ?? ''}-${idx}`}
               variant="secondary"
               className="gap-1 pr-1"
             >
               <span className="text-muted-foreground text-xs">{af.label}:</span>
               <span>{af.value}</span>
+              {af.entityType !== undefined && (
+                <AuditEntityBadge entityType={af.entityType} />
+              )}
               <Button
                 variant="ghost"
                 size="icon"
