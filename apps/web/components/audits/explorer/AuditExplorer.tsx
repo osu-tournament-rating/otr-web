@@ -3,9 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useTransition } from 'react';
 
+import { AuditActionType } from '@otr/core/osu';
+
 import { FilterOptionsResponse, PropertyFilter } from '@/lib/orpc/schema/audit';
+import { AuditFilterState, AuditUnifiedFilter } from '../filters';
 import AuditExplorerLayout from './AuditExplorerLayout';
-import AuditFilterBuilder, { AuditExplorerFilter } from './AuditFilterBuilder';
 import TournamentAuditTable from './TournamentAuditTable';
 import TournamentTimelinePanel from './TournamentTimelinePanel';
 
@@ -23,6 +25,17 @@ function parsePropertyFilters(
   return parsed.length > 0 ? parsed : undefined;
 }
 
+function parseActionTypes(
+  actionsParam: string | null
+): AuditActionType[] | undefined {
+  if (!actionsParam) return undefined;
+  const parsed = actionsParam
+    .split(',')
+    .map((s) => parseInt(s, 10) as AuditActionType)
+    .filter((n) => !isNaN(n) && n >= 0 && n <= 2);
+  return parsed.length > 0 ? parsed : undefined;
+}
+
 interface AuditExplorerProps {
   filterOptions: FilterOptionsResponse;
 }
@@ -33,17 +46,25 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
-  const filter = useMemo((): AuditExplorerFilter => {
+  const filter = useMemo((): AuditFilterState => {
     const q = searchParams.get('q');
     const props = searchParams.get('props');
     const userOnly = searchParams.get('userOnly');
     const tid = searchParams.get('tid');
+    const after = searchParams.get('after');
+    const before = searchParams.get('before');
+    const actions = searchParams.get('actions');
+    const actor = searchParams.get('actor');
 
     return {
       searchQuery: q ?? undefined,
       changedProperties: parsePropertyFilters(props),
       userActionsOnly: userOnly === 'true',
       selectedTournamentId: tid ? parseInt(tid, 10) : undefined,
+      activityAfter: after ?? undefined,
+      activityBefore: before ?? undefined,
+      actionTypes: parseActionTypes(actions),
+      actionUserId: actor ? parseInt(actor, 10) : undefined,
     };
   }, [searchParams]);
 
@@ -75,13 +96,23 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
       searchQuery: filter.searchQuery,
       changedProperties: filter.changedProperties,
       userActionsOnly: filter.userActionsOnly ?? false,
+      activityAfter: filter.activityAfter,
+      activityBefore: filter.activityBefore,
+      actionUserId: filter.actionUserId,
     }),
-    [filter.searchQuery, filter.changedProperties, filter.userActionsOnly]
+    [
+      filter.searchQuery,
+      filter.changedProperties,
+      filter.userActionsOnly,
+      filter.activityAfter,
+      filter.activityBefore,
+      filter.actionUserId,
+    ]
   );
 
   return (
     <div className="space-y-4">
-      <AuditFilterBuilder filter={filter} filterOptions={filterOptions} />
+      <AuditUnifiedFilter filter={filter} filterOptions={filterOptions} />
 
       <AuditExplorerLayout
         selectedId={filter.selectedTournamentId ?? null}
