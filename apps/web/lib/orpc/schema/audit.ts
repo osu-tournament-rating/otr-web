@@ -127,3 +127,85 @@ export type AuditRecord = z.infer<typeof AuditRecordSchema>;
 export type AuditListResponse = z.infer<typeof AuditListResponseSchema>;
 export type AuditEntityState = z.infer<typeof AuditEntityStateSchema>;
 export type AuditDetailResponse = z.infer<typeof AuditDetailResponseSchema>;
+
+export const TournamentAuditSummarySchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  abbreviation: z.string().nullable(),
+  tournamentChanges: z.number().int(),
+  matchChanges: z.number().int(),
+  gameChanges: z.number().int(),
+  scoreChanges: z.number().int(),
+  lastActivity: z.string(),
+});
+
+export const TournamentAuditListInputSchema = z.object({
+  cursor: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+  searchQuery: z.string().optional(),
+  changedProperties: z.array(z.string()).optional(),
+  entityTypesWithChanges: z.array(AuditEntityTypeSchema).optional(),
+  userActionsOnly: z.boolean().default(false),
+  actionUserId: z.number().int().optional(),
+  activityAfter: z.string().optional(),
+  activityBefore: z.string().optional(),
+});
+
+export const TournamentAuditListResponseSchema = z.object({
+  tournaments: z.array(TournamentAuditSummarySchema),
+  nextCursor: z.number().int().nullable(),
+  hasMore: z.boolean(),
+});
+
+export const TournamentTimelineInputSchema = z.object({
+  tournamentId: z.number().int().positive(),
+  cursor: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+  entityTypes: z.array(AuditEntityTypeSchema).optional(),
+  excludeSystemActions: z.boolean().default(false),
+  excludeVerificationChanges: z.boolean().default(false),
+  changedProperties: z.array(z.string()).optional(),
+  actionTypes: z.array(AuditActionTypeSchema).optional(),
+});
+
+export const TournamentTimelineAuditSchema = AuditRecordSchema.extend({
+  parentEntityId: z.number().int().nullable(),
+  parentEntityName: z.string().nullable(),
+});
+
+export const TournamentTimelineResponseSchema = z.object({
+  audits: z.array(TournamentTimelineAuditSchema),
+  nextCursor: z.number().int().nullable(),
+  hasMore: z.boolean(),
+});
+
+export const FilterPropertySchema = z.object({
+  name: z.string(),
+  entityType: AuditEntityTypeSchema,
+  changeCount: z.number().int(),
+});
+
+export const FilterOptionsResponseSchema = z.object({
+  properties: z.array(FilterPropertySchema),
+});
+
+export type TournamentAuditSummary = z.infer<
+  typeof TournamentAuditSummarySchema
+>;
+export type TournamentAuditListInput = z.infer<
+  typeof TournamentAuditListInputSchema
+>;
+export type TournamentAuditListResponse = z.infer<
+  typeof TournamentAuditListResponseSchema
+>;
+export type TournamentTimelineInput = z.infer<
+  typeof TournamentTimelineInputSchema
+>;
+export type TournamentTimelineAudit = z.infer<
+  typeof TournamentTimelineAuditSchema
+>;
+export type TournamentTimelineResponse = z.infer<
+  typeof TournamentTimelineResponseSchema
+>;
+export type FilterProperty = z.infer<typeof FilterPropertySchema>;
+export type FilterOptionsResponse = z.infer<typeof FilterOptionsResponseSchema>;

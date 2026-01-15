@@ -225,3 +225,14 @@ export const auditListFilterSchema = z.object({
   sort: z.enum(auditSortValues).catch('created'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });
+
+export const defaultAuditExplorerFilter = {
+  userActionsOnly: false,
+};
+
+export const auditExplorerFilterSchema = z.object({
+  q: z.string().optional(),
+  props: z.string().optional(),
+  userOnly: z.union([z.boolean(), booleanStringSchema]).catch(false),
+  tid: z.coerce.number().int().optional(),
+});

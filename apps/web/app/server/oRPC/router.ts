@@ -99,8 +99,11 @@ import {
   getAudit,
   getEntityHistory,
   getEntityState,
+  getFilterOptions,
+  getTournamentAuditTimeline,
   listAudits,
   listRecentlyAuditedEntities,
+  listTournamentsWithAuditSummary,
 } from './procedures/audits/auditProcedures';
 
 export interface InitialContext {
@@ -128,6 +131,9 @@ export const router = base.router({
     history: getEntityHistory,
     entityState: getEntityState,
     recentEntities: listRecentlyAuditedEntities,
+    tournamentSummaries: listTournamentsWithAuditSummary,
+    tournamentTimeline: getTournamentAuditTimeline,
+    filterOptions: getFilterOptions,
   },
   user: {
     get: getUser,
