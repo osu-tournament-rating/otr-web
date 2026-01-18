@@ -11,8 +11,6 @@ import {
 } from 'react';
 import { useDebounce } from '@uidotdev/usehooks';
 
-import { AuditActionType } from '@otr/core/osu';
-
 import { FilterProperty, PropertyFilter } from '@/lib/orpc/schema/audit';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +24,6 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 
-import ActionTypeFilter from './ActionTypeFilter';
 import ActorFilter from './ActorFilter';
 import DateRangeFilter from './DateRangeFilter';
 import PropertyFilterSection from './PropertyFilterSection';
@@ -37,7 +34,6 @@ export interface AuditFilterState {
   userActionsOnly?: boolean;
   activityAfter?: string;
   activityBefore?: string;
-  actionTypes?: AuditActionType[];
   actionUserId?: number;
   selectedTournamentId?: number;
 }
@@ -49,10 +45,6 @@ interface AuditUnifiedFilterProps {
 
 function serializePropertyFilters(filters: PropertyFilter[]): string {
   return filters.map((f) => `${f.property}:${f.entityType}`).join(',');
-}
-
-function serializeActionTypes(types: AuditActionType[]): string {
-  return types.join(',');
 }
 
 export default function AuditUnifiedFilter({
@@ -92,9 +84,6 @@ export default function AuditUnifiedFilter({
       }
       if (newFilter.activityBefore) {
         params.set('before', newFilter.activityBefore);
-      }
-      if (newFilter.actionTypes?.length) {
-        params.set('actions', serializeActionTypes(newFilter.actionTypes));
       }
       if (newFilter.actionUserId) {
         params.set('actor', newFilter.actionUserId.toString());
@@ -139,20 +128,6 @@ export default function AuditUnifiedFilter({
     [filter.changedProperties, updateUrl]
   );
 
-  const handleActionTypeToggle = useCallback(
-    (type: AuditActionType) => {
-      const current = filter.actionTypes ?? [];
-      const exists = current.includes(type);
-
-      const updated = exists
-        ? current.filter((t) => t !== type)
-        : [...current, type];
-
-      updateUrl({ actionTypes: updated.length > 0 ? updated : undefined });
-    },
-    [filter.actionTypes, updateUrl]
-  );
-
   const handleDateRangeChange = useCallback(
     (after: string | undefined, before: string | undefined) => {
       updateUrl({ activityAfter: after, activityBefore: before });
@@ -179,7 +154,6 @@ export default function AuditUnifiedFilter({
       userActionsOnly: undefined,
       activityAfter: undefined,
       activityBefore: undefined,
-      actionTypes: undefined,
       actionUserId: undefined,
     });
   }, [updateUrl]);
@@ -190,7 +164,6 @@ export default function AuditUnifiedFilter({
       count += filter.changedProperties.length;
     if (filter.userActionsOnly) count += 1;
     if (filter.activityAfter || filter.activityBefore) count += 1;
-    if (filter.actionTypes?.length) count += filter.actionTypes.length;
     if (filter.actionUserId) count += 1;
     return count;
   }, [filter]);
@@ -229,18 +202,6 @@ export default function AuditUnifiedFilter({
                 properties={filterOptions.properties}
                 selectedProperties={filter.changedProperties ?? []}
                 onPropertyToggle={handlePropertyToggle}
-              />
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="mb-2 block text-sm font-medium">
-                Action Types
-              </Label>
-              <ActionTypeFilter
-                selectedTypes={filter.actionTypes ?? []}
-                onToggle={handleActionTypeToggle}
               />
             </div>
 

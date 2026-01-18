@@ -3,8 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useTransition } from 'react';
 
-import { AuditActionType } from '@otr/core/osu';
-
 import { FilterOptionsResponse, PropertyFilter } from '@/lib/orpc/schema/audit';
 import { AuditFilterState, AuditUnifiedFilter } from '../filters';
 import AuditExplorerLayout from './AuditExplorerLayout';
@@ -25,17 +23,6 @@ function parsePropertyFilters(
   return parsed.length > 0 ? parsed : undefined;
 }
 
-function parseActionTypes(
-  actionsParam: string | null
-): AuditActionType[] | undefined {
-  if (!actionsParam) return undefined;
-  const parsed = actionsParam
-    .split(',')
-    .map((s) => parseInt(s, 10) as AuditActionType)
-    .filter((n) => !isNaN(n) && n >= 0 && n <= 2);
-  return parsed.length > 0 ? parsed : undefined;
-}
-
 interface AuditExplorerProps {
   filterOptions: FilterOptionsResponse;
 }
@@ -53,7 +40,6 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
     const tid = searchParams.get('tid');
     const after = searchParams.get('after');
     const before = searchParams.get('before');
-    const actions = searchParams.get('actions');
     const actor = searchParams.get('actor');
 
     return {
@@ -63,7 +49,6 @@ export default function AuditExplorer({ filterOptions }: AuditExplorerProps) {
       selectedTournamentId: tid ? parseInt(tid, 10) : undefined,
       activityAfter: after ?? undefined,
       activityBefore: before ?? undefined,
-      actionTypes: parseActionTypes(actions),
       actionUserId: actor ? parseInt(actor, 10) : undefined,
     };
   }, [searchParams]);

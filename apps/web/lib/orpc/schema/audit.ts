@@ -165,15 +165,11 @@ export const TournamentTimelineInputSchema = z.object({
   tournamentId: z.number().int().positive(),
   cursor: z.number().int().optional(),
   limit: z.number().int().min(1).max(100).default(50),
-  entityTypes: z.array(AuditEntityTypeSchema).optional(),
-  excludeSystemActions: z.boolean().default(false),
-  excludeVerificationChanges: z.boolean().default(false),
   changedProperties: z
     .array(
       z.object({ property: z.string(), entityType: AuditEntityTypeSchema })
     )
     .optional(),
-  actionTypes: z.array(AuditActionTypeSchema).optional(),
 });
 
 export const TournamentTimelineAuditSchema = AuditRecordSchema.extend({
@@ -190,7 +186,6 @@ export const TournamentTimelineResponseSchema = z.object({
 export const FilterPropertySchema = z.object({
   name: z.string(),
   entityType: AuditEntityTypeSchema,
-  changeCount: z.number().int(),
 });
 
 export const PropertyFilterSchema = z.object({

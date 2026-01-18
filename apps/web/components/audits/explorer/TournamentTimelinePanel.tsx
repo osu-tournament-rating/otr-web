@@ -1,8 +1,8 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { ChevronDown, Filter, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
 import useSWRInfinite from 'swr/infinite';
 
 import { orpc } from '@/lib/orpc/orpc';
@@ -11,27 +11,11 @@ import {
   TournamentTimelineAudit,
   TournamentTimelineInput,
 } from '@/lib/orpc/schema/audit';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import AuditActionBadge from '../AuditActionBadge';
 import AuditActorBadge from '../AuditActorBadge';
 import AuditEntityBadge from '../AuditEntityBadge';
 import AuditChangesDisplay from '../AuditChangesDisplay';
-
-interface TimelineFilter {
-  entityTypes?: number[];
-  excludeSystemActions: boolean;
-  excludeVerificationChanges: boolean;
-}
 
 interface TournamentTimelinePanelProps {
   tournamentId: number | null;
@@ -39,18 +23,8 @@ interface TournamentTimelinePanelProps {
 }
 
 const PAGE_SIZE = 50;
-const ENTITY_TYPES = [
-  { value: '0', label: 'Tournament' },
-  { value: '1', label: 'Match' },
-  { value: '2', label: 'Game' },
-  { value: '3', label: 'Score' },
-];
 
-function getKey(
-  tournamentId: number,
-  filter: TimelineFilter,
-  changedProperties?: PropertyFilter[]
-) {
+function getKey(tournamentId: number, changedProperties?: PropertyFilter[]) {
   return (
     pageIndex: number,
     previousPageData: {
@@ -66,9 +40,6 @@ function getKey(
       tournamentId,
       cursor,
       limit: PAGE_SIZE,
-      entityTypes: filter.entityTypes,
-      excludeSystemActions: filter.excludeSystemActions,
-      excludeVerificationChanges: filter.excludeVerificationChanges,
       changedProperties,
     };
   };
@@ -79,17 +50,10 @@ export default function TournamentTimelinePanel({
   changedProperties,
 }: TournamentTimelinePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filter, setFilter] = useState<TimelineFilter>({
-    excludeSystemActions: false,
-    excludeVerificationChanges: false,
-  });
 
   const { data, size, setSize, isLoading, isValidating, mutate } =
     useSWRInfinite(
-      tournamentId
-        ? getKey(tournamentId, filter, changedProperties)
-        : () => null,
+      tournamentId ? getKey(tournamentId, changedProperties) : () => null,
       (params) =>
         orpc.audits.tournamentTimeline(params as TournamentTimelineInput),
       {
@@ -100,7 +64,7 @@ export default function TournamentTimelinePanel({
 
   useEffect(() => {
     mutate();
-  }, [filter, changedProperties, mutate]);
+  }, [changedProperties, mutate]);
 
   const audits = data?.flatMap((page) => page.audits) ?? [];
   const hasMore = data?.[data.length - 1]?.hasMore ?? false;
@@ -112,13 +76,6 @@ export default function TournamentTimelinePanel({
       setSize(size + 1);
     }
   }, [hasMore, isValidating, setSize, size]);
-
-  const handleEntityTypeToggle = (values: string[]) => {
-    setFilter((prev) => ({
-      ...prev,
-      entityTypes: values.length > 0 ? values.map(Number) : undefined,
-    }));
-  };
 
   if (!tournamentId) {
     return (
@@ -142,77 +99,6 @@ export default function TournamentTimelinePanel({
 
   return (
     <div className="flex h-full flex-col">
-      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full justify-between border-b px-4 py-2"
-          >
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-            </div>
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 transition-transform',
-                filtersOpen && 'rotate-180'
-              )}
-            />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 border-b p-4">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Entity Types</Label>
-            <ToggleGroup
-              type="multiple"
-              variant="outline"
-              className="flex-wrap justify-start"
-              value={filter.entityTypes?.map(String) ?? []}
-              onValueChange={handleEntityTypeToggle}
-            >
-              {ENTITY_TYPES.map((type) => (
-                <ToggleGroupItem key={type.value} value={type.value} size="sm">
-                  {type.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="excludeSystem"
-                checked={filter.excludeSystemActions}
-                onCheckedChange={(checked) =>
-                  setFilter((prev) => ({
-                    ...prev,
-                    excludeSystemActions: !!checked,
-                  }))
-                }
-              />
-              <Label htmlFor="excludeSystem" className="text-sm">
-                Hide system actions
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="excludeVerification"
-                checked={filter.excludeVerificationChanges}
-                onCheckedChange={(checked) =>
-                  setFilter((prev) => ({
-                    ...prev,
-                    excludeVerificationChanges: !!checked,
-                  }))
-                }
-              />
-              <Label htmlFor="excludeVerification" className="text-sm">
-                Hide verification status changes
-              </Label>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto"

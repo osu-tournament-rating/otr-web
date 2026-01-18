@@ -906,16 +906,7 @@ export const getTournamentAuditTimeline = publicProcedure
     path: '/audits/tournaments/{tournamentId}/timeline',
   })
   .handler(async ({ input, context }) => {
-    const {
-      tournamentId,
-      cursor,
-      limit,
-      entityTypes,
-      excludeSystemActions,
-      excludeVerificationChanges,
-      changedProperties,
-      actionTypes,
-    } = input;
+    const { tournamentId, cursor, limit, changedProperties } = input;
 
     const db = context.db;
 
@@ -976,39 +967,7 @@ export const getTournamentAuditTimeline = publicProcedure
       hasAnyPropertyFilter
     );
 
-    const shouldIncludeEntityType = (type: number) =>
-      !entityTypes || entityTypes.length === 0 || entityTypes.includes(type);
-
-    const includeTournament = shouldIncludeEntityType(
-      ReportEntityType.Tournament
-    );
-    const includeMatch = shouldIncludeEntityType(ReportEntityType.Match);
-    const includeGame = shouldIncludeEntityType(ReportEntityType.Game);
-    const includeScore = shouldIncludeEntityType(ReportEntityType.Score);
-
-    const systemActionCond = excludeSystemActions
-      ? sql`action_user_id IS NOT NULL`
-      : sql`TRUE`;
-
-    const actionTypeCond =
-      actionTypes && actionTypes.length > 0
-        ? sql`action_type = ANY(ARRAY[${sql.join(
-            actionTypes.map((t) => sql`${t}`),
-            sql`, `
-          )}])`
-        : sql`TRUE`;
-
     const cursorCond = cursor ? sql`id < ${cursor}` : sql`TRUE`;
-
-    const verificationExcludeCond = excludeVerificationChanges
-      ? sql`NOT (
-          jsonb_typeof(changes) = 'object'
-          AND (
-            (changes ?& ARRAY['verificationStatus'] AND jsonb_object_keys(changes)::text[] = ARRAY['verificationStatus'])
-            OR (changes ?& ARRAY['VerificationStatus'] AND jsonb_object_keys(changes)::text[] = ARRAY['VerificationStatus'])
-          )
-        )`
-      : sql`TRUE`;
 
     const query = sql`
       WITH all_audits AS (
@@ -1025,9 +984,6 @@ export const getTournamentAuditTimeline = publicProcedure
         FROM tournament_audits ta
         WHERE ta.reference_id_lock = ${tournamentId}
           AND ta.action_type != 0
-          AND ${includeTournament ? sql`TRUE` : sql`FALSE`}
-          AND ${systemActionCond}
-          AND ${actionTypeCond}
           AND ${tournamentPropCond}
 
         UNION ALL
@@ -1046,16 +1002,6 @@ export const getTournamentAuditTimeline = publicProcedure
         JOIN matches m ON ma.reference_id_lock = m.id
         WHERE m.tournament_id = ${tournamentId}
           AND ma.action_type != 0
-          AND ${includeMatch ? sql`TRUE` : sql`FALSE`}
-          AND ${excludeSystemActions ? sql`ma.action_user_id IS NOT NULL` : sql`TRUE`}
-          AND ${
-            actionTypes && actionTypes.length > 0
-              ? sql`ma.action_type = ANY(ARRAY[${sql.join(
-                  actionTypes.map((t) => sql`${t}`),
-                  sql`, `
-                )}])`
-              : sql`TRUE`
-          }
           AND ${matchPropCond}
 
         UNION ALL
@@ -1075,16 +1021,6 @@ export const getTournamentAuditTimeline = publicProcedure
         JOIN matches m ON g.match_id = m.id
         WHERE m.tournament_id = ${tournamentId}
           AND ga.action_type != 0
-          AND ${includeGame ? sql`TRUE` : sql`FALSE`}
-          AND ${excludeSystemActions ? sql`ga.action_user_id IS NOT NULL` : sql`TRUE`}
-          AND ${
-            actionTypes && actionTypes.length > 0
-              ? sql`ga.action_type = ANY(ARRAY[${sql.join(
-                  actionTypes.map((t) => sql`${t}`),
-                  sql`, `
-                )}])`
-              : sql`TRUE`
-          }
           AND ${gamePropCond}
 
         UNION ALL
@@ -1105,22 +1041,11 @@ export const getTournamentAuditTimeline = publicProcedure
         JOIN matches m ON g.match_id = m.id
         WHERE m.tournament_id = ${tournamentId}
           AND sa.action_type != 0
-          AND ${includeScore ? sql`TRUE` : sql`FALSE`}
-          AND ${excludeSystemActions ? sql`sa.action_user_id IS NOT NULL` : sql`TRUE`}
-          AND ${
-            actionTypes && actionTypes.length > 0
-              ? sql`sa.action_type = ANY(ARRAY[${sql.join(
-                  actionTypes.map((t) => sql`${t}`),
-                  sql`, `
-                )}])`
-              : sql`TRUE`
-          }
           AND ${scorePropCond}
       )
       SELECT *
       FROM all_audits
       WHERE ${cursorCond}
-        AND ${verificationExcludeCond}
       ORDER BY id DESC
       LIMIT ${limit + 1}
     `;
@@ -1206,10 +1131,8 @@ export const getFilterOptions = publicProcedure
   .handler(async ({ context }) => {
     const db = context.db;
 
-    const propertyMap = new Map<
-      string,
-      { entityType: AuditEntityType; count: number }
-    >();
+    const propertySet = new Set<string>();
+    const propertyEntityMap = new Map<string, AuditEntityType>();
 
     const extractProperties = async (
       table: typeof schema.tournamentAudits,
@@ -1219,18 +1142,16 @@ export const getFilterOptions = publicProcedure
         .select({ changes: table.changes })
         .from(table)
         .where(isNotNull(table.changes))
-        .limit(1000);
+        .limit(500);
 
       for (const audit of audits) {
         if (audit.changes && typeof audit.changes === 'object') {
           const changes = audit.changes as Record<string, unknown>;
           for (const key of Object.keys(changes)) {
             const normalizedKey = key.charAt(0).toLowerCase() + key.slice(1);
-            const existing = propertyMap.get(normalizedKey);
-            if (existing) {
-              existing.count++;
-            } else {
-              propertyMap.set(normalizedKey, { entityType, count: 1 });
+            if (!propertySet.has(normalizedKey)) {
+              propertySet.add(normalizedKey);
+              propertyEntityMap.set(normalizedKey, entityType);
             }
           }
         }
@@ -1253,13 +1174,12 @@ export const getFilterOptions = publicProcedure
       ),
     ]);
 
-    const properties = Array.from(propertyMap.entries())
-      .map(([name, data]) => ({
+    const properties = Array.from(propertySet)
+      .map((name) => ({
         name,
-        entityType: data.entityType,
-        changeCount: data.count,
+        entityType: propertyEntityMap.get(name)!,
       }))
-      .sort((a, b) => b.changeCount - a.changeCount);
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     return { properties };
   });

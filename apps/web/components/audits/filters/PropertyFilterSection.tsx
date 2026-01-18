@@ -7,7 +7,6 @@ import { ReportEntityType } from '@otr/core/osu';
 
 import { FilterProperty, PropertyFilter } from '@/lib/orpc/schema/audit';
 import { toSentenceCase } from '@/lib/utils/toSentenceCase';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Collapsible,
@@ -120,9 +119,6 @@ export default function PropertyFilterSection({
                 <span className="flex-1 text-left">
                   {ENTITY_LABELS[entityType]}
                 </span>
-                <Badge variant="secondary" className="text-xs">
-                  {entityProps.length}
-                </Badge>
               </CollapsibleTrigger>
 
               <CollapsibleContent>
@@ -140,14 +136,6 @@ export default function PropertyFilterSection({
                         {toSentenceCase(prop.name)}
                       </span>
                       <AuditEntityBadge entityType={prop.entityType} />
-                      {prop.changeCount > 0 && (
-                        <Badge
-                          variant="outline"
-                          className="text-muted-foreground text-xs"
-                        >
-                          {prop.changeCount}
-                        </Badge>
-                      )}
                     </label>
                   ))}
                 </div>
