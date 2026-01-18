@@ -11,17 +11,22 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  captionLayout,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      captionLayout={captionLayout}
       className={cn('p-3', className)}
       classNames={{
         months: 'flex flex-col sm:flex-row gap-2',
         month: 'flex flex-col gap-4',
         caption: 'flex justify-center pt-1 relative items-center w-full',
-        caption_label: 'text-sm font-medium',
+        caption_label: cn(
+          'text-sm font-medium',
+          captionLayout === 'dropdown' && 'hidden'
+        ),
         nav: 'flex items-center gap-1',
         nav_button: cn(
           buttonVariants({ variant: 'outline' }),
@@ -72,6 +77,11 @@ function Calendar({
           <ChevronRight className={cn('size-4', className)} {...props} />
         ),
       }}
+      labels={
+        captionLayout === 'dropdown'
+          ? { labelMonthDropdown: () => '', labelYearDropdown: () => '' }
+          : undefined
+      }
       {...props}
     />
   );
