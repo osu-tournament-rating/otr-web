@@ -39,6 +39,7 @@ const FALLBACK_PLAYER = {
   defaultRuleset: Ruleset.Osu,
   osuLastFetch: '2007-09-17 00:00:00',
   osuTrackLastFetch: '2007-09-17 00:00:00',
+  osuTrackDataFetchStatus: 0,
   dataFetchStatus: 0,
   userId: null as number | null,
 };
@@ -74,6 +75,7 @@ export type AdminNoteRow = {
   playerDefaultRuleset: number | null;
   playerOsuLastFetch: string | null;
   playerOsuTrackLastFetch: string | null;
+  playerOsuTrackDataFetchStatus: number | null;
   playerDataFetchStatus: number | null;
 };
 
@@ -92,6 +94,7 @@ export const selectAdminNoteFields = (table: AdminNoteTable) => ({
   playerDefaultRuleset: schema.players.defaultRuleset,
   playerOsuLastFetch: schema.players.osuLastFetch,
   playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
+  playerOsuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
   playerDataFetchStatus: schema.players.dataFetchStatus,
 });
 
@@ -122,6 +125,7 @@ export const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
           osuLastFetch: note.playerOsuLastFetch ?? '2007-09-17 00:00:00',
           osuTrackLastFetch:
             note.playerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
+          osuTrackDataFetchStatus: note.playerOsuTrackDataFetchStatus ?? 0,
           dataFetchStatus: note.playerDataFetchStatus ?? 0,
           userId: note.userId,
         },

@@ -141,7 +141,6 @@ describe('OsuApiFetchWorker', () => {
       const consumer = createMockConsumer();
       const logger = createMockLogger();
       const fetchAndPersistPlayer = mock(() => Promise.resolve(true));
-      const onPlayerProcessed = mock(() => Promise.resolve());
 
       const worker = new OsuApiFetchWorker({
         queue: consumer,
@@ -149,7 +148,6 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
         logger,
-        onPlayerProcessed,
       });
 
       await worker.start();
@@ -158,7 +156,6 @@ describe('OsuApiFetchWorker', () => {
       await consumer.emit(message);
 
       expect(fetchAndPersistPlayer).toHaveBeenCalledWith(12345);
-      expect(onPlayerProcessed).toHaveBeenCalledWith({ osuPlayerId: 12345 });
       expect(message.ack).toHaveBeenCalled();
     });
   });
