@@ -370,7 +370,8 @@ export const getMatch = publicProcedure
             playerDefaultRuleset: schema.players.defaultRuleset,
             playerOsuLastFetch: schema.players.osuLastFetch,
             playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
-            playerOsuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
+            playerOsuTrackDataFetchStatus:
+              schema.players.osuTrackDataFetchStatus,
             playerDataFetchStatus: schema.players.dataFetchStatus,
           })
           .from(schema.gameAdminNotes)
@@ -544,7 +545,8 @@ export const getMatch = publicProcedure
             playerDefaultRuleset: schema.players.defaultRuleset,
             playerOsuLastFetch: schema.players.osuLastFetch,
             playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
-            playerOsuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
+            playerOsuTrackDataFetchStatus:
+              schema.players.osuTrackDataFetchStatus,
             playerDataFetchStatus: schema.players.dataFetchStatus,
           })
           .from(schema.gameScoreAdminNotes)
