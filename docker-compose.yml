@@ -177,7 +177,6 @@ services:
       - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
     depends_on:
       - postgres-exporter
-      - node-exporter
 
   loki:
     image: grafana/loki:3.4.1
@@ -225,7 +224,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_SECURITY_SECRET_KEY: ${GRAFANA_SECRET_KEY}
       GF_USERS_ALLOW_SIGN_UP: 'false'
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-NULL}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -256,6 +255,8 @@ services:
     volumes:
       - /:/host:ro,rslave
     pid: host
+    profiles:
+      - 'node-exporter'
 
 volumes:
   postgres-data:
