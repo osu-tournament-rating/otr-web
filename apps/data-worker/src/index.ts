@@ -175,9 +175,6 @@ const bootstrap = async () => {
     matchService,
     playerService,
     logger,
-    onPlayerProcessed: async ({ osuPlayerId }) => {
-      playerRefetchScheduler.markOsuPlayerProcessed(osuPlayerId);
-    },
   });
 
   const osuTrackClient = new OsuTrackClient({});
@@ -195,9 +192,6 @@ const bootstrap = async () => {
         osuPlayerId: message.osuPlayerId,
         results,
       });
-    },
-    onProcessed: async ({ osuPlayerId }) => {
-      playerRefetchScheduler.markOsuTrackPlayerProcessed(osuPlayerId);
     },
   });
 

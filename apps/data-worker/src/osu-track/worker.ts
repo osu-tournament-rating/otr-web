@@ -18,7 +18,6 @@ export interface OsuTrackPlayerWorkerEvents {
       updates: UserStatUpdate[];
     }>;
   }) => Promise<void> | void;
-  onProcessed?: (details: { osuPlayerId: number }) => Promise<void> | void;
 }
 
 export interface OsuTrackPlayerWorkerOptions extends OsuTrackPlayerWorkerEvents {
@@ -47,7 +46,6 @@ export class OsuTrackPlayerWorker {
     this.logger = options.logger ?? defaultLogger;
     this.events = {
       onPlayer: options.onPlayer,
-      onProcessed: options.onProcessed,
     };
   }
 
@@ -82,7 +80,6 @@ export class OsuTrackPlayerWorker {
         }
         await this.events.onPlayer?.({ message: envelope, results });
         await message.ack();
-        await this.events.onProcessed?.({ osuPlayerId: envelope.osuPlayerId });
 
         const summary = results
           .map((entry) => `${entry.mode}:${entry.updates.length}`)
