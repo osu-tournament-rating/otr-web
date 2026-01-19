@@ -10,7 +10,11 @@ import {
   ensureBeatmapPlaceholder,
   updateBeatmapStatus,
 } from '../beatmap-store';
-import { getOrCreatePlayerId, getPlayerFetchStatus } from '../player-store';
+import {
+  getOrCreatePlayerId,
+  getPlayerFetchStatus,
+  setPlayerFetchStatusByOsuId,
+} from '../player-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
@@ -191,6 +195,12 @@ export class BeatmapFetchService {
             });
             continue;
           }
+          await setPlayerFetchStatusByOsuId(
+            tx,
+            userId,
+            DataFetchStatus.Fetching,
+            nowIso
+          );
           await this.publishPlayerFetch(userId);
         } catch (error) {
           this.logger.error('Failed to enqueue player fetch', {

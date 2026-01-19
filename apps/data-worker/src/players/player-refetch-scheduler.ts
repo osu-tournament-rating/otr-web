@@ -1,4 +1,4 @@
-import { asc, isNull, lt, ne, or } from 'drizzle-orm';
+import { and, asc, isNull, lt, ne, or } from 'drizzle-orm';
 import type { FetchOsuMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
@@ -7,6 +7,7 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
 import type { QueuePublisher } from '../queue/types';
+import { setPlayerFetchStatusByOsuId } from '../osu/player-store';
 
 type AutoRefetchConfig = {
   enabled: boolean;
@@ -21,7 +22,6 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
-const DEFAULT_BATCH_SIZE = 250;
 
 type IntervalHandle = ReturnType<typeof setInterval> | null;
 
@@ -36,7 +36,6 @@ interface PlayerRefetchSchedulerOptions {
   osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   config: SchedulerConfig;
-  batchSize?: number;
 }
 
 export class PlayerRefetchScheduler {
@@ -45,7 +44,6 @@ export class PlayerRefetchScheduler {
   private readonly osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   private readonly osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   private readonly config: SchedulerConfig;
-  private readonly batchSize: number;
 
   private osuInterval: IntervalHandle = null;
   private osuTrackInterval: IntervalHandle = null;
@@ -64,7 +62,6 @@ export class PlayerRefetchScheduler {
     this.osuPublisher = options.osuPublisher;
     this.osuTrackPublisher = options.osuTrackPublisher;
     this.config = options.config;
-    this.batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
   }
 
   async start() {
@@ -150,14 +147,17 @@ export class PlayerRefetchScheduler {
   }
 
   private async runOsuRefetch() {
-    // Select ALL players, not just outdated ones - maximize API usage within rate limits
-    // Skip players that are currently being fetched (status === Fetching)
+    const cutoffIso = this.calculateCutoff(this.config.osu.outdatedDays);
     const players = await this.db
       .select({ osuPlayerId: schema.players.osuId })
       .from(schema.players)
-      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
-      .orderBy(asc(schema.players.osuLastFetch))
-      .limit(this.batchSize);
+      .where(
+        and(
+          ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+          lt(schema.players.osuLastFetch, cutoffIso)
+        )
+      )
+      .orderBy(asc(schema.players.osuLastFetch));
 
     const enqueued = await this.enqueuePlayers({
       players,
@@ -171,6 +171,14 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!',
+      setFetchingStatus: async (osuPlayerId) => {
+        await setPlayerFetchStatusByOsuId(
+          this.db,
+          osuPlayerId,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+      },
     });
 
     if (enqueued > 0) {
@@ -193,8 +201,7 @@ export class PlayerRefetchScheduler {
           lt(schema.players.osuTrackLastFetch, cutoffIso)
         )
       )
-      .orderBy(asc(schema.players.osuTrackLastFetch))
-      .limit(this.batchSize);
+      .orderBy(asc(schema.players.osuTrackLastFetch));
 
     const enqueued = await this.enqueuePlayers({
       players,
@@ -224,6 +231,7 @@ export class PlayerRefetchScheduler {
     intervalMinutes: number;
     publish: (osuPlayerId: number) => Promise<void>;
     logContext: string;
+    setFetchingStatus?: (osuPlayerId: number) => Promise<void>;
   }): Promise<number> {
     const intervalMs = options.intervalMinutes * MS_PER_MINUTE;
     const now = Date.now();
@@ -243,6 +251,9 @@ export class PlayerRefetchScheduler {
       }
 
       try {
+        if (options.setFetchingStatus) {
+          await options.setFetchingStatus(osuPlayerId);
+        }
         await options.publish(osuPlayerId);
         options.pending.add(osuPlayerId);
         options.lastScheduled.set(osuPlayerId, now);

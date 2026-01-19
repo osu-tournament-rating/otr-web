@@ -150,18 +150,20 @@ export const processOsuTrackPlayerResults = async ({
     }
   }
 
-  if (persistedAny) {
-    await db
-      .update(schema.players)
-      .set({ osuTrackLastFetch: nowIso })
-      .where(eq(schema.players.id, player.id));
+  // Always update osuTrackLastFetch to mark this player as fetched,
+  // even when no updates were persisted
+  await db
+    .update(schema.players)
+    .set({ osuTrackLastFetch: nowIso })
+    .where(eq(schema.players.id, player.id));
 
+  if (persistedAny) {
     logger.info(
       `osu!track persistence finished player ${player.id}, set last fetch ${nowIso}`
     );
   } else {
     logger.info(
-      `osu!track persistence finished player ${player.id}, no ruleset rows updated`
+      `osu!track persistence finished player ${player.id}, no ruleset rows updated, set last fetch ${nowIso}`
     );
   }
 };
