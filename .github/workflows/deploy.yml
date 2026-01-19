@@ -94,8 +94,8 @@ jobs:
             export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
             export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
             cd "$REMOTE_PATH"
-            docker compose --env-file .env pull web data-worker
-            docker compose --env-file .env up -d db rabbitmq prometheus grafana postgres-exporter node-exporter
+            docker compose --env-file .env pull
             docker compose --env-file .env --profile migrate run --rm migrate
+            docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
           envs: REMOTE_PATH
