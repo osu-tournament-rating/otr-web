@@ -81,7 +81,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
+    image: '${WEB_IMAGE:-otr-web:local}'
     container_name: web
     restart: unless-stopped
     ports:
@@ -123,7 +123,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: '${DATA_WORKER_IMAGE:-stagecodes/otr-data-worker:local}'
+    image: '${DATA_WORKER_IMAGE:-otr-data-worker:local}'
     container_name: data-worker
     restart: unless-stopped
     depends_on:
