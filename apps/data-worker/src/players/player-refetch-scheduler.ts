@@ -7,7 +7,10 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
 import type { QueuePublisher } from '../queue/types';
-import { setPlayerFetchStatusByOsuId } from '../osu/player-store';
+import {
+  setPlayerFetchStatusByOsuId,
+  setPlayerOsuTrackFetchStatusByOsuId,
+} from '../osu/player-store';
 
 type AutoRefetchConfig = {
   enabled: boolean;
@@ -196,9 +199,12 @@ export class PlayerRefetchScheduler {
       })
       .from(schema.players)
       .where(
-        or(
-          isNull(schema.players.osuTrackLastFetch),
-          lt(schema.players.osuTrackLastFetch, cutoffIso)
+        and(
+          ne(schema.players.osuTrackDataFetchStatus, DataFetchStatus.Fetching),
+          or(
+            isNull(schema.players.osuTrackLastFetch),
+            lt(schema.players.osuTrackLastFetch, cutoffIso)
+          )
         )
       )
       .orderBy(asc(schema.players.osuTrackLastFetch));
@@ -215,6 +221,14 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!track',
+      setFetchingStatus: async (osuPlayerId) => {
+        await setPlayerOsuTrackFetchStatusByOsuId(
+          this.db,
+          osuPlayerId,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+      },
     });
 
     if (enqueued > 0) {

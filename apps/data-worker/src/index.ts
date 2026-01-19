@@ -186,6 +186,7 @@ const bootstrap = async () => {
     queue: osuTrackConsumer,
     client: osuTrackClient,
     rateLimiter: osuTrackRateLimiter,
+    db,
     logger,
     onPlayer: async ({ message, results }) => {
       await processOsuTrackPlayerResults({

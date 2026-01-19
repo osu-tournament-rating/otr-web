@@ -146,3 +146,18 @@ export const setPlayerFetchStatusByOsuId = async (
     })
     .where(eq(schema.players.osuId, osuPlayerId));
 };
+
+export const setPlayerOsuTrackFetchStatusByOsuId = async (
+  db: UpdateExecutor,
+  osuPlayerId: number,
+  status: number,
+  updatedIso: string
+) => {
+  await db
+    .update(schema.players)
+    .set({
+      osuTrackDataFetchStatus: status,
+      updated: updatedIso,
+    })
+    .where(eq(schema.players.osuId, osuPlayerId));
+};
