@@ -1,0 +1,1 @@
+ALTER TABLE "players" ADD COLUMN "osu_track_data_fetch_status" integer DEFAULT 0 NOT NULL;

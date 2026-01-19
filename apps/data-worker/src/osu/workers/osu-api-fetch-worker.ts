@@ -10,13 +10,7 @@ type BeatmapFetchServiceContract = Pick<BeatmapFetchService, 'fetchAndPersist'>;
 type MatchFetchServiceContract = Pick<MatchFetchService, 'fetchAndPersist'>;
 type PlayerFetchServiceContract = Pick<PlayerFetchService, 'fetchAndPersist'>;
 
-interface OsuApiFetchWorkerEvents {
-  onPlayerProcessed?: (details: {
-    osuPlayerId: number;
-  }) => Promise<void> | void;
-}
-
-interface OsuApiFetchWorkerOptions extends OsuApiFetchWorkerEvents {
+interface OsuApiFetchWorkerOptions {
   queue: QueueConsumer<FetchOsuMessage>;
   beatmapService: BeatmapFetchServiceContract;
   matchService: MatchFetchServiceContract;
@@ -30,7 +24,6 @@ export class OsuApiFetchWorker {
   private readonly matchService: MatchFetchServiceContract;
   private readonly playerService: PlayerFetchServiceContract;
   private readonly logger: Logger;
-  private readonly events: OsuApiFetchWorkerEvents;
 
   constructor(options: OsuApiFetchWorkerOptions) {
     this.queue = options.queue;
@@ -38,7 +31,6 @@ export class OsuApiFetchWorker {
     this.matchService = options.matchService;
     this.playerService = options.playerService;
     this.logger = options.logger;
-    this.events = { onPlayerProcessed: options.onPlayerProcessed };
   }
 
   async start() {
@@ -95,7 +87,6 @@ export class OsuApiFetchWorker {
         const { osuPlayerId } = payload;
         msgLogger.info('processing player fetch', { osuPlayerId });
         await this.playerService.fetchAndPersist(osuPlayerId);
-        await this.events.onPlayerProcessed?.({ osuPlayerId });
         break;
       }
 

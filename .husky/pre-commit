@@ -11,12 +11,6 @@ bun run lint
 echo "Type checking..."
 bunx tsc
 
-staged_files="$(git diff --cached --name-only --diff-filter=ACM)"
-
-if [ -n "$staged_files" ]; then
-  echo "Running Prettier on staged files..."
-  printf '%s' "$staged_files" | tr '\n' '\0' | xargs -0 bunx prettier --write --ignore-unknown
-  printf '%s' "$staged_files" | tr '\n' '\0' | xargs -0 git add
-fi
+git add .
 
 echo "Pre-commit checks passed!"

@@ -1,4 +1,4 @@
-import { asc, isNull, lt, ne, or } from 'drizzle-orm';
+import { and, asc, isNull, lt, ne, or } from 'drizzle-orm';
 import type { FetchOsuMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
@@ -7,6 +7,10 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
 import type { QueuePublisher } from '../queue/types';
+import {
+  setPlayerFetchStatusByOsuId,
+  setPlayerOsuTrackFetchStatusByOsuId,
+} from '../osu/player-store';
 
 type AutoRefetchConfig = {
   enabled: boolean;
@@ -21,7 +25,6 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
-const DEFAULT_BATCH_SIZE = 250;
 
 type IntervalHandle = ReturnType<typeof setInterval> | null;
 
@@ -36,7 +39,6 @@ interface PlayerRefetchSchedulerOptions {
   osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   config: SchedulerConfig;
-  batchSize?: number;
 }
 
 export class PlayerRefetchScheduler {
@@ -45,7 +47,6 @@ export class PlayerRefetchScheduler {
   private readonly osuPublisher: QueuePublisherContract<FetchOsuMessage>;
   private readonly osuTrackPublisher: QueuePublisherContract<FetchPlayerOsuTrackMessage>;
   private readonly config: SchedulerConfig;
-  private readonly batchSize: number;
 
   private osuInterval: IntervalHandle = null;
   private osuTrackInterval: IntervalHandle = null;
@@ -53,18 +54,12 @@ export class PlayerRefetchScheduler {
   private osuTrackInFlight: Promise<void> | null = null;
   private started = false;
 
-  private readonly osuPending = new Set<number>();
-  private readonly osuTrackPending = new Set<number>();
-  private readonly osuLastScheduled = new Map<number, number>();
-  private readonly osuTrackLastScheduled = new Map<number, number>();
-
   constructor(options: PlayerRefetchSchedulerOptions) {
     this.db = options.db;
     this.logger = options.logger;
     this.osuPublisher = options.osuPublisher;
     this.osuTrackPublisher = options.osuTrackPublisher;
     this.config = options.config;
-    this.batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
   }
 
   async start() {
@@ -150,20 +145,20 @@ export class PlayerRefetchScheduler {
   }
 
   private async runOsuRefetch() {
-    // Select ALL players, not just outdated ones - maximize API usage within rate limits
-    // Skip players that are currently being fetched (status === Fetching)
+    const cutoffIso = this.calculateCutoff(this.config.osu.outdatedDays);
     const players = await this.db
       .select({ osuPlayerId: schema.players.osuId })
       .from(schema.players)
-      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
-      .orderBy(asc(schema.players.osuLastFetch))
-      .limit(this.batchSize);
+      .where(
+        and(
+          ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+          lt(schema.players.osuLastFetch, cutoffIso)
+        )
+      )
+      .orderBy(asc(schema.players.osuLastFetch));
 
     const enqueued = await this.enqueuePlayers({
       players,
-      pending: this.osuPending,
-      lastScheduled: this.osuLastScheduled,
-      intervalMinutes: this.config.osu.intervalMinutes,
       publish: async (osuPlayerId) => {
         await this.osuPublisher.publish(
           { type: 'player', osuPlayerId },
@@ -171,6 +166,14 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!',
+      setFetchingStatus: async (osuPlayerId) => {
+        await setPlayerFetchStatusByOsuId(
+          this.db,
+          osuPlayerId,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+      },
     });
 
     if (enqueued > 0) {
@@ -188,19 +191,18 @@ export class PlayerRefetchScheduler {
       })
       .from(schema.players)
       .where(
-        or(
-          isNull(schema.players.osuTrackLastFetch),
-          lt(schema.players.osuTrackLastFetch, cutoffIso)
+        and(
+          ne(schema.players.osuTrackDataFetchStatus, DataFetchStatus.Fetching),
+          or(
+            isNull(schema.players.osuTrackLastFetch),
+            lt(schema.players.osuTrackLastFetch, cutoffIso)
+          )
         )
       )
-      .orderBy(asc(schema.players.osuTrackLastFetch))
-      .limit(this.batchSize);
+      .orderBy(asc(schema.players.osuTrackLastFetch));
 
     const enqueued = await this.enqueuePlayers({
       players,
-      pending: this.osuTrackPending,
-      lastScheduled: this.osuTrackLastScheduled,
-      intervalMinutes: this.config.osuTrack.intervalMinutes,
       publish: async (osuPlayerId) => {
         await this.osuTrackPublisher.publish(
           { osuPlayerId },
@@ -208,6 +210,14 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!track',
+      setFetchingStatus: async (osuPlayerId) => {
+        await setPlayerOsuTrackFetchStatusByOsuId(
+          this.db,
+          osuPlayerId,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+      },
     });
 
     if (enqueued > 0) {
@@ -219,33 +229,20 @@ export class PlayerRefetchScheduler {
 
   private async enqueuePlayers(options: {
     players: Array<{ osuPlayerId: number }>;
-    pending: Set<number>;
-    lastScheduled: Map<number, number>;
-    intervalMinutes: number;
     publish: (osuPlayerId: number) => Promise<void>;
     logContext: string;
+    setFetchingStatus?: (osuPlayerId: number) => Promise<void>;
   }): Promise<number> {
-    const intervalMs = options.intervalMinutes * MS_PER_MINUTE;
-    const now = Date.now();
     let enqueued = 0;
 
     for (const player of options.players) {
       const osuPlayerId = player.osuPlayerId;
 
-      if (options.pending.has(osuPlayerId)) {
-        continue;
-      }
-
-      const lastScheduledAt = options.lastScheduled.get(osuPlayerId) ?? 0;
-
-      if (now - lastScheduledAt < intervalMs) {
-        continue;
-      }
-
       try {
+        if (options.setFetchingStatus) {
+          await options.setFetchingStatus(osuPlayerId);
+        }
         await options.publish(osuPlayerId);
-        options.pending.add(osuPlayerId);
-        options.lastScheduled.set(osuPlayerId, now);
         enqueued += 1;
       } catch (error) {
         this.logger.error('Failed to publish auto-refetch player', {
@@ -262,15 +259,5 @@ export class PlayerRefetchScheduler {
   private calculateCutoff(outdatedDays: number) {
     const cutoff = new Date(Date.now() - outdatedDays * MS_PER_DAY);
     return cutoff.toISOString();
-  }
-
-  markOsuPlayerProcessed(osuPlayerId: number) {
-    this.osuPending.delete(osuPlayerId);
-    this.osuLastScheduled.set(osuPlayerId, Date.now());
-  }
-
-  markOsuTrackPlayerProcessed(osuPlayerId: number) {
-    this.osuTrackPending.delete(osuPlayerId);
-    this.osuTrackLastScheduled.set(osuPlayerId, Date.now());
   }
 }

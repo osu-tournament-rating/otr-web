@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, vi } from 'bun:test';
 import { type FetchPlayerOsuTrackMessage, MessagePriority } from '@otr/core';
 
 import { OsuTrackClient } from '../client';
@@ -6,6 +6,7 @@ import { OsuTrackPlayerWorker } from '../worker';
 import type { QueueConsumer, QueueMessage } from '../../queue/types';
 import type { RateLimiter } from '../../rate-limiter';
 import type { Logger } from '../../logging/logger';
+import type { DatabaseClient } from '../../db';
 
 class StubRateLimiter implements RateLimiter {
   public calls = 0;
@@ -49,6 +50,14 @@ const noopLogger: Logger = {
   debug: () => {},
   child: () => noopLogger,
 };
+
+const stubDb = {
+  update: () => ({
+    set: () => ({
+      where: vi.fn(),
+    }),
+  }),
+} as unknown as DatabaseClient;
 
 describe('OsuTrackPlayerWorker', () => {
   it('processes queue messages and emits parsed updates', async () => {
@@ -95,6 +104,7 @@ describe('OsuTrackPlayerWorker', () => {
       client,
       rateLimiter,
       logger: noopLogger,
+      db: stubDb,
       onPlayer: async ({ message, results }) => {
         received.push({
           message,

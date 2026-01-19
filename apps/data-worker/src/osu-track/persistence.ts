@@ -1,5 +1,6 @@
 import type { UserStatUpdate } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { and, asc, eq, isNotNull } from 'drizzle-orm';
 
@@ -150,18 +151,23 @@ export const processOsuTrackPlayerResults = async ({
     }
   }
 
-  if (persistedAny) {
-    await db
-      .update(schema.players)
-      .set({ osuTrackLastFetch: nowIso })
-      .where(eq(schema.players.id, player.id));
+  // Always update osuTrackLastFetch and status to mark this player as fetched,
+  // even when no updates were persisted
+  await db
+    .update(schema.players)
+    .set({
+      osuTrackLastFetch: nowIso,
+      osuTrackDataFetchStatus: DataFetchStatus.Fetched,
+    })
+    .where(eq(schema.players.id, player.id));
 
+  if (persistedAny) {
     logger.info(
       `osu!track persistence finished player ${player.id}, set last fetch ${nowIso}`
     );
   } else {
     logger.info(
-      `osu!track persistence finished player ${player.id}, no ruleset rows updated`
+      `osu!track persistence finished player ${player.id}, no ruleset rows updated, set last fetch ${nowIso}`
     );
   }
 };

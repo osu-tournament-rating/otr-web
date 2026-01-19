@@ -1209,6 +1209,9 @@ export const players = pgTable(
       withTimezone: true,
       mode: 'string',
     }),
+    osuTrackDataFetchStatus: integer('osu_track_data_fetch_status')
+      .default(0)
+      .notNull(),
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
