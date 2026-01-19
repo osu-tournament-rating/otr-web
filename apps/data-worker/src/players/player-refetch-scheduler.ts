@@ -260,5 +260,4 @@ export class PlayerRefetchScheduler {
     const cutoff = new Date(Date.now() - outdatedDays * MS_PER_DAY);
     return cutoff.toISOString();
   }
-
 }
