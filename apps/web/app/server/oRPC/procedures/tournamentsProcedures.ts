@@ -370,6 +370,8 @@ export const getTournament = publicProcedure
           beatmapsetCreatorOsuLastFetch: beatmapsetCreator.osuLastFetch,
           beatmapsetCreatorOsuTrackLastFetch:
             beatmapsetCreator.osuTrackLastFetch,
+          beatmapsetCreatorOsuTrackDataFetchStatus:
+            beatmapsetCreator.osuTrackDataFetchStatus,
           beatmapsetCreatorDataFetchStatus: beatmapsetCreator.dataFetchStatus,
         })
         .from(schema.joinPooledBeatmaps)
@@ -402,6 +404,7 @@ export const getTournament = publicProcedure
               defaultRuleset: schema.players.defaultRuleset,
               osuLastFetch: schema.players.osuLastFetch,
               osuTrackLastFetch: schema.players.osuTrackLastFetch,
+              osuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
               dataFetchStatus: schema.players.dataFetchStatus,
             })
             .from(schema.joinBeatmapCreators)
@@ -424,6 +427,7 @@ export const getTournament = publicProcedure
           defaultRuleset: Ruleset;
           osuLastFetch: string;
           osuTrackLastFetch: string;
+          osuTrackDataFetchStatus: number;
           dataFetchStatus: number;
         }[]
       >();
@@ -439,6 +443,7 @@ export const getTournament = publicProcedure
           defaultRuleset: creator.defaultRuleset as Ruleset,
           osuLastFetch: creator.osuLastFetch,
           osuTrackLastFetch: creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
+          osuTrackDataFetchStatus: creator.osuTrackDataFetchStatus ?? 0,
           dataFetchStatus: creator.dataFetchStatus ?? 0,
         });
         creatorsByBeatmapId.set(beatmapId, current);
@@ -770,6 +775,8 @@ export const getTournament = publicProcedure
                 osuTrackLastFetch:
                   beatmap.beatmapsetCreatorOsuTrackLastFetch ??
                   '2007-09-17 00:00:00',
+                osuTrackDataFetchStatus:
+                  beatmap.beatmapsetCreatorOsuTrackDataFetchStatus ?? 0,
                 dataFetchStatus: beatmap.beatmapsetCreatorDataFetchStatus ?? 0,
               };
 
@@ -798,6 +805,7 @@ export const getTournament = publicProcedure
             osuLastFetch: creator.osuLastFetch,
             osuTrackLastFetch:
               creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
+            osuTrackDataFetchStatus: creator.osuTrackDataFetchStatus ?? 0,
             dataFetchStatus: creator.dataFetchStatus ?? 0,
           })
         );
