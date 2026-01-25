@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEST_PLAYER_ID, ROUTES, RULESETS } from './fixtures/test-config';
+import { TEST_PLAYER_ID, ROUTES, Ruleset } from './fixtures/test-config';
 
 test.describe('Player Profile Page', () => {
   test.describe('Core Data Loading', () => {
@@ -83,12 +83,12 @@ test.describe('Player Profile Page', () => {
 
     test('preserves ruleset in URL on page reload', async ({ page }) => {
       await page.goto(
-        `${ROUTES.playerProfile(TEST_PLAYER_ID)}?ruleset=${RULESETS.taiko}`
+        `${ROUTES.playerProfile(TEST_PLAYER_ID)}?ruleset=${Ruleset.Taiko}`
       );
       await page.waitForLoadState('networkidle');
       await page.reload();
       await page.waitForLoadState('networkidle');
-      expect(page.url()).toContain(`ruleset=${RULESETS.taiko}`);
+      expect(page.url()).toContain(`ruleset=${Ruleset.Taiko}`);
     });
 
     test('updates page content when ruleset changes', async ({ page }) => {
