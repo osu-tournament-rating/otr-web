@@ -21,9 +21,9 @@ test.describe('Player Profile Page', () => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(
-        page.locator('[data-testid="stat-card-tier"]')
-      ).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="stat-card-tier"]')).toBeVisible({
+        timeout: 10000,
+      });
       await expect(
         page.locator('[data-testid="stat-card-rating"]')
       ).toBeVisible({ timeout: 10000 });
