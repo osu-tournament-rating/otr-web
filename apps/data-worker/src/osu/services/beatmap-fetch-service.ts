@@ -1,6 +1,6 @@
 import type { API } from 'osu-api-v2-js';
 
-import { withApiErrorHandling } from '../api-helpers';
+import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
 import {
   convertBeatmapRankStatus,
   convertRuleset,
@@ -73,7 +73,9 @@ export class BeatmapFetchService {
     }
 
     const beatmapResult = await this.rateLimiter.schedule(() =>
-      withApiErrorHandling(() => this.api.getBeatmap(osuBeatmapId))
+      withApiMetrics('getBeatmap', () =>
+        withApiErrorHandling(() => this.api.getBeatmap(osuBeatmapId))
+      )
     );
 
     if (beatmapResult.status === 'unauthorized') {
@@ -104,8 +106,10 @@ export class BeatmapFetchService {
     const apiBeatmap = beatmapResult.data;
 
     const beatmapsetResult = await this.rateLimiter.schedule(() =>
-      withApiErrorHandling(() =>
-        this.api.getBeatmapset(apiBeatmap.beatmapset_id)
+      withApiMetrics('getBeatmapset', () =>
+        withApiErrorHandling(() =>
+          this.api.getBeatmapset(apiBeatmap.beatmapset_id)
+        )
       )
     );
 

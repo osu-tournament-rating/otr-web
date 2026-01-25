@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { API } from 'osu-api-v2-js';
 
-import { withApiErrorHandling } from '../api-helpers';
+import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
 import { convertRuleset } from '../conversions';
 import { ensurePlayerPlaceholder, updatePlayerStatus } from '../player-store';
 import type { DatabaseClient } from '../../db';
@@ -71,7 +71,9 @@ export class PlayerFetchService {
     for (const ruleset of FETCHABLE_RULESETS) {
       const apiRuleset = ruleset as number;
       const result = await this.rateLimiter.schedule(() =>
-        withApiErrorHandling(() => this.api.getUser(osuPlayerId, apiRuleset))
+        withApiMetrics('getUser', () =>
+          withApiErrorHandling(() => this.api.getUser(osuPlayerId, apiRuleset))
+        )
       );
 
       if (result.status === 'unauthorized') {
