@@ -13,9 +13,15 @@ interface PlayerCardProps {
 
 export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
   return (
-    <Card className="bg-popover flex flex-row flex-wrap justify-between border-none p-4">
+    <Card
+      data-testid="player-card"
+      className="bg-popover flex flex-row flex-wrap justify-between border-none p-4"
+    >
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
-        <Avatar className="bg-accent hover:border-primary/80 h-16 w-16 transition-all">
+        <Avatar
+          data-testid="player-avatar"
+          className="bg-accent hover:border-primary/80 h-16 w-16 transition-all"
+        >
           <AvatarImage
             src={`https://a.ppy.sh/${player.osuId}`}
             alt={player.username}
@@ -25,7 +31,9 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
           </AvatarFallback>
         </Avatar>
         <div className="flex items-center gap-2">
-          <span className="text-3xl font-medium">{player.username}</span>
+          <span data-testid="player-username" className="text-3xl font-medium">
+            {player.username}
+          </span>
           <Link
             href={`https://osu.ppy.sh/u/${player.osuId}`}
             target="_blank"
