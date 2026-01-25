@@ -38,8 +38,4 @@ export type OsuApiEndpoint =
   | 'getBeatmapset'
   | 'getRoomEvents';
 
-export type OsuApiStatus =
-  | 'success'
-  | 'not_found'
-  | 'unauthorized'
-  | 'error';
+export type OsuApiStatus = 'success' | 'not_found' | 'unauthorized' | 'error';
