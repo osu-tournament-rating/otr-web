@@ -1,4 +1,10 @@
 import { APIError } from './client';
+import {
+  osuApiRequests,
+  osuApiDuration,
+  type OsuApiEndpoint,
+  type OsuApiStatus,
+} from '../metrics';
 
 export const withNotFoundHandling = async <T>(
   invoke: () => Promise<T>
@@ -35,5 +41,25 @@ export const withApiErrorHandling = async <T>(
       }
     }
     throw error;
+  }
+};
+
+export const withApiMetrics = async <T>(
+  endpoint: OsuApiEndpoint,
+  invoke: () => Promise<ApiCallResult<T>>
+): Promise<ApiCallResult<T>> => {
+  const start = Date.now();
+  let status: OsuApiStatus = 'error';
+
+  try {
+    const result = await invoke();
+    status = result.status as OsuApiStatus;
+    return result;
+  } catch (error) {
+    status = 'error';
+    throw error;
+  } finally {
+    osuApiRequests.labels({ endpoint, status }).inc();
+    osuApiDuration.labels({ endpoint }).observe((Date.now() - start) / 1000);
   }
 };

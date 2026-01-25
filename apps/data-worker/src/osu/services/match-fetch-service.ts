@@ -7,7 +7,11 @@ import {
 } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import { RoomFetchService } from './room-fetch-service';
-import { withApiErrorHandling, type ApiCallResult } from '../api-helpers';
+import {
+  withApiErrorHandling,
+  withApiMetrics,
+  type ApiCallResult,
+} from '../api-helpers';
 import {
   calculateScoreWithMods,
   convertModsToFlags,
@@ -358,7 +362,9 @@ export class MatchFetchService {
     }>
   > {
     const initialResult = await this.rateLimiter.schedule(() =>
-      withApiErrorHandling(() => this.api.getMatch(osuMatchId))
+      withApiMetrics('getMatch', () =>
+        withApiErrorHandling(() => this.api.getMatch(osuMatchId))
+      )
     );
 
     if (initialResult.status !== 'success') {
@@ -418,7 +424,9 @@ export class MatchFetchService {
           : { after: firstEventId - 1, limit };
 
         const pageResult = await this.rateLimiter.schedule(() =>
-          withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
+          withApiMetrics('getMatch', () =>
+            withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
+          )
         );
         if (pageResult.status !== 'success') {
           return pageResult;
@@ -440,7 +448,9 @@ export class MatchFetchService {
           : { before: latestEventId + 1, limit };
 
         const pageResult = await this.rateLimiter.schedule(() =>
-          withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
+          withApiMetrics('getMatch', () =>
+            withApiErrorHandling(() => this.api.getMatch(osuMatchId, query))
+          )
         );
         if (pageResult.status !== 'success') {
           return pageResult;

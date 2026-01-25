@@ -6,7 +6,7 @@ import {
   updateBeatmapStatus,
 } from '../beatmap-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
-import { withApiErrorHandling } from '../api-helpers';
+import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
 import {
   convertModsToFlags,
   convertScoreGrade,
@@ -85,7 +85,9 @@ export class RoomFetchService {
       .where(eq(schema.matches.id, matchRow.id));
 
     const roomResult = await this.rateLimiter.schedule(() =>
-      withApiErrorHandling(() => this.api.getRoomEvents(roomId))
+      withApiMetrics('getRoomEvents', () =>
+        withApiErrorHandling(() => this.api.getRoomEvents(roomId))
+      )
     );
 
     if (roomResult.status === 'unauthorized') {
