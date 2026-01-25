@@ -640,25 +640,29 @@ const withRequestLogging = base.middleware(
   }
 );
 
-const withMetrics = base.middleware(async ({ path, next }) => {
+const withMetrics = base.middleware(async ({ context, path, next }) => {
   const procedureName = formatProcedurePath(path);
   const start = Date.now();
+  const loggingContext = context as typeof context & {
+    logging?: RequestLoggingContext;
+  };
+  const accessMethod = loggingContext.logging?.actor?.accessMethod ?? 'unknown';
 
   try {
     const result = await next();
     orpcProcedureCalls
-      .labels({ procedure: procedureName, status: 'success' })
+      .labels({ procedure: procedureName, status: 'success', accessMethod })
       .inc();
     orpcProcedureDuration
-      .labels({ procedure: procedureName })
+      .labels({ procedure: procedureName, accessMethod })
       .observe((Date.now() - start) / 1000);
     return result;
   } catch (error) {
     orpcProcedureCalls
-      .labels({ procedure: procedureName, status: 'error' })
+      .labels({ procedure: procedureName, status: 'error', accessMethod })
       .inc();
     orpcProcedureDuration
-      .labels({ procedure: procedureName })
+      .labels({ procedure: procedureName, accessMethod })
       .observe((Date.now() - start) / 1000);
     throw error;
   }

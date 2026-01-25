@@ -1,4 +1,5 @@
 import type { UserStatUpdate } from '@otr/core';
+import { osuTrackApiRequests, osuTrackApiDuration } from '../metrics';
 
 type FetchFunction = (
   input: RequestInfo | URL,
@@ -98,25 +99,35 @@ export class OsuTrackClient {
       url.searchParams.set('to', options.to);
     }
 
-    const response = await this.fetchImpl(url.toString(), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    const start = Date.now();
+    let status: 'success' | 'error' = 'error';
 
-    if (!response.ok) {
-      throw new Error(
-        `osu!track API request failed with status ${response.status}`
-      );
+    try {
+      const response = await this.fetchImpl(url.toString(), {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `osu!track API request failed with status ${response.status}`
+        );
+      }
+
+      const data = (await response.json()) as RawUserStatUpdate[] | null;
+
+      status = 'success';
+
+      if (!Array.isArray(data)) {
+        return [];
+      }
+
+      return data.map(mapUserStatUpdate);
+    } finally {
+      osuTrackApiRequests.labels({ status }).inc();
+      osuTrackApiDuration.observe((Date.now() - start) / 1000);
     }
-
-    const data = (await response.json()) as RawUserStatUpdate[] | null;
-
-    if (!Array.isArray(data)) {
-      return [];
-    }
-
-    return data.map(mapUserStatUpdate);
   }
 }
