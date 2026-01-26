@@ -680,6 +680,8 @@ export const getTournament = publicProcedure
           statsPlayerOsuLastFetch: schema.players.osuLastFetch,
           statsPlayerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
           statsPlayerDataFetchStatus: schema.players.dataFetchStatus,
+          statsPlayerOsuTrackDataFetchStatus:
+            schema.players.osuTrackDataFetchStatus,
 
           // correlated subqueries as raw SQL
           ratingBefore: sql<number>`
@@ -744,6 +746,8 @@ export const getTournament = publicProcedure
                 osuLastFetch: stat.statsPlayerOsuLastFetch,
                 osuTrackLastFetch:
                   stat.statsPlayerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
+                osuTrackDataFetchStatus:
+                  stat.statsPlayerOsuTrackDataFetchStatus ?? 0,
                 dataFetchStatus: stat.statsPlayerDataFetchStatus ?? 0,
               }
             : {
@@ -754,6 +758,7 @@ export const getTournament = publicProcedure
                 defaultRuleset: Ruleset.Osu,
                 osuLastFetch: '2007-09-17 00:00:00',
                 osuTrackLastFetch: '2007-09-17 00:00:00',
+                osuTrackDataFetchStatus: 0,
                 dataFetchStatus: 0,
               },
       }));
