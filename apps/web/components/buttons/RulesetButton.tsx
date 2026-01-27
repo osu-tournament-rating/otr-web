@@ -22,6 +22,8 @@ export function RulesetButton({
   const tooltipText = RulesetEnumHelper.getMetadata(ruleset).text;
   return (
     <button
+      data-testid={`ruleset-button-${ruleset}`}
+      aria-label={tooltipText}
       onClick={onClick}
       className={cn(
         'cursor-pointer rounded-full p-2 transition-colors',

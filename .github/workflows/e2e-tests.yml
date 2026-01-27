@@ -1,0 +1,88 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  e2e:
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    env:
+      # The database runs on the on-prem server as a container,
+      # no need for the action to set it up.
+      DATABASE_URL: ${{ secrets.SELF_HOSTED_DB_URL }}
+      GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+      NEXT_PUBLIC_APP_BASE_URL: http://localhost:3001
+      BETTER_AUTH_SECRET: e2e-test-secret
+      BETTER_AUTH_URL: http://localhost:3001
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.23
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download and restore database dump
+        run: |
+          LATEST_FILE=$(gcloud storage ls -l "gs://${GCS_BUCKET}" \
+            | awk 'NF >= 3 && $NF ~ /^gs:\/\/.*\.gz$/ {print $(NF-1) " " $NF}' \
+            | sort -k1,1r \
+            | head -n1 \
+            | awk '{print $2}')
+
+          if [ -z "${LATEST_FILE}" ]; then
+            echo "Error: No dump files found in bucket"
+            exit 1
+          fi
+
+          FILENAME=$(basename "${LATEST_FILE}")
+          echo "Downloading ${FILENAME}..."
+          gcloud storage cp "${LATEST_FILE}" /tmp/
+
+          echo "Restoring database..."
+          gunzip -c "/tmp/${FILENAME}" | psql "${DATABASE_URL}"
+
+      - name: Run database migrations
+        run: bunx drizzle-kit migrate
+
+      - name: Install Playwright browsers
+        run: bunx playwright install chromium
+        working-directory: apps/web
+
+      - name: Run E2E tests
+        run: bun run test:e2e
+        working-directory: apps/web
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - name: Upload test traces
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-traces
+          path: apps/web/test-results/
+          retention-days: 30

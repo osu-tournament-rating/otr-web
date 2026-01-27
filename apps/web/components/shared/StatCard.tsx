@@ -19,6 +19,7 @@ export default function StatCard({
 }: StatCardProps) {
   return (
     <Card
+      data-testid={`stat-card-${label.toLowerCase().replace(/\s+/g, '-')}`}
       className={cn(
         'bg-popover flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none !p-4',
         className

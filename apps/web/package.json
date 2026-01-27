@@ -9,7 +9,10 @@
     "start": "bun run next start",
     "lint": "bun run eslint .",
     "format": "bun run prettier . --write --ignore-unknown",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@alduino/humanizer": "^1.1.0",
@@ -73,11 +76,12 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.58.0",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4",
+    "@types/amqplib": "^0.10.5",
     "@types/node": "^20",
     "@types/pg": "^8.15.5",
-    "@types/amqplib": "^0.10.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.4",
