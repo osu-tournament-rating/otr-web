@@ -201,7 +201,7 @@ export default function PlayerRatingChart({
   };
 
   return (
-    <Card className="p-6 font-sans">
+    <Card data-testid="player-rating-chart" className="p-6 font-sans">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <LineChartIcon className="text-primary h-6 w-6" />
@@ -256,7 +256,7 @@ export default function PlayerRatingChart({
         defaultValue="chart"
         onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
       >
-        <TabsList className="font-sans">
+        <TabsList data-testid="rating-chart-toggle" className="font-sans">
           <TabsTrigger value="chart">Chart</TabsTrigger>
           <TabsTrigger value="table">Table</TabsTrigger>
         </TabsList>
