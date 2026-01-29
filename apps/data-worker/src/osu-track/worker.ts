@@ -88,11 +88,13 @@ export class OsuTrackPlayerWorker {
       } catch (error) {
         msgLogger.error('failed to process osu!track player fetch', { error });
 
+        const errorIso = new Date().toISOString();
         await this.db
           .update(schema.players)
           .set({
             osuTrackDataFetchStatus: DataFetchStatus.Error,
-            updated: new Date().toISOString(),
+            osuTrackLastFetch: errorIso,
+            updated: errorIso,
           })
           .where(eq(schema.players.osuId, envelope.osuPlayerId));
 
