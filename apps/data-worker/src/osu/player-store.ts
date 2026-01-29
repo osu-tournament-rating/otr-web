@@ -113,6 +113,7 @@ export const updatePlayerStatus = async (
     .update(schema.players)
     .set({
       dataFetchStatus: status,
+      osuLastFetch: updatedIso,
       updated: updatedIso,
     })
     .where(eq(schema.players.id, playerId));
