@@ -61,7 +61,7 @@ export default async function Page() {
           title="Read the docs"
           description="Learn the inner-workings of our rating algorithm"
           icon="book"
-          href="https://docs.otr.stagec.xyz"
+          href="https://docs.otr.stagec.net"
           target="_blank"
         />
       </div>

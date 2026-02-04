@@ -6,7 +6,7 @@ import SimpleTooltip from '../simple-tooltip';
 
 export default function DocsButton() {
   return (
-    <Link href={'https://docs.otr.stagec.xyz'} target="_blank">
+    <Link href={'https://docs.otr.stagec.net'} target="_blank">
       <SimpleTooltip content="Read the docs">
         <Button
           aria-label="Docs"

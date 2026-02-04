@@ -2,4 +2,4 @@
 
 # o!TR Web
 
-Check out our [development guide](https://docs.otr.stagec.xyz/Development/Development-Guide) to get started with local development.
+Check out our [development guide](https://docs.otr.stagec.net/Development/Development-Guide) to get started with local development.
