@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 const navItems = [
-  { parent: 'About', title: 'Docs', href: 'https://docs.otr.stagec.xyz' },
+  { parent: 'About', title: 'Docs', href: 'https://docs.otr.stagec.net' },
   {
     parent: 'About',
     title: 'Team',
-    href: 'https://docs.otr.stagec.xyz/About/Team',
+    href: 'https://docs.otr.stagec.net/About/Team',
   },
   {
     parent: 'Contact',
@@ -15,7 +15,7 @@ const navItems = [
   {
     parent: 'Contact',
     title: 'Status',
-    href: 'https://status.stagec.xyz/status/otr',
+    href: 'https://status.stagec.net/status/otr',
   },
   {
     parent: 'Contribute',
