@@ -23,11 +23,19 @@ const operationConfig: Record<
   {
     verificationStatus?: VerificationStatus;
     icon?: typeof Layers;
+    iconColor?: string;
     label?: string;
     borderColor: string;
     bgColor: string;
   }
 > = {
+  submission: {
+    icon: Layers,
+    iconColor: 'text-green-500',
+    label: 'created',
+    borderColor: 'border-l-green-500',
+    bgColor: 'bg-green-500/5',
+  },
   verification: {
     verificationStatus: VerificationStatus.Verified,
     borderColor: 'border-l-green-500',
@@ -38,8 +46,19 @@ const operationConfig: Record<
     borderColor: 'border-l-red-500',
     bgColor: 'bg-red-500/5',
   },
+  pre_verification: {
+    verificationStatus: VerificationStatus.PreVerified,
+    borderColor: 'border-l-emerald-400',
+    bgColor: 'bg-emerald-400/5',
+  },
+  pre_rejection: {
+    verificationStatus: VerificationStatus.PreRejected,
+    borderColor: 'border-l-amber-500',
+    bgColor: 'bg-amber-500/5',
+  },
   bulk_update: {
     icon: Layers,
+    iconColor: 'text-blue-500',
     label: 'bulk updated',
     borderColor: 'border-l-blue-500',
     bgColor: 'bg-blue-500/5',
@@ -194,9 +213,12 @@ export default function AuditBatchOperationEntry({
                 ) : (
                   <span className="text-muted-foreground">{config.label}</span>
                 )}
-                <span className="text-foreground font-medium">
-                  tournament + cascaded entities
-                </span>
+                {/* Only show "tournament + cascaded entities" for multi-entity batches */}
+                {batch.entityBreakdown.length > 1 && (
+                  <span className="text-foreground font-medium">
+                    tournament + cascaded entities
+                  </span>
+                )}
               </div>
 
               {/* Entity chips */}
@@ -208,7 +230,7 @@ export default function AuditBatchOperationEntry({
                     minimal
                   />
                 ) : config.icon ? (
-                  <config.icon className="text-blue-500 h-3.5 w-3.5 shrink-0" />
+                  <config.icon className={cn(config.iconColor, 'h-3.5 w-3.5 shrink-0')} />
                 ) : null}
                 {batch.entityBreakdown.map((breakdown) => (
                   <EntityChip

@@ -57,3 +57,4 @@ remove-local-link.sh
 setup-local-link.sh
 **/dist/
 monitoring/loki/data/
+.playwright-mcp/

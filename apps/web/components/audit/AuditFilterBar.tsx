@@ -152,7 +152,7 @@ export default function AuditFilterBar() {
         {/* Entity Type */}
         <div className="relative">
           <Select value={entityType} onValueChange={setEntityType}>
-            <SelectTrigger className={cn('h-9 w-full', entityType !== ALL_VALUE && 'pr-8')}>
+            <SelectTrigger className={cn('h-9 w-full', entityType !== ALL_VALUE && 'pr-10')}>
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
             <SelectContent>
@@ -170,7 +170,7 @@ export default function AuditFilterBar() {
           {entityType !== ALL_VALUE && (
             <button
               onClick={() => setEntityType(ALL_VALUE)}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
               aria-label="Clear entity type"
             >
               <X className="h-3 w-3" />
@@ -181,7 +181,7 @@ export default function AuditFilterBar() {
         {/* Action Type */}
         <div className="relative">
           <Select value={actionType} onValueChange={setActionType}>
-            <SelectTrigger className={cn('h-9 w-full', actionType !== ALL_VALUE && 'pr-8')}>
+            <SelectTrigger className={cn('h-9 w-full', actionType !== ALL_VALUE && 'pr-10')}>
               <SelectValue placeholder="Action" />
             </SelectTrigger>
             <SelectContent>
@@ -200,7 +200,7 @@ export default function AuditFilterBar() {
           {actionType !== ALL_VALUE && (
             <button
               onClick={() => setActionType(ALL_VALUE)}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
               aria-label="Clear action type"
             >
               <X className="h-3 w-3" />

@@ -1,5 +1,5 @@
-import { AuditEntityType } from '@otr/core/osu';
-import type { AuditGroupedEntry } from '@/lib/orpc/schema/audit';
+import { AuditEntityType, AuditActionType, VerificationStatus } from '@otr/core/osu';
+import type { AuditGroupedEntry, AuditEntry } from '@/lib/orpc/schema/audit';
 
 /** Extract the action user type from AuditGroupedEntry */
 type AuditActionUser = NonNullable<AuditGroupedEntry['actionUser']>;
@@ -17,7 +17,13 @@ const BATCH_WINDOW_MS = 2000;
 /** Minimum entity types required to consider it a batch operation */
 const MIN_ENTITY_TYPES_FOR_BATCH = 2;
 
-export type BatchOperationType = 'verification' | 'rejection' | 'bulk_update';
+export type BatchOperationType =
+  | 'submission'         // Entity created/submitted
+  | 'verification'       // User verified
+  | 'rejection'          // User rejected
+  | 'pre_verification'   // System PreVerified
+  | 'pre_rejection'      // System PreRejected
+  | 'bulk_update';
 
 export type BatchOperation = {
   kind: 'batch';
@@ -46,6 +52,34 @@ function isVerificationRelated(changedFields: string[]): boolean {
 }
 
 /**
+ * Check if ALL changed fields are verification-related (no other fields changed)
+ */
+function isVerificationOnlyChange(changedFields: string[]): boolean {
+  return (
+    changedFields.length > 0 &&
+    changedFields.every((field) => VERIFICATION_FIELDS.has(field))
+  );
+}
+
+/**
+ * Extract the new verification status from entries' changes
+ */
+function getVerificationStatusChange(entries: AuditEntry[]): {
+  newStatus: VerificationStatus | null;
+} {
+  for (const entry of entries) {
+    const changes = entry.changes as Record<
+      string,
+      { originalValue: unknown; newValue: unknown }
+    > | null;
+    if (changes?.verificationStatus?.newValue !== undefined) {
+      return { newStatus: changes.verificationStatus.newValue as VerificationStatus };
+    }
+  }
+  return { newStatus: null };
+}
+
+/**
  * Get timestamp in ms from ISO string
  */
 function getTimestamp(isoString: string): number {
@@ -56,14 +90,39 @@ function getTimestamp(isoString: string): number {
  * Determine the operation type from the groups
  */
 function determineOperationType(groups: AuditGroupedEntry[]): BatchOperationType {
-  // Check if any group contains a rejection-related change
+  const firstGroup = groups[0];
+  if (!firstGroup) return 'bulk_update';
+
+  // If this is a creation action, it's a submission (not verification-related)
+  // Creation actions set initial field values but aren't actually verify/reject operations
+  const isCreation = groups.every((g) => g.actionType === AuditActionType.Created);
+  if (isCreation) {
+    return 'submission';
+  }
+
+  const isSystemAction = firstGroup.actionUserId === null;
+  const { newStatus } = getVerificationStatusChange(firstGroup.entries);
+
+  // Check for verification status changes with specific target status
+  if (newStatus !== null) {
+    // System actions: PreVerified or PreRejected
+    if (isSystemAction) {
+      if (newStatus === VerificationStatus.PreVerified) return 'pre_verification';
+      if (newStatus === VerificationStatus.PreRejected) return 'pre_rejection';
+    }
+    // User actions: Verified or Rejected
+    if (newStatus === VerificationStatus.Verified) return 'verification';
+    if (newStatus === VerificationStatus.Rejected) return 'rejection';
+  }
+
+  // Fallback: check for rejection reason changes
   for (const group of groups) {
     if (group.changedFields.includes('rejectionReason')) {
       return 'rejection';
     }
   }
 
-  // If verification-related fields changed, it's a verification
+  // Fallback: check for verification status field (without checking value)
   for (const group of groups) {
     if (group.changedFields.includes('verificationStatus')) {
       return 'verification';
@@ -145,11 +204,22 @@ export function detectBatchOperations(
   function flushBatch() {
     if (currentBatch.length === 0) return;
 
-    // Only create a batch if we have multiple entity types
-    if (currentEntityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH) {
+    // Check if all changes are verification-only (no other fields changed)
+    const allVerificationOnly = currentBatch.every((g) =>
+      isVerificationOnlyChange(g.changedFields)
+    );
+
+    // Create batch if:
+    // 1. Multiple entity types (existing cascade behavior), OR
+    // 2. All changes are verification-only (even single entity type)
+    const shouldCreateBatch =
+      currentEntityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH ||
+      allVerificationOnly;
+
+    if (shouldCreateBatch) {
       result.push(createBatchOperation(currentBatch));
     } else {
-      // Not enough entity types - add as individual groups
+      // Not enough entity types and not verification-only - add as individual groups
       for (const group of currentBatch) {
         result.push({ kind: 'group', data: group });
       }

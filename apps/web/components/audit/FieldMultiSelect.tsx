@@ -94,7 +94,7 @@ export default function FieldMultiSelect({
             aria-expanded={open}
             className={cn(
               'h-9 w-full justify-between',
-              selected.length > 0 && onClear && 'pr-8'
+              selected.length > 0 && onClear && 'pr-10'
             )}
             disabled={disabled}
           >
@@ -155,7 +155,7 @@ export default function FieldMultiSelect({
           e.stopPropagation();
           onClear();
         }}
-        className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
         aria-label="Clear field selection"
       >
         <X className="h-3 w-3" />
