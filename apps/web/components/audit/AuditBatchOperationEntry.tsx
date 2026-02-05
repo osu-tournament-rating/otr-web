@@ -274,21 +274,25 @@ export default function AuditBatchOperationEntry({
                       : config.label}
                   </span>
                 )}
-                {/* Show parent entity ID link if available */}
+                {/* Show parent entity: "tournament #2978" or "tournament #2978 + child entities" */}
                 {parentEntity && (
-                  <Link
-                    href={`/${parentEntity.urlPath}/${parentEntity.id}`}
-                    className="text-muted-foreground hover:text-primary text-xs hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    #{parentEntity.id}
-                  </Link>
-                )}
-                {/* Show "[parent] + child entities" for multi-entity batches */}
-                {batch.entityBreakdown.length > 1 && parentEntity && (
-                  <span className="text-foreground font-medium">
-                    {parentEntity.label} + child entities
-                  </span>
+                  <>
+                    <span className="text-foreground font-medium">
+                      {parentEntity.label}
+                    </span>
+                    <Link
+                      href={`/${parentEntity.urlPath}/${parentEntity.id}`}
+                      className="text-muted-foreground hover:text-primary text-xs hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      #{parentEntity.id}
+                    </Link>
+                    {batch.entityBreakdown.length > 1 && (
+                      <span className="text-foreground font-medium">
+                        + child entities
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
