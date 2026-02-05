@@ -10,7 +10,6 @@ import type {
   AuditGroupedEntry as AuditGroupedEntryType,
 } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditFilterBar from './AuditFilterBar';
@@ -244,45 +243,23 @@ export default function AuditLogView() {
     );
   }, [searchParams]);
 
-  const activeTab = hasFilters ? 'search' : 'activity';
-
   const handleClearFilters = useCallback(() => {
     router.push('/tools/audit-logs');
   }, [router]);
-
-  const handleTabChange = useCallback(
-    (value: string) => {
-      if (value === 'activity') {
-        router.push('/tools/audit-logs');
-      }
-    },
-    [router]
-  );
 
   return (
     <div className="flex flex-col gap-4">
       {/* Filter Bar */}
       <AuditFilterBar />
 
-      {/* Content */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="border-border flex items-center justify-between border-b pb-2">
-          <TabsList>
-            <TabsTrigger value="activity">All Activity</TabsTrigger>
-            <TabsTrigger value="search" disabled={!hasFilters}>
-              Search Results
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="activity" className="mt-4">
-          <DefaultView onClearFilters={handleClearFilters} />
-        </TabsContent>
-
-        <TabsContent value="search" className="mt-4">
+      {/* Content - automatically switch view based on filters */}
+      <div className="mt-2">
+        {hasFilters ? (
           <SearchView searchParams={searchParams} onClearFilters={handleClearFilters} />
-        </TabsContent>
-      </Tabs>
+        ) : (
+          <DefaultView onClearFilters={handleClearFilters} />
+        )}
+      </div>
     </div>
   );
 }

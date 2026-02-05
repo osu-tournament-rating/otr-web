@@ -10,7 +10,9 @@ import {
   AuditEntityTypeEnumHelper,
 } from '@/lib/enums';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -26,7 +28,8 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { getTrackedFieldsForTypes, getFieldLabel } from './auditFieldConfig';
+import { getFieldOptionsWithEntityType, parseFieldOptionValue, getFieldLabel } from './auditFieldConfig';
+import FieldMultiSelect from './FieldMultiSelect';
 
 const ALL_VALUE = '__all__';
 
@@ -61,18 +64,25 @@ export default function AuditFilterBar() {
     const param = searchParams.get('dateTo');
     return param ? new Date(param) : undefined;
   });
-  const [fieldChanged, setFieldChanged] = useState(
-    searchParams.get('fieldChanged') || ALL_VALUE
-  );
+  const [fieldsChanged, setFieldsChanged] = useState<string[]>(() => {
+    const param = searchParams.get('fieldsChanged');
+    return param ? param.split(',') : [];
+  });
   const [entityId, setEntityId] = useState(searchParams.get('entityId') ?? '');
+  const [hideSystemAudits, setHideSystemAudits] = useState(
+    searchParams.get('adminOnly') === 'true'
+  );
 
   const selectedEntityTypes = entityType && entityType !== ALL_VALUE
     ? (entityType.split(',').map(Number) as AuditEntityType[])
     : [];
 
-  const availableFields = getTrackedFieldsForTypes(
-    selectedEntityTypes.length > 0 ? selectedEntityTypes : [...ENTITY_TYPES]
-  );
+  // Get all field options with entity type context
+  const allFieldOptions = getFieldOptionsWithEntityType();
+  // Filter to selected entity types if any
+  const filteredFieldOptions = selectedEntityTypes.length > 0
+    ? allFieldOptions.filter((opt) => selectedEntityTypes.includes(opt.entityType))
+    : allFieldOptions;
 
   const activeFilters: { key: string; label: string; value: string }[] = [];
   if (entityType && entityType !== ALL_VALUE) {
@@ -109,14 +119,16 @@ export default function AuditFilterBar() {
       value: format(dateTo, 'MMM d, yyyy'),
     });
   }
-  if (fieldChanged && fieldChanged !== ALL_VALUE) {
+  if (fieldsChanged.length > 0) {
+    const fieldLabels = fieldsChanged.map((value) => {
+      const parsed = parseFieldOptionValue(value);
+      if (!parsed) return value;
+      return getFieldLabel(parsed.entityType, parsed.fieldName);
+    });
     activeFilters.push({
-      key: 'fieldChanged',
-      label: 'Field',
-      value: getFieldLabel(
-        selectedEntityTypes[0] ?? AuditEntityType.Tournament,
-        fieldChanged
-      ),
+      key: 'fieldsChanged',
+      label: fieldsChanged.length === 1 ? 'Field' : 'Fields',
+      value: fieldLabels.join(', '),
     });
   }
   if (entityId) {
@@ -126,6 +138,13 @@ export default function AuditFilterBar() {
       value: `#${entityId}`,
     });
   }
+  if (hideSystemAudits) {
+    activeFilters.push({
+      key: 'adminOnly',
+      label: 'Filter',
+      value: 'Admin actions only',
+    });
+  }
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -133,12 +152,13 @@ export default function AuditFilterBar() {
     if (actionType && actionType !== ALL_VALUE) params.set('actionTypes', actionType);
     if (dateFrom) params.set('dateFrom', format(dateFrom, 'yyyy-MM-dd'));
     if (dateTo) params.set('dateTo', format(dateTo, 'yyyy-MM-dd'));
-    if (fieldChanged && fieldChanged !== ALL_VALUE) params.set('fieldChanged', fieldChanged);
+    if (fieldsChanged.length > 0) params.set('fieldsChanged', fieldsChanged.join(','));
     if (entityId) params.set('entityId', entityId);
+    if (hideSystemAudits) params.set('adminOnly', 'true');
 
     const qs = params.toString();
     router.push(qs ? `/tools/audit-logs?${qs}` : '/tools/audit-logs');
-  }, [entityType, actionType, dateFrom, dateTo, fieldChanged, entityId, router]);
+  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, router]);
 
   const clearFilter = useCallback(
     (key: string) => {
@@ -155,11 +175,14 @@ export default function AuditFilterBar() {
         case 'dateTo':
           setDateTo(undefined);
           break;
-        case 'fieldChanged':
-          setFieldChanged(ALL_VALUE);
+        case 'fieldsChanged':
+          setFieldsChanged([]);
           break;
         case 'entityId':
           setEntityId('');
+          break;
+        case 'adminOnly':
+          setHideSystemAudits(false);
           break;
       }
     },
@@ -171,8 +194,9 @@ export default function AuditFilterBar() {
     setActionType(ALL_VALUE);
     setDateFrom(undefined);
     setDateTo(undefined);
-    setFieldChanged(ALL_VALUE);
+    setFieldsChanged([]);
     setEntityId('');
+    setHideSystemAudits(false);
     router.push('/tools/audit-logs');
   }, [router]);
 
@@ -182,7 +206,7 @@ export default function AuditFilterBar() {
       applyFilters();
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [entityType, actionType, dateFrom, dateTo, fieldChanged, entityId, applyFilters]);
+  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, applyFilters]);
 
   return (
     <div className="space-y-3">
@@ -237,22 +261,12 @@ export default function AuditFilterBar() {
         </Select>
 
         {/* Field Changed */}
-        <Select value={fieldChanged} onValueChange={setFieldChanged}>
-          <SelectTrigger className="h-9 w-[140px]">
-            <SelectValue placeholder="Field" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Any field</SelectItem>
-            {availableFields.map((field) => (
-              <SelectItem key={field} value={field}>
-                {getFieldLabel(
-                  selectedEntityTypes[0] ?? AuditEntityType.Tournament,
-                  field
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FieldMultiSelect
+          options={filteredFieldOptions}
+          selected={fieldsChanged}
+          onChange={setFieldsChanged}
+          placeholder="Any field"
+        />
 
         {/* Date Range */}
         <Popover>
@@ -285,6 +299,7 @@ export default function AuditFilterBar() {
                 mode="single"
                 selected={dateFrom}
                 onSelect={setDateFrom}
+                disabled={(date) => date > new Date()}
                 initialFocus
               />
               <div className="text-muted-foreground text-xs font-medium">To</div>
@@ -292,6 +307,7 @@ export default function AuditFilterBar() {
                 mode="single"
                 selected={dateTo}
                 onSelect={setDateTo}
+                disabled={(date) => date > new Date()}
               />
               {(dateFrom || dateTo) && (
                 <Button
@@ -309,6 +325,18 @@ export default function AuditFilterBar() {
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Hide System Audits */}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="hide-system"
+            checked={hideSystemAudits}
+            onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
+          />
+          <Label htmlFor="hide-system" className="text-sm cursor-pointer">
+            Hide system audits
+          </Label>
+        </div>
 
         {/* Clear All */}
         {activeFilters.length > 0 && (

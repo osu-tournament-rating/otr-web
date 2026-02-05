@@ -13,6 +13,7 @@ export const CursorPaginationInputSchema = z.object({
 export const AuditActionUserSchema = z.object({
   id: z.number().int(),
   playerId: z.number().int().nullable(),
+  osuId: z.number().int().nullable(),
   username: z.string().nullable(),
 });
 
@@ -118,6 +119,7 @@ export const AuditDefaultViewResponseSchema = z.object({
 export const AuditAdminUserSchema = z.object({
   userId: z.number().int(),
   playerId: z.number().int().nullable(),
+  osuId: z.number().int().nullable(),
   username: z.string().nullable(),
 });
 

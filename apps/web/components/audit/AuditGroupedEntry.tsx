@@ -11,6 +11,7 @@ import {
 import type { AuditGroupedEntry as AuditGroupedEntryType } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Collapsible,
@@ -42,6 +43,16 @@ function getUserInitials(username: string | null | undefined): string {
     .join('');
 }
 
+function pluralize(word: string, count: number): string {
+  if (count === 1) return word;
+  const lower = word.toLowerCase();
+  // Handle irregular: match → matches, game → games
+  if (lower.endsWith('ch') || lower.endsWith('s') || lower.endsWith('x') || lower.endsWith('sh')) {
+    return word + 'es';
+  }
+  return word + 's';
+}
+
 export default function AuditGroupedEntry({
   group,
 }: {
@@ -51,9 +62,11 @@ export default function AuditGroupedEntry({
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(group.actionType);
   const ActionIcon = actionIcons[group.actionType];
-  const fieldLabels = group.changedFields
-    .map((f) => getFieldLabel(group.entityType, f))
-    .join(', ');
+  // Only show changed fields for Updated actions - Created/Deleted change all fields
+  const showFieldLabels = group.actionType === AuditActionType.Updated;
+  const fieldLabels = showFieldLabels
+    ? group.changedFields.map((f) => getFieldLabel(group.entityType, f)).join(', ')
+    : '';
 
   const username = group.actionUser?.username;
   const initials = getUserInitials(username);
@@ -69,11 +82,20 @@ export default function AuditGroupedEntry({
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-3 p-3 text-left">
             {/* User Avatar */}
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            {group.actionUser?.osuId ? (
+              <OsuAvatar
+                osuId={group.actionUser.osuId}
+                username={username}
+                size={32}
+                className="shrink-0"
+              />
+            ) : (
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            )}
 
             {/* Content */}
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm">
@@ -101,8 +123,7 @@ export default function AuditGroupedEntry({
               {/* Count badge */}
               <Badge variant="secondary" className="gap-1 font-normal">
                 <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
-                {group.count} {entityMeta.text.toLowerCase()}
-                {group.count !== 1 ? 's' : ''}
+                {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
               </Badge>
             </div>
 

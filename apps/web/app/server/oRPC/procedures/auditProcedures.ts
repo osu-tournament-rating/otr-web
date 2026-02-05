@@ -36,6 +36,7 @@ type AuditRow = {
   changes: unknown;
   userId: number | null;
   playerId: number | null;
+  osuId: number | null;
   username: string | null;
 };
 
@@ -58,6 +59,7 @@ function mapAuditRow(
       ? {
           id: row.userId,
           playerId: row.playerId,
+          osuId: row.osuId,
           username: row.username,
         }
       : null,
@@ -71,6 +73,7 @@ type AdminNoteRow = {
   updated: string | null;
   userId: number | null;
   playerId: number | null;
+  osuId: number | null;
   username: string | null;
 };
 
@@ -84,6 +87,7 @@ function mapAdminNoteRow(row: AdminNoteRow): AuditAdminNote {
       ? {
           id: row.userId,
           playerId: row.playerId,
+          osuId: row.osuId,
           username: row.username,
         }
       : null,
@@ -177,6 +181,7 @@ async function queryAuditEntries(
       changes: table.changes,
       userId: schema.users.id,
       playerId: schema.players.id,
+      osuId: schema.players.osuId,
       username: schema.players.username,
     })
     .from(table)
@@ -234,6 +239,7 @@ export const getEntityAuditTimeline = publicProcedure
         updated: notesTable.updated,
         userId: schema.users.id,
         playerId: schema.players.id,
+        osuId: schema.players.osuId,
         username: schema.players.username,
       })
       .from(notesTable)
@@ -452,6 +458,7 @@ export const listAuditAdminUsers = publicProcedure
       .select({
         userId: schema.users.id,
         playerId: schema.players.id,
+        osuId: schema.players.osuId,
         username: schema.players.username,
       })
       .from(schema.users)
@@ -461,6 +468,7 @@ export const listAuditAdminUsers = publicProcedure
     const users = userRows.map((row) => ({
       userId: row.userId,
       playerId: row.playerId,
+      osuId: row.osuId,
       username: row.username,
     }));
 

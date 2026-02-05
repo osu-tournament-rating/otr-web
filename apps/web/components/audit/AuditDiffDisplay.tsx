@@ -17,7 +17,7 @@ function formatValue(
   entityType: AuditEntityType,
   fieldName: string
 ): string {
-  if (value === null || value === undefined || value === 'null') return '\u2014';
+  if (value === null || value === undefined || value === 'null' || value === '') return '\u2014';
 
   const enumHelper = getFieldEnumHelper(entityType, fieldName);
   if (enumHelper && typeof value === 'number') {

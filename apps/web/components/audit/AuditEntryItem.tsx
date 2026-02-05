@@ -11,6 +11,8 @@ import {
 } from '@/lib/enums';
 import type { AuditEntry } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Collapsible,
@@ -95,15 +97,30 @@ export default function AuditEntryItem({
             )}
 
             {/* User */}
-            <span className="text-sm">
+            <span className="flex items-center gap-1.5 text-sm">
               {entry.actionUser ? (
-                <Link
-                  href={`/players/${entry.actionUser.playerId}`}
-                  className="text-primary hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {entry.actionUser.username ?? `User ${entry.actionUser.id}`}
-                </Link>
+                <>
+                  {entry.actionUser.osuId ? (
+                    <OsuAvatar
+                      osuId={entry.actionUser.osuId}
+                      username={entry.actionUser.username}
+                      size={20}
+                    />
+                  ) : (
+                    <Avatar className="h-5 w-5">
+                      <AvatarFallback className="text-[10px]">
+                        {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <Link
+                    href={`/players/${entry.actionUser.playerId}`}
+                    className="text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {entry.actionUser.username ?? `User ${entry.actionUser.id}`}
+                  </Link>
+                </>
               ) : (
                 <span className="text-muted-foreground italic">System</span>
               )}

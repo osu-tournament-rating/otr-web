@@ -21,6 +21,7 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 /** Basic enum metadata */
 export type EnumMetadata = {
@@ -916,6 +917,33 @@ export const AuditEntityTypeEnumHelper: IEnumHelper<AuditEntityType> = {
     [AuditEntityType.Score]: {
       text: 'Score',
       description: '',
+    },
+  },
+};
+
+export const DataFetchStatusEnumHelper: IEnumHelper<number> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [DataFetchStatus.NotFetched]: {
+      text: 'Not Fetched',
+      description: 'Data has not been fetched yet',
+    },
+    [DataFetchStatus.Fetching]: {
+      text: 'Fetching',
+      description: 'Data is currently being fetched',
+    },
+    [DataFetchStatus.Fetched]: {
+      text: 'Fetched',
+      description: 'Data has been successfully fetched',
+    },
+    [DataFetchStatus.NotFound]: {
+      text: 'Not Found',
+      description: 'Data was not found',
+    },
+    [DataFetchStatus.Error]: {
+      text: 'Error',
+      description: 'An error occurred while fetching data',
     },
   },
 };
