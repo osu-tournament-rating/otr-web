@@ -34,6 +34,12 @@ const actionIconColors: Record<AuditActionType, string> = {
   [AuditActionType.Deleted]: 'text-red-500',
 };
 
+const actionBorderColors: Record<AuditActionType, string> = {
+  [AuditActionType.Created]: 'border-l-green-500',
+  [AuditActionType.Updated]: 'border-l-blue-500',
+  [AuditActionType.Deleted]: 'border-l-red-500',
+};
+
 function getUserInitials(username: string | null | undefined): string {
   if (!username) return '?';
   return username
@@ -56,11 +62,13 @@ function pluralize(word: string, count: number): string {
 export default function AuditGroupedEntry({
   group,
   compact = false,
+  alwaysExpanded = false,
 }: {
   group: AuditGroupedEntryType;
   compact?: boolean;
+  alwaysExpanded?: boolean;
 }): React.JSX.Element {
-  const [expanded, setExpanded] = useState(group.count < 10);
+  const [expanded, setExpanded] = useState(alwaysExpanded || group.count < 10);
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(group.actionType);
   const ActionIcon = actionIcons[group.actionType];
@@ -73,19 +81,31 @@ export default function AuditGroupedEntry({
   const username = group.actionUser?.username;
   const initials = getUserInitials(username);
 
+  // When alwaysExpanded, render entries directly without collapsible header
+  if (alwaysExpanded) {
+    return (
+      <div className="border-border divide-border divide-y rounded-lg border">
+        {group.entries.map((entry) => (
+          <AuditEntryItem key={entry.id} entry={entry} showEntityInfo />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
       <div
         className={cn(
-          'border-border overflow-hidden rounded-lg border transition-colors',
-          expanded ? 'bg-card' : 'hover:bg-accent/30',
-          compact && 'border-muted/50'
+          'overflow-hidden rounded-lg border border-l-4 transition-colors',
+          actionBorderColors[group.actionType],
+          expanded ? 'bg-card border-border' : 'border-border/50 hover:border-border hover:bg-card/50',
+          compact && 'border-l-2'
         )}
       >
         <CollapsibleTrigger asChild>
           <button className={cn(
             'flex w-full items-center gap-3 text-left',
-            compact ? 'p-2' : 'p-3'
+            compact ? 'p-2' : 'px-4 py-3'
           )}>
             {/* User Avatar - hidden in compact mode */}
             {!compact && (
@@ -93,12 +113,12 @@ export default function AuditGroupedEntry({
                 <OsuAvatar
                   osuId={group.actionUser.osuId}
                   username={username}
-                  size={32}
+                  size={36}
                   className="shrink-0"
                 />
               ) : (
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-sm font-medium">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -107,41 +127,44 @@ export default function AuditGroupedEntry({
 
             {/* Content */}
             <div className={cn(
-              'flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5',
-              compact ? 'text-xs' : 'text-sm'
+              'flex min-w-0 flex-1 flex-col gap-1',
+              compact && 'flex-row flex-wrap items-center gap-x-1.5 gap-y-0.5'
             )}>
-              {/* User link - hidden in compact mode (parent shows it) */}
+              {/* Primary line: User + action */}
               {!compact && (
-                group.actionUser ? (
-                  <Link
-                    href={`/players/${group.actionUser.playerId}`}
-                    className="text-primary font-medium hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {username ?? `User ${group.actionUser.id}`}
-                  </Link>
-                ) : (
-                  <span className="text-muted-foreground italic">System</span>
-                )
+                <div className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                  {group.actionUser ? (
+                    <Link
+                      href={`/players/${group.actionUser.playerId}`}
+                      className="text-primary font-medium hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {username ?? `User ${group.actionUser.id}`}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground italic">System</span>
+                  )}
+                  <span className="text-muted-foreground">
+                    {actionMeta.text.toLowerCase()}
+                  </span>
+                  {fieldLabels && (
+                    <span className="text-foreground font-medium">
+                      {fieldLabels}
+                    </span>
+                  )}
+                </div>
               )}
 
-              {/* Action description */}
-              {!compact && (
-                <span className="text-muted-foreground">
-                  {actionMeta.text.toLowerCase()}
-                </span>
-              )}
-              {fieldLabels && (
-                <span className="text-muted-foreground">
-                  {compact ? fieldLabels : `${fieldLabels} on`}
-                </span>
-              )}
-
-              {/* Count badge */}
-              <Badge variant="secondary" className="gap-1 font-normal">
-                <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
-                {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
-              </Badge>
+              {/* Secondary line: Entity count badge */}
+              <div className={cn('flex items-center gap-2', compact && 'text-xs')}>
+                {compact && fieldLabels && (
+                  <span className="text-muted-foreground">{fieldLabels}</span>
+                )}
+                <Badge variant="secondary" className="gap-1.5 font-normal">
+                  <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
+                  {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
+                </Badge>
+              </div>
             </div>
 
             {/* Timestamp and expand indicator */}
@@ -163,7 +186,7 @@ export default function AuditGroupedEntry({
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="bg-muted/30 border-border border-t">
+          <div className="bg-muted/20 border-border border-t">
             {group.entries.map((entry) => (
               <AuditEntryItem key={entry.id} entry={entry} showEntityInfo />
             ))}

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { ClipboardList } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 import AuditLogView from '@/components/audit/AuditLogView';
 
 export const metadata: Metadata = {
@@ -21,16 +23,23 @@ function FilterBarSkeleton() {
 
 export default function AuditLogsPage() {
   return (
-    <div className="container mx-auto flex flex-col gap-6 py-6">
-      <div>
-        <h1 className="text-2xl font-bold">Audit Logs</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Browse the history of changes made to tournaments, matches, games, and scores.
-        </p>
-      </div>
-      <Suspense fallback={<FilterBarSkeleton />}>
-        <AuditLogView />
-      </Suspense>
+    <div className="container mx-auto py-6">
+      <Card className="p-6">
+        {/* Section Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <ClipboardList className="text-primary h-6 w-6" />
+          <div>
+            <h1 className="text-xl font-semibold">Audit Logs</h1>
+            <p className="text-muted-foreground text-sm">
+              Browse the history of changes made to tournaments, matches, games, and scores.
+            </p>
+          </div>
+        </div>
+
+        <Suspense fallback={<FilterBarSkeleton />}>
+          <AuditLogView />
+        </Suspense>
+      </Card>
     </div>
   );
 }

@@ -125,16 +125,16 @@ export default function AuditFilterBar() {
   }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, applyFilters]);
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {/* Entity ID Search */}
-      <div className="relative min-w-[120px] flex-1 max-w-[180px]">
-        <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
+    <div className="bg-popover flex flex-wrap items-center gap-3 rounded-lg p-3">
+      {/* Search Group */}
+      <div className="relative min-w-[140px] flex-1 max-w-[200px]">
+        <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
         <Input
           type="number"
           placeholder="Entity ID..."
           value={entityId}
           onChange={(e) => setEntityId(e.target.value)}
-          className={cn('h-9 pl-8 text-sm', entityId && 'pr-8')}
+          className={cn('h-9 pl-9 text-sm', entityId && 'pr-8')}
         />
         {entityId && (
           <button
@@ -147,174 +147,178 @@ export default function AuditFilterBar() {
         )}
       </div>
 
-      {/* Entity Type */}
-      <div className="relative">
-        <Select value={entityType} onValueChange={setEntityType}>
-          <SelectTrigger className={cn('h-9 w-[140px]', entityType !== ALL_VALUE && 'pr-8')}>
-            <SelectValue placeholder="Entity type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>All entities</SelectItem>
-            {ENTITY_TYPES.map((et) => {
-              const meta = AuditEntityTypeEnumHelper.getMetadata(et);
-              return (
-                <SelectItem key={et} value={String(et)}>
-                  {meta.text}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-        {entityType !== ALL_VALUE && (
-          <button
-            onClick={() => setEntityType(ALL_VALUE)}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
-            aria-label="Clear entity type"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
-      </div>
-
-      {/* Action Type */}
-      <div className="relative">
-        <Select value={actionType} onValueChange={setActionType}>
-          <SelectTrigger className={cn('h-9 w-[130px]', actionType !== ALL_VALUE && 'pr-8')}>
-            <SelectValue placeholder="Action" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>All actions</SelectItem>
-            {ACTION_TYPES.map((at) => (
-              <SelectItem key={at} value={String(at)}>
-                {at === AuditActionType.Created
-                  ? 'Created'
-                  : at === AuditActionType.Updated
-                    ? 'Updated'
-                    : 'Deleted'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {actionType !== ALL_VALUE && (
-          <button
-            onClick={() => setActionType(ALL_VALUE)}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
-            aria-label="Clear action type"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
-      </div>
-
-      {/* Field Changed */}
-      <FieldMultiSelect
-        options={filteredFieldOptions}
-        selected={fieldsChanged}
-        onChange={setFieldsChanged}
-        onClear={() => setFieldsChanged([])}
-        placeholder="Any field"
-      />
-
-      {/* Date Range */}
-      <div className="relative">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'h-9 w-[180px] justify-start text-left font-normal',
-                !dateFrom && !dateTo && 'text-muted-foreground',
-                (dateFrom || dateTo) && 'pr-8'
-              )}
+      {/* Filters Group */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Entity Type */}
+        <div className="relative">
+          <Select value={entityType} onValueChange={setEntityType}>
+            <SelectTrigger className={cn('h-9 w-[140px]', entityType !== ALL_VALUE && 'pr-8')}>
+              <SelectValue placeholder="Entity type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>All entities</SelectItem>
+              {ENTITY_TYPES.map((et) => {
+                const meta = AuditEntityTypeEnumHelper.getMetadata(et);
+                return (
+                  <SelectItem key={et} value={String(et)}>
+                    {meta.text}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {entityType !== ALL_VALUE && (
+            <button
+              onClick={() => setEntityType(ALL_VALUE)}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              aria-label="Clear entity type"
             >
-              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-              {dateFrom && dateTo ? (
-                <span className="truncate text-sm">
-                  {format(dateFrom, 'MMM d')} - {format(dateTo, 'MMM d')}
-                </span>
-              ) : dateFrom ? (
-                <span className="truncate text-sm">
-                  From {format(dateFrom, 'MMM d')}
-                </span>
-              ) : dateTo ? (
-                <span className="truncate text-sm">
-                  Until {format(dateTo, 'MMM d')}
-                </span>
-              ) : (
-                <span className="text-sm">Date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="flex flex-col gap-2 p-3">
-              <div className="text-muted-foreground text-xs font-medium">
-                From
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Action Type */}
+        <div className="relative">
+          <Select value={actionType} onValueChange={setActionType}>
+            <SelectTrigger className={cn('h-9 w-[130px]', actionType !== ALL_VALUE && 'pr-8')}>
+              <SelectValue placeholder="Action" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>All actions</SelectItem>
+              {ACTION_TYPES.map((at) => (
+                <SelectItem key={at} value={String(at)}>
+                  {at === AuditActionType.Created
+                    ? 'Created'
+                    : at === AuditActionType.Updated
+                      ? 'Updated'
+                      : 'Deleted'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {actionType !== ALL_VALUE && (
+            <button
+              onClick={() => setActionType(ALL_VALUE)}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              aria-label="Clear action type"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Field Changed */}
+        <FieldMultiSelect
+          options={filteredFieldOptions}
+          selected={fieldsChanged}
+          onChange={setFieldsChanged}
+          onClear={() => setFieldsChanged([])}
+          placeholder="Any field"
+        />
+
+        {/* Date Range */}
+        <div className="relative">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  'h-9 w-[170px] justify-start text-left font-normal',
+                  !dateFrom && !dateTo && 'text-muted-foreground',
+                  (dateFrom || dateTo) && 'pr-8'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                {dateFrom && dateTo ? (
+                  <span className="truncate text-sm">
+                    {format(dateFrom, 'MMM d')} - {format(dateTo, 'MMM d')}
+                  </span>
+                ) : dateFrom ? (
+                  <span className="truncate text-sm">
+                    From {format(dateFrom, 'MMM d')}
+                  </span>
+                ) : dateTo ? (
+                  <span className="truncate text-sm">
+                    Until {format(dateTo, 'MMM d')}
+                  </span>
+                ) : (
+                  <span className="text-sm">Date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <div className="flex flex-col gap-2 p-3">
+                <div className="text-muted-foreground text-xs font-medium">
+                  From
+                </div>
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  disabled={(date) => date > new Date()}
+                  initialFocus
+                />
+                <div className="text-muted-foreground text-xs font-medium">To</div>
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  disabled={(date) => date > new Date()}
+                />
+                {(dateFrom || dateTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateFrom(undefined);
+                      setDateTo(undefined);
+                    }}
+                    className="mt-2"
+                  >
+                    Clear dates
+                  </Button>
+                )}
               </div>
-              <Calendar
-                mode="single"
-                selected={dateFrom}
-                onSelect={setDateFrom}
-                disabled={(date) => date > new Date()}
-                initialFocus
-              />
-              <div className="text-muted-foreground text-xs font-medium">To</div>
-              <Calendar
-                mode="single"
-                selected={dateTo}
-                onSelect={setDateTo}
-                disabled={(date) => date > new Date()}
-              />
-              {(dateFrom || dateTo) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
-                  }}
-                  className="mt-2"
-                >
-                  Clear dates
-                </Button>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-        {(dateFrom || dateTo) && (
-          <button
-            onClick={() => {
-              setDateFrom(undefined);
-              setDateTo(undefined);
-            }}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
-            aria-label="Clear date range"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
+            </PopoverContent>
+          </Popover>
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => {
+                setDateFrom(undefined);
+                setDateTo(undefined);
+              }}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              aria-label="Clear date range"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Hide System Audits */}
-      <div className="flex items-center gap-2">
+      {/* Options - inline with filters */}
+      <div className="flex items-center gap-2 border-l border-border/50 pl-3">
         <Checkbox
           id="hide-system"
           checked={hideSystemAudits}
           onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
         />
-        <Label htmlFor="hide-system" className="cursor-pointer text-sm">
-          Hide system audits
+        <Label htmlFor="hide-system" className="text-muted-foreground cursor-pointer text-sm whitespace-nowrap">
+          Hide system
         </Label>
       </div>
 
-      {/* Clear All */}
+      {/* Clear All - pushed to right */}
       {activeFilterCount > 0 && (
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           onClick={clearAllFilters}
-          className="text-muted-foreground hover:text-foreground h-9"
+          className="ml-auto h-8 gap-1.5"
         >
-          Clear all ({activeFilterCount})
+          <X className="h-3.5 w-3.5" />
+          Clear ({activeFilterCount})
         </Button>
       )}
     </div>

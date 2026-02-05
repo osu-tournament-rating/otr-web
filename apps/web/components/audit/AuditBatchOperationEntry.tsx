@@ -100,10 +100,10 @@ function EntityChip({ entityType, count, isActive, onClick }: EntityChipProps) {
         }
       }}
       className={cn(
-        'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors',
+        'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
         isActive
-          ? 'bg-primary/15 text-primary font-medium'
-          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+          ? 'bg-primary/15 text-primary border-primary/30 font-medium'
+          : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:border-border'
       )}
     >
       <span
@@ -271,12 +271,12 @@ export default function AuditBatchOperationEntry({
 
                 {/* Nested groups */}
                 {activeEntityType === breakdown.entityType && (
-                  <div className="space-y-1 px-3 pb-3">
+                  <div className="space-y-2 px-3 pb-3">
                     {breakdown.groups.map((group, i) => (
                       <AuditGroupedEntry
                         key={`${group.latestCreated}-${i}`}
                         group={group}
-                        compact
+                        alwaysExpanded
                       />
                     ))}
                   </div>
