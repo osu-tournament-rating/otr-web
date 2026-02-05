@@ -39,6 +39,19 @@ export const ALL_AUDIT_TABLES = [
 ] as const;
 
 /**
+ * Compare two values for equality, handling objects/arrays via JSON serialization.
+ */
+function valuesAreEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== typeof b) return false;
+  if (typeof a === 'object') {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  return false;
+}
+
+/**
  * Normalizes inner change value keys (originalValue/newValue) to camelCase.
  * Handles both PascalCase (NewValue/OriginalValue) and camelCase inputs.
  */
@@ -67,6 +80,7 @@ function normalizeChangeValue(value: unknown): unknown {
  * The audit triggers store keys in snake_case, but historical data
  * was already camelized by a migration. This handles both cases.
  * Also normalizes inner value keys (originalValue/newValue) to camelCase.
+ * Filters out fields where originalValue equals newValue (no actual change).
  */
 export function camelizeChangesKeys(
   changes: Record<string, unknown> | null
@@ -78,9 +92,24 @@ export function camelizeChangesKeys(
     const camelKey = key.replace(/_([a-z])/g, (_, c: string) =>
       c.toUpperCase()
     );
-    result[camelKey] = normalizeChangeValue(value);
+    const normalizedValue = normalizeChangeValue(value);
+
+    // Skip fields where originalValue equals newValue (no actual change)
+    if (normalizedValue && typeof normalizedValue === 'object') {
+      const { originalValue, newValue } = normalizedValue as {
+        originalValue?: unknown;
+        newValue?: unknown;
+      };
+      if (valuesAreEqual(originalValue, newValue)) {
+        continue;
+      }
+    }
+
+    result[camelKey] = normalizedValue;
   }
-  return result;
+
+  // Return null if all fields were filtered out
+  return Object.keys(result).length > 0 ? result : null;
 }
 
 /**

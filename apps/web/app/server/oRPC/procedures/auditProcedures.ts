@@ -232,9 +232,18 @@ async function queryAuditEntries(
   }
 
   if (options.fieldNames && options.fieldNames.length > 0) {
-    // OR logic: match if ANY of the specified fields changed
+    // OR logic: match if ANY of the specified fields actually changed
+    // Check field exists AND values are different
+    // Handle both PascalCase (NewValue/OriginalValue) and camelCase keys in JSONB
     const fieldConditions = options.fieldNames.map(
-      (name) => sql`${table.changes} ? ${name}`
+      (name) => sql`(
+        ${table.changes} ? ${name}
+        AND (
+          COALESCE(${table.changes}->${name}->>'NewValue', ${table.changes}->${name}->>'newValue')
+          IS DISTINCT FROM
+          COALESCE(${table.changes}->${name}->>'OriginalValue', ${table.changes}->${name}->>'originalValue')
+        )
+      )`
     );
     if (fieldConditions.length === 1) {
       conditions.push(fieldConditions[0]);
