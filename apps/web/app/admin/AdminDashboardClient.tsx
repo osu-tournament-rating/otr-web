@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -443,15 +443,17 @@ export default function AdminDashboardClient() {
               <div className="overflow-hidden rounded-lg border">
                 <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <Avatar className="size-12 border">
-                      <AvatarImage
-                        src={`https://a.ppy.sh/${result.osuId}`}
-                        alt={`${result.username}'s avatar`}
-                      />
-                      <AvatarFallback>
-                        {result.username.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <OsuAvatar
+                      osuId={result.osuId}
+                      username={result.username}
+                      size={48}
+                      className="border"
+                      fallback={
+                        <span className="text-sm font-medium">
+                          {result.username.slice(0, 2).toUpperCase()}
+                        </span>
+                      }
+                    />
                     <div className="flex flex-col">
                       <span className="text-foreground font-medium">
                         {result.username}
