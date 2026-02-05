@@ -95,6 +95,12 @@ import {
   reopenReport,
   resolveReport,
 } from './procedures/reports/reportProcedures';
+import {
+  getEntityAuditTimeline,
+  getDefaultAuditActivity,
+  searchAudits,
+  listAuditAdminUsers,
+} from './procedures/auditProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -196,6 +202,12 @@ export const router = base.router({
     getKeys: getUserApiKeys,
     generateKey: generateUserApiKey,
     deleteKey: deleteUserApiKey,
+  },
+  audit: {
+    timeline: getEntityAuditTimeline,
+    activity: getDefaultAuditActivity,
+    search: searchAudits,
+    adminUsers: listAuditAdminUsers,
   },
   tournaments: {
     list: listTournaments,

@@ -1,5 +1,7 @@
 import {
   AdminNoteRouteTarget,
+  AuditActionType,
+  AuditEntityType,
   FilteringFailReason,
   GameRejectionReason,
   GameWarningFlags,
@@ -872,6 +874,48 @@ export const ReportStatusEnumHelper: IEnumHelper<ReportStatus> = {
     [ReportStatus.Rejected]: {
       text: 'Rejected',
       description: 'Report was declined',
+    },
+  },
+};
+
+export const AuditActionTypeEnumHelper: IEnumHelper<AuditActionType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [AuditActionType.Created]: {
+      text: 'Created',
+      description: 'Entity was created',
+    },
+    [AuditActionType.Updated]: {
+      text: 'Updated',
+      description: 'Entity was updated',
+    },
+    [AuditActionType.Deleted]: {
+      text: 'Deleted',
+      description: 'Entity was deleted',
+    },
+  },
+};
+
+export const AuditEntityTypeEnumHelper: IEnumHelper<AuditEntityType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [AuditEntityType.Tournament]: {
+      text: 'Tournament',
+      description: '',
+    },
+    [AuditEntityType.Match]: {
+      text: 'Match',
+      description: '',
+    },
+    [AuditEntityType.Game]: {
+      text: 'Game',
+      description: '',
+    },
+    [AuditEntityType.Score]: {
+      text: 'Score',
+      description: '',
     },
   },
 };
