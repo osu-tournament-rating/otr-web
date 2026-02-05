@@ -80,6 +80,25 @@ function getVerificationStatusChange(entries: AuditEntry[]): {
 }
 
 /**
+ * Check if rejection reason is being SET (not cleared) in any entries.
+ * Returns true if newValue is non-zero, false if being cleared (to 0/None).
+ */
+function isRejectionReasonBeingSet(entries: AuditEntry[]): boolean {
+  for (const entry of entries) {
+    const changes = entry.changes as Record<
+      string,
+      { originalValue: unknown; newValue: unknown }
+    > | null;
+    if (changes?.rejectionReason?.newValue !== undefined) {
+      const newValue = changes.rejectionReason.newValue;
+      // Rejection reason is being SET if newValue is non-zero
+      return typeof newValue === 'number' && newValue !== 0;
+    }
+  }
+  return false;
+}
+
+/**
  * Get timestamp in ms from ISO string
  */
 function getTimestamp(isoString: string): number {
@@ -115,9 +134,12 @@ function determineOperationType(groups: AuditGroupedEntry[]): BatchOperationType
     if (newStatus === VerificationStatus.Rejected) return 'rejection';
   }
 
-  // Fallback: check for rejection reason changes
+  // Fallback: check for rejection reason being SET (not cleared)
   for (const group of groups) {
-    if (group.changedFields.includes('rejectionReason')) {
+    if (
+      group.changedFields.includes('rejectionReason') &&
+      isRejectionReasonBeingSet(group.entries)
+    ) {
       return 'rejection';
     }
   }

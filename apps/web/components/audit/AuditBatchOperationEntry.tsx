@@ -132,6 +132,61 @@ function EntityChip({ entityType, count, isActive, onClick }: EntityChipProps) {
   );
 }
 
+/** Entity type hierarchy order (highest to lowest) */
+const ENTITY_HIERARCHY: AuditEntityType[] = [
+  AuditEntityType.Tournament,
+  AuditEntityType.Match,
+  AuditEntityType.Game,
+  AuditEntityType.Score,
+];
+
+/** URL path segment for each entity type */
+const ENTITY_URL_PATH: Record<AuditEntityType, string> = {
+  [AuditEntityType.Tournament]: 'tournaments',
+  [AuditEntityType.Match]: 'matches',
+  [AuditEntityType.Game]: 'games',
+  [AuditEntityType.Score]: 'scores',
+};
+
+/** Display label for each entity type */
+const ENTITY_LABEL: Record<AuditEntityType, string> = {
+  [AuditEntityType.Tournament]: 'tournament',
+  [AuditEntityType.Match]: 'match',
+  [AuditEntityType.Game]: 'game',
+  [AuditEntityType.Score]: 'score',
+};
+
+type ParentEntityInfo = {
+  entityType: AuditEntityType;
+  id: number;
+  label: string;
+  urlPath: string;
+} | null;
+
+/**
+ * Find the parent entity in a batch operation.
+ * Returns the highest-level entity in the hierarchy (Tournament > Match > Game > Score).
+ */
+function getParentEntity(batch: BatchOperation): ParentEntityInfo {
+  for (const entityType of ENTITY_HIERARCHY) {
+    const breakdown = batch.entityBreakdown.find(
+      (b) => b.entityType === entityType
+    );
+    if (breakdown && breakdown.groups.length > 0) {
+      const firstGroup = breakdown.groups[0];
+      if (firstGroup.entries.length > 0) {
+        return {
+          entityType,
+          id: firstGroup.entries[0].referenceIdLock,
+          label: ENTITY_LABEL[entityType],
+          urlPath: ENTITY_URL_PATH[entityType],
+        };
+      }
+    }
+  }
+  return null;
+}
+
 export default function AuditBatchOperationEntry({
   batch,
 }: {
@@ -145,6 +200,7 @@ export default function AuditBatchOperationEntry({
   const config = operationConfig[batch.type];
   const username = batch.actionUser?.username;
   const initials = getUserInitials(username);
+  const parentEntity = getParentEntity(batch);
 
   // When expanding, auto-select first entity type if none selected
   const handleOpenChange = (open: boolean) => {
@@ -211,12 +267,27 @@ export default function AuditBatchOperationEntry({
                     minimal
                   />
                 ) : (
-                  <span className="text-muted-foreground">{config.label}</span>
+                  <span className="text-muted-foreground">
+                    {/* Use "updated" instead of "bulk updated" for single entity changes */}
+                    {batch.type === 'bulk_update' && batch.totalCount === 1
+                      ? 'updated'
+                      : config.label}
+                  </span>
                 )}
-                {/* Only show "tournament + cascaded entities" for multi-entity batches */}
-                {batch.entityBreakdown.length > 1 && (
+                {/* Show parent entity ID link if available */}
+                {parentEntity && (
+                  <Link
+                    href={`/${parentEntity.urlPath}/${parentEntity.id}`}
+                    className="text-muted-foreground hover:text-primary text-xs hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    #{parentEntity.id}
+                  </Link>
+                )}
+                {/* Show "[parent] + child entities" for multi-entity batches */}
+                {batch.entityBreakdown.length > 1 && parentEntity && (
                   <span className="text-foreground font-medium">
-                    tournament + cascaded entities
+                    {parentEntity.label} + child entities
                   </span>
                 )}
               </div>

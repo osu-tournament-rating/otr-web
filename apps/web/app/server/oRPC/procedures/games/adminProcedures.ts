@@ -4,6 +4,7 @@ import { eq, inArray, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { withAuditUserId } from '@otr/core/db';
 import { cascadeGameRejection } from '@otr/core/db/rejection-cascade';
+import { cascadeGameVerification } from '@otr/core/db/verification-cascade';
 import {
   GameAdminDeleteInputSchema,
   GameAdminLookupInputSchema,
@@ -77,6 +78,10 @@ export const updateGameAdmin = protectedProcedure
             updated: NOW,
           })
           .where(eq(schema.games.id, input.id));
+
+        if (input.verificationStatus === VerificationStatus.Verified) {
+          await cascadeGameVerification(tx, [input.id], { updatedAt: NOW });
+        }
 
         if (input.verificationStatus === VerificationStatus.Rejected) {
           await cascadeGameRejection(tx, [input.id], {
