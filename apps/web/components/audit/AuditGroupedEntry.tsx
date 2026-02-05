@@ -55,8 +55,10 @@ function pluralize(word: string, count: number): string {
 
 export default function AuditGroupedEntry({
   group,
+  compact = false,
 }: {
   group: AuditGroupedEntryType;
+  compact?: boolean;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(group.count < 10);
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
@@ -76,48 +78,63 @@ export default function AuditGroupedEntry({
       <div
         className={cn(
           'border-border overflow-hidden rounded-lg border transition-colors',
-          expanded ? 'bg-card' : 'hover:bg-accent/30'
+          expanded ? 'bg-card' : 'hover:bg-accent/30',
+          compact && 'border-muted/50'
         )}
       >
         <CollapsibleTrigger asChild>
-          <button className="flex w-full items-center gap-3 p-3 text-left">
-            {/* User Avatar */}
-            {group.actionUser?.osuId ? (
-              <OsuAvatar
-                osuId={group.actionUser.osuId}
-                username={username}
-                size={32}
-                className="shrink-0"
-              />
-            ) : (
-              <Avatar className="h-8 w-8 shrink-0">
-                <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+          <button className={cn(
+            'flex w-full items-center gap-3 text-left',
+            compact ? 'p-2' : 'p-3'
+          )}>
+            {/* User Avatar - hidden in compact mode */}
+            {!compact && (
+              group.actionUser?.osuId ? (
+                <OsuAvatar
+                  osuId={group.actionUser.osuId}
+                  username={username}
+                  size={32}
+                  className="shrink-0"
+                />
+              ) : (
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              )
             )}
 
             {/* Content */}
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm">
-              {/* User link */}
-              {group.actionUser ? (
-                <Link
-                  href={`/players/${group.actionUser.playerId}`}
-                  className="text-primary font-medium hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {username ?? `User ${group.actionUser.id}`}
-                </Link>
-              ) : (
-                <span className="text-muted-foreground italic">System</span>
+            <div className={cn(
+              'flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5',
+              compact ? 'text-xs' : 'text-sm'
+            )}>
+              {/* User link - hidden in compact mode (parent shows it) */}
+              {!compact && (
+                group.actionUser ? (
+                  <Link
+                    href={`/players/${group.actionUser.playerId}`}
+                    className="text-primary font-medium hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {username ?? `User ${group.actionUser.id}`}
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground italic">System</span>
+                )
               )}
 
               {/* Action description */}
-              <span className="text-muted-foreground">
-                {actionMeta.text.toLowerCase()}
-              </span>
+              {!compact && (
+                <span className="text-muted-foreground">
+                  {actionMeta.text.toLowerCase()}
+                </span>
+              )}
               {fieldLabels && (
-                <span className="text-muted-foreground">{fieldLabels} on</span>
+                <span className="text-muted-foreground">
+                  {compact ? fieldLabels : `${fieldLabels} on`}
+                </span>
               )}
 
               {/* Count badge */}

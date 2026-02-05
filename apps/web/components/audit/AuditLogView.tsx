@@ -16,7 +16,9 @@ import { orpc } from '@/lib/orpc/orpc';
 import AuditFilterBar from './AuditFilterBar';
 import AuditEntryItem from './AuditEntryItem';
 import AuditGroupedEntry from './AuditGroupedEntry';
+import AuditBatchOperationEntry from './AuditBatchOperationEntry';
 import { parseFieldOptionValue } from './auditFieldConfig';
+import { detectBatchOperations } from './batchDetection';
 
 type TimelineResponse = {
   items: AuditTimelineItem[];
@@ -216,6 +218,12 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
   const isEmpty = !isLoading && allGroups.length === 0;
 
+  // Detect batch operations (verification cascades, etc.)
+  const displayItems = useMemo(
+    () => detectBatchOperations(allGroups),
+    [allGroups]
+  );
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -228,9 +236,19 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
     <div className="space-y-4">
       {/* Activity feed */}
       <div className="space-y-2">
-        {allGroups.map((group, i) => (
-          <AuditGroupedEntry key={`${group.latestCreated}-${i}`} group={group} />
-        ))}
+        {displayItems.map((item, i) =>
+          item.kind === 'batch' ? (
+            <AuditBatchOperationEntry
+              key={`batch-${item.latestCreated}-${i}`}
+              batch={item}
+            />
+          ) : (
+            <AuditGroupedEntry
+              key={`${item.data.latestCreated}-${i}`}
+              group={item.data}
+            />
+          )
+        )}
       </div>
 
       {/* Load more */}
