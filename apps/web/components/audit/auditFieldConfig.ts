@@ -25,6 +25,8 @@ type FieldConfig = {
   label: string;
   enumHelper?: AnyEnumHelper;
   isBitwise?: boolean;
+  /** Field contains a user ID that should be displayed as username */
+  isUserReference?: boolean;
 };
 
 /**
@@ -51,8 +53,8 @@ export const auditFieldConfig: Record<
       enumHelper: TournamentRejectionReasonEnumHelper,
       isBitwise: true,
     },
-    submittedByUserId: { label: 'Submitted By' },
-    verifiedByUserId: { label: 'Verified By' },
+    submittedByUserId: { label: 'Submitted By', isUserReference: true },
+    verifiedByUserId: { label: 'Verified By', isUserReference: true },
     startTime: { label: 'Start Time' },
     endTime: { label: 'End Time' },
     created: { label: 'Created' },
@@ -77,8 +79,8 @@ export const auditFieldConfig: Record<
       isBitwise: true,
     },
     tournamentId: { label: 'Tournament ID' },
-    submittedByUserId: { label: 'Submitted By' },
-    verifiedByUserId: { label: 'Verified By' },
+    submittedByUserId: { label: 'Submitted By', isUserReference: true },
+    verifiedByUserId: { label: 'Verified By', isUserReference: true },
     created: { label: 'Created' },
     dataFetchStatus: { label: 'Data Fetch Status', enumHelper: DataFetchStatusEnumHelper },
   },
@@ -173,6 +175,14 @@ export function isFieldBitwise(
   fieldName: string
 ): boolean {
   return auditFieldConfig[entityType]?.[fieldName]?.isBitwise ?? false;
+}
+
+/** Check if a field is a user ID reference */
+export function isFieldUserReference(
+  entityType: AuditEntityType,
+  fieldName: string
+): boolean {
+  return auditFieldConfig[entityType]?.[fieldName]?.isUserReference ?? false;
 }
 
 /** Field option for multi-select with entity context */

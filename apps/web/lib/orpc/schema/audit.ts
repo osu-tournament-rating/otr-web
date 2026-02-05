@@ -27,6 +27,8 @@ export const AuditEntrySchema = z.object({
   changes: z.record(z.string(), z.unknown()).nullable(),
   created: z.string(),
   actionUser: AuditActionUserSchema.nullable(),
+  /** Map of user IDs to user info for IDs referenced in changes (e.g. verifiedByUserId) */
+  referencedUsers: z.record(z.string(), AuditActionUserSchema).optional(),
 });
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
@@ -77,6 +79,15 @@ export const EntityAuditInputSchema = CursorPaginationInputSchema.extend({
   entityId: z.number().int().positive(),
 });
 
+// --- Field Filter ---
+
+export const FieldFilterSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  fieldName: z.string(),
+});
+
+export type FieldFilter = z.infer<typeof FieldFilterSchema>;
+
 // --- Search Input ---
 
 export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
@@ -86,7 +97,8 @@ export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   adminUserId: z.number().int().optional(),
-  fieldChanged: z.string().optional(),
+  /** Structured field filters with entity type context - OR logic: match any */
+  fieldsChanged: z.array(FieldFilterSchema).optional(),
   entityId: z.number().int().optional(),
   changeValue: z.string().optional(),
 });

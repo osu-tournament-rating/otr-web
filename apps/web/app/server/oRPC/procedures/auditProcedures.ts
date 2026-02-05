@@ -40,10 +40,93 @@ type AuditRow = {
   username: string | null;
 };
 
+/** Fields in changes that contain user IDs requiring resolution */
+const USER_ID_FIELDS = ['verifiedByUserId', 'submittedByUserId'];
+
+type ReferencedUser = {
+  id: number;
+  playerId: number | null;
+  osuId: number | null;
+  username: string | null;
+};
+
+/** Extract all user IDs from changes that need resolution */
+function extractUserIdsFromChanges(
+  changes: Record<string, { originalValue?: unknown; newValue?: unknown }> | null
+): number[] {
+  if (!changes) return [];
+  const ids: number[] = [];
+  for (const field of USER_ID_FIELDS) {
+    const change = changes[field];
+    if (change) {
+      if (typeof change.originalValue === 'number') ids.push(change.originalValue);
+      if (typeof change.newValue === 'number') ids.push(change.newValue);
+    }
+  }
+  return ids;
+}
+
+/** Resolve user IDs to user info */
+async function resolveUserIds(
+  db: DatabaseClient,
+  userIds: number[]
+): Promise<Map<number, ReferencedUser>> {
+  if (userIds.length === 0) return new Map();
+
+  const uniqueIds = [...new Set(userIds)];
+  const rows = await db
+    .select({
+      userId: schema.users.id,
+      playerId: schema.players.id,
+      osuId: schema.players.osuId,
+      username: schema.players.username,
+    })
+    .from(schema.users)
+    .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
+    .where(inArray(schema.users.id, uniqueIds));
+
+  const map = new Map<number, ReferencedUser>();
+  for (const row of rows) {
+    map.set(row.userId, {
+      id: row.userId,
+      playerId: row.playerId,
+      osuId: row.osuId,
+      username: row.username,
+    });
+  }
+  return map;
+}
+
 function mapAuditRow(
   row: AuditRow,
-  entityType: AuditEntityType
+  entityType: AuditEntityType,
+  userMap?: Map<number, ReferencedUser>
 ): AuditEntry {
+  const changes = camelizeChangesKeys(
+    row.changes as Record<string, unknown> | null
+  );
+
+  // Build referencedUsers for this entry from the shared user map
+  let referencedUsers: Record<string, ReferencedUser> | undefined;
+  if (userMap && changes) {
+    const userIds = extractUserIdsFromChanges(
+      changes as Record<string, { originalValue?: unknown; newValue?: unknown }>
+    );
+    if (userIds.length > 0) {
+      referencedUsers = {};
+      for (const id of userIds) {
+        const user = userMap.get(id);
+        if (user) {
+          referencedUsers[String(id)] = user;
+        }
+      }
+      // Only include if we found at least one user
+      if (Object.keys(referencedUsers).length === 0) {
+        referencedUsers = undefined;
+      }
+    }
+  }
+
   return {
     id: row.id,
     entityType,
@@ -51,9 +134,7 @@ function mapAuditRow(
     referenceId: row.referenceId,
     actionUserId: row.actionUserId,
     actionType: row.actionType as AuditActionType,
-    changes: camelizeChangesKeys(
-      row.changes as Record<string, unknown> | null
-    ),
+    changes,
     created: row.created,
     actionUser: row.userId
       ? {
@@ -63,6 +144,7 @@ function mapAuditRow(
           username: row.username,
         }
       : null,
+    referencedUsers,
   };
 }
 
@@ -106,7 +188,8 @@ async function queryAuditEntries(
     actionTypes?: AuditActionType[];
     dateFrom?: string;
     dateTo?: string;
-    fieldChanged?: string;
+    /** Array of field names to filter by (OR logic - match any) */
+    fieldNames?: string[];
     entityId?: number;
     changeValue?: string;
     cursorTimestamp?: string;
@@ -148,18 +231,27 @@ async function queryAuditEntries(
     );
   }
 
-  if (options.fieldChanged) {
-    conditions.push(sql`${table.changes} ? ${options.fieldChanged}`);
+  if (options.fieldNames && options.fieldNames.length > 0) {
+    // OR logic: match if ANY of the specified fields changed
+    const fieldConditions = options.fieldNames.map(
+      (name) => sql`${table.changes} ? ${name}`
+    );
+    if (fieldConditions.length === 1) {
+      conditions.push(fieldConditions[0]);
+    } else {
+      conditions.push(sql`(${sql.join(fieldConditions, sql` OR `)})`);
+    }
   }
 
   if (options.entityId !== undefined) {
     conditions.push(eq(table.referenceIdLock, options.entityId));
   }
 
-  if (options.changeValue && options.fieldChanged) {
+  if (options.changeValue && options.fieldNames && options.fieldNames.length === 1) {
+    // changeValue only works when filtering by a single field
     conditions.push(
       sql`${table.changes} @> ${JSON.stringify({
-        [options.fieldChanged]: { newValue: tryParseJsonValue(options.changeValue) },
+        [options.fieldNames[0]]: { newValue: tryParseJsonValue(options.changeValue) },
       })}::jsonb`
     );
   }
@@ -191,7 +283,22 @@ async function queryAuditEntries(
     .orderBy(desc(table.id))
     .limit(options.limit);
 
-  return (rows as AuditRow[]).map((row) => mapAuditRow(row, entityType));
+  // Collect all user IDs from changes that need resolution
+  const allUserIds: number[] = [];
+  for (const row of rows) {
+    const changes = camelizeChangesKeys(
+      row.changes as Record<string, unknown> | null
+    );
+    const ids = extractUserIdsFromChanges(
+      changes as Record<string, { originalValue?: unknown; newValue?: unknown }> | null
+    );
+    allUserIds.push(...ids);
+  }
+
+  // Resolve all user IDs in a single batch query
+  const userMap = await resolveUserIds(db, allUserIds);
+
+  return (rows as AuditRow[]).map((row) => mapAuditRow(row, entityType, userMap));
 }
 
 function tryParseJsonValue(value: string): unknown {
@@ -370,22 +477,46 @@ export const searchAudits = publicProcedure
       dateFrom,
       dateTo,
       adminUserId,
-      fieldChanged,
+      fieldsChanged,
       entityId,
       changeValue,
       cursor,
       limit,
     } = input;
 
-    const targetEntityTypes =
-      entityTypes && entityTypes.length > 0
-        ? entityTypes
-        : [
-            AuditEntityType.Tournament,
-            AuditEntityType.Match,
-            AuditEntityType.Game,
-            AuditEntityType.Score,
-          ];
+    // Group field filters by entity type
+    const fieldsByEntityType = new Map<AuditEntityType, string[]>();
+    if (fieldsChanged && fieldsChanged.length > 0) {
+      for (const { entityType, fieldName } of fieldsChanged) {
+        const existing = fieldsByEntityType.get(entityType) || [];
+        fieldsByEntityType.set(entityType, [...existing, fieldName]);
+      }
+    }
+
+    // Determine which entity types to query:
+    // - If fieldsChanged is set, only query entity types that have field filters
+    // - Otherwise, use entityTypes filter or default to all
+    let targetEntityTypes: AuditEntityType[];
+    if (fieldsByEntityType.size > 0) {
+      // Only query entity types that have field filters
+      targetEntityTypes = Array.from(fieldsByEntityType.keys());
+      // If entityTypes filter is also set, intersect them
+      if (entityTypes && entityTypes.length > 0) {
+        targetEntityTypes = targetEntityTypes.filter((et) =>
+          entityTypes.includes(et)
+        );
+      }
+    } else {
+      targetEntityTypes =
+        entityTypes && entityTypes.length > 0
+          ? entityTypes
+          : [
+              AuditEntityType.Tournament,
+              AuditEntityType.Match,
+              AuditEntityType.Game,
+              AuditEntityType.Score,
+            ];
+    }
 
     const allEntries = await Promise.all(
       targetEntityTypes.map((entityType) =>
@@ -397,7 +528,7 @@ export const searchAudits = publicProcedure
           actionTypes,
           dateFrom,
           dateTo,
-          fieldChanged,
+          fieldNames: fieldsByEntityType.get(entityType),
           entityId,
           changeValue,
         })

@@ -8,6 +8,7 @@ import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
   AuditTimelineItem,
   AuditGroupedEntry as AuditGroupedEntryType,
+  FieldFilter,
 } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +16,7 @@ import { orpc } from '@/lib/orpc/orpc';
 import AuditFilterBar from './AuditFilterBar';
 import AuditEntryItem from './AuditEntryItem';
 import AuditGroupedEntry from './AuditGroupedEntry';
+import { parseFieldOptionValue } from './auditFieldConfig';
 
 type TimelineResponse = {
   items: AuditTimelineItem[];
@@ -85,6 +87,16 @@ function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
     getKey,
     async ([, , cursor]) => {
+      // Parse fieldChanged values from "entityType:fieldName" format
+      const fieldChangedParam = searchParams.get('fieldChanged');
+      let fieldsChanged: FieldFilter[] | undefined;
+      if (fieldChangedParam) {
+        const parsed = fieldChangedParam.split(',').map(parseFieldOptionValue).filter(Boolean) as FieldFilter[];
+        if (parsed.length > 0) {
+          fieldsChanged = parsed;
+        }
+      }
+
       return orpc.audit.search({
         entityTypes: searchParams.get('entityTypes')
           ? (searchParams
@@ -101,7 +113,7 @@ function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
         adminOnly: searchParams.get('adminOnly') === 'true' || undefined,
         dateFrom: searchParams.get('dateFrom') || undefined,
         dateTo: searchParams.get('dateTo') || undefined,
-        fieldChanged: searchParams.get('fieldChanged') || undefined,
+        fieldsChanged,
         entityId: searchParams.get('entityId')
           ? Number(searchParams.get('entityId'))
           : undefined,

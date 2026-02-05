@@ -39,9 +39,34 @@ export const ALL_AUDIT_TABLES = [
 ] as const;
 
 /**
+ * Normalizes inner change value keys (originalValue/newValue) to camelCase.
+ * Handles both PascalCase (NewValue/OriginalValue) and camelCase inputs.
+ */
+function normalizeChangeValue(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+
+  const obj = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  for (const [key, v] of Object.entries(obj)) {
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'originalvalue') {
+      result['originalValue'] = v;
+    } else if (lowerKey === 'newvalue') {
+      result['newValue'] = v;
+    } else {
+      result[key] = v;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Normalizes JSONB change keys from snake_case to camelCase.
  * The audit triggers store keys in snake_case, but historical data
  * was already camelized by a migration. This handles both cases.
+ * Also normalizes inner value keys (originalValue/newValue) to camelCase.
  */
 export function camelizeChangesKeys(
   changes: Record<string, unknown> | null
@@ -53,7 +78,7 @@ export function camelizeChangesKeys(
     const camelKey = key.replace(/_([a-z])/g, (_, c: string) =>
       c.toUpperCase()
     );
-    result[camelKey] = value;
+    result[camelKey] = normalizeChangeValue(value);
   }
   return result;
 }

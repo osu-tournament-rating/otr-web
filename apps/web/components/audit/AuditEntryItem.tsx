@@ -164,6 +164,7 @@ export default function AuditEntryItem({
                     fieldName={fieldName}
                     change={change}
                     entityType={entry.entityType}
+                    referencedUsers={entry.referencedUsers}
                   />
                 ))}
               </div>

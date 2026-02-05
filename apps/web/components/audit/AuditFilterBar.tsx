@@ -65,7 +65,7 @@ export default function AuditFilterBar() {
     return param ? new Date(param) : undefined;
   });
   const [fieldsChanged, setFieldsChanged] = useState<string[]>(() => {
-    const param = searchParams.get('fieldsChanged');
+    const param = searchParams.get('fieldChanged');
     return param ? param.split(',') : [];
   });
   const [entityId, setEntityId] = useState(searchParams.get('entityId') ?? '');
@@ -126,7 +126,7 @@ export default function AuditFilterBar() {
       return getFieldLabel(parsed.entityType, parsed.fieldName);
     });
     activeFilters.push({
-      key: 'fieldsChanged',
+      key: 'fieldChanged',
       label: fieldsChanged.length === 1 ? 'Field' : 'Fields',
       value: fieldLabels.join(', '),
     });
@@ -152,7 +152,7 @@ export default function AuditFilterBar() {
     if (actionType && actionType !== ALL_VALUE) params.set('actionTypes', actionType);
     if (dateFrom) params.set('dateFrom', format(dateFrom, 'yyyy-MM-dd'));
     if (dateTo) params.set('dateTo', format(dateTo, 'yyyy-MM-dd'));
-    if (fieldsChanged.length > 0) params.set('fieldsChanged', fieldsChanged.join(','));
+    if (fieldsChanged.length > 0) params.set('fieldChanged', fieldsChanged.join(','));
     if (entityId) params.set('entityId', entityId);
     if (hideSystemAudits) params.set('adminOnly', 'true');
 
@@ -175,7 +175,7 @@ export default function AuditFilterBar() {
         case 'dateTo':
           setDateTo(undefined);
           break;
-        case 'fieldsChanged':
+        case 'fieldChanged':
           setFieldsChanged([]);
           break;
         case 'entityId':

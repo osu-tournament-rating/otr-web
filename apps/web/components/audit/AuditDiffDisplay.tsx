@@ -5,7 +5,15 @@ import {
   getFieldLabel,
   getFieldEnumHelper,
   isFieldBitwise,
+  isFieldUserReference,
 } from './auditFieldConfig';
+
+type ReferencedUser = {
+  id: number;
+  playerId: number | null;
+  osuId: number | null;
+  username: string | null;
+};
 
 type ChangeValue = {
   originalValue: unknown;
@@ -15,9 +23,19 @@ type ChangeValue = {
 function formatValue(
   value: unknown,
   entityType: AuditEntityType,
-  fieldName: string
+  fieldName: string,
+  referencedUsers?: Record<string, ReferencedUser>
 ): string {
   if (value === null || value === undefined || value === 'null' || value === '') return '\u2014';
+
+  // Handle user reference fields
+  if (isFieldUserReference(entityType, fieldName) && typeof value === 'number') {
+    const user = referencedUsers?.[String(value)];
+    if (user?.username) {
+      return user.username;
+    }
+    return `Deleted user (${value})`;
+  }
 
   const enumHelper = getFieldEnumHelper(entityType, fieldName);
   if (enumHelper && typeof value === 'number') {
@@ -39,14 +57,16 @@ export default function AuditDiffDisplay({
   fieldName,
   change,
   entityType,
+  referencedUsers,
 }: {
   fieldName: string;
   change: ChangeValue;
   entityType: AuditEntityType;
+  referencedUsers?: Record<string, ReferencedUser>;
 }): React.JSX.Element {
   const label = getFieldLabel(entityType, fieldName);
-  const oldVal = formatValue(change.originalValue, entityType, fieldName);
-  const newVal = formatValue(change.newValue, entityType, fieldName);
+  const oldVal = formatValue(change.originalValue, entityType, fieldName, referencedUsers);
+  const newVal = formatValue(change.newValue, entityType, fieldName, referencedUsers);
 
   return (
     <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
