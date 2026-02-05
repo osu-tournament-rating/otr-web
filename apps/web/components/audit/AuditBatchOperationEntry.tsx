@@ -38,23 +38,23 @@ const operationConfig: Record<
   },
   verification: {
     verificationStatus: VerificationStatus.Verified,
-    borderColor: 'border-l-green-500',
-    bgColor: 'bg-green-500/5',
+    borderColor: 'border-l-violet-400',
+    bgColor: 'bg-violet-500/5',
   },
   rejection: {
     verificationStatus: VerificationStatus.Rejected,
-    borderColor: 'border-l-red-500',
-    bgColor: 'bg-red-500/5',
+    borderColor: 'border-l-violet-400',
+    bgColor: 'bg-violet-500/5',
   },
   pre_verification: {
     verificationStatus: VerificationStatus.PreVerified,
-    borderColor: 'border-l-emerald-400',
-    bgColor: 'bg-emerald-400/5',
+    borderColor: 'border-l-violet-300',
+    bgColor: 'bg-violet-400/5',
   },
   pre_rejection: {
     verificationStatus: VerificationStatus.PreRejected,
-    borderColor: 'border-l-amber-500',
-    bgColor: 'bg-amber-500/5',
+    borderColor: 'border-l-violet-300',
+    bgColor: 'bg-violet-400/5',
   },
   bulk_update: {
     icon: Layers,
@@ -117,14 +117,14 @@ function EntityChip({ entityType, count, isActive, onClick }: EntityChipProps) {
       className={cn(
         'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
         isActive
-          ? 'bg-primary/15 text-primary border-primary/30 font-medium'
+          ? 'bg-foreground/10 text-foreground border-foreground/20 font-medium'
           : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:border-border'
       )}
     >
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full',
-          isActive ? 'bg-primary' : 'bg-muted-foreground/50'
+          isActive ? 'bg-foreground' : 'bg-muted-foreground/50'
         )}
       />
       {count} {label}
@@ -167,7 +167,7 @@ export default function AuditBatchOperationEntry({
         className={cn(
           'border-border overflow-hidden rounded-lg border border-l-4 transition-colors',
           config.borderColor,
-          expanded ? config.bgColor : 'hover:bg-accent/30'
+          expanded ? config.bgColor : 'hover:bg-muted/30'
         )}
       >
         <CollapsibleTrigger asChild>
@@ -223,15 +223,6 @@ export default function AuditBatchOperationEntry({
 
               {/* Entity chips */}
               <div className="flex flex-wrap items-center gap-1.5">
-                {config.verificationStatus !== undefined ? (
-                  <VerificationBadge
-                    verificationStatus={config.verificationStatus}
-                    size="small"
-                    minimal
-                  />
-                ) : config.icon ? (
-                  <config.icon className={cn(config.iconColor, 'h-3.5 w-3.5 shrink-0')} />
-                ) : null}
                 {batch.entityBreakdown.map((breakdown) => (
                   <EntityChip
                     key={breakdown.entityType}

@@ -35,9 +35,9 @@ const actionIconColors: Record<AuditActionType, string> = {
 };
 
 const actionBadgeColors: Record<AuditActionType, string> = {
-  [AuditActionType.Created]: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  [AuditActionType.Updated]: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  [AuditActionType.Deleted]: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+  [AuditActionType.Created]: 'bg-green-500/5 text-green-600 dark:text-green-400 border-green-500/15',
+  [AuditActionType.Updated]: 'bg-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-500/15',
+  [AuditActionType.Deleted]: 'bg-red-500/5 text-red-600 dark:text-red-400 border-red-500/15',
 };
 
 export default function AuditEntryItem({
