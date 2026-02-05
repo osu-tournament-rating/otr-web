@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShieldCheck, ShieldX, Layers } from 'lucide-react';
-import { AuditEntityType } from '@otr/core/osu';
+import { ChevronRight, Layers } from 'lucide-react';
+import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
+import VerificationBadge from '@/components/badges/VerificationBadge';
 import { AuditEntityTypeEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -20,32 +21,27 @@ import { formatRelativeTime } from './formatRelativeTime';
 const operationConfig: Record<
   BatchOperationType,
   {
-    icon: typeof ShieldCheck;
-    label: string;
+    verificationStatus?: VerificationStatus;
+    icon?: typeof Layers;
+    label?: string;
     borderColor: string;
-    iconColor: string;
     bgColor: string;
   }
 > = {
   verification: {
-    icon: ShieldCheck,
-    label: 'verified',
+    verificationStatus: VerificationStatus.Verified,
     borderColor: 'border-l-green-500',
-    iconColor: 'text-green-500',
     bgColor: 'bg-green-500/5',
   },
   rejection: {
-    icon: ShieldX,
-    label: 'rejected',
+    verificationStatus: VerificationStatus.Rejected,
     borderColor: 'border-l-red-500',
-    iconColor: 'text-red-500',
     bgColor: 'bg-red-500/5',
   },
   bulk_update: {
     icon: Layers,
     label: 'bulk updated',
     borderColor: 'border-l-blue-500',
-    iconColor: 'text-blue-500',
     bgColor: 'bg-blue-500/5',
   },
 };
@@ -128,7 +124,6 @@ export default function AuditBatchOperationEntry({
   );
 
   const config = operationConfig[batch.type];
-  const OperationIcon = config.icon;
   const username = batch.actionUser?.username;
   const initials = getUserInitials(username);
 
@@ -189,7 +184,16 @@ export default function AuditBatchOperationEntry({
                 ) : (
                   <span className="text-muted-foreground italic">System</span>
                 )}
-                <span className="text-muted-foreground">{config.label}</span>
+                {config.verificationStatus !== undefined ? (
+                  <VerificationBadge
+                    verificationStatus={config.verificationStatus}
+                    displayText
+                    size="small"
+                    minimal
+                  />
+                ) : (
+                  <span className="text-muted-foreground">{config.label}</span>
+                )}
                 <span className="text-foreground font-medium">
                   tournament + cascaded entities
                 </span>
@@ -197,9 +201,15 @@ export default function AuditBatchOperationEntry({
 
               {/* Entity chips */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <OperationIcon
-                  className={cn('h-3.5 w-3.5 shrink-0', config.iconColor)}
-                />
+                {config.verificationStatus !== undefined ? (
+                  <VerificationBadge
+                    verificationStatus={config.verificationStatus}
+                    size="small"
+                    minimal
+                  />
+                ) : config.icon ? (
+                  <config.icon className="text-blue-500 h-3.5 w-3.5 shrink-0" />
+                ) : null}
                 {batch.entityBreakdown.map((breakdown) => (
                   <EntityChip
                     key={breakdown.entityType}

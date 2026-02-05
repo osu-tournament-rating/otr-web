@@ -26,7 +26,7 @@ export default function AuditLogsPage() {
     <div className="container mx-auto py-6">
       <Card className="p-6">
         {/* Section Header */}
-        <div className="mb-6 flex items-center gap-3">
+        <div className="mb-3 flex items-center gap-3">
           <ClipboardList className="text-primary h-6 w-6" />
           <div>
             <h1 className="text-xl font-semibold">Audit Logs</h1>

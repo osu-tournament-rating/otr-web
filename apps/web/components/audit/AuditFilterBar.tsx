@@ -125,34 +125,34 @@ export default function AuditFilterBar() {
   }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, applyFilters]);
 
   return (
-    <div className="bg-popover flex flex-wrap items-center gap-3 rounded-lg p-3">
-      {/* Search Group */}
-      <div className="relative min-w-[140px] flex-1 max-w-[200px]">
-        <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-        <Input
-          type="number"
-          placeholder="Entity ID..."
-          value={entityId}
-          onChange={(e) => setEntityId(e.target.value)}
-          className={cn('h-9 pl-9 text-sm', entityId && 'pr-8')}
-        />
-        {entityId && (
-          <button
-            onClick={() => setEntityId('')}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
-            aria-label="Clear entity ID"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
-      </div>
+    <div className="bg-popover flex flex-col gap-2.5 rounded-lg p-3">
+      {/* Row 1: Search & Entity/Action Filters */}
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-2.5 sm:grid-cols-[2fr_1fr_1fr]">
+        {/* Search Group */}
+        <div className="relative">
+          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Input
+            type="number"
+            placeholder="Entity ID..."
+            value={entityId}
+            onChange={(e) => setEntityId(e.target.value)}
+            className={cn('h-9 w-full pl-9 text-sm', entityId && 'pr-8')}
+          />
+          {entityId && (
+            <button
+              onClick={() => setEntityId('')}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+              aria-label="Clear entity ID"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
 
-      {/* Filters Group */}
-      <div className="flex flex-wrap items-center gap-2">
         {/* Entity Type */}
         <div className="relative">
           <Select value={entityType} onValueChange={setEntityType}>
-            <SelectTrigger className={cn('h-9 w-[140px]', entityType !== ALL_VALUE && 'pr-8')}>
+            <SelectTrigger className={cn('h-9 w-full', entityType !== ALL_VALUE && 'pr-8')}>
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
             <SelectContent>
@@ -181,7 +181,7 @@ export default function AuditFilterBar() {
         {/* Action Type */}
         <div className="relative">
           <Select value={actionType} onValueChange={setActionType}>
-            <SelectTrigger className={cn('h-9 w-[130px]', actionType !== ALL_VALUE && 'pr-8')}>
+            <SelectTrigger className={cn('h-9 w-full', actionType !== ALL_VALUE && 'pr-8')}>
               <SelectValue placeholder="Action" />
             </SelectTrigger>
             <SelectContent>
@@ -207,7 +207,10 @@ export default function AuditFilterBar() {
             </button>
           )}
         </div>
+      </div>
 
+      {/* Row 2: Field, Date, Options & Clear */}
+      <div className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-2.5">
         {/* Field Changed */}
         <FieldMultiSelect
           options={filteredFieldOptions}
@@ -215,6 +218,7 @@ export default function AuditFilterBar() {
           onChange={setFieldsChanged}
           onClear={() => setFieldsChanged([])}
           placeholder="Any field"
+          className="w-full"
         />
 
         {/* Date Range */}
@@ -224,7 +228,7 @@ export default function AuditFilterBar() {
               <Button
                 variant="outline"
                 className={cn(
-                  'h-9 w-[170px] justify-start text-left font-normal',
+                  'h-9 w-full justify-start text-left font-normal',
                   !dateFrom && !dateTo && 'text-muted-foreground',
                   (dateFrom || dateTo) && 'pr-8'
                 )}
@@ -295,32 +299,34 @@ export default function AuditFilterBar() {
             </button>
           )}
         </div>
-      </div>
 
-      {/* Options - inline with filters */}
-      <div className="flex items-center gap-2 border-l border-border/50 pl-3">
-        <Checkbox
-          id="hide-system"
-          checked={hideSystemAudits}
-          onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
-        />
-        <Label htmlFor="hide-system" className="text-muted-foreground cursor-pointer text-sm whitespace-nowrap">
-          Hide system
-        </Label>
-      </div>
+        {/* Options */}
+        <div className="flex items-center gap-2 border-l border-border/50 pl-3">
+          <Checkbox
+            id="hide-system"
+            checked={hideSystemAudits}
+            onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
+          />
+          <Label htmlFor="hide-system" className="text-muted-foreground cursor-pointer text-sm whitespace-nowrap">
+            Hide system
+          </Label>
+        </div>
 
-      {/* Clear All - pushed to right */}
-      {activeFilterCount > 0 && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={clearAllFilters}
-          className="ml-auto h-8 gap-1.5"
-        >
-          <X className="h-3.5 w-3.5" />
-          Clear ({activeFilterCount})
-        </Button>
-      )}
+        {/* Clear All */}
+        {activeFilterCount > 0 ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={clearAllFilters}
+            className="h-8 gap-1.5"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear ({activeFilterCount})
+          </Button>
+        ) : (
+          <div className="w-[88px]" /> /* Placeholder to maintain grid alignment */
+        )}
+      </div>
     </div>
   );
 }

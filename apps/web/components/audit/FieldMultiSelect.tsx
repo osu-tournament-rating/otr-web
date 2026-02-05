@@ -84,7 +84,7 @@ export default function FieldMultiSelect({
   };
 
   return (
-    <div className="relative">
+    <div className={cn('relative', className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -93,9 +93,8 @@ export default function FieldMultiSelect({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              'h-9 w-[180px] justify-between',
-              selected.length > 0 && onClear && 'pr-8',
-              className
+              'h-9 w-full justify-between',
+              selected.length > 0 && onClear && 'pr-8'
             )}
             disabled={disabled}
           >
