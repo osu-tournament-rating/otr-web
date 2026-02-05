@@ -11,38 +11,37 @@ export default function AuditNoteItem({
   return (
     <div
       id={`note-${note.id}`}
-      className="border-border group relative border-l-2 py-2 pl-4"
+      className="border-border border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/10 group border-b border-l-2 px-3 py-2.5 transition-colors hover:bg-amber-50/50 dark:hover:bg-amber-900/20"
     >
-      <div className="absolute -left-[5px] top-3 h-2 w-2 rounded-full bg-amber-400" />
-
-      <div className="rounded-md border border-amber-200/50 bg-amber-50/50 p-2 dark:border-amber-700/30 dark:bg-amber-900/10">
-        <div className="flex items-center gap-1.5 text-xs">
-          <MessageSquare className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-          <span className="font-medium text-amber-700 dark:text-amber-400">
-            Note
-          </span>
-          <span className="text-muted-foreground">&middot;</span>
-          {note.adminUser ? (
-            <Link
-              href={`/players/${note.adminUser.playerId}`}
-              className="text-primary hover:underline"
-            >
-              {note.adminUser.username ?? `User ${note.adminUser.id}`}
-            </Link>
-          ) : (
-            <span className="text-muted-foreground italic">Unknown</span>
-          )}
-          <span className="text-muted-foreground">&middot;</span>
-          <time
-            className="text-muted-foreground"
-            dateTime={note.created}
-            title={new Date(note.created).toLocaleString()}
+      {/* Header row */}
+      <div className="flex items-center gap-2">
+        <MessageSquare className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+          Note
+        </span>
+        <span className="text-muted-foreground text-xs">&middot;</span>
+        {note.adminUser ? (
+          <Link
+            href={`/players/${note.adminUser.playerId}`}
+            className="text-primary text-sm hover:underline"
           >
-            {formatRelativeTime(note.created)}
-          </time>
-        </div>
-        <p className="mt-1 whitespace-pre-wrap text-sm">{note.note}</p>
+            {note.adminUser.username ?? `User ${note.adminUser.id}`}
+          </Link>
+        ) : (
+          <span className="text-muted-foreground text-sm italic">Unknown</span>
+        )}
+        <span className="flex-1" />
+        <time
+          className="text-muted-foreground shrink-0 text-xs"
+          dateTime={note.created}
+          title={new Date(note.created).toLocaleString()}
+        >
+          {formatRelativeTime(note.created)}
+        </time>
       </div>
+
+      {/* Note content */}
+      <p className="mt-1.5 whitespace-pre-wrap pl-6 text-sm">{note.note}</p>
     </div>
   );
 }

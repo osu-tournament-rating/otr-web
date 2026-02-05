@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { IBitwiseEnumHelper, EnumMetadata } from '@/lib/enums';
 import {
@@ -48,12 +49,18 @@ export default function AuditDiffDisplay({
   const newVal = formatValue(change.newValue, entityType, fieldName);
 
   return (
-    <div className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:gap-1.5">
-      <span className="text-muted-foreground font-medium">{label}:</span>
-      <span className="flex items-center gap-1">
-        <span className="text-red-500/80 line-through">{oldVal}</span>
-        <span className="text-muted-foreground">&rarr;</span>
-        <span className="text-green-600 dark:text-green-400">{newVal}</span>
+    <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
+      <span className="text-muted-foreground w-28 shrink-0 font-medium">
+        {label}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="bg-red-500/10 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 line-through">
+          {oldVal}
+        </span>
+        <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
+        <span className="bg-green-500/10 text-green-600 dark:text-green-400 rounded px-1.5 py-0.5">
+          {newVal}
+        </span>
       </span>
     </div>
   );
