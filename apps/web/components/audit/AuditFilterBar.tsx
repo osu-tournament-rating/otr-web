@@ -5,15 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CalendarIcon, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
-import {
-  AuditActionTypeEnumHelper,
-  AuditEntityTypeEnumHelper,
-} from '@/lib/enums';
+import { AuditEntityTypeEnumHelper } from '@/lib/enums';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -28,7 +24,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { getFieldOptionsWithEntityType, parseFieldOptionValue, getFieldLabel } from './auditFieldConfig';
+import { getFieldOptionsWithEntityType } from './auditFieldConfig';
 import FieldMultiSelect from './FieldMultiSelect';
 
 const ALL_VALUE = '__all__';
@@ -84,67 +80,16 @@ export default function AuditFilterBar() {
     ? allFieldOptions.filter((opt) => selectedEntityTypes.includes(opt.entityType))
     : allFieldOptions;
 
-  const activeFilters: { key: string; label: string; value: string }[] = [];
-  if (entityType && entityType !== ALL_VALUE) {
-    const types = entityType.split(',').map(Number) as AuditEntityType[];
-    activeFilters.push({
-      key: 'entityTypes',
-      label: 'Entity',
-      value: types
-        .map((t) => AuditEntityTypeEnumHelper.getMetadata(t).text)
-        .join(', '),
-    });
-  }
-  if (actionType && actionType !== ALL_VALUE) {
-    const types = actionType.split(',').map(Number) as AuditActionType[];
-    activeFilters.push({
-      key: 'actionTypes',
-      label: 'Action',
-      value: types
-        .map((t) => AuditActionTypeEnumHelper.getMetadata(t).text)
-        .join(', '),
-    });
-  }
-  if (dateFrom) {
-    activeFilters.push({
-      key: 'dateFrom',
-      label: 'From',
-      value: format(dateFrom, 'MMM d, yyyy'),
-    });
-  }
-  if (dateTo) {
-    activeFilters.push({
-      key: 'dateTo',
-      label: 'To',
-      value: format(dateTo, 'MMM d, yyyy'),
-    });
-  }
-  if (fieldsChanged.length > 0) {
-    const fieldLabels = fieldsChanged.map((value) => {
-      const parsed = parseFieldOptionValue(value);
-      if (!parsed) return value;
-      return getFieldLabel(parsed.entityType, parsed.fieldName);
-    });
-    activeFilters.push({
-      key: 'fieldChanged',
-      label: fieldsChanged.length === 1 ? 'Field' : 'Fields',
-      value: fieldLabels.join(', '),
-    });
-  }
-  if (entityId) {
-    activeFilters.push({
-      key: 'entityId',
-      label: 'ID',
-      value: `#${entityId}`,
-    });
-  }
-  if (hideSystemAudits) {
-    activeFilters.push({
-      key: 'adminOnly',
-      label: 'Filter',
-      value: 'Admin actions only',
-    });
-  }
+  // Count active filters for the Clear all button
+  const activeFilterCount = [
+    entityType !== ALL_VALUE,
+    actionType !== ALL_VALUE,
+    dateFrom !== undefined,
+    dateTo !== undefined,
+    fieldsChanged.length > 0,
+    entityId !== '',
+    hideSystemAudits,
+  ].filter(Boolean).length;
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -159,35 +104,6 @@ export default function AuditFilterBar() {
     const qs = params.toString();
     router.push(qs ? `/tools/audit-logs?${qs}` : '/tools/audit-logs');
   }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, router]);
-
-  const clearFilter = useCallback(
-    (key: string) => {
-      switch (key) {
-        case 'entityTypes':
-          setEntityType(ALL_VALUE);
-          break;
-        case 'actionTypes':
-          setActionType(ALL_VALUE);
-          break;
-        case 'dateFrom':
-          setDateFrom(undefined);
-          break;
-        case 'dateTo':
-          setDateTo(undefined);
-          break;
-        case 'fieldChanged':
-          setFieldsChanged([]);
-          break;
-        case 'entityId':
-          setEntityId('');
-          break;
-        case 'adminOnly':
-          setHideSystemAudits(false);
-          break;
-      }
-    },
-    []
-  );
 
   const clearAllFilters = useCallback(() => {
     setEntityType(ALL_VALUE);
@@ -209,24 +125,32 @@ export default function AuditFilterBar() {
   }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, applyFilters]);
 
   return (
-    <div className="space-y-3">
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Entity ID Search */}
-        <div className="relative min-w-[120px] flex-1 max-w-[200px]">
-          <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
-          <Input
-            type="number"
-            placeholder="Entity ID..."
-            value={entityId}
-            onChange={(e) => setEntityId(e.target.value)}
-            className="h-9 pl-8 text-sm"
-          />
-        </div>
+    <div className="flex flex-wrap items-center gap-1.5">
+      {/* Entity ID Search */}
+      <div className="relative min-w-[120px] flex-1 max-w-[180px]">
+        <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
+        <Input
+          type="number"
+          placeholder="Entity ID..."
+          value={entityId}
+          onChange={(e) => setEntityId(e.target.value)}
+          className={cn('h-9 pl-8 text-sm', entityId && 'pr-8')}
+        />
+        {entityId && (
+          <button
+            onClick={() => setEntityId('')}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+            aria-label="Clear entity ID"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
 
-        {/* Entity Type */}
+      {/* Entity Type */}
+      <div className="relative">
         <Select value={entityType} onValueChange={setEntityType}>
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className={cn('h-9 w-[140px]', entityType !== ALL_VALUE && 'pr-8')}>
             <SelectValue placeholder="Entity type" />
           </SelectTrigger>
           <SelectContent>
@@ -241,52 +165,81 @@ export default function AuditFilterBar() {
             })}
           </SelectContent>
         </Select>
+        {entityType !== ALL_VALUE && (
+          <button
+            onClick={() => setEntityType(ALL_VALUE)}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+            aria-label="Clear entity type"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
 
-        {/* Action Type */}
+      {/* Action Type */}
+      <div className="relative">
         <Select value={actionType} onValueChange={setActionType}>
-          <SelectTrigger className="h-9 w-[130px]">
+          <SelectTrigger className={cn('h-9 w-[130px]', actionType !== ALL_VALUE && 'pr-8')}>
             <SelectValue placeholder="Action" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_VALUE}>All actions</SelectItem>
-            {ACTION_TYPES.map((at) => {
-              const meta = AuditActionTypeEnumHelper.getMetadata(at);
-              return (
-                <SelectItem key={at} value={String(at)}>
-                  {meta.text}
-                </SelectItem>
-              );
-            })}
+            {ACTION_TYPES.map((at) => (
+              <SelectItem key={at} value={String(at)}>
+                {at === AuditActionType.Created
+                  ? 'Created'
+                  : at === AuditActionType.Updated
+                    ? 'Updated'
+                    : 'Deleted'}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+        {actionType !== ALL_VALUE && (
+          <button
+            onClick={() => setActionType(ALL_VALUE)}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+            aria-label="Clear action type"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
 
-        {/* Field Changed */}
-        <FieldMultiSelect
-          options={filteredFieldOptions}
-          selected={fieldsChanged}
-          onChange={setFieldsChanged}
-          placeholder="Any field"
-        />
+      {/* Field Changed */}
+      <FieldMultiSelect
+        options={filteredFieldOptions}
+        selected={fieldsChanged}
+        onChange={setFieldsChanged}
+        onClear={() => setFieldsChanged([])}
+        placeholder="Any field"
+      />
 
-        {/* Date Range */}
+      {/* Date Range */}
+      <div className="relative">
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                'h-9 w-[200px] justify-start text-left font-normal',
-                !dateFrom && !dateTo && 'text-muted-foreground'
+                'h-9 w-[180px] justify-start text-left font-normal',
+                !dateFrom && !dateTo && 'text-muted-foreground',
+                (dateFrom || dateTo) && 'pr-8'
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
               {dateFrom && dateTo ? (
-                <span className="text-sm">
+                <span className="truncate text-sm">
                   {format(dateFrom, 'MMM d')} - {format(dateTo, 'MMM d')}
                 </span>
               ) : dateFrom ? (
-                <span className="text-sm">From {format(dateFrom, 'MMM d')}</span>
+                <span className="truncate text-sm">
+                  From {format(dateFrom, 'MMM d')}
+                </span>
               ) : dateTo ? (
-                <span className="text-sm">Until {format(dateTo, 'MMM d')}</span>
+                <span className="truncate text-sm">
+                  Until {format(dateTo, 'MMM d')}
+                </span>
               ) : (
                 <span className="text-sm">Date range</span>
               )}
@@ -294,7 +247,9 @@ export default function AuditFilterBar() {
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <div className="flex flex-col gap-2 p-3">
-              <div className="text-muted-foreground text-xs font-medium">From</div>
+              <div className="text-muted-foreground text-xs font-medium">
+                From
+              </div>
               <Calendar
                 mode="single"
                 selected={dateFrom}
@@ -325,52 +280,42 @@ export default function AuditFilterBar() {
             </div>
           </PopoverContent>
         </Popover>
-
-        {/* Hide System Audits */}
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="hide-system"
-            checked={hideSystemAudits}
-            onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
-          />
-          <Label htmlFor="hide-system" className="text-sm cursor-pointer">
-            Hide system audits
-          </Label>
-        </div>
-
-        {/* Clear All */}
-        {activeFilters.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllFilters}
-            className="h-9 text-muted-foreground hover:text-foreground"
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => {
+              setDateFrom(undefined);
+              setDateTo(undefined);
+            }}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+            aria-label="Clear date range"
           >
-            Clear all
-          </Button>
+            <X className="h-3 w-3" />
+          </button>
         )}
       </div>
 
-      {/* Active Filter Badges */}
-      {activeFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {activeFilters.map((filter) => (
-            <Badge
-              key={filter.key}
-              variant="secondary"
-              className="gap-1 py-1 pr-1"
-            >
-              <span className="text-muted-foreground">{filter.label}:</span>
-              <span>{filter.value}</span>
-              <button
-                onClick={() => clearFilter(filter.key)}
-                className="hover:bg-muted ml-0.5 rounded p-0.5 transition-colors"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
+      {/* Hide System Audits */}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="hide-system"
+          checked={hideSystemAudits}
+          onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
+        />
+        <Label htmlFor="hide-system" className="cursor-pointer text-sm">
+          Hide system audits
+        </Label>
+      </div>
+
+      {/* Clear All */}
+      {activeFilterCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearAllFilters}
+          className="text-muted-foreground hover:text-foreground h-9"
+        >
+          Clear all ({activeFilterCount})
+        </Button>
       )}
     </div>
   );

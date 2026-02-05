@@ -35,7 +35,8 @@ export default function FieldMultiSelect({
   className,
   placeholder = 'Select fields...',
   disabled = false,
-}: FieldMultiSelectProps) {
+  onClear,
+}: FieldMultiSelectProps & { onClear?: () => void }) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
   const triggerRef = React.useRef<HTMLButtonElement>(null);
@@ -62,10 +63,6 @@ export default function FieldMultiSelect({
     return groups;
   }, [filteredOptions]);
 
-  const handleUnselect = (value: string) => {
-    onChange(selected.filter((v) => v !== value));
-  };
-
   const handleSelect = (value: string) => {
     if (selected.includes(value)) {
       onChange(selected.filter((v) => v !== value));
@@ -77,60 +74,42 @@ export default function FieldMultiSelect({
   // Get option by value for display
   const getOption = (value: string) => options.find((o) => o.value === value);
 
+  // Get display text for trigger
+  const getTriggerText = () => {
+    if (selected.length === 0) return placeholder;
+    const firstOption = getOption(selected[0]);
+    if (!firstOption) return placeholder;
+    if (selected.length === 1) return firstOption.label;
+    return `${firstOption.label} +${selected.length - 1}`;
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            'h-9 w-[180px] justify-between',
-            selected.length > 0 && 'h-auto min-h-9',
-            className
-          )}
-          disabled={disabled}
-        >
-          <div className="flex flex-wrap gap-1">
-            {selected.length > 0 ? (
-              selected.map((value) => {
-                const option = getOption(value);
-                if (!option) return null;
-                return (
-                  <Badge
-                    key={value}
-                    variant="secondary"
-                    className="gap-1 py-0.5 pr-1"
-                  >
-                    <span>{option.label}</span>
-                    <span className="text-muted-foreground">({option.entityLabel})</span>
-                    <span
-                      role="button"
-                      tabIndex={-1}
-                      className="ring-offset-background focus:ring-ring ml-0.5 cursor-pointer rounded-full outline-none focus:ring-2 focus:ring-offset-2"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleUnselect(value);
-                      }}
-                    >
-                      <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
-                    </span>
-                  </Badge>
-                );
-              })
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            ref={triggerRef}
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              'h-9 w-[180px] justify-between',
+              selected.length > 0 && onClear && 'pr-8',
+              className
             )}
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+            disabled={disabled}
+          >
+            <span
+              className={cn(
+                'truncate',
+                selected.length === 0 && 'text-muted-foreground'
+              )}
+            >
+              {getTriggerText()}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
       <PopoverContent className="w-[280px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
@@ -170,5 +149,19 @@ export default function FieldMultiSelect({
         </Command>
       </PopoverContent>
     </Popover>
+    {selected.length > 0 && onClear && (
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClear();
+        }}
+        className="text-muted-foreground hover:text-foreground hover:bg-muted absolute right-7 top-1/2 -translate-y-1/2 rounded p-0.5 transition-colors"
+        aria-label="Clear field selection"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    )}
+    </div>
   );
 }
