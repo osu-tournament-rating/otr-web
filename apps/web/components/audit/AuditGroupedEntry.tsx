@@ -58,7 +58,7 @@ export default function AuditGroupedEntry({
 }: {
   group: AuditGroupedEntryType;
 }): React.JSX.Element {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(group.count < 10);
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(group.actionType);
   const ActionIcon = actionIcons[group.actionType];

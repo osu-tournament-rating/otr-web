@@ -117,11 +117,17 @@ function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
         entityId: searchParams.get('entityId')
           ? Number(searchParams.get('entityId'))
           : undefined,
-        limit: 50,
+        limit: 250,
         cursor: cursor ?? undefined,
       });
     },
-    { revalidateFirstPage: false, revalidateOnFocus: false }
+    {
+      revalidateFirstPage: false,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 86400000, // 24 hours - audits never change
+    }
   );
 
   const pages = data ?? [];
@@ -193,10 +199,16 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
     getKey,
     async ([, cursor]) =>
       orpc.audit.activity({
-        limit: 50,
+        limit: 250,
         cursor: cursor ? Number(cursor) : undefined,
       }),
-    { revalidateFirstPage: false, revalidateOnFocus: false }
+    {
+      revalidateFirstPage: false,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 86400000, // 24 hours - audits never change
+    }
   );
 
   const pages = data ?? [];

@@ -5,7 +5,7 @@ import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
 export const CursorPaginationInputSchema = z.object({
   cursor: z.number().int().optional(),
-  limit: z.number().int().min(1).max(100).default(50),
+  limit: z.number().int().min(1).max(1000).default(250),
 });
 
 // --- Audit Entry ---

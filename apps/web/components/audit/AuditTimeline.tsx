@@ -72,12 +72,15 @@ export default function AuditTimeline({
       orpc.audit.timeline({
         entityType: eType,
         entityId: eId,
-        limit: 50,
+        limit: 1000,
         cursor: cursor ?? undefined,
       }),
-    {
+{
       revalidateFirstPage: false,
       revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 86400000, // 24 hours - audits never change
     }
   );
 

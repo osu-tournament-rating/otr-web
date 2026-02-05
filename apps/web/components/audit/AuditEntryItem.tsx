@@ -47,7 +47,6 @@ export default function AuditEntryItem({
   entry: AuditEntry;
   showEntityInfo?: boolean;
 }): React.JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(entry.actionType);
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(entry.entityType);
   const changes = entry.changes as Record<
@@ -57,6 +56,7 @@ export default function AuditEntryItem({
   const slug = entityTypeToSlug(entry.entityType);
   const ActionIcon = actionIcons[entry.actionType];
   const changeCount = changes ? Object.keys(changes).length : 0;
+  const [isOpen, setIsOpen] = useState(changeCount < 10);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
