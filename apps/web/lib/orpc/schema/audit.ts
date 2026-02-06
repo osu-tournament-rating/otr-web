@@ -103,26 +103,59 @@ export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
   changeValue: z.string().optional(),
 });
 
-// --- Grouped Entry (for default view) ---
+// --- Group Summary (for default activity view, SQL-level grouping) ---
 
-export const AuditGroupedEntrySchema = z.object({
+export const AuditGroupSummarySchema = z.object({
   actionUserId: z.number().int().nullable(),
   actionUser: AuditActionUserSchema.nullable(),
   entityType: z.nativeEnum(AuditEntityType),
   actionType: z.nativeEnum(AuditActionType),
   changedFields: z.array(z.string()),
-  entries: z.array(AuditEntrySchema),
-  latestCreated: z.string(),
   count: z.number().int(),
+  latestCreated: z.string(),
+  earliestCreated: z.string(),
+  /** Sample changes from one entry for batch detection (verification status, etc.) */
+  sampleChanges: z.record(z.string(), z.unknown()).nullable(),
+  /** Sample referenceIdLock for parent entity identification */
+  sampleReferenceIdLock: z.number().int(),
+  /** ISO timestamp truncated to second, used to identify the group for lazy loading */
+  timeBucket: z.string(),
+  /** Sorted comma-separated JSONB keys, used to identify the group for lazy loading */
+  changedFieldsKey: z.string(),
 });
 
-export type AuditGroupedEntry = z.infer<typeof AuditGroupedEntrySchema>;
+export type AuditGroupSummary = z.infer<typeof AuditGroupSummarySchema>;
 
-// --- Default View Response ---
+// --- Activity Pagination Input (grouping-based) ---
 
-export const AuditDefaultViewResponseSchema = z.object({
-  groups: z.array(AuditGroupedEntrySchema),
+export const ActivityPaginationInputSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).default(30),
+});
+
+// --- Activity Response ---
+
+export const AuditActivityResponseSchema = z.object({
+  groups: z.array(AuditGroupSummarySchema),
   nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+});
+
+// --- Group Entries Input/Response (lazy loading within a group) ---
+
+export const GroupEntriesInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  actionUserId: z.number().int().nullable(),
+  actionType: z.nativeEnum(AuditActionType),
+  timeBucket: z.string(),
+  changedFieldsKey: z.string(),
+  cursor: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+
+export const GroupEntriesResponseSchema = z.object({
+  entries: z.array(AuditEntrySchema),
+  nextCursor: z.number().int().nullable(),
   hasMore: z.boolean(),
 });
 

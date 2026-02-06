@@ -30,6 +30,20 @@ export function getAdminNotesTable(entityType: AuditEntityType) {
   }
 }
 
+/** Maps AuditEntityType to the raw SQL table name string */
+export function getTableNameString(entityType: AuditEntityType): string {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return 'tournament_audits';
+    case AuditEntityType.Match:
+      return 'match_audits';
+    case AuditEntityType.Game:
+      return 'game_audits';
+    case AuditEntityType.Score:
+      return 'game_score_audits';
+  }
+}
+
 /** All audit tables in order matching AuditEntityType values */
 export const ALL_AUDIT_TABLES = [
   { table: schema.tournamentAudits, entityType: AuditEntityType.Tournament },

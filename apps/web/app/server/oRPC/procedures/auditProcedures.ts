@@ -6,13 +6,15 @@ import {
   EntityAuditInputSchema,
   AuditTimelineResponseSchema,
   AuditSearchInputSchema,
-  CursorPaginationInputSchema,
-  AuditDefaultViewResponseSchema,
+  ActivityPaginationInputSchema,
+  AuditActivityResponseSchema,
+  GroupEntriesInputSchema,
+  GroupEntriesResponseSchema,
   AuditAdminUsersResponseSchema,
   type AuditEntry,
   type AuditAdminNote,
   type AuditTimelineItem,
-  type AuditGroupedEntry,
+  type AuditGroupSummary,
 } from '@/lib/orpc/schema/audit';
 import type { DatabaseClient } from '@/lib/db';
 
@@ -20,6 +22,7 @@ import { publicProcedure } from './base';
 import {
   getAuditTable,
   getAdminNotesTable,
+  getTableNameString,
   ALL_AUDIT_TABLES,
   camelizeChangesKeys,
   mergeTimelineItems,
@@ -386,11 +389,24 @@ export const getEntityAuditTimeline = publicProcedure
     return { items, nextCursor, hasMore };
   });
 
-// --- Procedure 2: Default audit activity view ---
+// --- Procedure 2: Default audit activity view (SQL-level grouping) ---
+
+type GroupingRow = {
+  entity_type: number;
+  action_user_id: number | null;
+  action_type: number;
+  changed_fields_key: string;
+  time_bucket: string;
+  count: number;
+  latest_created: string;
+  earliest_created: string;
+  sample_changes: unknown;
+  sample_reference_id_lock: number;
+};
 
 export const getDefaultAuditActivity = publicProcedure
-  .input(CursorPaginationInputSchema)
-  .output(AuditDefaultViewResponseSchema)
+  .input(ActivityPaginationInputSchema)
+  .output(AuditActivityResponseSchema)
   .route({
     summary: 'Get default audit activity (admin-initiated, grouped)',
     tags: ['audit'],
@@ -399,72 +415,285 @@ export const getDefaultAuditActivity = publicProcedure
   })
   .handler(async ({ input, context }) => {
     const { cursor, limit } = input;
-    const cursorTimestamp = cursor
-      ? new Date(cursor).toISOString()
-      : undefined;
 
-    // Query each table for admin-initiated entries
-    const allEntries = await Promise.all(
-      ALL_AUDIT_TABLES.map(({ entityType }) =>
-        queryAuditEntries(context.db, entityType, {
-          actionUserIdNotNull: true,
-          cursorTimestamp,
-          limit: limit + 1,
-        })
-      )
-    );
+    // Build per-table grouping CTEs using SQL GROUP BY
+    const tableQueries = ALL_AUDIT_TABLES.map(({ entityType }) => {
+      const tableName = getTableNameString(entityType);
+      return sql`
+        SELECT
+          ${entityType}::int AS entity_type,
+          action_user_id,
+          action_type,
+          COALESCE(
+            (SELECT string_agg(k, ',' ORDER BY k)
+             FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
+            ''
+          ) AS changed_fields_key,
+          date_trunc('second', created) AS time_bucket,
+          COUNT(*)::int AS count,
+          MAX(created) AS latest_created,
+          MIN(created) AS earliest_created,
+          (array_agg(changes ORDER BY id DESC))[1] AS sample_changes,
+          (array_agg(reference_id_lock ORDER BY id DESC))[1] AS sample_reference_id_lock
+        FROM ${sql.identifier(tableName)}
+        WHERE action_user_id IS NOT NULL
+          ${cursor ? sql`AND created < ${cursor}::timestamptz` : sql``}
+        GROUP BY action_user_id, action_type, changed_fields_key, time_bucket
+      `;
+    });
 
-    // Merge and sort by created descending
-    const merged = mergeAuditEntries(...allEntries);
-    const trimmed = merged.slice(0, limit + 1);
-    const hasMore = trimmed.length > limit;
-    const final = hasMore ? trimmed.slice(0, limit) : trimmed;
+    const query = sql`
+      SELECT * FROM (
+        ${sql.join(tableQueries, sql` UNION ALL `)}
+      ) combined
+      ORDER BY latest_created DESC
+      LIMIT ${limit + 1}
+    `;
 
-    // Group entries by (actionUserId, entityType, changedFieldKeys, ~timestamp)
-    const groups: AuditGroupedEntry[] = [];
+    const result = await context.db.execute(query);
+    const rows = result.rows as GroupingRow[];
 
-    for (const entry of final) {
-      const changedFields = entry.changes ? Object.keys(entry.changes).sort() : [];
-      const changedFieldsKey = changedFields.join(',');
-      const timestampBucket = Math.floor(
-        new Date(entry.created).getTime() / 1000
+    const hasMore = rows.length > limit;
+    const trimmedRows = hasMore ? rows.slice(0, limit) : rows;
+
+    // Resolve action user info for all unique action_user_ids
+    const actionUserIds = [
+      ...new Set(
+        trimmedRows
+          .map((r) => r.action_user_id)
+          .filter((id): id is number => id !== null)
+      ),
+    ];
+
+    const userMap =
+      actionUserIds.length > 0
+        ? await resolveActionUsers(context.db, actionUserIds)
+        : new Map<number, ReferencedUser>();
+
+    // Map rows to AuditGroupSummary
+    const groups: AuditGroupSummary[] = trimmedRows.map((row) => {
+      const sampleChanges = camelizeChangesKeys(
+        row.sample_changes as Record<string, unknown> | null
       );
+      const changedFields = sampleChanges
+        ? Object.keys(sampleChanges).sort()
+        : [];
+      const user = row.action_user_id
+        ? userMap.get(row.action_user_id)
+        : null;
 
-      const lastGroup = groups[groups.length - 1];
-      const lastGroupTimestamp = lastGroup
-        ? Math.floor(new Date(lastGroup.latestCreated).getTime() / 1000)
-        : -1;
-
-      if (
-        lastGroup &&
-        lastGroup.actionUserId === entry.actionUserId &&
-        lastGroup.entityType === entry.entityType &&
-        lastGroup.actionType === entry.actionType &&
-        lastGroup.changedFields.join(',') === changedFieldsKey &&
-        Math.abs(timestampBucket - lastGroupTimestamp) <= 1
-      ) {
-        lastGroup.entries.push(entry);
-        lastGroup.count++;
-      } else {
-        groups.push({
-          actionUserId: entry.actionUserId,
-          actionUser: entry.actionUser,
-          entityType: entry.entityType,
-          actionType: entry.actionType,
-          changedFields,
-          entries: [entry],
-          latestCreated: entry.created,
-          count: 1,
-        });
-      }
-    }
+      return {
+        actionUserId: row.action_user_id,
+        actionUser: user
+          ? {
+              id: user.id,
+              playerId: user.playerId,
+              osuId: user.osuId,
+              username: user.username,
+            }
+          : null,
+        entityType: row.entity_type as AuditEntityType,
+        actionType: row.action_type as AuditActionType,
+        changedFields,
+        count: row.count,
+        latestCreated: row.latest_created,
+        earliestCreated: row.earliest_created,
+        sampleChanges,
+        sampleReferenceIdLock: row.sample_reference_id_lock,
+        timeBucket: row.time_bucket,
+        changedFieldsKey: row.changed_fields_key,
+      };
+    });
 
     const nextCursor =
-      hasMore && final.length > 0
-        ? String(new Date(final[final.length - 1].created).getTime())
+      hasMore && trimmedRows.length > 0
+        ? trimmedRows[trimmedRows.length - 1].latest_created
         : null;
 
     return { groups, nextCursor, hasMore };
+  });
+
+/** Resolve action user IDs to user info (id, playerId, osuId, username) */
+async function resolveActionUsers(
+  db: DatabaseClient,
+  userIds: number[]
+): Promise<Map<number, ReferencedUser>> {
+  const rows = await db
+    .select({
+      userId: schema.users.id,
+      playerId: schema.players.id,
+      osuId: schema.players.osuId,
+      username: schema.players.username,
+    })
+    .from(schema.users)
+    .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
+    .where(inArray(schema.users.id, userIds));
+
+  const map = new Map<number, ReferencedUser>();
+  for (const row of rows) {
+    map.set(row.userId, {
+      id: row.userId,
+      playerId: row.playerId,
+      osuId: row.osuId,
+      username: row.username,
+    });
+  }
+  return map;
+}
+
+// --- Procedure 2b: Lazy-load entries within a group ---
+
+export const getGroupEntries = publicProcedure
+  .input(GroupEntriesInputSchema)
+  .output(GroupEntriesResponseSchema)
+  .route({
+    summary: 'Get individual entries for an audit group',
+    tags: ['audit'],
+    method: 'GET',
+    path: '/audit/activity-entries',
+  })
+  .handler(async ({ input, context }) => {
+    const {
+      entityType,
+      actionUserId,
+      actionType,
+      timeBucket,
+      changedFieldsKey,
+      cursor,
+      limit,
+    } = input;
+
+    const tableName = getTableNameString(entityType);
+
+    // Build conditions to match the exact grouping
+    const conditions = [
+      actionUserId !== null
+        ? sql`action_user_id = ${actionUserId}`
+        : sql`action_user_id IS NULL`,
+      sql`action_type = ${actionType}`,
+      sql`date_trunc('second', created) = ${timeBucket}::timestamptz`,
+      sql`COALESCE(
+        (SELECT string_agg(k, ',' ORDER BY k)
+         FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
+        ''
+      ) = ${changedFieldsKey}`,
+    ];
+
+    if (cursor !== undefined) {
+      conditions.push(sql`id < ${cursor}`);
+    }
+
+    const query = sql`
+      SELECT
+        id, created, reference_id_lock, reference_id,
+        action_user_id, action_type, changes
+      FROM ${sql.identifier(tableName)}
+      WHERE ${sql.join(conditions, sql` AND `)}
+      ORDER BY id DESC
+      LIMIT ${limit + 1}
+    `;
+
+    const result = await context.db.execute(query);
+    const rows = result.rows as {
+      id: number;
+      created: string;
+      reference_id_lock: number;
+      reference_id: number | null;
+      action_user_id: number | null;
+      action_type: number;
+      changes: unknown;
+    }[];
+
+    const hasMore = rows.length > limit;
+    const trimmedRows = hasMore ? rows.slice(0, limit) : rows;
+
+    // Resolve action users
+    const actionUserIds = [
+      ...new Set(
+        trimmedRows
+          .map((r) => r.action_user_id)
+          .filter((id): id is number => id !== null)
+      ),
+    ];
+    const userMap =
+      actionUserIds.length > 0
+        ? await resolveActionUsers(context.db, actionUserIds)
+        : new Map<number, ReferencedUser>();
+
+    // Collect referenced user IDs from changes for resolution
+    const allRefUserIds: number[] = [];
+    const normalizedChanges: (Record<string, unknown> | null)[] = [];
+    for (const row of trimmedRows) {
+      const changes = camelizeChangesKeys(
+        row.changes as Record<string, unknown> | null
+      );
+      normalizedChanges.push(changes);
+      const ids = extractUserIdsFromChanges(
+        changes as Record<
+          string,
+          { originalValue?: unknown; newValue?: unknown }
+        > | null
+      );
+      allRefUserIds.push(...ids);
+    }
+    const refUserMap = await resolveUserIds(context.db, allRefUserIds);
+
+    const entries: AuditEntry[] = trimmedRows.map((row, i) => {
+      const changes = normalizedChanges[i];
+      const actionUser = row.action_user_id
+        ? userMap.get(row.action_user_id)
+        : null;
+
+      // Build referencedUsers
+      let referencedUsers: Record<string, ReferencedUser> | undefined;
+      if (changes) {
+        const userIds = extractUserIdsFromChanges(
+          changes as Record<
+            string,
+            { originalValue?: unknown; newValue?: unknown }
+          >
+        );
+        if (userIds.length > 0) {
+          referencedUsers = {};
+          for (const id of userIds) {
+            const user = refUserMap.get(id);
+            if (user) {
+              referencedUsers[String(id)] = user;
+            }
+          }
+          if (Object.keys(referencedUsers).length === 0) {
+            referencedUsers = undefined;
+          }
+        }
+      }
+
+      return {
+        id: row.id,
+        entityType,
+        referenceIdLock: row.reference_id_lock,
+        referenceId: row.reference_id,
+        actionUserId: row.action_user_id,
+        actionType: row.action_type as AuditActionType,
+        changes,
+        created: row.created,
+        actionUser: actionUser
+          ? {
+              id: actionUser.id,
+              playerId: actionUser.playerId,
+              osuId: actionUser.osuId,
+              username: actionUser.username,
+            }
+          : null,
+        referencedUsers,
+      };
+    });
+
+    const nextCursor =
+      hasMore && trimmedRows.length > 0
+        ? trimmedRows[trimmedRows.length - 1].id
+        : null;
+
+    return { entries, nextCursor, hasMore };
   });
 
 // --- Procedure 3: Search audits ---

@@ -183,14 +183,12 @@ function findMatchIdForGame(batch: BatchOperation): number | null {
   if (!gameBreakdown) return null;
 
   for (const group of gameBreakdown.groups) {
-    for (const entry of group.entries) {
-      const changes = entry.changes as Record<
-        string,
-        { originalValue?: unknown; newValue?: unknown }
-      > | null;
-      const matchId = getFieldFromChanges(changes, 'matchId');
-      if (matchId !== null) return matchId;
-    }
+    const changes = group.sampleChanges as Record<
+      string,
+      { originalValue?: unknown; newValue?: unknown }
+    > | null;
+    const matchId = getFieldFromChanges(changes, 'matchId');
+    if (matchId !== null) return matchId;
   }
   return null;
 }
@@ -251,15 +249,13 @@ function getParentEntity(batch: BatchOperation): ParentEntityInfo {
     );
     if (breakdown && breakdown.groups.length > 0) {
       const firstGroup = breakdown.groups[0];
-      if (firstGroup.entries.length > 0) {
-        const entityId = firstGroup.entries[0].referenceIdLock;
-        return {
-          entityType,
-          id: entityId,
-          label: ENTITY_LABEL[entityType],
-          href: generateEntityHref(entityType, entityId, batch),
-        };
-      }
+      const entityId = firstGroup.sampleReferenceIdLock;
+      return {
+        entityType,
+        id: entityId,
+        label: ENTITY_LABEL[entityType],
+        href: generateEntityHref(entityType, entityId, batch),
+      };
     }
   }
   return null;

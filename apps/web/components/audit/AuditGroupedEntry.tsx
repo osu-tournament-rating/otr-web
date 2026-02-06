@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import useSWR from 'swr';
+import { ChevronRight, Loader2, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { AuditActionType } from '@otr/core/osu';
 import {
   AuditEntityTypeEnumHelper,
   AuditActionTypeEnumHelper,
 } from '@/lib/enums';
-import type { AuditGroupedEntry as AuditGroupedEntryType } from '@/lib/orpc/schema/audit';
+import type { AuditGroupSummary } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
@@ -18,6 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryItem from './AuditEntryItem';
 import { getFieldLabel } from './auditFieldConfig';
 import { formatRelativeTime } from './formatRelativeTime';
@@ -52,11 +54,62 @@ function getUserInitials(username: string | null | undefined): string {
 function pluralize(word: string, count: number): string {
   if (count === 1) return word;
   const lower = word.toLowerCase();
-  // Handle irregular: match → matches, game → games
   if (lower.endsWith('ch') || lower.endsWith('s') || lower.endsWith('x') || lower.endsWith('sh')) {
     return word + 'es';
   }
   return word + 's';
+}
+
+/** Lazy-loaded entry list for a group summary */
+function GroupEntryList({ group }: { group: AuditGroupSummary }) {
+  const { data, isLoading } = useSWR(
+    [
+      'group-entries',
+      group.entityType,
+      group.actionUserId,
+      group.actionType,
+      group.timeBucket,
+      group.changedFieldsKey,
+    ],
+    () =>
+      orpc.audit.activityEntries({
+        entityType: group.entityType,
+        actionUserId: group.actionUserId,
+        actionType: group.actionType,
+        timeBucket: group.timeBucket,
+        changedFieldsKey: group.changedFieldsKey,
+        limit: 50,
+      }),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 86400000,
+    }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!data?.entries.length) {
+    return (
+      <div className="text-muted-foreground py-4 text-center text-sm">
+        No entries found
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {data.entries.map((entry) => (
+        <AuditEntryItem key={entry.id} entry={entry} showEntityInfo />
+      ))}
+    </>
+  );
 }
 
 export default function AuditGroupedEntry({
@@ -64,7 +117,7 @@ export default function AuditGroupedEntry({
   compact = false,
   alwaysExpanded = false,
 }: {
-  group: AuditGroupedEntryType;
+  group: AuditGroupSummary;
   compact?: boolean;
   alwaysExpanded?: boolean;
 }): React.JSX.Element {
@@ -72,7 +125,6 @@ export default function AuditGroupedEntry({
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(group.actionType);
   const ActionIcon = actionIcons[group.actionType];
-  // Only show changed fields for Updated actions - Created/Deleted change all fields
   const showFieldLabels = group.actionType === AuditActionType.Updated;
   const fieldLabels = showFieldLabels
     ? group.changedFields.map((f) => getFieldLabel(group.entityType, f)).join(', ')
@@ -81,13 +133,11 @@ export default function AuditGroupedEntry({
   const username = group.actionUser?.username;
   const initials = getUserInitials(username);
 
-  // When alwaysExpanded, render entries directly without collapsible header
+  // When alwaysExpanded, render lazy-loaded entries directly without collapsible header
   if (alwaysExpanded) {
     return (
       <div className="border-border divide-border divide-y rounded-lg border">
-        {group.entries.map((entry) => (
-          <AuditEntryItem key={entry.id} entry={entry} showEntityInfo />
-        ))}
+        <GroupEntryList group={group} />
       </div>
     );
   }
@@ -187,9 +237,7 @@ export default function AuditGroupedEntry({
 
         <CollapsibleContent>
           <div className="bg-muted/20 border-border border-t">
-            {group.entries.map((entry) => (
-              <AuditEntryItem key={entry.id} entry={entry} showEntityInfo />
-            ))}
+            <GroupEntryList group={group} />
           </div>
         </CollapsibleContent>
       </div>

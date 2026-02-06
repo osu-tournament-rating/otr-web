@@ -98,6 +98,7 @@ import {
 import {
   getEntityAuditTimeline,
   getDefaultAuditActivity,
+  getGroupEntries,
   searchAudits,
   listAuditAdminUsers,
   getEntityParentMatchId,
@@ -207,6 +208,7 @@ export const router = base.router({
   audit: {
     timeline: getEntityAuditTimeline,
     activity: getDefaultAuditActivity,
+    activityEntries: getGroupEntries,
     search: searchAudits,
     adminUsers: listAuditAdminUsers,
     entityParent: getEntityParentMatchId,

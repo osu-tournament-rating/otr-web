@@ -1,8 +1,8 @@
 import { AuditEntityType, AuditActionType, VerificationStatus } from '@otr/core/osu';
-import type { AuditGroupedEntry, AuditEntry } from '@/lib/orpc/schema/audit';
+import type { AuditGroupSummary } from '@/lib/orpc/schema/audit';
 
-/** Extract the action user type from AuditGroupedEntry */
-type AuditActionUser = NonNullable<AuditGroupedEntry['actionUser']>;
+/** Extract the action user type from AuditGroupSummary */
+type AuditActionUser = NonNullable<AuditGroupSummary['actionUser']>;
 
 /** Fields that indicate a verification-related operation */
 const VERIFICATION_FIELDS = new Set([
@@ -28,7 +28,7 @@ export type BatchOperationType =
 export type BatchOperation = {
   kind: 'batch';
   type: BatchOperationType;
-  groups: AuditGroupedEntry[];
+  groups: AuditGroupSummary[];
   totalCount: number;
   latestCreated: string;
   actionUserId: number | null;
@@ -36,12 +36,12 @@ export type BatchOperation = {
   entityBreakdown: {
     entityType: AuditEntityType;
     count: number;
-    groups: AuditGroupedEntry[];
+    groups: AuditGroupSummary[];
   }[];
 };
 
 export type AuditDisplayItem =
-  | { kind: 'group'; data: AuditGroupedEntry }
+  | { kind: 'group'; data: AuditGroupSummary }
   | BatchOperation;
 
 /**
@@ -62,38 +62,35 @@ function isVerificationOnlyChange(changedFields: string[]): boolean {
 }
 
 /**
- * Extract the new verification status from entries' changes
+ * Extract the new verification status from a group's sample changes
  */
-function getVerificationStatusChange(entries: AuditEntry[]): {
+function getVerificationStatusChange(sampleChanges: Record<string, unknown> | null): {
   newStatus: VerificationStatus | null;
 } {
-  for (const entry of entries) {
-    const changes = entry.changes as Record<
-      string,
-      { originalValue: unknown; newValue: unknown }
-    > | null;
-    if (changes?.verificationStatus?.newValue !== undefined) {
-      return { newStatus: changes.verificationStatus.newValue as VerificationStatus };
-    }
+  if (!sampleChanges) return { newStatus: null };
+  const changes = sampleChanges as Record<
+    string,
+    { originalValue: unknown; newValue: unknown }
+  >;
+  if (changes?.verificationStatus?.newValue !== undefined) {
+    return { newStatus: changes.verificationStatus.newValue as VerificationStatus };
   }
   return { newStatus: null };
 }
 
 /**
- * Check if rejection reason is being SET (not cleared) in any entries.
+ * Check if rejection reason is being SET (not cleared) in sample changes.
  * Returns true if newValue is non-zero, false if being cleared (to 0/None).
  */
-function isRejectionReasonBeingSet(entries: AuditEntry[]): boolean {
-  for (const entry of entries) {
-    const changes = entry.changes as Record<
-      string,
-      { originalValue: unknown; newValue: unknown }
-    > | null;
-    if (changes?.rejectionReason?.newValue !== undefined) {
-      const newValue = changes.rejectionReason.newValue;
-      // Rejection reason is being SET if newValue is non-zero
-      return typeof newValue === 'number' && newValue !== 0;
-    }
+function isRejectionReasonBeingSet(sampleChanges: Record<string, unknown> | null): boolean {
+  if (!sampleChanges) return false;
+  const changes = sampleChanges as Record<
+    string,
+    { originalValue: unknown; newValue: unknown }
+  >;
+  if (changes?.rejectionReason?.newValue !== undefined) {
+    const newValue = changes.rejectionReason.newValue;
+    return typeof newValue === 'number' && newValue !== 0;
   }
   return false;
 }
@@ -108,28 +105,25 @@ function getTimestamp(isoString: string): number {
 /**
  * Determine the operation type from the groups
  */
-function determineOperationType(groups: AuditGroupedEntry[]): BatchOperationType {
+function determineOperationType(groups: AuditGroupSummary[]): BatchOperationType {
   const firstGroup = groups[0];
   if (!firstGroup) return 'bulk_update';
 
   // If this is a creation action, it's a submission (not verification-related)
-  // Creation actions set initial field values but aren't actually verify/reject operations
   const isCreation = groups.every((g) => g.actionType === AuditActionType.Created);
   if (isCreation) {
     return 'submission';
   }
 
   const isSystemAction = firstGroup.actionUserId === null;
-  const { newStatus } = getVerificationStatusChange(firstGroup.entries);
+  const { newStatus } = getVerificationStatusChange(firstGroup.sampleChanges);
 
   // Check for verification status changes with specific target status
   if (newStatus !== null) {
-    // System actions: PreVerified or PreRejected
     if (isSystemAction) {
       if (newStatus === VerificationStatus.PreVerified) return 'pre_verification';
       if (newStatus === VerificationStatus.PreRejected) return 'pre_rejection';
     }
-    // User actions: Verified or Rejected
     if (newStatus === VerificationStatus.Verified) return 'verification';
     if (newStatus === VerificationStatus.Rejected) return 'rejection';
   }
@@ -138,7 +132,7 @@ function determineOperationType(groups: AuditGroupedEntry[]): BatchOperationType
   for (const group of groups) {
     if (
       group.changedFields.includes('rejectionReason') &&
-      isRejectionReasonBeingSet(group.entries)
+      isRejectionReasonBeingSet(group.sampleChanges)
     ) {
       return 'rejection';
     }
@@ -157,8 +151,8 @@ function determineOperationType(groups: AuditGroupedEntry[]): BatchOperationType
 /**
  * Build entity breakdown from groups
  */
-function buildEntityBreakdown(groups: AuditGroupedEntry[]): BatchOperation['entityBreakdown'] {
-  const byEntityType = new Map<AuditEntityType, AuditGroupedEntry[]>();
+function buildEntityBreakdown(groups: AuditGroupSummary[]): BatchOperation['entityBreakdown'] {
+  const byEntityType = new Map<AuditEntityType, AuditGroupSummary[]>();
 
   for (const group of groups) {
     const existing = byEntityType.get(group.entityType) || [];
@@ -188,9 +182,9 @@ function buildEntityBreakdown(groups: AuditGroupedEntry[]): BatchOperation['enti
 /**
  * Create a batch operation from a set of groups
  */
-function createBatchOperation(groups: AuditGroupedEntry[]): BatchOperation {
+function createBatchOperation(groups: AuditGroupSummary[]): BatchOperation {
   const totalCount = groups.reduce((sum, g) => sum + g.count, 0);
-  const latestCreated = groups[0].latestCreated; // Groups are already sorted by time desc
+  const latestCreated = groups[0].latestCreated;
 
   return {
     kind: 'batch',
@@ -205,7 +199,7 @@ function createBatchOperation(groups: AuditGroupedEntry[]): BatchOperation {
 }
 
 /**
- * Detect batch operations from a list of grouped audit entries.
+ * Detect batch operations from a list of audit group summaries.
  *
  * A batch operation is detected when consecutive groups share:
  * - Same actionUserId
@@ -214,26 +208,22 @@ function createBatchOperation(groups: AuditGroupedEntry[]): BatchOperation {
  * - Multiple entity types
  */
 export function detectBatchOperations(
-  groups: AuditGroupedEntry[]
+  groups: AuditGroupSummary[]
 ): AuditDisplayItem[] {
   if (groups.length === 0) return [];
 
   const result: AuditDisplayItem[] = [];
-  let currentBatch: AuditGroupedEntry[] = [];
+  let currentBatch: AuditGroupSummary[] = [];
   let currentEntityTypes = new Set<AuditEntityType>();
   let batchStartTime: number | null = null;
 
   function flushBatch() {
     if (currentBatch.length === 0) return;
 
-    // Check if all changes are verification-only (no other fields changed)
     const allVerificationOnly = currentBatch.every((g) =>
       isVerificationOnlyChange(g.changedFields)
     );
 
-    // Create batch if:
-    // 1. Multiple entity types (existing cascade behavior), OR
-    // 2. All changes are verification-only (even single entity type)
     const shouldCreateBatch =
       currentEntityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH ||
       allVerificationOnly;
@@ -241,7 +231,6 @@ export function detectBatchOperations(
     if (shouldCreateBatch) {
       result.push(createBatchOperation(currentBatch));
     } else {
-      // Not enough entity types and not verification-only - add as individual groups
       for (const group of currentBatch) {
         result.push({ kind: 'group', data: group });
       }
@@ -256,7 +245,6 @@ export function detectBatchOperations(
     const groupTime = getTimestamp(group.latestCreated);
     const isVerification = isVerificationRelated(group.changedFields);
 
-    // Check if this group can be added to current batch
     const canAddToBatch =
       isVerification &&
       currentBatch.length > 0 &&
@@ -265,26 +253,21 @@ export function detectBatchOperations(
       Math.abs(groupTime - batchStartTime) <= BATCH_WINDOW_MS;
 
     if (canAddToBatch) {
-      // Add to current batch
       currentBatch.push(group);
       currentEntityTypes.add(group.entityType);
     } else {
-      // Flush current batch and start new one
       flushBatch();
 
       if (isVerification) {
-        // Start a new potential batch
         currentBatch = [group];
         currentEntityTypes = new Set([group.entityType]);
         batchStartTime = groupTime;
       } else {
-        // Not verification-related, add as standalone
         result.push({ kind: 'group', data: group });
       }
     }
   }
 
-  // Flush any remaining batch
   flushBatch();
 
   return result;

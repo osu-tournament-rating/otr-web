@@ -7,7 +7,7 @@ import { ClipboardList, Loader2 } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
   AuditTimelineItem,
-  AuditGroupedEntry as AuditGroupedEntryType,
+  AuditGroupSummary,
   FieldFilter,
 } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ type TimelineResponse = {
 };
 
 type ActivityResponse = {
-  groups: AuditGroupedEntryType[];
+  groups: AuditGroupSummary[];
   nextCursor: string | null;
   hasMore: boolean;
 };
@@ -201,8 +201,8 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
     getKey,
     async ([, cursor]) =>
       orpc.audit.activity({
-        limit: 250,
-        cursor: cursor ? Number(cursor) : undefined,
+        limit: 30,
+        cursor: cursor ?? undefined,
       }),
     {
       revalidateFirstPage: false,
