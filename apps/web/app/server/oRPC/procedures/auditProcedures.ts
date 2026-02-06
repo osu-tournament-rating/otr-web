@@ -614,3 +614,55 @@ export const listAuditAdminUsers = publicProcedure
 
     return { users };
   });
+
+// --- Procedure 5: Get parent matchId for game/score entities ---
+
+import { z } from 'zod';
+
+const EntityParentInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  entityId: z.number().int().positive(),
+});
+
+const EntityParentOutputSchema = z.object({
+  matchId: z.number().int().nullable(),
+});
+
+export const getEntityParentMatchId = publicProcedure
+  .input(EntityParentInputSchema)
+  .output(EntityParentOutputSchema)
+  .route({
+    summary: 'Get parent matchId for a game or score entity',
+    tags: ['audit'],
+    method: 'GET',
+    path: '/audit/entity-parent',
+  })
+  .handler(async ({ input, context }) => {
+    const { entityType, entityId } = input;
+
+    if (entityType === AuditEntityType.Game) {
+      // Game -> matchId directly
+      const game = await context.db
+        .select({ matchId: schema.games.matchId })
+        .from(schema.games)
+        .where(eq(schema.games.id, entityId))
+        .limit(1);
+
+      return { matchId: game[0]?.matchId ?? null };
+    }
+
+    if (entityType === AuditEntityType.Score) {
+      // Score -> gameId -> matchId
+      const result = await context.db
+        .select({ matchId: schema.games.matchId })
+        .from(schema.gameScores)
+        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+        .where(eq(schema.gameScores.id, entityId))
+        .limit(1);
+
+      return { matchId: result[0]?.matchId ?? null };
+    }
+
+    // Tournament and Match don't need parent lookup
+    return { matchId: null };
+  });

@@ -140,14 +140,6 @@ const ENTITY_HIERARCHY: AuditEntityType[] = [
   AuditEntityType.Score,
 ];
 
-/** URL path segment for each entity type */
-const ENTITY_URL_PATH: Record<AuditEntityType, string> = {
-  [AuditEntityType.Tournament]: 'tournaments',
-  [AuditEntityType.Match]: 'matches',
-  [AuditEntityType.Game]: 'games',
-  [AuditEntityType.Score]: 'scores',
-};
-
 /** Display label for each entity type */
 const ENTITY_LABEL: Record<AuditEntityType, string> = {
   [AuditEntityType.Tournament]: 'tournament',
@@ -160,8 +152,93 @@ type ParentEntityInfo = {
   entityType: AuditEntityType;
   id: number;
   label: string;
-  urlPath: string;
+  /** The URL to link to for this entity */
+  href: string;
 } | null;
+
+/**
+ * Extract a field value from an audit entry's changes.
+ * Handles both created (newValue) and updated entries.
+ */
+function getFieldFromChanges(
+  changes: Record<string, { originalValue?: unknown; newValue?: unknown }> | null,
+  fieldName: string
+): number | null {
+  if (!changes) return null;
+  const change = changes[fieldName];
+  if (!change) return null;
+  // For created entries, newValue has the initial value
+  // For updated entries, originalValue has the current value
+  const value = change.newValue ?? change.originalValue;
+  return typeof value === 'number' ? value : null;
+}
+
+/**
+ * Try to find the matchId for a game from its entries' changes.
+ */
+function findMatchIdForGame(batch: BatchOperation): number | null {
+  const gameBreakdown = batch.entityBreakdown.find(
+    (b) => b.entityType === AuditEntityType.Game
+  );
+  if (!gameBreakdown) return null;
+
+  for (const group of gameBreakdown.groups) {
+    for (const entry of group.entries) {
+      const changes = entry.changes as Record<
+        string,
+        { originalValue?: unknown; newValue?: unknown }
+      > | null;
+      const matchId = getFieldFromChanges(changes, 'matchId');
+      if (matchId !== null) return matchId;
+    }
+  }
+  return null;
+}
+
+/**
+ * Try to find the matchId for a score from its entries' changes.
+ * Scores have gameId, so we need to find the game's matchId too.
+ */
+function findMatchIdForScore(batch: BatchOperation): number | null {
+  // First try to get matchId from any game entries in the batch
+  const matchIdFromGame = findMatchIdForGame(batch);
+  if (matchIdFromGame !== null) return matchIdFromGame;
+
+  // If no game entries, we can't determine the matchId client-side
+  return null;
+}
+
+/**
+ * Generate the href for an entity based on its type and available parent info.
+ */
+function generateEntityHref(
+  entityType: AuditEntityType,
+  entityId: number,
+  batch: BatchOperation
+): string {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return `/tournaments/${entityId}`;
+    case AuditEntityType.Match:
+      return `/matches/${entityId}`;
+    case AuditEntityType.Game: {
+      const matchId = findMatchIdForGame(batch);
+      if (matchId !== null) {
+        return `/matches/${matchId}?gameId=${entityId}`;
+      }
+      // Fallback to audit page if matchId not found
+      return `/audit/games/${entityId}`;
+    }
+    case AuditEntityType.Score: {
+      const matchId = findMatchIdForScore(batch);
+      if (matchId !== null) {
+        return `/matches/${matchId}?scoreId=${entityId}`;
+      }
+      // Fallback to audit page if matchId not found
+      return `/audit/scores/${entityId}`;
+    }
+  }
+}
 
 /**
  * Find the parent entity in a batch operation.
@@ -175,11 +252,12 @@ function getParentEntity(batch: BatchOperation): ParentEntityInfo {
     if (breakdown && breakdown.groups.length > 0) {
       const firstGroup = breakdown.groups[0];
       if (firstGroup.entries.length > 0) {
+        const entityId = firstGroup.entries[0].referenceIdLock;
         return {
           entityType,
-          id: firstGroup.entries[0].referenceIdLock,
+          id: entityId,
           label: ENTITY_LABEL[entityType],
-          urlPath: ENTITY_URL_PATH[entityType],
+          href: generateEntityHref(entityType, entityId, batch),
         };
       }
     }
@@ -281,7 +359,7 @@ export default function AuditBatchOperationEntry({
                       {parentEntity.label}
                     </span>
                     <Link
-                      href={`/${parentEntity.urlPath}/${parentEntity.id}`}
+                      href={parentEntity.href}
                       className="text-muted-foreground hover:text-primary text-xs hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >

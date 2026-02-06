@@ -100,6 +100,7 @@ import {
   getDefaultAuditActivity,
   searchAudits,
   listAuditAdminUsers,
+  getEntityParentMatchId,
 } from './procedures/auditProcedures';
 
 export interface InitialContext {
@@ -208,6 +209,7 @@ export const router = base.router({
     activity: getDefaultAuditActivity,
     search: searchAudits,
     adminUsers: listAuditAdminUsers,
+    entityParent: getEntityParentMatchId,
   },
   tournaments: {
     list: listTournaments,
