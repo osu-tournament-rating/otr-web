@@ -122,6 +122,8 @@ export const AuditGroupSummarySchema = z.object({
   timeBucket: z.string(),
   /** Sorted comma-separated JSONB keys, used to identify the group for lazy loading */
   changedFieldsKey: z.string(),
+  /** Tournament name (only populated for Tournament entity type groups) */
+  tournamentName: z.string().nullable().optional(),
 });
 
 export type AuditGroupSummary = z.infer<typeof AuditGroupSummarySchema>;
@@ -170,4 +172,26 @@ export const AuditAdminUserSchema = z.object({
 
 export const AuditAdminUsersResponseSchema = z.object({
   users: z.array(AuditAdminUserSchema),
+});
+
+// --- Batch Child Counts (lazy-loaded game/score counts for expanded batches) ---
+
+export const BatchChildCountsInputSchema = z.object({
+  /** The action user who performed the batch operation */
+  actionUserId: z.number().int().nullable(),
+  /** Earliest timestamp in the batch window */
+  timeFrom: z.string(),
+  /** Latest timestamp in the batch window */
+  timeTo: z.string(),
+  /** Which entity types to count (typically Game + Score) */
+  entityTypes: z.array(z.nativeEnum(AuditEntityType)),
+});
+
+export const BatchChildCountsResponseSchema = z.object({
+  counts: z.array(
+    z.object({
+      entityType: z.nativeEnum(AuditEntityType),
+      count: z.number().int(),
+    })
+  ),
 });

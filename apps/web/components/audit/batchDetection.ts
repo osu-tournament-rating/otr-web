@@ -31,6 +31,8 @@ export type BatchOperation = {
   groups: AuditGroupSummary[];
   totalCount: number;
   latestCreated: string;
+  /** Earliest timestamp across all groups in the batch (for lazy-load time range) */
+  earliestCreated: string;
   actionUserId: number | null;
   actionUser: AuditActionUser | null;
   entityBreakdown: {
@@ -38,6 +40,8 @@ export type BatchOperation = {
     count: number;
     groups: AuditGroupSummary[];
   }[];
+  /** Tournament name if the top-level entity is a tournament */
+  tournamentName: string | null;
 };
 
 export type AuditDisplayItem =
@@ -186,15 +190,29 @@ function createBatchOperation(groups: AuditGroupSummary[]): BatchOperation {
   const totalCount = groups.reduce((sum, g) => sum + g.count, 0);
   const latestCreated = groups[0].latestCreated;
 
+  // Compute earliest timestamp across all groups in the batch
+  const earliestCreated = groups.reduce(
+    (earliest, g) =>
+      g.earliestCreated < earliest ? g.earliestCreated : earliest,
+    groups[0].earliestCreated
+  );
+
+  // Extract tournament name from the tournament group if present
+  const tournamentGroup = groups.find(
+    (g) => g.entityType === AuditEntityType.Tournament && g.tournamentName
+  );
+
   return {
     kind: 'batch',
     type: determineOperationType(groups),
     groups,
     totalCount,
     latestCreated,
+    earliestCreated,
     actionUserId: groups[0].actionUserId,
     actionUser: groups[0].actionUser,
     entityBreakdown: buildEntityBreakdown(groups),
+    tournamentName: tournamentGroup?.tournamentName ?? null,
   };
 }
 

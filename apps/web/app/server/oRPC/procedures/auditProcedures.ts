@@ -11,6 +11,8 @@ import {
   GroupEntriesInputSchema,
   GroupEntriesResponseSchema,
   AuditAdminUsersResponseSchema,
+  BatchChildCountsInputSchema,
+  BatchChildCountsResponseSchema,
   type AuditEntry,
   type AuditAdminNote,
   type AuditTimelineItem,
@@ -23,7 +25,7 @@ import {
   getAuditTable,
   getAdminNotesTable,
   getTableNameString,
-  ALL_AUDIT_TABLES,
+  LIGHT_AUDIT_TABLES,
   camelizeChangesKeys,
   mergeTimelineItems,
   mergeAuditEntries,
@@ -417,7 +419,8 @@ export const getDefaultAuditActivity = publicProcedure
     const { cursor, limit } = input;
 
     // Build per-table grouping CTEs using SQL GROUP BY
-    const tableQueries = ALL_AUDIT_TABLES.map(({ entityType }) => {
+    // Only query tournament + match tables for performance (game/score loaded on demand)
+    const tableQueries = LIGHT_AUDIT_TABLES.map(({ entityType }) => {
       const tableName = getTableNameString(entityType);
       return sql`
         SELECT
@@ -470,6 +473,20 @@ export const getDefaultAuditActivity = publicProcedure
         ? await resolveActionUsers(context.db, actionUserIds)
         : new Map<number, ReferencedUser>();
 
+    // Resolve tournament names for tournament-type groups
+    const tournamentIds = [
+      ...new Set(
+        trimmedRows
+          .filter((r) => r.entity_type === AuditEntityType.Tournament)
+          .map((r) => r.sample_reference_id_lock)
+      ),
+    ];
+
+    const tournamentNameMap =
+      tournamentIds.length > 0
+        ? await resolveTournamentNames(context.db, tournamentIds)
+        : new Map<number, string>();
+
     // Map rows to AuditGroupSummary
     const groups: AuditGroupSummary[] = trimmedRows.map((row) => {
       const sampleChanges = camelizeChangesKeys(
@@ -502,6 +519,10 @@ export const getDefaultAuditActivity = publicProcedure
         sampleReferenceIdLock: row.sample_reference_id_lock,
         timeBucket: row.time_bucket,
         changedFieldsKey: row.changed_fields_key,
+        tournamentName:
+          row.entity_type === AuditEntityType.Tournament
+            ? tournamentNameMap.get(row.sample_reference_id_lock) ?? null
+            : null,
       };
     });
 
@@ -537,6 +558,26 @@ async function resolveActionUsers(
       osuId: row.osuId,
       username: row.username,
     });
+  }
+  return map;
+}
+
+/** Resolve tournament IDs to tournament names */
+async function resolveTournamentNames(
+  db: DatabaseClient,
+  tournamentIds: number[]
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({
+      id: schema.tournaments.id,
+      name: schema.tournaments.name,
+    })
+    .from(schema.tournaments)
+    .where(inArray(schema.tournaments.id, tournamentIds));
+
+  const map = new Map<number, string>();
+  for (const row of rows) {
+    map.set(row.id, row.name);
   }
   return map;
 }
@@ -894,4 +935,52 @@ export const getEntityParentMatchId = publicProcedure
 
     // Tournament and Match don't need parent lookup
     return { matchId: null };
+  });
+
+// --- Procedure 6: Lazy-load child entity counts for a batch operation ---
+
+export const getBatchChildCounts = publicProcedure
+  .input(BatchChildCountsInputSchema)
+  .output(BatchChildCountsResponseSchema)
+  .route({
+    summary: 'Get child entity counts for a batch operation (lazy load)',
+    tags: ['audit'],
+    method: 'GET',
+    path: '/audit/batch-child-counts',
+  })
+  .handler(async ({ input, context }) => {
+    const { actionUserId, timeFrom, timeTo, entityTypes } = input;
+
+    const countQueries = entityTypes.map((entityType) => {
+      const tableName = getTableNameString(entityType);
+      return sql`
+        SELECT
+          ${entityType}::int AS entity_type,
+          COUNT(*)::int AS count
+        FROM ${sql.identifier(tableName)}
+        WHERE ${
+          actionUserId !== null
+            ? sql`action_user_id = ${actionUserId}`
+            : sql`action_user_id IS NULL`
+        }
+          AND created >= ${timeFrom}::timestamptz
+          AND created <= ${timeTo}::timestamptz
+      `;
+    });
+
+    const query = sql`
+      SELECT * FROM (
+        ${sql.join(countQueries, sql` UNION ALL `)}
+      ) counts
+    `;
+
+    const result = await context.db.execute(query);
+    const rows = result.rows as { entity_type: number; count: number }[];
+
+    return {
+      counts: rows.map((row) => ({
+        entityType: row.entity_type as AuditEntityType,
+        count: row.count,
+      })),
+    };
   });

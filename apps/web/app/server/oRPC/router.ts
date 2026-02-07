@@ -102,6 +102,7 @@ import {
   searchAudits,
   listAuditAdminUsers,
   getEntityParentMatchId,
+  getBatchChildCounts,
 } from './procedures/auditProcedures';
 
 export interface InitialContext {
@@ -209,6 +210,7 @@ export const router = base.router({
     timeline: getEntityAuditTimeline,
     activity: getDefaultAuditActivity,
     activityEntries: getGroupEntries,
+    batchChildCounts: getBatchChildCounts,
     search: searchAudits,
     adminUsers: listAuditAdminUsers,
     entityParent: getEntityParentMatchId,

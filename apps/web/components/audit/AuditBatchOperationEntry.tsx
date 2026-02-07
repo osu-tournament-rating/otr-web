@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Layers } from 'lucide-react';
+import useSWR from 'swr';
+import { ChevronRight, Layers, Loader2 } from 'lucide-react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { AuditEntityTypeEnumHelper } from '@/lib/enums';
@@ -14,8 +15,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { orpc } from '@/lib/orpc/orpc';
 import type { BatchOperation, BatchOperationType } from './batchDetection';
 import AuditGroupedEntry from './AuditGroupedEntry';
+import AuditEntryItem from './AuditEntryItem';
 import { formatRelativeTime } from './formatRelativeTime';
 
 const operationConfig: Record<
@@ -241,6 +244,7 @@ function generateEntityHref(
 /**
  * Find the parent entity in a batch operation.
  * Returns the highest-level entity in the hierarchy (Tournament > Match > Game > Score).
+ * Uses tournament name when available.
  */
 function getParentEntity(batch: BatchOperation): ParentEntityInfo {
   for (const entityType of ENTITY_HIERARCHY) {
@@ -253,12 +257,72 @@ function getParentEntity(batch: BatchOperation): ParentEntityInfo {
       return {
         entityType,
         id: entityId,
-        label: ENTITY_LABEL[entityType],
+        label:
+          entityType === AuditEntityType.Tournament && batch.tournamentName
+            ? batch.tournamentName
+            : ENTITY_LABEL[entityType],
         href: generateEntityHref(entityType, entityId, batch),
       };
     }
   }
   return null;
+}
+
+/** Lazy-loaded entry list for game/score sections that lack group data */
+function BatchChildEntryList({
+  entityType,
+  actionUserId,
+  timeFrom,
+  timeTo,
+}: {
+  entityType: AuditEntityType;
+  actionUserId: number | null;
+  timeFrom: string;
+  timeTo: string;
+}) {
+  const { data, isLoading } = useSWR(
+    ['batch-child-entries', entityType, actionUserId, timeFrom, timeTo],
+    () =>
+      orpc.audit.search({
+        entityTypes: [entityType],
+        adminUserId: actionUserId ?? undefined,
+        adminOnly: actionUserId !== null ? true : undefined,
+        dateFrom: timeFrom,
+        dateTo: timeTo,
+        limit: 50,
+      }),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 86400000,
+    }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!data?.items.length) {
+    return (
+      <div className="text-muted-foreground py-4 text-center text-sm">
+        No entries found
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-border divide-border divide-y rounded-lg border">
+      {data.items.map((item) =>
+        item.type === 'audit' ? (
+          <AuditEntryItem key={`a-${item.data.id}`} entry={item.data} showEntityInfo />
+        ) : null
+      )}
+    </div>
+  );
 }
 
 export default function AuditBatchOperationEntry({
@@ -275,6 +339,62 @@ export default function AuditBatchOperationEntry({
   const username = batch.actionUser?.username;
   const initials = getUserInitials(username);
   const parentEntity = getParentEntity(batch);
+
+  // Lazy-load child counts (game/score) when expanded
+  const needsChildCounts =
+    expanded &&
+    !batch.entityBreakdown.some(
+      (b) =>
+        b.entityType === AuditEntityType.Game ||
+        b.entityType === AuditEntityType.Score
+    );
+
+  const { data: childCountsData, isLoading: isLoadingChildren } = useSWR(
+    needsChildCounts
+      ? [
+          'batch-child-counts',
+          batch.actionUserId,
+          batch.earliestCreated,
+          batch.latestCreated,
+        ]
+      : null,
+    () =>
+      orpc.audit.batchChildCounts({
+        actionUserId: batch.actionUserId,
+        timeFrom: batch.earliestCreated,
+        timeTo: batch.latestCreated,
+        entityTypes: [AuditEntityType.Game, AuditEntityType.Score],
+      }),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 86400000,
+    }
+  );
+
+  const childCounts = childCountsData?.counts?.filter((c) => c.count > 0) ?? null;
+
+  // Merge initial breakdown with lazy-loaded child counts for the expanded view
+  const allBreakdowns = useMemo(() => {
+    const initial = [...batch.entityBreakdown];
+    if (childCounts) {
+      for (const cc of childCounts) {
+        if (!initial.some((b) => b.entityType === cc.entityType)) {
+          initial.push({
+            entityType: cc.entityType,
+            count: cc.count,
+            groups: [], // No groups — entries loaded on demand via BatchChildEntryList
+          });
+        }
+      }
+    }
+    // Sort by hierarchy
+    return initial.sort(
+      (a, b) =>
+        ENTITY_HIERARCHY.indexOf(a.entityType) -
+        ENTITY_HIERARCHY.indexOf(b.entityType)
+    );
+  }, [batch.entityBreakdown, childCounts]);
 
   // When expanding, auto-select first entity type if none selected
   const handleOpenChange = (open: boolean) => {
@@ -348,19 +468,36 @@ export default function AuditBatchOperationEntry({
                       : config.label}
                   </span>
                 )}
-                {/* Show parent entity: "tournament #2978" or "tournament #2978 + child entities" */}
+                {/* Show parent entity with tournament name when available */}
                 {parentEntity && (
                   <>
-                    <span className="text-foreground font-medium">
-                      {parentEntity.label}
-                    </span>
-                    <Link
-                      href={parentEntity.href}
-                      className="text-muted-foreground hover:text-primary text-xs hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      #{parentEntity.id}
-                    </Link>
+                    {parentEntity.entityType === AuditEntityType.Tournament && batch.tournamentName ? (
+                      <>
+                        <Link
+                          href={parentEntity.href}
+                          className="text-foreground font-medium hover:text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {batch.tournamentName}
+                        </Link>
+                        <span className="text-muted-foreground text-xs">
+                          (#{parentEntity.id})
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-foreground font-medium">
+                          {parentEntity.label}
+                        </span>
+                        <Link
+                          href={parentEntity.href}
+                          className="text-muted-foreground hover:text-primary text-xs hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          #{parentEntity.id}
+                        </Link>
+                      </>
+                    )}
                     {batch.entityBreakdown.length > 1 && (
                       <span className="text-foreground font-medium">
                         + child entities
@@ -370,7 +507,7 @@ export default function AuditBatchOperationEntry({
                 )}
               </div>
 
-              {/* Entity chips */}
+              {/* Entity chips — initial breakdowns + lazy-loaded child counts */}
               <div className="flex flex-wrap items-center gap-1.5">
                 {batch.entityBreakdown.map((breakdown) => (
                   <EntityChip
@@ -381,6 +518,21 @@ export default function AuditBatchOperationEntry({
                     onClick={() => handleEntityChipClick(breakdown.entityType)}
                   />
                 ))}
+                {childCounts?.map((cc) => (
+                  <EntityChip
+                    key={cc.entityType}
+                    entityType={cc.entityType}
+                    count={cc.count}
+                    isActive={expanded && activeEntityType === cc.entityType}
+                    onClick={() => handleEntityChipClick(cc.entityType)}
+                  />
+                ))}
+                {expanded && !childCounts && isLoadingChildren && (
+                  <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Loading counts…
+                  </span>
+                )}
               </div>
             </div>
 
@@ -404,7 +556,7 @@ export default function AuditBatchOperationEntry({
 
         <CollapsibleContent>
           <div className="border-border border-t">
-            {batch.entityBreakdown.map((breakdown) => (
+            {allBreakdowns.map((breakdown) => (
               <div
                 key={breakdown.entityType}
                 className={cn(
@@ -441,16 +593,27 @@ export default function AuditBatchOperationEntry({
                   </span>
                 </button>
 
-                {/* Nested groups */}
+                {/* Nested content */}
                 {activeEntityType === breakdown.entityType && (
                   <div className="space-y-2 px-3 pb-3">
-                    {breakdown.groups.map((group, i) => (
-                      <AuditGroupedEntry
-                        key={`${group.latestCreated}-${i}`}
-                        group={group}
-                        alwaysExpanded
+                    {breakdown.groups.length > 0 ? (
+                      // Has groups from initial load (tournament/match)
+                      breakdown.groups.map((group, i) => (
+                        <AuditGroupedEntry
+                          key={`${group.latestCreated}-${i}`}
+                          group={group}
+                          alwaysExpanded
+                        />
+                      ))
+                    ) : (
+                      // Lazy-loaded section (game/score) — load entries on demand
+                      <BatchChildEntryList
+                        entityType={breakdown.entityType}
+                        actionUserId={batch.actionUserId}
+                        timeFrom={batch.earliestCreated}
+                        timeTo={batch.latestCreated}
                       />
-                    ))}
+                    )}
                   </div>
                 )}
               </div>

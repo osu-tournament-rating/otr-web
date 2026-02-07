@@ -52,6 +52,12 @@ export const ALL_AUDIT_TABLES = [
   { table: schema.gameScoreAudits, entityType: AuditEntityType.Score },
 ] as const;
 
+/** Lightweight subset for the default activity view (skips large game/score tables) */
+export const LIGHT_AUDIT_TABLES = [
+  { table: schema.tournamentAudits, entityType: AuditEntityType.Tournament },
+  { table: schema.matchAudits, entityType: AuditEntityType.Match },
+] as const;
+
 /**
  * Compare two values for equality, handling objects/arrays via JSON serialization.
  */
