@@ -7,6 +7,7 @@ import { ChevronRight, Layers, Loader2 } from 'lucide-react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { AuditEntityTypeEnumHelper } from '@/lib/enums';
+import type { BatchEntityInfo } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/collapsible';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BatchOperation, BatchOperationType } from './batchDetection';
+import AuditEntryItem from './AuditEntryItem';
 import RelativeTime from './RelativeTime';
 
 const operationConfig: Record<
@@ -146,8 +148,102 @@ function getTournamentInfo(batch: BatchOperation): { name: string; id: number; h
   return { name: batch.tournamentName, id, href: `/tournaments/${id}` };
 }
 
-/** Lazy-loaded entity ID list for the expanded view */
-function BatchEntityIdList({ batch }: { batch: BatchOperation }) {
+/** Lazy-loaded changelog for a single entity within a batch */
+function EntityChangelog({
+  entityType,
+  entityId,
+}: {
+  entityType: AuditEntityType;
+  entityId: number;
+}) {
+  const { data, isLoading } = useSWR(
+    ['batch-entity-changelog', entityType, entityId],
+    () =>
+      orpc.audit.timeline({
+        entityType,
+        entityId,
+        limit: 50,
+      }),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 86400000,
+    }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-3">
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  const entries = data?.items.filter((item) => item.type === 'audit') ?? [];
+  if (entries.length === 0) {
+    return (
+      <div className="text-muted-foreground py-2 text-center text-xs">
+        No changes found
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-border divide-y">
+      {entries.map((item) => (
+        <AuditEntryItem key={item.data.id} entry={item.data} />
+      ))}
+    </div>
+  );
+}
+
+/** A single entity row with expandable changelog */
+function BatchEntityRow({
+  entityType,
+  entity,
+}: {
+  entityType: AuditEntityType;
+  entity: BatchEntityInfo;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const href = entityHref(entityType, entity.id);
+  const displayName = entity.name ?? `#${entity.id}`;
+
+  return (
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <CollapsibleTrigger asChild>
+        <button className="hover:bg-accent/50 flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors">
+          <ChevronRight
+            className={cn(
+              'text-muted-foreground h-3.5 w-3.5 shrink-0 transition-transform',
+              expanded && 'rotate-90'
+            )}
+          />
+          <Link
+            href={href}
+            className="text-foreground hover:text-primary min-w-0 truncate font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {displayName}
+          </Link>
+          {entity.name && (
+            <span className="text-muted-foreground shrink-0 text-xs">
+              #{entity.id}
+            </span>
+          )}
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="bg-muted/20 border-border border-t">
+          <EntityChangelog entityType={entityType} entityId={entity.id} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/** Lazy-loaded entity list for the expanded batch view */
+function BatchEntityList({ batch }: { batch: BatchOperation }) {
   const { data, isLoading } = useSWR(
     [
       'batch-entity-ids',
@@ -193,26 +289,23 @@ function BatchEntityIdList({ batch }: { batch: BatchOperation }) {
   );
 
   return (
-    <div className="space-y-2 px-4 py-3">
-      {sorted.map(({ entityType, ids }) => {
-        if (ids.length === 0) return null;
+    <div className="divide-border divide-y">
+      {sorted.map(({ entityType, items, ids }) => {
+        const entityItems = items ?? ids.map((id) => ({ id, name: null }));
+        if (entityItems.length === 0) return null;
         const meta = AuditEntityTypeEnumHelper.getMetadata(entityType);
         return (
           <div key={entityType}>
-            <div className="text-muted-foreground mb-1 text-xs font-medium">
-              {pluralize(meta.text, ids.length)} ({ids.length})
+            <div className="text-muted-foreground bg-muted/30 border-border border-b px-4 py-1.5 text-xs font-medium">
+              {pluralize(meta.text, entityItems.length)} ({entityItems.length})
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {ids.map((id) => (
-                <Link
-                  key={id}
-                  href={entityHref(entityType, id)}
-                  className="bg-muted/50 text-muted-foreground hover:text-primary hover:bg-muted inline-block rounded px-1.5 py-0.5 text-xs transition-colors"
-                >
-                  #{id}
-                </Link>
-              ))}
-            </div>
+            {entityItems.map((entity) => (
+              <BatchEntityRow
+                key={entity.id}
+                entityType={entityType}
+                entity={entity}
+              />
+            ))}
           </div>
         );
       })}
@@ -344,7 +437,7 @@ export default function AuditBatchOperationEntry({
 
         <CollapsibleContent>
           <div className="bg-muted/20 border-border border-t">
-            <BatchEntityIdList batch={batch} />
+            <BatchEntityList batch={batch} />
           </div>
         </CollapsibleContent>
       </div>

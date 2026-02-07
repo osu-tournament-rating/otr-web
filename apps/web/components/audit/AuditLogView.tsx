@@ -125,7 +125,7 @@ function parseActivityFilters(searchParams: URLSearchParams) {
     actionTypes: searchParams.get('actionTypes')
       ? (searchParams.get('actionTypes')!.split(',').map(Number) as AuditActionType[])
       : undefined,
-    adminOnly: searchParams.get('adminOnly') === 'true' || undefined,
+    adminOnly: searchParams.get('showSystem') === 'true' ? false : undefined,
     dateFrom: searchParams.get('dateFrom') || undefined,
     dateTo: searchParams.get('dateTo') || undefined,
     fieldsChanged,
@@ -261,7 +261,7 @@ export default function AuditLogView() {
     return (
       searchParams.has('entityTypes') ||
       searchParams.has('actionTypes') ||
-      searchParams.has('adminOnly') ||
+      searchParams.has('showSystem') ||
       searchParams.has('dateFrom') ||
       searchParams.has('dateTo') ||
       searchParams.has('fieldChanged') ||

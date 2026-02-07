@@ -29,6 +29,8 @@ export const AuditEntrySchema = z.object({
   actionUser: AuditActionUserSchema.nullable(),
   /** Map of user IDs to user info for IDs referenced in changes (e.g. verifiedByUserId) */
   referencedUsers: z.record(z.string(), AuditActionUserSchema).optional(),
+  /** Resolved entity name (for tournaments and matches) */
+  entityName: z.string().nullable().optional(),
 });
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
@@ -214,11 +216,20 @@ export const BatchEntityIdsInputSchema = z.object({
   entityTypes: z.array(z.nativeEnum(AuditEntityType)),
 });
 
+export const BatchEntityInfoSchema = z.object({
+  id: z.number().int(),
+  name: z.string().nullable(),
+});
+
+export type BatchEntityInfo = z.infer<typeof BatchEntityInfoSchema>;
+
 export const BatchEntityIdsResponseSchema = z.object({
   entities: z.array(
     z.object({
       entityType: z.nativeEnum(AuditEntityType),
       ids: z.array(z.number().int()),
+      /** Entity details with resolved names (for tournaments and matches) */
+      items: z.array(BatchEntityInfoSchema).optional(),
     })
   ),
 });

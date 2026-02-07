@@ -31,6 +31,7 @@ import {
   ALL_AUDIT_TABLES,
   TIME_BUCKET_EXPR,
   camelizeChangesKeys,
+  camelToSnake,
   mergeTimelineItems,
   mergeAuditEntries,
 } from './audit/helpers';
@@ -242,18 +243,36 @@ async function queryAuditEntries(
 
   if (options.fieldNames && options.fieldNames.length > 0) {
     // OR logic: match if ANY of the specified fields actually changed
-    // Check field exists AND values are different
-    // Handle both PascalCase (NewValue/OriginalValue) and camelCase keys in JSONB
-    const fieldConditions = options.fieldNames.map(
-      (name) => sql`(
-        ${table.changes} ? ${name}
-        AND (
-          COALESCE(${table.changes}->${name}->>'NewValue', ${table.changes}->${name}->>'newValue')
-          IS DISTINCT FROM
-          COALESCE(${table.changes}->${name}->>'OriginalValue', ${table.changes}->${name}->>'originalValue')
-        )
-      )`
-    );
+    // DB stores keys in snake_case (triggers) or camelCase (historical), so check both
+    const fieldConditions = options.fieldNames.map((name) => {
+      const snakeName = camelToSnake(name);
+      const sameCase = name === snakeName;
+      const hasKey = sameCase
+        ? sql`${table.changes} ? ${name}`
+        : sql`(${table.changes} ? ${name} OR ${table.changes} ? ${snakeName})`;
+      const valueCheck = sameCase
+        ? sql`(
+            COALESCE(${table.changes}->${name}->>'NewValue', ${table.changes}->${name}->>'newValue')
+            IS DISTINCT FROM
+            COALESCE(${table.changes}->${name}->>'OriginalValue', ${table.changes}->${name}->>'originalValue')
+          )`
+        : sql`(
+            COALESCE(
+              ${table.changes}->${name}->>'NewValue',
+              ${table.changes}->${name}->>'newValue',
+              ${table.changes}->${snakeName}->>'NewValue',
+              ${table.changes}->${snakeName}->>'newValue'
+            )
+            IS DISTINCT FROM
+            COALESCE(
+              ${table.changes}->${name}->>'OriginalValue',
+              ${table.changes}->${name}->>'originalValue',
+              ${table.changes}->${snakeName}->>'OriginalValue',
+              ${table.changes}->${snakeName}->>'originalValue'
+            )
+          )`;
+      return sql`(${hasKey} AND ${valueCheck})`;
+    });
     if (fieldConditions.length === 1) {
       conditions.push(fieldConditions[0]);
     } else {
@@ -487,7 +506,11 @@ export const getDefaultAuditActivity = publicProcedure
       }
 
       if (actionTypes && actionTypes.length > 0) {
-        conditions.push(sql`action_type = ANY(${actionTypes}::int[])`);
+        if (actionTypes.length === 1) {
+          conditions.push(sql`action_type = ${actionTypes[0]}`);
+        } else {
+          conditions.push(sql`action_type IN (${sql.join(actionTypes.map(a => sql`${a}`), sql`, `)})`);
+        }
       }
 
       if (dateFrom) {
@@ -503,18 +526,37 @@ export const getDefaultAuditActivity = publicProcedure
       }
 
       // Field name filters (OR logic within entity type)
+      // DB stores keys in snake_case (triggers) or camelCase (historical), so check both
       const entityFieldNames = fieldsByEntityType.get(entityType);
       if (entityFieldNames && entityFieldNames.length > 0) {
-        const fieldConditions = entityFieldNames.map(
-          (name) => sql`(
-            changes ? ${name}
-            AND (
-              COALESCE(changes->${sql.raw(`'${name}'`)}->>'NewValue', changes->${sql.raw(`'${name}'`)}->>'newValue')
-              IS DISTINCT FROM
-              COALESCE(changes->${sql.raw(`'${name}'`)}->>'OriginalValue', changes->${sql.raw(`'${name}'`)}->>'originalValue')
-            )
-          )`
-        );
+        const fieldConditions = entityFieldNames.map((name) => {
+          const snakeName = camelToSnake(name);
+          const hasKey = name === snakeName
+            ? sql`changes ? ${name}`
+            : sql`(changes ? ${name} OR changes ? ${snakeName})`;
+          const valueCheck = name === snakeName
+            ? sql`(
+                COALESCE(changes->${sql.raw(`'${name}'`)}->>'NewValue', changes->${sql.raw(`'${name}'`)}->>'newValue')
+                IS DISTINCT FROM
+                COALESCE(changes->${sql.raw(`'${name}'`)}->>'OriginalValue', changes->${sql.raw(`'${name}'`)}->>'originalValue')
+              )`
+            : sql`(
+                COALESCE(
+                  changes->${sql.raw(`'${name}'`)}->>'NewValue',
+                  changes->${sql.raw(`'${name}'`)}->>'newValue',
+                  changes->${sql.raw(`'${snakeName}'`)}->>'NewValue',
+                  changes->${sql.raw(`'${snakeName}'`)}->>'newValue'
+                )
+                IS DISTINCT FROM
+                COALESCE(
+                  changes->${sql.raw(`'${name}'`)}->>'OriginalValue',
+                  changes->${sql.raw(`'${name}'`)}->>'originalValue',
+                  changes->${sql.raw(`'${snakeName}'`)}->>'OriginalValue',
+                  changes->${sql.raw(`'${snakeName}'`)}->>'originalValue'
+                )
+              )`;
+          return sql`(${hasKey} AND ${valueCheck})`;
+        });
         if (fieldConditions.length === 1) {
           conditions.push(fieldConditions[0]);
         } else {
@@ -665,6 +707,30 @@ async function resolveActionUsers(
   return map;
 }
 
+/** Resolve entity IDs to names (tournaments and matches have name fields) */
+async function resolveEntityNames(
+  db: DatabaseClient,
+  entityType: AuditEntityType,
+  entityIds: number[]
+): Promise<Map<number, string>> {
+  if (entityIds.length === 0) return new Map();
+
+  if (entityType === AuditEntityType.Tournament) {
+    return resolveTournamentNames(db, entityIds);
+  }
+
+  if (entityType === AuditEntityType.Match) {
+    const rows = await db
+      .select({ id: schema.matches.id, name: schema.matches.name })
+      .from(schema.matches)
+      .where(inArray(schema.matches.id, entityIds));
+    return new Map(rows.map((r) => [r.id, r.name]));
+  }
+
+  // Games and scores don't have name fields
+  return new Map();
+}
+
 /** Resolve tournament IDs to tournament names */
 async function resolveTournamentNames(
   db: DatabaseClient,
@@ -782,6 +848,10 @@ export const getGroupEntries = publicProcedure
     }
     const refUserMap = await resolveUserIds(context.db, allRefUserIds);
 
+    // Resolve entity names for tournaments and matches
+    const entityIds = [...new Set(trimmedRows.map((r) => r.reference_id_lock))];
+    const entityNameMap = await resolveEntityNames(context.db, entityType, entityIds);
+
     const entries: AuditEntry[] = trimmedRows.map((row, i) => {
       const changes = normalizedChanges[i];
       const actionUser = row.action_user_id
@@ -829,6 +899,7 @@ export const getGroupEntries = publicProcedure
             }
           : null,
         referencedUsers,
+        entityName: entityNameMap.get(row.reference_id_lock) ?? null,
       };
     });
 
@@ -1119,10 +1190,41 @@ export const getBatchEntityIds = publicProcedure
       })
     );
 
-    return {
-      entities: entityTypes.map((entityType, i) => ({
-        entityType,
-        ids: (results[i].rows as { id: number }[]).map((r) => r.id),
-      })),
-    };
+    // Resolve entity names for tournaments and matches
+    const entitiesWithIds = entityTypes.map((entityType, i) => ({
+      entityType,
+      ids: (results[i].rows as { id: number }[]).map((r) => r.id),
+    }));
+
+    const entities = await Promise.all(
+      entitiesWithIds.map(async ({ entityType, ids }) => {
+        if (ids.length === 0) return { entityType, ids, items: [] };
+
+        let nameMap = new Map<number, string | null>();
+        if (entityType === AuditEntityType.Tournament && ids.length > 0) {
+          const rows = await context.db
+            .select({ id: schema.tournaments.id, name: schema.tournaments.name })
+            .from(schema.tournaments)
+            .where(inArray(schema.tournaments.id, ids));
+          nameMap = new Map(rows.map((r) => [r.id, r.name]));
+        } else if (entityType === AuditEntityType.Match && ids.length > 0) {
+          const rows = await context.db
+            .select({ id: schema.matches.id, name: schema.matches.name })
+            .from(schema.matches)
+            .where(inArray(schema.matches.id, ids));
+          nameMap = new Map(rows.map((r) => [r.id, r.name]));
+        }
+
+        return {
+          entityType,
+          ids,
+          items: ids.map((id) => ({
+            id,
+            name: nameMap.get(id) ?? null,
+          })),
+        };
+      })
+    );
+
+    return { entities };
   });

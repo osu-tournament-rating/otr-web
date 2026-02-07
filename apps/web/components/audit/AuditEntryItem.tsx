@@ -91,7 +91,7 @@ export default function AuditEntryItem({
                   className="text-primary hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  #{entry.referenceIdLock}
+                  {entry.entityName ?? `#${entry.referenceIdLock}`}
                 </Link>
               </span>
             )}

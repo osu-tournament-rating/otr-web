@@ -65,8 +65,8 @@ export default function AuditFilterBar() {
     return param ? param.split(',') : [];
   });
   const [entityId, setEntityId] = useState(searchParams.get('entityId') ?? '');
-  const [hideSystemAudits, setHideSystemAudits] = useState(
-    searchParams.get('adminOnly') === 'true'
+  const [showSystemAudits, setShowSystemAudits] = useState(
+    searchParams.get('showSystem') === 'true'
   );
 
   const selectedEntityTypes = entityType && entityType !== ALL_VALUE
@@ -88,7 +88,7 @@ export default function AuditFilterBar() {
     dateTo !== undefined,
     fieldsChanged.length > 0,
     entityId !== '',
-    hideSystemAudits,
+    showSystemAudits,
   ].filter(Boolean).length;
 
   const applyFilters = useCallback(() => {
@@ -99,11 +99,11 @@ export default function AuditFilterBar() {
     if (dateTo) params.set('dateTo', format(dateTo, 'yyyy-MM-dd'));
     if (fieldsChanged.length > 0) params.set('fieldChanged', fieldsChanged.join(','));
     if (entityId) params.set('entityId', entityId);
-    if (hideSystemAudits) params.set('adminOnly', 'true');
+    if (showSystemAudits) params.set('showSystem', 'true');
 
     const qs = params.toString();
     router.push(qs ? `/tools/audit-logs?${qs}` : '/tools/audit-logs');
-  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, router]);
+  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, showSystemAudits, router]);
 
   const clearAllFilters = useCallback(() => {
     setEntityType(ALL_VALUE);
@@ -112,7 +112,7 @@ export default function AuditFilterBar() {
     setDateTo(undefined);
     setFieldsChanged([]);
     setEntityId('');
-    setHideSystemAudits(false);
+    setShowSystemAudits(false);
     router.push('/tools/audit-logs');
   }, [router]);
 
@@ -122,7 +122,7 @@ export default function AuditFilterBar() {
       applyFilters();
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, hideSystemAudits, applyFilters]);
+  }, [entityType, actionType, dateFrom, dateTo, fieldsChanged, entityId, showSystemAudits, applyFilters]);
 
   return (
     <div className="bg-popover flex flex-col gap-2.5 rounded-lg p-3">
@@ -303,12 +303,12 @@ export default function AuditFilterBar() {
         {/* Options */}
         <div className="flex items-center gap-2 border-l border-border/50 pl-3">
           <Checkbox
-            id="hide-system"
-            checked={hideSystemAudits}
-            onCheckedChange={(checked) => setHideSystemAudits(checked === true)}
+            id="show-system"
+            checked={showSystemAudits}
+            onCheckedChange={(checked) => setShowSystemAudits(checked === true)}
           />
-          <Label htmlFor="hide-system" className="text-muted-foreground cursor-pointer text-sm whitespace-nowrap">
-            Hide system
+          <Label htmlFor="show-system" className="text-muted-foreground cursor-pointer text-sm whitespace-nowrap">
+            Show system
           </Label>
         </div>
 

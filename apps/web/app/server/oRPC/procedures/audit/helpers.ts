@@ -169,6 +169,11 @@ export function mergeAuditEntries(
   return merged;
 }
 
+/** Convert camelCase to snake_case */
+export function camelToSnake(s: string): string {
+  return s.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
+}
+
 /** Entity type slug for URL paths */
 export function entityTypeToSlug(entityType: AuditEntityType): string {
   switch (entityType) {
