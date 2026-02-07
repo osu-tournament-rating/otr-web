@@ -118,7 +118,7 @@ export const AuditGroupSummarySchema = z.object({
   sampleChanges: z.record(z.string(), z.unknown()).nullable(),
   /** Sample referenceIdLock for parent entity identification */
   sampleReferenceIdLock: z.number().int(),
-  /** ISO timestamp truncated to second, used to identify the group for lazy loading */
+  /** ISO timestamp of the 5-minute bucket start, used to identify the group for lazy loading */
   timeBucket: z.string(),
   /** Sorted comma-separated JSONB keys, used to identify the group for lazy loading */
   changedFieldsKey: z.string(),
@@ -128,11 +128,20 @@ export const AuditGroupSummarySchema = z.object({
 
 export type AuditGroupSummary = z.infer<typeof AuditGroupSummarySchema>;
 
-// --- Activity Pagination Input (grouping-based) ---
+// --- Activity Pagination Input (grouping-based, with optional search filters) ---
 
 export const ActivityPaginationInputSchema = z.object({
   cursor: z.string().optional(),
   limit: z.number().int().min(1).max(100).default(30),
+  // Optional search filters (when provided, searches across all entity types)
+  entityTypes: z.array(z.nativeEnum(AuditEntityType)).optional(),
+  actionTypes: z.array(z.nativeEnum(AuditActionType)).optional(),
+  adminOnly: z.boolean().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  adminUserId: z.number().int().optional(),
+  fieldsChanged: z.array(FieldFilterSchema).optional(),
+  entityId: z.number().int().optional(),
 });
 
 // --- Activity Response ---
@@ -192,6 +201,24 @@ export const BatchChildCountsResponseSchema = z.object({
     z.object({
       entityType: z.nativeEnum(AuditEntityType),
       count: z.number().int(),
+    })
+  ),
+});
+
+// --- Batch Entity IDs (expandable ID list for batch operations) ---
+
+export const BatchEntityIdsInputSchema = z.object({
+  actionUserId: z.number().int().nullable(),
+  timeFrom: z.string(),
+  timeTo: z.string(),
+  entityTypes: z.array(z.nativeEnum(AuditEntityType)),
+});
+
+export const BatchEntityIdsResponseSchema = z.object({
+  entities: z.array(
+    z.object({
+      entityType: z.nativeEnum(AuditEntityType),
+      ids: z.array(z.number().int()),
     })
   ),
 });

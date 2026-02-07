@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MessageSquare } from 'lucide-react';
 import type { AuditAdminNote } from '@/lib/orpc/schema/audit';
-import { formatRelativeTime } from './formatRelativeTime';
+import RelativeTime from './RelativeTime';
 
 export default function AuditNoteItem({
   note,
@@ -31,13 +31,10 @@ export default function AuditNoteItem({
           <span className="text-muted-foreground text-sm italic">Unknown</span>
         )}
         <span className="flex-1" />
-        <time
+        <RelativeTime
+          dateString={note.created}
           className="text-muted-foreground shrink-0 text-xs"
-          dateTime={note.created}
-          title={new Date(note.created).toLocaleString()}
-        >
-          {formatRelativeTime(note.created)}
-        </time>
+        />
       </div>
 
       {/* Note content */}

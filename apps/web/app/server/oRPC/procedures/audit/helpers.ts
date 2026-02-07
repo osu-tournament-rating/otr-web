@@ -58,6 +58,12 @@ export const LIGHT_AUDIT_TABLES = [
   { table: schema.matchAudits, entityType: AuditEntityType.Match },
 ] as const;
 
+/** 5-minute time bucket interval in seconds */
+export const TIME_BUCKET_SECONDS = 300;
+
+/** Raw SQL expression for 5-minute time bucketing on the `created` column */
+export const TIME_BUCKET_EXPR = `to_timestamp(floor(extract(epoch from created) / ${TIME_BUCKET_SECONDS}) * ${TIME_BUCKET_SECONDS}) AT TIME ZONE 'UTC'`;
+
 /**
  * Compare two values for equality, handling objects/arrays via JSON serialization.
  */

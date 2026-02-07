@@ -6,7 +6,6 @@ import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
-  AuditTimelineItem,
   AuditGroupSummary,
   FieldFilter,
 } from '@/lib/orpc/schema/audit';
@@ -14,17 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditFilterBar from './AuditFilterBar';
-import AuditEntryItem from './AuditEntryItem';
 import AuditGroupedEntry from './AuditGroupedEntry';
 import AuditBatchOperationEntry from './AuditBatchOperationEntry';
 import { parseFieldOptionValue } from './auditFieldConfig';
-import { detectBatchOperations } from './batchDetection';
-
-type TimelineResponse = {
-  items: AuditTimelineItem[];
-  nextCursor: number | null;
-  hasMore: boolean;
-};
+import { detectBatchOperations, type AuditDisplayItem } from './batchDetection';
 
 type ActivityResponse = {
   groups: AuditGroupSummary[];
@@ -68,17 +60,94 @@ function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () 
   );
 }
 
+/** Renders a list of display items (groups + batches) with a load-more button */
+function GroupedFeed({
+  displayItems,
+  hasMore,
+  isValidating,
+  onLoadMore,
+}: {
+  displayItems: AuditDisplayItem[];
+  hasMore: boolean;
+  isValidating: boolean;
+  onLoadMore: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        {displayItems.map((item, i) =>
+          item.kind === 'batch' ? (
+            <AuditBatchOperationEntry
+              key={`batch-${item.latestCreated}-${i}`}
+              batch={item}
+            />
+          ) : (
+            <AuditGroupedEntry
+              key={`${item.data.latestCreated}-${i}`}
+              group={item.data}
+            />
+          )
+        )}
+      </div>
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLoadMore}
+            disabled={isValidating}
+          >
+            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Load more
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Parse URL search params into activity endpoint filter params */
+function parseActivityFilters(searchParams: URLSearchParams) {
+  const fieldChangedParam = searchParams.get('fieldChanged');
+  let fieldsChanged: FieldFilter[] | undefined;
+  if (fieldChangedParam) {
+    const parsed = fieldChangedParam.split(',').map(parseFieldOptionValue).filter(Boolean) as FieldFilter[];
+    if (parsed.length > 0) {
+      fieldsChanged = parsed;
+    }
+  }
+
+  return {
+    entityTypes: searchParams.get('entityTypes')
+      ? (searchParams.get('entityTypes')!.split(',').map(Number) as AuditEntityType[])
+      : undefined,
+    actionTypes: searchParams.get('actionTypes')
+      ? (searchParams.get('actionTypes')!.split(',').map(Number) as AuditActionType[])
+      : undefined,
+    adminOnly: searchParams.get('adminOnly') === 'true' || undefined,
+    dateFrom: searchParams.get('dateFrom') || undefined,
+    dateTo: searchParams.get('dateTo') || undefined,
+    fieldsChanged,
+    entityId: searchParams.get('entityId')
+      ? Number(searchParams.get('entityId'))
+      : undefined,
+  };
+}
+
 interface SearchViewProps {
   searchParams: URLSearchParams;
   onClearFilters: () => void;
 }
 
 function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
+  const filters = useMemo(() => parseActivityFilters(searchParams), [searchParams]);
+
   const getKey = useCallback(
-    (pageIndex: number, prev: TimelineResponse | null) => {
+    (pageIndex: number, prev: ActivityResponse | null) => {
       if (prev && !prev.hasMore) return null;
       return [
-        'audit-search',
+        'audit-activity-search',
         searchParams.toString(),
         prev?.nextCursor ?? null,
       ] as const;
@@ -88,55 +157,30 @@ function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
     getKey,
-    async ([, , cursor]) => {
-      // Parse fieldChanged values from "entityType:fieldName" format
-      const fieldChangedParam = searchParams.get('fieldChanged');
-      let fieldsChanged: FieldFilter[] | undefined;
-      if (fieldChangedParam) {
-        const parsed = fieldChangedParam.split(',').map(parseFieldOptionValue).filter(Boolean) as FieldFilter[];
-        if (parsed.length > 0) {
-          fieldsChanged = parsed;
-        }
-      }
-
-      return orpc.audit.search({
-        entityTypes: searchParams.get('entityTypes')
-          ? (searchParams
-              .get('entityTypes')!
-              .split(',')
-              .map(Number) as AuditEntityType[])
-          : undefined,
-        actionTypes: searchParams.get('actionTypes')
-          ? (searchParams
-              .get('actionTypes')!
-              .split(',')
-              .map(Number) as AuditActionType[])
-          : undefined,
-        adminOnly: searchParams.get('adminOnly') === 'true' || undefined,
-        dateFrom: searchParams.get('dateFrom') || undefined,
-        dateTo: searchParams.get('dateTo') || undefined,
-        fieldsChanged,
-        entityId: searchParams.get('entityId')
-          ? Number(searchParams.get('entityId'))
-          : undefined,
-        limit: 250,
+    async ([, , cursor]) =>
+      orpc.audit.activity({
+        ...filters,
+        limit: 30,
         cursor: cursor ?? undefined,
-      });
-    },
+      }),
     {
       revalidateFirstPage: false,
       revalidateOnFocus: false,
       revalidateIfStale: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 86400000, // 24 hours - audits never change
+      dedupingInterval: 86400000,
     }
   );
 
   const pages = data ?? [];
-  const allItems = pages.flatMap((p) => p.items);
+  const allGroups = pages.flatMap((p) => p.groups);
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
-  const isEmpty = !isLoading && allItems.length === 0;
-  const totalCount = allItems.length;
+  const isEmpty = !isLoading && allGroups.length === 0;
+
+  const displayItems = useMemo(
+    () => detectBatchOperations(allGroups),
+    [allGroups]
+  );
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -147,44 +191,12 @@ function SearchView({ searchParams, onClearFilters }: SearchViewProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Result count */}
-      <div className="text-muted-foreground text-sm">
-        Showing {totalCount} result{totalCount !== 1 ? 's' : ''}
-        {hasMore && '+'}
-      </div>
-
-      {/* Results */}
-      <div className="border-border divide-border divide-y rounded-lg border">
-        {allItems.map((item) => {
-          if (item.type === 'audit') {
-            return (
-              <AuditEntryItem
-                key={`a-${item.data.id}`}
-                entry={item.data}
-                showEntityInfo
-              />
-            );
-          }
-          return null;
-        })}
-      </div>
-
-      {/* Load more */}
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSize(size + 1)}
-            disabled={isValidating}
-          >
-            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Load more
-          </Button>
-        </div>
-      )}
-    </div>
+    <GroupedFeed
+      displayItems={displayItems}
+      hasMore={hasMore}
+      isValidating={isValidating}
+      onLoadMore={() => setSize(size + 1)}
+    />
   );
 }
 
@@ -209,7 +221,7 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
       revalidateOnFocus: false,
       revalidateIfStale: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 86400000, // 24 hours - audits never change
+      dedupingInterval: 86400000,
     }
   );
 
@@ -218,7 +230,6 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
   const isEmpty = !isLoading && allGroups.length === 0;
 
-  // Detect batch operations (verification cascades, etc.)
   const displayItems = useMemo(
     () => detectBatchOperations(allGroups),
     [allGroups]
@@ -233,39 +244,12 @@ function DefaultView({ onClearFilters }: { onClearFilters: () => void }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Activity feed */}
-      <div className="space-y-2">
-        {displayItems.map((item, i) =>
-          item.kind === 'batch' ? (
-            <AuditBatchOperationEntry
-              key={`batch-${item.latestCreated}-${i}`}
-              batch={item}
-            />
-          ) : (
-            <AuditGroupedEntry
-              key={`${item.data.latestCreated}-${i}`}
-              group={item.data}
-            />
-          )
-        )}
-      </div>
-
-      {/* Load more */}
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSize(size + 1)}
-            disabled={isValidating}
-          >
-            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Load more
-          </Button>
-        </div>
-      )}
-    </div>
+    <GroupedFeed
+      displayItems={displayItems}
+      hasMore={hasMore}
+      isValidating={isValidating}
+      onLoadMore={() => setSize(size + 1)}
+    />
   );
 }
 

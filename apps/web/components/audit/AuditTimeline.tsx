@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryItem from './AuditEntryItem';
 import AuditNoteItem from './AuditNoteItem';
-import { formatRelativeTime } from './formatRelativeTime';
+import RelativeTime from './RelativeTime';
 
 type TimelineResponse = {
   items: AuditTimelineItem[];
@@ -125,7 +125,7 @@ export default function AuditTimeline({
         {latestChange && (
           <>
             <span>&middot;</span>
-            <span>Last modified {formatRelativeTime(latestChange)}</span>
+            <span>Last modified <RelativeTime dateString={latestChange} /></span>
           </>
         )}
       </div>

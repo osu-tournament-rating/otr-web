@@ -22,7 +22,7 @@ import {
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryItem from './AuditEntryItem';
 import { getFieldLabel } from './auditFieldConfig';
-import { formatRelativeTime } from './formatRelativeTime';
+import RelativeTime from './RelativeTime';
 
 const actionIcons: Record<AuditActionType, typeof PlusCircle> = {
   [AuditActionType.Created]: PlusCircle,
@@ -121,7 +121,7 @@ export default function AuditGroupedEntry({
   compact?: boolean;
   alwaysExpanded?: boolean;
 }): React.JSX.Element {
-  const [expanded, setExpanded] = useState(alwaysExpanded || group.count < 10);
+  const [expanded, setExpanded] = useState(alwaysExpanded);
   const entityMeta = AuditEntityTypeEnumHelper.getMetadata(group.entityType);
   const actionMeta = AuditActionTypeEnumHelper.getMetadata(group.actionType);
   const ActionIcon = actionIcons[group.actionType];
@@ -219,12 +219,10 @@ export default function AuditGroupedEntry({
 
             {/* Timestamp and expand indicator */}
             <div className="flex shrink-0 items-center gap-2">
-              <time
+              <RelativeTime
+                dateString={group.latestCreated}
                 className="text-muted-foreground text-xs"
-                dateTime={group.latestCreated}
-              >
-                {formatRelativeTime(group.latestCreated)}
-              </time>
+              />
               <ChevronRight
                 className={cn(
                   'text-muted-foreground h-4 w-4 transition-transform',

@@ -20,7 +20,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import AuditDiffDisplay from './AuditDiffDisplay';
-import { formatRelativeTime } from './formatRelativeTime';
+import RelativeTime from './RelativeTime';
 
 const actionIcons: Record<AuditActionType, typeof PlusCircle> = {
   [AuditActionType.Created]: PlusCircle,
@@ -143,13 +143,10 @@ export default function AuditEntryItem({
             )}
 
             {/* Timestamp */}
-            <time
+            <RelativeTime
+              dateString={entry.created}
               className="text-muted-foreground shrink-0 text-xs"
-              dateTime={entry.created}
-              title={new Date(entry.created).toLocaleString()}
-            >
-              {formatRelativeTime(entry.created)}
-            </time>
+            />
           </button>
         </CollapsibleTrigger>
 

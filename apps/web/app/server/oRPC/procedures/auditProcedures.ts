@@ -13,6 +13,8 @@ import {
   AuditAdminUsersResponseSchema,
   BatchChildCountsInputSchema,
   BatchChildCountsResponseSchema,
+  BatchEntityIdsInputSchema,
+  BatchEntityIdsResponseSchema,
   type AuditEntry,
   type AuditAdminNote,
   type AuditTimelineItem,
@@ -26,6 +28,8 @@ import {
   getAdminNotesTable,
   getTableNameString,
   LIGHT_AUDIT_TABLES,
+  ALL_AUDIT_TABLES,
+  TIME_BUCKET_EXPR,
   camelizeChangesKeys,
   mergeTimelineItems,
   mergeAuditEntries,
@@ -416,12 +420,112 @@ export const getDefaultAuditActivity = publicProcedure
     path: '/audit/activity',
   })
   .handler(async ({ input, context }) => {
-    const { cursor, limit } = input;
+    const {
+      cursor,
+      limit,
+      entityTypes,
+      actionTypes,
+      adminOnly,
+      dateFrom,
+      dateTo,
+      adminUserId,
+      fieldsChanged,
+      entityId,
+    } = input;
 
-    // Build per-table grouping CTEs using SQL GROUP BY
-    // Only query tournament + match tables for performance (game/score loaded on demand)
-    const tableQueries = LIGHT_AUDIT_TABLES.map(({ entityType }) => {
+    const hasFilters = !!(
+      entityTypes || actionTypes || adminOnly || dateFrom || dateTo ||
+      adminUserId !== undefined || fieldsChanged || entityId !== undefined
+    );
+
+    // Group field filters by entity type for per-table application
+    const fieldsByEntityType = new Map<AuditEntityType, string[]>();
+    if (fieldsChanged && fieldsChanged.length > 0) {
+      for (const { entityType, fieldName } of fieldsChanged) {
+        const existing = fieldsByEntityType.get(entityType) || [];
+        fieldsByEntityType.set(entityType, [...existing, fieldName]);
+      }
+    }
+
+    // Determine which tables to query:
+    // - No filters: only lightweight tables (tournament + match)
+    // - With filters: use entityTypes filter, or fieldsByEntityType, or all tables
+    let tablesToQuery: { entityType: AuditEntityType }[];
+    if (!hasFilters) {
+      tablesToQuery = [...LIGHT_AUDIT_TABLES];
+    } else if (fieldsByEntityType.size > 0) {
+      // Only query entity types that have field filters
+      let targetTypes = Array.from(fieldsByEntityType.keys());
+      if (entityTypes && entityTypes.length > 0) {
+        targetTypes = targetTypes.filter((et) => entityTypes.includes(et));
+      }
+      tablesToQuery = targetTypes.map((entityType) => ({ entityType }));
+    } else if (entityTypes && entityTypes.length > 0) {
+      tablesToQuery = entityTypes.map((entityType) => ({ entityType }));
+    } else {
+      tablesToQuery = [...ALL_AUDIT_TABLES];
+    }
+
+    // Build per-table grouping queries using SQL GROUP BY
+    const tableQueries = tablesToQuery.map(({ entityType }) => {
       const tableName = getTableNameString(entityType);
+
+      // Build WHERE conditions
+      const conditions: ReturnType<typeof sql>[] = [];
+
+      // Default: only admin-initiated. With adminOnly=false explicitly, show all.
+      if (!hasFilters || adminOnly !== false) {
+        conditions.push(sql`action_user_id IS NOT NULL`);
+      }
+
+      if (adminUserId !== undefined) {
+        conditions.push(sql`action_user_id = ${adminUserId}`);
+      }
+
+      if (cursor) {
+        conditions.push(sql`created < ${cursor}::timestamptz`);
+      }
+
+      if (actionTypes && actionTypes.length > 0) {
+        conditions.push(sql`action_type = ANY(${actionTypes}::int[])`);
+      }
+
+      if (dateFrom) {
+        conditions.push(sql`created >= ${dateFrom}::timestamptz`);
+      }
+
+      if (dateTo) {
+        conditions.push(sql`created <= ${dateTo}::timestamptz`);
+      }
+
+      if (entityId !== undefined) {
+        conditions.push(sql`reference_id_lock = ${entityId}`);
+      }
+
+      // Field name filters (OR logic within entity type)
+      const entityFieldNames = fieldsByEntityType.get(entityType);
+      if (entityFieldNames && entityFieldNames.length > 0) {
+        const fieldConditions = entityFieldNames.map(
+          (name) => sql`(
+            changes ? ${name}
+            AND (
+              COALESCE(changes->${sql.raw(`'${name}'`)}->>'NewValue', changes->${sql.raw(`'${name}'`)}->>'newValue')
+              IS DISTINCT FROM
+              COALESCE(changes->${sql.raw(`'${name}'`)}->>'OriginalValue', changes->${sql.raw(`'${name}'`)}->>'originalValue')
+            )
+          )`
+        );
+        if (fieldConditions.length === 1) {
+          conditions.push(fieldConditions[0]);
+        } else {
+          conditions.push(sql`(${sql.join(fieldConditions, sql` OR `)})`);
+        }
+      }
+
+      const whereClause = conditions.length > 0
+        ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+        : sql``;
+
       return sql`
         SELECT
           ${entityType}::int AS entity_type,
@@ -432,15 +536,14 @@ export const getDefaultAuditActivity = publicProcedure
              FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
             ''
           ) AS changed_fields_key,
-          date_trunc('second', created) AS time_bucket,
+          ${sql.raw(TIME_BUCKET_EXPR)} AS time_bucket,
           COUNT(*)::int AS count,
           MAX(created) AS latest_created,
           MIN(created) AS earliest_created,
           (array_agg(changes ORDER BY id DESC))[1] AS sample_changes,
           (array_agg(reference_id_lock ORDER BY id DESC))[1] AS sample_reference_id_lock
         FROM ${sql.identifier(tableName)}
-        WHERE action_user_id IS NOT NULL
-          ${cursor ? sql`AND created < ${cursor}::timestamptz` : sql``}
+        ${whereClause}
         GROUP BY action_user_id, action_type, changed_fields_key, time_bucket
       `;
     });
@@ -612,7 +715,7 @@ export const getGroupEntries = publicProcedure
         ? sql`action_user_id = ${actionUserId}`
         : sql`action_user_id IS NULL`,
       sql`action_type = ${actionType}`,
-      sql`date_trunc('second', created) = ${timeBucket}::timestamptz`,
+      sql`${sql.raw(TIME_BUCKET_EXPR)} = ${timeBucket}::timestamptz`,
       sql`COALESCE(
         (SELECT string_agg(k, ',' ORDER BY k)
          FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
@@ -981,6 +1084,45 @@ export const getBatchChildCounts = publicProcedure
       counts: rows.map((row) => ({
         entityType: row.entity_type as AuditEntityType,
         count: row.count,
+      })),
+    };
+  });
+
+export const getBatchEntityIds = publicProcedure
+  .input(BatchEntityIdsInputSchema)
+  .output(BatchEntityIdsResponseSchema)
+  .route({
+    summary: 'Get distinct entity IDs for a batch operation',
+    tags: ['audit'],
+    method: 'GET',
+    path: '/audit/batch-entity-ids',
+  })
+  .handler(async ({ input, context }) => {
+    const { actionUserId, timeFrom, timeTo, entityTypes } = input;
+
+    const results = await Promise.all(
+      entityTypes.map((entityType) => {
+        const tableName = getTableNameString(entityType);
+        return context.db.execute(sql`
+          SELECT DISTINCT reference_id_lock AS id
+          FROM ${sql.identifier(tableName)}
+          WHERE ${
+            actionUserId !== null
+              ? sql`action_user_id = ${actionUserId}`
+              : sql`action_user_id IS NULL`
+          }
+            AND created >= ${timeFrom}::timestamptz
+            AND created <= ${timeTo}::timestamptz
+          ORDER BY id
+          LIMIT 500
+        `);
+      })
+    );
+
+    return {
+      entities: entityTypes.map((entityType, i) => ({
+        entityType,
+        ids: (results[i].rows as { id: number }[]).map((r) => r.id),
       })),
     };
   });

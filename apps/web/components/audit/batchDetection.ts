@@ -11,8 +11,8 @@ const VERIFICATION_FIELDS = new Set([
   'rejectionReason',
 ]);
 
-/** Timestamp window (ms) for grouping related operations */
-const BATCH_WINDOW_MS = 2000;
+/** Timestamp window (ms) for grouping related operations (matches 5-minute SQL bucket) */
+const BATCH_WINDOW_MS = 300_000;
 
 /** Minimum entity types required to consider it a batch operation */
 const MIN_ENTITY_TYPES_FOR_BATCH = 2;
