@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { ChevronRight, Loader2, PlusCircle, Pencil, Trash2 } from 'lucide-react';
-import { AuditActionType } from '@otr/core/osu';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import {
   AuditEntityTypeEnumHelper,
   AuditActionTypeEnumHelper,
@@ -58,6 +58,29 @@ function pluralize(word: string, count: number): string {
     return word + 'es';
   }
   return word + 's';
+}
+
+/** Get entity identifier for display when a group represents a single entity */
+function getEntityIdentifier(group: AuditGroupSummary): {
+  prefix?: string;
+  name: string;
+  href: string;
+} | null {
+  if (group.count !== 1) return null;
+
+  const id = group.sampleReferenceIdLock;
+  switch (group.entityType) {
+    case AuditEntityType.Tournament:
+      return group.tournamentName
+        ? { prefix: 'tournament', name: group.tournamentName, href: `/tournaments/${id}` }
+        : { name: `tournament #${id}`, href: `/tournaments/${id}` };
+    case AuditEntityType.Match:
+      return { name: `match #${id}`, href: `/matches/${id}` };
+    case AuditEntityType.Game:
+      return { name: `game #${id}`, href: `/audit/games/${id}` };
+    case AuditEntityType.Score:
+      return { name: `score #${id}`, href: `/audit/scores/${id}` };
+  }
 }
 
 /** Lazy-loaded entry list for a group summary */
@@ -129,9 +152,12 @@ export default function AuditGroupedEntry({
   const fieldLabels = showFieldLabels
     ? group.changedFields.map((f) => getFieldLabel(group.entityType, f)).join(', ')
     : '';
+  const showFieldCount = group.actionType === AuditActionType.Updated;
+  const fieldCount = showFieldCount ? group.changedFields.length : 0;
 
   const username = group.actionUser?.username;
   const initials = getUserInitials(username);
+  const entityId = getEntityIdentifier(group);
 
   // When alwaysExpanded, render lazy-loaded entries directly without collapsible header
   if (alwaysExpanded) {
@@ -155,7 +181,7 @@ export default function AuditGroupedEntry({
         <CollapsibleTrigger asChild>
           <button className={cn(
             'flex w-full items-center gap-3 text-left',
-            compact ? 'p-2' : 'px-4 py-3'
+            compact ? 'p-2' : 'p-3'
           )}>
             {/* User Avatar - hidden in compact mode */}
             {!compact && (
@@ -163,11 +189,11 @@ export default function AuditGroupedEntry({
                 <OsuAvatar
                   osuId={group.actionUser.osuId}
                   username={username}
-                  size={36}
+                  size={32}
                   className="shrink-0"
                 />
               ) : (
-                <Avatar className="h-9 w-9 shrink-0">
+                <Avatar className="h-8 w-8 shrink-0">
                   <AvatarFallback className="bg-muted text-muted-foreground text-sm font-medium">
                     {initials}
                   </AvatarFallback>
@@ -177,12 +203,11 @@ export default function AuditGroupedEntry({
 
             {/* Content */}
             <div className={cn(
-              'flex min-w-0 flex-1 flex-col gap-1',
-              compact && 'flex-row flex-wrap items-center gap-x-1.5 gap-y-0.5'
+              'flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5',
+              compact ? 'text-xs' : 'text-sm'
             )}>
-              {/* Primary line: User + action */}
               {!compact && (
-                <div className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                <>
                   {group.actionUser ? (
                     <Link
                       href={`/players/${group.actionUser.playerId}`}
@@ -202,23 +227,40 @@ export default function AuditGroupedEntry({
                       {fieldLabels}
                     </span>
                   )}
-                </div>
+                  {entityId && (
+                    <>
+                      {entityId.prefix && (
+                        <span className="text-muted-foreground">{entityId.prefix}</span>
+                      )}
+                      <Link
+                        href={entityId.href}
+                        className="text-foreground font-medium hover:text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {entityId.name}
+                      </Link>
+                    </>
+                  )}
+                </>
               )}
-
-              {/* Secondary line: Entity count badge */}
-              <div className={cn('flex items-center gap-2', compact && 'text-xs')}>
-                {compact && fieldLabels && (
-                  <span className="text-muted-foreground">{fieldLabels}</span>
-                )}
+              {compact && fieldLabels && (
+                <span className="text-muted-foreground">{fieldLabels}</span>
+              )}
+              {(!entityId || compact) && (
                 <Badge variant="secondary" className="gap-1.5 font-normal">
                   <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
                   {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
                 </Badge>
-              </div>
+              )}
             </div>
 
             {/* Timestamp and expand indicator */}
             <div className="flex shrink-0 items-center gap-2">
+              {fieldCount > 0 && (
+                <span className="text-muted-foreground text-xs">
+                  {fieldCount} field{fieldCount !== 1 ? 's' : ''} changed
+                </span>
+              )}
               <RelativeTime
                 dateString={group.latestCreated}
                 className="text-muted-foreground text-xs"

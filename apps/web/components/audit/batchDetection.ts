@@ -242,9 +242,14 @@ export function detectBatchOperations(
       isVerificationOnlyChange(g.changedFields)
     );
 
+    const hasVerificationStatusChange = currentBatch.some((g) =>
+      g.changedFields.includes('verificationStatus')
+    );
+
     const shouldCreateBatch =
       currentEntityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH ||
-      allVerificationOnly;
+      allVerificationOnly ||
+      hasVerificationStatusChange;
 
     if (shouldCreateBatch) {
       result.push(createBatchOperation(currentBatch));

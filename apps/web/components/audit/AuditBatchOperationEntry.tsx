@@ -116,9 +116,10 @@ function entityHref(entityType: AuditEntityType, entityId: number): string {
  * Build the inline entity description for the action line.
  * e.g. "229 games" or "1 tournament, 15 matches"
  */
-function buildEntityDescription(batch: BatchOperation): string {
-  // Sort by hierarchy
-  const sorted = [...batch.entityBreakdown].sort(
+function buildEntityDescription(batch: BatchOperation, excludeType?: AuditEntityType): string {
+  const sorted = [...batch.entityBreakdown]
+    .filter((b) => excludeType === undefined || b.entityType !== excludeType)
+    .sort(
     (a, b) =>
       ENTITY_HIERARCHY.indexOf(a.entityType) -
       ENTITY_HIERARCHY.indexOf(b.entityType)
@@ -230,6 +231,9 @@ export default function AuditBatchOperationEntry({
   const initials = getUserInitials(username);
   const tournamentInfo = getTournamentInfo(batch);
   const entityDescription = buildEntityDescription(batch);
+  const childEntityDescription = tournamentInfo
+    ? buildEntityDescription(batch, AuditEntityType.Tournament)
+    : '';
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
@@ -241,7 +245,7 @@ export default function AuditBatchOperationEntry({
         )}
       >
         <CollapsibleTrigger asChild>
-          <button className="flex w-full items-start gap-3 p-3 text-left">
+          <button className="flex w-full items-center gap-3 p-3 text-left">
             {/* User Avatar */}
             {batch.actionUser?.osuId ? (
               <OsuAvatar
@@ -290,6 +294,9 @@ export default function AuditBatchOperationEntry({
                 {/* Inline entity counts */}
                 {tournamentInfo ? (
                   <>
+                    {batch.type === 'submission' && (
+                      <span className="text-muted-foreground">tournament</span>
+                    )}
                     <Link
                       href={tournamentInfo.href}
                       className="text-foreground font-medium hover:text-primary hover:underline"
@@ -297,10 +304,18 @@ export default function AuditBatchOperationEntry({
                     >
                       {tournamentInfo.name}
                     </Link>
-                    {batch.entityBreakdown.length > 1 && (
-                      <span className="text-muted-foreground">
-                        ({entityDescription})
-                      </span>
+                    {batch.type === 'submission' ? (
+                      childEntityDescription && (
+                        <span className="text-muted-foreground">
+                          ({childEntityDescription})
+                        </span>
+                      )
+                    ) : (
+                      batch.entityBreakdown.length > 1 && (
+                        <span className="text-muted-foreground">
+                          ({entityDescription})
+                        </span>
+                      )
                     )}
                   </>
                 ) : (
@@ -312,7 +327,7 @@ export default function AuditBatchOperationEntry({
             </div>
 
             {/* Timestamp and expand indicator */}
-            <div className="flex shrink-0 items-center gap-2 pt-0.5">
+            <div className="flex shrink-0 items-center gap-2">
               <RelativeTime
                 dateString={batch.latestCreated}
                 className="text-muted-foreground text-xs"
