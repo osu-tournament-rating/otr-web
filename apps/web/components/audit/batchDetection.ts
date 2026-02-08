@@ -11,9 +11,6 @@ const VERIFICATION_FIELDS = new Set([
   'rejectionReason',
 ]);
 
-/** Timestamp window (ms) for grouping related operations (matches 5-minute SQL bucket) */
-const BATCH_WINDOW_MS = 300_000;
-
 /** Minimum entity types required to consider it a batch operation */
 const MIN_ENTITY_TYPES_FOR_BATCH = 2;
 
@@ -31,7 +28,7 @@ export type BatchOperation = {
   groups: AuditGroupSummary[];
   totalCount: number;
   latestCreated: string;
-  /** Earliest timestamp across all groups in the batch (for lazy-load time range) */
+  /** Earliest timestamp across all groups in the batch */
   earliestCreated: string;
   actionUserId: number | null;
   actionUser: AuditActionUser | null;
@@ -40,8 +37,10 @@ export type BatchOperation = {
     count: number;
     groups: AuditGroupSummary[];
   }[];
-  /** Tournament name if the top-level entity is a tournament */
+  /** Tournament name for the parent entity */
   tournamentName: string | null;
+  /** Parent tournament ID for entity lookups */
+  parentEntityId: number | null;
 };
 
 export type AuditDisplayItem =
@@ -97,13 +96,6 @@ function isRejectionReasonBeingSet(sampleChanges: Record<string, unknown> | null
     return typeof newValue === 'number' && newValue !== 0;
   }
   return false;
-}
-
-/**
- * Get timestamp in ms from ISO string
- */
-function getTimestamp(isoString: string): number {
-  return new Date(isoString).getTime();
 }
 
 /**
@@ -197,10 +189,8 @@ function createBatchOperation(groups: AuditGroupSummary[]): BatchOperation {
     groups[0].earliestCreated
   );
 
-  // Extract tournament name from the tournament group if present
-  const tournamentGroup = groups.find(
-    (g) => g.entityType === AuditEntityType.Tournament && g.tournamentName
-  );
+  // Tournament name is now available on all groups via parentEntityId resolution
+  const tournamentName = groups.find((g) => g.tournamentName)?.tournamentName ?? null;
 
   return {
     kind: 'batch',
@@ -212,18 +202,18 @@ function createBatchOperation(groups: AuditGroupSummary[]): BatchOperation {
     actionUserId: groups[0].actionUserId,
     actionUser: groups[0].actionUser,
     entityBreakdown: buildEntityBreakdown(groups),
-    tournamentName: tournamentGroup?.tournamentName ?? null,
+    tournamentName,
+    parentEntityId: groups[0].parentEntityId,
   };
 }
 
 /**
  * Detect batch operations from a list of audit group summaries.
  *
- * A batch operation is detected when consecutive groups share:
+ * Groups are batched together when consecutive groups share:
  * - Same actionUserId
- * - Timestamps within 2 seconds
+ * - Same parentEntityId (same parent tournament)
  * - Verification-related field changes
- * - Multiple entity types
  */
 export function detectBatchOperations(
   groups: AuditGroupSummary[]
@@ -232,8 +222,7 @@ export function detectBatchOperations(
 
   const result: AuditDisplayItem[] = [];
   let currentBatch: AuditGroupSummary[] = [];
-  let currentEntityTypes = new Set<AuditEntityType>();
-  let batchStartTime: number | null = null;
+  let currentKey: string | null = null;
 
   function flushBatch() {
     if (currentBatch.length === 0) return;
@@ -246,8 +235,10 @@ export function detectBatchOperations(
       g.changedFields.includes('verificationStatus')
     );
 
+    const entityTypes = new Set(currentBatch.map((g) => g.entityType));
+
     const shouldCreateBatch =
-      currentEntityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH ||
+      entityTypes.size >= MIN_ENTITY_TYPES_FOR_BATCH ||
       allVerificationOnly ||
       hasVerificationStatusChange;
 
@@ -260,31 +251,26 @@ export function detectBatchOperations(
     }
 
     currentBatch = [];
-    currentEntityTypes = new Set();
-    batchStartTime = null;
+    currentKey = null;
   }
 
   for (const group of groups) {
-    const groupTime = getTimestamp(group.latestCreated);
     const isVerification = isVerificationRelated(group.changedFields);
+    const groupKey = `${group.actionUserId}:${group.parentEntityId}`;
 
     const canAddToBatch =
       isVerification &&
       currentBatch.length > 0 &&
-      group.actionUserId === currentBatch[0].actionUserId &&
-      batchStartTime !== null &&
-      Math.abs(groupTime - batchStartTime) <= BATCH_WINDOW_MS;
+      groupKey === currentKey;
 
     if (canAddToBatch) {
       currentBatch.push(group);
-      currentEntityTypes.add(group.entityType);
     } else {
       flushBatch();
 
       if (isVerification) {
         currentBatch = [group];
-        currentEntityTypes = new Set([group.entityType]);
-        batchStartTime = groupTime;
+        currentKey = groupKey;
       } else {
         result.push({ kind: 'group', data: group });
       }

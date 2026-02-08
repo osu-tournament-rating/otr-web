@@ -26,10 +26,9 @@ import { publicProcedure } from './base';
 import {
   getAuditTable,
   getAdminNotesTable,
-  getTableNameString,
+  getParentEntityJoinInfo,
   LIGHT_AUDIT_TABLES,
   ALL_AUDIT_TABLES,
-  TIME_BUCKET_EXPR,
   camelizeChangesKeys,
   camelToSnake,
   mergeTimelineItems,
@@ -421,7 +420,7 @@ type GroupingRow = {
   action_user_id: number | null;
   action_type: number;
   changed_fields_key: string;
-  time_bucket: string;
+  parent_entity_id: number | null;
   count: number;
   latest_created: string;
   earliest_created: string;
@@ -486,43 +485,44 @@ export const getDefaultAuditActivity = publicProcedure
     }
 
     // Build per-table grouping queries using SQL GROUP BY
+    // Groups by parent tournament ID instead of time bucket
     const tableQueries = tablesToQuery.map(({ entityType }) => {
-      const tableName = getTableNameString(entityType);
+      const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
 
-      // Build WHERE conditions
+      // Build WHERE conditions (prefixed with a. for audit table alias)
       const conditions: ReturnType<typeof sql>[] = [];
 
       // Default: only admin-initiated. With adminOnly=false explicitly, show all.
       if (!hasFilters || adminOnly !== false) {
-        conditions.push(sql`action_user_id IS NOT NULL`);
+        conditions.push(sql`a.action_user_id IS NOT NULL`);
       }
 
       if (adminUserId !== undefined) {
-        conditions.push(sql`action_user_id = ${adminUserId}`);
+        conditions.push(sql`a.action_user_id = ${adminUserId}`);
       }
 
       if (cursor) {
-        conditions.push(sql`created < ${cursor}::timestamptz`);
+        conditions.push(sql`a.created < ${cursor}::timestamptz`);
       }
 
       if (actionTypes && actionTypes.length > 0) {
         if (actionTypes.length === 1) {
-          conditions.push(sql`action_type = ${actionTypes[0]}`);
+          conditions.push(sql`a.action_type = ${actionTypes[0]}`);
         } else {
-          conditions.push(sql`action_type IN (${sql.join(actionTypes.map(a => sql`${a}`), sql`, `)})`);
+          conditions.push(sql`a.action_type IN (${sql.join(actionTypes.map(a => sql`${a}`), sql`, `)})`);
         }
       }
 
       if (dateFrom) {
-        conditions.push(sql`created >= ${dateFrom}::timestamptz`);
+        conditions.push(sql`a.created >= ${dateFrom}::timestamptz`);
       }
 
       if (dateTo) {
-        conditions.push(sql`created <= ${dateTo}::timestamptz`);
+        conditions.push(sql`a.created <= ${dateTo}::timestamptz`);
       }
 
       if (entityId !== undefined) {
-        conditions.push(sql`reference_id_lock = ${entityId}`);
+        conditions.push(sql`a.reference_id_lock = ${entityId}`);
       }
 
       // Field name filters (OR logic within entity type)
@@ -532,27 +532,27 @@ export const getDefaultAuditActivity = publicProcedure
         const fieldConditions = entityFieldNames.map((name) => {
           const snakeName = camelToSnake(name);
           const hasKey = name === snakeName
-            ? sql`changes ? ${name}`
-            : sql`(changes ? ${name} OR changes ? ${snakeName})`;
+            ? sql`a.changes ? ${name}`
+            : sql`(a.changes ? ${name} OR a.changes ? ${snakeName})`;
           const valueCheck = name === snakeName
             ? sql`(
-                COALESCE(changes->${sql.raw(`'${name}'`)}->>'NewValue', changes->${sql.raw(`'${name}'`)}->>'newValue')
+                COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'NewValue', a.changes->${sql.raw(`'${name}'`)}->>'newValue')
                 IS DISTINCT FROM
-                COALESCE(changes->${sql.raw(`'${name}'`)}->>'OriginalValue', changes->${sql.raw(`'${name}'`)}->>'originalValue')
+                COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'OriginalValue', a.changes->${sql.raw(`'${name}'`)}->>'originalValue')
               )`
             : sql`(
                 COALESCE(
-                  changes->${sql.raw(`'${name}'`)}->>'NewValue',
-                  changes->${sql.raw(`'${name}'`)}->>'newValue',
-                  changes->${sql.raw(`'${snakeName}'`)}->>'NewValue',
-                  changes->${sql.raw(`'${snakeName}'`)}->>'newValue'
+                  a.changes->${sql.raw(`'${name}'`)}->>'NewValue',
+                  a.changes->${sql.raw(`'${name}'`)}->>'newValue',
+                  a.changes->${sql.raw(`'${snakeName}'`)}->>'NewValue',
+                  a.changes->${sql.raw(`'${snakeName}'`)}->>'newValue'
                 )
                 IS DISTINCT FROM
                 COALESCE(
-                  changes->${sql.raw(`'${name}'`)}->>'OriginalValue',
-                  changes->${sql.raw(`'${name}'`)}->>'originalValue',
-                  changes->${sql.raw(`'${snakeName}'`)}->>'OriginalValue',
-                  changes->${sql.raw(`'${snakeName}'`)}->>'originalValue'
+                  a.changes->${sql.raw(`'${name}'`)}->>'OriginalValue',
+                  a.changes->${sql.raw(`'${name}'`)}->>'originalValue',
+                  a.changes->${sql.raw(`'${snakeName}'`)}->>'OriginalValue',
+                  a.changes->${sql.raw(`'${snakeName}'`)}->>'originalValue'
                 )
               )`;
           return sql`(${hasKey} AND ${valueCheck})`;
@@ -571,22 +571,22 @@ export const getDefaultAuditActivity = publicProcedure
       return sql`
         SELECT
           ${entityType}::int AS entity_type,
-          action_user_id,
-          action_type,
+          a.action_user_id,
+          a.action_type,
           COALESCE(
             (SELECT string_agg(k, ',' ORDER BY k)
-             FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
+             FROM jsonb_object_keys(COALESCE(a.changes, '{}'::jsonb)) AS k),
             ''
           ) AS changed_fields_key,
-          ${sql.raw(TIME_BUCKET_EXPR)} AS time_bucket,
+          ${sql.raw(parentIdExpr)} AS parent_entity_id,
           COUNT(*)::int AS count,
-          MAX(created) AS latest_created,
-          MIN(created) AS earliest_created,
-          (array_agg(changes ORDER BY id DESC))[1] AS sample_changes,
-          (array_agg(reference_id_lock ORDER BY id DESC))[1] AS sample_reference_id_lock
-        FROM ${sql.identifier(tableName)}
+          MAX(a.created) AS latest_created,
+          MIN(a.created) AS earliest_created,
+          (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes,
+          (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_reference_id_lock
+        FROM ${sql.raw(fromClause)}
         ${whereClause}
-        GROUP BY action_user_id, action_type, changed_fields_key, time_bucket
+        GROUP BY a.action_user_id, a.action_type, changed_fields_key, parent_entity_id
       `;
     });
 
@@ -618,12 +618,12 @@ export const getDefaultAuditActivity = publicProcedure
         ? await resolveActionUsers(context.db, actionUserIds)
         : new Map<number, ReferencedUser>();
 
-    // Resolve tournament names for tournament-type groups
+    // Resolve tournament names for ALL groups using parent_entity_id
     const tournamentIds = [
       ...new Set(
         trimmedRows
-          .filter((r) => r.entity_type === AuditEntityType.Tournament)
-          .map((r) => r.sample_reference_id_lock)
+          .map((r) => r.parent_entity_id)
+          .filter((id): id is number => id !== null)
       ),
     ];
 
@@ -662,12 +662,11 @@ export const getDefaultAuditActivity = publicProcedure
         earliestCreated: row.earliest_created,
         sampleChanges,
         sampleReferenceIdLock: row.sample_reference_id_lock,
-        timeBucket: row.time_bucket,
         changedFieldsKey: row.changed_fields_key,
-        tournamentName:
-          row.entity_type === AuditEntityType.Tournament
-            ? tournamentNameMap.get(row.sample_reference_id_lock) ?? null
-            : null,
+        parentEntityId: row.parent_entity_id,
+        tournamentName: row.parent_entity_id
+          ? tournamentNameMap.get(row.parent_entity_id) ?? null
+          : null,
       };
     });
 
@@ -767,39 +766,41 @@ export const getGroupEntries = publicProcedure
       entityType,
       actionUserId,
       actionType,
-      timeBucket,
+      parentEntityId,
       changedFieldsKey,
       cursor,
       limit,
     } = input;
 
-    const tableName = getTableNameString(entityType);
+    const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
 
     // Build conditions to match the exact grouping
     const conditions = [
       actionUserId !== null
-        ? sql`action_user_id = ${actionUserId}`
-        : sql`action_user_id IS NULL`,
-      sql`action_type = ${actionType}`,
-      sql`${sql.raw(TIME_BUCKET_EXPR)} = ${timeBucket}::timestamptz`,
+        ? sql`a.action_user_id = ${actionUserId}`
+        : sql`a.action_user_id IS NULL`,
+      sql`a.action_type = ${actionType}`,
+      parentEntityId !== null
+        ? sql`${sql.raw(parentIdExpr)} = ${parentEntityId}`
+        : sql`${sql.raw(parentIdExpr)} IS NULL`,
       sql`COALESCE(
         (SELECT string_agg(k, ',' ORDER BY k)
-         FROM jsonb_object_keys(COALESCE(changes, '{}'::jsonb)) AS k),
+         FROM jsonb_object_keys(COALESCE(a.changes, '{}'::jsonb)) AS k),
         ''
       ) = ${changedFieldsKey}`,
     ];
 
     if (cursor !== undefined) {
-      conditions.push(sql`id < ${cursor}`);
+      conditions.push(sql`a.id < ${cursor}`);
     }
 
     const query = sql`
       SELECT
-        id, created, reference_id_lock, reference_id,
-        action_user_id, action_type, changes
-      FROM ${sql.identifier(tableName)}
+        a.id, a.created, a.reference_id_lock, a.reference_id,
+        a.action_user_id, a.action_type, a.changes
+      FROM ${sql.raw(fromClause)}
       WHERE ${sql.join(conditions, sql` AND `)}
-      ORDER BY id DESC
+      ORDER BY a.id DESC
       LIMIT ${limit + 1}
     `;
 
@@ -1123,22 +1124,33 @@ export const getBatchChildCounts = publicProcedure
     path: '/audit/batch-child-counts',
   })
   .handler(async ({ input, context }) => {
-    const { actionUserId, timeFrom, timeTo, entityTypes } = input;
+    const { actionUserId, parentEntityId, timeFrom, timeTo, entityTypes } = input;
 
     const countQueries = entityTypes.map((entityType) => {
-      const tableName = getTableNameString(entityType);
+      const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
+
+      const conditions = [
+        actionUserId !== null
+          ? sql`a.action_user_id = ${actionUserId}`
+          : sql`a.action_user_id IS NULL`,
+      ];
+
+      if (parentEntityId !== null) {
+        conditions.push(sql`${sql.raw(parentIdExpr)} = ${parentEntityId}`);
+      }
+      if (timeFrom) {
+        conditions.push(sql`a.created >= ${timeFrom}::timestamptz`);
+      }
+      if (timeTo) {
+        conditions.push(sql`a.created <= ${timeTo}::timestamptz`);
+      }
+
       return sql`
         SELECT
           ${entityType}::int AS entity_type,
           COUNT(*)::int AS count
-        FROM ${sql.identifier(tableName)}
-        WHERE ${
-          actionUserId !== null
-            ? sql`action_user_id = ${actionUserId}`
-            : sql`action_user_id IS NULL`
-        }
-          AND created >= ${timeFrom}::timestamptz
-          AND created <= ${timeTo}::timestamptz
+        FROM ${sql.raw(fromClause)}
+        WHERE ${sql.join(conditions, sql` AND `)}
       `;
     });
 
@@ -1169,21 +1181,32 @@ export const getBatchEntityIds = publicProcedure
     path: '/audit/batch-entity-ids',
   })
   .handler(async ({ input, context }) => {
-    const { actionUserId, timeFrom, timeTo, entityTypes } = input;
+    const { actionUserId, parentEntityId, timeFrom, timeTo, entityTypes } = input;
 
     const results = await Promise.all(
       entityTypes.map((entityType) => {
-        const tableName = getTableNameString(entityType);
+        const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
+
+        const conditions = [
+          actionUserId !== null
+            ? sql`a.action_user_id = ${actionUserId}`
+            : sql`a.action_user_id IS NULL`,
+        ];
+
+        if (parentEntityId !== null) {
+          conditions.push(sql`${sql.raw(parentIdExpr)} = ${parentEntityId}`);
+        }
+        if (timeFrom) {
+          conditions.push(sql`a.created >= ${timeFrom}::timestamptz`);
+        }
+        if (timeTo) {
+          conditions.push(sql`a.created <= ${timeTo}::timestamptz`);
+        }
+
         return context.db.execute(sql`
-          SELECT DISTINCT reference_id_lock AS id
-          FROM ${sql.identifier(tableName)}
-          WHERE ${
-            actionUserId !== null
-              ? sql`action_user_id = ${actionUserId}`
-              : sql`action_user_id IS NULL`
-          }
-            AND created >= ${timeFrom}::timestamptz
-            AND created <= ${timeTo}::timestamptz
+          SELECT DISTINCT a.reference_id_lock AS id
+          FROM ${sql.raw(fromClause)}
+          WHERE ${sql.join(conditions, sql` AND `)}
           ORDER BY id
           LIMIT 500
         `);

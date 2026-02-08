@@ -58,11 +58,45 @@ export const LIGHT_AUDIT_TABLES = [
   { table: schema.matchAudits, entityType: AuditEntityType.Match },
 ] as const;
 
-/** 5-minute time bucket interval in seconds */
-export const TIME_BUCKET_SECONDS = 300;
-
-/** Raw SQL expression for 5-minute time bucketing on the `created` column */
-export const TIME_BUCKET_EXPR = `to_timestamp(floor(extract(epoch from created) / ${TIME_BUCKET_SECONDS}) * ${TIME_BUCKET_SECONDS}) AT TIME ZONE 'UTC'`;
+/**
+ * Get the SQL FROM clause (with JOINs) and parent entity ID expression
+ * for resolving the parent tournament of each entity type.
+ *
+ * Tournament audits: reference_id_lock IS the tournament ID
+ * Match audits: JOIN matches to get tournament_id
+ * Game audits: JOIN games → matches to get tournament_id
+ * Score audits: JOIN game_scores → games → matches to get tournament_id
+ */
+export function getParentEntityJoinInfo(entityType: AuditEntityType): {
+  fromClause: string;
+  parentIdExpr: string;
+} {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return {
+        fromClause: 'tournament_audits a',
+        parentIdExpr: 'a.reference_id_lock',
+      };
+    case AuditEntityType.Match:
+      return {
+        fromClause:
+          'match_audits a LEFT JOIN matches m ON m.id = a.reference_id_lock',
+        parentIdExpr: 'm.tournament_id',
+      };
+    case AuditEntityType.Game:
+      return {
+        fromClause:
+          'game_audits a LEFT JOIN games g ON g.id = a.reference_id_lock LEFT JOIN matches m ON m.id = g.match_id',
+        parentIdExpr: 'm.tournament_id',
+      };
+    case AuditEntityType.Score:
+      return {
+        fromClause:
+          'game_score_audits a LEFT JOIN game_scores gs ON gs.id = a.reference_id_lock LEFT JOIN games g ON g.id = gs.game_id LEFT JOIN matches m ON m.id = g.match_id',
+        parentIdExpr: 'm.tournament_id',
+      };
+  }
+}
 
 /**
  * Compare two values for equality, handling objects/arrays via JSON serialization.

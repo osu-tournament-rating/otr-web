@@ -60,6 +60,20 @@ function pluralize(word: string, count: number): string {
   return word + 's';
 }
 
+/** Get tournament context for display when a group has a parent tournament */
+function getTournamentContext(group: AuditGroupSummary): {
+  name: string;
+  href: string;
+} | null {
+  if (!group.tournamentName || !group.parentEntityId) return null;
+  // Don't show tournament context for tournament-type groups (redundant)
+  if (group.entityType === AuditEntityType.Tournament) return null;
+  return {
+    name: group.tournamentName,
+    href: `/tournaments/${group.parentEntityId}`,
+  };
+}
+
 /** Get entity identifier for display when a group represents a single entity */
 function getEntityIdentifier(group: AuditGroupSummary): {
   prefix?: string;
@@ -91,7 +105,7 @@ function GroupEntryList({ group }: { group: AuditGroupSummary }) {
       group.entityType,
       group.actionUserId,
       group.actionType,
-      group.timeBucket,
+      group.parentEntityId,
       group.changedFieldsKey,
     ],
     () =>
@@ -99,7 +113,7 @@ function GroupEntryList({ group }: { group: AuditGroupSummary }) {
         entityType: group.entityType,
         actionUserId: group.actionUserId,
         actionType: group.actionType,
-        timeBucket: group.timeBucket,
+        parentEntityId: group.parentEntityId,
         changedFieldsKey: group.changedFieldsKey,
         limit: 50,
       }),
@@ -158,6 +172,7 @@ export default function AuditGroupedEntry({
   const username = group.actionUser?.username;
   const initials = getUserInitials(username);
   const entityId = getEntityIdentifier(group);
+  const tournamentContext = getTournamentContext(group);
 
   // When alwaysExpanded, render lazy-loaded entries directly without collapsible header
   if (alwaysExpanded) {
@@ -239,6 +254,18 @@ export default function AuditGroupedEntry({
                       >
                         {entityId.name}
                       </Link>
+                      {tournamentContext && (
+                        <>
+                          <span className="text-muted-foreground">in</span>
+                          <Link
+                            href={tournamentContext.href}
+                            className="text-foreground font-medium hover:text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {tournamentContext.name}
+                          </Link>
+                        </>
+                      )}
                     </>
                   )}
                 </>
@@ -247,10 +274,24 @@ export default function AuditGroupedEntry({
                 <span className="text-muted-foreground">{fieldLabels}</span>
               )}
               {(!entityId || compact) && (
-                <Badge variant="secondary" className="gap-1.5 font-normal">
-                  <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
-                  {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
-                </Badge>
+                <>
+                  <Badge variant="secondary" className="gap-1.5 font-normal">
+                    <ActionIcon className={cn('h-3 w-3', actionIconColors[group.actionType])} />
+                    {group.count} {pluralize(entityMeta.text.toLowerCase(), group.count)}
+                  </Badge>
+                  {tournamentContext && (
+                    <>
+                      <span className="text-muted-foreground">in</span>
+                      <Link
+                        href={tournamentContext.href}
+                        className="text-foreground font-medium hover:text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {tournamentContext.name}
+                      </Link>
+                    </>
+                  )}
+                </>
               )}
             </div>
 

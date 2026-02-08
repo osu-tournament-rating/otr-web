@@ -136,16 +136,15 @@ function buildEntityDescription(batch: BatchOperation, excludeType?: AuditEntity
 }
 
 /**
- * Get the tournament name and href if the batch has a tournament parent.
+ * Get the tournament name and href from the batch's parent entity.
  */
 function getTournamentInfo(batch: BatchOperation): { name: string; id: number; href: string } | null {
-  if (!batch.tournamentName) return null;
-  const tournamentBreakdown = batch.entityBreakdown.find(
-    (b) => b.entityType === AuditEntityType.Tournament
-  );
-  if (!tournamentBreakdown || tournamentBreakdown.groups.length === 0) return null;
-  const id = tournamentBreakdown.groups[0].sampleReferenceIdLock;
-  return { name: batch.tournamentName, id, href: `/tournaments/${id}` };
+  if (!batch.tournamentName || !batch.parentEntityId) return null;
+  return {
+    name: batch.tournamentName,
+    id: batch.parentEntityId,
+    href: `/tournaments/${batch.parentEntityId}`,
+  };
 }
 
 /** Lazy-loaded changelog for a single entity within a batch */
@@ -248,12 +247,12 @@ function BatchEntityList({ batch }: { batch: BatchOperation }) {
     [
       'batch-entity-ids',
       batch.actionUserId,
-      batch.earliestCreated,
-      batch.latestCreated,
+      batch.parentEntityId,
     ],
     () =>
       orpc.audit.batchEntityIds({
         actionUserId: batch.actionUserId,
+        parentEntityId: batch.parentEntityId,
         timeFrom: batch.earliestCreated,
         timeTo: batch.latestCreated,
         entityTypes: batch.entityBreakdown.map((b) => b.entityType),
@@ -324,9 +323,14 @@ export default function AuditBatchOperationEntry({
   const initials = getUserInitials(username);
   const tournamentInfo = getTournamentInfo(batch);
   const entityDescription = buildEntityDescription(batch);
+  // For batches with a tournament parent, show child entity counts (excluding tournament itself)
   const childEntityDescription = tournamentInfo
     ? buildEntityDescription(batch, AuditEntityType.Tournament)
     : '';
+  // For non-tournament batches with a tournament parent, show "N matches in <tournament>"
+  const hasNonTournamentEntities = batch.entityBreakdown.some(
+    (b) => b.entityType !== AuditEntityType.Tournament
+  );
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
@@ -386,31 +390,51 @@ export default function AuditBatchOperationEntry({
                 )}
                 {/* Inline entity counts */}
                 {tournamentInfo ? (
-                  <>
-                    {batch.type === 'submission' && (
-                      <span className="text-muted-foreground">tournament</span>
-                    )}
-                    <Link
-                      href={tournamentInfo.href}
-                      className="text-foreground font-medium hover:text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {tournamentInfo.name}
-                    </Link>
-                    {batch.type === 'submission' ? (
-                      childEntityDescription && (
-                        <span className="text-muted-foreground">
-                          ({childEntityDescription})
-                        </span>
-                      )
-                    ) : (
-                      batch.entityBreakdown.length > 1 && (
-                        <span className="text-muted-foreground">
-                          ({entityDescription})
-                        </span>
-                      )
-                    )}
-                  </>
+                  hasNonTournamentEntities ? (
+                    <>
+                      {/* "N matches in <tournament>" or "N matches, M games in <tournament>" */}
+                      <span className="text-foreground font-medium">
+                        {childEntityDescription || entityDescription}
+                      </span>
+                      {batch.type === 'submission' ? (
+                        <>
+                          <span className="text-muted-foreground">tournament</span>
+                          <Link
+                            href={tournamentInfo.href}
+                            className="text-foreground font-medium hover:text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {tournamentInfo.name}
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-muted-foreground">in</span>
+                          <Link
+                            href={tournamentInfo.href}
+                            className="text-foreground font-medium hover:text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {tournamentInfo.name}
+                          </Link>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* Tournament-only: "<tournament name>" */}
+                      {batch.type === 'submission' && (
+                        <span className="text-muted-foreground">tournament</span>
+                      )}
+                      <Link
+                        href={tournamentInfo.href}
+                        className="text-foreground font-medium hover:text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {tournamentInfo.name}
+                      </Link>
+                    </>
+                  )
                 ) : (
                   <span className="text-foreground font-medium">
                     {entityDescription}

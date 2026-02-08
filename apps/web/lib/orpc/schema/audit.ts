@@ -120,11 +120,11 @@ export const AuditGroupSummarySchema = z.object({
   sampleChanges: z.record(z.string(), z.unknown()).nullable(),
   /** Sample referenceIdLock for parent entity identification */
   sampleReferenceIdLock: z.number().int(),
-  /** ISO timestamp of the 5-minute bucket start, used to identify the group for lazy loading */
-  timeBucket: z.string(),
   /** Sorted comma-separated JSONB keys, used to identify the group for lazy loading */
   changedFieldsKey: z.string(),
-  /** Tournament name (only populated for Tournament entity type groups) */
+  /** Parent tournament ID (populated for all entity types via parent entity resolution) */
+  parentEntityId: z.number().int().nullable(),
+  /** Tournament name (populated for all entity types via parent entity resolution) */
   tournamentName: z.string().nullable().optional(),
 });
 
@@ -160,7 +160,7 @@ export const GroupEntriesInputSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   actionUserId: z.number().int().nullable(),
   actionType: z.nativeEnum(AuditActionType),
-  timeBucket: z.string(),
+  parentEntityId: z.number().int().nullable(),
   changedFieldsKey: z.string(),
   cursor: z.number().int().optional(),
   limit: z.number().int().min(1).max(100).default(50),
@@ -190,10 +190,12 @@ export const AuditAdminUsersResponseSchema = z.object({
 export const BatchChildCountsInputSchema = z.object({
   /** The action user who performed the batch operation */
   actionUserId: z.number().int().nullable(),
-  /** Earliest timestamp in the batch window */
-  timeFrom: z.string(),
-  /** Latest timestamp in the batch window */
-  timeTo: z.string(),
+  /** Parent tournament ID for filtering */
+  parentEntityId: z.number().int().nullable(),
+  /** Earliest timestamp in the batch window (optional optimization) */
+  timeFrom: z.string().optional(),
+  /** Latest timestamp in the batch window (optional optimization) */
+  timeTo: z.string().optional(),
   /** Which entity types to count (typically Game + Score) */
   entityTypes: z.array(z.nativeEnum(AuditEntityType)),
 });
@@ -211,8 +213,9 @@ export const BatchChildCountsResponseSchema = z.object({
 
 export const BatchEntityIdsInputSchema = z.object({
   actionUserId: z.number().int().nullable(),
-  timeFrom: z.string(),
-  timeTo: z.string(),
+  parentEntityId: z.number().int().nullable(),
+  timeFrom: z.string().optional(),
+  timeTo: z.string().optional(),
   entityTypes: z.array(z.nativeEnum(AuditEntityType)),
 });
 
