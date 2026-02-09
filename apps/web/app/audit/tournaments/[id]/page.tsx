@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
 import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditTimeline from '@/components/audit/AuditTimeline';
+import AuditEntityTimeline from '@/components/audit/AuditEntityTimeline';
 import {
   fetchOrpcOptional,
   parseParamsOrNotFound,
@@ -46,7 +46,7 @@ export default async function TournamentAuditPage({ params }: PageProps) {
         entityId={id}
         entityName={tournament?.name}
       />
-      <AuditTimeline
+      <AuditEntityTimeline
         entityType={AuditEntityType.Tournament}
         entityId={id}
       />

@@ -17,6 +17,8 @@ export const AuditActionUserSchema = z.object({
   username: z.string().nullable(),
 });
 
+export type AuditActionUser = z.infer<typeof AuditActionUserSchema>;
+
 export const AuditEntrySchema = z.object({
   id: z.number().int(),
   entityType: z.nativeEnum(AuditEntityType),
@@ -47,33 +49,6 @@ export const AuditAdminNoteSchema = z.object({
 
 export type AuditAdminNote = z.infer<typeof AuditAdminNoteSchema>;
 
-// --- Timeline Item (discriminated union) ---
-
-export const AuditTimelineAuditItemSchema = z.object({
-  type: z.literal('audit'),
-  data: AuditEntrySchema,
-});
-
-export const AuditTimelineNoteItemSchema = z.object({
-  type: z.literal('note'),
-  data: AuditAdminNoteSchema,
-});
-
-export const AuditTimelineItemSchema = z.discriminatedUnion('type', [
-  AuditTimelineAuditItemSchema,
-  AuditTimelineNoteItemSchema,
-]);
-
-export type AuditTimelineItem = z.infer<typeof AuditTimelineItemSchema>;
-
-// --- Timeline Response ---
-
-export const AuditTimelineResponseSchema = z.object({
-  items: z.array(AuditTimelineItemSchema),
-  nextCursor: z.number().int().nullable(),
-  hasMore: z.boolean(),
-});
-
 // --- Per-Entity Input ---
 
 export const EntityAuditInputSchema = CursorPaginationInputSchema.extend({
@@ -90,84 +65,144 @@ export const FieldFilterSchema = z.object({
 
 export type FieldFilter = z.infer<typeof FieldFilterSchema>;
 
-// --- Search Input ---
+// --- Audit Event Action (semantic classification) ---
 
-export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
-  entityTypes: z.array(z.nativeEnum(AuditEntityType)).optional(),
-  actionTypes: z.array(z.nativeEnum(AuditActionType)).optional(),
-  adminOnly: z.boolean().optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  adminUserId: z.number().int().optional(),
-  /** Structured field filters with entity type context - OR logic: match any */
-  fieldsChanged: z.array(FieldFilterSchema).optional(),
-  entityId: z.number().int().optional(),
-  changeValue: z.string().optional(),
+export const AuditEventActionSchema = z.enum([
+  'verification',
+  'rejection',
+  'pre_verification',
+  'pre_rejection',
+  'submission',
+  'update',
+  'deletion',
+]);
+
+export type AuditEventAction = z.infer<typeof AuditEventActionSchema>;
+
+// --- Audit Event (assembled from grouped audit entries) ---
+
+export const AuditEventChildLevelSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  affectedCount: z.number().int(),
+  /** Total children in parent entity (for "85 of 118" display). Null if not computed. */
+  totalCount: z.number().int().nullable(),
 });
 
-// --- Group Summary (for default activity view, SQL-level grouping) ---
-
-export const AuditGroupSummarySchema = z.object({
+export const AuditEventSchema = z.object({
+  /** Semantic action derived from top-level entity's verificationStatus change */
+  action: AuditEventActionSchema,
+  /** Who performed the action (null = system) */
   actionUserId: z.number().int().nullable(),
   actionUser: AuditActionUserSchema.nullable(),
-  entityType: z.nativeEnum(AuditEntityType),
-  actionType: z.nativeEnum(AuditActionType),
+  /** Exact transaction timestamp (shared across all entries in this event) */
+  created: z.string(),
+  /** Whether this was a system action (no actionUserId) */
+  isSystem: z.boolean(),
+  /** The top-level entity in the hierarchy */
+  topEntity: z.object({
+    entityType: z.nativeEnum(AuditEntityType),
+    entityId: z.number().int(),
+    entityName: z.string().nullable(),
+    /** How many entities of this type were affected (usually 1 for cascades) */
+    count: z.number().int(),
+  }),
+  /** One sublevel child count (immediate children affected by cascade) */
+  childLevel: AuditEventChildLevelSchema.nullable(),
+  /** Whether this event spans multiple entity types (cascade) */
+  isCascade: z.boolean(),
+  /** Parent tournament context (null when topEntity is a tournament) */
+  parentTournament: z
+    .object({
+      id: z.number().int(),
+      name: z.string().nullable(),
+    })
+    .nullable(),
+  /** Fields changed on the top-level entity */
   changedFields: z.array(z.string()),
-  count: z.number().int(),
-  latestCreated: z.string(),
-  earliestCreated: z.string(),
-  /** Sample changes from one entry for batch detection (verification status, etc.) */
+  /** Sample changes from the top-level entity for expandable diff */
   sampleChanges: z.record(z.string(), z.unknown()).nullable(),
-  /** Sample referenceIdLock for parent entity identification */
-  sampleReferenceIdLock: z.number().int(),
-  /** Sorted comma-separated JSONB keys, used to identify the group for lazy loading */
-  changedFieldsKey: z.string(),
-  /** Parent tournament ID (populated for all entity types via parent entity resolution) */
-  parentEntityId: z.number().int().nullable(),
-  /** Tournament name (populated for all entity types via parent entity resolution) */
-  tournamentName: z.string().nullable().optional(),
+  /** Resolved user info for user IDs referenced in changes */
+  referencedUsers: z.record(z.string(), AuditActionUserSchema).optional(),
 });
 
-export type AuditGroupSummary = z.infer<typeof AuditGroupSummarySchema>;
+export type AuditEvent = z.infer<typeof AuditEventSchema>;
 
-// --- Activity Pagination Input (grouping-based, with optional search filters) ---
+// --- Event Feed Input/Response ---
 
-export const ActivityPaginationInputSchema = z.object({
+export const EventFeedInputSchema = z.object({
   cursor: z.string().optional(),
   limit: z.number().int().min(1).max(100).default(30),
-  // Optional search filters (when provided, searches across all entity types)
   entityTypes: z.array(z.nativeEnum(AuditEntityType)).optional(),
   actionTypes: z.array(z.nativeEnum(AuditActionType)).optional(),
-  adminOnly: z.boolean().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   adminUserId: z.number().int().optional(),
   fieldsChanged: z.array(FieldFilterSchema).optional(),
   entityId: z.number().int().optional(),
+  /** Whether to include system (non-admin) events. Default: false */
+  showSystem: z.boolean().optional(),
 });
 
-// --- Activity Response ---
-
-export const AuditActivityResponseSchema = z.object({
-  groups: z.array(AuditGroupSummarySchema),
+export const EventFeedResponseSchema = z.object({
+  events: z.array(AuditEventSchema),
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
 });
 
-// --- Group Entries Input/Response (lazy loading within a group) ---
+// --- Event Details Input/Response (expandable view of a single event) ---
 
-export const GroupEntriesInputSchema = z.object({
-  entityType: z.nativeEnum(AuditEntityType),
+export const EventDetailsInputSchema = z.object({
   actionUserId: z.number().int().nullable(),
-  actionType: z.nativeEnum(AuditActionType),
-  parentEntityId: z.number().int().nullable(),
-  changedFieldsKey: z.string(),
+  created: z.string(),
+  entityType: z.nativeEnum(AuditEntityType).optional(),
   cursor: z.number().int().optional(),
   limit: z.number().int().min(1).max(100).default(50),
 });
 
-export const GroupEntriesResponseSchema = z.object({
+export const EventDetailsResponseSchema = z.object({
   entries: z.array(AuditEntrySchema),
+  nextCursor: z.number().int().nullable(),
+  hasMore: z.boolean(),
+});
+
+// --- Entity Timeline (enhanced with cascade context) ---
+
+export const CascadeContextSchema = z.object({
+  topEntityType: z.nativeEnum(AuditEntityType),
+  topEntityId: z.number().int(),
+  topEntityName: z.string().nullable(),
+  action: AuditEventActionSchema,
+  /** e.g., "also affected 85 of 118 matches" */
+  childSummary: z.string().nullable(),
+});
+
+export const EntityTimelineEventSchema = z.object({
+  entry: AuditEntrySchema,
+  /** Populated when this entry was part of a cascade operation */
+  cascadeContext: CascadeContextSchema.nullable(),
+});
+
+export type EntityTimelineEvent = z.infer<typeof EntityTimelineEventSchema>;
+
+export const EntityTimelineAuditItemSchema = z.object({
+  type: z.literal('audit'),
+  data: EntityTimelineEventSchema,
+});
+
+export const EntityTimelineNoteItemSchema = z.object({
+  type: z.literal('note'),
+  data: AuditAdminNoteSchema,
+});
+
+export const EntityTimelineItemSchema = z.discriminatedUnion('type', [
+  EntityTimelineAuditItemSchema,
+  EntityTimelineNoteItemSchema,
+]);
+
+export type EntityTimelineItem = z.infer<typeof EntityTimelineItemSchema>;
+
+export const EntityTimelineResponseSchema = z.object({
+  items: z.array(EntityTimelineItemSchema),
   nextCursor: z.number().int().nullable(),
   hasMore: z.boolean(),
 });
@@ -185,54 +220,29 @@ export const AuditAdminUsersResponseSchema = z.object({
   users: z.array(AuditAdminUserSchema),
 });
 
-// --- Batch Child Counts (lazy-loaded game/score counts for expanded batches) ---
+// --- Search Input (kept for backward compatibility) ---
 
-export const BatchChildCountsInputSchema = z.object({
-  /** The action user who performed the batch operation */
-  actionUserId: z.number().int().nullable(),
-  /** Parent tournament ID for filtering */
-  parentEntityId: z.number().int().nullable(),
-  /** Earliest timestamp in the batch window (optional optimization) */
-  timeFrom: z.string().optional(),
-  /** Latest timestamp in the batch window (optional optimization) */
-  timeTo: z.string().optional(),
-  /** Which entity types to count (typically Game + Score) */
-  entityTypes: z.array(z.nativeEnum(AuditEntityType)),
+export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
+  entityTypes: z.array(z.nativeEnum(AuditEntityType)).optional(),
+  actionTypes: z.array(z.nativeEnum(AuditActionType)).optional(),
+  adminOnly: z.boolean().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  adminUserId: z.number().int().optional(),
+  fieldsChanged: z.array(FieldFilterSchema).optional(),
+  entityId: z.number().int().optional(),
+  changeValue: z.string().optional(),
 });
 
-export const BatchChildCountsResponseSchema = z.object({
-  counts: z.array(
-    z.object({
-      entityType: z.nativeEnum(AuditEntityType),
-      count: z.number().int(),
-    })
+// --- Legacy search response (kept for searchAudits procedure) ---
+
+export const AuditTimelineResponseSchema = z.object({
+  items: z.array(
+    z.discriminatedUnion('type', [
+      z.object({ type: z.literal('audit'), data: AuditEntrySchema }),
+      z.object({ type: z.literal('note'), data: AuditAdminNoteSchema }),
+    ])
   ),
-});
-
-// --- Batch Entity IDs (expandable ID list for batch operations) ---
-
-export const BatchEntityIdsInputSchema = z.object({
-  actionUserId: z.number().int().nullable(),
-  parentEntityId: z.number().int().nullable(),
-  timeFrom: z.string().optional(),
-  timeTo: z.string().optional(),
-  entityTypes: z.array(z.nativeEnum(AuditEntityType)),
-});
-
-export const BatchEntityInfoSchema = z.object({
-  id: z.number().int(),
-  name: z.string().nullable(),
-});
-
-export type BatchEntityInfo = z.infer<typeof BatchEntityInfoSchema>;
-
-export const BatchEntityIdsResponseSchema = z.object({
-  entities: z.array(
-    z.object({
-      entityType: z.nativeEnum(AuditEntityType),
-      ids: z.array(z.number().int()),
-      /** Entity details with resolved names (for tournaments and matches) */
-      items: z.array(BatchEntityInfoSchema).optional(),
-    })
-  ),
+  nextCursor: z.number().int().nullable(),
+  hasMore: z.boolean(),
 });

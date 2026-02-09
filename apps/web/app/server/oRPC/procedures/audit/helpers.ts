@@ -1,6 +1,14 @@
 import * as schema from '@otr/core/db/schema';
-import { AuditEntityType } from '@otr/core/osu';
-import type { AuditEntry, AuditTimelineItem } from '@/lib/orpc/schema/audit';
+import {
+  AuditActionType,
+  AuditEntityType,
+  VerificationStatus,
+} from '@otr/core/osu';
+import type {
+  AuditEntry,
+  AuditEventAction,
+  EntityTimelineItem,
+} from '@/lib/orpc/schema/audit';
 
 /** Maps AuditEntityType to the corresponding Drizzle audit table */
 export function getAuditTable(entityType: AuditEntityType) {
@@ -177,15 +185,19 @@ export function camelizeChangesKeys(
  * Used to interleave audit entries and admin notes.
  */
 export function mergeTimelineItems(
-  ...arrays: AuditTimelineItem[][]
-): AuditTimelineItem[] {
+  ...arrays: EntityTimelineItem[][]
+): EntityTimelineItem[] {
   const merged = arrays.flat();
   merged.sort((a, b) => {
-    const dateA = new Date(a.data.created).getTime();
-    const dateB = new Date(b.data.created).getTime();
+    const dateA = new Date(getTimelineItemCreated(a)).getTime();
+    const dateB = new Date(getTimelineItemCreated(b)).getTime();
     return dateB - dateA;
   });
   return merged;
+}
+
+function getTimelineItemCreated(item: EntityTimelineItem): string {
+  return item.type === 'audit' ? item.data.entry.created : item.data.created;
 }
 
 /**
@@ -220,4 +232,233 @@ export function entityTypeToSlug(entityType: AuditEntityType): string {
     case AuditEntityType.Score:
       return 'scores';
   }
+}
+
+// --- Event Assembly ---
+
+/**
+ * A raw grouped row from the per-table SQL query, before cross-table merging.
+ */
+export type GroupedAuditRow = {
+  actionUserId: number | null;
+  created: string;
+  actionType: AuditActionType;
+  entityType: AuditEntityType;
+  parentEntityId: number | null;
+  entryCount: number;
+  sampleChanges: Record<string, unknown> | null;
+  sampleEntityId: number;
+};
+
+/**
+ * Classify the semantic action from the top-level entity's sample changes.
+ *
+ * Uses the `verificationStatus.newValue` field exclusively to determine
+ * whether this is a verification or rejection. This fixes the old bug where
+ * `rejectionReason.newValue !== 0` was used as a fallback, which could
+ * misidentify verifications as rejections.
+ */
+export function classifyAction(
+  actionType: AuditActionType,
+  sampleChanges: Record<string, unknown> | null,
+  isSystem: boolean
+): AuditEventAction {
+  if (actionType === AuditActionType.Created) return 'submission';
+  if (actionType === AuditActionType.Deleted) return 'deletion';
+
+  if (!sampleChanges) return 'update';
+
+  const changes = sampleChanges as Record<
+    string,
+    { originalValue: unknown; newValue: unknown }
+  >;
+
+  // Check verificationStatus change (handles both camelCase and snake_case keys)
+  const vsChange =
+    changes.verificationStatus ?? changes.verification_status;
+
+  if (vsChange?.newValue !== undefined) {
+    const newStatus = vsChange.newValue as number;
+
+    switch (newStatus) {
+      case VerificationStatus.Verified:
+        return isSystem ? 'pre_verification' : 'verification';
+      case VerificationStatus.Rejected:
+        return isSystem ? 'pre_rejection' : 'rejection';
+      case VerificationStatus.PreVerified:
+        return 'pre_verification';
+      case VerificationStatus.PreRejected:
+        return 'pre_rejection';
+    }
+  }
+
+  return 'update';
+}
+
+/**
+ * Returns the immediate child entity type in the hierarchy.
+ * Tournament → Match → Game → Score → null
+ */
+export function getImmediateChildType(
+  entityType: AuditEntityType
+): AuditEntityType | null {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return AuditEntityType.Match;
+    case AuditEntityType.Match:
+      return AuditEntityType.Game;
+    case AuditEntityType.Game:
+      return AuditEntityType.Score;
+    case AuditEntityType.Score:
+      return null;
+  }
+}
+
+/** Entity type label for display (singular) */
+export function entityTypeLabel(entityType: AuditEntityType): string {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return 'tournament';
+    case AuditEntityType.Match:
+      return 'match';
+    case AuditEntityType.Game:
+      return 'game';
+    case AuditEntityType.Score:
+      return 'score';
+  }
+}
+
+/** Pluralize entity type label */
+export function entityTypeLabelPlural(entityType: AuditEntityType): string {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return 'tournaments';
+    case AuditEntityType.Match:
+      return 'matches';
+    case AuditEntityType.Game:
+      return 'games';
+    case AuditEntityType.Score:
+      return 'scores';
+  }
+}
+
+/**
+ * Extract changed field names from sample changes.
+ */
+export function extractChangedFields(
+  sampleChanges: Record<string, unknown> | null
+): string[] {
+  if (!sampleChanges) return [];
+  return Object.keys(sampleChanges).sort();
+}
+
+/**
+ * Assemble grouped rows from multiple audit tables into audit events.
+ *
+ * Groups rows by (actionUserId, created) — entries sharing these values
+ * came from the same PostgreSQL transaction (cascade operations).
+ *
+ * For each group:
+ * 1. Identifies the top-level entity by hierarchy (lowest enum = highest in hierarchy)
+ * 2. Classifies the action from the top-level entity's changes
+ * 3. Computes one-sublevel child count
+ */
+export function assembleEvents(
+  rows: GroupedAuditRow[]
+): {
+  action: AuditEventAction;
+  actionUserId: number | null;
+  created: string;
+  isSystem: boolean;
+  topEntityType: AuditEntityType;
+  topEntityId: number;
+  topEntityCount: number;
+  childEntityType: AuditEntityType | null;
+  childAffectedCount: number;
+  isCascade: boolean;
+  parentEntityId: number | null;
+  changedFields: string[];
+  sampleChanges: Record<string, unknown> | null;
+}[] {
+  // Group by (actionUserId, created) — same transaction
+  const eventMap = new Map<string, GroupedAuditRow[]>();
+  for (const row of rows) {
+    const key = `${row.actionUserId}:${row.created}`;
+    const existing = eventMap.get(key);
+    if (existing) {
+      existing.push(row);
+    } else {
+      eventMap.set(key, [row]);
+    }
+  }
+
+  const events: ReturnType<typeof assembleEvents> = [];
+
+  for (const [, groupRows] of eventMap) {
+    // Sort by entity hierarchy: Tournament(0) < Match(1) < Game(2) < Score(3)
+    groupRows.sort((a, b) => a.entityType - b.entityType);
+
+    const topRow = groupRows[0]!;
+    const isSystem = topRow.actionUserId === null;
+    const normalizedChanges = camelizeChangesKeys(topRow.sampleChanges);
+    const action = classifyAction(topRow.actionType, normalizedChanges, isSystem);
+
+    // Determine if this is a cascade (multiple entity types)
+    const entityTypes = new Set(groupRows.map((r) => r.entityType));
+    const isCascade = entityTypes.size > 1;
+
+    // Compute one-sublevel child count
+    const childType = getImmediateChildType(topRow.entityType);
+    let childAffectedCount = 0;
+    if (childType !== null) {
+      for (const r of groupRows) {
+        if (r.entityType === childType) {
+          childAffectedCount += r.entryCount;
+        }
+      }
+    }
+
+    events.push({
+      action,
+      actionUserId: topRow.actionUserId,
+      created: topRow.created,
+      isSystem,
+      topEntityType: topRow.entityType,
+      topEntityId: topRow.sampleEntityId,
+      topEntityCount: topRow.entryCount,
+      childEntityType: childType,
+      childAffectedCount,
+      isCascade,
+      parentEntityId: topRow.parentEntityId,
+      changedFields: extractChangedFields(normalizedChanges),
+      sampleChanges: normalizedChanges,
+    });
+  }
+
+  // Sort by timestamp descending
+  events.sort(
+    (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+  );
+
+  return events;
+}
+
+/**
+ * Build cascade child summary string for entity timeline display.
+ * e.g., "also affected 85 of 118 matches"
+ */
+export function buildChildSummary(
+  childType: AuditEntityType,
+  affected: number,
+  total: number | null
+): string {
+  const label =
+    affected === 1
+      ? entityTypeLabel(childType)
+      : entityTypeLabelPlural(childType);
+
+  if (total !== null && total !== affected) {
+    return `also affected ${affected} of ${total} ${label}`;
+  }
+  return `also affected ${affected} ${label}`;
 }

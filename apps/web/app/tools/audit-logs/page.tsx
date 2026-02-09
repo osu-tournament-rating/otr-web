@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
-import AuditLogView from '@/components/audit/AuditLogView';
+import AuditEventFeed from '@/components/audit/AuditEventFeed';
 
 export const metadata: Metadata = {
   title: 'Audit Logs',
@@ -37,7 +37,7 @@ export default function AuditLogsPage() {
         </div>
 
         <Suspense fallback={<FilterBarSkeleton />}>
-          <AuditLogView />
+          <AuditEventFeed />
         </Suspense>
       </Card>
     </div>

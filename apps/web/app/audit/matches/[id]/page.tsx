@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
 import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditTimeline from '@/components/audit/AuditTimeline';
+import AuditEntityTimeline from '@/components/audit/AuditEntityTimeline';
 import { fetchOrpcOptional, parseParamsOrNotFound } from '@/lib/orpc/server-helpers';
 import { getMatchCached } from '@/lib/orpc/queries/match';
 
@@ -43,7 +43,7 @@ export default async function MatchAuditPage({ params }: PageProps) {
         entityId={id}
         entityName={match?.name}
       />
-      <AuditTimeline
+      <AuditEntityTimeline
         entityType={AuditEntityType.Match}
         entityId={id}
       />

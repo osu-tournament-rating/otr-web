@@ -97,13 +97,11 @@ import {
 } from './procedures/reports/reportProcedures';
 import {
   getEntityAuditTimeline,
-  getDefaultAuditActivity,
-  getGroupEntries,
+  getAuditEventFeed,
+  getEventDetails,
   searchAudits,
   listAuditAdminUsers,
   getEntityParentMatchId,
-  getBatchChildCounts,
-  getBatchEntityIds,
 } from './procedures/auditProcedures';
 
 export interface InitialContext {
@@ -209,10 +207,8 @@ export const router = base.router({
   },
   audit: {
     timeline: getEntityAuditTimeline,
-    activity: getDefaultAuditActivity,
-    activityEntries: getGroupEntries,
-    batchChildCounts: getBatchChildCounts,
-    batchEntityIds: getBatchEntityIds,
+    events: getAuditEventFeed,
+    eventDetails: getEventDetails,
     search: searchAudits,
     adminUsers: listAuditAdminUsers,
     entityParent: getEntityParentMatchId,
