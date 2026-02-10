@@ -102,9 +102,10 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   // Cascade: "rejected Tournament X (118 matches)" or "(85 of 118 matches)"
   if (isCascade && childLevel) {
     const childPlural = ENTITY_TYPE_PLURALS[childLevel.entityType];
-    const countDisplay = childLevel.totalCount
-      ? `${childLevel.affectedCount} of ${childLevel.totalCount} ${childPlural}`
-      : `${childLevel.affectedCount} ${childPlural}`;
+    const countDisplay =
+      childLevel.totalCount && childLevel.affectedCount !== childLevel.totalCount
+        ? `${childLevel.affectedCount} of ${childLevel.totalCount} ${childPlural}`
+        : null;
 
     // Non-tournament top entity: "rejected Match #123 in Tournament Y (15 games)"
     if (topEntity.entityType !== AuditEntityType.Tournament && parentTournament) {
@@ -122,8 +123,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <>
           <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
           {' '}{entityLabel} {entityLink} in {tournamentLink}
-          {' '}
-          <span className="text-muted-foreground">({countDisplay})</span>
+          {countDisplay && <span className="text-muted-foreground"> ({countDisplay})</span>}
         </>
       );
     }
@@ -132,8 +132,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       <>
         <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
         {' '}{entityLabel} {entityLink}
-        {' '}
-        <span className="text-muted-foreground">({countDisplay})</span>
+        {countDisplay && <span className="text-muted-foreground"> ({countDisplay})</span>}
       </>
     );
   }
@@ -163,7 +162,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
         {' '}{topEntity.count} {entityPlural}
         {parentContext}
-        {fieldLabels.length > 0 && (
+        {action !== 'deletion' && fieldLabels.length > 0 && (
           <span className="text-muted-foreground">
             {' '}({fieldLabels.join(', ')})
           </span>
@@ -196,7 +195,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
       {' '}{entityLabel} {entityLink}
       {parentContext}
-      {fieldLabels.length > 0 && (
+      {action !== 'deletion' && fieldLabels.length > 0 && (
         <span className="text-muted-foreground">
           {' '}({fieldLabels.join(', ')})
         </span>

@@ -81,6 +81,7 @@ const BaseSchema = createSelectSchema(table).omit({ searchVector: true })
 - **Docker env vars**: Containers use `DOCKER_DATABASE_URL` → injected as `DATABASE_URL`
 - **Request cache**: `withRequestCache()` prevents duplicate calls (5s TTL default)
 - **Rate limiting**: Data worker has separate limiters for osu! API and osu!track API
+- **Worktrees**: The repository to use is always osu-tournament-rating/otr-web, even when in a directory like otr-web-1
 
 ## Rules
 
