@@ -11,7 +11,7 @@ import { RulesetSchema, VerificationStatusSchema } from './constants';
 import { TierProgressSchema } from './leaderboard';
 
 export const SearchRequestSchema = z.object({
-  searchKey: z.string().trim().min(1).max(100),
+  searchKey: z.string().trim().min(2).max(100),
 });
 
 export const PlayerSearchResultSchema = playerSelectSchema

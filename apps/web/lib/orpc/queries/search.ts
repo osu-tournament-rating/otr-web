@@ -138,8 +138,8 @@ export function buildBeatmapSearchExpressions(
   const beatmapSimilarity = sql`greatest(${beatmapDiffSimilarity}, ${beatmapArtistSimilarity}, ${beatmapTitleSimilarity})`;
 
   const textCondition = prefixTsQuery
-    ? sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapVector} @@ ${prefixTsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`
-    : sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+    ? sql`(${beatmapVector} @@ ${tsQuery} OR ${beatmapVector} @@ ${prefixTsQuery})`
+    : sql`(${beatmapVector} @@ ${tsQuery})`;
 
   const condition =
     osuIdCandidate !== null

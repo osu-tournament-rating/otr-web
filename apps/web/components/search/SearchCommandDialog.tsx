@@ -51,7 +51,7 @@ function GroupHeading({
 export default function SearchCommandDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 500);
   const { data, isLoading } = useSearch(debouncedQuery);
   const session = useSession();
   const router = useRouter();
@@ -129,7 +129,16 @@ export default function SearchCommandDialog() {
               </div>
             )}
 
-            {debouncedQuery && !isLoading && !hasResults && (
+            {debouncedQuery && debouncedQuery.trim().length < 2 && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Search className="text-muted-foreground/30 h-10 w-10" />
+                <p className="text-muted-foreground mt-3 text-sm">
+                  Type at least 2 characters to search
+                </p>
+              </div>
+            )}
+
+            {debouncedQuery && debouncedQuery.trim().length >= 2 && !isLoading && !hasResults && (
               <CommandEmpty>
                 <div className="text-center">
                   <p className="text-muted-foreground">No results found</p>
