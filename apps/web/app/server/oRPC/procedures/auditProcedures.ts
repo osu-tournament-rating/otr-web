@@ -1101,7 +1101,7 @@ export const getEventDetails = publicProcedure
       changes: unknown;
       user_id: number | null;
       player_id: number | null;
-      osu_id: number | null;
+      osu_id: string | null; // bigint returned as string by node-postgres
       username: string | null;
     }[];
 
@@ -1178,7 +1178,7 @@ export const getEventDetails = publicProcedure
           ? {
               id: row.user_id,
               playerId: row.player_id,
-              osuId: row.osu_id,
+              osuId: row.osu_id !== null ? Number(row.osu_id) : null,
               username: row.username,
             }
           : null,

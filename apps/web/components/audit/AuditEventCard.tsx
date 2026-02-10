@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import useSWR from 'swr';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { AuditEvent, AuditEventAction } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
+import { orpc } from '@/lib/orpc/orpc';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -204,13 +206,102 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   );
 }
 
+function CascadeChildEntries({
+  event,
+  hasTopLevelDiffs,
+}: {
+  event: AuditEvent;
+  hasTopLevelDiffs: boolean;
+}) {
+  const childEntityType = event.childLevel!.entityType;
+
+  const { data, isLoading } = useSWR(
+    ['cascade-children', event.actionUserId, event.created, childEntityType],
+    () =>
+      orpc.audit.eventDetails({
+        actionUserId: event.actionUserId,
+        created: event.created,
+        entityType: childEntityType,
+        limit: 50,
+      }),
+    { revalidateOnFocus: false, revalidateIfStale: false, dedupingInterval: 60_000 }
+  );
+
+  const childSlug = entityTypeToSlug(childEntityType);
+  const childPlural = ENTITY_TYPE_PLURALS[childEntityType];
+  const childLabel = ENTITY_TYPE_LABELS[childEntityType];
+
+  return (
+    <div className={cn(
+      'bg-muted/20 border-border px-3 py-2',
+      !hasTopLevelDiffs && 'border-t',
+    )}>
+      <div className="flex flex-col gap-2 pl-9">
+        <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+          Affected {childPlural}
+        </span>
+
+        {isLoading && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Loading…
+          </div>
+        )}
+
+        {data?.entries.map((entry) => {
+          const changes = entry.changes as Record<
+            string,
+            { originalValue: unknown; newValue: unknown }
+          > | null;
+          const entryLabel = entry.entityName ?? `${childLabel.charAt(0).toUpperCase() + childLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
+          const entryId = entry.referenceId ?? entry.referenceIdLock;
+
+          return (
+            <div key={entry.id} className="flex flex-col gap-1">
+              <Link
+                href={`/audit/${childSlug}/${entryId}`}
+                className="text-primary text-xs font-medium hover:underline"
+              >
+                {entryLabel}
+              </Link>
+              {changes && Object.keys(changes).length > 0 ? (
+                <div className="flex flex-col gap-1 pl-3">
+                  {Object.entries(changes).map(([fieldName, change]) => (
+                    <AuditDiffDisplay
+                      key={fieldName}
+                      fieldName={fieldName}
+                      change={change}
+                      entityType={childEntityType}
+                      referencedUsers={entry.referencedUsers}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground pl-3 text-xs italic">
+                  {event.action === 'deletion' ? '(deleted)' : '(no field changes)'}
+                </span>
+              )}
+            </div>
+          );
+        })}
+
+        {data && data.hasMore && (
+          <span className="text-muted-foreground text-xs italic">
+            … and more (showing first {data.entries.length})
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AuditEventCard({ event }: AuditEventCardProps): React.JSX.Element {
   const changes = event.sampleChanges as Record<
     string,
     { originalValue: unknown; newValue: unknown }
   > | null;
   const changeCount = changes ? Object.keys(changes).length : 0;
-  const hasExpandableContent = changeCount > 0;
+  const hasExpandableContent = changeCount > 0 || event.isCascade;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -298,6 +389,9 @@ export default function AuditEventCard({ event }: AuditEventCardProps): React.JS
                 ))}
               </div>
             </div>
+          )}
+          {event.isCascade && isOpen && (
+            <CascadeChildEntries event={event} hasTopLevelDiffs={changeCount > 0} />
           )}
         </CollapsibleContent>
       </div>
