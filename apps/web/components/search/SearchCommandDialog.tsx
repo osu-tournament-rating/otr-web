@@ -138,16 +138,19 @@ export default function SearchCommandDialog() {
               </div>
             )}
 
-            {debouncedQuery && debouncedQuery.trim().length >= 2 && !isLoading && !hasResults && (
-              <CommandEmpty>
-                <div className="text-center">
-                  <p className="text-muted-foreground">No results found</p>
-                  <p className="text-muted-foreground/70 text-xs">
-                    Try adjusting your search terms
-                  </p>
-                </div>
-              </CommandEmpty>
-            )}
+            {debouncedQuery &&
+              debouncedQuery.trim().length >= 2 &&
+              !isLoading &&
+              !hasResults && (
+                <CommandEmpty>
+                  <div className="text-center">
+                    <p className="text-muted-foreground">No results found</p>
+                    <p className="text-muted-foreground/70 text-xs">
+                      Try adjusting your search terms
+                    </p>
+                  </div>
+                </CommandEmpty>
+              )}
 
             {hasResults && (
               <>
