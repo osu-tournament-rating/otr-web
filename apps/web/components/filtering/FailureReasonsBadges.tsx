@@ -8,6 +8,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+/** Bitmask of failure reasons shown in the UI (rating-related only) */
+const VISIBLE_FAILURE_MASK =
+  FilteringFailReason.MinRating | FilteringFailReason.MaxRating;
+
+/** Masks a failure reason to only include visible (rating-related) flags */
+function maskFailureReason(
+  failureReason: number | undefined
+): FilteringFailReason {
+  if (!failureReason) return FilteringFailReason.None;
+  return (failureReason & VISIBLE_FAILURE_MASK) as FilteringFailReason;
+}
+
 interface FailureReasonsBadgesProps {
   failureReason?: FilteringFailReason;
 }
@@ -15,15 +27,13 @@ interface FailureReasonsBadgesProps {
 export default function FailureReasonsBadges({
   failureReason,
 }: FailureReasonsBadgesProps) {
-  if (
-    failureReason === undefined ||
-    failureReason === null ||
-    failureReason === FilteringFailReason.None
-  ) {
+  const masked = maskFailureReason(failureReason);
+
+  if (masked === FilteringFailReason.None) {
     return <div className="text-muted-foreground text-center">-</div>;
   }
 
-  const reasons = FilteringFailReasonEnumHelper.getMetadata(failureReason);
+  const reasons = FilteringFailReasonEnumHelper.getMetadata(masked);
 
   return (
     <TooltipProvider>
@@ -49,9 +59,10 @@ export default function FailureReasonsBadges({
 }
 
 export function getFailureReasons(failureReason?: number): string[] {
-  if (!failureReason || failureReason === FilteringFailReason.None) return [];
+  const masked = maskFailureReason(failureReason);
+  if (masked === FilteringFailReason.None) return [];
 
-  return FilteringFailReasonEnumHelper.getMetadata(failureReason).map(
+  return FilteringFailReasonEnumHelper.getMetadata(masked).map(
     (metadata) => metadata.text
   );
 }
