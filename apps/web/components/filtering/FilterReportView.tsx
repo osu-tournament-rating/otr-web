@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { ORPCError } from '@orpc/client';
 import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import StatCard from '@/components/shared/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -94,9 +95,6 @@ export function FilterReportView() {
       'Player ID',
       'Status',
       'Rating',
-      'Peak Rating',
-      'Tournaments Played',
-      'Matches Played',
       'Failure Reasons',
     ];
 
@@ -106,11 +104,6 @@ export function FilterReportView() {
       player.playerId?.toString() || 'N/A',
       player.isSuccess ? 'Passed' : 'Failed',
       player.currentRating != null ? player.currentRating.toFixed(2) : 'N/A',
-      player.peakRating != null ? player.peakRating.toFixed(2) : 'N/A',
-      player.tournamentsPlayed != null
-        ? player.tournamentsPlayed.toString()
-        : 'N/A',
-      player.matchesPlayed != null ? player.matchesPlayed.toString() : 'N/A',
       getFailureReasons(player.failureReason ?? undefined).join(', '),
     ]);
 
@@ -233,122 +226,37 @@ export function FilterReportView() {
                     checked
                   </span>
                 </div>
-                <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-4 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  <div className="sm:col-span-2 md:col-span-1">
-                    <span className="text-muted-foreground text-xs">
-                      Ruleset
-                    </span>
-                    <p className="mt-0.5 flex items-center gap-1.5 font-medium">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  <StatCard
+                    icon={
                       <RulesetIcon
                         ruleset={report.request.ruleset}
-                        className="fill-primary size-4"
+                        className="fill-primary size-5"
                       />
-                      <span>
-                        {
-                          RulesetEnumHelper.metadata[report.request.ruleset]
-                            .text
-                        }
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Rating
-                    </span>
-                    <p
-                      className={
-                        report.request.minRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.minRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max Rating
-                    </span>
-                    <p
-                      className={
-                        report.request.maxRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Peak Rating Limit
-                    </span>
-                    <p
-                      className={
-                        report.request.peakRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.peakRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Tournaments
-                    </span>
-                    <p
-                      className={
-                        report.request.tournamentsPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.tournamentsPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Matches
-                    </span>
-                    <p
-                      className={
-                        report.request.matchesPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.matchesPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max. Tournaments
-                    </span>
-                    <p
-                      className={
-                        report.request.maxTournamentsPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxTournamentsPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max. Matches
-                    </span>
-                    <p
-                      className={
-                        report.request.maxMatchesPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxMatchesPlayed ?? '—'}
-                    </p>
-                  </div>
+                    }
+                    label="Ruleset"
+                    value={
+                      RulesetEnumHelper.metadata[report.request.ruleset].text
+                    }
+                  />
+                  <StatCard
+                    label="Min. Rating"
+                    value={report.request.minRating ?? '—'}
+                    valueClassName={
+                      !report.request.minRating
+                        ? 'text-muted-foreground/60'
+                        : undefined
+                    }
+                  />
+                  <StatCard
+                    label="Max Rating"
+                    value={report.request.maxRating ?? '—'}
+                    valueClassName={
+                      !report.request.maxRating
+                        ? 'text-muted-foreground/60'
+                        : undefined
+                    }
+                  />
                 </div>
               </div>
             )}

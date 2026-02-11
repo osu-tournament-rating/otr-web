@@ -101,36 +101,6 @@ export default function FilteringResultsTable({
           />
         ),
       },
-      {
-        accessorKey: 'peakRating',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Peak</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell
-            value={getValue() as number | undefined | null}
-            format={(v) => v.toFixed(2)}
-          />
-        ),
-      },
-      {
-        accessorKey: 'tournamentsPlayed',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Tournaments</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell value={getValue() as number | undefined | null} />
-        ),
-      },
-      {
-        accessorKey: 'matchesPlayed',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Matches</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell value={getValue() as number | undefined | null} />
-        ),
-      },
     ],
     []
   );
@@ -225,7 +195,7 @@ export default function FilteringResultsTable({
             hideCard && 'bg-background'
           )}
         >
-          <Table>
+          <Table className="w-auto">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
@@ -244,10 +214,6 @@ export default function FilteringResultsTable({
                         case 'player':
                           return 'min-w-[60px]';
                         case 'currentRating':
-                        case 'peakRating':
-                          return 'w-[50px] text-center';
-                        case 'tournamentsPlayed':
-                        case 'matchesPlayed':
                           return 'w-[50px] text-center';
                         default:
                           return '';
