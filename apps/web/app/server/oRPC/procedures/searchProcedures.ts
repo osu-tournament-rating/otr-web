@@ -106,8 +106,8 @@ export const searchEntities = protectedProcedure
       );
       const matchSimilarity = sql`greatest(${matchNameSimilarity}, ${matchTournamentNameSimilarity}, ${matchTournamentAbbreviationSimilarity})`;
       const matchCondition = prefixTsQuery
-        ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`
-        : sql`(${matchVector} @@ ${tsQuery} OR ${matchSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+        ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery})`
+        : sql`(${matchVector} @@ ${tsQuery})`;
       const matchRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
         : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
