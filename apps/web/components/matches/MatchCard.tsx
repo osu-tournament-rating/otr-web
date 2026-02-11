@@ -2,7 +2,11 @@ import Link from 'next/link';
 import React, { Fragment } from 'react';
 import { ExternalLink, Users, Gamepad2 } from 'lucide-react';
 
-import { AdminNoteRouteTarget, AuditEntityType, ReportEntityType } from '@otr/core/osu';
+import {
+  AdminNoteRouteTarget,
+  AuditEntityType,
+  ReportEntityType,
+} from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
 import { MatchReportableFields } from '@/lib/orpc/schema/report';
 import { formatUTCDate } from '@/lib/utils/date';

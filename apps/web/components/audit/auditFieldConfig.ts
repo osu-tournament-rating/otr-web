@@ -1,6 +1,10 @@
 import { AuditEntityType } from '@otr/core/osu';
 import { AuditEntityTypeEnumHelper } from '@/lib/enums';
-import type { IEnumHelper, IBitwiseEnumHelper, EnumMetadata } from '@/lib/enums';
+import type {
+  IEnumHelper,
+  IBitwiseEnumHelper,
+  EnumMetadata,
+} from '@/lib/enums';
 import {
   VerificationStatusEnumHelper,
   TournamentRejectionReasonEnumHelper,
@@ -82,7 +86,10 @@ export const auditFieldConfig: Record<
     submittedByUserId: { label: 'Submitted By', isUserReference: true },
     verifiedByUserId: { label: 'Verified By', isUserReference: true },
     created: { label: 'Created' },
-    dataFetchStatus: { label: 'Data Fetch Status', enumHelper: DataFetchStatusEnumHelper },
+    dataFetchStatus: {
+      label: 'Data Fetch Status',
+      enumHelper: DataFetchStatusEnumHelper,
+    },
   },
   [AuditEntityType.Game]: {
     osuId: { label: 'osu! ID' },
@@ -205,7 +212,9 @@ export function getFieldOptionsWithEntityType(): FieldOption[] {
   const options: FieldOption[] = [];
   for (const entityType of ENTITY_TYPES_FOR_FIELDS) {
     const entityLabel = AuditEntityTypeEnumHelper.getMetadata(entityType).text;
-    for (const [fieldName, config] of Object.entries(auditFieldConfig[entityType])) {
+    for (const [fieldName, config] of Object.entries(
+      auditFieldConfig[entityType]
+    )) {
       options.push({
         label: config.label,
         value: `${entityType}:${fieldName}`,
@@ -218,7 +227,9 @@ export function getFieldOptionsWithEntityType(): FieldOption[] {
 }
 
 /** Parse field option value back to entity type and field name */
-export function parseFieldOptionValue(value: string): { entityType: AuditEntityType; fieldName: string } | null {
+export function parseFieldOptionValue(
+  value: string
+): { entityType: AuditEntityType; fieldName: string } | null {
   const [entityTypeStr, fieldName] = value.split(':');
   const entityType = Number(entityTypeStr) as AuditEntityType;
   if (isNaN(entityType) || !fieldName) return null;

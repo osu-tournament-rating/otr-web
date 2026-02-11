@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Info } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { AuditEventAction } from '@/lib/orpc/schema/audit';
+import { entityTypeToSlug } from '@/lib/audit-entity-types';
 
 type CascadeContext = {
   topEntityType: AuditEntityType;
@@ -16,19 +17,6 @@ type CascadeContext = {
 type CascadeContextBannerProps = {
   context: CascadeContext;
 };
-
-function entityTypeToSlug(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournaments';
-    case AuditEntityType.Match:
-      return 'matches';
-    case AuditEntityType.Game:
-      return 'games';
-    case AuditEntityType.Score:
-      return 'scores';
-  }
-}
 
 const ACTION_LABELS: Record<AuditEventAction, string> = {
   verification: 'verification',
@@ -57,11 +45,9 @@ export default function CascadeContextBanner({
           className="text-primary font-medium hover:underline"
         >
           {entityName}
-        </Link>
-        {' '}{actionLabel}
-        {context.childSummary && (
-          <> &mdash; {context.childSummary}</>
-        )}
+        </Link>{' '}
+        {actionLabel}
+        {context.childSummary && <> &mdash; {context.childSummary}</>}
       </span>
     </div>
   );

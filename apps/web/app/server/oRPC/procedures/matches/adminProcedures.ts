@@ -14,10 +14,7 @@ import {
   MatchAdminMutationResponseSchema,
   MatchAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
-import {
-  MatchWarningFlags,
-  VerificationStatus,
-} from '@otr/core/osu';
+import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -108,7 +105,6 @@ export const updateMatchAdmin = protectedProcedure
 
     return { success: true } as const;
   });
-
 
 export const mergeMatchAdmin = protectedProcedure
   .input(MatchAdminMergeInputSchema)

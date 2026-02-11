@@ -203,9 +203,7 @@ function getTimelineItemCreated(item: EntityTimelineItem): string {
 /**
  * Merge-sort audit entries from multiple tables by created date descending.
  */
-export function mergeAuditEntries(
-  ...arrays: AuditEntry[][]
-): AuditEntry[] {
+export function mergeAuditEntries(...arrays: AuditEntry[][]): AuditEntry[] {
   const merged = arrays.flat();
   merged.sort((a, b) => {
     const dateA = new Date(a.created).getTime();
@@ -220,19 +218,7 @@ export function camelToSnake(s: string): string {
   return s.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
 }
 
-/** Entity type slug for URL paths */
-export function entityTypeToSlug(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournaments';
-    case AuditEntityType.Match:
-      return 'matches';
-    case AuditEntityType.Game:
-      return 'games';
-    case AuditEntityType.Score:
-      return 'scores';
-  }
-}
+export { entityTypeToSlug } from '@/lib/audit-entity-types';
 
 // --- Event Assembly ---
 
@@ -274,8 +260,7 @@ export function classifyAction(
   >;
 
   // Check verificationStatus change (handles both camelCase and snake_case keys)
-  const vsChange =
-    changes.verificationStatus ?? changes.verification_status;
+  const vsChange = changes.verificationStatus ?? changes.verification_status;
 
   if (vsChange?.newValue !== undefined) {
     const newStatus = vsChange.newValue as number;
@@ -386,9 +371,7 @@ export type AssembledEvent = {
  * (parentEntityId, classifiedAction, hourBucket) to collapse per-match
  * rows into summary events.
  */
-export function assembleEvents(
-  rows: GroupedAuditRow[]
-): AssembledEvent[] {
+export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
   // Group by (actionUserId, created, actionType) — same transaction
   const eventMap = new Map<string, GroupedAuditRow[]>();
   for (const row of rows) {
@@ -410,7 +393,11 @@ export function assembleEvents(
     const topRow = groupRows[0]!;
     const isSystem = topRow.actionUserId === null;
     const normalizedChanges = camelizeChangesKeys(topRow.sampleChanges);
-    const action = classifyAction(topRow.actionType, normalizedChanges, isSystem);
+    const action = classifyAction(
+      topRow.actionType,
+      normalizedChanges,
+      isSystem
+    );
 
     // Determine if this is a cascade (multiple entity types)
     const entityTypes = new Set(groupRows.map((r) => r.entityType));
@@ -463,7 +450,9 @@ export function assembleEvents(
   if (systemEvents.length > 0) {
     const systemGroupMap = new Map<string, AssembledEvent[]>();
     for (const event of systemEvents) {
-      const hourBucket = Math.floor(new Date(event.created).getTime() / 3600000);
+      const hourBucket = Math.floor(
+        new Date(event.created).getTime() / 3600000
+      );
       const key = `${event.parentEntityId}:${event.action}:${hourBucket}`;
       const existing = systemGroupMap.get(key);
       if (existing) {

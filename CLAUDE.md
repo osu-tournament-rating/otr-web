@@ -62,8 +62,8 @@ publicProcedure
 ### Schema Derivation
 
 ```typescript
-import { createSelectSchema } from 'drizzle-zod'
-const BaseSchema = createSelectSchema(table).omit({ searchVector: true })
+import { createSelectSchema } from 'drizzle-zod';
+const BaseSchema = createSelectSchema(table).omit({ searchVector: true });
 ```
 
 ## Critical Files

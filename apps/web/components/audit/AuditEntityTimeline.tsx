@@ -16,9 +16,7 @@ import type {
   EntityTimelineEvent,
   EntityTimelineItem,
 } from '@/lib/orpc/schema/audit';
-import {
-  AuditActionTypeEnumHelper,
-} from '@/lib/enums';
+import { AuditActionTypeEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -170,13 +168,21 @@ function TimelineAuditEntry({
                       </AvatarFallback>
                     </Avatar>
                   )}
-                  <Link
-                    href={`/players/${entry.actionUser.playerId}`}
-                    className="text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {entry.actionUser.username ?? `User ${entry.actionUser.id}`}
-                  </Link>
+                  {entry.actionUser.playerId ? (
+                    <Link
+                      href={`/players/${entry.actionUser.playerId}`}
+                      className="text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {entry.actionUser.username ??
+                        `User ${entry.actionUser.id}`}
+                    </Link>
+                  ) : (
+                    <span className="text-foreground">
+                      {entry.actionUser.username ??
+                        `User ${entry.actionUser.id}`}
+                    </span>
+                  )}
                 </>
               ) : (
                 <span className="text-muted-foreground italic">System</span>
@@ -247,12 +253,7 @@ export default function AuditEntityTimeline({
     (pageIndex: number, previousPageData: TimelineResponse | null) => {
       if (previousPageData && !previousPageData.hasMore) return null;
       const cursor = previousPageData?.nextCursor ?? null;
-      return [
-        'audit-entity-timeline',
-        entityType,
-        entityId,
-        cursor,
-      ] as const;
+      return ['audit-entity-timeline', entityType, entityId, cursor] as const;
     },
     [entityType, entityId]
   );
@@ -263,7 +264,7 @@ export default function AuditEntityTimeline({
       orpc.audit.timeline({
         entityType: eType,
         entityId: eId,
-        limit: 250,
+        limit: 50,
         cursor: cursor ?? undefined,
       }),
     {
@@ -291,7 +292,12 @@ export default function AuditEntityTimeline({
 
   // Scroll to hash target on initial load
   useEffect(() => {
-    if (typeof window === 'undefined' || !allItems.length || scrollTargetRef.current) return;
+    if (
+      typeof window === 'undefined' ||
+      !allItems.length ||
+      scrollTargetRef.current
+    )
+      return;
     const hash = window.location.hash;
     if (hash) {
       const el = document.querySelector(hash);
@@ -299,7 +305,11 @@ export default function AuditEntityTimeline({
         scrollTargetRef.current = true;
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.classList.add('bg-primary/5');
-        setTimeout(() => el.classList.remove('bg-primary/5'), 2000);
+        const timer = setTimeout(
+          () => el.classList.remove('bg-primary/5'),
+          2000
+        );
+        return () => clearTimeout(timer);
       }
     }
   }, [allItems.length]);
@@ -341,9 +351,7 @@ export default function AuditEntityTimeline({
               />
             );
           }
-          return (
-            <AuditNoteItem key={`n-${item.data.id}`} note={item.data} />
-          );
+          return <AuditNoteItem key={`n-${item.data.id}`} note={item.data} />;
         })}
       </div>
 
@@ -356,9 +364,7 @@ export default function AuditEntityTimeline({
             onClick={() => setSize(size + 1)}
             disabled={isValidating}
           >
-            {isValidating && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Load more
           </Button>
         </div>

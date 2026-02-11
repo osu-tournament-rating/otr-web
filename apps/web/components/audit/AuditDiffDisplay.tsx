@@ -26,10 +26,14 @@ function formatValue(
   fieldName: string,
   referencedUsers?: Record<string, ReferencedUser>
 ): string {
-  if (value === null || value === undefined || value === 'null' || value === '') return '\u2014';
+  if (value === null || value === undefined || value === 'null' || value === '')
+    return '\u2014';
 
   // Handle user reference fields
-  if (isFieldUserReference(entityType, fieldName) && typeof value === 'number') {
+  if (
+    isFieldUserReference(entityType, fieldName) &&
+    typeof value === 'number'
+  ) {
     const user = referencedUsers?.[String(value)];
     if (user?.username) {
       return user.username;
@@ -40,7 +44,10 @@ function formatValue(
   const enumHelper = getFieldEnumHelper(entityType, fieldName);
   if (enumHelper && typeof value === 'number') {
     if (isFieldBitwise(entityType, fieldName)) {
-      const bitwiseHelper = enumHelper as IBitwiseEnumHelper<number, EnumMetadata>;
+      const bitwiseHelper = enumHelper as IBitwiseEnumHelper<
+        number,
+        EnumMetadata
+      >;
       const flags = bitwiseHelper.getMetadata(value);
       return flags.map((m) => m.text).join(', ') || 'None';
     }
@@ -65,8 +72,18 @@ export default function AuditDiffDisplay({
   referencedUsers?: Record<string, ReferencedUser>;
 }): React.JSX.Element {
   const label = getFieldLabel(entityType, fieldName);
-  const oldVal = formatValue(change.originalValue, entityType, fieldName, referencedUsers);
-  const newVal = formatValue(change.newValue, entityType, fieldName, referencedUsers);
+  const oldVal = formatValue(
+    change.originalValue,
+    entityType,
+    fieldName,
+    referencedUsers
+  );
+  const newVal = formatValue(
+    change.newValue,
+    entityType,
+    fieldName,
+    referencedUsers
+  );
 
   return (
     <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
@@ -74,11 +91,11 @@ export default function AuditDiffDisplay({
         {label}
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="bg-red-500/10 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 line-through">
+        <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-600 line-through dark:text-red-400">
           {oldVal}
         </span>
         <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
-        <span className="bg-green-500/10 text-green-600 dark:text-green-400 rounded px-1.5 py-0.5">
+        <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-green-600 dark:text-green-400">
           {newVal}
         </span>
       </span>

@@ -443,7 +443,6 @@ async function alignTournamentChildRulesets(
     .where(inArray(schema.gameScores.gameId, gameIds));
 }
 
-
 export const resetTournamentAutomatedChecks = protectedProcedure
   .input(TournamentResetAutomatedChecksInputSchema)
   .output(TournamentAdminMutationResponseSchema)

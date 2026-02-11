@@ -1,10 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
-import { AuditActionType } from '@otr/core/osu';
 import type { AuditEvent } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,7 +44,6 @@ function EmptyState(): React.JSX.Element {
 }
 
 export default function AuditEventFeed(): React.JSX.Element {
-  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<FilterState>({
     entityTypes: [],
     fieldsChanged: [],
@@ -54,19 +51,13 @@ export default function AuditEventFeed(): React.JSX.Element {
     actionTypes: [],
   });
 
-  // Build a stable filter hash from URL search params + filter state for cache keying
-  const filterKey = useMemo(
-    () => `${searchParams.toString()}:${JSON.stringify(filters)}`,
-    [searchParams, filters]
-  );
-
   const getKey = useCallback(
     (pageIndex: number, previousPageData: EventFeedResponse | null) => {
       if (previousPageData && !previousPageData.hasMore) return null;
       const cursor = previousPageData?.nextCursor ?? null;
-      return ['audit-events', cursor, filterKey] as const;
+      return ['audit-events', cursor, JSON.stringify(filters)] as const;
     },
-    [filterKey]
+    [filters]
   );
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
@@ -76,11 +67,12 @@ export default function AuditEventFeed(): React.JSX.Element {
         limit: 30,
         cursor: cursor ?? undefined,
         showSystem: filters.showSystem ? true : undefined,
-        entityTypes: filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
-        fieldsChanged: filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
-        actionTypes: filters.fieldsChanged.length > 0
-          ? [AuditActionType.Updated]
-          : (filters.actionTypes.length > 0 ? filters.actionTypes : undefined),
+        entityTypes:
+          filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
+        fieldsChanged:
+          filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
+        actionTypes:
+          filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
       }),
     {
       revalidateFirstPage: false,
@@ -108,9 +100,9 @@ export default function AuditEventFeed(): React.JSX.Element {
       ) : (
         <div className="space-y-4">
           <div className="border-border divide-border divide-y rounded-lg border">
-            {allEvents.map((event, i) => (
+            {allEvents.map((event) => (
               <AuditEventCard
-                key={`${event.created}-${event.actionUserId}-${i}`}
+                key={`${event.created}-${event.actionUserId}-${event.topEntity.entityType}-${event.topEntity.entityId}`}
                 event={event}
               />
             ))}

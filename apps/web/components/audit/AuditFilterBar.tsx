@@ -94,10 +94,7 @@ function EntityTypeSelect({
                 const label = AuditEntityTypeEnumHelper.getMetadata(et).text;
                 const isSelected = selected.includes(et);
                 return (
-                  <CommandItem
-                    key={et}
-                    onSelect={() => toggle(et)}
-                  >
+                  <CommandItem key={et} onSelect={() => toggle(et)}>
                     <Check
                       className={cn(
                         'h-3.5 w-3.5',
@@ -122,19 +119,25 @@ function FieldSelect({
   entityTypeFilter,
 }: {
   selected: { entityType: AuditEntityType; fieldName: string }[];
-  onChange: (fields: { entityType: AuditEntityType; fieldName: string }[]) => void;
+  onChange: (
+    fields: { entityType: AuditEntityType; fieldName: string }[]
+  ) => void;
   entityTypeFilter: AuditEntityType[];
 }) {
   const allOptions = useMemo(() => getFieldOptionsWithEntityType(), []);
 
   const filteredOptions = useMemo(() => {
     if (entityTypeFilter.length === 0) return allOptions;
-    return allOptions.filter((opt) => entityTypeFilter.includes(opt.entityType));
+    return allOptions.filter((opt) =>
+      entityTypeFilter.includes(opt.entityType)
+    );
   }, [allOptions, entityTypeFilter]);
 
   const isSelected = (opt: FieldOption) =>
     selected.some(
-      (s) => s.entityType === opt.entityType && s.fieldName === opt.value.split(':')[1]
+      (s) =>
+        s.entityType === opt.entityType &&
+        s.fieldName === opt.value.split(':')[1]
     );
 
   const toggle = (opt: FieldOption) => {
@@ -144,11 +147,18 @@ function FieldSelect({
     if (isSelected(opt)) {
       onChange(
         selected.filter(
-          (s) => !(s.entityType === parsed.entityType && s.fieldName === parsed.fieldName)
+          (s) =>
+            !(
+              s.entityType === parsed.entityType &&
+              s.fieldName === parsed.fieldName
+            )
         )
       );
     } else {
-      onChange([...selected, { entityType: parsed.entityType, fieldName: parsed.fieldName }]);
+      onChange([
+        ...selected,
+        { entityType: parsed.entityType, fieldName: parsed.fieldName },
+      ]);
     }
   };
 
@@ -172,10 +182,7 @@ function FieldSelect({
             <CommandEmpty>No fields found.</CommandEmpty>
             <CommandGroup>
               {filteredOptions.map((opt) => (
-                <CommandItem
-                  key={opt.value}
-                  onSelect={() => toggle(opt)}
-                >
+                <CommandItem key={opt.value} onSelect={() => toggle(opt)}>
                   <Check
                     className={cn(
                       'h-3.5 w-3.5',
@@ -183,7 +190,9 @@ function FieldSelect({
                     )}
                   />
                   <span className="flex-1">{opt.label}</span>
-                  <span className="text-muted-foreground text-[10px]">{opt.entityLabel}</span>
+                  <span className="text-muted-foreground text-[10px]">
+                    {opt.entityLabel}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -229,10 +238,7 @@ function ActionTypeSelect({
               {ALL_ACTION_TYPES.map((at) => {
                 const isSelected = selected.includes(at);
                 return (
-                  <CommandItem
-                    key={at}
-                    onSelect={() => toggle(at)}
-                  >
+                  <CommandItem key={at} onSelect={() => toggle(at)}>
                     <Check
                       className={cn(
                         'h-3.5 w-3.5',
@@ -251,7 +257,10 @@ function ActionTypeSelect({
   );
 }
 
-export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProps): React.JSX.Element {
+export default function AuditFilterBar({
+  filters,
+  onChange,
+}: AuditFilterBarProps): React.JSX.Element {
   const hasActiveFilters =
     filters.entityTypes.length > 0 ||
     filters.fieldsChanged.length > 0 ||
@@ -261,7 +270,9 @@ export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProp
     // Prune field selections that no longer match selected entity types
     const prunedFields =
       entityTypes.length > 0
-        ? filters.fieldsChanged.filter((f) => entityTypes.includes(f.entityType))
+        ? filters.fieldsChanged.filter((f) =>
+            entityTypes.includes(f.entityType)
+          )
         : filters.fieldsChanged;
 
     onChange({ ...filters, entityTypes, fieldsChanged: prunedFields });
@@ -307,7 +318,12 @@ export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProp
           size="sm"
           className="h-8 gap-1 px-2 text-xs"
           onClick={() =>
-            onChange({ ...filters, entityTypes: [], fieldsChanged: [], actionTypes: [] })
+            onChange({
+              ...filters,
+              entityTypes: [],
+              fieldsChanged: [],
+              actionTypes: [],
+            })
           }
         >
           <X className="h-3 w-3" />

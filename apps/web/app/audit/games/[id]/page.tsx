@@ -27,14 +27,8 @@ export default async function GameAuditPage({ params }: PageProps) {
 
   return (
     <>
-      <AuditPageHeader
-        entityType={AuditEntityType.Game}
-        entityId={id}
-      />
-      <AuditEntityTimeline
-        entityType={AuditEntityType.Game}
-        entityId={id}
-      />
+      <AuditPageHeader entityType={AuditEntityType.Game} entityId={id} />
+      <AuditEntityTimeline entityType={AuditEntityType.Game} entityId={id} />
     </>
   );
 }

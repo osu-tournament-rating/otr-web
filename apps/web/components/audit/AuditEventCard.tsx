@@ -16,10 +16,11 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import AuditDiffDisplay from './AuditDiffDisplay';
+import { entityTypeToSlug } from '@/lib/audit-entity-types';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
-// --- Inline entity type helpers (avoid importing from server code) ---
+// --- Inline entity type helpers ---
 
 const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   [AuditEntityType.Tournament]: 'tournament',
@@ -35,25 +36,16 @@ const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
   [AuditEntityType.Score]: 'scores',
 };
 
-function entityTypeToSlug(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournaments';
-    case AuditEntityType.Match:
-      return 'matches';
-    case AuditEntityType.Game:
-      return 'games';
-    case AuditEntityType.Score:
-      return 'scores';
-  }
-}
-
 // --- Actions where inline field labels are suppressed ---
 // Self-describing (verification/rejection) + submission (created) + deletion
 
 const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
-  'verification', 'rejection', 'pre_verification', 'pre_rejection',
-  'submission', 'deletion',
+  'verification',
+  'rejection',
+  'pre_verification',
+  'pre_rejection',
+  'submission',
+  'deletion',
 ]);
 
 // --- Action display config ---
@@ -93,7 +85,14 @@ type AuditEventCardProps = {
 };
 
 function buildDescription(event: AuditEvent): React.ReactNode {
-  const { action, topEntity, childLevel, isCascade, parentTournament, changedFields } = event;
+  const {
+    action,
+    topEntity,
+    childLevel,
+    isCascade,
+    parentTournament,
+    changedFields,
+  } = event;
   const actionLabel = ACTION_LABELS[action];
   const entityLabel = ENTITY_TYPE_LABELS[topEntity.entityType];
   const topEntitySlug = entityTypeToSlug(topEntity.entityType);
@@ -118,7 +117,10 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         : null;
 
     // Non-tournament top entity: "rejected Match #123 in Tournament Y (15 games)"
-    if (topEntity.entityType !== AuditEntityType.Tournament && parentTournament) {
+    if (
+      topEntity.entityType !== AuditEntityType.Tournament &&
+      parentTournament
+    ) {
       const tournamentLink = (
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
@@ -131,18 +133,22 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
       return (
         <>
-          <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
-          {' '}{entityLabel} {entityLink} in {tournamentLink}
-          {countDisplay && <span className="text-muted-foreground"> ({countDisplay})</span>}
+          <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
+          {entityLabel} {entityLink} in {tournamentLink}
+          {countDisplay && (
+            <span className="text-muted-foreground"> ({countDisplay})</span>
+          )}
         </>
       );
     }
 
     return (
       <>
-        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
-        {' '}{entityLabel} {entityLink}
-        {countDisplay && <span className="text-muted-foreground"> ({countDisplay})</span>}
+        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
+        {entityLabel} {entityLink}
+        {countDisplay && (
+          <span className="text-muted-foreground"> ({countDisplay})</span>
+        )}
       </>
     );
   }
@@ -169,8 +175,8 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
     return (
       <>
-        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
-        {' '}{topEntity.count} {entityPlural}
+        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
+        {topEntity.count} {entityPlural}
         {parentContext}
         {!FIELD_SUPPRESSED_ACTIONS.has(action) && fieldLabels.length > 0 && (
           <span className="text-muted-foreground">
@@ -204,8 +210,8 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
   return (
     <>
-      <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
-      {' '}{entityLabel} {entityLink}
+      <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
+      {entityLabel} {entityLink}
       {parentContext}
       {!FIELD_SUPPRESSED_ACTIONS.has(action) && fieldLabels.length > 0 && (
         <span className="text-muted-foreground">
@@ -236,7 +242,11 @@ function CascadeChildEntries({
         entityType: childEntityType,
         limit: 50,
       }),
-    { revalidateOnFocus: false, revalidateIfStale: false, dedupingInterval: 60_000 }
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 60_000,
+    }
   );
 
   const childSlug = entityTypeToSlug(childEntityType);
@@ -244,17 +254,19 @@ function CascadeChildEntries({
   const childLabel = ENTITY_TYPE_LABELS[childEntityType];
 
   return (
-    <div className={cn(
-      'bg-muted/20 border-border px-3 py-2',
-      !hasTopLevelDiffs && 'border-t',
-    )}>
+    <div
+      className={cn(
+        'bg-muted/20 border-border px-3 py-2',
+        !hasTopLevelDiffs && 'border-t'
+      )}
+    >
       <div className="flex flex-col gap-2 pl-9">
         <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           Affected {childPlural}
         </span>
 
         {isLoading && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <Loader2 className="h-3 w-3 animate-spin" />
             Loading…
           </div>
@@ -265,7 +277,9 @@ function CascadeChildEntries({
             string,
             { originalValue: unknown; newValue: unknown }
           > | null;
-          const entryLabel = entry.entityName ?? `${childLabel.charAt(0).toUpperCase() + childLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
+          const entryLabel =
+            entry.entityName ??
+            `${childLabel.charAt(0).toUpperCase() + childLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
           const entryId = entry.referenceId ?? entry.referenceIdLock;
 
           return (
@@ -290,7 +304,9 @@ function CascadeChildEntries({
                 </div>
               ) : (
                 <span className="text-muted-foreground pl-3 text-xs italic">
-                  {event.action === 'deletion' ? '(deleted)' : '(no field changes)'}
+                  {event.action === 'deletion'
+                    ? '(deleted)'
+                    : '(no field changes)'}
                 </span>
               )}
             </div>
@@ -307,7 +323,9 @@ function CascadeChildEntries({
   );
 }
 
-export default function AuditEventCard({ event }: AuditEventCardProps): React.JSX.Element {
+export default function AuditEventCard({
+  event,
+}: AuditEventCardProps): React.JSX.Element {
   const changes = event.sampleChanges as Record<
     string,
     { originalValue: unknown; newValue: unknown }
@@ -317,7 +335,10 @@ export default function AuditEventCard({ event }: AuditEventCardProps): React.JS
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={hasExpandableContent ? setIsOpen : undefined}>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={hasExpandableContent ? setIsOpen : undefined}
+    >
       <div
         className={cn(
           'border-border border-b border-l-2 transition-colors',
@@ -352,17 +373,27 @@ export default function AuditEventCard({ event }: AuditEventCardProps): React.JS
             {/* User name + description */}
             <span className="min-w-0 flex-1">
               {event.isSystem ? (
-                <span className="text-muted-foreground mr-1 italic">System</span>
+                <span className="text-muted-foreground mr-1 italic">
+                  System
+                </span>
               ) : event.actionUser ? (
-                <Link
-                  href={`/players/${event.actionUser.playerId}`}
-                  className="text-primary mr-1 font-medium hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {event.actionUser.username ?? `User ${event.actionUser.id}`}
-                </Link>
+                event.actionUser.playerId ? (
+                  <Link
+                    href={`/players/${event.actionUser.playerId}`}
+                    className="text-primary mr-1 font-medium hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                  </Link>
+                ) : (
+                  <span className="text-foreground mr-1 font-medium">
+                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                  </span>
+                )
               ) : (
-                <span className="text-muted-foreground mr-1 italic">Unknown</span>
+                <span className="text-muted-foreground mr-1 italic">
+                  Unknown
+                </span>
               )}
               {buildDescription(event)}
             </span>
@@ -403,7 +434,10 @@ export default function AuditEventCard({ event }: AuditEventCardProps): React.JS
             </div>
           )}
           {event.isCascade && isOpen && (
-            <CascadeChildEntries event={event} hasTopLevelDiffs={changeCount > 0} />
+            <CascadeChildEntries
+              event={event}
+              hasTopLevelDiffs={changeCount > 0}
+            />
           )}
         </CollapsibleContent>
       </div>

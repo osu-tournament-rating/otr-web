@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import { entityTypeToSlug } from '@/app/server/oRPC/procedures/audit/helpers';
+import { entityTypeToSlug } from '@/lib/audit-entity-types';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { cn } from '@/lib/utils';

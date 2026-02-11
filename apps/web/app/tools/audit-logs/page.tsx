@@ -31,7 +31,8 @@ export default function AuditLogsPage() {
           <div>
             <h1 className="text-xl font-semibold">Audit Logs</h1>
             <p className="text-muted-foreground text-sm">
-              Browse the history of changes made to tournaments, matches, games, and scores.
+              Browse the history of changes made to tournaments, matches, games,
+              and scores.
             </p>
           </div>
         </div>

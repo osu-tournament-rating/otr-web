@@ -58,6 +58,13 @@ type AuditRow = {
   username: string | null;
 };
 
+/** Validate that a field name is a safe SQL identifier (alphanumeric + underscore) */
+const SAFE_FIELD_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+function validateFieldNames(fieldNames: string[]): string[] {
+  return fieldNames.filter((name) => SAFE_FIELD_NAME_RE.test(name));
+}
+
 /** Fields in changes that contain user IDs requiring resolution */
 const USER_ID_FIELDS = ['verifiedByUserId', 'submittedByUserId'];
 
@@ -70,14 +77,18 @@ type ReferencedUser = {
 
 /** Extract all user IDs from changes that need resolution */
 function extractUserIdsFromChanges(
-  changes: Record<string, { originalValue?: unknown; newValue?: unknown }> | null
+  changes: Record<
+    string,
+    { originalValue?: unknown; newValue?: unknown }
+  > | null
 ): number[] {
   if (!changes) return [];
   const ids: number[] = [];
   for (const field of USER_ID_FIELDS) {
     const change = changes[field];
     if (change) {
-      if (typeof change.originalValue === 'number') ids.push(change.originalValue);
+      if (typeof change.originalValue === 'number')
+        ids.push(change.originalValue);
       if (typeof change.newValue === 'number') ids.push(change.newValue);
     }
   }
@@ -238,21 +249,22 @@ async function queryAuditEntries(
   }
 
   if (options.dateFrom) {
-    conditions.push(
-      sql`${table.created} >= ${options.dateFrom}::timestamptz`
-    );
+    conditions.push(sql`${table.created} >= ${options.dateFrom}::timestamptz`);
   }
 
   if (options.dateTo) {
-    conditions.push(
-      sql`${table.created} <= ${options.dateTo}::timestamptz`
-    );
+    conditions.push(sql`${table.created} <= ${options.dateTo}::timestamptz`);
   }
 
   if (options.fieldNames && options.fieldNames.length > 0) {
+    // Validate field names to prevent injection (defense-in-depth)
+    const safeFieldNames = validateFieldNames(options.fieldNames);
+    if (safeFieldNames.length === 0) {
+      return [];
+    }
     // OR logic: match if ANY of the specified fields actually changed
     // DB stores keys in snake_case (triggers) or camelCase (historical), so check both
-    const fieldConditions = options.fieldNames.map((name) => {
+    const fieldConditions = safeFieldNames.map((name) => {
       const snakeName = camelToSnake(name);
       const sameCase = name === snakeName;
       const hasKey = sameCase
@@ -292,11 +304,17 @@ async function queryAuditEntries(
     conditions.push(eq(table.referenceIdLock, options.entityId));
   }
 
-  if (options.changeValue && options.fieldNames && options.fieldNames.length === 1) {
+  if (
+    options.changeValue &&
+    options.fieldNames &&
+    options.fieldNames.length === 1
+  ) {
     // changeValue only works when filtering by a single field
     conditions.push(
       sql`${table.changes} @> ${JSON.stringify({
-        [options.fieldNames[0]]: { newValue: tryParseJsonValue(options.changeValue) },
+        [options.fieldNames[0]]: {
+          newValue: tryParseJsonValue(options.changeValue),
+        },
       })}::jsonb`
     );
   }
@@ -335,7 +353,10 @@ async function queryAuditEntries(
       row.changes as Record<string, unknown> | null
     );
     const ids = extractUserIdsFromChanges(
-      changes as Record<string, { originalValue?: unknown; newValue?: unknown }> | null
+      changes as Record<
+        string,
+        { originalValue?: unknown; newValue?: unknown }
+      > | null
     );
     allUserIds.push(...ids);
   }
@@ -343,7 +364,9 @@ async function queryAuditEntries(
   // Resolve all user IDs in a single batch query
   const userMap = await resolveUserIds(db, allUserIds);
 
-  return (rows as AuditRow[]).map((row) => mapAuditRow(row, entityType, userMap));
+  return (rows as AuditRow[]).map((row) =>
+    mapAuditRow(row, entityType, userMap)
+  );
 }
 
 function tryParseJsonValue(value: string): unknown {
@@ -542,44 +565,60 @@ export const getEntityAuditTimeline = publicProcedure
         WHERE a.reference_id_lock = ${entityId}
         LIMIT 1
       `);
-      const parentTournamentId = (parentResult.rows[0] as { parent_id: number | null } | undefined)?.parent_id ?? null;
+      const parentTournamentId =
+        (parentResult.rows[0] as { parent_id: number | null } | undefined)
+          ?.parent_id ?? null;
 
       if (parentTournamentId !== null) {
-        for (const [key, { actionUserId, created }] of cascadePairs) {
-          // Query all audit tables for sibling entries with same (actionUserId, created)
-          // that share the same parent tournament
-          const siblingQueries = ALL_AUDIT_TABLES.map(({ entityType: et }) => {
-            const info = getParentEntityJoinInfo(et);
-            const userCondition = actionUserId !== null
-              ? sql`a.action_user_id = ${actionUserId}`
-              : sql`a.action_user_id IS NULL`;
-            return sql`
-              SELECT
-                ${et}::int AS entity_type,
-                COUNT(*)::int AS cnt,
-                (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_id,
-                (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes
-              FROM ${sql.raw(info.fromClause)}
-              WHERE ${userCondition}
-                AND a.created = ${created}::timestamptz
-                AND ${sql.raw(info.parentIdExpr)} = ${parentTournamentId}
-              GROUP BY entity_type
-            `;
-          });
+        // Batch all sibling queries in parallel
+        const pairEntries = Array.from(cascadePairs.entries());
+        const siblingResults = await Promise.all(
+          pairEntries.map(([, { actionUserId, created }]) => {
+            const siblingQueries = ALL_AUDIT_TABLES.map(
+              ({ entityType: et }) => {
+                const info = getParentEntityJoinInfo(et);
+                const userCondition =
+                  actionUserId !== null
+                    ? sql`a.action_user_id = ${actionUserId}`
+                    : sql`a.action_user_id IS NULL`;
+                return sql`
+                SELECT
+                  ${et}::int AS entity_type,
+                  COUNT(*)::int AS cnt,
+                  (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_id,
+                  (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes
+                FROM ${sql.raw(info.fromClause)}
+                WHERE ${userCondition}
+                  AND a.created = ${created}::timestamptz
+                  AND ${sql.raw(info.parentIdExpr)} = ${parentTournamentId}
+                GROUP BY entity_type
+              `;
+              }
+            );
+            return context.db.execute(
+              sql`${sql.join(siblingQueries, sql` UNION ALL `)}`
+            );
+          })
+        );
 
-          const siblingResult = await context.db.execute(
-            sql`${sql.join(siblingQueries, sql` UNION ALL `)}`
-          );
-          const siblingRows = siblingResult.rows as CascadeSiblingRow[];
+        // Process results and collect IDs for batched resolution
+        type CascadeInfo = {
+          key: string;
+          topEntityType: AuditEntityType;
+          topEntityId: number;
+          action: ReturnType<typeof classifyAction>;
+          childType: AuditEntityType | null;
+          childAffectedCount: number;
+        };
+        const cascadeInfos: CascadeInfo[] = [];
 
-          if (siblingRows.length <= 1) {
-            // Not a cascade - only the current entity type has entries
-            continue;
-          }
+        for (let i = 0; i < pairEntries.length; i++) {
+          const [key, { actionUserId }] = pairEntries[i];
+          const siblingRows = siblingResults[i].rows as CascadeSiblingRow[];
 
-          // Sort by entity hierarchy (lowest enum = highest in hierarchy)
+          if (siblingRows.length <= 1) continue;
+
           siblingRows.sort((a, b) => a.entity_type - b.entity_type);
-
           const topRow = siblingRows[0]!;
           const topEntityType = topRow.entity_type as AuditEntityType;
           const topEntityId = topRow.sample_id;
@@ -593,7 +632,6 @@ export const getEntityAuditTimeline = publicProcedure
             isSystem
           );
 
-          // Determine child type and affected count
           const childType = getImmediateChildType(topEntityType);
           let childAffectedCount = 0;
           if (childType !== null) {
@@ -604,41 +642,106 @@ export const getEntityAuditTimeline = publicProcedure
             }
           }
 
-          // Resolve total child count from entity tables for verification events
-          let totalChildCount: number | null = null;
-          if (childType !== null && childAffectedCount > 0) {
-            if (topEntityType === AuditEntityType.Tournament && childType === AuditEntityType.Match) {
-              const countResult = await context.db.execute(sql`
-                SELECT COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${topEntityId}
-              `);
-              totalChildCount = (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? null;
-            } else if (topEntityType === AuditEntityType.Match && childType === AuditEntityType.Game) {
-              const countResult = await context.db.execute(sql`
-                SELECT COUNT(*)::int AS cnt FROM games WHERE match_id = ${topEntityId}
-              `);
-              totalChildCount = (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? null;
-            } else if (topEntityType === AuditEntityType.Game && childType === AuditEntityType.Score) {
-              const countResult = await context.db.execute(sql`
-                SELECT COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${topEntityId}
-              `);
-              totalChildCount = (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? null;
-            }
-          }
-
-          // Resolve top entity name
-          const topNameMap = await resolveEntityNames(context.db, topEntityType, [topEntityId]);
-          const topEntityName = topNameMap.get(topEntityId) ?? null;
-
-          const childSummary =
-            childType !== null && childAffectedCount > 0
-              ? buildChildSummary(childType, childAffectedCount, totalChildCount)
-              : null;
-
-          cascadeContextMap.set(key, {
+          cascadeInfos.push({
+            key,
             topEntityType,
             topEntityId,
-            topEntityName,
             action,
+            childType,
+            childAffectedCount,
+          });
+        }
+
+        // Batch child count queries by entity type
+        const childCountQueries: {
+          cacheKey: string;
+          query: ReturnType<typeof sql>;
+        }[] = [];
+        for (const info of cascadeInfos) {
+          if (info.childType === null || info.childAffectedCount === 0)
+            continue;
+          const cacheKey = `${info.topEntityType}:${info.topEntityId}`;
+          if (
+            info.topEntityType === AuditEntityType.Tournament &&
+            info.childType === AuditEntityType.Match
+          ) {
+            childCountQueries.push({
+              cacheKey,
+              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${info.topEntityId}`,
+            });
+          } else if (
+            info.topEntityType === AuditEntityType.Match &&
+            info.childType === AuditEntityType.Game
+          ) {
+            childCountQueries.push({
+              cacheKey,
+              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM games WHERE match_id = ${info.topEntityId}`,
+            });
+          } else if (
+            info.topEntityType === AuditEntityType.Game &&
+            info.childType === AuditEntityType.Score
+          ) {
+            childCountQueries.push({
+              cacheKey,
+              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${info.topEntityId}`,
+            });
+          }
+        }
+
+        const totalChildCounts = new Map<string, number>();
+        if (childCountQueries.length > 0) {
+          const countResults = await Promise.all(
+            childCountQueries.map((q) => context.db.execute(q.query))
+          );
+          for (let i = 0; i < childCountQueries.length; i++) {
+            const cnt =
+              (countResults[i].rows[0] as { cnt: number } | undefined)?.cnt ??
+              0;
+            totalChildCounts.set(childCountQueries[i].cacheKey, cnt);
+          }
+        }
+
+        // Batch entity name resolution
+        const entityIdsByType = new Map<AuditEntityType, number[]>();
+        for (const info of cascadeInfos) {
+          const existing = entityIdsByType.get(info.topEntityType) || [];
+          entityIdsByType.set(info.topEntityType, [
+            ...existing,
+            info.topEntityId,
+          ]);
+        }
+        const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
+        await Promise.all(
+          Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
+            const nameMap = await resolveEntityNames(context.db, et, [
+              ...new Set(ids),
+            ]);
+            entityNameMaps.set(et, nameMap);
+          })
+        );
+
+        // Build cascade context map
+        for (const info of cascadeInfos) {
+          const topEntityName =
+            entityNameMaps.get(info.topEntityType)?.get(info.topEntityId) ??
+            null;
+          const cacheKey = `${info.topEntityType}:${info.topEntityId}`;
+          const totalChildCount = totalChildCounts.get(cacheKey) ?? null;
+
+          const childSummary =
+            info.childType !== null && info.childAffectedCount > 0
+              ? buildChildSummary(
+                  info.childType,
+                  info.childAffectedCount,
+                  totalChildCount
+                )
+              : null;
+
+          cascadeContextMap.set(info.key, {
+            topEntityType: info.topEntityType,
+            topEntityId: info.topEntityId,
+            topEntityName,
+            action: info.action,
             childSummary,
           });
         }
@@ -751,7 +854,12 @@ export const getAuditEventFeed = publicProcedure
         if (actionTypes.length === 1) {
           conditions.push(sql`a.action_type = ${actionTypes[0]}`);
         } else {
-          conditions.push(sql`a.action_type IN (${sql.join(actionTypes.map((a) => sql`${a}`), sql`, `)})`);
+          conditions.push(
+            sql`a.action_type IN (${sql.join(
+              actionTypes.map((a) => sql`${a}`),
+              sql`, `
+            )})`
+          );
         }
       }
 
@@ -768,20 +876,25 @@ export const getAuditEventFeed = publicProcedure
       }
 
       // Field name filters (OR logic within entity type)
-      const entityFieldNames = fieldsByEntityType.get(entityType);
+      const rawFieldNames = fieldsByEntityType.get(entityType);
+      const entityFieldNames = rawFieldNames
+        ? validateFieldNames(rawFieldNames)
+        : undefined;
       if (entityFieldNames && entityFieldNames.length > 0) {
         const fieldConditions = entityFieldNames.map((name) => {
           const snakeName = camelToSnake(name);
-          const hasKey = name === snakeName
-            ? sql`a.changes ? ${name}`
-            : sql`(a.changes ? ${name} OR a.changes ? ${snakeName})`;
-          const valueCheck = name === snakeName
-            ? sql`(
+          const hasKey =
+            name === snakeName
+              ? sql`a.changes ? ${name}`
+              : sql`(a.changes ? ${name} OR a.changes ? ${snakeName})`;
+          const valueCheck =
+            name === snakeName
+              ? sql`(
                 COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'NewValue', a.changes->${sql.raw(`'${name}'`)}->>'newValue')
                 IS DISTINCT FROM
                 COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'OriginalValue', a.changes->${sql.raw(`'${name}'`)}->>'originalValue')
               )`
-            : sql`(
+              : sql`(
                 COALESCE(
                   a.changes->${sql.raw(`'${name}'`)}->>'NewValue',
                   a.changes->${sql.raw(`'${name}'`)}->>'newValue',
@@ -805,9 +918,10 @@ export const getAuditEventFeed = publicProcedure
         }
       }
 
-      const whereClause = conditions.length > 0
-        ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
-        : sql``;
+      const whereClause =
+        conditions.length > 0
+          ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+          : sql``;
 
       return sql`
         SELECT
@@ -886,50 +1000,128 @@ export const getAuditEventFeed = publicProcedure
     const entityIdsByType = new Map<AuditEntityType, number[]>();
     for (const event of assembledEvents) {
       const existing = entityIdsByType.get(event.topEntityType) || [];
-      entityIdsByType.set(event.topEntityType, [...existing, event.topEntityId]);
+      entityIdsByType.set(event.topEntityType, [
+        ...existing,
+        event.topEntityId,
+      ]);
     }
 
     const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
     await Promise.all(
       Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
-        const nameMap = await resolveEntityNames(context.db, et, [...new Set(ids)]);
+        const nameMap = await resolveEntityNames(context.db, et, [
+          ...new Set(ids),
+        ]);
         entityNameMaps.set(et, nameMap);
       })
     );
 
-    // 4. For verification cascades, query total child counts
+    // 4. For verification cascades, batch total child counts by entity type
     const totalChildCounts = new Map<string, number>();
+    const tournamentIdsForMatchCount: number[] = [];
+    const matchIdsForGameCount: number[] = [];
+    const gameIdsForScoreCount: number[] = [];
+
     for (const event of assembledEvents) {
-      if (!event.isCascade || event.childEntityType === null || event.childAffectedCount === 0) {
+      if (
+        !event.isCascade ||
+        event.childEntityType === null ||
+        event.childAffectedCount === 0
+      )
         continue;
-      }
-
-      const cacheKey = `${event.topEntityType}:${event.topEntityId}`;
-
-      if (event.topEntityType === AuditEntityType.Tournament && event.childEntityType === AuditEntityType.Match) {
-        const countResult = await context.db.execute(sql`
-          SELECT COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${event.topEntityId}
-        `);
-        totalChildCounts.set(cacheKey, (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? 0);
-      } else if (event.topEntityType === AuditEntityType.Match && event.childEntityType === AuditEntityType.Game) {
-        const countResult = await context.db.execute(sql`
-          SELECT COUNT(*)::int AS cnt FROM games WHERE match_id = ${event.topEntityId}
-        `);
-        totalChildCounts.set(cacheKey, (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? 0);
-      } else if (event.topEntityType === AuditEntityType.Game && event.childEntityType === AuditEntityType.Score) {
-        const countResult = await context.db.execute(sql`
-          SELECT COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${event.topEntityId}
-        `);
-        totalChildCounts.set(cacheKey, (countResult.rows[0] as { cnt: number } | undefined)?.cnt ?? 0);
+      if (
+        event.topEntityType === AuditEntityType.Tournament &&
+        event.childEntityType === AuditEntityType.Match
+      ) {
+        tournamentIdsForMatchCount.push(event.topEntityId);
+      } else if (
+        event.topEntityType === AuditEntityType.Match &&
+        event.childEntityType === AuditEntityType.Game
+      ) {
+        matchIdsForGameCount.push(event.topEntityId);
+      } else if (
+        event.topEntityType === AuditEntityType.Game &&
+        event.childEntityType === AuditEntityType.Score
+      ) {
+        gameIdsForScoreCount.push(event.topEntityId);
       }
     }
+
+    await Promise.all([
+      tournamentIdsForMatchCount.length > 0
+        ? context.db
+            .execute(
+              sql`
+            SELECT tournament_id AS id, COUNT(*)::int AS cnt FROM matches
+            WHERE tournament_id IN (${sql.join(
+              tournamentIdsForMatchCount.map((id) => sql`${id}`),
+              sql`, `
+            )})
+            GROUP BY tournament_id
+          `
+            )
+            .then((r) => {
+              for (const row of r.rows as { id: number; cnt: number }[]) {
+                totalChildCounts.set(
+                  `${AuditEntityType.Tournament}:${row.id}`,
+                  row.cnt
+                );
+              }
+            })
+        : Promise.resolve(),
+      matchIdsForGameCount.length > 0
+        ? context.db
+            .execute(
+              sql`
+            SELECT match_id AS id, COUNT(*)::int AS cnt FROM games
+            WHERE match_id IN (${sql.join(
+              matchIdsForGameCount.map((id) => sql`${id}`),
+              sql`, `
+            )})
+            GROUP BY match_id
+          `
+            )
+            .then((r) => {
+              for (const row of r.rows as { id: number; cnt: number }[]) {
+                totalChildCounts.set(
+                  `${AuditEntityType.Match}:${row.id}`,
+                  row.cnt
+                );
+              }
+            })
+        : Promise.resolve(),
+      gameIdsForScoreCount.length > 0
+        ? context.db
+            .execute(
+              sql`
+            SELECT game_id AS id, COUNT(*)::int AS cnt FROM game_scores
+            WHERE game_id IN (${sql.join(
+              gameIdsForScoreCount.map((id) => sql`${id}`),
+              sql`, `
+            )})
+            GROUP BY game_id
+          `
+            )
+            .then((r) => {
+              for (const row of r.rows as { id: number; cnt: number }[]) {
+                totalChildCounts.set(
+                  `${AuditEntityType.Game}:${row.id}`,
+                  row.cnt
+                );
+              }
+            })
+        : Promise.resolve(),
+    ]);
 
     // 5. Build referenced users from sample changes
     const allRefUserIds: number[] = [];
     for (const event of assembledEvents) {
       if (event.sampleChanges) {
         const ids = extractUserIdsFromChanges(
-          event.sampleChanges as Record<string, { originalValue?: unknown; newValue?: unknown }>
+          event.sampleChanges as Record<
+            string,
+            { originalValue?: unknown; newValue?: unknown }
+          >
         );
         allRefUserIds.push(...ids);
       }
@@ -939,7 +1131,7 @@ export const getAuditEventFeed = publicProcedure
     // Map to AuditEvent[]
     const events: AuditEvent[] = assembledEvents.map((event) => {
       const actionUser = event.actionUserId
-        ? userMap.get(event.actionUserId) ?? null
+        ? (userMap.get(event.actionUserId) ?? null)
         : null;
 
       const topEntityNameMap = entityNameMaps.get(event.topEntityType);
@@ -973,7 +1165,10 @@ export const getAuditEventFeed = publicProcedure
       let referencedUsers: Record<string, ReferencedUser> | undefined;
       if (event.sampleChanges) {
         const ids = extractUserIdsFromChanges(
-          event.sampleChanges as Record<string, { originalValue?: unknown; newValue?: unknown }>
+          event.sampleChanges as Record<
+            string,
+            { originalValue?: unknown; newValue?: unknown }
+          >
         );
         if (ids.length > 0) {
           referencedUsers = {};
@@ -1019,7 +1214,9 @@ export const getAuditEventFeed = publicProcedure
 
     // Use earliestCreated for cursor to avoid pagination duplicates
     // when system events have been aggregated across multiple timestamps
-    const lastAssembled = assembledEvents[assembledEvents.length - 1] as AssembledEvent | undefined;
+    const lastAssembled = assembledEvents[assembledEvents.length - 1] as
+      | AssembledEvent
+      | undefined;
     const nextCursor =
       hasMore && lastAssembled
         ? (lastAssembled.earliestCreated ?? lastAssembled.created)
@@ -1045,15 +1242,15 @@ export const getEventDetails = publicProcedure
     const { actionUserId, created, entityType, cursor, limit } = input;
 
     // Determine which tables to query
-    const tablesToQuery = entityType !== undefined
-      ? [{ entityType }]
-      : [...ALL_AUDIT_TABLES];
+    const tablesToQuery =
+      entityType !== undefined ? [{ entityType }] : [...ALL_AUDIT_TABLES];
 
     const tableQueries = tablesToQuery.map(({ entityType: et }) => {
       const tableName = getTableNameString(et);
-      const userCondition = actionUserId !== null
-        ? sql`a.action_user_id = ${actionUserId}`
-        : sql`a.action_user_id IS NULL`;
+      const userCondition =
+        actionUserId !== null
+          ? sql`a.action_user_id = ${actionUserId}`
+          : sql`a.action_user_id IS NULL`;
 
       const conditions = [
         userCondition,
@@ -1121,7 +1318,10 @@ export const getEventDetails = publicProcedure
       );
       normalizedChangesList.push(changes);
       const ids = extractUserIdsFromChanges(
-        changes as Record<string, { originalValue?: unknown; newValue?: unknown }> | null
+        changes as Record<
+          string,
+          { originalValue?: unknown; newValue?: unknown }
+        > | null
       );
       allRefUserIds.push(...ids);
     }
@@ -1138,7 +1338,9 @@ export const getEventDetails = publicProcedure
     const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
     await Promise.all(
       Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
-        const nameMap = await resolveEntityNames(context.db, et, [...new Set(ids)]);
+        const nameMap = await resolveEntityNames(context.db, et, [
+          ...new Set(ids),
+        ]);
         entityNameMaps.set(et, nameMap);
       })
     );
@@ -1151,7 +1353,10 @@ export const getEventDetails = publicProcedure
       let referencedUsers: Record<string, ReferencedUser> | undefined;
       if (changes) {
         const userIds = extractUserIdsFromChanges(
-          changes as Record<string, { originalValue?: unknown; newValue?: unknown }>
+          changes as Record<
+            string,
+            { originalValue?: unknown; newValue?: unknown }
+          >
         );
         if (userIds.length > 0) {
           referencedUsers = {};
@@ -1355,7 +1560,7 @@ export const listAuditAdminUsers = publicProcedure
 // Procedure 6: Get parent matchId for game/score entities
 // ---------------------------------------------------------------------------
 
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const EntityParentInputSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),

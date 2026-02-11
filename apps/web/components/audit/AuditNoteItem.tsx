@@ -11,7 +11,7 @@ export default function AuditNoteItem({
   return (
     <div
       id={`note-${note.id}`}
-      className="border-border border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/10 group border-b border-l-2 px-3 py-2.5 transition-colors hover:bg-amber-50/50 dark:hover:bg-amber-900/20"
+      className="border-border group border-b border-l-2 border-l-amber-400 bg-amber-50/30 px-3 py-2.5 transition-colors hover:bg-amber-50/50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
     >
       {/* Header row */}
       <div className="flex items-center gap-2">
@@ -21,12 +21,18 @@ export default function AuditNoteItem({
         </span>
         <span className="text-muted-foreground text-xs">&middot;</span>
         {note.adminUser ? (
-          <Link
-            href={`/players/${note.adminUser.playerId}`}
-            className="text-primary text-sm hover:underline"
-          >
-            {note.adminUser.username ?? `User ${note.adminUser.id}`}
-          </Link>
+          note.adminUser.playerId ? (
+            <Link
+              href={`/players/${note.adminUser.playerId}`}
+              className="text-primary text-sm hover:underline"
+            >
+              {note.adminUser.username ?? `User ${note.adminUser.id}`}
+            </Link>
+          ) : (
+            <span className="text-foreground text-sm">
+              {note.adminUser.username ?? `User ${note.adminUser.id}`}
+            </span>
+          )
         ) : (
           <span className="text-muted-foreground text-sm italic">Unknown</span>
         )}

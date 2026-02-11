@@ -27,14 +27,8 @@ export default async function ScoreAuditPage({ params }: PageProps) {
 
   return (
     <>
-      <AuditPageHeader
-        entityType={AuditEntityType.Score}
-        entityId={id}
-      />
-      <AuditEntityTimeline
-        entityType={AuditEntityType.Score}
-        entityId={id}
-      />
+      <AuditPageHeader entityType={AuditEntityType.Score} entityId={id} />
+      <AuditEntityTimeline entityType={AuditEntityType.Score} entityId={id} />
     </>
   );
 }
