@@ -48,6 +48,12 @@ function entityTypeToSlug(entityType: AuditEntityType): string {
   }
 }
 
+// --- Self-describing actions (field labels are redundant) ---
+
+const SELF_DESCRIBING_ACTIONS = new Set<AuditEventAction>([
+  'verification', 'rejection', 'pre_verification', 'pre_rejection',
+]);
+
 // --- Action display config ---
 
 const ACTION_LABELS: Record<AuditEventAction, string> = {
@@ -164,7 +170,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
         {' '}{topEntity.count} {entityPlural}
         {parentContext}
-        {action !== 'deletion' && fieldLabels.length > 0 && (
+        {!SELF_DESCRIBING_ACTIONS.has(action) && action !== 'deletion' && fieldLabels.length > 0 && (
           <span className="text-muted-foreground">
             {' '}({fieldLabels.join(', ')})
           </span>
@@ -197,7 +203,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
       {' '}{entityLabel} {entityLink}
       {parentContext}
-      {action !== 'deletion' && fieldLabels.length > 0 && (
+      {!SELF_DESCRIBING_ACTIONS.has(action) && action !== 'deletion' && fieldLabels.length > 0 && (
         <span className="text-muted-foreground">
           {' '}({fieldLabels.join(', ')})
         </span>

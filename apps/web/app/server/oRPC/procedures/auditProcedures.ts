@@ -37,6 +37,7 @@ import {
   getImmediateChildType,
   buildChildSummary,
   type GroupedAuditRow,
+  type AssembledEvent,
 } from './audit/helpers';
 
 // ---------------------------------------------------------------------------
@@ -1016,9 +1017,12 @@ export const getAuditEventFeed = publicProcedure
       };
     });
 
+    // Use earliestCreated for cursor to avoid pagination duplicates
+    // when system events have been aggregated across multiple timestamps
+    const lastAssembled = assembledEvents[assembledEvents.length - 1] as AssembledEvent | undefined;
     const nextCursor =
-      hasMore && events.length > 0
-        ? events[events.length - 1].created
+      hasMore && lastAssembled
+        ? (lastAssembled.earliestCreated ?? lastAssembled.created)
         : null;
 
     return { events, nextCursor, hasMore };

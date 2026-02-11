@@ -6,10 +6,10 @@ import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import type { AuditEvent } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEventCard from './AuditEventCard';
+import AuditFilterBar, { type FilterState } from './AuditFilterBar';
 
 type EventFeedResponse = {
   events: AuditEvent[];
@@ -46,21 +46,25 @@ function EmptyState(): React.JSX.Element {
 
 export default function AuditEventFeed(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const [showSystem, setShowSystem] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    entityTypes: [],
+    fieldsChanged: [],
+    showSystem: false,
+  });
 
-  // Build a stable filter hash from URL search params for cache keying
-  const filterHash = useMemo(
-    () => searchParams.toString(),
-    [searchParams]
+  // Build a stable filter hash from URL search params + filter state for cache keying
+  const filterKey = useMemo(
+    () => `${searchParams.toString()}:${JSON.stringify(filters)}`,
+    [searchParams, filters]
   );
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: EventFeedResponse | null) => {
       if (previousPageData && !previousPageData.hasMore) return null;
       const cursor = previousPageData?.nextCursor ?? null;
-      return ['audit-events', cursor, filterHash, showSystem] as const;
+      return ['audit-events', cursor, filterKey] as const;
     },
-    [filterHash, showSystem]
+    [filterKey]
   );
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
@@ -69,7 +73,9 @@ export default function AuditEventFeed(): React.JSX.Element {
       orpc.audit.events({
         limit: 30,
         cursor: cursor ?? undefined,
-        showSystem: showSystem || undefined,
+        showSystem: filters.showSystem || undefined,
+        entityTypes: filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
+        fieldsChanged: filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
       }),
     {
       revalidateFirstPage: false,
@@ -87,21 +93,7 @@ export default function AuditEventFeed(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Minimal filter bar */}
-      {/* TODO: Full filter bar will be designed with frontend-design skill */}
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="show-system"
-          checked={showSystem}
-          onCheckedChange={(checked) => setShowSystem(checked === true)}
-        />
-        <label
-          htmlFor="show-system"
-          className="text-muted-foreground cursor-pointer text-sm"
-        >
-          Show system events
-        </label>
-      </div>
+      <AuditFilterBar filters={filters} onChange={setFilters} />
 
       {/* Event list */}
       {isLoading ? (

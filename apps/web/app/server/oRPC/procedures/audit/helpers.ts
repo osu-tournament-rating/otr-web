@@ -352,23 +352,13 @@ export function extractChangedFields(
   return Object.keys(sampleChanges).sort();
 }
 
-/**
- * Assemble grouped rows from multiple audit tables into audit events.
- *
- * Groups rows by (actionUserId, created) — entries sharing these values
- * came from the same PostgreSQL transaction (cascade operations).
- *
- * For each group:
- * 1. Identifies the top-level entity by hierarchy (lowest enum = highest in hierarchy)
- * 2. Classifies the action from the top-level entity's changes
- * 3. Computes one-sublevel child count
- */
-export function assembleEvents(
-  rows: GroupedAuditRow[]
-): {
+/** Assembled event type returned by assembleEvents() */
+export type AssembledEvent = {
   action: AuditEventAction;
   actionUserId: number | null;
   created: string;
+  /** Earliest timestamp in this group (for cursor-safe pagination of aggregated system events) */
+  earliestCreated?: string;
   isSystem: boolean;
   topEntityType: AuditEntityType;
   topEntityId: number;
@@ -379,11 +369,30 @@ export function assembleEvents(
   parentEntityId: number | null;
   changedFields: string[];
   sampleChanges: Record<string, unknown> | null;
-}[] {
-  // Group by (actionUserId, created) — same transaction
+};
+
+/**
+ * Assemble grouped rows from multiple audit tables into audit events.
+ *
+ * Groups rows by (actionUserId, created, actionType) — entries sharing these values
+ * came from the same PostgreSQL transaction (cascade operations).
+ *
+ * For each group:
+ * 1. Identifies the top-level entity by hierarchy (lowest enum = highest in hierarchy)
+ * 2. Classifies the action from the top-level entity's changes
+ * 3. Computes one-sublevel child count
+ *
+ * System events (actionUserId=null) are further aggregated by
+ * (parentEntityId, classifiedAction, hourBucket) to collapse per-match
+ * rows into summary events.
+ */
+export function assembleEvents(
+  rows: GroupedAuditRow[]
+): AssembledEvent[] {
+  // Group by (actionUserId, created, actionType) — same transaction
   const eventMap = new Map<string, GroupedAuditRow[]>();
   for (const row of rows) {
-    const key = `${row.actionUserId}:${row.created}`;
+    const key = `${row.actionUserId}:${row.created}:${row.actionType}`;
     const existing = eventMap.get(key);
     if (existing) {
       existing.push(row);
@@ -392,7 +401,7 @@ export function assembleEvents(
     }
   }
 
-  const events: ReturnType<typeof assembleEvents> = [];
+  const events: AssembledEvent[] = [];
 
   for (const [, groupRows] of eventMap) {
     // Sort by entity hierarchy: Tournament(0) < Match(1) < Game(2) < Score(3)
@@ -435,12 +444,71 @@ export function assembleEvents(
     });
   }
 
+  // --- Post-processing: aggregate system events ---
+  // System events are processed individually per entity, each with a unique
+  // timestamp. Re-group them by (parentEntityId, action, hourBucket) to
+  // produce summary rows like "System pre-verified N matches in Tournament X".
+  const systemEvents: AssembledEvent[] = [];
+  const adminEvents: AssembledEvent[] = [];
+
+  for (const event of events) {
+    if (event.isSystem) {
+      systemEvents.push(event);
+    } else {
+      adminEvents.push(event);
+    }
+  }
+
+  const aggregatedSystem: AssembledEvent[] = [];
+  if (systemEvents.length > 0) {
+    const systemGroupMap = new Map<string, AssembledEvent[]>();
+    for (const event of systemEvents) {
+      const hourBucket = Math.floor(new Date(event.created).getTime() / 3600000);
+      const key = `${event.parentEntityId}:${event.action}:${hourBucket}`;
+      const existing = systemGroupMap.get(key);
+      if (existing) {
+        existing.push(event);
+      } else {
+        systemGroupMap.set(key, [event]);
+      }
+    }
+
+    for (const [, group] of systemGroupMap) {
+      if (group.length === 1) {
+        aggregatedSystem.push(group[0]!);
+        continue;
+      }
+
+      // Sort by timestamp descending to pick the latest as the display timestamp
+      group.sort(
+        (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+      );
+
+      const latest = group[0]!;
+      const earliest = group[group.length - 1]!;
+
+      // Sum topEntityCount across all events in the group
+      let totalCount = 0;
+      for (const e of group) {
+        totalCount += e.topEntityCount;
+      }
+
+      aggregatedSystem.push({
+        ...latest,
+        topEntityCount: totalCount,
+        earliestCreated: earliest.created,
+      });
+    }
+  }
+
+  const allEvents = [...adminEvents, ...aggregatedSystem];
+
   // Sort by timestamp descending
-  events.sort(
+  allEvents.sort(
     (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
   );
 
-  return events;
+  return allEvents;
 }
 
 /**
