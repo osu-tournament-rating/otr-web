@@ -7,6 +7,13 @@ import {
   FileText,
   ClipboardCheck,
   Filter,
+  CheckCircle2,
+  XCircle,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  ListFilter,
+  Download,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -15,6 +22,7 @@ import { toast } from 'sonner';
 import { ORPCError } from '@orpc/client';
 import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import StatCard from '@/components/shared/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -85,6 +93,12 @@ export function FilterReportView() {
     }
   };
 
+  const handleNewLookup = () => {
+    setReport(null);
+    setResults(null);
+    form.reset();
+  };
+
   const handleDownloadCSV = () => {
     if (!results) return;
 
@@ -94,9 +108,6 @@ export function FilterReportView() {
       'Player ID',
       'Status',
       'Rating',
-      'Peak Rating',
-      'Tournaments Played',
-      'Matches Played',
       'Failure Reasons',
     ];
 
@@ -106,11 +117,6 @@ export function FilterReportView() {
       player.playerId?.toString() || 'N/A',
       player.isSuccess ? 'Passed' : 'Failed',
       player.currentRating != null ? player.currentRating.toFixed(2) : 'N/A',
-      player.peakRating != null ? player.peakRating.toFixed(2) : 'N/A',
-      player.tournamentsPlayed != null
-        ? player.tournamentsPlayed.toString()
-        : 'N/A',
-      player.matchesPlayed != null ? player.matchesPlayed.toString() : 'N/A',
       getFailureReasons(player.failureReason ?? undefined).join(', '),
     ]);
 
@@ -121,248 +127,229 @@ export function FilterReportView() {
     );
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="text-primary size-6" />
-            Filter Report Lookup
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col gap-4 sm:flex-row"
-            >
-              <FormField
-                control={form.control}
-                name="reportId"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Report ID</FormLabel>
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <Input
-                          placeholder="Enter report ID"
-                          type="text"
-                          {...field}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        aria-label="Load filter report"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Search className="size-4" />
-                        )}
-                        <span className="ml-2">Load Report</span>
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+  const hasReport = report && results;
 
-      {report && results && (
+  return (
+    <div className="flex flex-col gap-4 md:gap-2">
+      {/* Search Card — hero style when empty, compact when loaded */}
+      {!hasReport ? (
         <Card>
-          {/* Report Header */}
-          <CardHeader>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-2xl">
-                  <ClipboardCheck className="text-primary size-6" />
-                  Filter Report #{report.id}
-                </CardTitle>
+          <CardContent className="py-8 sm:py-12">
+            <div className="mx-auto flex max-w-md flex-col items-center gap-4">
+              <div className="bg-muted/50 flex h-16 w-16 items-center justify-center rounded-full">
+                <FileText className="text-primary h-8 w-8" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-xl font-semibold">
+                  Look Up a Filter Report
+                </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Generated on{' '}
-                  {new Date(report.created).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  Enter a report ID to view detailed filtering results for
+                  tournament participants.
                 </p>
               </div>
-              <div className="bg-muted/50 flex gap-3 rounded-lg p-3 sm:gap-4">
-                <div className="flex-1 text-center sm:flex-initial sm:px-2">
-                  <p className="text-xl font-bold text-green-600 sm:text-2xl dark:text-green-500">
-                    {results.playersPassed}
-                  </p>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider">
-                    Passed
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+                  <FormField
+                    control={form.control}
+                    name="reportId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Report ID</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input
+                              placeholder="Enter report ID"
+                              type="text"
+                              {...field}
+                              disabled={isLoading}
+                            />
+                          </FormControl>
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            aria-label="Load filter report"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Search className="size-4" />
+                            )}
+                            <span className="ml-2">Load Report</span>
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Report Header Card — hero card with identity + stats */}
+          <Card className="p-6">
+            {/* Identity section */}
+            <div className="bg-popover flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-muted/50 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
+                  <ClipboardCheck className="text-primary h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-medium">
+                    Filter Report #{report.id}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    Generated on{' '}
+                    {new Date(report.created).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </p>
                 </div>
-                <div className="bg-border h-auto w-px" />
-                <div className="flex-1 text-center sm:flex-initial sm:px-2">
-                  <p className="text-xl font-bold text-red-600 sm:text-2xl dark:text-red-500">
-                    {results.playersFailed}
-                  </p>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider">
-                    Failed
-                  </p>
-                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadCSV}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="size-4" />
+                  Download CSV
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleNewLookup}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="size-4" />
+                  New Lookup
+                </Button>
               </div>
             </div>
-          </CardHeader>
 
-          <CardContent className="space-y-6">
-            {/* Filter Criteria Section */}
-            {report.request && (
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-base font-semibold">
-                    <Filter className="text-muted-foreground size-4" />
+            {/* Stats grid */}
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+              <StatCard
+                icon={
+                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
+                }
+                label="Passed"
+                value={results.playersPassed}
+                valueClassName="text-green-600 dark:text-green-500"
+              />
+              <StatCard
+                icon={
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-500" />
+                }
+                label="Failed"
+                value={results.playersFailed}
+                valueClassName="text-red-600 dark:text-red-500"
+              />
+              <StatCard
+                icon={<Users className="text-primary h-5 w-5" />}
+                label="Total Players"
+                value={results.filteringResults.length}
+              />
+              {report.request && (
+                <StatCard
+                  icon={
+                    <RulesetIcon
+                      ruleset={report.request.ruleset}
+                      className="fill-primary size-5"
+                    />
+                  }
+                  label="Ruleset"
+                  value={
+                    RulesetEnumHelper.metadata[report.request.ruleset].text
+                  }
+                />
+              )}
+            </div>
+          </Card>
+
+          {/* Filter Criteria Card */}
+          {report.request && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Filter className="text-primary h-6 w-6" />
+                  <CardTitle className="text-xl font-bold">
                     Filter Criteria
-                  </h3>
-                  <span className="text-muted-foreground text-sm">
-                    {report.request.osuPlayerIds.length}{' '}
-                    {report.request.osuPlayerIds.length === 1
-                      ? 'player'
-                      : 'players'}{' '}
-                    checked
-                  </span>
+                  </CardTitle>
                 </div>
-                <div className="bg-muted/30 grid grid-cols-1 gap-3 rounded-lg p-4 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  <div className="sm:col-span-2 md:col-span-1">
-                    <span className="text-muted-foreground text-xs">
-                      Ruleset
-                    </span>
-                    <p className="mt-0.5 flex items-center gap-1.5 font-medium">
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  <StatCard
+                    icon={
                       <RulesetIcon
                         ruleset={report.request.ruleset}
-                        className="fill-primary size-4"
+                        className="fill-primary size-5"
                       />
-                      <span>
-                        {
-                          RulesetEnumHelper.metadata[report.request.ruleset]
-                            .text
-                        }
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Rating
-                    </span>
-                    <p
-                      className={
-                        report.request.minRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.minRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max Rating
-                    </span>
-                    <p
-                      className={
-                        report.request.maxRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Peak Rating Limit
-                    </span>
-                    <p
-                      className={
-                        report.request.peakRating
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.peakRating ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Tournaments
-                    </span>
-                    <p
-                      className={
-                        report.request.tournamentsPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.tournamentsPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Min. Matches
-                    </span>
-                    <p
-                      className={
-                        report.request.matchesPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.matchesPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max. Tournaments
-                    </span>
-                    <p
-                      className={
-                        report.request.maxTournamentsPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxTournamentsPlayed ?? '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      Max. Matches
-                    </span>
-                    <p
-                      className={
-                        report.request.maxMatchesPlayed
-                          ? 'mt-0.5 font-medium'
-                          : 'text-muted-foreground/60 mt-0.5 text-sm'
-                      }
-                    >
-                      {report.request.maxMatchesPlayed ?? '—'}
-                    </p>
-                  </div>
+                    }
+                    label="Ruleset"
+                    value={
+                      RulesetEnumHelper.metadata[report.request.ruleset].text
+                    }
+                  />
+                  <StatCard
+                    icon={<TrendingUp className="text-primary h-5 w-5" />}
+                    label="Min. Rating"
+                    value={report.request.minRating ?? 'Not set'}
+                    valueClassName={
+                      !report.request.minRating
+                        ? 'text-muted-foreground'
+                        : undefined
+                    }
+                  />
+                  <StatCard
+                    icon={<TrendingDown className="text-primary h-5 w-5" />}
+                    label="Max Rating"
+                    value={report.request.maxRating ?? 'Not set'}
+                    valueClassName={
+                      !report.request.maxRating
+                        ? 'text-muted-foreground'
+                        : undefined
+                    }
+                  />
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Results Table Section */}
-            <div>
+          {/* Results Table Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ListFilter className="text-primary h-6 w-6" />
+                  <CardTitle className="text-xl font-bold">Results</CardTitle>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadCSV}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="size-4" />
+                  Download CSV
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
               <FilteringResultsTable
                 results={results}
                 onDownloadCSV={handleDownloadCSV}
                 hideCard
               />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
