@@ -166,23 +166,6 @@ export default function FilteringResultsTable({
           </div>
         </div>
       )}
-      {hideCard && (
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-base font-semibold">
-            <ListFilter className="text-muted-foreground size-4" />
-            Results
-          </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onDownloadCSV}
-            className="flex items-center gap-2"
-          >
-            <Download className="size-4" />
-            Download CSV
-          </Button>
-        </div>
-      )}
 
       {safeData.length === 0 ? (
         <div className="text-muted-foreground py-8 text-center">
