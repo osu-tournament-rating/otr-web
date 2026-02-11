@@ -149,10 +149,7 @@ export function FilterReportView() {
                 </p>
               </div>
               <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="w-full"
-                >
+                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
                   <FormField
                     control={form.control}
                     name="reportId"
