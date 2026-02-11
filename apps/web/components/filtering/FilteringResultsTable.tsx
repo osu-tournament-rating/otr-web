@@ -241,16 +241,17 @@ export default function FilteringResultsTable({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => {
+              {table.getRowModel().rows.map((row, index) => {
                 const isFailed = row.original?.isSuccess === false;
                 return (
                   <TableRow
                     key={row.id}
                     className={cn(
-                      'transition-colors duration-200',
                       isFailed
                         ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/30'
-                        : 'hover:bg-muted/50'
+                        : index % 2 === 0
+                          ? 'bg-background/50'
+                          : 'bg-muted/10'
                     )}
                   >
                     {row.getVisibleCells().map((cell) => {
