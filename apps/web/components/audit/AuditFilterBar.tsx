@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { AuditEntityType } from '@otr/core/osu';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import { AuditEntityTypeEnumHelper } from '@/lib/enums';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   getFieldOptionsWithEntityType,
   parseFieldOptionValue,
@@ -34,10 +35,23 @@ const ALL_ENTITY_TYPES = [
   AuditEntityType.Score,
 ] as const;
 
+const ALL_ACTION_TYPES = [
+  AuditActionType.Created,
+  AuditActionType.Updated,
+  AuditActionType.Deleted,
+] as const;
+
+const ACTION_TYPE_LABELS: Record<AuditActionType, string> = {
+  [AuditActionType.Created]: 'Created',
+  [AuditActionType.Updated]: 'Updated',
+  [AuditActionType.Deleted]: 'Deleted',
+};
+
 export type FilterState = {
   entityTypes: AuditEntityType[];
   fieldsChanged: { entityType: AuditEntityType; fieldName: string }[];
   showSystem: boolean;
+  actionTypes: AuditActionType[];
 };
 
 type AuditFilterBarProps = {
@@ -183,6 +197,7 @@ function FieldSelect({
 
 export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProps): React.JSX.Element {
   const hasActiveFilters = filters.entityTypes.length > 0 || filters.fieldsChanged.length > 0;
+  const hasFieldFilters = filters.fieldsChanged.length > 0;
 
   const handleEntityTypesChange = (entityTypes: AuditEntityType[]) => {
     // Prune field selections that no longer match selected entity types
@@ -194,8 +209,41 @@ export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProp
     onChange({ ...filters, entityTypes, fieldsChanged: prunedFields });
   };
 
+  const handleActionTypesChange = (values: string[]) => {
+    // Prevent deselecting all — at least one must remain
+    if (values.length === 0) return;
+    onChange({
+      ...filters,
+      actionTypes: values.map(Number) as AuditActionType[],
+    });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <ToggleGroup
+        type="multiple"
+        variant="outline"
+        size="sm"
+        value={
+          hasFieldFilters
+            ? [String(AuditActionType.Updated)]
+            : filters.actionTypes.map(String)
+        }
+        onValueChange={hasFieldFilters ? undefined : handleActionTypesChange}
+        disabled={hasFieldFilters}
+        className={cn(hasFieldFilters && 'opacity-50')}
+      >
+        {ALL_ACTION_TYPES.map((at) => (
+          <ToggleGroupItem
+            key={at}
+            value={String(at)}
+            className="h-8 px-2.5 text-xs"
+          >
+            {ACTION_TYPE_LABELS[at]}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+
       <EntityTypeSelect
         selected={filters.entityTypes}
         onChange={handleEntityTypesChange}

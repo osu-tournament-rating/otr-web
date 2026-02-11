@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
+import { AuditActionType } from '@otr/core/osu';
 import type { AuditEvent } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,6 +51,7 @@ export default function AuditEventFeed(): React.JSX.Element {
     entityTypes: [],
     fieldsChanged: [],
     showSystem: false,
+    actionTypes: [AuditActionType.Created, AuditActionType.Updated, AuditActionType.Deleted],
   });
 
   // Build a stable filter hash from URL search params + filter state for cache keying
@@ -73,9 +75,12 @@ export default function AuditEventFeed(): React.JSX.Element {
       orpc.audit.events({
         limit: 30,
         cursor: cursor ?? undefined,
-        showSystem: filters.showSystem || undefined,
+        showSystem: filters.showSystem ? true : undefined,
         entityTypes: filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
         fieldsChanged: filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
+        actionTypes: filters.fieldsChanged.length > 0
+          ? [AuditActionType.Updated]
+          : (filters.actionTypes.length === 3 ? undefined : filters.actionTypes),
       }),
     {
       revalidateFirstPage: false,

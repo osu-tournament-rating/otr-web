@@ -48,10 +48,12 @@ function entityTypeToSlug(entityType: AuditEntityType): string {
   }
 }
 
-// --- Self-describing actions (field labels are redundant) ---
+// --- Actions where inline field labels are suppressed ---
+// Self-describing (verification/rejection) + submission (created) + deletion
 
-const SELF_DESCRIBING_ACTIONS = new Set<AuditEventAction>([
+const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'verification', 'rejection', 'pre_verification', 'pre_rejection',
+  'submission', 'deletion',
 ]);
 
 // --- Action display config ---
@@ -170,9 +172,11 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
         {' '}{topEntity.count} {entityPlural}
         {parentContext}
-        {!SELF_DESCRIBING_ACTIONS.has(action) && action !== 'deletion' && fieldLabels.length > 0 && (
+        {!FIELD_SUPPRESSED_ACTIONS.has(action) && fieldLabels.length > 0 && (
           <span className="text-muted-foreground">
-            {' '}({fieldLabels.join(', ')})
+            {fieldLabels.length > 3
+              ? ` (${fieldLabels.length} fields)`
+              : ` (${fieldLabels.join(', ')})`}
           </span>
         )}
       </>
@@ -203,9 +207,11 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>
       {' '}{entityLabel} {entityLink}
       {parentContext}
-      {!SELF_DESCRIBING_ACTIONS.has(action) && action !== 'deletion' && fieldLabels.length > 0 && (
+      {!FIELD_SUPPRESSED_ACTIONS.has(action) && fieldLabels.length > 0 && (
         <span className="text-muted-foreground">
-          {' '}({fieldLabels.join(', ')})
+          {fieldLabels.length > 3
+            ? ` (${fieldLabels.length} fields)`
+            : ` (${fieldLabels.join(', ')})`}
         </span>
       )}
     </>
