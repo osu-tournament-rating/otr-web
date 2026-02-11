@@ -191,7 +191,7 @@ export default function FilteringResultsTable({
       ) : (
         <div
           className={cn(
-            'overflow-x-auto rounded-lg border',
+            'w-fit max-w-full overflow-x-auto rounded-lg border [&_[data-slot=table-container]]:w-fit [&_table]:w-auto',
             hideCard && 'bg-background'
           )}
         >
