@@ -9,7 +9,7 @@ export function useSearch(query: string) {
   return useSWR<SearchResponse | undefined, Error, [string, string]>(
     ['search', query],
     async ([, searchQuery]: [string, string]) => {
-      if (!searchQuery || searchQuery.trim() === '') {
+      if (!searchQuery || searchQuery.trim().length < 2) {
         return undefined;
       }
 
