@@ -123,7 +123,7 @@ type FormSectionProps = {
 };
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
-  <div className="space-y-4 sm:space-y-6">
+  <div className="space-y-3 sm:space-y-4">
     <div className="border-border flex items-center gap-2 rounded-md border-b pb-2 sm:gap-3 sm:pb-3">
       {icon}
       <h3 className="text-foreground text-lg font-semibold sm:text-xl">
@@ -296,7 +296,7 @@ export default function FilteringForm({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
+            className="space-y-4 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-6 lg:px-8"
           >
             <FormSection
               icon={<Settings className="text-primary size-6" />}
