@@ -105,7 +105,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   if (isCascade && childLevel) {
     const childPlural = ENTITY_TYPE_PLURALS[childLevel.entityType];
     const countDisplay =
-      childLevel.totalCount && childLevel.affectedCount !== childLevel.totalCount
+      childLevel.totalCount && childLevel.affectedCount < childLevel.totalCount
         ? `${childLevel.affectedCount} of ${childLevel.totalCount} ${childPlural}`
         : null;
 
