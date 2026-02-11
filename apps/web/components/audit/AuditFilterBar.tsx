@@ -21,7 +21,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   getFieldOptionsWithEntityType,
   parseFieldOptionValue,
@@ -195,9 +194,68 @@ function FieldSelect({
   );
 }
 
+function ActionTypeSelect({
+  selected,
+  onChange,
+}: {
+  selected: AuditActionType[];
+  onChange: (types: AuditActionType[]) => void;
+}) {
+  const toggle = (actionType: AuditActionType) => {
+    if (selected.includes(actionType)) {
+      onChange(selected.filter((t) => t !== actionType));
+    } else {
+      onChange([...selected, actionType]);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-1">
+          Action Type
+          <ChevronsUpDown className="h-3 w-3 opacity-50" />
+          {selected.length > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1 text-[10px]">
+              {selected.length}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-0" align="start">
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              {ALL_ACTION_TYPES.map((at) => {
+                const isSelected = selected.includes(at);
+                return (
+                  <CommandItem
+                    key={at}
+                    onSelect={() => toggle(at)}
+                  >
+                    <Check
+                      className={cn(
+                        'h-3.5 w-3.5',
+                        isSelected ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    {ACTION_TYPE_LABELS[at]}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProps): React.JSX.Element {
-  const hasActiveFilters = filters.entityTypes.length > 0 || filters.fieldsChanged.length > 0;
-  const hasFieldFilters = filters.fieldsChanged.length > 0;
+  const hasActiveFilters =
+    filters.entityTypes.length > 0 ||
+    filters.fieldsChanged.length > 0 ||
+    filters.actionTypes.length > 0;
 
   const handleEntityTypesChange = (entityTypes: AuditEntityType[]) => {
     // Prune field selections that no longer match selected entity types
@@ -209,40 +267,12 @@ export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProp
     onChange({ ...filters, entityTypes, fieldsChanged: prunedFields });
   };
 
-  const handleActionTypesChange = (values: string[]) => {
-    // Prevent deselecting all — at least one must remain
-    if (values.length === 0) return;
-    onChange({
-      ...filters,
-      actionTypes: values.map(Number) as AuditActionType[],
-    });
-  };
-
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <ToggleGroup
-        type="multiple"
-        variant="outline"
-        size="sm"
-        value={
-          hasFieldFilters
-            ? [String(AuditActionType.Updated)]
-            : filters.actionTypes.map(String)
-        }
-        onValueChange={hasFieldFilters ? undefined : handleActionTypesChange}
-        disabled={hasFieldFilters}
-        className={cn(hasFieldFilters && 'opacity-50')}
-      >
-        {ALL_ACTION_TYPES.map((at) => (
-          <ToggleGroupItem
-            key={at}
-            value={String(at)}
-            className="h-8 px-2.5 text-xs"
-          >
-            {ACTION_TYPE_LABELS[at]}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <ActionTypeSelect
+        selected={filters.actionTypes}
+        onChange={(actionTypes) => onChange({ ...filters, actionTypes })}
+      />
 
       <EntityTypeSelect
         selected={filters.entityTypes}
@@ -277,7 +307,7 @@ export default function AuditFilterBar({ filters, onChange }: AuditFilterBarProp
           size="sm"
           className="h-8 gap-1 px-2 text-xs"
           onClick={() =>
-            onChange({ ...filters, entityTypes: [], fieldsChanged: [] })
+            onChange({ ...filters, entityTypes: [], fieldsChanged: [], actionTypes: [] })
           }
         >
           <X className="h-3 w-3" />

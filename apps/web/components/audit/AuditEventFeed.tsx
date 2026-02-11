@@ -51,7 +51,7 @@ export default function AuditEventFeed(): React.JSX.Element {
     entityTypes: [],
     fieldsChanged: [],
     showSystem: false,
-    actionTypes: [AuditActionType.Created, AuditActionType.Updated, AuditActionType.Deleted],
+    actionTypes: [],
   });
 
   // Build a stable filter hash from URL search params + filter state for cache keying
@@ -80,7 +80,7 @@ export default function AuditEventFeed(): React.JSX.Element {
         fieldsChanged: filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
         actionTypes: filters.fieldsChanged.length > 0
           ? [AuditActionType.Updated]
-          : (filters.actionTypes.length === 3 ? undefined : filters.actionTypes),
+          : (filters.actionTypes.length > 0 ? filters.actionTypes : undefined),
       }),
     {
       revalidateFirstPage: false,
