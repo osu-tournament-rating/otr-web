@@ -19,6 +19,7 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
     >
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
         <OsuAvatar
+          data-testid="player-avatar"
           osuId={player.osuId}
           username={player.username}
           size={64}

@@ -6,7 +6,7 @@ import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-interface OsuAvatarProps {
+interface OsuAvatarProps extends React.ComponentProps<typeof Avatar> {
   osuId: number;
   username?: string | null;
   size?: number;
@@ -25,11 +25,12 @@ export function OsuAvatar({
   size = 32,
   className,
   fallback,
+  ...rest
 }: OsuAvatarProps) {
   const [hasError, setHasError] = useState(false);
 
   return (
-    <Avatar className={cn(className)} style={{ width: size, height: size }}>
+    <Avatar className={cn(className)} style={{ width: size, height: size }} {...rest}>
       {hasError ? (
         <AvatarFallback className="size-full">
           {fallback ?? <User className="h-1/2 w-1/2" />}

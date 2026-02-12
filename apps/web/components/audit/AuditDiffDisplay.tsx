@@ -86,16 +86,16 @@ export default function AuditDiffDisplay({
   );
 
   return (
-    <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
-      <span className="text-muted-foreground w-28 shrink-0 font-medium">
+    <div data-testid="audit-diff-row" className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
+      <span data-testid="diff-field-label" className="text-muted-foreground w-28 shrink-0 font-medium">
         {label}
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-600 line-through dark:text-red-400">
+        <span data-testid="diff-old-value" className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-600 line-through dark:text-red-400">
           {oldVal}
         </span>
         <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
-        <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-green-600 dark:text-green-400">
+        <span data-testid="diff-new-value" className="rounded bg-green-500/10 px-1.5 py-0.5 text-green-600 dark:text-green-400">
           {newVal}
         </span>
       </span>

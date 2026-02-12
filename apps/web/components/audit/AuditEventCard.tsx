@@ -328,6 +328,7 @@ export default function AuditEventCard({
 
   return (
     <Collapsible
+      data-testid="audit-event-card"
       open={isOpen}
       onOpenChange={hasExpandableContent ? setIsOpen : undefined}
     >
@@ -363,7 +364,7 @@ export default function AuditEventCard({
             )}
 
             {/* User name + description */}
-            <span className="min-w-0 flex-1">
+            <span data-testid="event-card-description" className="min-w-0 flex-1">
               {event.isSystem ? (
                 <span className="text-muted-foreground mr-1 italic">
                   System
@@ -402,6 +403,7 @@ export default function AuditEventCard({
 
             {/* Timestamp */}
             <RelativeTime
+              data-testid="event-card-timestamp"
               dateString={event.created}
               className="text-muted-foreground shrink-0 text-xs"
             />
@@ -409,7 +411,7 @@ export default function AuditEventCard({
         </CollapsibleTrigger>
 
         {/* Expanded diffs */}
-        <CollapsibleContent>
+        <CollapsibleContent data-testid="event-card-diff">
           {changes && changeCount > 0 && (
             <div className="bg-muted/20 border-border border-t px-3 py-2">
               <div className="flex flex-col gap-1 pl-9">

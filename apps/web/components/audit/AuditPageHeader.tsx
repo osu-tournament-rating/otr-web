@@ -32,10 +32,11 @@ export default function AuditPageHeader({
   const entityHref = getEntityHref(entityType, entityId);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div data-testid="audit-page-header" className="flex flex-col gap-3">
       {/* Breadcrumb */}
-      <nav className="text-muted-foreground flex items-center gap-1 text-sm">
+      <nav data-testid="audit-breadcrumb" className="text-muted-foreground flex items-center gap-1 text-sm">
         <Link
+          data-testid="audit-breadcrumb-link"
           href="/tools/audit-logs"
           className="hover:text-foreground transition-colors"
         >
@@ -49,11 +50,12 @@ export default function AuditPageHeader({
 
       {/* Title row */}
       <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold sm:text-2xl">
+        <h1 data-testid="audit-entity-title" className="text-xl font-bold sm:text-2xl">
           {entityMeta.text} #{entityId}
         </h1>
         {entityHref && (
           <Link
+            data-testid="audit-view-entity-link"
             href={entityHref}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
           >

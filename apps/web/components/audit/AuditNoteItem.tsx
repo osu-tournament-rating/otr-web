@@ -10,6 +10,7 @@ export default function AuditNoteItem({
 }): React.JSX.Element {
   return (
     <div
+      data-testid="audit-note-item"
       id={`note-${note.id}`}
       className="border-border group border-b border-l-2 border-l-amber-400 bg-amber-50/30 px-3 py-2.5 transition-colors hover:bg-amber-50/50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
     >

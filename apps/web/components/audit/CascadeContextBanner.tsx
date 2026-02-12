@@ -36,7 +36,7 @@ export default function CascadeContextBanner({
   const actionLabel = ACTION_LABELS[context.action];
 
   return (
-    <div className="flex items-start gap-2 rounded border-l-2 border-l-blue-400 bg-blue-50/50 px-3 py-2 text-xs dark:bg-blue-900/10">
+    <div data-testid="cascade-context-banner" className="flex items-start gap-2 rounded border-l-2 border-l-blue-400 bg-blue-50/50 px-3 py-2 text-xs dark:bg-blue-900/10">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
       <span className="text-muted-foreground">
         Part of{' '}

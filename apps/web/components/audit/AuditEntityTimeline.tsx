@@ -67,7 +67,7 @@ const ACTION_BADGE_COLORS: Record<AuditActionType, string> = {
 
 function LoadingSkeleton(): React.JSX.Element {
   return (
-    <div className="border-border divide-border divide-y rounded-lg border">
+    <div data-testid="audit-timeline-loading" className="border-border divide-border divide-y rounded-lg border">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5">
           <Skeleton className="h-4 w-4 rounded-full" />
@@ -83,7 +83,7 @@ function LoadingSkeleton(): React.JSX.Element {
 
 function EmptyState(): React.JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center py-16">
+    <div data-testid="audit-timeline-empty" className="flex flex-col items-center justify-center py-16">
       <ClipboardList className="text-muted-foreground/50 mb-4 h-12 w-12" />
       <h3 className="text-lg font-medium">No audit history found</h3>
       <p className="text-muted-foreground mt-1 text-sm">
@@ -110,7 +110,7 @@ function TimelineAuditEntry({
   const ActionIcon = ACTION_ICONS[entry.actionType];
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible data-testid="timeline-entry" open={isOpen} onOpenChange={setIsOpen}>
       <div
         id={`audit-${entry.id}`}
         className={cn(
@@ -142,6 +142,7 @@ function TimelineAuditEntry({
 
             {/* Action Badge */}
             <Badge
+              data-testid="timeline-action-badge"
               variant="outline"
               className={cn(
                 'shrink-0 text-xs',
@@ -214,7 +215,7 @@ function TimelineAuditEntry({
         </CollapsibleTrigger>
 
         {/* Expanded diffs */}
-        <CollapsibleContent>
+        <CollapsibleContent data-testid="timeline-entry-diff">
           {changes && changeCount > 0 && (
             <div className="bg-muted/20 border-border border-t px-3 py-2">
               <div className="flex flex-col gap-1 pl-7">
@@ -323,9 +324,9 @@ export default function AuditEntityTimeline({
   }
 
   return (
-    <div className="space-y-4">
+    <div data-testid="audit-timeline" className="space-y-4">
       {/* Summary header */}
-      <div className="text-muted-foreground flex items-center gap-2 text-sm">
+      <div data-testid="timeline-summary" className="text-muted-foreground flex items-center gap-2 text-sm">
         <span>
           {totalCount} change{totalCount !== 1 ? 's' : ''}
           {hasMore && '+'}
@@ -341,7 +342,7 @@ export default function AuditEntityTimeline({
       </div>
 
       {/* Timeline entries */}
-      <div className="border-border divide-border divide-y rounded-lg border">
+      <div data-testid="timeline-entry-list" className="border-border divide-border divide-y rounded-lg border">
         {allItems.map((item) => {
           if (item.type === 'audit') {
             return (
@@ -359,6 +360,7 @@ export default function AuditEntityTimeline({
       {hasMore && (
         <div className="flex justify-center pt-2">
           <Button
+            data-testid="timeline-load-more"
             variant="outline"
             size="sm"
             onClick={() => setSize(size + 1)}

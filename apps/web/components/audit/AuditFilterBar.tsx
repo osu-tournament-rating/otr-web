@@ -76,7 +76,7 @@ function EntityTypeSelect({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button data-testid="filter-entity-type" variant="outline" size="sm" className="h-8 gap-1">
           Entity Type
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
@@ -165,7 +165,7 @@ function FieldSelect({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button data-testid="filter-field-updated" variant="outline" size="sm" className="h-8 gap-1">
           Field Updated
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
@@ -221,7 +221,7 @@ function ActionTypeSelect({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button data-testid="filter-action-type" variant="outline" size="sm" className="h-8 gap-1">
           Action Type
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
@@ -279,7 +279,7 @@ export default function AuditFilterBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div data-testid="audit-filter-bar" className="flex flex-wrap items-center gap-2">
       <ActionTypeSelect
         selected={filters.actionTypes}
         onChange={(actionTypes) => onChange({ ...filters, actionTypes })}
@@ -298,6 +298,7 @@ export default function AuditFilterBar({
 
       <div className="flex items-center gap-2">
         <Checkbox
+          data-testid="filter-show-system"
           id="show-system"
           checked={filters.showSystem}
           onCheckedChange={(checked) =>
@@ -314,6 +315,7 @@ export default function AuditFilterBar({
 
       {hasActiveFilters && (
         <Button
+          data-testid="filter-clear"
           variant="ghost"
           size="sm"
           className="h-8 gap-1 px-2 text-xs"
