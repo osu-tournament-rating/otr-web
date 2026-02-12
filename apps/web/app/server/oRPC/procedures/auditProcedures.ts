@@ -5,8 +5,6 @@ import { AuditEntityType, AuditActionType } from '@otr/core/osu';
 import {
   EntityAuditInputSchema,
   EntityTimelineResponseSchema,
-  AuditSearchInputSchema,
-  AuditTimelineResponseSchema,
   EventFeedInputSchema,
   EventFeedResponseSchema,
   EventDetailsInputSchema,
@@ -31,13 +29,18 @@ import {
   ALL_AUDIT_TABLES,
   LIGHT_AUDIT_TABLES,
   camelizeChangesKeys,
-  camelToSnake,
   mergeTimelineItems,
-  mergeAuditEntries,
   assembleEvents,
   classifyAction,
   getImmediateChildType,
   buildChildSummary,
+  buildFieldChangeConditions,
+  buildReferencedUsers,
+  extractUserIdsFromChanges,
+  resolveEntityNamesBatched,
+  resolveUserIds,
+  resolveTournamentNames,
+  type ReferencedUser,
   type GroupedAuditRow,
   type AssembledEvent,
 } from './audit/helpers';
@@ -67,67 +70,6 @@ function validateFieldNames(fieldNames: string[]): string[] {
   return fieldNames.filter((name) => SAFE_FIELD_NAME_RE.test(name));
 }
 
-/** Fields in changes that contain user IDs requiring resolution */
-const USER_ID_FIELDS = ['verifiedByUserId', 'submittedByUserId'];
-
-type ReferencedUser = {
-  id: number;
-  playerId: number | null;
-  osuId: number | null;
-  username: string | null;
-};
-
-/** Extract all user IDs from changes that need resolution */
-function extractUserIdsFromChanges(
-  changes: Record<
-    string,
-    { originalValue?: unknown; newValue?: unknown }
-  > | null
-): number[] {
-  if (!changes) return [];
-  const ids: number[] = [];
-  for (const field of USER_ID_FIELDS) {
-    const change = changes[field];
-    if (change) {
-      if (typeof change.originalValue === 'number')
-        ids.push(change.originalValue);
-      if (typeof change.newValue === 'number') ids.push(change.newValue);
-    }
-  }
-  return ids;
-}
-
-/** Resolve user IDs to user info */
-async function resolveUserIds(
-  db: DatabaseClient,
-  userIds: number[]
-): Promise<Map<number, ReferencedUser>> {
-  if (userIds.length === 0) return new Map();
-
-  const uniqueIds = [...new Set(userIds)];
-  const rows = await db
-    .select({
-      userId: schema.users.id,
-      playerId: schema.players.id,
-      osuId: schema.players.osuId,
-      username: schema.players.username,
-    })
-    .from(schema.users)
-    .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
-    .where(inArray(schema.users.id, uniqueIds));
-
-  const map = new Map<number, ReferencedUser>();
-  for (const row of rows) {
-    map.set(row.userId, {
-      id: row.userId,
-      playerId: row.playerId,
-      osuId: row.osuId,
-      username: row.username,
-    });
-  }
-  return map;
-}
-
 function mapAuditRow(
   row: AuditRow,
   entityType: AuditEntityType,
@@ -139,26 +81,9 @@ function mapAuditRow(
       ? precomputedChanges
       : camelizeChangesKeys(row.changes as Record<string, unknown> | null);
 
-  // Build referencedUsers for this entry from the shared user map
-  let referencedUsers: Record<string, ReferencedUser> | undefined;
-  if (userMap && changes) {
-    const userIds = extractUserIdsFromChanges(
-      changes as Record<string, { originalValue?: unknown; newValue?: unknown }>
-    );
-    if (userIds.length > 0) {
-      referencedUsers = {};
-      for (const id of userIds) {
-        const user = userMap.get(id);
-        if (user) {
-          referencedUsers[String(id)] = user;
-        }
-      }
-      // Only include if we found at least one user
-      if (Object.keys(referencedUsers).length === 0) {
-        referencedUsers = undefined;
-      }
-    }
-  }
+  const referencedUsers = userMap
+    ? buildReferencedUsers(changes, userMap)
+    : undefined;
 
   return {
     id: row.id,
@@ -266,37 +191,10 @@ async function queryAuditEntries(
     if (safeFieldNames.length === 0) {
       return [];
     }
-    // OR logic: match if ANY of the specified fields actually changed
-    // DB stores keys in snake_case (triggers) or camelCase (historical), so check both
-    const fieldConditions = safeFieldNames.map((name) => {
-      const snakeName = camelToSnake(name);
-      const sameCase = name === snakeName;
-      const hasKey = sameCase
-        ? sql`${table.changes} ? ${name}`
-        : sql`(${table.changes} ? ${name} OR ${table.changes} ? ${snakeName})`;
-      const valueCheck = sameCase
-        ? sql`(
-            COALESCE(${table.changes}->${name}->>'NewValue', ${table.changes}->${name}->>'newValue')
-            IS DISTINCT FROM
-            COALESCE(${table.changes}->${name}->>'OriginalValue', ${table.changes}->${name}->>'originalValue')
-          )`
-        : sql`(
-            COALESCE(
-              ${table.changes}->${name}->>'NewValue',
-              ${table.changes}->${name}->>'newValue',
-              ${table.changes}->${snakeName}->>'NewValue',
-              ${table.changes}->${snakeName}->>'newValue'
-            )
-            IS DISTINCT FROM
-            COALESCE(
-              ${table.changes}->${name}->>'OriginalValue',
-              ${table.changes}->${name}->>'originalValue',
-              ${table.changes}->${snakeName}->>'OriginalValue',
-              ${table.changes}->${snakeName}->>'originalValue'
-            )
-          )`;
-      return sql`(${hasKey} AND ${valueCheck})`;
-    });
+    const fieldConditions = buildFieldChangeConditions(
+      sql`${table.changes}`,
+      safeFieldNames
+    );
     if (fieldConditions.length === 1) {
       conditions.push(fieldConditions[0]);
     } else {
@@ -380,50 +278,6 @@ function tryParseJsonValue(value: string): unknown {
   if (value === 'false') return false;
   // Return as string
   return value;
-}
-
-/** Resolve entity IDs to names (tournaments and matches have name fields) */
-async function resolveEntityNames(
-  db: DatabaseClient,
-  entityType: AuditEntityType,
-  entityIds: number[]
-): Promise<Map<number, string>> {
-  if (entityIds.length === 0) return new Map();
-
-  if (entityType === AuditEntityType.Tournament) {
-    return resolveTournamentNames(db, entityIds);
-  }
-
-  if (entityType === AuditEntityType.Match) {
-    const rows = await db
-      .select({ id: schema.matches.id, name: schema.matches.name })
-      .from(schema.matches)
-      .where(inArray(schema.matches.id, entityIds));
-    return new Map(rows.map((r) => [r.id, r.name]));
-  }
-
-  // Games and scores don't have name fields
-  return new Map();
-}
-
-/** Resolve tournament IDs to tournament names */
-async function resolveTournamentNames(
-  db: DatabaseClient,
-  tournamentIds: number[]
-): Promise<Map<number, string>> {
-  const rows = await db
-    .select({
-      id: schema.tournaments.id,
-      name: schema.tournaments.name,
-    })
-    .from(schema.tournaments)
-    .where(inArray(schema.tournaments.id, tournamentIds));
-
-  const map = new Map<number, string>();
-  for (const row of rows) {
-    map.set(row.id, row.name);
-  }
-  return map;
 }
 
 // ---------------------------------------------------------------------------
@@ -676,22 +530,12 @@ export const getEntityAuditTimeline = publicProcedure
         }
 
         // Batch entity name resolution
-        const entityIdsByType = new Map<AuditEntityType, number[]>();
-        for (const info of cascadeInfos) {
-          const existing = entityIdsByType.get(info.topEntityType) || [];
-          entityIdsByType.set(info.topEntityType, [
-            ...existing,
-            info.topEntityId,
-          ]);
-        }
-        const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
-        await Promise.all(
-          Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
-            const nameMap = await resolveEntityNames(context.db, et, [
-              ...new Set(ids),
-            ]);
-            entityNameMaps.set(et, nameMap);
-          })
+        const entityNameMaps = await resolveEntityNamesBatched(
+          context.db,
+          cascadeInfos.map((info) => ({
+            entityType: info.topEntityType,
+            entityId: info.topEntityId,
+          }))
         );
 
         // Build cascade context map
@@ -855,36 +699,10 @@ export const getAuditEventFeed = publicProcedure
         ? validateFieldNames(rawFieldNames)
         : undefined;
       if (entityFieldNames && entityFieldNames.length > 0) {
-        const fieldConditions = entityFieldNames.map((name) => {
-          const snakeName = camelToSnake(name);
-          const hasKey =
-            name === snakeName
-              ? sql`a.changes ? ${name}`
-              : sql`(a.changes ? ${name} OR a.changes ? ${snakeName})`;
-          const valueCheck =
-            name === snakeName
-              ? sql`(
-                COALESCE(a.changes->${name}->>'NewValue', a.changes->${name}->>'newValue')
-                IS DISTINCT FROM
-                COALESCE(a.changes->${name}->>'OriginalValue', a.changes->${name}->>'originalValue')
-              )`
-              : sql`(
-                COALESCE(
-                  a.changes->${name}->>'NewValue',
-                  a.changes->${name}->>'newValue',
-                  a.changes->${snakeName}->>'NewValue',
-                  a.changes->${snakeName}->>'newValue'
-                )
-                IS DISTINCT FROM
-                COALESCE(
-                  a.changes->${name}->>'OriginalValue',
-                  a.changes->${name}->>'originalValue',
-                  a.changes->${snakeName}->>'OriginalValue',
-                  a.changes->${snakeName}->>'originalValue'
-                )
-              )`;
-          return sql`(${hasKey} AND ${valueCheck})`;
-        });
+        const fieldConditions = buildFieldChangeConditions(
+          sql.raw('a.changes'),
+          entityFieldNames
+        );
         if (fieldConditions.length === 1) {
           conditions.push(fieldConditions[0]);
         } else {
@@ -971,23 +789,12 @@ export const getAuditEventFeed = publicProcedure
         : new Map<number, string>();
 
     // 3. Resolve entity names for top-level entities (batch per type)
-    const entityIdsByType = new Map<AuditEntityType, number[]>();
-    for (const event of assembledEvents) {
-      const existing = entityIdsByType.get(event.topEntityType) || [];
-      entityIdsByType.set(event.topEntityType, [
-        ...existing,
-        event.topEntityId,
-      ]);
-    }
-
-    const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
-    await Promise.all(
-      Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
-        const nameMap = await resolveEntityNames(context.db, et, [
-          ...new Set(ids),
-        ]);
-        entityNameMaps.set(et, nameMap);
-      })
+    const entityNameMaps = await resolveEntityNamesBatched(
+      context.db,
+      assembledEvents.map((e) => ({
+        entityType: e.topEntityType,
+        entityId: e.topEntityId,
+      }))
     );
 
     // 4. For verification cascades, batch total child counts by entity type
@@ -1135,28 +942,10 @@ export const getAuditEventFeed = publicProcedure
         };
       }
 
-      // Referenced users from sample changes
-      let referencedUsers: Record<string, ReferencedUser> | undefined;
-      if (event.sampleChanges) {
-        const ids = extractUserIdsFromChanges(
-          event.sampleChanges as Record<
-            string,
-            { originalValue?: unknown; newValue?: unknown }
-          >
-        );
-        if (ids.length > 0) {
-          referencedUsers = {};
-          for (const id of ids) {
-            const user = refUserMap.get(id);
-            if (user) {
-              referencedUsers[String(id)] = user;
-            }
-          }
-          if (Object.keys(referencedUsers).length === 0) {
-            referencedUsers = undefined;
-          }
-        }
-      }
+      const referencedUsers = buildReferencedUsers(
+        event.sampleChanges,
+        refUserMap
+      );
 
       return {
         action: event.action,
@@ -1302,49 +1091,19 @@ export const getEventDetails = publicProcedure
     const refUserMap = await resolveUserIds(context.db, allRefUserIds);
 
     // Resolve entity names for tournaments and matches
-    const entityIdsByType = new Map<AuditEntityType, number[]>();
-    for (const row of trimmedRows) {
-      const et = row.entity_type as AuditEntityType;
-      const existing = entityIdsByType.get(et) || [];
-      entityIdsByType.set(et, [...existing, row.reference_id_lock]);
-    }
-
-    const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
-    await Promise.all(
-      Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
-        const nameMap = await resolveEntityNames(context.db, et, [
-          ...new Set(ids),
-        ]);
-        entityNameMaps.set(et, nameMap);
-      })
+    const entityNameMaps = await resolveEntityNamesBatched(
+      context.db,
+      trimmedRows.map((row) => ({
+        entityType: row.entity_type as AuditEntityType,
+        entityId: row.reference_id_lock,
+      }))
     );
 
     const entries: AuditEntry[] = trimmedRows.map((row, i) => {
       const et = row.entity_type as AuditEntityType;
       const changes = normalizedChangesList[i];
 
-      // Build referencedUsers
-      let referencedUsers: Record<string, ReferencedUser> | undefined;
-      if (changes) {
-        const userIds = extractUserIdsFromChanges(
-          changes as Record<
-            string,
-            { originalValue?: unknown; newValue?: unknown }
-          >
-        );
-        if (userIds.length > 0) {
-          referencedUsers = {};
-          for (const id of userIds) {
-            const user = refUserMap.get(id);
-            if (user) {
-              referencedUsers[String(id)] = user;
-            }
-          }
-          if (Object.keys(referencedUsers).length === 0) {
-            referencedUsers = undefined;
-          }
-        }
-      }
+      const referencedUsers = buildReferencedUsers(changes, refUserMap);
 
       const entityNameMap = entityNameMaps.get(et);
 
@@ -1379,102 +1138,7 @@ export const getEventDetails = publicProcedure
   });
 
 // ---------------------------------------------------------------------------
-// Procedure 4: Search audits
-// ---------------------------------------------------------------------------
-
-export const searchAudits = publicProcedure
-  .input(AuditSearchInputSchema)
-  .output(AuditTimelineResponseSchema)
-  .route({
-    summary: 'Search audit entries with filters',
-    tags: ['audit'],
-    method: 'GET',
-    path: '/audit/search',
-  })
-  .handler(async ({ input, context }) => {
-    const {
-      entityTypes,
-      actionTypes,
-      adminOnly,
-      dateFrom,
-      dateTo,
-      adminUserId,
-      fieldsChanged,
-      entityId,
-      changeValue,
-      cursor,
-      limit,
-    } = input;
-
-    // Group field filters by entity type
-    const fieldsByEntityType = new Map<AuditEntityType, string[]>();
-    if (fieldsChanged && fieldsChanged.length > 0) {
-      for (const { entityType, fieldName } of fieldsChanged) {
-        const existing = fieldsByEntityType.get(entityType) || [];
-        fieldsByEntityType.set(entityType, [...existing, fieldName]);
-      }
-    }
-
-    // Determine which entity types to query:
-    // - If fieldsChanged is set, only query entity types that have field filters
-    // - Otherwise, use entityTypes filter or default to all
-    let targetEntityTypes: AuditEntityType[];
-    if (fieldsByEntityType.size > 0) {
-      // Only query entity types that have field filters
-      targetEntityTypes = Array.from(fieldsByEntityType.keys());
-      // If entityTypes filter is also set, intersect them
-      if (entityTypes && entityTypes.length > 0) {
-        targetEntityTypes = targetEntityTypes.filter((et) =>
-          entityTypes.includes(et)
-        );
-      }
-    } else {
-      targetEntityTypes =
-        entityTypes && entityTypes.length > 0
-          ? entityTypes
-          : [
-              AuditEntityType.Tournament,
-              AuditEntityType.Match,
-              AuditEntityType.Game,
-              AuditEntityType.Score,
-            ];
-    }
-
-    const allEntries = await Promise.all(
-      targetEntityTypes.map((entityType) =>
-        queryAuditEntries(context.db, entityType, {
-          cursor,
-          limit: limit + 1,
-          actionUserIdNotNull: adminOnly,
-          actionUserId: adminUserId,
-          actionTypes,
-          dateFrom,
-          dateTo,
-          fieldNames: fieldsByEntityType.get(entityType),
-          entityId,
-          changeValue,
-        })
-      )
-    );
-
-    const merged = mergeAuditEntries(...allEntries);
-    const trimmed = merged.slice(0, limit + 1);
-    const hasMore = trimmed.length > limit;
-    const final = hasMore ? trimmed.slice(0, limit) : trimmed;
-
-    const items = final.map((entry) => ({
-      type: 'audit' as const,
-      data: entry,
-    }));
-
-    const nextCursor =
-      hasMore && final.length > 0 ? final[final.length - 1].id : null;
-
-    return { items, nextCursor, hasMore };
-  });
-
-// ---------------------------------------------------------------------------
-// Procedure 5: List admin users for autocomplete
+// Procedure 4: List admin users for autocomplete
 // ---------------------------------------------------------------------------
 
 export const listAuditAdminUsers = publicProcedure

@@ -231,29 +231,3 @@ export const AuditAdminUsersResponseSchema = z.object({
   users: z.array(AuditAdminUserSchema),
 });
 
-// --- Search Input (kept for backward compatibility) ---
-
-export const AuditSearchInputSchema = CursorPaginationInputSchema.extend({
-  entityTypes: z.array(z.nativeEnum(AuditEntityType)).optional(),
-  actionTypes: z.array(z.nativeEnum(AuditActionType)).optional(),
-  adminOnly: z.boolean().optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  adminUserId: z.number().int().optional(),
-  fieldsChanged: z.array(FieldFilterSchema).optional(),
-  entityId: z.number().int().optional(),
-  changeValue: z.string().optional(),
-});
-
-// --- Legacy search response (kept for searchAudits procedure) ---
-
-export const AuditTimelineResponseSchema = z.object({
-  items: z.array(
-    z.discriminatedUnion('type', [
-      z.object({ type: z.literal('audit'), data: AuditEntrySchema }),
-      z.object({ type: z.literal('note'), data: AuditAdminNoteSchema }),
-    ])
-  ),
-  nextCursor: z.number().int().nullable(),
-  hasMore: z.boolean(),
-});

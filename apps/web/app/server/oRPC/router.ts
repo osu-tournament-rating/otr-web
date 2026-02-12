@@ -99,7 +99,6 @@ import {
   getEntityAuditTimeline,
   getAuditEventFeed,
   getEventDetails,
-  searchAudits,
   listAuditAdminUsers,
   getEntityParentMatchId,
 } from './procedures/auditProcedures';
@@ -209,7 +208,6 @@ export const router = base.router({
     timeline: getEntityAuditTimeline,
     events: getAuditEventFeed,
     eventDetails: getEventDetails,
-    search: searchAudits,
     adminUsers: listAuditAdminUsers,
     entityParent: getEntityParentMatchId,
   },

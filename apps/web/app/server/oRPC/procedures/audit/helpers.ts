@@ -1,3 +1,4 @@
+import { eq, inArray, sql, type SQL } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import {
   AuditActionType,
@@ -13,6 +14,7 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import type { DatabaseClient } from '@/lib/db';
 
 /** Maps AuditEntityType to the corresponding Drizzle audit table */
 export function getAuditTable(entityType: AuditEntityType) {
@@ -222,8 +224,6 @@ export function camelToSnake(s: string): string {
   return s.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
 }
 
-export { entityTypeToSlug } from '@/lib/audit-entity-types';
-export { ENTITY_TYPE_LABELS, ENTITY_TYPE_PLURALS };
 
 // --- Event Assembly ---
 
@@ -302,16 +302,6 @@ export function getImmediateChildType(
     case AuditEntityType.Score:
       return null;
   }
-}
-
-/** Entity type label for display (singular) */
-export function entityTypeLabel(entityType: AuditEntityType): string {
-  return ENTITY_TYPE_LABELS[entityType];
-}
-
-/** Pluralize entity type label */
-export function entityTypeLabelPlural(entityType: AuditEntityType): string {
-  return ENTITY_TYPE_PLURALS[entityType];
 }
 
 /**
@@ -498,11 +488,218 @@ export function buildChildSummary(
 ): string {
   const label =
     affected === 1
-      ? entityTypeLabel(childType)
-      : entityTypeLabelPlural(childType);
+      ? ENTITY_TYPE_LABELS[childType]
+      : ENTITY_TYPE_PLURALS[childType];
 
   if (total !== null && total !== affected) {
     return `also affected ${affected} of ${total} ${label}`;
   }
   return `also affected ${affected} ${label}`;
+}
+
+// ---------------------------------------------------------------------------
+// Shared types & utilities for referenced users
+// ---------------------------------------------------------------------------
+
+/** Fields in changes that contain user IDs requiring resolution */
+export const USER_ID_FIELDS = ['verifiedByUserId', 'submittedByUserId'];
+
+export type ReferencedUser = {
+  id: number;
+  playerId: number | null;
+  osuId: number | null;
+  username: string | null;
+};
+
+/** Extract all user IDs from changes that need resolution */
+export function extractUserIdsFromChanges(
+  changes: Record<
+    string,
+    { originalValue?: unknown; newValue?: unknown }
+  > | null
+): number[] {
+  if (!changes) return [];
+  const ids: number[] = [];
+  for (const field of USER_ID_FIELDS) {
+    const change = changes[field];
+    if (change) {
+      if (typeof change.originalValue === 'number')
+        ids.push(change.originalValue);
+      if (typeof change.newValue === 'number') ids.push(change.newValue);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Build referencedUsers record from changes and a pre-resolved user map.
+ * Returns undefined if no user references found.
+ */
+export function buildReferencedUsers(
+  changes: Record<string, unknown> | null,
+  userMap: Map<number, ReferencedUser>
+): Record<string, ReferencedUser> | undefined {
+  if (!changes) return undefined;
+
+  const userIds = extractUserIdsFromChanges(
+    changes as Record<string, { originalValue?: unknown; newValue?: unknown }>
+  );
+  if (userIds.length === 0) return undefined;
+
+  const result: Record<string, ReferencedUser> = {};
+  for (const id of userIds) {
+    const user = userMap.get(id);
+    if (user) {
+      result[String(id)] = user;
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// SQL field-change condition builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Build SQL conditions that check whether specific fields in a JSONB changes
+ * column actually changed (key exists AND newValue IS DISTINCT FROM originalValue).
+ * Handles both camelCase and snake_case key formats.
+ */
+export function buildFieldChangeConditions(
+  changesExpr: SQL,
+  fieldNames: string[]
+): SQL[] {
+  return fieldNames.map((name) => {
+    const snakeName = camelToSnake(name);
+    const sameCase = name === snakeName;
+    const hasKey = sameCase
+      ? sql`${changesExpr} ? ${name}`
+      : sql`(${changesExpr} ? ${name} OR ${changesExpr} ? ${snakeName})`;
+    const valueCheck = sameCase
+      ? sql`(
+          COALESCE(${changesExpr}->${name}->>'NewValue', ${changesExpr}->${name}->>'newValue')
+          IS DISTINCT FROM
+          COALESCE(${changesExpr}->${name}->>'OriginalValue', ${changesExpr}->${name}->>'originalValue')
+        )`
+      : sql`(
+          COALESCE(
+            ${changesExpr}->${name}->>'NewValue',
+            ${changesExpr}->${name}->>'newValue',
+            ${changesExpr}->${snakeName}->>'NewValue',
+            ${changesExpr}->${snakeName}->>'newValue'
+          )
+          IS DISTINCT FROM
+          COALESCE(
+            ${changesExpr}->${name}->>'OriginalValue',
+            ${changesExpr}->${name}->>'originalValue',
+            ${changesExpr}->${snakeName}->>'OriginalValue',
+            ${changesExpr}->${snakeName}->>'originalValue'
+          )
+        )`;
+    return sql`(${hasKey} AND ${valueCheck})`;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Entity name resolution
+// ---------------------------------------------------------------------------
+
+/** Resolve entity IDs to names (tournaments and matches have name fields) */
+export async function resolveEntityNames(
+  db: DatabaseClient,
+  entityType: AuditEntityType,
+  entityIds: number[]
+): Promise<Map<number, string>> {
+  if (entityIds.length === 0) return new Map();
+
+  if (entityType === AuditEntityType.Tournament) {
+    return resolveTournamentNames(db, entityIds);
+  }
+
+  if (entityType === AuditEntityType.Match) {
+    const rows = await db
+      .select({ id: schema.matches.id, name: schema.matches.name })
+      .from(schema.matches)
+      .where(inArray(schema.matches.id, entityIds));
+    return new Map(rows.map((r) => [r.id, r.name]));
+  }
+
+  // Games and scores don't have name fields
+  return new Map();
+}
+
+/** Resolve tournament IDs to tournament names */
+export async function resolveTournamentNames(
+  db: DatabaseClient,
+  tournamentIds: number[]
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({
+      id: schema.tournaments.id,
+      name: schema.tournaments.name,
+    })
+    .from(schema.tournaments)
+    .where(inArray(schema.tournaments.id, tournamentIds));
+
+  const map = new Map<number, string>();
+  for (const row of rows) {
+    map.set(row.id, row.name);
+  }
+  return map;
+}
+
+/**
+ * Batch-resolve entity names grouped by type.
+ * Collects unique IDs per entity type, queries in parallel.
+ */
+export async function resolveEntityNamesBatched(
+  db: DatabaseClient,
+  entries: { entityType: AuditEntityType; entityId: number }[]
+): Promise<Map<AuditEntityType, Map<number, string>>> {
+  const entityIdsByType = new Map<AuditEntityType, number[]>();
+  for (const { entityType, entityId } of entries) {
+    const existing = entityIdsByType.get(entityType) || [];
+    entityIdsByType.set(entityType, [...existing, entityId]);
+  }
+
+  const entityNameMaps = new Map<AuditEntityType, Map<number, string>>();
+  await Promise.all(
+    Array.from(entityIdsByType.entries()).map(async ([et, ids]) => {
+      const nameMap = await resolveEntityNames(db, et, [...new Set(ids)]);
+      entityNameMaps.set(et, nameMap);
+    })
+  );
+
+  return entityNameMaps;
+}
+
+/** Resolve user IDs to user info */
+export async function resolveUserIds(
+  db: DatabaseClient,
+  userIds: number[]
+): Promise<Map<number, ReferencedUser>> {
+  if (userIds.length === 0) return new Map();
+
+  const uniqueIds = [...new Set(userIds)];
+  const rows = await db
+    .select({
+      userId: schema.users.id,
+      playerId: schema.players.id,
+      osuId: schema.players.osuId,
+      username: schema.players.username,
+    })
+    .from(schema.users)
+    .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
+    .where(inArray(schema.users.id, uniqueIds));
+
+  const map = new Map<number, ReferencedUser>();
+  for (const row of rows) {
+    map.set(row.userId, {
+      id: row.userId,
+      playerId: row.playerId,
+      osuId: row.osuId,
+      username: row.username,
+    });
+  }
+  return map;
 }

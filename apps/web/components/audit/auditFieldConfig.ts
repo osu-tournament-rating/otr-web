@@ -147,19 +147,6 @@ export function getTrackedFields(entityType: AuditEntityType): string[] {
   return Object.keys(auditFieldConfig[entityType]);
 }
 
-/** Get tracked fields scoped to selected entity types */
-export function getTrackedFieldsForTypes(
-  entityTypes: AuditEntityType[]
-): string[] {
-  const fieldSet = new Set<string>();
-  for (const entityType of entityTypes) {
-    for (const field of getTrackedFields(entityType)) {
-      fieldSet.add(field);
-    }
-  }
-  return Array.from(fieldSet).sort();
-}
-
 /** Get field label for a specific entity type and field name */
 export function getFieldLabel(
   entityType: AuditEntityType,

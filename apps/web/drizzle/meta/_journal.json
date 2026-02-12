@@ -120,13 +120,6 @@
       "when": 1768855508043,
       "tag": "0016_even_omega_flight",
       "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1770262857737,
-      "tag": "0017_massive_marvel_zombies",
-      "breakpoints": true
     }
   ]
 }
