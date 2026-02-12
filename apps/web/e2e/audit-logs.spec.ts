@@ -55,15 +55,9 @@ test.describe('Audit Event Feed Page', () => {
       await page.waitForLoadState('networkidle');
 
       await page.locator('[data-testid="filter-action-type"]').click();
-      await expect(
-        page.getByRole('option', { name: 'Created' })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('option', { name: 'Updated' })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('option', { name: 'Deleted' })
-      ).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Created' })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Updated' })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Deleted' })).toBeVisible();
     });
 
     test('entity type popover opens and shows options', async ({ page }) => {
@@ -74,9 +68,7 @@ test.describe('Audit Event Feed Page', () => {
       await expect(
         page.getByRole('option', { name: 'Tournament' })
       ).toBeVisible();
-      await expect(
-        page.getByRole('option', { name: 'Match' })
-      ).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Match' })).toBeVisible();
     });
 
     test('field updated popover opens with search input', async ({ page }) => {
@@ -84,9 +76,7 @@ test.describe('Audit Event Feed Page', () => {
       await page.waitForLoadState('networkidle');
 
       await page.locator('[data-testid="filter-field-updated"]').click();
-      await expect(
-        page.getByPlaceholder('Search fields...')
-      ).toBeVisible();
+      await expect(page.getByPlaceholder('Search fields...')).toBeVisible();
     });
 
     test('show system events checkbox toggles', async ({ page }) => {
@@ -139,7 +129,9 @@ test.describe('Audit Event Feed Page', () => {
       const eventList = page.locator('[data-testid="audit-event-list"]');
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
-      const firstCard = page.locator('[data-testid="audit-event-card"]').first();
+      const firstCard = page
+        .locator('[data-testid="audit-event-card"]')
+        .first();
       await expect(firstCard).toBeVisible();
 
       const description = firstCard.locator(
@@ -164,7 +156,9 @@ test.describe('Audit Event Feed Page', () => {
       // Find an expandable card (one with a chevron indicator)
       const expandableCard = page
         .locator('[data-testid="audit-event-card"]')
-        .filter({ has: page.locator('svg.rotate-90, svg:not(.rotate-90)').first() })
+        .filter({
+          has: page.locator('svg.rotate-90, svg:not(.rotate-90)').first(),
+        })
         .filter({ has: page.locator('button:not([disabled])') })
         .first();
 
@@ -172,9 +166,7 @@ test.describe('Audit Event Feed Page', () => {
         const trigger = expandableCard.locator('button').first();
         await trigger.click();
 
-        const diff = expandableCard.locator(
-          '[data-testid="event-card-diff"]'
-        );
+        const diff = expandableCard.locator('[data-testid="event-card-diff"]');
         await expect(diff).toBeVisible({ timeout: 5000 });
       }
     });
@@ -195,12 +187,13 @@ test.describe('Audit Event Feed Page', () => {
       for (let i = 0; i < cardCount; i++) {
         const card = cards.nth(i);
         const trigger = card.locator('button').first();
-        const isDisabled =
-          (await trigger.getAttribute('disabled')) !== null;
+        const isDisabled = (await trigger.getAttribute('disabled')) !== null;
 
         if (!isDisabled) {
           await trigger.click();
-          const diffRow = card.locator('[data-testid="audit-diff-row"]').first();
+          const diffRow = card
+            .locator('[data-testid="audit-diff-row"]')
+            .first();
           if (await diffRow.isVisible({ timeout: 3000 }).catch(() => false)) {
             await expect(
               diffRow.locator('[data-testid="diff-field-label"]')
@@ -229,7 +222,9 @@ test.describe('Audit Event Feed Page', () => {
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
       // Find an entity link inside the first card description
-      const firstCard = page.locator('[data-testid="audit-event-card"]').first();
+      const firstCard = page
+        .locator('[data-testid="audit-event-card"]')
+        .first();
       const entityLink = firstCard.locator(
         '[data-testid="event-card-description"] a[href^="/audit/"]'
       );
@@ -281,9 +276,7 @@ test.describe('Entity Audit Timeline Page', () => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
-      const viewLink = page.locator(
-        '[data-testid="audit-view-entity-link"]'
-      );
+      const viewLink = page.locator('[data-testid="audit-view-entity-link"]');
       await expect(viewLink).toBeVisible({ timeout: 10000 });
       await expect(viewLink).toHaveAttribute(
         'href',
@@ -333,8 +326,7 @@ test.describe('Entity Audit Timeline Page', () => {
       for (let i = 0; i < entryCount; i++) {
         const entry = entries.nth(i);
         const trigger = entry.locator('button').first();
-        const isDisabled =
-          (await trigger.getAttribute('disabled')) !== null;
+        const isDisabled = (await trigger.getAttribute('disabled')) !== null;
 
         if (!isDisabled) {
           // Entry may already be open (auto-expands when changeCount > 0 && < 10)

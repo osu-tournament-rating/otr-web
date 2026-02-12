@@ -34,7 +34,10 @@ export default function AuditPageHeader({
   return (
     <div data-testid="audit-page-header" className="flex flex-col gap-3">
       {/* Breadcrumb */}
-      <nav data-testid="audit-breadcrumb" className="text-muted-foreground flex items-center gap-1 text-sm">
+      <nav
+        data-testid="audit-breadcrumb"
+        className="text-muted-foreground flex items-center gap-1 text-sm"
+      >
         <Link
           data-testid="audit-breadcrumb-link"
           href="/tools/audit-logs"
@@ -50,7 +53,10 @@ export default function AuditPageHeader({
 
       {/* Title row */}
       <div className="flex items-center gap-3">
-        <h1 data-testid="audit-entity-title" className="text-xl font-bold sm:text-2xl">
+        <h1
+          data-testid="audit-entity-title"
+          className="text-xl font-bold sm:text-2xl"
+        >
           {entityMeta.text} #{entityId}
         </h1>
         {entityHref && (

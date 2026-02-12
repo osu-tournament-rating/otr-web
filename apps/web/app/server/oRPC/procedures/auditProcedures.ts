@@ -24,6 +24,7 @@ import { publicProcedure } from './base';
 import {
   getAuditTable,
   getAdminNotesTable,
+  getAdminNotesTableNameString,
   getParentEntityJoinInfo,
   getTableNameString,
   ALL_AUDIT_TABLES,
@@ -139,8 +140,10 @@ async function queryAuditEntries(
   entityType: AuditEntityType,
   options: {
     referenceIdLock?: number;
+    ids?: number[];
     cursor?: number;
     limit: number;
+    offset?: number;
     actionUserIdNotNull?: boolean;
     actionUserId?: number;
     actionTypes?: AuditActionType[];
@@ -159,6 +162,10 @@ async function queryAuditEntries(
 
   if (options.referenceIdLock !== undefined) {
     conditions.push(eq(table.referenceIdLock, options.referenceIdLock));
+  }
+
+  if (options.ids !== undefined && options.ids.length > 0) {
+    conditions.push(inArray(table.id, options.ids));
   }
 
   if (options.cursor !== undefined) {
@@ -223,7 +230,7 @@ async function queryAuditEntries(
     );
   }
 
-  const rows = await db
+  let query = db
     .select({
       id: table.id,
       created: table.created,
@@ -242,7 +249,14 @@ async function queryAuditEntries(
     .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(table.id))
-    .limit(options.limit);
+    .limit(options.limit)
+    .$dynamic();
+
+  if (options.offset !== undefined) {
+    query = query.offset(options.offset);
+  }
+
+  const rows = await query;
 
   // Pre-compute camelized changes and collect user IDs in one pass
   const allUserIds: number[] = [];
@@ -315,41 +329,121 @@ export const getEntityAuditTimeline = publicProcedure
   .output(EntityTimelineResponseSchema)
   .route({
     summary: 'Get audit timeline for a specific entity',
-    tags: ['audit'],
+    description: [
+      'Returns the full audit history and admin notes for a single entity, sorted in reverse chronological order.',
+      '',
+      '**Entity types** (`entityType` parameter):',
+      '- `0` — Tournament',
+      '- `1` — Match',
+      '- `2` — Game',
+      '- `3` — Score',
+      '',
+      'Each timeline item is either an `audit` entry (a recorded change) or a `note` (an admin comment).',
+      'Audit entries that were part of a bulk cascade operation include a `cascadeContext` object describing',
+      'the top-level entity that triggered the change and a human-readable child summary (e.g. "also affected 85 of 118 matches").',
+      '',
+      '**Pagination** — offset-based with `page` and `pageSize` parameters.',
+      'The response includes `page`, `pageSize`, `pages` (total page count), and `total` (total item count).',
+      '',
+      '**Examples**',
+      '```',
+      'GET /audit/timeline?entityType=0&entityId=42',
+      'GET /audit/timeline?entityType=1&entityId=100&pageSize=25',
+      'GET /audit/timeline?entityType=0&entityId=42&page=2&pageSize=50',
+      '```',
+    ].join('\n'),
+    tags: ['public'],
     method: 'GET',
     path: '/audit/timeline',
   })
   .handler(async ({ input, context }) => {
-    const { entityType, entityId, cursor, limit } = input;
+    const { entityType, entityId } = input;
+    const DEFAULT_PAGE_SIZE = 50;
+    const MAX_PAGE_SIZE = 100;
 
-    // Fetch audit entries
-    const entries = await queryAuditEntries(context.db, entityType, {
-      referenceIdLock: entityId,
-      cursor,
-      limit: limit + 1,
-    });
+    const page = Math.max(input.page ?? 1, 1);
+    const pageSize = Math.max(
+      1,
+      Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+    );
 
-    const hasMore = entries.length > limit;
-    const trimmedEntries = hasMore ? entries.slice(0, limit) : entries;
+    const auditTableName = getTableNameString(entityType);
+    const notesTableName = getAdminNotesTableNameString(entityType);
 
-    // Fetch admin notes for this entity
-    const notesTable = getAdminNotesTable(entityType);
-    const noteRows = await context.db
-      .select({
-        id: notesTable.id,
-        note: notesTable.note,
-        created: notesTable.created,
-        updated: notesTable.updated,
-        userId: schema.users.id,
-        playerId: schema.players.id,
-        osuId: schema.players.osuId,
-        username: schema.players.username,
-      })
-      .from(notesTable)
-      .leftJoin(schema.users, eq(schema.users.id, notesTable.adminUserId))
-      .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
-      .where(eq(notesTable.referenceId, entityId))
-      .orderBy(desc(notesTable.created));
+    // Count total timeline items (audit entries + admin notes)
+    const countResult = await context.db.execute(sql`
+      SELECT
+        (SELECT COUNT(*)::int FROM ${sql.raw(auditTableName)} WHERE reference_id_lock = ${entityId}) AS audit_count,
+        (SELECT COUNT(*)::int FROM ${sql.raw(notesTableName)} WHERE reference_id = ${entityId}) AS note_count
+    `);
+    const { audit_count: auditCount, note_count: noteCount } = countResult
+      .rows[0] as { audit_count: number; note_count: number };
+
+    const total = auditCount + noteCount;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, pages);
+    const offset = Math.max(0, (currentPage - 1) * pageSize);
+
+    // Get the IDs and types for the current page via UNION ALL
+    const pageItemResult = await context.db.execute(sql`
+      SELECT item_id, item_type FROM (
+        SELECT id AS item_id, 'audit'::text AS item_type, created
+        FROM ${sql.raw(auditTableName)}
+        WHERE reference_id_lock = ${entityId}
+        UNION ALL
+        SELECT id AS item_id, 'note'::text AS item_type, created
+        FROM ${sql.raw(notesTableName)}
+        WHERE reference_id = ${entityId}
+      ) merged
+      ORDER BY created DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `);
+    const pageItemRows = pageItemResult.rows as {
+      item_id: number;
+      item_type: string;
+    }[];
+    const auditIds = pageItemRows
+      .filter((r) => r.item_type === 'audit')
+      .map((r) => r.item_id);
+    const noteIds = pageItemRows
+      .filter((r) => r.item_type === 'note')
+      .map((r) => r.item_id);
+
+    // Fetch full audit entries and notes for this page in parallel
+    const [trimmedEntries, noteRows] = await Promise.all([
+      auditIds.length > 0
+        ? queryAuditEntries(context.db, entityType, {
+            ids: auditIds,
+            limit: auditIds.length,
+          })
+        : Promise.resolve([] as AuditEntry[]),
+      noteIds.length > 0
+        ? (async () => {
+            const notesTable = getAdminNotesTable(entityType);
+            return context.db
+              .select({
+                id: notesTable.id,
+                note: notesTable.note,
+                created: notesTable.created,
+                updated: notesTable.updated,
+                userId: schema.users.id,
+                playerId: schema.players.id,
+                osuId: schema.players.osuId,
+                username: schema.players.username,
+              })
+              .from(notesTable)
+              .leftJoin(
+                schema.users,
+                eq(schema.users.id, notesTable.adminUserId)
+              )
+              .leftJoin(
+                schema.players,
+                eq(schema.players.id, schema.users.playerId)
+              )
+              .where(inArray(notesTable.id, noteIds));
+          })()
+        : Promise.resolve([] as AdminNoteRow[]),
+    ]);
 
     // Detect cascade context for entries that changed verificationStatus
     const cascadePairs = new Map<
@@ -589,12 +683,7 @@ export const getEntityAuditTimeline = publicProcedure
 
     const items = mergeTimelineItems(auditItems, noteItems);
 
-    const nextCursor =
-      hasMore && trimmedEntries.length > 0
-        ? trimmedEntries[trimmedEntries.length - 1].id
-        : null;
-
-    return { items, nextCursor, hasMore };
+    return { page: currentPage, pageSize, pages, total, items };
   });
 
 // ---------------------------------------------------------------------------

@@ -364,7 +364,10 @@ export default function AuditEventCard({
             )}
 
             {/* User name + description */}
-            <span data-testid="event-card-description" className="min-w-0 flex-1">
+            <span
+              data-testid="event-card-description"
+              className="min-w-0 flex-1"
+            >
               {event.isSystem ? (
                 <span className="text-muted-foreground mr-1 italic">
                   System

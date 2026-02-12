@@ -30,7 +30,11 @@ export function OsuAvatar({
   const [hasError, setHasError] = useState(false);
 
   return (
-    <Avatar className={cn(className)} style={{ width: size, height: size }} {...rest}>
+    <Avatar
+      className={cn(className)}
+      style={{ width: size, height: size }}
+      {...rest}
+    >
       {hasError ? (
         <AvatarFallback className="size-full">
           {fallback ?? <User className="h-1/2 w-1/2" />}

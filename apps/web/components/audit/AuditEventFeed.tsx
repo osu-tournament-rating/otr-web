@@ -18,7 +18,10 @@ type EventFeedResponse = {
 
 function LoadingSkeleton(): React.JSX.Element {
   return (
-    <div data-testid="audit-feed-loading" className="border-border divide-border divide-y rounded-lg border">
+    <div
+      data-testid="audit-feed-loading"
+      className="border-border divide-border divide-y rounded-lg border"
+    >
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5">
           <Skeleton className="h-7 w-7 rounded-full" />
@@ -33,7 +36,10 @@ function LoadingSkeleton(): React.JSX.Element {
 
 function EmptyState(): React.JSX.Element {
   return (
-    <div data-testid="audit-feed-empty" className="flex flex-col items-center justify-center py-16">
+    <div
+      data-testid="audit-feed-empty"
+      className="flex flex-col items-center justify-center py-16"
+    >
       <ClipboardList className="text-muted-foreground/50 mb-4 h-12 w-12" />
       <h3 className="text-lg font-medium">No audit events found</h3>
       <p className="text-muted-foreground mt-1 text-sm">
@@ -99,7 +105,10 @@ export default function AuditEventFeed(): React.JSX.Element {
         <EmptyState />
       ) : (
         <div className="space-y-4">
-          <div data-testid="audit-event-list" className="border-border divide-border divide-y rounded-lg border">
+          <div
+            data-testid="audit-event-list"
+            className="border-border divide-border divide-y rounded-lg border"
+          >
             {allEvents.map((event) => (
               <AuditEventCard
                 key={`${event.created}-${event.actionUserId}-${event.topEntity.entityType}-${event.topEntity.entityId}`}

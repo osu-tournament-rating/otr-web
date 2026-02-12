@@ -1,13 +1,6 @@
 import { z } from 'zod/v4';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
-// --- Pagination ---
-
-export const CursorPaginationInputSchema = z.object({
-  cursor: z.number().int().optional(),
-  limit: z.number().int().min(1).max(1000).default(250),
-});
-
 // --- Audit Entry ---
 
 export const AuditActionUserSchema = z.object({
@@ -51,9 +44,11 @@ export type AuditAdminNote = z.infer<typeof AuditAdminNoteSchema>;
 
 // --- Per-Entity Input ---
 
-export const EntityAuditInputSchema = CursorPaginationInputSchema.extend({
+export const EntityAuditInputSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   entityId: z.number().int().positive(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).max(100).optional(),
 });
 
 // --- Field Filter ---
@@ -202,9 +197,11 @@ export const EntityTimelineItemSchema = z.discriminatedUnion('type', [
 export type EntityTimelineItem = z.infer<typeof EntityTimelineItemSchema>;
 
 export const EntityTimelineResponseSchema = z.object({
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  pages: z.number().int().min(0),
+  total: z.number().int().nonnegative(),
   items: z.array(EntityTimelineItemSchema),
-  nextCursor: z.number().int().nullable(),
-  hasMore: z.boolean(),
 });
 
 // --- Entity Parent ---
@@ -230,4 +227,3 @@ export const AuditAdminUserSchema = z.object({
 export const AuditAdminUsersResponseSchema = z.object({
   users: z.array(AuditAdminUserSchema),
 });
-

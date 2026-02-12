@@ -29,7 +29,12 @@ export default function AuditLogsPage() {
         <div className="mb-3 flex items-center gap-3">
           <ClipboardList className="text-primary h-6 w-6" />
           <div>
-            <h1 data-testid="audit-logs-heading" className="text-xl font-semibold">Audit Logs</h1>
+            <h1
+              data-testid="audit-logs-heading"
+              className="text-xl font-semibold"
+            >
+              Audit Logs
+            </h1>
             <p className="text-muted-foreground text-sm">
               Browse the history of changes made to tournaments, matches, games,
               and scores.

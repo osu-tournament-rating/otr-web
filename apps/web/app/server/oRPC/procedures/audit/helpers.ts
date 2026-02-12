@@ -58,6 +58,22 @@ export function getTableNameString(entityType: AuditEntityType): string {
   }
 }
 
+/** Maps AuditEntityType to the raw SQL admin notes table name string */
+export function getAdminNotesTableNameString(
+  entityType: AuditEntityType
+): string {
+  switch (entityType) {
+    case AuditEntityType.Tournament:
+      return 'tournament_admin_notes';
+    case AuditEntityType.Match:
+      return 'match_admin_notes';
+    case AuditEntityType.Game:
+      return 'game_admin_notes';
+    case AuditEntityType.Score:
+      return 'game_score_admin_notes';
+  }
+}
+
 /** All audit tables in order matching AuditEntityType values */
 export const ALL_AUDIT_TABLES = [
   { table: schema.tournamentAudits, entityType: AuditEntityType.Tournament },
@@ -223,7 +239,6 @@ export function mergeAuditEntries(...arrays: AuditEntry[][]): AuditEntry[] {
 export function camelToSnake(s: string): string {
   return s.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
 }
-
 
 // --- Event Assembly ---
 

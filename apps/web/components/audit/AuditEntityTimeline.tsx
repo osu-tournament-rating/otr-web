@@ -37,9 +37,11 @@ import RelativeTime from './RelativeTime';
 // --- Constants ---
 
 type TimelineResponse = {
+  page: number;
+  pageSize: number;
+  pages: number;
+  total: number;
   items: EntityTimelineItem[];
-  nextCursor: number | null;
-  hasMore: boolean;
 };
 
 const ACTION_ICONS: Record<AuditActionType, typeof PlusCircle> = {
@@ -67,7 +69,10 @@ const ACTION_BADGE_COLORS: Record<AuditActionType, string> = {
 
 function LoadingSkeleton(): React.JSX.Element {
   return (
-    <div data-testid="audit-timeline-loading" className="border-border divide-border divide-y rounded-lg border">
+    <div
+      data-testid="audit-timeline-loading"
+      className="border-border divide-border divide-y rounded-lg border"
+    >
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5">
           <Skeleton className="h-4 w-4 rounded-full" />
@@ -83,7 +88,10 @@ function LoadingSkeleton(): React.JSX.Element {
 
 function EmptyState(): React.JSX.Element {
   return (
-    <div data-testid="audit-timeline-empty" className="flex flex-col items-center justify-center py-16">
+    <div
+      data-testid="audit-timeline-empty"
+      className="flex flex-col items-center justify-center py-16"
+    >
       <ClipboardList className="text-muted-foreground/50 mb-4 h-12 w-12" />
       <h3 className="text-lg font-medium">No audit history found</h3>
       <p className="text-muted-foreground mt-1 text-sm">
@@ -110,7 +118,11 @@ function TimelineAuditEntry({
   const ActionIcon = ACTION_ICONS[entry.actionType];
 
   return (
-    <Collapsible data-testid="timeline-entry" open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible
+      data-testid="timeline-entry"
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
       <div
         id={`audit-${entry.id}`}
         className={cn(
@@ -252,21 +264,25 @@ export default function AuditEntityTimeline({
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: TimelineResponse | null) => {
-      if (previousPageData && !previousPageData.hasMore) return null;
-      const cursor = previousPageData?.nextCursor ?? null;
-      return ['audit-entity-timeline', entityType, entityId, cursor] as const;
+      if (previousPageData && pageIndex >= previousPageData.pages) return null;
+      return [
+        'audit-entity-timeline',
+        entityType,
+        entityId,
+        pageIndex + 1,
+      ] as const;
     },
     [entityType, entityId]
   );
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
     getKey,
-    async ([, eType, eId, cursor]) =>
+    async ([, eType, eId, page]) =>
       orpc.audit.timeline({
         entityType: eType,
         entityId: eId,
-        limit: 50,
-        cursor: cursor ?? undefined,
+        pageSize: 50,
+        page,
       }),
     {
       revalidateFirstPage: false,
@@ -277,11 +293,12 @@ export default function AuditEntityTimeline({
     }
   );
 
-  const pages = data ?? [];
-  const allItems = pages.flatMap((page) => page.items);
-  const hasMore = pages[pages.length - 1]?.hasMore ?? false;
+  const responsePages = data ?? [];
+  const allItems = responsePages.flatMap((p) => p.items);
+  const totalPages = responsePages[0]?.pages ?? 0;
+  const hasMore = size < totalPages;
   const isEmpty = !isLoading && allItems.length === 0;
-  const totalCount = allItems.length;
+  const totalCount = responsePages[0]?.total ?? allItems.length;
 
   // Find the most recent change timestamp
   const firstItem = allItems[0] ?? null;
@@ -326,7 +343,10 @@ export default function AuditEntityTimeline({
   return (
     <div data-testid="audit-timeline" className="space-y-4">
       {/* Summary header */}
-      <div data-testid="timeline-summary" className="text-muted-foreground flex items-center gap-2 text-sm">
+      <div
+        data-testid="timeline-summary"
+        className="text-muted-foreground flex items-center gap-2 text-sm"
+      >
         <span>
           {totalCount} change{totalCount !== 1 ? 's' : ''}
           {hasMore && '+'}
@@ -342,7 +362,10 @@ export default function AuditEntityTimeline({
       </div>
 
       {/* Timeline entries */}
-      <div data-testid="timeline-entry-list" className="border-border divide-border divide-y rounded-lg border">
+      <div
+        data-testid="timeline-entry-list"
+        className="border-border divide-border divide-y rounded-lg border"
+      >
         {allItems.map((item) => {
           if (item.type === 'audit') {
             return (
