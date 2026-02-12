@@ -30,9 +30,7 @@ export default function HomeActionCards({
           </div>
           <div className="flex flex-col gap-1">
             <h3 className="text-xl font-semibold">My Profile</h3>
-            <p className="text-muted-foreground">
-              Log in to view your profile
-            </p>
+            <p className="text-muted-foreground">Log in to view your profile</p>
             <LoginButton />
           </div>
         </Card>

@@ -112,9 +112,7 @@ export default function LeaderboardFirstVisitDialog() {
               }}
             />
             <span className="relative z-10">
-              {canDismiss
-                ? 'I understand'
-                : `I understand (${countdown}s)`}
+              {canDismiss ? 'I understand' : `I understand (${countdown}s)`}
             </span>
           </Button>
         </DialogFooter>
