@@ -22,6 +22,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import { hasFriends } from '@/lib/db/player-friends';
 import LeaderboardTabs from './LeaderboardTabs';
+import LeaderboardFirstVisitDialog from '@/components/leaderboard/LeaderboardFirstVisitDialog';
 
 export const metadata: Metadata = {
   title: 'Global Leaderboard',
@@ -167,6 +168,7 @@ export default async function Page(props: {
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
+      <LeaderboardFirstVisitDialog />
       {/* Leaderboard Table */}
       {data && (
         <Card>
