@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const STORAGE_KEY = 'otr-leaderboard-first-visit-dismissed';
-const COUNTDOWN_SECONDS = 3;
+const COUNTDOWN_SECONDS = 5;
 
 export default function LeaderboardFirstVisitDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,9 +59,7 @@ export default function LeaderboardFirstVisitDialog() {
       }}
     >
       <DialogContent
-        onInteractOutside={(e) => {
-          if (!canDismiss) e.preventDefault();
-        }}
+        closable={false}
         onEscapeKeyDown={(e) => {
           if (!canDismiss) e.preventDefault();
         }}

@@ -64,7 +64,7 @@ export default async function Page() {
             </h2>
             <p className="text-muted-foreground">
               High ratings indicate consistently strong performance in matches,
-              possibly due to playing in tournaments below one's skill level.
+              possibly due to playing in tournaments below one&apos;s skill level.
             </p>
           </div>
           <RatingLadder />
