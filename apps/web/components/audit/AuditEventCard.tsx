@@ -16,25 +16,13 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import AuditDiffDisplay from './AuditDiffDisplay';
-import { entityTypeToSlug } from '@/lib/audit-entity-types';
+import {
+  entityTypeToSlug,
+  ENTITY_TYPE_LABELS,
+  ENTITY_TYPE_PLURALS,
+} from '@/lib/audit-entity-types';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
-
-// --- Inline entity type helpers ---
-
-const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
-  [AuditEntityType.Tournament]: 'tournament',
-  [AuditEntityType.Match]: 'match',
-  [AuditEntityType.Game]: 'game',
-  [AuditEntityType.Score]: 'score',
-};
-
-const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
-  [AuditEntityType.Tournament]: 'tournaments',
-  [AuditEntityType.Match]: 'matches',
-  [AuditEntityType.Game]: 'games',
-  [AuditEntityType.Score]: 'scores',
-};
 
 // --- Actions where inline field labels are suppressed ---
 // Self-describing (verification/rejection) + submission (created) + deletion
@@ -231,15 +219,17 @@ function CascadeChildEntries({
   event: AuditEvent;
   hasTopLevelDiffs: boolean;
 }) {
-  const childEntityType = event.childLevel!.entityType;
+  const childEntityType = event.childLevel?.entityType ?? null;
 
   const { data, isLoading } = useSWR(
-    ['cascade-children', event.actionUserId, event.created, childEntityType],
+    childEntityType
+      ? ['cascade-children', event.actionUserId, event.created, childEntityType]
+      : null,
     () =>
       orpc.audit.eventDetails({
         actionUserId: event.actionUserId,
         created: event.created,
-        entityType: childEntityType,
+        entityType: childEntityType!,
         limit: 50,
       }),
     {
@@ -248,6 +238,8 @@ function CascadeChildEntries({
       dedupingInterval: 60_000,
     }
   );
+
+  if (!childEntityType) return null;
 
   const childSlug = entityTypeToSlug(childEntityType);
   const childPlural = ENTITY_TYPE_PLURALS[childEntityType];

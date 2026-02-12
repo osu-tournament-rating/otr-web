@@ -9,6 +9,10 @@ import type {
   AuditEventAction,
   EntityTimelineItem,
 } from '@/lib/orpc/schema/audit';
+import {
+  ENTITY_TYPE_LABELS,
+  ENTITY_TYPE_PLURALS,
+} from '@/lib/audit-entity-types';
 
 /** Maps AuditEntityType to the corresponding Drizzle audit table */
 export function getAuditTable(entityType: AuditEntityType) {
@@ -219,6 +223,7 @@ export function camelToSnake(s: string): string {
 }
 
 export { entityTypeToSlug } from '@/lib/audit-entity-types';
+export { ENTITY_TYPE_LABELS, ENTITY_TYPE_PLURALS };
 
 // --- Event Assembly ---
 
@@ -301,30 +306,12 @@ export function getImmediateChildType(
 
 /** Entity type label for display (singular) */
 export function entityTypeLabel(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournament';
-    case AuditEntityType.Match:
-      return 'match';
-    case AuditEntityType.Game:
-      return 'game';
-    case AuditEntityType.Score:
-      return 'score';
-  }
+  return ENTITY_TYPE_LABELS[entityType];
 }
 
 /** Pluralize entity type label */
 export function entityTypeLabelPlural(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournaments';
-    case AuditEntityType.Match:
-      return 'matches';
-    case AuditEntityType.Game:
-      return 'games';
-    case AuditEntityType.Score:
-      return 'scores';
-  }
+  return ENTITY_TYPE_PLURALS[entityType];
 }
 
 /**

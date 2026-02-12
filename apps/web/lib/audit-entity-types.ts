@@ -1,15 +1,22 @@
 import { AuditEntityType } from '@otr/core/osu';
 
+/** Entity type display labels (singular) */
+export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
+  [AuditEntityType.Tournament]: 'tournament',
+  [AuditEntityType.Match]: 'match',
+  [AuditEntityType.Game]: 'game',
+  [AuditEntityType.Score]: 'score',
+};
+
+/** Entity type display labels (plural) */
+export const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
+  [AuditEntityType.Tournament]: 'tournaments',
+  [AuditEntityType.Match]: 'matches',
+  [AuditEntityType.Game]: 'games',
+  [AuditEntityType.Score]: 'scores',
+};
+
 /** Entity type slug for URL paths */
 export function entityTypeToSlug(entityType: AuditEntityType): string {
-  switch (entityType) {
-    case AuditEntityType.Tournament:
-      return 'tournaments';
-    case AuditEntityType.Match:
-      return 'matches';
-    case AuditEntityType.Game:
-      return 'games';
-    case AuditEntityType.Score:
-      return 'scores';
-  }
+  return ENTITY_TYPE_PLURALS[entityType];
 }

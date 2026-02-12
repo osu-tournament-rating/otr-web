@@ -272,7 +272,7 @@ export default function AuditEntityTimeline({
       revalidateOnFocus: false,
       revalidateIfStale: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 86_400_000,
+      dedupingInterval: 300_000,
     }
   );
 

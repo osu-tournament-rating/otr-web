@@ -12,6 +12,8 @@ import {
   EventDetailsInputSchema,
   EventDetailsResponseSchema,
   AuditAdminUsersResponseSchema,
+  EntityParentInputSchema,
+  EntityParentOutputSchema,
   type AuditEntry,
   type AuditAdminNote,
   type AuditEvent,
@@ -129,11 +131,13 @@ async function resolveUserIds(
 function mapAuditRow(
   row: AuditRow,
   entityType: AuditEntityType,
-  userMap?: Map<number, ReferencedUser>
+  userMap?: Map<number, ReferencedUser>,
+  precomputedChanges?: Record<string, unknown> | null
 ): AuditEntry {
-  const changes = camelizeChangesKeys(
-    row.changes as Record<string, unknown> | null
-  );
+  const changes =
+    precomputedChanges !== undefined
+      ? precomputedChanges
+      : camelizeChangesKeys(row.changes as Record<string, unknown> | null);
 
   // Build referencedUsers for this entry from the shared user map
   let referencedUsers: Record<string, ReferencedUser> | undefined;
@@ -298,25 +302,21 @@ async function queryAuditEntries(
     } else {
       conditions.push(sql`(${sql.join(fieldConditions, sql` OR `)})`);
     }
+
+    if (options.changeValue && safeFieldNames.length === 1) {
+      // changeValue only works when filtering by a single field
+      conditions.push(
+        sql`${table.changes} @> ${JSON.stringify({
+          [safeFieldNames[0]]: {
+            newValue: tryParseJsonValue(options.changeValue),
+          },
+        })}::jsonb`
+      );
+    }
   }
 
   if (options.entityId !== undefined) {
     conditions.push(eq(table.referenceIdLock, options.entityId));
-  }
-
-  if (
-    options.changeValue &&
-    options.fieldNames &&
-    options.fieldNames.length === 1
-  ) {
-    // changeValue only works when filtering by a single field
-    conditions.push(
-      sql`${table.changes} @> ${JSON.stringify({
-        [options.fieldNames[0]]: {
-          newValue: tryParseJsonValue(options.changeValue),
-        },
-      })}::jsonb`
-    );
   }
 
   if (options.cursorTimestamp) {
@@ -346,12 +346,14 @@ async function queryAuditEntries(
     .orderBy(desc(table.id))
     .limit(options.limit);
 
-  // Collect all user IDs from changes that need resolution
+  // Pre-compute camelized changes and collect user IDs in one pass
   const allUserIds: number[] = [];
+  const camelizedChanges: (Record<string, unknown> | null)[] = [];
   for (const row of rows) {
     const changes = camelizeChangesKeys(
       row.changes as Record<string, unknown> | null
     );
+    camelizedChanges.push(changes);
     const ids = extractUserIdsFromChanges(
       changes as Record<
         string,
@@ -364,8 +366,8 @@ async function queryAuditEntries(
   // Resolve all user IDs in a single batch query
   const userMap = await resolveUserIds(db, allUserIds);
 
-  return (rows as AuditRow[]).map((row) =>
-    mapAuditRow(row, entityType, userMap)
+  return (rows as AuditRow[]).map((row, i) =>
+    mapAuditRow(row, entityType, userMap, camelizedChanges[i])
   );
 }
 
@@ -378,34 +380,6 @@ function tryParseJsonValue(value: string): unknown {
   if (value === 'false') return false;
   // Return as string
   return value;
-}
-
-/** Resolve action user IDs to user info (id, playerId, osuId, username) */
-async function resolveActionUsers(
-  db: DatabaseClient,
-  userIds: number[]
-): Promise<Map<number, ReferencedUser>> {
-  const rows = await db
-    .select({
-      userId: schema.users.id,
-      playerId: schema.players.id,
-      osuId: schema.players.osuId,
-      username: schema.players.username,
-    })
-    .from(schema.users)
-    .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
-    .where(inArray(schema.users.id, userIds));
-
-  const map = new Map<number, ReferencedUser>();
-  for (const row of rows) {
-    map.set(row.userId, {
-      id: row.userId,
-      playerId: row.playerId,
-      osuId: row.osuId,
-      username: row.username,
-    });
-  }
-  return map;
 }
 
 /** Resolve entity IDs to names (tournaments and matches have name fields) */
@@ -667,7 +641,7 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${info.topEntityId}`,
+              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${info.topEntityId}`,
             });
           } else if (
             info.topEntityType === AuditEntityType.Match &&
@@ -675,7 +649,7 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM games WHERE match_id = ${info.topEntityId}`,
+              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM games WHERE match_id = ${info.topEntityId}`,
             });
           } else if (
             info.topEntityType === AuditEntityType.Game &&
@@ -683,7 +657,7 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${sql.raw(`'${cacheKey}'`)} AS k, COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${info.topEntityId}`,
+              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${info.topEntityId}`,
             });
           }
         }
@@ -890,23 +864,23 @@ export const getAuditEventFeed = publicProcedure
           const valueCheck =
             name === snakeName
               ? sql`(
-                COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'NewValue', a.changes->${sql.raw(`'${name}'`)}->>'newValue')
+                COALESCE(a.changes->${name}->>'NewValue', a.changes->${name}->>'newValue')
                 IS DISTINCT FROM
-                COALESCE(a.changes->${sql.raw(`'${name}'`)}->>'OriginalValue', a.changes->${sql.raw(`'${name}'`)}->>'originalValue')
+                COALESCE(a.changes->${name}->>'OriginalValue', a.changes->${name}->>'originalValue')
               )`
               : sql`(
                 COALESCE(
-                  a.changes->${sql.raw(`'${name}'`)}->>'NewValue',
-                  a.changes->${sql.raw(`'${name}'`)}->>'newValue',
-                  a.changes->${sql.raw(`'${snakeName}'`)}->>'NewValue',
-                  a.changes->${sql.raw(`'${snakeName}'`)}->>'newValue'
+                  a.changes->${name}->>'NewValue',
+                  a.changes->${name}->>'newValue',
+                  a.changes->${snakeName}->>'NewValue',
+                  a.changes->${snakeName}->>'newValue'
                 )
                 IS DISTINCT FROM
                 COALESCE(
-                  a.changes->${sql.raw(`'${name}'`)}->>'OriginalValue',
-                  a.changes->${sql.raw(`'${name}'`)}->>'originalValue',
-                  a.changes->${sql.raw(`'${snakeName}'`)}->>'OriginalValue',
-                  a.changes->${sql.raw(`'${snakeName}'`)}->>'originalValue'
+                  a.changes->${name}->>'OriginalValue',
+                  a.changes->${name}->>'originalValue',
+                  a.changes->${snakeName}->>'OriginalValue',
+                  a.changes->${snakeName}->>'originalValue'
                 )
               )`;
           return sql`(${hasKey} AND ${valueCheck})`;
@@ -980,7 +954,7 @@ export const getAuditEventFeed = publicProcedure
     ];
     const userMap =
       actionUserIds.length > 0
-        ? await resolveActionUsers(context.db, actionUserIds)
+        ? await resolveUserIds(context.db, actionUserIds)
         : new Map<number, ReferencedUser>();
 
     // 2. Resolve tournament names (batch) from parentEntityIds
@@ -1559,17 +1533,6 @@ export const listAuditAdminUsers = publicProcedure
 // ---------------------------------------------------------------------------
 // Procedure 6: Get parent matchId for game/score entities
 // ---------------------------------------------------------------------------
-
-import { z } from 'zod/v4';
-
-const EntityParentInputSchema = z.object({
-  entityType: z.nativeEnum(AuditEntityType),
-  entityId: z.number().int().positive(),
-});
-
-const EntityParentOutputSchema = z.object({
-  matchId: z.number().int().nullable(),
-});
 
 export const getEntityParentMatchId = publicProcedure
   .input(EntityParentInputSchema)

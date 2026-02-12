@@ -207,6 +207,17 @@ export const EntityTimelineResponseSchema = z.object({
   hasMore: z.boolean(),
 });
 
+// --- Entity Parent ---
+
+export const EntityParentInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  entityId: z.number().int().positive(),
+});
+
+export const EntityParentOutputSchema = z.object({
+  matchId: z.number().int().nullable(),
+});
+
 // --- Admin Users Response ---
 
 export const AuditAdminUserSchema = z.object({
