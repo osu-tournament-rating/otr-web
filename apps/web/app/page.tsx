@@ -8,9 +8,16 @@ import {
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@otr/core/osu';
 import { RulesetEnumHelper } from '@/lib/enums';
-import LinkCard from '@/components/home/LinkCard';
+import HomeActionCards from '@/components/home/HomeActionCards';
+import { auth } from '@/lib/auth/auth';
+import { headers } from 'next/headers';
 
 export default async function Page() {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  const isLoggedIn = !!session;
+  const playerId = session?.dbPlayer?.id ?? null;
+
   return (
     <div className="bg-background text-foreground container m-4 mx-auto flex min-h-screen flex-col gap-2 py-4">
       {/* Hero section */}
@@ -29,54 +36,11 @@ export default async function Page() {
         </FeatureCardDescription>
       </FeatureCard>
 
-      {/* Rating Ladder */}
-      <Card className="bg-card mb-4 border-none p-6 md:p-8">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold">Rise to the top</h2>
-          <p className="text-muted-foreground">
-            Join your friends on the ladder as soon as you play in a verified
-            tournament
-          </p>
-        </div>
-        <RatingLadder />
-      </Card>
-
       {/* Link cards */}
-      <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <LinkCard
-          title="View Rankings"
-          description="Find out where you stack up against your friends... and foes"
-          icon="medal"
-          href={'/leaderboard'}
-        />
-
-        <LinkCard
-          title="Browse Tournaments"
-          description="View the latest and greatest or go back in time"
-          icon="trophy"
-          href={'/tournaments'}
-        />
-
-        <LinkCard
-          title="Read the docs"
-          description="Learn the inner-workings of our rating algorithm"
-          icon="book"
-          href="https://docs.otr.stagec.net"
-          target="_blank"
-        />
-      </div>
+      <HomeActionCards isLoggedIn={isLoggedIn} playerId={playerId} />
 
       {/* Feature sections */}
       <div className="space-y-6">
-        {/* Rating restricted tournaments */}
-        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
-          <FeatureCardTitle>Rating restricted tournaments</FeatureCardTitle>
-          <FeatureCardDescription>
-            o!TR opens the door to an all-new level of fair competition in
-            tournaments targeting specific skill brackets
-          </FeatureCardDescription>
-        </FeatureCard>
-
         {/* Verified tournaments */}
         <FeatureCard
           decoration={3}
@@ -92,17 +56,26 @@ export default async function Page() {
           </FeatureCardDescription>
         </FeatureCard>
 
-        {/* Stats on stats */}
-        <FeatureCard
-          decoration={2}
-          imageClassName="-left-50 top-0 rotate-180"
-          imageSize="h-[260px] w-[600px]"
-          contentClassName="md:w-2/3 xl:w-1/2"
-        >
-          <FeatureCardTitle>Stats on stats</FeatureCardTitle>
+        {/* Use ratings to filter registrants */}
+        <Card className="bg-card border-none p-6 md:p-8">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-3xl font-bold">
+              Use ratings to filter registrants
+            </h2>
+            <p className="text-muted-foreground">
+              High ratings indicate consistently strong performance in matches,
+              possibly due to playing in tournaments below one's skill level.
+            </p>
+          </div>
+          <RatingLadder />
+        </Card>
+
+        {/* Detailed beatmap histories */}
+        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
+          <FeatureCardTitle>Detailed beatmap histories</FeatureCardTitle>
           <FeatureCardDescription>
-            Powerful tools for players and teams. Compare performance, track
-            progress, and analyze your tournament history with ease
+            Learn where beatmaps have been pooled and how well players perform on
+            them.
           </FeatureCardDescription>
         </FeatureCard>
 
@@ -114,7 +87,7 @@ export default async function Page() {
         >
           <FeatureCardTitle>New updates every Tuesday</FeatureCardTitle>
           <FeatureCardDescription>
-            Ratings are recalculated every Tuesday at 23:59 UTC
+            Ratings are recalculated every Tuesday at 12:00 UTC
           </FeatureCardDescription>
         </FeatureCard>
 
