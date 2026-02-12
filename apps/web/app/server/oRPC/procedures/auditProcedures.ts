@@ -1,4 +1,5 @@
-import { and, desc, eq, isNotNull, lt, sql, inArray } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, lt, or, sql, inArray } from 'drizzle-orm';
+import { union } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { AuditEntityType, AuditActionType } from '@otr/core/osu';
 
@@ -202,11 +203,7 @@ async function queryAuditEntries(
       sql`${table.changes}`,
       safeFieldNames
     );
-    if (fieldConditions.length === 1) {
-      conditions.push(fieldConditions[0]);
-    } else {
-      conditions.push(sql`(${sql.join(fieldConditions, sql` OR `)})`);
-    }
+    conditions.push(or(...fieldConditions)!);
 
     if (options.changeValue && safeFieldNames.length === 1) {
       // changeValue only works when filtering by a single field
@@ -577,7 +574,7 @@ export const getEntityAuditTimeline = publicProcedure
         // Batch child count queries by entity type
         const childCountQueries: {
           cacheKey: string;
-          query: ReturnType<typeof sql>;
+          query: Promise<{ cnt: number }[]>;
         }[] = [];
         for (const info of cascadeInfos) {
           if (info.childType === null || info.childAffectedCount === 0)
@@ -589,7 +586,10 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM matches WHERE tournament_id = ${info.topEntityId}`,
+              query: context.db
+                .select({ cnt: sql<number>`count(*)::int` })
+                .from(schema.matches)
+                .where(eq(schema.matches.tournamentId, info.topEntityId)),
             });
           } else if (
             info.topEntityType === AuditEntityType.Match &&
@@ -597,7 +597,10 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM games WHERE match_id = ${info.topEntityId}`,
+              query: context.db
+                .select({ cnt: sql<number>`count(*)::int` })
+                .from(schema.games)
+                .where(eq(schema.games.matchId, info.topEntityId)),
             });
           } else if (
             info.topEntityType === AuditEntityType.Game &&
@@ -605,7 +608,10 @@ export const getEntityAuditTimeline = publicProcedure
           ) {
             childCountQueries.push({
               cacheKey,
-              query: sql`SELECT ${cacheKey} AS k, COUNT(*)::int AS cnt FROM game_scores WHERE game_id = ${info.topEntityId}`,
+              query: context.db
+                .select({ cnt: sql<number>`count(*)::int` })
+                .from(schema.gameScores)
+                .where(eq(schema.gameScores.gameId, info.topEntityId)),
             });
           }
         }
@@ -613,12 +619,10 @@ export const getEntityAuditTimeline = publicProcedure
         const totalChildCounts = new Map<string, number>();
         if (childCountQueries.length > 0) {
           const countResults = await Promise.all(
-            childCountQueries.map((q) => context.db.execute(q.query))
+            childCountQueries.map((q) => q.query)
           );
           for (let i = 0; i < childCountQueries.length; i++) {
-            const cnt =
-              (countResults[i].rows[0] as { cnt: number } | undefined)?.cnt ??
-              0;
+            const cnt = countResults[i][0]?.cnt ?? 0;
             totalChildCounts.set(childCountQueries[i].cacheKey, cnt);
           }
         }
@@ -792,11 +796,7 @@ export const getAuditEventFeed = publicProcedure
           sql.raw('a.changes'),
           entityFieldNames
         );
-        if (fieldConditions.length === 1) {
-          conditions.push(fieldConditions[0]);
-        } else {
-          conditions.push(sql`(${sql.join(fieldConditions, sql` OR `)})`);
-        }
+        conditions.push(or(...fieldConditions)!);
       }
 
       const whereClause =
@@ -920,18 +920,17 @@ export const getAuditEventFeed = publicProcedure
     await Promise.all([
       tournamentIdsForMatchCount.length > 0
         ? context.db
-            .execute(
-              sql`
-            SELECT tournament_id AS id, COUNT(*)::int AS cnt FROM matches
-            WHERE tournament_id IN (${sql.join(
-              tournamentIdsForMatchCount.map((id) => sql`${id}`),
-              sql`, `
-            )})
-            GROUP BY tournament_id
-          `
+            .select({
+              id: schema.matches.tournamentId,
+              cnt: sql<number>`count(*)::int`,
+            })
+            .from(schema.matches)
+            .where(
+              inArray(schema.matches.tournamentId, tournamentIdsForMatchCount)
             )
-            .then((r) => {
-              for (const row of r.rows as { id: number; cnt: number }[]) {
+            .groupBy(schema.matches.tournamentId)
+            .then((rows) => {
+              for (const row of rows) {
                 totalChildCounts.set(
                   `${AuditEntityType.Tournament}:${row.id}`,
                   row.cnt
@@ -941,18 +940,15 @@ export const getAuditEventFeed = publicProcedure
         : Promise.resolve(),
       matchIdsForGameCount.length > 0
         ? context.db
-            .execute(
-              sql`
-            SELECT match_id AS id, COUNT(*)::int AS cnt FROM games
-            WHERE match_id IN (${sql.join(
-              matchIdsForGameCount.map((id) => sql`${id}`),
-              sql`, `
-            )})
-            GROUP BY match_id
-          `
-            )
-            .then((r) => {
-              for (const row of r.rows as { id: number; cnt: number }[]) {
+            .select({
+              id: schema.games.matchId,
+              cnt: sql<number>`count(*)::int`,
+            })
+            .from(schema.games)
+            .where(inArray(schema.games.matchId, matchIdsForGameCount))
+            .groupBy(schema.games.matchId)
+            .then((rows) => {
+              for (const row of rows) {
                 totalChildCounts.set(
                   `${AuditEntityType.Match}:${row.id}`,
                   row.cnt
@@ -962,18 +958,15 @@ export const getAuditEventFeed = publicProcedure
         : Promise.resolve(),
       gameIdsForScoreCount.length > 0
         ? context.db
-            .execute(
-              sql`
-            SELECT game_id AS id, COUNT(*)::int AS cnt FROM game_scores
-            WHERE game_id IN (${sql.join(
-              gameIdsForScoreCount.map((id) => sql`${id}`),
-              sql`, `
-            )})
-            GROUP BY game_id
-          `
-            )
-            .then((r) => {
-              for (const row of r.rows as { id: number; cnt: number }[]) {
+            .select({
+              id: schema.gameScores.gameId,
+              cnt: sql<number>`count(*)::int`,
+            })
+            .from(schema.gameScores)
+            .where(inArray(schema.gameScores.gameId, gameIdsForScoreCount))
+            .groupBy(schema.gameScores.gameId)
+            .then((rows) => {
+              for (const row of rows) {
                 totalChildCounts.set(
                   `${AuditEntityType.Game}:${row.id}`,
                   row.cnt
@@ -1240,23 +1233,25 @@ export const listAuditAdminUsers = publicProcedure
   })
   .handler(async ({ context }) => {
     // Query distinct action_user_ids across all audit tables
-    const unionQuery = sql`
-      SELECT DISTINCT action_user_id
-      FROM (
-        SELECT action_user_id FROM tournament_audits WHERE action_user_id IS NOT NULL
-        UNION
-        SELECT action_user_id FROM match_audits WHERE action_user_id IS NOT NULL
-        UNION
-        SELECT action_user_id FROM game_audits WHERE action_user_id IS NOT NULL
-        UNION
-        SELECT action_user_id FROM game_score_audits WHERE action_user_id IS NOT NULL
-      ) sub
-    `;
+    const q1 = context.db
+      .select({ actionUserId: schema.tournamentAudits.actionUserId })
+      .from(schema.tournamentAudits)
+      .where(isNotNull(schema.tournamentAudits.actionUserId));
+    const q2 = context.db
+      .select({ actionUserId: schema.matchAudits.actionUserId })
+      .from(schema.matchAudits)
+      .where(isNotNull(schema.matchAudits.actionUserId));
+    const q3 = context.db
+      .select({ actionUserId: schema.gameAudits.actionUserId })
+      .from(schema.gameAudits)
+      .where(isNotNull(schema.gameAudits.actionUserId));
+    const q4 = context.db
+      .select({ actionUserId: schema.gameScoreAudits.actionUserId })
+      .from(schema.gameScoreAudits)
+      .where(isNotNull(schema.gameScoreAudits.actionUserId));
 
-    const userIdsResult = await context.db.execute(unionQuery);
-    const userIds = (userIdsResult.rows as { action_user_id: number }[]).map(
-      (row) => row.action_user_id
-    );
+    const userIdsResult = await union(q1, q2, q3, q4);
+    const userIds = userIdsResult.map((row) => row.actionUserId!);
 
     if (userIds.length === 0) {
       return { users: [] };
