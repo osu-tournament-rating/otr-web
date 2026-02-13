@@ -203,27 +203,3 @@ export const EntityTimelineResponseSchema = z.object({
   total: z.number().int().nonnegative(),
   items: z.array(EntityTimelineItemSchema),
 });
-
-// --- Entity Parent ---
-
-export const EntityParentInputSchema = z.object({
-  entityType: z.nativeEnum(AuditEntityType),
-  entityId: z.number().int().positive(),
-});
-
-export const EntityParentOutputSchema = z.object({
-  matchId: z.number().int().nullable(),
-});
-
-// --- Admin Users Response ---
-
-export const AuditAdminUserSchema = z.object({
-  userId: z.number().int(),
-  playerId: z.number().int().nullable(),
-  osuId: z.number().int().nullable(),
-  username: z.string().nullable(),
-});
-
-export const AuditAdminUsersResponseSchema = z.object({
-  users: z.array(AuditAdminUserSchema),
-});

@@ -1,5 +1,4 @@
 import { and, desc, eq, isNotNull, lt, or, sql, inArray } from 'drizzle-orm';
-import { union } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { AuditEntityType, AuditActionType } from '@otr/core/osu';
 
@@ -10,9 +9,6 @@ import {
   EventFeedResponseSchema,
   EventDetailsInputSchema,
   EventDetailsResponseSchema,
-  AuditAdminUsersResponseSchema,
-  EntityParentInputSchema,
-  EntityParentOutputSchema,
   type AuditEntry,
   type AuditAdminNote,
   type AuditEvent,
@@ -46,10 +42,6 @@ import {
   type GroupedAuditRow,
   type AssembledEvent,
 } from './audit/helpers';
-
-// ---------------------------------------------------------------------------
-// Shared types
-// ---------------------------------------------------------------------------
 
 type AuditRow = {
   id: number;
@@ -194,7 +186,7 @@ async function queryAuditEntries(
   }
 
   if (options.fieldNames && options.fieldNames.length > 0) {
-    // Validate field names to prevent injection (defense-in-depth)
+    // Validate field names to prevent injection
     const safeFieldNames = validateFieldNames(options.fieldNames);
     if (safeFieldNames.length === 0) {
       return [];
@@ -291,10 +283,6 @@ function tryParseJsonValue(value: string): unknown {
   return value;
 }
 
-// ---------------------------------------------------------------------------
-// Raw row type for the event feed grouped SQL query
-// ---------------------------------------------------------------------------
-
 type GroupedEventRow = {
   entity_type: number;
   action_user_id: number | null;
@@ -306,20 +294,12 @@ type GroupedEventRow = {
   sample_entity_id: number;
 };
 
-// ---------------------------------------------------------------------------
-// Raw row type for cascade sibling detection
-// ---------------------------------------------------------------------------
-
 type CascadeSiblingRow = {
   entity_type: number;
   cnt: number;
   sample_id: number;
   sample_changes: unknown;
 };
-
-// ---------------------------------------------------------------------------
-// Procedure 1: Per-entity audit timeline (enhanced with cascade context)
-// ---------------------------------------------------------------------------
 
 export const getEntityAuditTimeline = publicProcedure
   .input(EntityAuditInputSchema)
@@ -689,10 +669,6 @@ export const getEntityAuditTimeline = publicProcedure
 
     return { page: currentPage, pageSize, pages, total, items };
   });
-
-// ---------------------------------------------------------------------------
-// Procedure 2: Audit event feed (grouped by transaction)
-// ---------------------------------------------------------------------------
 
 export const getAuditEventFeed = publicProcedure
   .input(EventFeedInputSchema)
@@ -1070,10 +1046,6 @@ export const getAuditEventFeed = publicProcedure
     return { events, nextCursor, hasMore };
   });
 
-// ---------------------------------------------------------------------------
-// Procedure 3: Event details (expandable view of a single event)
-// ---------------------------------------------------------------------------
-
 export const getEventDetails = publicProcedure
   .input(EventDetailsInputSchema)
   .output(EventDetailsResponseSchema)
@@ -1217,106 +1189,4 @@ export const getEventDetails = publicProcedure
         : null;
 
     return { entries, nextCursor, hasMore };
-  });
-
-// ---------------------------------------------------------------------------
-// Procedure 4: List admin users for autocomplete
-// ---------------------------------------------------------------------------
-
-export const listAuditAdminUsers = publicProcedure
-  .output(AuditAdminUsersResponseSchema)
-  .route({
-    summary: 'List admin users who appear in audit logs',
-    tags: ['audit'],
-    method: 'GET',
-    path: '/audit/admin-users',
-  })
-  .handler(async ({ context }) => {
-    // Query distinct action_user_ids across all audit tables
-    const q1 = context.db
-      .select({ actionUserId: schema.tournamentAudits.actionUserId })
-      .from(schema.tournamentAudits)
-      .where(isNotNull(schema.tournamentAudits.actionUserId));
-    const q2 = context.db
-      .select({ actionUserId: schema.matchAudits.actionUserId })
-      .from(schema.matchAudits)
-      .where(isNotNull(schema.matchAudits.actionUserId));
-    const q3 = context.db
-      .select({ actionUserId: schema.gameAudits.actionUserId })
-      .from(schema.gameAudits)
-      .where(isNotNull(schema.gameAudits.actionUserId));
-    const q4 = context.db
-      .select({ actionUserId: schema.gameScoreAudits.actionUserId })
-      .from(schema.gameScoreAudits)
-      .where(isNotNull(schema.gameScoreAudits.actionUserId));
-
-    const userIdsResult = await union(q1, q2, q3, q4);
-    const userIds = userIdsResult.map((row) => row.actionUserId!);
-
-    if (userIds.length === 0) {
-      return { users: [] };
-    }
-
-    const userRows = await context.db
-      .select({
-        userId: schema.users.id,
-        playerId: schema.players.id,
-        osuId: schema.players.osuId,
-        username: schema.players.username,
-      })
-      .from(schema.users)
-      .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
-      .where(inArray(schema.users.id, userIds));
-
-    const users = userRows.map((row) => ({
-      userId: row.userId,
-      playerId: row.playerId,
-      osuId: row.osuId,
-      username: row.username,
-    }));
-
-    return { users };
-  });
-
-// ---------------------------------------------------------------------------
-// Procedure 6: Get parent matchId for game/score entities
-// ---------------------------------------------------------------------------
-
-export const getEntityParentMatchId = publicProcedure
-  .input(EntityParentInputSchema)
-  .output(EntityParentOutputSchema)
-  .route({
-    summary: 'Get parent matchId for a game or score entity',
-    tags: ['audit'],
-    method: 'GET',
-    path: '/audit/entity-parent',
-  })
-  .handler(async ({ input, context }) => {
-    const { entityType, entityId } = input;
-
-    if (entityType === AuditEntityType.Game) {
-      // Game -> matchId directly
-      const game = await context.db
-        .select({ matchId: schema.games.matchId })
-        .from(schema.games)
-        .where(eq(schema.games.id, entityId))
-        .limit(1);
-
-      return { matchId: game[0]?.matchId ?? null };
-    }
-
-    if (entityType === AuditEntityType.Score) {
-      // Score -> gameId -> matchId
-      const result = await context.db
-        .select({ matchId: schema.games.matchId })
-        .from(schema.gameScores)
-        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
-        .where(eq(schema.gameScores.id, entityId))
-        .limit(1);
-
-      return { matchId: result[0]?.matchId ?? null };
-    }
-
-    // Tournament and Match don't need parent lookup
-    return { matchId: null };
   });

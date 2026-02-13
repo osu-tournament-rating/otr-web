@@ -99,8 +99,6 @@ import {
   getEntityAuditTimeline,
   getAuditEventFeed,
   getEventDetails,
-  listAuditAdminUsers,
-  getEntityParentMatchId,
 } from './procedures/auditProcedures';
 
 export interface InitialContext {
@@ -208,8 +206,6 @@ export const router = base.router({
     timeline: getEntityAuditTimeline,
     events: getAuditEventFeed,
     eventDetails: getEventDetails,
-    adminUsers: listAuditAdminUsers,
-    entityParent: getEntityParentMatchId,
   },
   tournaments: {
     list: listTournaments,
