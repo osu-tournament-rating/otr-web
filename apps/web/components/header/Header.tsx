@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 import {
   ChevronDown,
+  Clock,
   FileText,
   Filter,
   LucideIcon,
@@ -99,6 +100,12 @@ const navItems: NavItem[] = [
         title: 'Filter Reports',
         href: '/tools/filter-reports',
         icon: FileText,
+        roles: [],
+      },
+      {
+        title: 'Audit Logs',
+        href: '/tools/audit-logs',
+        icon: Clock,
         roles: [],
       },
     ],

@@ -1,10 +1,10 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Medal, Award, User } from 'lucide-react';
+import { Trophy, Medal, Award } from 'lucide-react';
 import { Ruleset } from '@otr/core/osu';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import TRText from '../rating/TRText';
 import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
@@ -80,15 +80,11 @@ export default function TournamentTopPerformers({
                 </span>
               </div>
 
-              <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={`https://a.ppy.sh/${stats.player.osuId}`}
-                  alt={`${stats.player.username}'s avatar`}
-                />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
+              <OsuAvatar
+                osuId={stats.player.osuId}
+                username={stats.player.username}
+                size={32}
+              />
 
               <div className="min-w-0 flex-1">
                 <Link

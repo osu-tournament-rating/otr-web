@@ -6,6 +6,7 @@ import {
   cascadeMatchRejection,
   cascadeTournamentRejection,
 } from '@otr/core/db/rejection-cascade';
+import { cascadeTournamentVerification } from '@otr/core/db/verification-cascade';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { withAuditUserId } from '@otr/core/db';
 import {
@@ -370,7 +371,7 @@ export async function updateTournamentAdminHandler({
       }
 
       if (input.verificationStatus === VerificationStatus.Verified) {
-        await clearTournamentWarningFlags(tx, input.id);
+        await cascadeTournamentVerification(tx, [input.id], { updatedAt: NOW });
       }
 
       if (input.verificationStatus === VerificationStatus.Rejected) {
@@ -440,53 +441,6 @@ async function alignTournamentChildRulesets(
       updated: NOW,
     })
     .where(inArray(schema.gameScores.gameId, gameIds));
-}
-
-async function clearTournamentWarningFlags(
-  tx: Pick<DatabaseClient, 'select' | 'update'>,
-  tournamentId: number
-) {
-  await tx
-    .update(schema.matches)
-    .set({
-      warningFlags: MatchWarningFlags.None,
-      updated: NOW,
-    })
-    .where(
-      and(
-        eq(schema.matches.tournamentId, tournamentId),
-        eq(schema.matches.verificationStatus, VerificationStatus.Verified)
-      )
-    );
-
-  const verifiedMatches = await tx
-    .select({ id: schema.matches.id })
-    .from(schema.matches)
-    .where(
-      and(
-        eq(schema.matches.tournamentId, tournamentId),
-        eq(schema.matches.verificationStatus, VerificationStatus.Verified)
-      )
-    );
-
-  const matchIds = verifiedMatches.map((match) => match.id);
-
-  if (matchIds.length === 0) {
-    return;
-  }
-
-  await tx
-    .update(schema.games)
-    .set({
-      warningFlags: GameWarningFlags.None,
-      updated: NOW,
-    })
-    .where(
-      and(
-        inArray(schema.games.matchId, matchIds),
-        eq(schema.games.verificationStatus, VerificationStatus.Verified)
-      )
-    );
 }
 
 export const resetTournamentAutomatedChecks = protectedProcedure

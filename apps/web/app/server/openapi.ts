@@ -21,6 +21,16 @@ import {
 import { UserSchema } from '@/lib/orpc/schema/user';
 import { PlatformStatsSchema } from '@/lib/orpc/schema/stats';
 import {
+  AuditActionUserSchema,
+  AuditAdminNoteSchema,
+  AuditEntrySchema,
+  AuditEventActionSchema,
+  CascadeContextSchema,
+  EntityTimelineEventSchema,
+  EntityTimelineItemSchema,
+  EntityTimelineResponseSchema,
+} from '@/lib/orpc/schema/audit';
+import {
   RatingAdjustmentTypeSchema,
   RulesetSchema,
   ScoreGradeSchema,
@@ -302,6 +312,14 @@ export const generatePublicOpenAPISpec = async () => {
       PlatformStats: {
         schema: PlatformStatsSchema,
       },
+      AuditActionUser: { schema: AuditActionUserSchema },
+      AuditEntry: { schema: AuditEntrySchema },
+      AuditAdminNote: { schema: AuditAdminNoteSchema },
+      AuditEventAction: { schema: AuditEventActionSchema },
+      CascadeContext: { schema: CascadeContextSchema },
+      EntityTimelineEvent: { schema: EntityTimelineEventSchema },
+      EntityTimelineItem: { schema: EntityTimelineItemSchema },
+      EntityTimelineResponse: { schema: EntityTimelineResponseSchema },
     },
     filter: (args) => isPublicProcedure(args),
   });

@@ -6,8 +6,8 @@ import CountryFlag from '@/components/shared/CountryFlag';
 import { LeaderboardEntry } from '@/lib/orpc/schema/leaderboard';
 import { TierName, getTierString } from '@/lib/utils/tierData';
 import type { ColumnDef } from '@tanstack/react-table';
-import Image from 'next/image';
 import Link from 'next/link';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 
 export const columns: ColumnDef<LeaderboardEntry>[] = [
   {
@@ -52,13 +52,11 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       const player = row.original.player;
       return (
         <div className="ml-1.5 flex min-w-[150px] flex-row items-center gap-3">
-          <Image
-            src={`https://a.ppy.sh/${player.osuId}`}
-            alt={`${player.username} avatar`}
-            className="ring-muted/20 flex-shrink-0 rounded-full ring-2"
-            width={32}
-            height={32}
-            unoptimized
+          <OsuAvatar
+            osuId={player.osuId}
+            username={player.username}
+            size={32}
+            className="ring-muted/20 flex-shrink-0 ring-2"
           />
           <Link
             href={`/players/${player.id}?ruleset=${row.original.ruleset}`}

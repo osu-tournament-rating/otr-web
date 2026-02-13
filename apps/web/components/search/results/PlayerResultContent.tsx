@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, User } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 import { RulesetEnumHelper } from '@/lib/enums';
 import type { PlayerSearchResult } from '@/lib/orpc/schema/search';
@@ -9,7 +9,7 @@ import { TierName } from '@/lib/utils/tierData';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TierIcon from '@/components/icons/TierIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import TRText from '@/components/rating/TRText';
 
 interface PlayerResultContentProps {
@@ -20,15 +20,12 @@ interface PlayerResultContentProps {
 export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
   return (
     <div className="flex w-full items-center gap-3">
-      <Avatar className="h-6 w-6 flex-shrink-0">
-        <AvatarImage
-          src={`https://a.ppy.sh/${data.osuId}`}
-          alt={`${data.username || 'Unknown user'}'s profile picture`}
-        />
-        <AvatarFallback>
-          <User className="h-3 w-3" />
-        </AvatarFallback>
-      </Avatar>
+      <OsuAvatar
+        osuId={data.osuId}
+        username={data.username}
+        size={24}
+        className="flex-shrink-0"
+      />
       <span className="min-w-0 flex-1 truncate font-medium">
         {highlightMatch(data.username ?? 'Unknown user', query)}
       </span>

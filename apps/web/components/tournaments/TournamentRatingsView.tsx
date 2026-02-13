@@ -18,7 +18,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useState, useMemo, useCallback } from 'react';
-import Image from 'next/image';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import Link from 'next/link';
 import {
   ArrowUpDown,
@@ -83,12 +83,11 @@ const PlayerCell = ({
     href={`/players/${player.id}`}
     className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5"
   >
-    <Image
-      src={`https://a.ppy.sh/${player.osuId}`}
-      alt={`${player.username} avatar`}
-      className="ring-border/10 flex-shrink-0 rounded-full ring-1"
-      width={28}
-      height={28}
+    <OsuAvatar
+      osuId={player.osuId}
+      username={player.username}
+      size={28}
+      className="ring-border/10 flex-shrink-0 ring-1"
     />
     <span className="truncate text-xs font-medium sm:text-sm">
       {player.username}

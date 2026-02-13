@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useMediaQuery, useToggle } from '@uidotdev/usehooks';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import {
   Collapsible,
   CollapsibleContent,
@@ -358,15 +358,13 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 function UserAvatar({ player, showNotificationDot }: UserAvatarProps) {
   return (
     <div className="relative">
-      <Avatar className="hover:border-primary/80 size-9 transition-all">
-        <AvatarImage
-          src={`https://a.ppy.sh/${player.osuId}`}
-          alt={player.username ? `${player.username}'s avatar` : 'User avatar'}
-        />
-        <AvatarFallback>
-          <User className="size-4" />
-        </AvatarFallback>
-      </Avatar>
+      <OsuAvatar
+        osuId={player.osuId}
+        username={player.username}
+        size={36}
+        className="hover:border-primary/80 transition-all"
+        fallback={<User className="size-4" />}
+      />
       {showNotificationDot && (
         <span className="absolute right-0 top-0 size-2.5 rounded-full bg-blue-500" />
       )}

@@ -1,6 +1,7 @@
 import { getTournamentCached } from '@/lib/orpc/queries/tournament';
 import {
   AdminNoteRouteTarget,
+  AuditEntityType,
   ReportEntityType,
   VerificationStatus,
 } from '@otr/core/osu';
@@ -34,6 +35,7 @@ import VerificationBadge from '@/components/badges/VerificationBadge';
 import { LazerBadge } from '@/components/badges/LazerBadge';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';
 import TournamentAdminView from '@/components/tournaments/TournamentAdminView';
+import AuditButton from '@/components/audit/AuditButton';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeatmapsAdminView';
 import TournamentMatchesAdminView from '@/components/tournaments/TournamentMatchesAdminView';
@@ -181,6 +183,10 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
                   startTime: tournament.startTime ?? '',
                   endTime: tournament.endTime ?? '',
                 }}
+              />
+              <AuditButton
+                entityType={AuditEntityType.Tournament}
+                entityId={tournament.id}
               />
               <AdminNoteView
                 notes={tournament.adminNotes ?? []}
