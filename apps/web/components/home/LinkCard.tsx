@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import React from 'react';
 import { Card } from '../ui/card';
-import { Medal, Trophy, BookOpen } from 'lucide-react';
+import { Medal, Trophy, BookOpen, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type IconVariant = 'medal' | 'trophy' | 'book';
+type IconVariant = 'medal' | 'trophy' | 'book' | 'user';
 
 const getIcon = (icon: IconVariant) => {
   switch (icon) {
@@ -14,6 +14,8 @@ const getIcon = (icon: IconVariant) => {
       return Trophy;
     case 'book':
       return BookOpen;
+    case 'user':
+      return User;
   }
 };
 

@@ -53,8 +53,11 @@ yarn-error.log*
 # Other
 .aider*
 .cursor/
-CLAUDE.md
 remove-local-link.sh
 setup-local-link.sh
 **/dist/
 monitoring/loki/data/
+.playwright-mcp/
+
+# top-level images (playwright mcp)
+*.png

@@ -4,6 +4,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { syncTournamentDateRange, withAuditUserId } from '@otr/core/db';
 import { cascadeMatchRejection } from '@otr/core/db/rejection-cascade';
+import { cascadeMatchVerification } from '@otr/core/db/verification-cascade';
 import {
   MatchAdminDeleteInputSchema,
   MatchAdminDeletePlayerScoresInputSchema,
@@ -13,12 +14,7 @@ import {
   MatchAdminMutationResponseSchema,
   MatchAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
-import {
-  GameWarningFlags,
-  MatchWarningFlags,
-  VerificationStatus,
-} from '@otr/core/osu';
-import type { DatabaseClient } from '@/lib/db';
+import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -96,7 +92,7 @@ export const updateMatchAdmin = protectedProcedure
           .where(eq(schema.matches.id, input.id));
 
         if (input.verificationStatus === VerificationStatus.Verified) {
-          await cascadeClearWarningFlags(tx, input.id);
+          await cascadeMatchVerification(tx, [input.id], { updatedAt: NOW });
         }
 
         if (input.verificationStatus === VerificationStatus.Rejected) {
@@ -109,24 +105,6 @@ export const updateMatchAdmin = protectedProcedure
 
     return { success: true } as const;
   });
-
-async function cascadeClearWarningFlags(
-  tx: Pick<DatabaseClient, 'update'>,
-  matchId: number
-) {
-  await tx
-    .update(schema.games)
-    .set({
-      warningFlags: GameWarningFlags.None,
-      updated: NOW,
-    })
-    .where(
-      and(
-        eq(schema.games.matchId, matchId),
-        eq(schema.games.verificationStatus, VerificationStatus.Verified)
-      )
-    );
-}
 
 export const mergeMatchAdmin = protectedProcedure
   .input(MatchAdminMergeInputSchema)

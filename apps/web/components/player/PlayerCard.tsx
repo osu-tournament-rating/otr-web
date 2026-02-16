@@ -1,8 +1,8 @@
 import type { PlayerCompact } from '@/lib/orpc/schema/playerStats';
 import { Ruleset } from '@otr/core/osu';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { OsuAvatar } from '../ui/osu-avatar';
 import Link from 'next/link';
-import { ExternalLink, User } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import PlayerRulesetSelector from '../buttons/RulesetSelector';
 import { Card } from '../ui/card';
 
@@ -18,18 +18,13 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
       className="bg-popover flex flex-row flex-wrap justify-between border-none p-4"
     >
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
-        <Avatar
+        <OsuAvatar
           data-testid="player-avatar"
-          className="bg-accent hover:border-primary/80 h-16 w-16 transition-all"
-        >
-          <AvatarImage
-            src={`https://a.ppy.sh/${player.osuId}`}
-            alt={player.username}
-          />
-          <AvatarFallback>
-            <User className="h-16 w-16" />
-          </AvatarFallback>
-        </Avatar>
+          osuId={player.osuId}
+          username={player.username}
+          size={64}
+          className="bg-accent hover:border-primary/80 transition-all"
+        />
         <div className="flex items-center gap-2">
           <span data-testid="player-username" className="text-3xl font-medium">
             {player.username}

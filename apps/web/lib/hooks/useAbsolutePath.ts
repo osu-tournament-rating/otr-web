@@ -10,7 +10,11 @@ import { usePathname } from 'next/navigation';
 export function useAbsolutePath() {
   const path = usePathname();
 
-  return window.location.origin + path;
+  const origin =
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_BASE_URL ?? '');
+  return origin + path;
 }
 
 /**
@@ -28,5 +32,9 @@ export function useAuthRedirectPath() {
     path = '/';
   }
 
-  return window.location.origin + path;
+  const origin =
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_BASE_URL ?? '');
+  return origin + path;
 }
