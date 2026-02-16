@@ -203,4 +203,17 @@ export enum ReportStatus {
   Rejected = 2,
 }
 
+export enum AuditActionType {
+  Created = 0,
+  Updated = 1,
+  Deleted = 2,
+}
+
+export enum AuditEntityType {
+  Tournament = 0,
+  Match = 1,
+  Game = 2,
+  Score = 3,
+}
+
 export type BitwiseEnum = number;

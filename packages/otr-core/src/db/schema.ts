@@ -293,6 +293,10 @@ export const gameAudits = pgTable(
       foreignColumns: [games.id],
       name: 'fk_game_audits_games_reference_id',
     }).onDelete('set null'),
+    index('ix_game_audits_changes_gin').using(
+      'gin',
+      table.changes.op('jsonb_path_ops')
+    ),
   ]
 );
 
@@ -466,6 +470,10 @@ export const gameScoreAudits = pgTable(
       foreignColumns: [gameScores.id],
       name: 'fk_game_score_audits_game_scores_reference_id',
     }).onDelete('set null'),
+    index('ix_game_score_audits_changes_gin').using(
+      'gin',
+      table.changes.op('jsonb_path_ops')
+    ),
   ]
 );
 
@@ -819,6 +827,10 @@ export const matchAudits = pgTable(
       foreignColumns: [matches.id],
       name: 'fk_match_audits_matches_reference_id',
     }).onDelete('set null'),
+    index('ix_match_audits_changes_gin').using(
+      'gin',
+      table.changes.op('jsonb_path_ops')
+    ),
   ]
 );
 
@@ -1544,6 +1556,10 @@ export const tournamentAudits = pgTable(
       foreignColumns: [tournaments.id],
       name: 'fk_tournament_audits_tournaments_reference_id',
     }).onDelete('set null'),
+    index('ix_tournament_audits_changes_gin').using(
+      'gin',
+      table.changes.op('jsonb_path_ops')
+    ),
   ]
 );
 

@@ -3,6 +3,7 @@ services:
     image: postgres:17
     container_name: db
     restart: unless-stopped
+    shm_size: '256m'
     ports:
       - '5432:5432'
     environment:

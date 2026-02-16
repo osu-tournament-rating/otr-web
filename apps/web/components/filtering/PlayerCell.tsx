@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { PlayerFilteringResult } from '@/lib/orpc/schema/filtering';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 
 interface PlayerCellProps {
   result: PlayerFilteringResult | null | undefined;
@@ -11,7 +11,7 @@ export default function PlayerCell({ result }: PlayerCellProps) {
     return <span className="text-muted-foreground">-</span>;
   }
 
-  if (!result.username || !result.playerId) {
+  if (!result.username || !result.playerId || result.osuId === null) {
     return (
       <div className="flex items-center gap-2">
         <div className="bg-muted size-6 rounded-full" />
@@ -22,17 +22,11 @@ export default function PlayerCell({ result }: PlayerCellProps) {
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <Image
-        src={`https://a.ppy.sh/${result.osuId}`}
-        alt={`${result.username} avatar`}
-        className="flex-shrink-0 rounded-full"
-        width={24}
-        height={24}
-        unoptimized
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-        }}
+      <OsuAvatar
+        osuId={result.osuId}
+        username={result.username}
+        size={24}
+        className="flex-shrink-0"
       />
       <Link
         href={`/players/${result.playerId}`}

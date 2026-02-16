@@ -1,5 +1,7 @@
 import {
   AdminNoteRouteTarget,
+  AuditActionType,
+  AuditEntityType,
   FilteringFailReason,
   GameRejectionReason,
   GameWarningFlags,
@@ -19,6 +21,7 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 /** Basic enum metadata */
 export type EnumMetadata = {
@@ -872,6 +875,75 @@ export const ReportStatusEnumHelper: IEnumHelper<ReportStatus> = {
     [ReportStatus.Rejected]: {
       text: 'Rejected',
       description: 'Report was declined',
+    },
+  },
+};
+
+export const AuditActionTypeEnumHelper: IEnumHelper<AuditActionType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [AuditActionType.Created]: {
+      text: 'Created',
+      description: 'Entity was created',
+    },
+    [AuditActionType.Updated]: {
+      text: 'Updated',
+      description: 'Entity was updated',
+    },
+    [AuditActionType.Deleted]: {
+      text: 'Deleted',
+      description: 'Entity was deleted',
+    },
+  },
+};
+
+export const AuditEntityTypeEnumHelper: IEnumHelper<AuditEntityType> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [AuditEntityType.Tournament]: {
+      text: 'Tournament',
+      description: '',
+    },
+    [AuditEntityType.Match]: {
+      text: 'Match',
+      description: '',
+    },
+    [AuditEntityType.Game]: {
+      text: 'Game',
+      description: '',
+    },
+    [AuditEntityType.Score]: {
+      text: 'Score',
+      description: '',
+    },
+  },
+};
+
+export const DataFetchStatusEnumHelper: IEnumHelper<number> = {
+  ...defaultEnumHelper(),
+
+  metadata: {
+    [DataFetchStatus.NotFetched]: {
+      text: 'Not Fetched',
+      description: 'Data has not been fetched yet',
+    },
+    [DataFetchStatus.Fetching]: {
+      text: 'Fetching',
+      description: 'Data is currently being fetched',
+    },
+    [DataFetchStatus.Fetched]: {
+      text: 'Fetched',
+      description: 'Data has been successfully fetched',
+    },
+    [DataFetchStatus.NotFound]: {
+      text: 'Not Found',
+      description: 'Data was not found',
+    },
+    [DataFetchStatus.Error]: {
+      text: 'Error',
+      description: 'An error occurred while fetching data',
     },
   },
 };

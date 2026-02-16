@@ -7,7 +7,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import Link from 'next/link';
-import { Medal, User } from 'lucide-react';
+import { Medal } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   Table,
@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { OsuAvatar } from '../ui/osu-avatar';
 import ModIconset from '@/components/icons/ModIconset';
 import { formatAccuracy } from '@/lib/utils/format';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
@@ -48,15 +48,11 @@ const columns = [
           href={`/players/${player.id}`}
           className="flex items-center gap-2"
         >
-          <Avatar className="h-6 w-6">
-            <AvatarImage
-              src={`https://a.ppy.sh/${player.osuId}`}
-              alt={player.username}
-            />
-            <AvatarFallback>
-              <User className="h-3 w-3" />
-            </AvatarFallback>
-          </Avatar>
+          <OsuAvatar
+            osuId={player.osuId}
+            username={player.username}
+            size={24}
+          />
           <span>{player.username}</span>
         </Link>
       );
