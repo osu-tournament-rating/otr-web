@@ -58,6 +58,8 @@ setup-local-link.sh
 **/dist/
 monitoring/loki/data/
 .playwright-mcp/
+.claude/
+.mcp.json
 
 # top-level images (playwright mcp)
 *.png

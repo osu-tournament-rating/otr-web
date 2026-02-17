@@ -39,22 +39,7 @@ import {
   cascadeMatchRejection,
 } from '@otr/core/db/rejection-cascade';
 import { coerceNumericEnumValue } from '@otr/core';
-
-const isManiaVariant = (
-  value: Ruleset
-): value is Ruleset.Mania4k | Ruleset.Mania7k =>
-  value === Ruleset.Mania4k || value === Ruleset.Mania7k;
-
-export const resolveRulesetWithTournament = (
-  rawRuleset: Ruleset,
-  tournamentRuleset: Ruleset
-): Ruleset => {
-  if (rawRuleset === Ruleset.ManiaOther && isManiaVariant(tournamentRuleset)) {
-    return tournamentRuleset;
-  }
-
-  return rawRuleset;
-};
+import { resolveRulesetWithTournament } from './ruleset-utils';
 
 interface MatchFetchServiceOptions {
   db: DatabaseClient;
