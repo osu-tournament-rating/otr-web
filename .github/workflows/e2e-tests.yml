@@ -5,6 +5,12 @@ on:
     branches: [master]
   push:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      refresh-database:
+        description: 'Pull and restore a fresh database dump from GCS'
+        type: boolean
+        default: false
 
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
@@ -36,15 +42,46 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Check for migration changes
+        id: check-migrations
+        run: |
+          if [[ "${{ inputs.refresh-database }}" == "true" ]]; then
+            echo "refresh=true" >> "$GITHUB_OUTPUT"
+            echo "Database refresh requested via input flag"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            CHANGED=$(git diff --name-only HEAD~1 -- apps/web/drizzle/)
+            if [ -n "$CHANGED" ]; then
+              echo "refresh=true" >> "$GITHUB_OUTPUT"
+              echo "Migration files changed on push: $CHANGED"
+            else
+              echo "refresh=false" >> "$GITHUB_OUTPUT"
+              echo "No migration changes detected"
+            fi
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- apps/web/drizzle/)
+            if [ -n "$CHANGED" ]; then
+              echo "refresh=true" >> "$GITHUB_OUTPUT"
+              echo "Migration files changed in PR: $CHANGED"
+            else
+              echo "refresh=false" >> "$GITHUB_OUTPUT"
+              echo "No migration changes detected"
+            fi
+          else
+            echo "refresh=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate with Google Cloud
+        if: steps.check-migrations.outputs.refresh == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}
 
       - name: Set up Cloud SDK
+        if: steps.check-migrations.outputs.refresh == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Download and restore database dump
+        if: steps.check-migrations.outputs.refresh == 'true'
         run: |
           LATEST_FILE=$(gcloud storage ls -l "gs://${GCS_BUCKET}" \
             | awk 'NF >= 3 && $NF ~ /^gs:\/\/.*\.gz$/ {print $(NF-1) " " $NF}' \
