@@ -7,6 +7,7 @@ Next.js 15 + React 19 monorepo.
 ```bash
 bun run lint                    # ESLint all workspaces
 bunx tsc --noEmit               # TypeScript check
+bun run format                  # Formatter, required before committing
 bunx drizzle-kit generate       # Create migration
 bunx drizzle-kit migrate        # Apply migrations
 ```
