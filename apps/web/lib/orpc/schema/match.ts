@@ -29,14 +29,17 @@ const matchTournamentBaseSchema = tournamentSelectSchema.pick({
   id: true,
   name: true,
   abbreviation: true,
+  ruleset: true,
 });
 
 export const MatchTournamentSchema = matchTournamentBaseSchema
   .omit({
     abbreviation: true,
+    ruleset: true,
   })
   .extend({
     abbreviation: matchTournamentBaseSchema.shape.abbreviation.nullable(),
+    ruleset: RulesetSchema,
   })
   .nullable();
 
