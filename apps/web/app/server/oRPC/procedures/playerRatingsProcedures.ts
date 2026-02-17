@@ -3,16 +3,16 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
-  BatchPlayerRatingsInputSchema,
-  BatchPlayerRatingsResponseSchema,
+  PlayerRatingsInputSchema,
+  PlayerRatingsResponseSchema,
 } from '@/lib/orpc/schema/playerRatings';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
 
-export const getPlayerRatingsBatch = publicProcedure
-  .input(BatchPlayerRatingsInputSchema)
-  .output(BatchPlayerRatingsResponseSchema)
+export const getPlayerRatings = publicProcedure
+  .input(PlayerRatingsInputSchema)
+  .output(PlayerRatingsResponseSchema)
   .route({
     summary: 'Get ratings for multiple players',
     tags: ['public'],
@@ -114,12 +114,12 @@ export const getPlayerRatingsBatch = publicProcedure
         throw error;
       }
 
-      console.error('[orpc] players.ratings.batch failed', error);
+      console.error('[orpc] players.ratings failed', error);
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
         message:
           error instanceof Error
             ? error.message
-            : 'Failed to fetch batch player ratings',
+            : 'Failed to fetch player ratings',
       });
     }
   });

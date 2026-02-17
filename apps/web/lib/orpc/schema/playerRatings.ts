@@ -2,12 +2,12 @@ import { z } from 'zod/v4';
 
 import { RulesetSchema } from './constants';
 
-export const BatchPlayerRatingsInputSchema = z.object({
+export const PlayerRatingsInputSchema = z.object({
   osuIds: z.array(z.number().int().positive()).min(1).max(50),
   ruleset: RulesetSchema,
 });
 
-export const BatchPlayerRatingEntrySchema = z.object({
+export const PlayerRatingEntrySchema = z.object({
   osuId: z.number().int().positive(),
   rating: z.number(),
   volatility: z.number(),
@@ -19,5 +19,5 @@ export const BatchPlayerRatingEntrySchema = z.object({
   subTier: z.number().int().min(1).max(3),
 });
 
-export const BatchPlayerRatingsResponseSchema =
-  BatchPlayerRatingEntrySchema.array();
+export const PlayerRatingsResponseSchema =
+  PlayerRatingEntrySchema.array();
