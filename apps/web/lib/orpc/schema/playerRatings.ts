@@ -19,5 +19,4 @@ export const PlayerRatingEntrySchema = z.object({
   subTier: z.number().int().min(1).max(3),
 });
 
-export const PlayerRatingsResponseSchema =
-  PlayerRatingEntrySchema.array();
+export const PlayerRatingsResponseSchema = PlayerRatingEntrySchema.array();
