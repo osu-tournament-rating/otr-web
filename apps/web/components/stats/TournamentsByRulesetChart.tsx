@@ -110,7 +110,7 @@ export default function TournamentsByRulesetChart({
   };
 
   return (
-    <Card className={className}>
+    <Card data-testid="chart-tournaments-by-ruleset" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Gamepad2 className="text-primary h-6 w-6" />

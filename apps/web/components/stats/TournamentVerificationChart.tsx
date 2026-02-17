@@ -140,7 +140,7 @@ export default function TournamentVerificationChart({
   const total = chartData.reduce((sum, entry) => sum + entry.count, 0);
 
   return (
-    <Card className={className}>
+    <Card data-testid="chart-tournament-verification" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CheckCircle className="text-primary h-6 w-6" />

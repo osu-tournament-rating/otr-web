@@ -147,7 +147,10 @@ export default function RatingDistributionChart({
 
   if (isEmpty) {
     return (
-      <Card className={className}>
+      <Card
+        data-testid={`chart-rating-distribution-${ruleset}`}
+        className={className}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
@@ -164,7 +167,10 @@ export default function RatingDistributionChart({
   }
 
   return (
-    <Card className={className}>
+    <Card
+      data-testid={`chart-rating-distribution-${ruleset}`}
+      className={className}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />

@@ -7,4 +7,5 @@ export const ROUTES = {
   auditLogs: '/tools/audit-logs',
   auditTournament: (id: number) => `/audit/tournaments/${id}`,
   auditMatch: (id: number) => `/audit/matches/${id}`,
+  stats: '/stats',
 } as const;
