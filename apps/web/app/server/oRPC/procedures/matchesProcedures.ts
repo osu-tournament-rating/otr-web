@@ -196,6 +196,7 @@ export const getMatch = publicProcedure
         dataFetchStatus: schema.matches.dataFetchStatus,
         tournamentName: schema.tournaments.name,
         tournamentAbbreviation: schema.tournaments.abbreviation,
+        tournamentRuleset: schema.tournaments.ruleset,
       })
       .from(schema.matches)
       .leftJoin(
@@ -783,6 +784,7 @@ export const getMatch = publicProcedure
             id: matchRow.tournamentId,
             name: matchRow.tournamentName ?? 'Unknown tournament',
             abbreviation: matchRow.tournamentAbbreviation ?? null,
+            ruleset: matchRow.tournamentRuleset,
           }
         : null;
 
