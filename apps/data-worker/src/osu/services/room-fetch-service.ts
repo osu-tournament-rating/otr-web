@@ -14,7 +14,7 @@ import {
   normalizeDate,
 } from '../conversions';
 import { getOrCreatePlayerId } from '../player-store';
-import { resolveRulesetWithTournament } from './match-fetch-service';
+import { resolveRulesetWithTournament } from './ruleset-utils';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
 import type { RateLimiter } from '../../rate-limiter';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { resolveRulesetWithTournament } from '../match-fetch-service';
+import { resolveRulesetWithTournament } from '../ruleset-utils';
 import { Ruleset } from '@otr/core/osu/enums';
 
 describe('resolveRulesetWithTournament', () => {
