@@ -6,6 +6,10 @@ on:
   push:
     branches: [master]
 
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
     runs-on: self-hosted
