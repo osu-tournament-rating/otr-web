@@ -146,7 +146,7 @@ export default function AdminReportsClient() {
         );
 
         toast.success(
-          `Report ${status === ReportStatus.Approved ? 'approved' : 'rejected'}`
+          `Report ${status === ReportStatus.Approved ? 'confirmed' : 'dismissed'}`
         );
         setDetailsOpen(false);
         setSelectedReport(null);
@@ -397,31 +397,39 @@ export default function AdminReportsClient() {
                 )}
               </div>
 
-              <div>
-                <Label className="text-muted-foreground text-xs">
-                  Reported Fields
-                </Label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {Object.keys(
-                    selectedReport.suggestedChanges as Record<string, string>
-                  ).map((field) => (
-                    <Badge key={field} variant="secondary">
-                      {formatFieldName(field)}
-                    </Badge>
-                  ))}
+              {Object.keys(
+                selectedReport.suggestedChanges as Record<string, string>
+              ).length > 0 && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">
+                    Reported Fields
+                  </Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {Object.keys(
+                      selectedReport.suggestedChanges as Record<string, string>
+                    ).map((field) => (
+                      <Badge key={field} variant="secondary">
+                        {formatFieldName(field)}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <Label className="text-muted-foreground text-xs">
-                  Suggested Changes
-                </Label>
-                <p className="bg-muted/50 mt-2 whitespace-pre-wrap rounded-md p-3 text-sm">
-                  {Object.values(
-                    selectedReport.suggestedChanges as Record<string, string>
-                  )[0] ?? '—'}
-                </p>
-              </div>
+              {Object.values(
+                selectedReport.suggestedChanges as Record<string, string>
+              ).some((v) => v) && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">
+                    Suggested Changes
+                  </Label>
+                  <p className="bg-muted/50 mt-2 whitespace-pre-wrap rounded-md p-3 text-sm">
+                    {Object.values(
+                      selectedReport.suggestedChanges as Record<string, string>
+                    )[0] ?? '—'}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label className="text-muted-foreground text-xs">
@@ -440,7 +448,7 @@ export default function AdminReportsClient() {
                       id="admin-note"
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="Add a note about your decision..."
+                      placeholder="Add a note about your decision"
                       className="mt-1"
                       rows={3}
                     />
@@ -456,7 +464,7 @@ export default function AdminReportsClient() {
                       ) : (
                         <X className="mr-2 size-4" />
                       )}
-                      Reject
+                      Dismiss
                     </Button>
                     <Button
                       onClick={() => handleResolve(ReportStatus.Approved)}
@@ -468,7 +476,7 @@ export default function AdminReportsClient() {
                       ) : (
                         <Check className="mr-2 size-4" />
                       )}
-                      Approve
+                      Confirm
                     </Button>
                   </div>
                 </div>

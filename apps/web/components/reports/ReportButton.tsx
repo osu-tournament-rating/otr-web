@@ -44,8 +44,8 @@ interface ReportButtonProps {
 }
 
 const reportFormSchema = z.object({
-  selectedFields: z.array(z.string()).min(1, 'Select at least one field'),
-  suggestedChanges: z.string().min(1, 'Suggested changes are required'),
+  selectedFields: z.array(z.string()),
+  suggestedChanges: z.string(),
   justification: z.string().min(1, 'Justification is required'),
 });
 
@@ -79,8 +79,10 @@ export default function ReportButton({
 
   async function onSubmit(data: ReportFormData) {
     const suggestedChanges: Record<string, string> = {};
-    for (const field of data.selectedFields) {
-      suggestedChanges[field] = data.suggestedChanges.trim();
+    if (data.selectedFields.length > 0 && data.suggestedChanges.trim()) {
+      for (const field of data.selectedFields) {
+        suggestedChanges[field] = data.suggestedChanges.trim();
+      }
     }
 
     try {
@@ -148,10 +150,7 @@ export default function ReportButton({
               name="selectedFields"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Select fields to report{' '}
-                    <span className="text-red-500">*</span>
-                  </FormLabel>
+                  <FormLabel>Select fields to report</FormLabel>
                   <div className="grid grid-cols-2 gap-2">
                     {reportableFields.map((reportableField) => {
                       const checkboxId = `report-field-${reportableField}`;
@@ -199,12 +198,10 @@ export default function ReportButton({
               name="suggestedChanges"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Suggested changes <span className="text-red-500">*</span>
-                  </FormLabel>
+                  <FormLabel>Suggested changes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe what the correct values should be..."
+                      placeholder="Describe what the correct values should be"
                       className="min-h-20 resize-none"
                       {...field}
                     />
@@ -224,7 +221,7 @@ export default function ReportButton({
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Please explain why this data is incorrect and provide any supporting evidence..."
+                      placeholder="Please explain why this data is incorrect and provide any supporting evidence"
                       className="min-h-20 resize-none"
                       {...field}
                     />

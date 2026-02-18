@@ -50,12 +50,7 @@ export const ReportableFieldsMap = {
 export const ReportCreateInputSchema = z.object({
   entityType: z.nativeEnum(ReportEntityType),
   entityId: z.number().int().positive(),
-  suggestedChanges: z
-    .record(z.string(), z.string())
-    .refine(
-      (obj) => Object.keys(obj).length > 0,
-      'At least one field change required'
-    ),
+  suggestedChanges: z.record(z.string(), z.string()),
   justification: z.string().min(1),
 });
 
