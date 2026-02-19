@@ -401,8 +401,7 @@ export default function TournamentSubmissionForm() {
                             )
                               .filter(
                                 ([v]) =>
-                                  Number(v) !==
-                                  TournamentRejectionReason.None
+                                  Number(v) !== TournamentRejectionReason.None
                               )
                               .map(([v, { text }]) => ({
                                 value: v,
