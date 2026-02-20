@@ -355,81 +355,78 @@ export default function TournamentSubmissionForm() {
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-4">
-              <FormField
-                control={form.control}
-                name="isLazer"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <LabelWithTooltip
-                      label="Played on osu!lazer"
-                      tooltip="Check this if the tournament was played on osu!lazer instead of osu!stable"
+          <div className="flex flex-row items-center gap-4">
+            <FormField
+              control={form.control}
+              name="isLazer"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
-                  </FormItem>
-                )}
-              />
-
-              {isAdmin && (
-                <div className="flex flex-row items-center gap-2">
-                  <Checkbox
-                    checked={rejectOnSubmit}
-                    onClick={() => setRejectOnSubmit((prev) => !prev)}
+                  </FormControl>
+                  <LabelWithTooltip
+                    label="Played on osu!lazer"
+                    tooltip="Check this if the tournament was played on osu!lazer instead of osu!stable"
                   />
-                  <FormLabel className="text-foreground font-medium">
-                    Reject this tournament on submission
-                  </FormLabel>
-                </div>
+                </FormItem>
               )}
-            </div>
+            />
 
-            {isAdmin && rejectOnSubmit && (
-              <FormField
-                control={form.control}
-                name="rejectionReason"
-                render={({
-                  field: { onChange, value },
-                  fieldState: { invalid },
-                }) => (
-                  <FormItem>
-                    <FormControl>
-                      <MultipleSelect
-                        placeholder="Select rejection reason"
-                        options={Object.entries(
-                          TournamentRejectionReasonEnumHelper.metadata
-                        )
-                          .filter(
-                            ([v]) =>
-                              Number(v) !== TournamentRejectionReason.None
-                          )
-                          .map(([v, { text }]) => ({
-                            value: v,
-                            label: text,
-                          }))}
-                        selected={TournamentRejectionReasonEnumHelper.getFlags(
-                          value
-                        ).map(String)}
-                        onChange={(values: string[]) => {
-                          let flag = 0;
-                          values.forEach((v: string) => {
-                            flag |= Number(v);
-                          });
+            {isAdmin && (
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox
+                  checked={rejectOnSubmit}
+                  onClick={() => setRejectOnSubmit((prev) => !prev)}
+                />
+                <FormLabel className="text-foreground font-medium">
+                  Reject this tournament on submission
+                </FormLabel>
+                {rejectOnSubmit && (
+                  <FormField
+                    control={form.control}
+                    name="rejectionReason"
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { invalid },
+                    }) => (
+                      <FormItem>
+                        <FormControl>
+                          <MultipleSelect
+                            placeholder="Select rejection reason"
+                            options={Object.entries(
+                              TournamentRejectionReasonEnumHelper.metadata
+                            )
+                              .filter(
+                                ([v]) =>
+                                  Number(v) !== TournamentRejectionReason.None
+                              )
+                              .map(([v, { text }]) => ({
+                                value: v,
+                                label: text,
+                              }))}
+                            selected={TournamentRejectionReasonEnumHelper.getFlags(
+                              value
+                            ).map(String)}
+                            onChange={(values: string[]) => {
+                              let flag = 0;
+                              values.forEach((v: string) => {
+                                flag |= Number(v);
+                              });
 
-                          onChange(flag);
-                        }}
-                        invalid={invalid}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                              onChange(flag);
+                            }}
+                            invalid={invalid}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
             )}
           </div>
 
