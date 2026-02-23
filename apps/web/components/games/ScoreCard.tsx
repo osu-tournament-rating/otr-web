@@ -201,18 +201,14 @@ export default function ScoreCard({
         <div className="flex items-center justify-between">
           <span
             className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400"
-            title={hitJudgments
-              .map((j) => `${j.label}: ${j.value}`)
-              .join(', ')}
+            title={hitJudgments.map((j) => `${j.label}: ${j.value}`).join(', ')}
           >
             {hitJudgments.map((j) => j.value.slice(0, -1)).join('/')}
             {' · '}
             {score.maxCombo}x{' · '}
             {formatAccuracy(score.accuracy)}
           </span>
-          <div className="flex items-center gap-1">
-            {renderActionIcons()}
-          </div>
+          <div className="flex items-center gap-1">{renderActionIcons()}</div>
         </div>
       </div>
 
@@ -228,9 +224,7 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
-            <div className="flex items-center gap-1">
-              {renderActionIcons()}
-            </div>
+            <div className="flex items-center gap-1">{renderActionIcons()}</div>
             {player?.country && (
               <CountryFlag
                 country={player.country}
