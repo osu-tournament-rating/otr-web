@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { MessagePriority, type ProcessTournamentStatsMessage } from '@otr/core';
 
-import type { QueueConsumer, QueueMessage } from '../../queue/types';
+import type { QueueConsumer, QueueMessage } from '@otr/core/queues';
 import type { Logger } from '../../logging/logger';
 import { TournamentStatsWorker } from '../tournament-stats-worker';
 import type { TournamentStatsService } from '../tournament-stats-service';
