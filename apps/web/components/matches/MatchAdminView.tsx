@@ -5,7 +5,7 @@ import {
   MatchWarningFlagsEnumHelper,
   MatchRejectionReasonEnumHelper,
 } from '@/lib/enum-helpers';
-import { matchEditFormSchema } from '@/lib/schema';
+import { matchEditFormSchema } from '@/lib/validation-schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ControllerFieldState, useForm } from 'react-hook-form';

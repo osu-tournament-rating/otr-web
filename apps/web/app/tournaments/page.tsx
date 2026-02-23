@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { PageSearchParams } from '@/lib/types';
-import { tournamentListFilterSchema } from '@/lib/schema';
+import { tournamentListFilterSchema } from '@/lib/validation-schema';
 import TournamentListFilter from '@/components/tournaments/list/TournamentListFilter';
 import TournamentList from '@/components/tournaments/list/TournamentList';
 import { Trophy } from 'lucide-react';

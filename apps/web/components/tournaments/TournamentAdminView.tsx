@@ -13,7 +13,7 @@ import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/tournament';
 import { TournamentDetail } from '@/lib/orpc/schema/tournament';
-import { tournamentEditFormSchema } from '@/lib/schema';
+import { tournamentEditFormSchema } from '@/lib/validation-schema';
 import { cn } from '@/lib/utils';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
