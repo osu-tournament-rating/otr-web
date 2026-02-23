@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Clock } from 'lucide-react';
 
 import { ScoreGradeEnumHelper } from '@/lib/enums';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
@@ -19,6 +20,7 @@ import { formatAccuracy } from '@/lib/utils/format';
 import AdminNoteView from '../admin-notes/AdminNoteView';
 import VerificationBadge from '../badges/VerificationBadge';
 import ReportButton from '../reports/ReportButton';
+import SimpleTooltip from '../simple-tooltip';
 import CountryFlag from '../shared/CountryFlag';
 import ScoreAdminView from '../scores/ScoreAdminView';
 import ModIconset from '../icons/ModIconset';
@@ -39,6 +41,10 @@ export default function ScoreCard({
   const isAdmin = session?.scopes?.includes(Roles.Admin);
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
+
+  /** Shared descendant-selector overrides for icon button slots */
+  const iconSlotStyles =
+    'relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
 
   const hitJudgments = (() => {
     switch (score.ruleset) {
@@ -104,37 +110,50 @@ export default function ScoreCard({
               entityType="score"
               size="small"
             />
-            <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3">
-              <ReportButton
-                entityType={ReportEntityType.Score}
-                entityId={score.id}
-                entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-                reportableFields={ScoreReportableFields}
-                currentValues={{
-                  score: String(score.score),
-                  accuracy: String(score.accuracy),
-                  maxCombo: String(score.maxCombo),
-                  mods: String(score.mods),
-                  team: String(score.team),
-                }}
-              />
-            </div>
-            {showAdminControls && (
-              <div className="relative flex items-center gap-0.5">
-                <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
-                  <AdminNoteView
-                    notes={score.adminNotes}
-                    entity={AdminNoteRouteTarget.GameScore}
-                    entityId={score.id}
-                  />
-                </div>
-                {isAdmin && (
-                  <div className="relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400">
-                    <ScoreAdminView score={score} />
-                  </div>
-                )}
+            <div className="flex items-center gap-1">
+              <div className={iconSlotStyles}>
+                <ReportButton
+                  entityType={ReportEntityType.Score}
+                  entityId={score.id}
+                  entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
+                  reportableFields={ScoreReportableFields}
+                  currentValues={{
+                    score: String(score.score),
+                    accuracy: String(score.accuracy),
+                    maxCombo: String(score.maxCombo),
+                    mods: String(score.mods),
+                    team: String(score.team),
+                  }}
+                />
               </div>
-            )}
+              <div className={iconSlotStyles}>
+                <SimpleTooltip content="View audit history">
+                  <Link
+                    href={`/audit/scores/${score.id}`}
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                    aria-label="View audit history"
+                  >
+                    <Clock className="size-4" />
+                  </Link>
+                </SimpleTooltip>
+              </div>
+              {showAdminControls && (
+                <>
+                  <div className={iconSlotStyles}>
+                    <AdminNoteView
+                      notes={score.adminNotes}
+                      entity={AdminNoteRouteTarget.GameScore}
+                      entityId={score.id}
+                    />
+                  </div>
+                  {isAdmin && (
+                    <div className={iconSlotStyles}>
+                      <ScoreAdminView score={score} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
             {player?.country && (
               <CountryFlag
                 country={player.country}
