@@ -83,6 +83,53 @@ export default function ScoreCard({
     }
   })();
 
+  const renderActionIcons = () => (
+    <>
+      <div className={iconSlotStyles}>
+        <ReportButton
+          entityType={ReportEntityType.Score}
+          entityId={score.id}
+          entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
+          reportableFields={ScoreReportableFields}
+          currentValues={{
+            score: String(score.score),
+            accuracy: String(score.accuracy),
+            maxCombo: String(score.maxCombo),
+            mods: String(score.mods),
+            team: String(score.team),
+          }}
+        />
+      </div>
+      <div className={iconSlotStyles}>
+        <SimpleTooltip content="View audit history">
+          <Link
+            href={`/audit/scores/${score.id}`}
+            className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            aria-label="View audit history"
+          >
+            <Clock className="size-4" />
+          </Link>
+        </SimpleTooltip>
+      </div>
+      {showAdminControls && (
+        <>
+          <div className={iconSlotStyles}>
+            <AdminNoteView
+              notes={score.adminNotes}
+              entity={AdminNoteRouteTarget.GameScore}
+              entityId={score.id}
+            />
+          </div>
+          {isAdmin && (
+            <div className={iconSlotStyles}>
+              <ScoreAdminView score={score} />
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+
   return (
     <div
       id={`score-${score.id}`}
@@ -98,8 +145,79 @@ export default function ScoreCard({
       {/* Team color on the side of the card */}
       <ScoreTeamColorBar />
 
-      {/* Content */}
-      <div className="flex size-full flex-col gap-2 px-2">
+      {/* XS compact layout */}
+      <div className="flex size-full flex-col gap-1 px-2 py-1 sm:hidden">
+        {/* Row 1: Player + Score */}
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <VerificationBadge
+              verificationStatus={score.verificationStatus}
+              rejectionReason={score.rejectionReason}
+              entityType="score"
+              size="small"
+            />
+            {player?.country && (
+              <CountryFlag
+                country={player.country}
+                width={18}
+                height={13}
+                showTooltip={false}
+                className="shrink-0"
+              />
+            )}
+            <Link
+              href={`/players/${player?.id}?ruleset=${score.ruleset}`}
+              className="min-w-0 shrink"
+            >
+              <span className="block truncate font-bold text-neutral-800 dark:text-neutral-200">
+                {player?.username}
+              </span>
+            </Link>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <ModIconset
+              className="flex h-full max-w-14 items-center justify-end"
+              iconClassName="max-h-5"
+              mods={score.mods}
+            />
+            <Image
+              src={`/icons/grades/${ScoreGradeEnumHelper.getMetadata(score.grade).text}.svg`}
+              alt={`Grade ${ScoreGradeEnumHelper.getMetadata(score.grade).text}`}
+              width={24}
+              height={24}
+              className="h-5 w-5"
+            />
+            <span
+              className={cn(
+                'text-(--score-text-color) tabular-nums',
+                won && 'font-bold'
+              )}
+            >
+              {score.score.toLocaleString()}
+            </span>
+          </div>
+        </div>
+        {/* Row 2: Compact stats + Action icons */}
+        <div className="flex items-center justify-between">
+          <span
+            className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400"
+            title={hitJudgments
+              .map((j) => `${j.label}: ${j.value}`)
+              .join(', ')}
+          >
+            {hitJudgments.map((j) => j.value.slice(0, -1)).join('/')}
+            {' · '}
+            {score.maxCombo}x{' · '}
+            {formatAccuracy(score.accuracy)}
+          </span>
+          <div className="flex items-center gap-1">
+            {renderActionIcons()}
+          </div>
+        </div>
+      </div>
+
+      {/* sm+ standard layout (matches original) */}
+      <div className="hidden size-full flex-col gap-2 px-2 sm:flex">
         {/* Top row */}
         <div className="team-flex-row flex flex-1 items-center justify-between">
           {/* Player */}
@@ -111,48 +229,7 @@ export default function ScoreCard({
               size="small"
             />
             <div className="flex items-center gap-1">
-              <div className={iconSlotStyles}>
-                <ReportButton
-                  entityType={ReportEntityType.Score}
-                  entityId={score.id}
-                  entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-                  reportableFields={ScoreReportableFields}
-                  currentValues={{
-                    score: String(score.score),
-                    accuracy: String(score.accuracy),
-                    maxCombo: String(score.maxCombo),
-                    mods: String(score.mods),
-                    team: String(score.team),
-                  }}
-                />
-              </div>
-              <div className={iconSlotStyles}>
-                <SimpleTooltip content="View audit history">
-                  <Link
-                    href={`/audit/scores/${score.id}`}
-                    className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                    aria-label="View audit history"
-                  >
-                    <Clock className="size-4" />
-                  </Link>
-                </SimpleTooltip>
-              </div>
-              {showAdminControls && (
-                <>
-                  <div className={iconSlotStyles}>
-                    <AdminNoteView
-                      notes={score.adminNotes}
-                      entity={AdminNoteRouteTarget.GameScore}
-                      entityId={score.id}
-                    />
-                  </div>
-                  {isAdmin && (
-                    <div className={iconSlotStyles}>
-                      <ScoreAdminView score={score} />
-                    </div>
-                  )}
-                </>
-              )}
+              {renderActionIcons()}
             </div>
             {player?.country && (
               <CountryFlag
@@ -160,12 +237,12 @@ export default function ScoreCard({
                 width={20}
                 height={14}
                 showTooltip={false}
-                className="flex-shrink-0"
+                className="shrink-0"
               />
             )}
             <Link
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
-              className="min-w-0 flex-shrink"
+              className="min-w-0 shrink"
             >
               <span className="block truncate font-bold text-neutral-800 dark:text-neutral-200">
                 {player?.username}
