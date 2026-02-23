@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import { ModsEnumHelper } from '@/lib/enums';
+import { ModsEnumHelper } from '@/lib/enum-helpers';
 import { Mods } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import { AuditEntityTypeEnumHelper } from '@/lib/enums';
+import { AuditEntityTypeEnumHelper } from '@/lib/enum-helpers';
 
 interface AuditPageHeaderProps {
   entityType: AuditEntityType;

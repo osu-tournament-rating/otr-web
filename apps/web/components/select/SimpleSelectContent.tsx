@@ -1,4 +1,4 @@
-import { EnumMetadata, IEnumHelper } from '@/lib/enums';
+import { EnumMetadata, IEnumHelper } from '@/lib/enum-helpers';
 import { SelectContent, SelectItem } from '../ui/select';
 
 export default function SimpleSelectContent<

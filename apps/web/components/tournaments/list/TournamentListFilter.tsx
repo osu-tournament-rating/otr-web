@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import {
   defaultTournamentListFilter,
   tournamentListFilterSchema,
-} from '@/lib/schema';
+} from '@/lib/validation-schema';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, ArrowUp, ArrowDown, Filter, X, Calendar } from 'lucide-react';
@@ -25,7 +25,7 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import { RulesetEnumHelper, LobbySizeEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper, LobbySizeEnumHelper } from '@/lib/enum-helpers';
 import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import {

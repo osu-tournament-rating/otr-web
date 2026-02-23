@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ScoreGradeEnumHelper } from '@/lib/enums';
+import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
 import { ScoreReportableFields } from '@/lib/orpc/schema/report';
 import {

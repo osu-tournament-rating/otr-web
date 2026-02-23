@@ -3,7 +3,7 @@
 import { Users } from 'lucide-react';
 
 import type { TournamentSearchResult } from '@/lib/orpc/schema/search';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { highlightMatch } from '@/lib/utils/search';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { LazerBadge } from '@/components/badges/LazerBadge';
