@@ -8,7 +8,7 @@ import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
 
 import { Game } from '@/lib/orpc/schema/match';
 import { Mods, Team, VerificationStatus } from '@otr/core/osu';
-import { ModsEnumHelper } from '@/lib/enums';
+import { ModsEnumHelper } from '@/lib/enum-helpers';
 import { cn } from '@/lib/utils';
 
 interface TeamScoresChartProps {

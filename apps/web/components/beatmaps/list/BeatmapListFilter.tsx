@@ -12,7 +12,7 @@ import {
   beatmapListFilterSchema,
   defaultBeatmapListFilter,
 } from '@/lib/schema';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import {
   Form,
   FormField,

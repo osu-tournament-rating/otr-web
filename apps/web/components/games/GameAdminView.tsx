@@ -36,7 +36,7 @@ import {
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
   getEnumFlags,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { orpc } from '@/lib/orpc/orpc';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';

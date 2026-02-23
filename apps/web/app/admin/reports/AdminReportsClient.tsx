@@ -41,7 +41,7 @@ import { Label } from '@/components/ui/label';
 import {
   ReportEntityTypeEnumHelper,
   ReportStatusEnumHelper,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
 import type { Report } from '@/lib/orpc/schema/report';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu';

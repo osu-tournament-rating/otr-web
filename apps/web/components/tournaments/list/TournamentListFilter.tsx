@@ -25,7 +25,7 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import { RulesetEnumHelper, LobbySizeEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper, LobbySizeEnumHelper } from '@/lib/enum-helpers';
 import { useDebounce } from '@uidotdev/usehooks';
 import { Button } from '@/components/ui/button';
 import {

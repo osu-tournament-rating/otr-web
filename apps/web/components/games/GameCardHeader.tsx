@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
-import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enums';
+import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enum-helpers';
 import { Game } from '@/lib/orpc/schema/match';
 import { GameReportableFields } from '@/lib/orpc/schema/report';
 import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';

@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import { AdminNoteRouteTargetEnumHelper } from '@/lib/enums';
+import { AdminNoteRouteTargetEnumHelper } from '@/lib/enum-helpers';
 import { adminNoteFormSchema } from '@/lib/schema';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { zodResolver } from '@hookform/resolvers/zod';

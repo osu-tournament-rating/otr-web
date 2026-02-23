@@ -40,7 +40,7 @@ import {
   ScoreGradeEnumHelper,
   ScoreRejectionReasonEnumHelper,
   getEnumFlags,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useState } from 'react';

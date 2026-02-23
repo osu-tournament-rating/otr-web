@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { ReportEntityTypeEnumHelper } from '@/lib/enums';
+import { ReportEntityTypeEnumHelper } from '@/lib/enum-helpers';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import { cn } from '@/lib/utils';

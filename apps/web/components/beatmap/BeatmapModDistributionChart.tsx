@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ModsEnumHelper } from '@/lib/enums';
+import { ModsEnumHelper } from '@/lib/enum-helpers';
 import {
   ChartConfig,
   ChartContainer,

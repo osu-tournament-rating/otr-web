@@ -1,4 +1,4 @@
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
 import { AdminNoteRouteTarget } from '@otr/core/osu';
