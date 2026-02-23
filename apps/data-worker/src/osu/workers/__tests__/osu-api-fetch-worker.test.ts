@@ -3,7 +3,7 @@ import type { FetchOsuMessage, OsuApiPayload } from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import { OsuApiFetchWorker } from '../osu-api-fetch-worker';
 import type { Logger } from '../../../logging/logger';
-import type { QueueConsumer, QueueMessage } from '../../../queue/types';
+import type { QueueConsumer, QueueMessage } from '@otr/core/queues';
 
 const createMockLogger = (): Logger => ({
   debug: mock(() => {}),

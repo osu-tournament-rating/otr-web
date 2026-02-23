@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 
 import type { DatabaseClient } from '../db';
 import { consoleLogger, type Logger } from '../logging/logger';
-import type { QueueConsumer } from '../queue/types';
+import type { QueueConsumer } from '@otr/core/queues';
 import type { RateLimiter } from '../rate-limiter';
 import { OsuTrackClient } from './client';
 
