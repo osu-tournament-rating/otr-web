@@ -141,7 +141,7 @@ export default function GameCard({
           </p>
         </div>
       ) : (
-        <div className="flex flex-row flex-wrap gap-1 md:gap-0">
+        <div className="flex flex-row flex-wrap gap-1 lg:gap-0">
           {/* Left column: Red team scores */}
           <div data-team="Red" className="team-container flex flex-col gap-1">
             {redTeamScores.map(({ score, won }: ScoreMapItem) => (
