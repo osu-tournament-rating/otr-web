@@ -6,7 +6,11 @@ import {
   queueMessageDuration,
   queueMessagesInFlight,
 } from '../metrics/queue-metrics';
-import type { QueueConsumer, QueueMessage, QueueMessageHandler } from './types';
+import type {
+  QueueConsumer,
+  QueueMessage,
+  QueueMessageHandler,
+} from '@otr/core/queues';
 
 export interface RabbitMqConsumerOptions {
   url: string;
