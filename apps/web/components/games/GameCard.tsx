@@ -144,11 +144,10 @@ export default function GameCard({
         <div className="flex flex-row flex-wrap gap-1 lg:gap-0">
           {/* Left column: Red team scores */}
           <div data-team="Red" className="team-container flex flex-col gap-1">
-            {redTeamScores.map(({ score, won }: ScoreMapItem) => (
+            {redTeamScores.map(({ score }: ScoreMapItem) => (
               <ScoreCard
                 key={score.id}
                 score={score}
-                won={won}
                 player={players.find((p) => p.id === score.playerId)}
                 highlighted={score.id === highlightScoreId}
               />
@@ -160,11 +159,10 @@ export default function GameCard({
                 data-team="NoTeam"
                 className="team-container flex flex-col gap-1"
               >
-                {noTeamScores.map(({ score, won }: ScoreMapItem) => (
+                {noTeamScores.map(({ score }: ScoreMapItem) => (
                   <ScoreCard
                     key={score.id}
                     score={score}
-                    won={won}
                     player={players.find((p) => p.id === score.playerId)}
                     highlighted={score.id === highlightScoreId}
                   />
@@ -175,11 +173,10 @@ export default function GameCard({
 
           {/* Right column: Blue team scores */}
           <div data-team="Blue" className="team-container flex flex-col gap-1">
-            {blueTeamScores.map(({ score, won }: ScoreMapItem) => (
+            {blueTeamScores.map(({ score }: ScoreMapItem) => (
               <ScoreCard
                 key={score.id}
                 score={score}
-                won={won}
                 player={players.find((p) => p.id === score.playerId)}
                 highlighted={score.id === highlightScoreId}
               />

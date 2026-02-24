@@ -29,12 +29,10 @@ import ScoreTeamColorBar from './ScoreTeamColorBar';
 export default function ScoreCard({
   score,
   player,
-  won = false,
   highlighted = false,
 }: {
   score: GameScore;
   player?: MatchPlayer;
-  won?: boolean;
   highlighted?: boolean;
 }) {
   const session = useSession();
@@ -85,47 +83,62 @@ export default function ScoreCard({
 
   const renderActionIcons = () => (
     <>
-      <div className={iconSlotStyles}>
-        <ReportButton
-          entityType={ReportEntityType.Score}
-          entityId={score.id}
-          entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-          reportableFields={ScoreReportableFields}
-          currentValues={{
-            score: String(score.score),
-            accuracy: String(score.accuracy),
-            maxCombo: String(score.maxCombo),
-            mods: String(score.mods),
-            team: String(score.team),
-          }}
-        />
+      {/* Hover-only icons — collapse to zero width, reveal on hover */}
+      <div className="flex max-w-0 items-center gap-1 overflow-hidden transition-all duration-200 group-hover:max-w-xs">
+        <div className={iconSlotStyles}>
+          <ReportButton
+            entityType={ReportEntityType.Score}
+            entityId={score.id}
+            entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
+            reportableFields={ScoreReportableFields}
+            currentValues={{
+              score: String(score.score),
+              accuracy: String(score.accuracy),
+              maxCombo: String(score.maxCombo),
+              mods: String(score.mods),
+              team: String(score.team),
+            }}
+          />
+        </div>
+        <div className={iconSlotStyles}>
+          <SimpleTooltip content="View audit history">
+            <Link
+              href={`/audit/scores/${score.id}`}
+              className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
+              aria-label="View audit history"
+            >
+              <Clock className="size-4" />
+            </Link>
+          </SimpleTooltip>
+        </div>
+        {showAdminControls && (
+          <>
+            {!hasNotes && (
+              <div className={iconSlotStyles}>
+                <AdminNoteView
+                  notes={score.adminNotes}
+                  entity={AdminNoteRouteTarget.GameScore}
+                  entityId={score.id}
+                />
+              </div>
+            )}
+            {isAdmin && (
+              <div className={iconSlotStyles}>
+                <ScoreAdminView score={score} />
+              </div>
+            )}
+          </>
+        )}
       </div>
-      <div className={iconSlotStyles}>
-        <SimpleTooltip content="View audit history">
-          <Link
-            href={`/audit/scores/${score.id}`}
-            className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
-            aria-label="View audit history"
-          >
-            <Clock className="size-4" />
-          </Link>
-        </SimpleTooltip>
-      </div>
-      {showAdminControls && (
-        <>
-          <div className={iconSlotStyles}>
-            <AdminNoteView
-              notes={score.adminNotes}
-              entity={AdminNoteRouteTarget.GameScore}
-              entityId={score.id}
-            />
-          </div>
-          {isAdmin && (
-            <div className={iconSlotStyles}>
-              <ScoreAdminView score={score} />
-            </div>
-          )}
-        </>
+      {/* Always-visible: admin notes with content */}
+      {hasNotes && (
+        <div className={iconSlotStyles}>
+          <AdminNoteView
+            notes={score.adminNotes}
+            entity={AdminNoteRouteTarget.GameScore}
+            entityId={score.id}
+          />
+        </div>
       )}
     </>
   );
@@ -169,7 +182,7 @@ export default function ScoreCard({
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >
-              <span className="block truncate font-bold text-neutral-800 dark:text-neutral-200">
+              <span className="block truncate text-neutral-800 dark:text-neutral-200">
                 {player?.username}
               </span>
             </Link>
@@ -187,12 +200,7 @@ export default function ScoreCard({
               height={24}
               className="h-5 w-5"
             />
-            <span
-              className={cn(
-                'text-(--score-text-color) tabular-nums',
-                won && 'font-bold'
-              )}
-            >
+            <span className="text-(--score-text-color) tabular-nums">
               {score.score.toLocaleString()}
             </span>
           </div>
@@ -238,7 +246,7 @@ export default function ScoreCard({
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >
-              <span className="block truncate font-bold text-neutral-800 dark:text-neutral-200">
+              <span className="block truncate text-neutral-800 dark:text-neutral-200">
                 {player?.username}
               </span>
             </Link>
@@ -257,12 +265,7 @@ export default function ScoreCard({
               height={32}
               className="h-8 w-8"
             />
-            <span
-              className={cn(
-                'text-(--score-text-color) text-lg',
-                won && 'font-bold'
-              )}
-            >
+            <span className="text-(--score-text-color) tabular-nums">
               {score.score.toLocaleString()}
             </span>
           </div>
@@ -276,7 +279,7 @@ export default function ScoreCard({
                 <span className="label text-neutral-600 dark:text-neutral-400">
                   {item.label}
                 </span>
-                <span className="value text-neutral-800 dark:text-neutral-200">
+                <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
                   {item.value}
                 </span>
               </div>
@@ -288,7 +291,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Combo
               </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
+              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
                 {score.maxCombo}x
               </span>
             </div>
@@ -296,7 +299,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Accuracy
               </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
+              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
                 {formatAccuracy(score.accuracy)}
               </span>
             </div>
