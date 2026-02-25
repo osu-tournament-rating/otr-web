@@ -2,7 +2,7 @@
 
 import GameCardHeader from './GameCardHeader';
 import ScoreCard from './ScoreCard';
-import { TeamEnumHelper } from '@/lib/enums';
+import { TeamEnumHelper } from '@/lib/enum-helpers';
 import { Game, GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
 import { Team } from '@otr/core/osu';
 import { cn } from '@/lib/utils';

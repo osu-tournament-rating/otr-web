@@ -1,6 +1,6 @@
 'use client';
 
-import { ModsEnumHelper } from '@/lib/enums';
+import { ModsEnumHelper } from '@/lib/enum-helpers';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
 import {
   ChartConfig,

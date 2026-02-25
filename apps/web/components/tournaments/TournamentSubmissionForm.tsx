@@ -28,7 +28,7 @@ import { orpc } from '@/lib/orpc/orpc';
 import { useSession } from '@/lib/hooks/useSession';
 import { Checkbox } from '../ui/checkbox';
 import { MultipleSelect } from '../select/multiple-select';
-import { TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import { TournamentRejectionReasonEnumHelper } from '@/lib/enum-helpers';
 import Link from 'next/link';
 import {
   AlertDialog,

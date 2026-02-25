@@ -1,4 +1,4 @@
-import { ScoreGradeEnumHelper } from '@/lib/enums';
+import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import { SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function ScoreGradeSelectContent() {

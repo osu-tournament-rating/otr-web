@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { leaderboardFilterSchema } from '../schema';
+import { leaderboardFilterSchema } from '../validation-schema';
 import { setFlattenedParams } from './urlParams';
 import { Ruleset } from '@otr/core/osu';
 

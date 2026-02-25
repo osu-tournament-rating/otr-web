@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
-import { AuditEntityTypeEnumHelper } from '@/lib/enums';
+import { AuditEntityTypeEnumHelper } from '@/lib/enum-helpers';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

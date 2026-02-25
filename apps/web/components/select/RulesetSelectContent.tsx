@@ -1,4 +1,4 @@
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { Ruleset } from '@otr/core/osu';
 import { SelectContent, SelectItem } from '../ui/select';
 

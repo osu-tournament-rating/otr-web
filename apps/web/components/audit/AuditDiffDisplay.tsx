@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import type { IBitwiseEnumHelper, EnumMetadata } from '@/lib/enums';
+import type { IBitwiseEnumHelper, EnumMetadata } from '@/lib/enum-helpers';
 import {
   getFieldLabel,
   getFieldEnumHelper,

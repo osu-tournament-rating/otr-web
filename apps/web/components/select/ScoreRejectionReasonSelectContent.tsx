@@ -1,4 +1,4 @@
-import { ScoreRejectionReasonEnumHelper } from '@/lib/enums';
+import { ScoreRejectionReasonEnumHelper } from '@/lib/enum-helpers';
 import { SelectContent, SelectItem } from '@/components/ui/select';
 import { ScoreRejectionReason } from '@otr/core/osu';
 

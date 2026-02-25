@@ -25,7 +25,7 @@ export interface QueuePublishOptions {
   metadata?: Partial<MessageMetadata>;
 }
 
-export interface QueuePublisher<TMessage> {
+export interface QueuePublisher<TMessage extends MessageEnvelope<unknown>> {
   publish(
     payload: QueueMessagePayload<TMessage>,
     options?: QueuePublishOptions

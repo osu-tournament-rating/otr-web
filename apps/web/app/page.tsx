@@ -7,7 +7,7 @@ import {
 } from '@/components/home/FeatureCard';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@otr/core/osu';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import HomeActionCards from '@/components/home/HomeActionCards';
 import { auth } from '@/lib/auth/auth';
 import { headers } from 'next/headers';

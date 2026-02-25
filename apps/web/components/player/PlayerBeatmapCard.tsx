@@ -1,6 +1,6 @@
 'use client';
 
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import Link from 'next/link';
 import { Card } from '../ui/card';
 import RulesetIcon from '../icons/RulesetIcon';
