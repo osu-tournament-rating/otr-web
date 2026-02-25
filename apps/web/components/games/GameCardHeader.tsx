@@ -6,7 +6,12 @@ import { ExternalLink } from 'lucide-react';
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enum-helpers';
 import { Game } from '@/lib/orpc/schema/match';
 import { GameReportableFields } from '@/lib/orpc/schema/report';
-import { AdminNoteRouteTarget, ReportEntityType } from '@otr/core/osu';
+import {
+  AdminNoteRouteTarget,
+  AuditEntityType,
+  ReportEntityType,
+} from '@otr/core/osu';
+import AuditButton from '../audit/AuditButton';
 import BeatmapBackground from './BeatmapBackground';
 import FormattedDate from '../dates/FormattedDate';
 import ModIconset from '../icons/ModIconset';
@@ -106,6 +111,11 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 startTime: game.startTime ?? '',
                 endTime: game.endTime ?? '',
               }}
+              darkMode={true}
+            />
+            <AuditButton
+              entityType={AuditEntityType.Game}
+              entityId={game.id}
               darkMode={true}
             />
             <AdminNoteView

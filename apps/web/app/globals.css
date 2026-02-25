@@ -404,7 +404,7 @@
     }
 
     &:not([data-team='NoTeam']) {
-      @apply md:w-1/2;
+      @apply lg:w-1/2;
     }
 
     &[data-team='Red'] {
@@ -412,8 +412,8 @@
 
       @apply order-2;
 
-      /* --var(--breakpoint-md) */
-      @media (width >= 48rem) {
+      /* --var(--breakpoint-lg) */
+      @media (width >= 64rem) {
         @apply pr-0.5;
       }
     }
@@ -423,8 +423,8 @@
 
       @apply order-3;
 
-      /* --var(--breakpoint-md) */
-      @media (width >= 48rem) {
+      /* --var(--breakpoint-lg) */
+      @media (width >= 64rem) {
         --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
 
