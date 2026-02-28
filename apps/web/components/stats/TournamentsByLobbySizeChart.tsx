@@ -76,7 +76,7 @@ export default function TournamentsByLobbySizeChart({
   };
 
   return (
-    <Card className={className}>
+    <Card data-testid="chart-tournaments-by-lobby-size" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="text-primary h-6 w-6" />
