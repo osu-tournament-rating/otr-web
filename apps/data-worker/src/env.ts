@@ -104,6 +104,9 @@ export const dataWorkerEnv = {
   osuApiRateLimit,
   osuTrackRateLimit,
   amqpUrl: requireEnv('RABBITMQ_AMQP_URL'),
+  beatmapAttrCreationEnabled: parseBooleanEnv(
+    'BEATMAP_ATTRIBUTE_CREATION_ENABLED'
+  ),
   playerAutoRefetch: {
     osu: playerOsuAutoRefetch,
     osuTrack: playerOsuTrackAutoRefetch,
