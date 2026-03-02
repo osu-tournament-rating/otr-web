@@ -5,8 +5,9 @@ import { Ruleset } from '@otr/core/osu/enums';
 import { Storage } from '@google-cloud/storage';
 import type { Logger } from '../logging/logger';
 import type { RateLimiter } from '../rate-limiter';
-import fs from 'fs';
-import path from 'path';
+import { mkdirSync } from 'fs';
+import { join } from 'path';
+import { gzipSync, gunzipSync, file as localFile } from 'bun';
 
 type QueryExecutor = Pick<DatabaseClient, 'query' | 'insert' | 'update'>;
 type UpdateExecutor = Pick<DatabaseClient, 'update'>;
@@ -231,12 +232,12 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
 
     // Download and decompress beatmap file
     const [data] = await file.download();
-    return Bun.gunzipSync(new Uint8Array(data));
+    return gunzipSync(new Uint8Array(data));
   }
 
   async store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
     // Compress before storing
-    const compressed = Bun.gzipSync(data);
+    const compressed = gzipSync(data);
 
     await this.storage
       .bucket(this.bucketName)
@@ -269,11 +270,11 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
   }
 
   private filepath(beatmapId: number) {
-    return path.join(this.directory, filename(beatmapId));
+    return join(this.directory, filename(beatmapId));
   }
 
   async get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
-    const file = Bun.file(this.filepath(beatmapId));
+    const file = localFile(this.filepath(beatmapId));
 
     // Download and store
     if (!(await file.exists())) {
@@ -289,14 +290,14 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
 
   async store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
     // Ensure local storage dir
-    fs.mkdirSync(this.directory, { recursive: true });
+    mkdirSync(this.directory, { recursive: true });
 
     // Compress with gzip and store
     await Bun.write(this.filepath(beatmapId), Bun.gzipSync(data));
   }
 
   async exists(beatmapId: number): Promise<boolean> {
-    return Bun.file(this.filepath(beatmapId)).exists();
+    return localFile(this.filepath(beatmapId)).exists();
   }
 }
 

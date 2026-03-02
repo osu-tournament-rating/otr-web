@@ -1,5 +1,5 @@
 import { loadRootEnv, projectRoot } from '../../../lib/env/load-root-env';
-import path from 'path';
+import { join } from 'path';
 
 loadRootEnv();
 
@@ -112,7 +112,7 @@ export const dataWorkerEnv = {
     gcsBucketName: process.env.GCS_BEATMAP_BUCKET_NAME,
     localPath:
       process.env.BEATMAP_FILE_LOCAL_PATH ??
-      path.join(projectRoot, 'beatmap-storage'),
+      join(projectRoot, 'beatmap-storage'),
   },
   playerAutoRefetch: {
     osu: playerOsuAutoRefetch,
