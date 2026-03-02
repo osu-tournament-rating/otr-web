@@ -98,7 +98,9 @@ export const updateBeatmapStatus = async (
     .where(eq(schema.beatmaps.id, beatmapId));
 };
 
-const filename = (beatmapId: number) => `${beatmapId}.osu.gz`;
+// #region Beatmap file storage
+
+export const beatmapFilename = (beatmapId: number) => `${beatmapId}.osu.gz`;
 
 export interface BeatmapStorage {
   /**
@@ -219,7 +221,9 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
   }
 
   async get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
-    const file = this.storage.bucket(this.bucketName).file(filename(beatmapId));
+    const file = this.storage
+      .bucket(this.bucketName)
+      .file(beatmapFilename(beatmapId));
     const [exists] = await file.exists();
 
     // Download and store
@@ -241,7 +245,7 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
 
     await this.storage
       .bucket(this.bucketName)
-      .file(filename(beatmapId))
+      .file(beatmapFilename(beatmapId))
       .save(compressed, {
         contentType: 'application/gzip',
       });
@@ -250,7 +254,7 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
   async exists(beatmapId: number): Promise<boolean> {
     const [exists] = await this.storage
       .bucket(this.bucketName)
-      .file(filename(beatmapId))
+      .file(beatmapFilename(beatmapId))
       .exists();
 
     return exists;
@@ -270,7 +274,7 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
   }
 
   private filepath(beatmapId: number) {
-    return join(this.directory, filename(beatmapId));
+    return join(this.directory, beatmapFilename(beatmapId));
   }
 
   async get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
@@ -338,3 +342,5 @@ export async function createBeatmapStorage({
   logger.info('Using local beatmap storage', { directory });
   return new LocalBeatmapStorage({ directory, logger, rateLimiter });
 }
+
+// #endregion
