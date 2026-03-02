@@ -15,7 +15,7 @@ import { gzipSync, gunzipSync, file as localFile } from 'bun';
 import type { RateLimiter } from '../../rate-limiter';
 import type { Logger } from '../../logging/logger';
 
-// --- GCS mock objects ---
+// #region Mocks
 
 const mockGcsFile = {
   exists: mock(() => Promise.resolve([false] as [boolean])),
@@ -36,7 +36,7 @@ mock.module('@google-cloud/storage', () => ({
   },
 }));
 
-// --- Module under test ---
+// #endregion
 
 import {
   LocalBeatmapStorage,
@@ -45,7 +45,7 @@ import {
   beatmapFilename,
 } from '../beatmap-store';
 
-// --- Helpers ---
+// #region Helpers
 
 const passthroughLimiter = (): RateLimiter => ({
   schedule: (task) => task(),
@@ -76,12 +76,14 @@ afterEach(() => {
   beatmapId++;
 });
 
-// --- LocalBeatmapStorage ---
+// #endregion
+
+// #region LocalBeatmapStorage
 
 describe('LocalBeatmapStorage', () => {
   const directory = join(tmpdir(), `beatmap-local-${Date.now()}`);
 
-  afterAll(async () => {
+  afterAll(() => {
     rmSync(directory, { recursive: true, force: true });
   });
 
@@ -176,7 +178,9 @@ describe('LocalBeatmapStorage', () => {
   });
 });
 
-// --- GcsBeatmapStorage ---
+// #endregion
+
+// #region GcsBeatmapStorage
 
 describe('GcsBeatmapStorage', () => {
   beforeEach(() => {
@@ -303,7 +307,9 @@ describe('GcsBeatmapStorage', () => {
   });
 });
 
-// --- createBeatmapStorage ---
+// #endregion
+
+// #region createBeatmapStorage
 
 describe('createBeatmapStorage', () => {
   const directory = join(tmpdir(), `beatmap-factory-${Date.now()}`);
@@ -353,3 +359,5 @@ describe('createBeatmapStorage', () => {
     expect(storage).toBeInstanceOf(LocalBeatmapStorage);
   });
 });
+
+// #endregion
