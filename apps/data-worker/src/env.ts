@@ -1,4 +1,5 @@
-import { loadRootEnv } from '../../../lib/env/load-root-env';
+import { loadRootEnv, projectRoot } from '../../../lib/env/load-root-env';
+import path from 'path';
 
 loadRootEnv();
 
@@ -107,6 +108,12 @@ export const dataWorkerEnv = {
   beatmapAttrCreationEnabled: parseBooleanEnv(
     'BEATMAP_ATTRIBUTE_CREATION_ENABLED'
   ),
+  beatmapFileStorage: {
+    gcsBucketName: process.env.GCS_BEATMAP_BUCKET_NAME,
+    localPath:
+      process.env.BEATMAP_FILE_LOCAL_PATH ??
+      path.join(projectRoot, 'beatmap-storage'),
+  },
   playerAutoRefetch: {
     osu: playerOsuAutoRefetch,
     osuTrack: playerOsuTrackAutoRefetch,

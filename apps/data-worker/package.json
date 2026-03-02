@@ -10,6 +10,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@otr/core": "workspace:*",
     "amqplib": "^0.10.4",
     "drizzle-orm": "^0.44.5",
