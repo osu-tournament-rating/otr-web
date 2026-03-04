@@ -38,6 +38,8 @@ import {
   TournamentStatsWorker,
 } from './stats';
 import { PlayerRefetchScheduler } from './players/player-refetch-scheduler';
+import { createBeatmapStorage } from './osu/beatmap-store';
+import { BeatmapAttributeService } from './osu/services/beatmap-attribute-service';
 
 const logger = consoleLogger;
 
@@ -125,6 +127,26 @@ const bootstrap = async () => {
     publishPlayerFetch: async (osuPlayerId) => {
       await osuPublisher.publish({ type: 'player', osuPlayerId });
     },
+    publishBeatmapAttributeGeneration: async (dbBeatmapId, osuBeatmapId) => {
+      await osuPublisher.publish({
+        type: 'beatmap-attributes',
+        dbBeatmapId,
+        osuBeatmapId,
+      });
+    },
+  });
+
+  const beatmapStorage = await createBeatmapStorage({
+    rateLimiter: osuApiRateLimiter,
+    logger,
+    bucketName: dataWorkerEnv.beatmapFileStorage.gcsBucketName,
+    directory: dataWorkerEnv.beatmapFileStorage.localPath,
+  });
+
+  const beatmapAttributeService = new BeatmapAttributeService({
+    db,
+    logger,
+    beatmapStorage,
   });
 
   const matchService = new MatchFetchService({
@@ -172,9 +194,13 @@ const bootstrap = async () => {
   const osuWorker = new OsuApiFetchWorker({
     queue: osuConsumer,
     beatmapService,
+    beatmapAttributeService,
     matchService,
     playerService,
     logger,
+    config: {
+      enableBeatmapAttributeCreation: dataWorkerEnv.beatmapAttrCreationEnabled,
+    },
   });
 
   const osuTrackClient = new OsuTrackClient({});

@@ -5,32 +5,45 @@ import type { QueueConsumer } from '@otr/core/queues';
 import type { BeatmapFetchService } from '../services/beatmap-fetch-service';
 import type { MatchFetchService } from '../services/match-fetch-service';
 import type { PlayerFetchService } from '../services/player-fetch-service';
+import { BeatmapAttributeService } from '../services/beatmap-attribute-service';
 
 type BeatmapFetchServiceContract = Pick<BeatmapFetchService, 'fetchAndPersist'>;
+type BeatmapAttributeServiceContract = Pick<
+  BeatmapAttributeService,
+  'createAttributes'
+>;
 type MatchFetchServiceContract = Pick<MatchFetchService, 'fetchAndPersist'>;
 type PlayerFetchServiceContract = Pick<PlayerFetchService, 'fetchAndPersist'>;
 
 interface OsuApiFetchWorkerOptions {
   queue: QueueConsumer<FetchOsuMessage>;
   beatmapService: BeatmapFetchServiceContract;
+  beatmapAttributeService: BeatmapAttributeServiceContract;
   matchService: MatchFetchServiceContract;
   playerService: PlayerFetchServiceContract;
   logger: Logger;
+  config: {
+    enableBeatmapAttributeCreation: boolean;
+  };
 }
 
 export class OsuApiFetchWorker {
   private readonly queue: QueueConsumer<FetchOsuMessage>;
   private readonly beatmapService: BeatmapFetchServiceContract;
+  private readonly beatmapAttributeService: BeatmapAttributeServiceContract;
   private readonly matchService: MatchFetchServiceContract;
   private readonly playerService: PlayerFetchServiceContract;
   private readonly logger: Logger;
+  private readonly config: OsuApiFetchWorkerOptions['config'];
 
   constructor(options: OsuApiFetchWorkerOptions) {
     this.queue = options.queue;
     this.beatmapService = options.beatmapService;
+    this.beatmapAttributeService = options.beatmapAttributeService;
     this.matchService = options.matchService;
     this.playerService = options.playerService;
     this.logger = options.logger;
+    this.config = options.config;
   }
 
   async start() {
@@ -67,6 +80,23 @@ export class OsuApiFetchWorker {
         await this.beatmapService.fetchAndPersist(beatmapId, {
           skipAutomationChecks,
         });
+        break;
+      }
+
+      case 'beatmap-attributes': {
+        if (!this.config.enableBeatmapAttributeCreation) {
+          break;
+        }
+
+        const { dbBeatmapId, osuBeatmapId } = payload;
+        msgLogger.info('processing beatmap attributes.', {
+          dbBeatmapId,
+          osuBeatmapId,
+        });
+        await this.beatmapAttributeService.createAttributes(
+          dbBeatmapId,
+          osuBeatmapId
+        );
         break;
       }
 
