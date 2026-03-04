@@ -15,6 +15,12 @@ export type FetchBeatmapPayload = {
   skipAutomationChecks?: boolean;
 };
 
+export type GenerateBeatmapAttributesPayload = {
+  type: 'beatmap-attributes';
+  dbBeatmapId: number;
+  osuBeatmapId: number;
+};
+
 export type FetchMatchPayload = {
   type: 'match';
   osuMatchId: number;
@@ -31,6 +37,7 @@ export type FetchPlayerPayload = {
  */
 export type OsuApiPayload =
   | FetchBeatmapPayload
+  | GenerateBeatmapAttributesPayload
   | FetchMatchPayload
   | FetchPlayerPayload;
 
