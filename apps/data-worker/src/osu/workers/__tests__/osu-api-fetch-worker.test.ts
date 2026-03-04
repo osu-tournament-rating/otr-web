@@ -65,7 +65,11 @@ describe('OsuApiFetchWorker', () => {
         beatmapService: { fetchAndPersist: fetchAndPersistBeatmap },
         matchService: { fetchAndPersist: fetchAndPersistMatch },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
+        beatmapAttributeService: {
+          createAttributes: mock(() => Promise.resolve()),
+        },
         logger,
+        config: { enableBeatmapAttributeCreation: false },
       });
 
       await worker.start();
@@ -90,7 +94,11 @@ describe('OsuApiFetchWorker', () => {
         beatmapService: { fetchAndPersist: fetchAndPersistBeatmap },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
+        beatmapAttributeService: {
+          createAttributes: mock(() => Promise.resolve()),
+        },
         logger,
+        config: { enableBeatmapAttributeCreation: false },
       });
 
       await worker.start();
@@ -119,7 +127,11 @@ describe('OsuApiFetchWorker', () => {
         beatmapService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         matchService: { fetchAndPersist: fetchAndPersistMatch },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
+        beatmapAttributeService: {
+          createAttributes: mock(() => Promise.resolve()),
+        },
         logger,
+        config: { enableBeatmapAttributeCreation: false },
       });
 
       await worker.start();
@@ -147,7 +159,11 @@ describe('OsuApiFetchWorker', () => {
         beatmapService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
+        beatmapAttributeService: {
+          createAttributes: mock(() => Promise.resolve()),
+        },
         logger,
+        config: { enableBeatmapAttributeCreation: false },
       });
 
       await worker.start();
@@ -173,7 +189,11 @@ describe('OsuApiFetchWorker', () => {
         beatmapService: { fetchAndPersist: fetchAndPersistBeatmap },
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
+        beatmapAttributeService: {
+          createAttributes: mock(() => Promise.resolve()),
+        },
         logger,
+        config: { enableBeatmapAttributeCreation: false },
       });
 
       await worker.start();
