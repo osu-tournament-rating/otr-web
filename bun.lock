@@ -81,6 +81,7 @@
         "drizzle-orm": "^0.44.5",
         "pg": "^8.13.1",
         "prom-client": "^15.1.3",
+        "rosu-pp-js": "^3.1.0",
       },
       "devDependencies": {
         "@types/amqplib": "^0.10.5",
@@ -1683,6 +1684,8 @@
     "retry-request": ["retry-request@7.0.2", "", { "dependencies": { "@types/request": "^2.48.8", "extend": "^3.0.2", "teeny-request": "^9.0.0" } }, "sha512-dUOvLMJ0/JJYEn8NrpOaGNE7X3vpI5XlZS/u0ANjqtcZVKnIxP7IgCFwrKTxENw29emmwug53awKtaMm4i9g5w=="],
 
     "reusify": ["reusify@1.1.0", "", {}, ""],
+
+    "rosu-pp-js": ["rosu-pp-js@3.1.0", "", {}, "sha512-5YR/ar+XKLvAJAEvPhfEeBunDAY/qPFoey9b9ykvbNDR1K6FO77Mj7VblPpVs9O5TFRwecVSvOLFHMaY63l3YA=="],
 
     "rou3": ["rou3@0.7.3", "", {}, "sha512-KKenF/hB2iIhS1ohj226LT+/8uKCBpSMqeS4V1UPN9vad99uLoyIhrULRRB1skaB40LQHcBlSsAi3sT8MaoDDQ=="],
 
