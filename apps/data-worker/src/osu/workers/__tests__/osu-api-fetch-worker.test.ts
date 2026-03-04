@@ -176,6 +176,74 @@ describe('OsuApiFetchWorker', () => {
     });
   });
 
+  describe('beatmap attribute messages', () => {
+    it('routes beatmap attribute messages to beatmapAttributeService', async () => {
+      const consumer = createMockConsumer();
+      const logger = createMockLogger();
+      const createAttributes = mock(() => Promise.resolve());
+
+      const worker = new OsuApiFetchWorker({
+        queue: consumer,
+        beatmapService: {
+          fetchAndPersist: mock(() => Promise.resolve(true)),
+        },
+        matchService: {
+          fetchAndPersist: mock(() => Promise.resolve(true)),
+        },
+        playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
+        beatmapAttributeService: { createAttributes },
+        logger,
+        config: { enableBeatmapAttributeCreation: true },
+      });
+
+      await worker.start();
+
+      const message = createMockMessage({
+        type: 'beatmap-attributes',
+        dbBeatmapId: 12345,
+        osuBeatmapId: 67890,
+      });
+      await consumer.emit(message);
+
+      expect(createAttributes).toHaveBeenCalledWith(12345, 67890);
+      expect(message.ack).toHaveBeenCalled();
+    });
+
+    it('does not route beatmap attribute messages to beatmapAttributeService when disabled with config', async () => {
+      const consumer = createMockConsumer();
+      const logger = createMockLogger();
+      const createAttributes = mock(() => Promise.resolve());
+
+      const worker = new OsuApiFetchWorker({
+        queue: consumer,
+        beatmapService: {
+          fetchAndPersist: mock(() => Promise.resolve(true)),
+        },
+        matchService: {
+          fetchAndPersist: mock(() => Promise.resolve(true)),
+        },
+        playerService: {
+          fetchAndPersist: mock(() => Promise.resolve(true)),
+        },
+        beatmapAttributeService: { createAttributes },
+        logger,
+        config: { enableBeatmapAttributeCreation: false },
+      });
+
+      await worker.start();
+
+      const message = createMockMessage({
+        type: 'beatmap-attributes',
+        dbBeatmapId: 12345,
+        osuBeatmapId: 67890,
+      });
+      await consumer.emit(message);
+
+      expect(createAttributes).toBeCalledTimes(0);
+      expect(message.ack).toHaveBeenCalled();
+    });
+  });
+
   describe('error handling', () => {
     it('nacks message on service error', async () => {
       const consumer = createMockConsumer();
