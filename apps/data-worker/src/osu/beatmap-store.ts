@@ -17,6 +17,46 @@ export interface BeatmapRecord {
   dataFetchStatus: number;
 }
 
+export interface BeatmapStorage {
+  /**
+   * Gets a beatmap file from storage.
+   * @param beatmapId Beatmap id.
+   * @returns Beatmap file data. If the file could not be downloaded, the buffer will be empty.
+   */
+  get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
+
+  /**
+   * Stores a beatmap file.
+   * @param beatmapId Beatmap id.
+   * @param data Beatmap file data.
+   */
+  store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void>;
+
+  /**
+   * Checks for the existence of a beatmap file.
+   * @param beatmapId Beatmap id.
+   */
+  exists(beatmapId: number): Promise<boolean>;
+}
+
+interface BeatmapStorageBaseOptions {
+  rateLimiter: RateLimiter;
+  logger: Logger;
+}
+
+interface GcsBeatmapStorageOptions extends BeatmapStorageBaseOptions {
+  bucketName: string;
+}
+
+interface LocalBeatmapStorageOptions extends BeatmapStorageBaseOptions {
+  directory: string;
+}
+
+export type BeatmapStorageCreationOptions = LocalBeatmapStorageOptions &
+  Omit<GcsBeatmapStorageOptions, 'bucketName'> & {
+    bucketName?: string;
+  };
+
 export const ensureBeatmapPlaceholder = async (
   db: QueryExecutor,
   osuBeatmapId: number,
@@ -102,33 +142,6 @@ export const updateBeatmapStatus = async (
 
 export const beatmapFilename = (beatmapId: number) => `${beatmapId}.osu.gz`;
 
-export interface BeatmapStorage {
-  /**
-   * Gets a beatmap file from storage.
-   * @param beatmapId Beatmap id.
-   * @returns Beatmap file data. If the file could not be downloaded, the buffer will be empty.
-   */
-  get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
-
-  /**
-   * Stores a beatmap file.
-   * @param beatmapId Beatmap id.
-   * @param data Beatmap file data.
-   */
-  store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void>;
-
-  /**
-   * Checks for the existence of a beatmap file.
-   * @param beatmapId Beatmap id.
-   */
-  exists(beatmapId: number): Promise<boolean>;
-}
-
-interface BeatmapStorageBaseOptions {
-  rateLimiter: RateLimiter;
-  logger: Logger;
-}
-
 abstract class BeatmapStorageBase implements BeatmapStorage {
   private readonly rateLimiter: RateLimiter;
   private readonly logger: Logger;
@@ -176,10 +189,6 @@ abstract class BeatmapStorageBase implements BeatmapStorage {
   ): Promise<void>;
 
   abstract exists(beatmapId: number): Promise<boolean>;
-}
-
-interface GcsBeatmapStorageOptions extends BeatmapStorageBaseOptions {
-  bucketName: string;
 }
 
 export class GcsBeatmapStorage extends BeatmapStorageBase {
@@ -261,10 +270,6 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
   }
 }
 
-interface LocalBeatmapStorageOptions extends BeatmapStorageBaseOptions {
-  directory: string;
-}
-
 export class LocalBeatmapStorage extends BeatmapStorageBase {
   private readonly directory: string;
 
@@ -304,11 +309,6 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
     return localFile(this.filepath(beatmapId)).exists();
   }
 }
-
-export type BeatmapStorageCreationOptions = LocalBeatmapStorageOptions &
-  Omit<GcsBeatmapStorageOptions, 'bucketName'> & {
-    bucketName?: string;
-  };
 
 /**
  * Creates an instance of a {@link BeatmapStorage} implementation based on provided options.
