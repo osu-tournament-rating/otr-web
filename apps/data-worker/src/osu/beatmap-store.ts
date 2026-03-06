@@ -44,18 +44,18 @@ interface BeatmapStorageBaseOptions {
   logger: Logger;
 }
 
-interface GcsBeatmapStorageOptions extends BeatmapStorageBaseOptions {
+export interface GcsBeatmapStorageOptions extends BeatmapStorageBaseOptions {
   bucketName: string;
 }
 
-interface LocalBeatmapStorageOptions extends BeatmapStorageBaseOptions {
+export interface LocalBeatmapStorageOptions extends BeatmapStorageBaseOptions {
   directory: string;
 }
 
-export type BeatmapStorageCreationOptions = LocalBeatmapStorageOptions &
-  Omit<GcsBeatmapStorageOptions, 'bucketName'> & {
-    bucketName?: string;
-  };
+export type BeatmapStorageCreationOptions = BeatmapStorageBaseOptions & {
+  bucketName?: string;
+  directory: string;
+};
 
 export const ensureBeatmapPlaceholder = async (
   db: QueryExecutor,
