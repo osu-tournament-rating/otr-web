@@ -125,7 +125,7 @@ export const ensureBeatmapPlaceholder = async (
 
 export const updateBeatmapStatus = async (
   db: UpdateExecutor,
-  osuBeatmapId: number,
+  beatmapId: number,
   status: number,
   updatedIso: string
 ) => {
@@ -135,7 +135,7 @@ export const updateBeatmapStatus = async (
       dataFetchStatus: status,
       updated: updatedIso,
     })
-    .where(eq(schema.beatmaps.id, osuBeatmapId));
+    .where(eq(schema.beatmaps.id, beatmapId));
 };
 
 // #region Beatmap file storage
