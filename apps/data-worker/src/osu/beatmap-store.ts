@@ -12,7 +12,7 @@ import { gzipSync, gunzipSync, file as localFile } from 'bun';
 type QueryExecutor = Pick<DatabaseClient, 'query' | 'insert' | 'update'>;
 type UpdateExecutor = Pick<DatabaseClient, 'update'>;
 
-export interface BeatmapRecord {
+interface BeatmapRecord {
   id: number;
   dataFetchStatus: number;
 }
@@ -20,23 +20,23 @@ export interface BeatmapRecord {
 export interface BeatmapStorage {
   /**
    * Gets a beatmap file from storage.
-   * @param beatmapId Beatmap id.
+   * @param osuBeatmapId Beatmap id.
    * @returns Beatmap file data. If the file could not be downloaded, the buffer will be empty.
    */
-  get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
+  get(osuBeatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
 
   /**
    * Stores a beatmap file.
-   * @param beatmapId Beatmap id.
+   * @param osuBeatmapId Beatmap id.
    * @param data Beatmap file data.
    */
-  store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void>;
+  store(osuBeatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void>;
 
   /**
    * Checks for the existence of a beatmap file.
-   * @param beatmapId Beatmap id.
+   * @param osuBeatmapId Beatmap id.
    */
-  exists(beatmapId: number): Promise<boolean>;
+  exists(osuBeatmapId: number): Promise<boolean>;
 }
 
 interface BeatmapStorageBaseOptions {
@@ -125,7 +125,7 @@ export const ensureBeatmapPlaceholder = async (
 
 export const updateBeatmapStatus = async (
   db: UpdateExecutor,
-  beatmapId: number,
+  osuBeatmapId: number,
   status: number,
   updatedIso: string
 ) => {
@@ -135,12 +135,13 @@ export const updateBeatmapStatus = async (
       dataFetchStatus: status,
       updated: updatedIso,
     })
-    .where(eq(schema.beatmaps.id, beatmapId));
+    .where(eq(schema.beatmaps.id, osuBeatmapId));
 };
 
 // #region Beatmap file storage
 
-export const beatmapFilename = (beatmapId: number) => `${beatmapId}.osu.gz`;
+export const beatmapFilename = (osuBeatmapId: number) =>
+  `${osuBeatmapId}.osu.gz`;
 
 abstract class BeatmapStorageBase implements BeatmapStorage {
   private readonly rateLimiter: RateLimiter;
@@ -153,25 +154,25 @@ abstract class BeatmapStorageBase implements BeatmapStorage {
 
   /**
    * Downloads a beatmap file from osu!
-   * @param beatmapId Beatmap id.
+   * @param osuBeatmapId Beatmap id.
    * @returns Beatmap file data. If download was unsuccessful, the buffer will be empty.
    */
   protected async download(
-    beatmapId: number
+    osuBeatmapId: number
   ): Promise<Uint8Array<ArrayBuffer>> {
     return await this.rateLimiter.schedule(async () => {
-      const response = await fetch(`https://osu.ppy.sh/osu/${beatmapId}`);
+      const response = await fetch(`https://osu.ppy.sh/osu/${osuBeatmapId}`);
 
       if (response.status === 404) {
         this.logger.warn('Beatmap file not found', {
-          beatmapId,
+          osuBeatmapId,
         });
         return new Uint8Array();
       }
 
       if (!response.ok) {
         this.logger.error('Failed to download beatmap file', {
-          beatmapId,
+          osuBeatmapId,
           status: response.status,
         });
         return new Uint8Array();
@@ -181,14 +182,14 @@ abstract class BeatmapStorageBase implements BeatmapStorage {
     });
   }
 
-  abstract get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
+  abstract get(osuBeatmapId: number): Promise<Uint8Array<ArrayBuffer>>;
 
   abstract store(
-    beatmapId: number,
+    osuBeatmapId: number,
     data: Uint8Array<ArrayBuffer>
   ): Promise<void>;
 
-  abstract exists(beatmapId: number): Promise<boolean>;
+  abstract exists(osuBeatmapId: number): Promise<boolean>;
 }
 
 export class GcsBeatmapStorage extends BeatmapStorageBase {
@@ -229,16 +230,16 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
     return instance;
   }
 
-  async get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
+  async get(osuBeatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
     const file = this.storage
       .bucket(this.bucketName)
-      .file(beatmapFilename(beatmapId));
+      .file(beatmapFilename(osuBeatmapId));
     const [exists] = await file.exists();
 
     // Download and store
     if (!exists) {
-      const downloaded = await this.download(beatmapId);
-      await this.store(beatmapId, downloaded);
+      const downloaded = await this.download(osuBeatmapId);
+      await this.store(osuBeatmapId, downloaded);
 
       return downloaded;
     }
@@ -248,22 +249,25 @@ export class GcsBeatmapStorage extends BeatmapStorageBase {
     return gunzipSync(new Uint8Array(data));
   }
 
-  async store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
+  async store(
+    osuBeatmapId: number,
+    data: Uint8Array<ArrayBuffer>
+  ): Promise<void> {
     // Compress before storing
     const compressed = gzipSync(data);
 
     await this.storage
       .bucket(this.bucketName)
-      .file(beatmapFilename(beatmapId))
+      .file(beatmapFilename(osuBeatmapId))
       .save(compressed, {
         contentType: 'application/gzip',
       });
   }
 
-  async exists(beatmapId: number): Promise<boolean> {
+  async exists(osuBeatmapId: number): Promise<boolean> {
     const [exists] = await this.storage
       .bucket(this.bucketName)
-      .file(beatmapFilename(beatmapId))
+      .file(beatmapFilename(osuBeatmapId))
       .exists();
 
     return exists;
@@ -278,17 +282,17 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
     this.directory = directory;
   }
 
-  private filepath(beatmapId: number) {
-    return join(this.directory, beatmapFilename(beatmapId));
+  private filepath(osuBeatmapId: number) {
+    return join(this.directory, beatmapFilename(osuBeatmapId));
   }
 
-  async get(beatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
-    const file = localFile(this.filepath(beatmapId));
+  async get(osuBeatmapId: number): Promise<Uint8Array<ArrayBuffer>> {
+    const file = localFile(this.filepath(osuBeatmapId));
 
     // Download and store
     if (!(await file.exists())) {
-      const downloaded = await this.download(beatmapId);
-      await this.store(beatmapId, downloaded);
+      const downloaded = await this.download(osuBeatmapId);
+      await this.store(osuBeatmapId, downloaded);
 
       return downloaded;
     }
@@ -297,16 +301,19 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
     return Bun.gunzipSync(await file.arrayBuffer());
   }
 
-  async store(beatmapId: number, data: Uint8Array<ArrayBuffer>): Promise<void> {
+  async store(
+    osuBeatmapId: number,
+    data: Uint8Array<ArrayBuffer>
+  ): Promise<void> {
     // Ensure local storage dir
     mkdirSync(this.directory, { recursive: true });
 
     // Compress with gzip and store
-    await Bun.write(this.filepath(beatmapId), Bun.gzipSync(data));
+    await Bun.write(this.filepath(osuBeatmapId), Bun.gzipSync(data));
   }
 
-  async exists(beatmapId: number): Promise<boolean> {
-    return localFile(this.filepath(beatmapId)).exists();
+  async exists(osuBeatmapId: number): Promise<boolean> {
+    return localFile(this.filepath(osuBeatmapId)).exists();
   }
 }
 
