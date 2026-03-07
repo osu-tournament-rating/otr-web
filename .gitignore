@@ -63,3 +63,7 @@ monitoring/loki/data/
 
 # top-level images (playwright mcp)
 *.png
+
+# data-worker local beatmap storage
+*.osu
+*.osu.gz

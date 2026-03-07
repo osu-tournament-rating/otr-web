@@ -2,7 +2,7 @@ import { config as loadEnv } from 'dotenv';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 
-const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
+export const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 let envLoaded = false;
 
 export function loadRootEnv(): void {
