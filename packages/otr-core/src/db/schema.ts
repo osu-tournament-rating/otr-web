@@ -1685,6 +1685,13 @@ export const beatmapAttributes = pgTable(
     }),
     mods: integer().notNull(),
     sr: doublePrecision().notNull(),
+    ar: doublePrecision().notNull(),
+    od: doublePrecision().notNull(),
+    hp: doublePrecision().notNull(),
+    cs: doublePrecision().notNull(),
+    bpm: doublePrecision().notNull(),
+    totalLength: bigint('total_length', { mode: 'number' }).notNull(),
+    drainLength: integer('drain_length').notNull(),
     beatmapId: integer('beatmap_id').notNull(),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
