@@ -120,6 +120,13 @@
       "when": 1768855508043,
       "tag": "0016_even_omega_flight",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1773472467607,
+      "tag": "0017_expand_beatmap_attributes",
+      "breakpoints": true
     }
   ]
 }
