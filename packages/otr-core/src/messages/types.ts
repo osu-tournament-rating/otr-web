@@ -17,8 +17,7 @@ export type FetchBeatmapPayload = {
 
 export type GenerateBeatmapAttributesPayload = {
   type: 'beatmap-attributes';
-  dbBeatmapId: number;
-  osuBeatmapId: number;
+  beatmapId: number;
 };
 
 export type FetchMatchPayload = {

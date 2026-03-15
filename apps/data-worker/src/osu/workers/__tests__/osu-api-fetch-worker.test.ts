@@ -200,8 +200,7 @@ describe('OsuApiFetchWorker', () => {
 
       const message = createMockMessage({
         type: 'beatmap-attributes',
-        dbBeatmapId: 12345,
-        osuBeatmapId: 67890,
+        beatmapId: 12345,
       });
       await consumer.emit(message);
 
@@ -234,8 +233,7 @@ describe('OsuApiFetchWorker', () => {
 
       const message = createMockMessage({
         type: 'beatmap-attributes',
-        dbBeatmapId: 12345,
-        osuBeatmapId: 67890,
+        beatmapId: 12345,
       });
       await consumer.emit(message);
 

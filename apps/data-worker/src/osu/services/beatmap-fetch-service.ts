@@ -29,10 +29,7 @@ interface BeatmapFetchServiceOptions {
   logger: Logger;
   dataCompletion: TournamentDataCompletionService;
   publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
-  publishBeatmapAttributeGeneration: (
-    dbBeatmapId: number,
-    osuBeatmapId: number
-  ) => Promise<void>;
+  publishBeatmapAttributeGeneration: (beatmapId: number) => Promise<void>;
 }
 
 export class BeatmapFetchService {
@@ -43,8 +40,7 @@ export class BeatmapFetchService {
   private readonly dataCompletion: TournamentDataCompletionService;
   private readonly publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
   private readonly publishBeatmapAttributeGeneration: (
-    dbBeatmapId: number,
-    osuBeatmapId: number
+    beatmapId: number
   ) => Promise<void>;
 
   constructor(options: BeatmapFetchServiceOptions) {
@@ -224,7 +220,7 @@ export class BeatmapFetchService {
         }
       }
 
-      const affectedBeatmapIds: { [key: number]: number } = {};
+      const affectedBeatmapIds: number[] = [];
 
       for (const beatmap of beatmapRows) {
         const ruleset = convertRuleset(beatmap.mode_int ?? beatmap.mode);
@@ -265,7 +261,7 @@ export class BeatmapFetchService {
           .returning({ id: schema.beatmaps.id });
 
         if (row) {
-          affectedBeatmapIds[row.id] = beatmap.id;
+          affectedBeatmapIds.push(row.id);
 
           // Create or update player record for beatmap creator
           if (beatmap.user_id) {
@@ -297,14 +293,11 @@ export class BeatmapFetchService {
       osuBeatmapId,
     });
 
-    result.affectedBeatmapIds[beatmapId] = osuBeatmapId;
+    const beatmapIds = new Set<number>(result.affectedBeatmapIds);
+    beatmapIds.add(beatmapId);
 
-    for (const [id, osuBeatmapId] of Object.entries(
-      result.affectedBeatmapIds
-    )) {
+    for (const id of beatmapIds) {
       const dbBeatmapId = Number(id);
-      // Enqueue beatmaps for attribute generation
-      await this.publishBeatmapAttributeGeneration(dbBeatmapId, osuBeatmapId);
       await updateBeatmapStatus(
         this.db,
         dbBeatmapId,
@@ -316,6 +309,8 @@ export class BeatmapFetchService {
         DataFetchStatus.Fetched,
         { skipAutomationChecks: options?.skipAutomationChecks }
       );
+      // Enqueue beatmaps for attribute generation
+      await this.publishBeatmapAttributeGeneration(id);
     }
 
     return true;

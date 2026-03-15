@@ -88,15 +88,11 @@ export class OsuApiFetchWorker {
           break;
         }
 
-        const { dbBeatmapId, osuBeatmapId } = payload;
+        const { beatmapId } = payload;
         msgLogger.info('processing beatmap attributes.', {
-          dbBeatmapId,
-          osuBeatmapId,
+          beatmapId,
         });
-        await this.beatmapAttributeService.createAttributes(
-          dbBeatmapId,
-          osuBeatmapId
-        );
+        await this.beatmapAttributeService.createAttributes(beatmapId);
         break;
       }
 

@@ -127,11 +127,10 @@ const bootstrap = async () => {
     publishPlayerFetch: async (osuPlayerId) => {
       await osuPublisher.publish({ type: 'player', osuPlayerId });
     },
-    publishBeatmapAttributeGeneration: async (dbBeatmapId, osuBeatmapId) => {
+    publishBeatmapAttributeGeneration: async (beatmapId) => {
       await osuPublisher.publish({
         type: 'beatmap-attributes',
-        dbBeatmapId,
-        osuBeatmapId,
+        beatmapId,
       });
     },
   });
