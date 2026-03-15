@@ -6,19 +6,20 @@ import { BeatmapStorage } from '../beatmap-store';
 import { Beatmap, Difficulty } from 'rosu-pp-js';
 import { sql } from 'drizzle-orm';
 
-// Note:
-// Flashlight also causes SR change, but would likely double the number of attrs
-// when accounting for all combinations
 const SR_CHANGE_MODS: Mods[] = [
   Mods.Easy,
   Mods.HardRock,
   Mods.DoubleTime,
   Mods.HalfTime,
-  // Mods.Flashlight,
+  Mods.Flashlight,
   Mods.Easy | Mods.DoubleTime,
   Mods.Easy | Mods.HalfTime,
   Mods.DoubleTime | Mods.HardRock,
   Mods.HalfTime | Mods.HardRock,
+  Mods.Easy | Mods.DoubleTime | Mods.Flashlight,
+  Mods.Easy | Mods.HalfTime | Mods.Flashlight,
+  Mods.DoubleTime | Mods.HardRock | Mods.Flashlight,
+  Mods.HalfTime | Mods.HardRock | Mods.Flashlight,
 ] as const;
 
 type BeatmapAttributeRecord = typeof beatmapAttributesSchema.$inferInsert;
