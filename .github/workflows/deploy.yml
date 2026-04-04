@@ -63,7 +63,7 @@ jobs:
       - name: Ensure remote directory exists
         run: |
           set -euo pipefail
-          mkdir -p "${{ secrets.REMOTE_PATH }}"
+          ssh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p \"${{ secrets.REMOTE_PATH }}\""
 
       - name: Create & upload deployment assets
         run: |
