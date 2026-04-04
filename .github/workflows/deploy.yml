@@ -23,6 +23,7 @@ on:
 
 jobs:
   build:
+    name: Build & push Docker images
     if: ${{ !inputs.skip_build }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
@@ -60,6 +61,7 @@ jobs:
           tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
 
   ssh-setup:
+    name: Copy deployment assets to remote host
     needs: build
     if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest
@@ -100,6 +102,7 @@ jobs:
           "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/"
 
   deploy:
+    name: Deploy stack via docker compose
     needs: ssh-setup
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
