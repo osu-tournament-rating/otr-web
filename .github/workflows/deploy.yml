@@ -53,10 +53,6 @@ jobs:
           push: true
           tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
 
-      - name: Create .env file from secret
-        run: |
-          printf '%s\n' "${{ secrets.ENV }}" > .env
-
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
         with:
@@ -65,44 +61,24 @@ jobs:
           tags: tag:ci
 
       - name: Ensure remote directory exists
-        uses: appleboy/ssh-action@v1
-        env:
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -euo pipefail
-            mkdir -p "$REMOTE_PATH"
-          envs: REMOTE_PATH
+        run: |
+          set -euo pipefail
+          mkdir -p "${{ secrets.REMOTE_PATH }}"
 
-      - name: Upload deployment assets
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: '.env,docker-compose.yml,docker-compose-staging.yml,monitoring'
-          target: ${{ secrets.REMOTE_PATH }}
+      - name: Create & upload deployment assets
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${{ secrets.ENV }}" > .env
+          scp -r .env docker-compose.yml docker-compose-staging.yml monitoring \
+          "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/"
 
       - name: Deploy stack via docker compose
-        uses: appleboy/ssh-action@v1
-        env:
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          timeout: 60m
-          command_timeout: 60m
-          script: |
-            set -euo pipefail
-            export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
-            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-            cd "$REMOTE_PATH"
-            docker compose --env-file .env pull
-            docker compose --env-file .env --profile migrate run --rm migrate
-            docker compose --env-file .env --profile node-exporter up -d
-            docker compose --env-file .env up -d --remove-orphans
-          envs: REMOTE_PATH
+        run: |
+          set -euo pipefail
+          export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
+          export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
+          cd "${{ secrets.REMOTE_PATH }}"
+          docker compose --env-file .env pull
+          docker compose --env-file .env --profile migrate run --rm migrate
+          docker compose --env-file .env --profile node-exporter up -d
+          docker compose --env-file .env up -d --remove-orphans
