@@ -76,7 +76,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: '.env,docker-compose.yml,monitoring'
+          source: '.env,docker-compose.yml,docker-compose-staging.yml,monitoring'
           target: ${{ secrets.REMOTE_PATH }}
 
       - name: Deploy stack via docker compose

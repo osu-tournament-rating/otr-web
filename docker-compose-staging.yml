@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     shm_size: '256m'
     ports:
-      - '5432:5432'
+      - '5532:5432'
     environment:
       POSTGRES_USER: ${DOCKER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
@@ -28,8 +28,8 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     ports:
-      - '5672:5672'
-      - '15672:15672'
+      - '5772:5672'
+      - '15772:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
@@ -55,7 +55,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - ./.env
+      - ./.env.staging
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -86,14 +86,14 @@ services:
     container_name: web
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3100:3000'
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     env_file:
-      - ./.env
+      - ./.env.staging
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -133,7 +133,7 @@ services:
       rabbitmq:
         condition: service_healthy
     env_file:
-      - ./.env
+      - ./.env.staging
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
@@ -143,12 +143,12 @@ services:
       OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
       OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
       OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
-      METRICS_PORT: '9091'
+      METRICS_PORT: '9191'
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          'bun -e "fetch(\"http://localhost:9091/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+          'bun -e "fetch(\"http://localhost:9191/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
         ]
       interval: 10s
       timeout: 5s
@@ -174,8 +174,8 @@ services:
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
     volumes:
       - prometheus-data:/prometheus
-      - ./monitoring/prod/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/prod/prometheus/rules:/etc/prometheus/rules:ro
+      - ./monitoring/staging/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/staging/prometheus/rules:/etc/prometheus/rules:ro
     depends_on:
       - postgres-exporter
 
@@ -187,7 +187,7 @@ services:
       - '-config.file=/etc/loki/loki-config.yaml'
     volumes:
       - loki-data:/loki
-      - ./monitoring/prod/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./monitoring/staging/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     healthcheck:
       test:
         [
@@ -206,7 +206,7 @@ services:
     command:
       - '-config.file=/etc/promtail/promtail-config.yaml'
     volumes:
-      - ./monitoring/prod/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - ./monitoring/staging/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - promtail-positions:/tmp
@@ -219,7 +219,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - '3001:3000'
+      - '3101:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -228,8 +228,8 @@ services:
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-NULL}
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/prod/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/prod/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/staging/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/staging/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
