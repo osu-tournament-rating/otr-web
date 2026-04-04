@@ -17,6 +17,11 @@ on:
         options:
           - Staging
           - Production
+      skip_build:
+        description: 'Skip Docker image build and publish'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   determine:
@@ -99,4 +104,5 @@ jobs:
       target: ${{ needs.determine.outputs.target }}
       deploy_tag: ${{ needs.determine.outputs.deploy_tag }}
       source_ref: ${{ needs.determine.outputs.source_ref }}
+      skip_build: ${{ github.event.inputs.skip_build == 'true' }}
     secrets: inherit
