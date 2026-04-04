@@ -33,7 +33,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.source_ref }}
-          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,7 +71,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.source_ref }}
-          fetch-depth: 0
+          sparse-checkout: |
+            docker-compose.yml
+            docker-compose-staging.yml
+            monitoring
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
@@ -83,16 +85,25 @@ jobs:
           ping: ${{ secrets.SSH_HOST }}
 
       - name: Ensure remote directory exists
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
-          ssh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p \"${{ secrets.REMOTE_PATH }}\""
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_PATH\""
 
       - name: Create & upload deployment assets
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          ENV_CONTENT: ${{ secrets.ENV }}
         run: |
           set -euo pipefail
-          printf '%s\n' "${{ secrets.ENV }}" > .env
-          scp -r .env docker-compose.yml docker-compose-staging.yml monitoring \
-          "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/"
+          printf '%s\n' "$ENV_CONTENT" > .env
+          scp -o StrictHostKeyChecking=no -r .env docker-compose.yml docker-compose-staging.yml monitoring \
+          "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
   deploy:
     name: Deploy stack via docker compose
@@ -110,13 +121,20 @@ jobs:
           ping: ${{ secrets.SSH_HOST }}
 
       - name: Deploy stack via docker compose
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          DEPLOY_TAG: ${{ inputs.deploy_tag }}
         run: |
           set -euo pipefail
-          ssh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOF'
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$DEPLOY_TAG" "$REMOTE_PATH" <<'EOF'
             set -euo pipefail
-            export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
-            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-            cd "${{ secrets.REMOTE_PATH }}"
+            DEPLOY_TAG="$1"
+            REMOTE_PATH="$2"
+            export WEB_IMAGE="stagecodes/otr-web:$DEPLOY_TAG"
+            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:$DEPLOY_TAG"
+            cd "$REMOTE_PATH"
             docker compose --env-file .env pull
             docker compose --env-file .env --profile migrate run --rm migrate
             docker compose --env-file .env --profile node-exporter up -d
