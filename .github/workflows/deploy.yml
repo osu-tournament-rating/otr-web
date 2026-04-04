@@ -91,7 +91,7 @@ jobs:
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
-          ssh "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_PATH\""
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_PATH\""
 
       - name: Create & upload deployment assets
         env:
@@ -102,7 +102,7 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s\n' "$ENV_CONTENT" > .env
-          scp -r .env docker-compose.yml docker-compose-staging.yml monitoring \
+          scp -o StrictHostKeyChecking=no -r .env docker-compose.yml docker-compose-staging.yml monitoring \
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
   deploy:
