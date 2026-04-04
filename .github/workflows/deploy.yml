@@ -71,7 +71,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          # key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             set -euo pipefail
             mkdir -p "$REMOTE_PATH"
@@ -82,7 +82,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          # key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           source: '.env,docker-compose.yml,docker-compose-staging.yml,monitoring'
           target: ${{ secrets.REMOTE_PATH }}
 
@@ -93,7 +93,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          # key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           timeout: 60m
           command_timeout: 60m
           script: |
