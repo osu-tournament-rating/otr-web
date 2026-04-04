@@ -60,9 +60,8 @@ jobs:
           tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
 
   ssh-setup:
-    name: Copy deployment assets to remote host
+    name: Copy assets & deploy
     needs: build
-    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
 
@@ -105,21 +104,6 @@ jobs:
           scp -o StrictHostKeyChecking=no -r .env docker-compose.yml docker-compose-staging.yml monitoring \
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
-  deploy:
-    name: Deploy stack via docker compose
-    needs: ssh-setup
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.target }}
-
-    steps:
-      - name: Connect to tailscale
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
-
       - name: Deploy stack via docker compose
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -140,3 +124,4 @@ jobs:
             docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
           EOF
+      
