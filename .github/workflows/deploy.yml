@@ -61,7 +61,6 @@ jobs:
 
   ssh-setup:
     name: Copy assets & deploy
-    needs: build
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
 
