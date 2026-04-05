@@ -16,7 +16,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'pg_isready postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB',
+          'pg_isready -U ${DOCKER_POSTGRES_USER} -d ${DOCKER_POSTGRES_DB}',
         ]
       interval: 5s
       timeout: 5s
@@ -47,7 +47,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: $WEB_IMAGE
+    image: stagecodes/otr-web:staging-latest
     container_name: otr-staging-migrate
     profiles:
       - migrate
@@ -66,7 +66,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: $WEB_IMAGE
+    image: stagecodes/otr-web:staging-latest
     container_name: otr-staging-web
     restart: unless-stopped
     ports:
@@ -97,7 +97,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: $DATA_WORKER_IMAGE:staging-latest
+    image: stagecodes/otr-data-worker:staging-latest
     container_name: otr-staging-data-worker
     restart: unless-stopped
     depends_on:
@@ -110,12 +110,12 @@ services:
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
-      METRICS_PORT: '9191'
+      METRICS_PORT: '9091'
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          'bun -e "fetch(\"http://localhost:9191/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+          'bun -e "fetch(\"http://localhost:9091/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
         ]
       interval: 10s
       timeout: 5s

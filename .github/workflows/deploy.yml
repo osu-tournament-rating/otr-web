@@ -43,13 +43,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Resolve image tags
+        id: tags
+        run: |
+          set -euo pipefail
+          WEB_TAGS="stagecodes/otr-web:${{ inputs.deploy_tag }}"
+          DW_TAGS="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
+          if [[ "${{ inputs.target }}" == "Production" ]]; then
+            WEB_TAGS="${WEB_TAGS},stagecodes/otr-web:latest"
+            DW_TAGS="${DW_TAGS},stagecodes/otr-data-worker:latest"
+          fi
+          echo "web=${WEB_TAGS}" >> "$GITHUB_OUTPUT"
+          echo "data-worker=${DW_TAGS}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push web image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: true
-          tags: stagecodes/otr-web:${{ inputs.deploy_tag }}
+          tags: ${{ steps.tags.outputs.web }}
 
       - name: Build and push data worker image
         uses: docker/build-push-action@v6
@@ -57,7 +70,7 @@ jobs:
           context: .
           file: apps/data-worker/Dockerfile
           push: true
-          tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
+          tags: ${{ steps.tags.outputs.data-worker }}
 
   ssh-setup:
     name: Copy assets & deploy
@@ -121,15 +134,13 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
-          DEPLOY_TAG: ${{ inputs.deploy_tag }}
           COMPOSE_FILE: ${{ steps.compose-file.outputs.file }}
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$DEPLOY_TAG" "$REMOTE_PATH" "$COMPOSE_FILE" <<'EOF'
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$REMOTE_PATH" "$COMPOSE_FILE" <<'EOF'
             set -euo pipefail
-            DEPLOY_TAG="$1"
-            REMOTE_PATH="$2"
-            COMPOSE_FILE="$3"
+            REMOTE_PATH="$1"
+            COMPOSE_FILE="$2"
             cd "$REMOTE_PATH"
             docker compose -f "$COMPOSE_FILE" --env-file .env pull
             docker compose -f "$COMPOSE_FILE" --env-file .env --profile migrate run --rm migrate

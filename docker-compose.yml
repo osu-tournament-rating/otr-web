@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17
-    container_name: db
+    container_name: otr-db
     restart: unless-stopped
     shm_size: '256m'
     ports:
@@ -25,7 +25,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: rabbitmq
+    container_name: otr-rabbitmq
     restart: unless-stopped
     ports:
       - '5672:5672'
@@ -47,7 +47,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: $WEB_IMAGE
+    image: stagecodes/otr-web:latest
+    container_name: otr-migrate
     profiles:
       - migrate
     restart: 'no'
@@ -65,8 +66,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: $WEB_IMAGE
-    container_name: web
+    image: stagecodes/otr-web:latest
+    container_name: otr-web
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -96,8 +97,8 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: '${DATA_WORKER_IMAGE:-otr-data-worker:local}'
-    container_name: data-worker
+    image: stagecodes/otr-data-worker:latest
+    container_name: otr-data-worker
     restart: unless-stopped
     depends_on:
       db:
@@ -123,7 +124,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.0.1
-    container_name: prometheus
+    container_name: otr-prometheus
     restart: unless-stopped
     entrypoint:
       - /bin/sh
@@ -147,7 +148,7 @@ services:
 
   loki:
     image: grafana/loki:3.4.1
-    container_name: loki
+    container_name: otr-loki
     restart: unless-stopped
     command:
       - '-config.file=/etc/loki/loki-config.yaml'
@@ -167,7 +168,7 @@ services:
 
   promtail:
     image: grafana/promtail:3.4.1
-    container_name: promtail
+    container_name: otr-promtail
     restart: unless-stopped
     command:
       - '-config.file=/etc/promtail/promtail-config.yaml'
@@ -182,7 +183,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: grafana
+    container_name: otr-grafana
     restart: unless-stopped
     ports:
       - '3001:3000'
@@ -202,7 +203,7 @@ services:
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
-    container_name: postgres-exporter
+    container_name: otr-postgres-exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: db:5432/${DOCKER_POSTGRES_DB:-postgres}?sslmode=disable
@@ -214,7 +215,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
-    container_name: node-exporter
+    container_name: otr-node-exporter
     restart: unless-stopped
     command:
       - '--path.rootfs=/host'
