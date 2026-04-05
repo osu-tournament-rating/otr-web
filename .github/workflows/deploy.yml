@@ -103,24 +103,37 @@ jobs:
           scp -o StrictHostKeyChecking=no -r .env docker-compose.yml docker-compose-staging.yml monitoring \
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
+      - name: Resolve compose file
+        id: compose-file
+        run: |
+          set -euo pipefail
+          case "${{ inputs.target }}" in
+            Staging)    echo "file=docker-compose-staging.yml" >> "$GITHUB_OUTPUT" ;;
+            Production) echo "file=docker-compose.yml" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "Invalid environment: ${{ inputs.target }}" >&2
+              exit 1
+              ;;
+          esac
+
       - name: Deploy stack via docker compose
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
           DEPLOY_TAG: ${{ inputs.deploy_tag }}
+          COMPOSE_FILE: ${{ steps.compose-file.outputs.file }}
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$DEPLOY_TAG" "$REMOTE_PATH" <<'EOF'
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$DEPLOY_TAG" "$REMOTE_PATH" "$COMPOSE_FILE" <<'EOF'
             set -euo pipefail
             DEPLOY_TAG="$1"
             REMOTE_PATH="$2"
-            export WEB_IMAGE="stagecodes/otr-web:$DEPLOY_TAG"
-            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:$DEPLOY_TAG"
+            COMPOSE_FILE="$3"
             cd "$REMOTE_PATH"
-            docker compose --env-file .env pull
-            docker compose --env-file .env --profile migrate run --rm migrate
-            docker compose --env-file .env --profile node-exporter up -d
-            docker compose --env-file .env up -d --remove-orphans
+            docker compose -f "$COMPOSE_FILE" --env-file .env pull
+            docker compose -f "$COMPOSE_FILE" --env-file .env --profile migrate run --rm migrate
+            docker compose -f "$COMPOSE_FILE" --env-file .env --profile node-exporter up -d
+            docker compose -f "$COMPOSE_FILE" --env-file .env up -d --remove-orphans
           EOF
       
