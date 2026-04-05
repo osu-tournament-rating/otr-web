@@ -47,7 +47,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
+    image: $WEB_IMAGE
     profiles:
       - migrate
     restart: 'no'
@@ -82,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '${WEB_IMAGE:-otr-web:local}'
+    image: $WEB_IMAGE
     container_name: web
     restart: unless-stopped
     ports:

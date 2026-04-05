@@ -47,7 +47,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '$WEB_IMAGE'
+    image: $WEB_IMAGE
     container_name: otr-staging-migrate
     profiles:
       - migrate
