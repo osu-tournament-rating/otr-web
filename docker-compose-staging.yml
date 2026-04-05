@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17
-    container_name: db
+    container_name: otr-staging-db
     restart: unless-stopped
     shm_size: '256m'
     ports:
@@ -16,7 +16,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'pg_isready -U ${DOCKER_POSTGRES_USER} -d ${DOCKER_POSTGRES_DB}',
+          'pg_isready postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB',
         ]
       interval: 5s
       timeout: 5s
@@ -25,7 +25,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: rabbitmq
+    container_name: otr-staging-rabbitmq
     restart: unless-stopped
     ports:
       - '5772:5672'
@@ -48,6 +48,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
+    container_name: otr-staging-migrate
     profiles:
       - migrate
     restart: 'no'
@@ -83,7 +84,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: '${WEB_IMAGE:-otr-web:local}'
-    container_name: web
+    container_name: otr-staging-web
     restart: unless-stopped
     ports:
       - '3100:3000'
@@ -125,7 +126,7 @@ services:
       context: .
       dockerfile: apps/data-worker/Dockerfile
     image: '${DATA_WORKER_IMAGE:-otr-data-worker:local}'
-    container_name: data-worker
+    container_name: otr-staging-data-worker
     restart: unless-stopped
     depends_on:
       db:
@@ -157,7 +158,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.0.1
-    container_name: prometheus
+    container_name: otr-staging-prometheus
     restart: unless-stopped
     entrypoint:
       - /bin/sh
@@ -181,7 +182,7 @@ services:
 
   loki:
     image: grafana/loki:3.4.1
-    container_name: loki
+    container_name: otr-staging-loki
     restart: unless-stopped
     command:
       - '-config.file=/etc/loki/loki-config.yaml'
@@ -201,7 +202,7 @@ services:
 
   promtail:
     image: grafana/promtail:3.4.1
-    container_name: promtail
+    container_name: otr-staging-promtail
     restart: unless-stopped
     command:
       - '-config.file=/etc/promtail/promtail-config.yaml'
@@ -216,7 +217,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: grafana
+    container_name: otr-staging-grafana
     restart: unless-stopped
     ports:
       - '3101:3000'
@@ -236,7 +237,7 @@ services:
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
-    container_name: postgres-exporter
+    container_name: otr-staging-postgres-exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: db:5432/${DOCKER_POSTGRES_DB:-postgres}?sslmode=disable
@@ -245,19 +246,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    container_name: node-exporter
-    restart: unless-stopped
-    command:
-      - '--path.rootfs=/host'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    volumes:
-      - /:/host:ro,rslave
-    pid: host
-    profiles:
-      - 'node-exporter'
 
 volumes:
   postgres-data:
