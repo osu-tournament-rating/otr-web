@@ -6,7 +6,7 @@ contactPoints:
       - uid: discord-webhook
         type: discord
         settings:
-          url: ${DISCORD_WEBHOOK_URL_STAGING}
+          url: ${DISCORD_WEBHOOK_URL}
         disableResolveMessage: false
 
 policies:
