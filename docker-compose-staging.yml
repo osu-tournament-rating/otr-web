@@ -97,7 +97,7 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: '$DATA_WORKER_IMAGE'
+    image: $DATA_WORKER_IMAGE:staging-latest
     container_name: otr-staging-data-worker
     restart: unless-stopped
     depends_on:
