@@ -12,11 +12,11 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'Staging'
+        default: 'staging'
         type: choice
         options:
-          - Staging
-          - Production
+          - staging
+          - production
 
 jobs:
   determine:
@@ -44,7 +44,7 @@ jobs:
             dispatch_ref_type="${{ github.ref_type }}"
             dispatch_ref_name="${{ github.ref_name }}"
 
-            if [[ "$target" == "Staging" ]]; then
+            if [[ "$target" == "staging" ]]; then
               if [[ "$dispatch_ref_type" != "tag" && "$dispatch_ref_type" != "branch" ]]; then
                 echo "Staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
                 exit 1
@@ -56,7 +56,7 @@ jobs:
               exit 0
             fi
 
-            if [[ "$target" == "Production" ]]; then
+            if [[ "$target" == "production" ]]; then
               if [[ "$dispatch_ref_type" != "tag" ]]; then
                 echo "Production deployments must target a tag (selected: $dispatch_ref_type)." >&2
                 exit 1
@@ -73,7 +73,7 @@ jobs:
           fi
 
           if [[ "$event_name" == "push" && "$current_ref" == "refs/heads/master" ]]; then
-            echo "target=Staging" >> "$GITHUB_OUTPUT"
+            echo "target=staging" >> "$GITHUB_OUTPUT"
             echo "deploy_tag=staging-latest" >> "$GITHUB_OUTPUT"
             echo "source_ref=$current_sha" >> "$GITHUB_OUTPUT"
             exit 0
@@ -81,7 +81,7 @@ jobs:
 
           if [[ "$event_name" == "release" && "${{ github.event.release.tag_name }}" != "" ]]; then
             release_tag="${{ github.event.release.tag_name }}"
-            echo "target=Production" >> "$GITHUB_OUTPUT"
+            echo "target=production" >> "$GITHUB_OUTPUT"
             echo "deploy_tag=$release_tag" >> "$GITHUB_OUTPUT"
             echo "source_ref=$release_tag" >> "$GITHUB_OUTPUT"
             exit 0
