@@ -59,16 +59,13 @@ jobs:
 
       - name: Ensure remote directory exists
         uses: appleboy/ssh-action@v1
-        env:
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -euo pipefail
-            mkdir -p "$REMOTE_PATH"
-          envs: REMOTE_PATH
+            mkdir -p ~/otr-web
 
       - name: Upload deployment assets
         uses: appleboy/scp-action@v0.1.7
@@ -77,12 +74,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: '.env,docker-compose.yml,monitoring'
-          target: ${{ secrets.REMOTE_PATH }}
+          target: otr-web
 
       - name: Deploy stack via docker compose
         uses: appleboy/ssh-action@v1
-        env:
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -93,9 +88,8 @@ jobs:
             set -euo pipefail
             export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
             export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-            cd "$REMOTE_PATH"
+            cd ~/otr-web
             docker compose --env-file .env pull
             docker compose --env-file .env --profile migrate run --rm migrate
             docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
-          envs: REMOTE_PATH
