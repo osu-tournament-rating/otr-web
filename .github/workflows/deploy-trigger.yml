@@ -51,7 +51,7 @@ jobs:
 
             if [[ "$target" == "staging" ]]; then
               if [[ "$dispatch_ref_type" != "tag" && "$dispatch_ref_type" != "branch" ]]; then
-                echo "Staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
+                echo "staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
                 exit 1
               fi
 
@@ -63,7 +63,7 @@ jobs:
 
             if [[ "$target" == "production" ]]; then
               if [[ "$dispatch_ref_type" != "tag" ]]; then
-                echo "Production deployments must target a tag (selected: $dispatch_ref_type)." >&2
+                echo "production deployments must target a tag (selected: $dispatch_ref_type)." >&2
                 exit 1
               fi
 

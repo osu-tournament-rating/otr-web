@@ -49,7 +49,7 @@ jobs:
           set -euo pipefail
           WEB_TAGS="stagecodes/otr-web:${{ inputs.deploy_tag }}"
           DW_TAGS="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-          if [[ "${{ inputs.target }}" == "Production" ]]; then
+          if [[ "${{ inputs.target }}" == "production" ]]; then
             WEB_TAGS="${WEB_TAGS},stagecodes/otr-web:latest"
             DW_TAGS="${DW_TAGS},stagecodes/otr-data-worker:latest"
           fi
@@ -116,12 +116,12 @@ jobs:
           printf '%s\n' "$ENV_CONTENT" > .env
 
           case "$TARGET" in
-            Staging)
+            staging)
               SOURCE_COMPOSE="docker-compose-staging.yml"
               echo "::notice::Uploading $SOURCE_COMPOSE as docker-compose.yml to $REMOTE_PATH (staging)"
               cp "$SOURCE_COMPOSE" docker-compose.yml
               ;;
-            Production)
+            production)
               SOURCE_COMPOSE="docker-compose.yml"
               echo "::notice::Uploading $SOURCE_COMPOSE to $REMOTE_PATH (production)"
               ;;
