@@ -5,7 +5,7 @@ on:
     inputs:
       target:
         type: string
-        description: 'GitHub environment to deploy to (e.g. Staging or Production)'
+        description: 'GitHub environment to deploy to (e.g. staging or production)'
         required: true
       deploy_tag:
         type: string
@@ -152,4 +152,3 @@ jobs:
             docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
           EOF
-      
