@@ -105,7 +105,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             mkdir -p "$1"
           EOF
-      
+
       - name: Create & upload deployment assets
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
