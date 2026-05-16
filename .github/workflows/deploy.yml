@@ -72,7 +72,7 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.data-worker }}
 
-  ssh-setup:
+  deploy:
     name: Copy assets & deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
@@ -86,14 +86,6 @@ jobs:
             docker-compose.yml
             docker-compose-staging.yml
             monitoring
-
-      - name: Connect to tailscale
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
