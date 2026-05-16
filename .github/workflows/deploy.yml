@@ -99,7 +99,7 @@ jobs:
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          REMOTE_PATH: ${{ env.REMOTE_PATH }}
         run: |
           set -euo pipefail
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash <<'EOF'
@@ -110,7 +110,7 @@ jobs:
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          REMOTE_PATH: ${{ env.REMOTE_PATH }}
           ENV_CONTENT: ${{ secrets.ENV }}
           TARGET: ${{ inputs.target }}
         run: |
@@ -140,7 +140,7 @@ jobs:
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          REMOTE_PATH: ${{ env.REMOTE_PATH }}
         run: |
           set -euo pipefail
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s "$REMOTE_PATH" <<'EOF'
