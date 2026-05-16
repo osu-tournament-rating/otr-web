@@ -146,6 +146,5 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             cd "$1"
             docker compose pull
-            docker compose --profile migrate run --rm migrate
-            docker compose --profile node-exporter up -d --remove-orphans
+            docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
           EOF
