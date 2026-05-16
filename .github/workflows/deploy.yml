@@ -57,15 +57,24 @@ jobs:
         run: |
           printf '%s\n' "${{ secrets.ENV }}" > .env
 
-      - name: Ensure remote directory exists
-        uses: appleboy/ssh-action@v1
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -euo pipefail
-            mkdir -p ~/otr-web
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Ensure remote directory exists
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash <<'EOF'
+            mkdir -p "$REMOTE_PATH"
+          EOF
 
       - name: Create & upload deployment assets
         env:
@@ -98,19 +107,19 @@ jobs:
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
       - name: Deploy stack via docker compose
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          timeout: 60m
-          command_timeout: 60m
-          script: |
-            set -euo pipefail
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash <<'EOF'
             export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
             export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-            cd ~/otr-web
+            cd "$REMOTE_PATH"
             docker compose --env-file .env pull
             docker compose --env-file .env --profile migrate run --rm migrate
             docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
+          EOF
+
