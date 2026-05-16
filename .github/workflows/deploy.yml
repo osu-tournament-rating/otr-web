@@ -122,4 +122,3 @@ jobs:
             docker compose --env-file .env --profile node-exporter up -d
             docker compose --env-file .env up -d --remove-orphans
           EOF
-
