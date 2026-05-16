@@ -57,11 +57,6 @@ jobs:
             fi
 
             if [[ "$target" == "production" ]]; then
-              if [[ "$dispatch_ref_type" != "tag" ]]; then
-                echo "Production deployments must target a tag (selected: $dispatch_ref_type)." >&2
-                exit 1
-              fi
-
               echo "target=$target" >> "$GITHUB_OUTPUT"
               echo "deploy_tag=$dispatch_ref_name" >> "$GITHUB_OUTPUT"
               echo "source_ref=$dispatch_ref" >> "$GITHUB_OUTPUT"
