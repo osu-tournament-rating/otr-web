@@ -145,8 +145,7 @@ jobs:
           set -euo pipefail
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             set -euo pipefail
-            REMOTE_PATH="$1"
-            cd "$REMOTE_PATH"
+            cd "$1"
             docker compose --env-file .env pull
             docker compose --env-file .env --profile migrate run --rm migrate
             docker compose --env-file .env --profile node-exporter up -d
