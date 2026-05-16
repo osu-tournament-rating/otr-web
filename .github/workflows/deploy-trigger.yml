@@ -17,6 +17,11 @@ on:
         options:
           - staging
           - production
+      skip_build:
+        description: 'Skip Docker image build and publish'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   determine:
@@ -46,7 +51,7 @@ jobs:
 
             if [[ "$target" == "staging" ]]; then
               if [[ "$dispatch_ref_type" != "tag" && "$dispatch_ref_type" != "branch" ]]; then
-                echo "Staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
+                echo "staging deployments must target a branch or tag (selected: $dispatch_ref_type)." >&2
                 exit 1
               fi
 
@@ -94,4 +99,5 @@ jobs:
       target: ${{ needs.determine.outputs.target }}
       deploy_tag: ${{ needs.determine.outputs.deploy_tag }}
       source_ref: ${{ needs.determine.outputs.source_ref }}
+      skip_build: ${{ github.event.inputs.skip_build == 'true' }}
     secrets: inherit
