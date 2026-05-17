@@ -1,11 +1,11 @@
 services:
   db:
     image: postgres:17
-    container_name: otr-db
+    container_name: otr-staging-db
     restart: unless-stopped
     shm_size: '256m'
     ports:
-      - '5432:5432'
+      - '5532:5432'
     environment:
       POSTGRES_USER: ${DOCKER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
@@ -25,11 +25,11 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: otr-rabbitmq
+    container_name: otr-staging-rabbitmq
     restart: unless-stopped
     ports:
-      - '5672:5672'
-      - '15672:15672'
+      - '5772:5672'
+      - '15772:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
@@ -47,8 +47,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:latest
-    container_name: otr-migrate
+    image: stagecodes/otr-web:staging-latest
+    container_name: otr-staging-migrate
     profiles:
       - migrate
     restart: 'no'
@@ -66,11 +66,11 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: stagecodes/otr-web:latest
-    container_name: otr-web
+    image: stagecodes/otr-web:staging-latest
+    container_name: otr-staging-web
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3100:3000'
     depends_on:
       db:
         condition: service_healthy
@@ -97,8 +97,8 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: stagecodes/otr-data-worker:latest
-    container_name: otr-data-worker
+    image: stagecodes/otr-data-worker:staging-latest
+    container_name: otr-staging-data-worker
     restart: unless-stopped
     depends_on:
       db:
@@ -124,7 +124,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.0.1
-    container_name: otr-prometheus
+    container_name: otr-staging-prometheus
     restart: unless-stopped
     entrypoint:
       - /bin/sh
@@ -141,20 +141,20 @@ services:
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
     volumes:
       - prometheus-data:/prometheus
-      - ./monitoring/prod/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/prod/prometheus/rules:/etc/prometheus/rules:ro
+      - ./monitoring/staging/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/staging/prometheus/rules:/etc/prometheus/rules:ro
     depends_on:
       - postgres-exporter
 
   loki:
     image: grafana/loki:3.4.1
-    container_name: otr-loki
+    container_name: otr-staging-loki
     restart: unless-stopped
     command:
       - '-config.file=/etc/loki/loki-config.yaml'
     volumes:
       - loki-data:/loki
-      - ./monitoring/prod/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./monitoring/staging/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     healthcheck:
       test:
         [
@@ -168,12 +168,12 @@ services:
 
   promtail:
     image: grafana/promtail:3.4.1
-    container_name: otr-promtail
+    container_name: otr-staging-promtail
     restart: unless-stopped
     command:
       - '-config.file=/etc/promtail/promtail-config.yaml'
     volumes:
-      - ./monitoring/prod/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - ./monitoring/staging/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - promtail-positions:/tmp
@@ -183,10 +183,10 @@ services:
 
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: otr-grafana
+    container_name: otr-staging-grafana
     restart: unless-stopped
     ports:
-      - '3001:3000'
+      - '3101:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -195,15 +195,15 @@ services:
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-NULL}
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/prod/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/prod/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/staging/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/staging/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
-    container_name: otr-postgres-exporter
+    container_name: otr-staging-postgres-exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: db:5432/${DOCKER_POSTGRES_DB:-postgres}?sslmode=disable
@@ -212,19 +212,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    container_name: otr-node-exporter
-    restart: unless-stopped
-    command:
-      - '--path.rootfs=/host'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    volumes:
-      - /:/host:ro,rslave
-    pid: host
-    profiles:
-      - 'node-exporter'
 
 volumes:
   postgres-data:

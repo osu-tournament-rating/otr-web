@@ -15,9 +15,16 @@ on:
         type: string
         description: 'Git ref (branch, tag, or commit) to deploy'
         required: true
+      skip_build:
+        type: boolean
+        description: 'Skip Docker image build and publish'
+        required: false
+        default: false
 
 jobs:
-  deploy:
+  build:
+    name: Build & push Docker images
+    if: ${{ !inputs.skip_build }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
 
@@ -26,7 +33,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.source_ref }}
-          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -37,13 +43,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Resolve image tags
+        id: tags
+        run: |
+          set -euo pipefail
+          WEB_TAGS="stagecodes/otr-web:${{ inputs.deploy_tag }}"
+          DW_TAGS="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
+          if [[ "${{ inputs.target }}" == "production" ]]; then
+            WEB_TAGS="${WEB_TAGS},stagecodes/otr-web:latest"
+            DW_TAGS="${DW_TAGS},stagecodes/otr-data-worker:latest"
+          fi
+          echo "web=${WEB_TAGS}" >> "$GITHUB_OUTPUT"
+          echo "data-worker=${DW_TAGS}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push web image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: true
-          tags: stagecodes/otr-web:${{ inputs.deploy_tag }}
+          tags: ${{ steps.tags.outputs.web }}
 
       - name: Build and push data worker image
         uses: docker/build-push-action@v6
@@ -51,11 +70,22 @@ jobs:
           context: .
           file: apps/data-worker/Dockerfile
           push: true
-          tags: stagecodes/otr-data-worker:${{ inputs.deploy_tag }}
+          tags: ${{ steps.tags.outputs.data-worker }}
 
-      - name: Create .env file from secret
-        run: |
-          printf '%s\n' "${{ secrets.ENV }}" > .env
+  deploy:
+    name: Copy assets & deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          sparse-checkout: |
+            docker-compose.yml
+            docker-compose-staging.yml
+            monitoring
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
@@ -72,8 +102,8 @@ jobs:
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash <<'EOF'
-            mkdir -p "$REMOTE_PATH"
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
+            mkdir -p "$1"
           EOF
 
       - name: Create & upload deployment assets
@@ -113,12 +143,8 @@ jobs:
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash <<'EOF'
-            export WEB_IMAGE="stagecodes/otr-web:${{ inputs.deploy_tag }}"
-            export DATA_WORKER_IMAGE="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-            cd "$REMOTE_PATH"
-            docker compose --env-file .env pull
-            docker compose --env-file .env --profile migrate run --rm migrate
-            docker compose --env-file .env --profile node-exporter up -d
-            docker compose --env-file .env up -d --remove-orphans
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
+            cd "$1"
+            docker compose pull
+            docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
           EOF
