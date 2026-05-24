@@ -74,8 +74,8 @@ jobs:
 
   deploy:
     name: Copy assets & deploy
-    needs: build  # dependency...
-    if: |         # but, still run when build was skipped
+    needs: build # dependency...
+    if: | # but, still run when build was skipped
       always() && (
         needs.build.result == 'success' ||
         needs.build.result == 'skipped'
