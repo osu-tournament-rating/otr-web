@@ -1,5 +1,5 @@
 import { Mods } from '@otr/core/osu';
-import { ModsEnumHelper } from '../enums';
+import { ModsEnumHelper } from '../enum-helpers';
 
 /** Mod multipliers (ScoreV2, common tournament mods) */
 const modMultipliers: Record<number, number> = {

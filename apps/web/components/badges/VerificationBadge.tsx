@@ -1,4 +1,4 @@
-import { VerificationStatusEnumHelper } from '@/lib/enums';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import {
   VerificationStatus,
   GameWarningFlags,
@@ -26,7 +26,7 @@ import {
   MatchWarningFlagsEnumHelper,
   ScoreRejectionReasonEnumHelper,
   TournamentRejectionReasonEnumHelper,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import { ApiItemType } from '@/lib/types';
 
 const statusConfig = {

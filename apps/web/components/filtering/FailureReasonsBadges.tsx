@@ -1,5 +1,5 @@
 import { FilteringFailReason } from '@otr/core/osu';
-import { FilteringFailReasonEnumHelper } from '@/lib/enums';
+import { FilteringFailReasonEnumHelper } from '@/lib/enum-helpers';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,

@@ -10,17 +10,13 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres-exporter:9187']
+      - targets: ['otr-staging-postgres-exporter:9187']
 
   - job_name: 'rabbitmq'
     static_configs:
-      - targets: ['rabbitmq:15692']
+      - targets: ['otr-staging-rabbitmq:15692']
 
   - job_name: 'web'
     metrics_path: '/api/metrics'
@@ -28,8 +24,8 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/secrets/metrics_token
     static_configs:
-      - targets: ['web:3000']
+      - targets: ['otr-staging-web:3000']
 
   - job_name: 'data-worker'
     static_configs:
-      - targets: ['data-worker:9091']
+      - targets: ['otr-staging-data-worker:9091']

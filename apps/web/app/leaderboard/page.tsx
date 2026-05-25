@@ -9,7 +9,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
-import { leaderboardFilterSchema } from '@/lib/schema';
+import { leaderboardFilterSchema } from '@/lib/validation-schema';
 import { z } from 'zod';
 import LeaderboardFilter from '@/components/leaderboard/LeaderboardFilter';
 import Link from 'next/link';

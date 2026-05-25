@@ -22,7 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { Ruleset } from '@otr/core/osu';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';

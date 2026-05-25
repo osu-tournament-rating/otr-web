@@ -869,12 +869,12 @@ export const ReportStatusEnumHelper: IEnumHelper<ReportStatus> = {
       description: 'Awaiting review',
     },
     [ReportStatus.Approved]: {
-      text: 'Approved',
-      description: 'Report was accepted',
+      text: 'Confirmed',
+      description: 'Action was taken',
     },
     [ReportStatus.Rejected]: {
-      text: 'Rejected',
-      description: 'Report was declined',
+      text: 'Dismissed',
+      description: 'No action to take',
     },
   },
 };

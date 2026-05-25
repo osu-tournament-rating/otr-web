@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { RatingAdjustmentTypeEnumhelper } from '@/lib/enums';
+import { RatingAdjustmentTypeEnumhelper } from '@/lib/enum-helpers';
 import { formattedDate } from './PlayerRatingChartTooltip';
 import {
   Table,

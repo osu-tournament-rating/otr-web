@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { ModsEnumHelper } from '@/lib/enums';
+import { ModsEnumHelper } from '@/lib/enum-helpers';
 import { getModColor, normalizedScore } from '@/lib/utils/mods';
 import {
   ChartConfig,

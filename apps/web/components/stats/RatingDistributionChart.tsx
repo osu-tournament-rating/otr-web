@@ -16,7 +16,7 @@ import {
 import TierIcon from '@/components/icons/TierIcon';
 import { Ruleset } from '@otr/core/osu';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { useRatingDistribution } from '@/lib/hooks/useRatingDistribution';

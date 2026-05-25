@@ -4,7 +4,7 @@ import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Ruleset } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 import SimpleTooltip from '../simple-tooltip';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 
 interface RulesetButtonProps {
   ruleset: Ruleset;

@@ -1,7 +1,10 @@
-import { RabbitMqPublisher } from '@/lib/queue';
-import type { QueuePublishOptions, QueuePublisher } from '@/lib/queue/types';
 import {
+  type QueuePublishOptions,
+  type QueuePublisher,
+  RabbitMqPublisher,
   QueueConstants,
+} from '@otr/core/queues';
+import {
   type FetchBeatmapPayload,
   type FetchMatchPayload,
   type FetchOsuMessage,

@@ -6,7 +6,7 @@ import {
 
 import { TournamentAutomationCheckWorker } from '../tournament-automation-check-worker';
 import type { TournamentAutomationCheckService } from '../tournament-automation-check-service';
-import type { QueueConsumer, QueueMessage } from '../../queue/types';
+import type { QueueConsumer, QueueMessage } from '@otr/core/queues';
 import type { TournamentDataCompletionService } from '../../osu/services/tournament-data-completion-service';
 import type { Logger } from '../../logging/logger';
 

@@ -11,7 +11,7 @@ import { startMetricsServer } from './metrics';
 import { dataWorkerEnv } from './env';
 import { consoleLogger } from './logging/logger';
 import { RabbitMqConsumer } from './queue/rabbitmq-consumer';
-import { RabbitMqPublisher } from './queue/rabbitmq-publisher';
+import { RabbitMqPublisher } from '@otr/core/queues';
 import { FixedWindowRateLimiter } from './rate-limiter';
 import {
   BeatmapFetchService,

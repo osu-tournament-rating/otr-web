@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/form';
 import { FilterReport, FilteringResult } from '@/lib/orpc/schema/filtering';
 import { orpc } from '@/lib/orpc/orpc';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { downloadCSV } from '@/lib/utils/csv';
 import { getFailureReasons } from './FailureReasonsBadges';
 

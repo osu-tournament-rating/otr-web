@@ -13,7 +13,7 @@ import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import type { VerificationStatusValue } from '@/lib/orpc/schema/tournament';
 import { TournamentDetail } from '@/lib/orpc/schema/tournament';
-import { tournamentEditFormSchema } from '@/lib/schema';
+import { tournamentEditFormSchema } from '@/lib/validation-schema';
 import { cn } from '@/lib/utils';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
@@ -45,7 +45,10 @@ import DeleteButton from '../shared/DeleteButton';
 import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
 import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
-import { getEnumFlags, TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import {
+  getEnumFlags,
+  TournamentRejectionReasonEnumHelper,
+} from '@/lib/enum-helpers';
 import { TournamentRejectionReason } from '@otr/core/osu';
 import RefetchMatchDataButton from './RefetchMatchDataButton';
 import RefetchBeatmapDataButton from './RefetchBeatmapDataButton';

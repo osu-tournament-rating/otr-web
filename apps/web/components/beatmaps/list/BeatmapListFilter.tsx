@@ -11,8 +11,8 @@ import { Ruleset } from '@otr/core/osu';
 import {
   beatmapListFilterSchema,
   defaultBeatmapListFilter,
-} from '@/lib/schema';
-import { RulesetEnumHelper } from '@/lib/enums';
+} from '@/lib/validation-schema';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import {
   Form,
   FormField,

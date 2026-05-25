@@ -1,12 +1,16 @@
 import { and, asc, isNull, lt, ne, or } from 'drizzle-orm';
-import type { FetchOsuMessage, FetchPlayerOsuTrackMessage } from '@otr/core';
+import type {
+  FetchOsuMessage,
+  FetchPlayerOsuTrackMessage,
+  MessageEnvelope,
+} from '@otr/core';
 import { MessagePriority } from '@otr/core';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
-import type { QueuePublisher } from '../queue/types';
+import type { QueuePublisher } from '@otr/core/queues';
 import {
   setPlayerFetchStatusByOsuId,
   setPlayerOsuTrackFetchStatusByOsuId,
@@ -28,7 +32,7 @@ const MS_PER_DAY = 86_400_000;
 
 type IntervalHandle = ReturnType<typeof setInterval> | null;
 
-type QueuePublisherContract<TMessage> = Pick<
+type QueuePublisherContract<TMessage extends MessageEnvelope<unknown>> = Pick<
   QueuePublisher<TMessage>,
   'publish'
 >;

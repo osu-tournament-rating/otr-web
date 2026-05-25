@@ -16,7 +16,7 @@ import type {
   EntityTimelineEvent,
   EntityTimelineItem,
 } from '@/lib/orpc/schema/audit';
-import { AuditActionTypeEnumHelper } from '@/lib/enums';
+import { AuditActionTypeEnumHelper } from '@/lib/enum-helpers';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

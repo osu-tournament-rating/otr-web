@@ -1,4 +1,4 @@
-import { TournamentRejectionReasonEnumHelper } from '@/lib/enums';
+import { TournamentRejectionReasonEnumHelper } from '@/lib/enum-helpers';
 import { SelectContent, SelectItem } from '@/components/ui/select';
 import { TournamentRejectionReason } from '@otr/core/osu';
 

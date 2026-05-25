@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17
-    container_name: db
+    container_name: otr-db
     restart: unless-stopped
     shm_size: '256m'
     ports:
@@ -25,7 +25,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: rabbitmq
+    container_name: otr-rabbitmq
     restart: unless-stopped
     ports:
       - '5672:5672'
@@ -47,7 +47,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '${WEB_IMAGE:-stagecodes/otr-web:local}'
+    image: stagecodes/otr-web:latest
+    container_name: otr-migrate
     profiles:
       - migrate
     restart: 'no'
@@ -58,32 +59,15 @@ services:
       - ./.env
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-      NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL}
-      WEB_OSU_CLIENT_ID: ${WEB_OSU_CLIENT_ID}
-      WEB_OSU_CLIENT_SECRET: ${WEB_OSU_CLIENT_SECRET}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
-      DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
-      DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
-      OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
-      OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
-      OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
-      OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
-      PLAYER_OSU_AUTO_REFETCH_ENABLED: ${PLAYER_OSU_AUTO_REFETCH_ENABLED}
-      PLAYER_OSU_REFETCH_INTERVAL_MINUTES: ${PLAYER_OSU_REFETCH_INTERVAL_MINUTES}
-      PLAYER_OSU_REFETCH_OUTDATED_DAYS: ${PLAYER_OSU_REFETCH_OUTDATED_DAYS}
-      PLAYER_OSUTRACK_AUTO_REFETCH_ENABLED: ${PLAYER_OSUTRACK_AUTO_REFETCH_ENABLED}
-      PLAYER_OSUTRACK_REFETCH_INTERVAL_MINUTES: ${PLAYER_OSUTRACK_REFETCH_INTERVAL_MINUTES}
-      PLAYER_OSUTRACK_REFETCH_OUTDATED_DAYS: ${PLAYER_OSUTRACK_REFETCH_OUTDATED_DAYS}
     command: ['./scripts/run-migrations.sh']
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: '${WEB_IMAGE:-otr-web:local}'
-    container_name: web
+    image: stagecodes/otr-web:latest
+    container_name: otr-web
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -96,18 +80,7 @@ services:
       - ./.env
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-      NEXT_PUBLIC_APP_BASE_URL: ${NEXT_PUBLIC_APP_BASE_URL}
-      WEB_OSU_CLIENT_ID: ${WEB_OSU_CLIENT_ID}
-      WEB_OSU_CLIENT_SECRET: ${WEB_OSU_CLIENT_SECRET}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
-      DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
-      DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
-      OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
-      OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
-      OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
-      OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
     healthcheck:
       test:
@@ -124,8 +97,8 @@ services:
     build:
       context: .
       dockerfile: apps/data-worker/Dockerfile
-    image: '${DATA_WORKER_IMAGE:-otr-data-worker:local}'
-    container_name: data-worker
+    image: stagecodes/otr-data-worker:latest
+    container_name: otr-data-worker
     restart: unless-stopped
     depends_on:
       db:
@@ -137,12 +110,6 @@ services:
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
-      DATA_WORKER_OSU_CLIENT_ID: ${DATA_WORKER_OSU_CLIENT_ID}
-      DATA_WORKER_OSU_CLIENT_SECRET: ${DATA_WORKER_OSU_CLIENT_SECRET}
-      OSU_API_RATE_LIMIT_REQUESTS: ${OSU_API_RATE_LIMIT_REQUESTS}
-      OSU_API_RATE_LIMIT_WINDOW_SECONDS: ${OSU_API_RATE_LIMIT_WINDOW_SECONDS}
-      OSUTRACK_API_RATE_LIMIT_REQUESTS: ${OSUTRACK_API_RATE_LIMIT_REQUESTS}
-      OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS: ${OSUTRACK_API_RATE_LIMIT_WINDOW_SECONDS}
       METRICS_PORT: '9091'
     healthcheck:
       test:
@@ -157,7 +124,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.0.1
-    container_name: prometheus
+    container_name: otr-prometheus
     restart: unless-stopped
     entrypoint:
       - /bin/sh
@@ -174,20 +141,20 @@ services:
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
     volumes:
       - prometheus-data:/prometheus
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - ./monitoring/prod/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prod/prometheus/rules:/etc/prometheus/rules:ro
     depends_on:
       - postgres-exporter
 
   loki:
     image: grafana/loki:3.4.1
-    container_name: loki
+    container_name: otr-loki
     restart: unless-stopped
     command:
       - '-config.file=/etc/loki/loki-config.yaml'
     volumes:
       - loki-data:/loki
-      - ./monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./monitoring/prod/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     healthcheck:
       test:
         [
@@ -201,12 +168,12 @@ services:
 
   promtail:
     image: grafana/promtail:3.4.1
-    container_name: promtail
+    container_name: otr-promtail
     restart: unless-stopped
     command:
       - '-config.file=/etc/promtail/promtail-config.yaml'
     volumes:
-      - ./monitoring/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - ./monitoring/prod/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - promtail-positions:/tmp
@@ -216,7 +183,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: grafana
+    container_name: otr-grafana
     restart: unless-stopped
     ports:
       - '3001:3000'
@@ -228,15 +195,15 @@ services:
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-NULL}
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/prod/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/prod/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
-    container_name: postgres-exporter
+    container_name: otr-postgres-exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: db:5432/${DOCKER_POSTGRES_DB:-postgres}?sslmode=disable
@@ -248,7 +215,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
-    container_name: node-exporter
+    container_name: otr-node-exporter
     restart: unless-stopped
     command:
       - '--path.rootfs=/host'
@@ -256,6 +223,7 @@ services:
     volumes:
       - /:/host:ro,rslave
     pid: host
+    # Don't rename, will break disaster recovery
     profiles:
       - 'node-exporter'
 

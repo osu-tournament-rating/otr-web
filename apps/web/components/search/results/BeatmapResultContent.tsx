@@ -2,7 +2,7 @@
 
 import { Gamepad2, Star } from 'lucide-react';
 
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapSearchResult } from '@/lib/orpc/schema/search';
 import { highlightMatch } from '@/lib/utils/search';
 import RulesetIcon from '@/components/icons/RulesetIcon';

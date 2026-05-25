@@ -1,6 +1,6 @@
 'use client';
 
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { formatRankRange } from '@/lib/utils/number';
 import Link from 'next/link';
 import VerificationBadge from '../badges/VerificationBadge';

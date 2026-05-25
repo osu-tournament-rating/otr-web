@@ -1,4 +1,4 @@
-import { VerificationStatusEnumHelper } from '@/lib/enums';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { SelectContent, SelectItem } from '../ui/select';
 
 export default function VerificationStatusSelectContent() {

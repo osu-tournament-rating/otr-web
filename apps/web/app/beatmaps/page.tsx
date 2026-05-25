@@ -3,7 +3,7 @@ import { Music } from 'lucide-react';
 import Link from 'next/link';
 
 import { orpc } from '@/lib/orpc/orpc';
-import { beatmapListFilterSchema } from '@/lib/schema';
+import { beatmapListFilterSchema } from '@/lib/validation-schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Pagination,

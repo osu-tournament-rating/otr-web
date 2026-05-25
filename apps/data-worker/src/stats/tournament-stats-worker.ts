@@ -1,7 +1,7 @@
 import type { ProcessTournamentStatsMessage } from '@otr/core';
 
 import type { Logger } from '../logging/logger';
-import type { QueueConsumer, QueueMessage } from '../queue/types';
+import type { QueueConsumer, QueueMessage } from '@otr/core/queues';
 import { TournamentStatsService } from './tournament-stats-service';
 
 interface TournamentStatsWorkerOptions {

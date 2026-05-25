@@ -1,10 +1,10 @@
 import { AuditEntityType } from '@otr/core/osu';
-import { AuditEntityTypeEnumHelper } from '@/lib/enums';
+import { AuditEntityTypeEnumHelper } from '@/lib/enum-helpers';
 import type {
   IEnumHelper,
   IBitwiseEnumHelper,
   EnumMetadata,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import {
   VerificationStatusEnumHelper,
   TournamentRejectionReasonEnumHelper,
@@ -19,7 +19,7 @@ import {
   TeamEnumHelper,
   ScoreGradeEnumHelper,
   DataFetchStatusEnumHelper,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 
 type AnyEnumHelper =
   | IEnumHelper<number, EnumMetadata>

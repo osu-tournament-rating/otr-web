@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { Users } from 'lucide-react';
 import { useMemo } from 'react';
-import { LobbySizeEnumHelper } from '@/lib/enums';
+import { LobbySizeEnumHelper } from '@/lib/enum-helpers';
 import {
   CHART_CONSTANTS,
   CHART_COLORS,

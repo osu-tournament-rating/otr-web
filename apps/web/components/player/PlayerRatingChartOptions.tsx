@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Menu, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Checkbox } from '../ui/checkbox';
-import { playerRatingChartFilterSchema } from '@/lib/schema';
+import { playerRatingChartFilterSchema } from '@/lib/validation-schema';
 
 export type PlayerRatingChartFilterValues = z.infer<
   typeof playerRatingChartFilterSchema

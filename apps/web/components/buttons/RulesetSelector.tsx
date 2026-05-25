@@ -4,7 +4,7 @@ import { Ruleset } from '@otr/core/osu';
 import { RulesetButton } from './RulesetButton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 
 export default function PlayerRulesetSelector({
   defaultRuleset,

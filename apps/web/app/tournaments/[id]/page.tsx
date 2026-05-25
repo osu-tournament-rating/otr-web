@@ -30,7 +30,7 @@ import {
 import StatCard from '@/components/shared/StatCard';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { LazerBadge } from '@/components/badges/LazerBadge';
 import AdminNoteView from '@/components/admin-notes/AdminNoteView';

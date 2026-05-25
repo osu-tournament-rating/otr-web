@@ -19,7 +19,7 @@ import {
 import { Gamepad2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Ruleset } from '@otr/core/osu';
-import { RulesetEnumHelper } from '@/lib/enums';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import RulesetIcon from '../icons/RulesetIcon';
 import {
   CHART_CONSTANTS,

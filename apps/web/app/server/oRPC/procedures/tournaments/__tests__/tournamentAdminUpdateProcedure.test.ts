@@ -17,7 +17,7 @@ type RequireKeys<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
 
 type TestTournamentRow = RequireKeys<
   typeof schema.tournaments.$inferSelect,
-  'id' | 'verificationStatus' | 'ruleset'
+  'id' | 'verificationStatus' | 'verifiedByUserId' | 'ruleset'
 >;
 
 type TestMatchRow = RequireKeys<typeof schema.matches.$inferSelect, 'id'>;
@@ -187,6 +187,7 @@ describe('updateTournamentAdminHandler', () => {
       {
         id: 1,
         verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
         ruleset: existingRuleset,
       },
       {
@@ -239,6 +240,7 @@ describe('updateTournamentAdminHandler', () => {
       {
         id: 1,
         verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
         ruleset: Ruleset.Mania4k,
       },
       {
@@ -290,6 +292,7 @@ describe('updateTournamentAdminHandler', () => {
       {
         id: 1,
         verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
         ruleset: Ruleset.Mania4k,
       },
       {
@@ -342,5 +345,214 @@ describe('updateTournamentAdminHandler', () => {
         }),
       ])
     );
+  });
+
+  describe('submittedByUserId and verifiedByUserId', () => {
+    it('does not include submittedByUserId in tournament update', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+        submittedByUserId: 42,
+      });
+
+      await updateTournamentAdminHandler({
+        input: baseInput,
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      expect(db.tournamentUpdates).toHaveLength(1);
+      expect('submittedByUserId' in db.tournamentUpdates[0]).toBe(false);
+    });
+
+    it('preserves verifiedByUserId when status unchanged', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.Verified,
+        verifiedByUserId: 55,
+        ruleset: Ruleset.Mania4k,
+      });
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.Verified,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      expect(db.tournamentUpdates[0].verifiedByUserId).toBe(55);
+    });
+
+    it('sets verifiedByUserId to admin on Verified', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+      });
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.Verified,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      expect(db.tournamentUpdates[0].verifiedByUserId).toBe(99);
+    });
+
+    it('sets verifiedByUserId to admin on Rejected', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+      });
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.Rejected,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      expect(db.tournamentUpdates[0].verifiedByUserId).toBe(99);
+    });
+
+    it('clears verifiedByUserId when status reverts to None', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.Verified,
+        verifiedByUserId: 55,
+        ruleset: Ruleset.Mania4k,
+      });
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.None,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      expect(db.tournamentUpdates[0].verifiedByUserId).toBeNull();
+    });
+
+    it('only includes expected keys in .set()', async () => {
+      const db = new UpdateTournamentTestDb({
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+      });
+
+      await updateTournamentAdminHandler({
+        input: baseInput,
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      const expectedKeys = new Set([
+        'name',
+        'abbreviation',
+        'forumUrl',
+        'rankRangeLowerBound',
+        'ruleset',
+        'lobbySize',
+        'verificationStatus',
+        'rejectionReason',
+        'startTime',
+        'endTime',
+        'verifiedByUserId',
+        'updated',
+      ]);
+
+      expect(new Set(Object.keys(db.tournamentUpdates[0]))).toEqual(
+        expectedKeys
+      );
+    });
+
+    it('cascade verification does not set submittedByUserId or verifiedByUserId on matches', async () => {
+      const db = new UpdateTournamentTestDb(
+        {
+          id: 1,
+          verificationStatus: VerificationStatus.None,
+          verifiedByUserId: null,
+          ruleset: Ruleset.Mania4k,
+        },
+        {
+          matches: [{ id: 10 }],
+          games: [{ id: 20, matchId: 10 }],
+        }
+      );
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.Verified,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      for (const update of db.matchUpdates) {
+        expect('submittedByUserId' in update).toBe(false);
+        expect('verifiedByUserId' in update).toBe(false);
+      }
+    });
+
+    it('cascade rejection does not set submittedByUserId or verifiedByUserId on matches', async () => {
+      const db = new UpdateTournamentTestDb(
+        {
+          id: 1,
+          verificationStatus: VerificationStatus.None,
+          verifiedByUserId: null,
+          ruleset: Ruleset.Mania4k,
+        },
+        {
+          matches: [{ id: 10 }],
+          games: [{ id: 20, matchId: 10 }],
+        }
+      );
+
+      await updateTournamentAdminHandler({
+        input: {
+          ...baseInput,
+          verificationStatus: VerificationStatus.Rejected,
+        },
+        context: {
+          db: db as unknown as DatabaseClient,
+          session: adminSession,
+        },
+      });
+
+      for (const update of db.matchUpdates) {
+        expect('submittedByUserId' in update).toBe(false);
+        expect('verifiedByUserId' in update).toBe(false);
+      }
+    });
   });
 });

@@ -3,7 +3,7 @@ import { type FetchPlayerOsuTrackMessage, MessagePriority } from '@otr/core';
 
 import { OsuTrackClient } from '../client';
 import { OsuTrackPlayerWorker } from '../worker';
-import type { QueueConsumer, QueueMessage } from '../../queue/types';
+import type { QueueConsumer, QueueMessage } from '@otr/core/queues';
 import type { RateLimiter } from '../../rate-limiter';
 import type { Logger } from '../../logging/logger';
 import type { DatabaseClient } from '../../db';

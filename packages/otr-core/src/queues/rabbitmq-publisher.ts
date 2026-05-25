@@ -46,7 +46,7 @@ export class RabbitMqPublisher<
   ): Promise<TMessage> {
     const channel = await this.ensureChannel();
     const metadata = createMessageMetadata(options.metadata);
-    const message = { ...metadata, ...payload } as TMessage;
+    const message = { ...metadata, ...(payload ?? {}) } as TMessage;
 
     const publishOptions: Options.Publish = {
       persistent: true,

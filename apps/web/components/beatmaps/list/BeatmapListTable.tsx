@@ -21,7 +21,7 @@ import type {
   BeatmapListItem,
   BeatmapListSort,
 } from '@/lib/orpc/schema/beatmapList';
-import type { beatmapListFilterSchema } from '@/lib/schema';
+import type { beatmapListFilterSchema } from '@/lib/validation-schema';
 import type { z } from 'zod';
 
 interface BeatmapListTableProps {

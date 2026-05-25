@@ -8,7 +8,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { gameEditFormSchema } from '@/lib/schema';
+import { gameEditFormSchema } from '@/lib/validation-schema';
 import { Game } from '@/lib/orpc/schema/match';
 import { GameRejectionReason, GameWarningFlags, Mods } from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
@@ -36,7 +36,7 @@ import {
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
   getEnumFlags,
-} from '@/lib/enums';
+} from '@/lib/enum-helpers';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { orpc } from '@/lib/orpc/orpc';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
