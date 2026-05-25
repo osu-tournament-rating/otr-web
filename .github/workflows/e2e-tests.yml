@@ -1,0 +1,183 @@
+name: E2E Tests
+
+# Manual-only: spins up Postgres + RabbitMQ in the runner, restores a
+# production-replica dump via otr-scripts, and runs playwright.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      # Match docker-compose.yml so the otr-db container name and creds
+      # line up with what otr-scripts expects via DB_CONTAINER/DB_USER/DB_NAME.
+      DOCKER_POSTGRES_USER: postgres
+      DOCKER_POSTGRES_PASSWORD: password
+      DOCKER_POSTGRES_DB: postgres
+      DOCKER_RABBITMQ_USER: admin
+      DOCKER_RABBITMQ_PASSWORD: admin
+      DOCKER_DATABASE_URL: postgresql://postgres:password@db:5432/postgres
+      DOCKER_RABBITMQ_AMQP_URL: amqp://admin:admin@rabbitmq:5672/
+
+      # Host-side connection strings for migrations + Playwright web server.
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/postgres
+      RABBITMQ_AMQP_URL: amqp://admin:admin@localhost:5672/
+
+      NEXT_PUBLIC_APP_BASE_URL: http://localhost:3001
+      BETTER_AUTH_SECRET: e2e-test-secret
+      BETTER_AUTH_URL: http://localhost:3001
+
+      # Staging dir for otr-scripts. Holds a stripped compose file that
+      # only declares db + rabbitmq, so the recovery script's
+      # `docker compose down` / `up -d` cycle doesn't try to start web
+      # and data-worker (Playwright launches its own web on 3001).
+      OTR_COMPOSE_DIR: ${{ github.workspace }}/.e2e-compose
+
+    steps:
+      - name: Checkout otr-web
+        uses: actions/checkout@v4
+
+      - name: Checkout otr-scripts
+        uses: actions/checkout@v4
+        with:
+          repository: osu-tournament-rating/otr-scripts
+          path: otr-scripts
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.x
+
+      - name: Install otr-web dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install otr-scripts dependencies
+        working-directory: otr-scripts
+        run: pip install -e .
+
+      - name: Write GCS service account key
+        run: |
+          mkdir -p "${HOME}/.gcs"
+          printf '%s' '${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}' > "${HOME}/.gcs/sa.json"
+          chmod 600 "${HOME}/.gcs/sa.json"
+
+      - name: Stage minimal compose for otr-scripts
+        # otr-scripts' recovery script runs `docker compose down/up` in
+        # OTR_WEB_DIR. Point it at this dir which only declares the two
+        # services we actually need for E2E.
+        run: |
+          mkdir -p "${OTR_COMPOSE_DIR}"
+          cat > "${OTR_COMPOSE_DIR}/docker-compose.yml" <<'YAML'
+          services:
+            db:
+              image: postgres:17
+              container_name: otr-db
+              shm_size: '256m'
+              ports:
+                - '5432:5432'
+              environment:
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: password
+                POSTGRES_DB: postgres
+              healthcheck:
+                test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+                interval: 5s
+                timeout: 5s
+                retries: 20
+                start_period: 5s
+            rabbitmq:
+              image: rabbitmq:4-management
+              container_name: otr-rabbitmq
+              ports:
+                - '5672:5672'
+                - '15672:15672'
+              environment:
+                RABBITMQ_DEFAULT_USER: admin
+                RABBITMQ_DEFAULT_PASS: admin
+              healthcheck:
+                test: ['CMD-SHELL', 'rabbitmq-diagnostics -q ping']
+                interval: 10s
+                timeout: 5s
+                retries: 12
+          YAML
+
+      - name: Write otr-scripts .env
+        working-directory: otr-scripts
+        run: |
+          cat > .env <<EOF
+          ENVIRONMENT=production
+          TAG=latest
+          DUMP_DIR=/tmp/otr-dumps
+          PUBLIC_HTML_DIR=/tmp/otr-public-html
+          OTR_WEB_DIR=${OTR_COMPOSE_DIR}
+          DB_PORT=5432
+          DB_CONTAINER=otr-db
+          DB_USER=postgres
+          DB_NAME=postgres
+          DB_PASSWORD=password
+          GCS_TEST_BUCKET=otr-test
+          GCS_DEV_BUCKET=otr-dev-replica
+          GCS_PUBLIC_BUCKET=otr-public-replica
+          GCS_PROD_BUCKET=otr-prod-dumps
+          GCS_SA_JSON_PATH=${HOME}/.gcs/sa.json
+          RABBITMQ_URL=amqp://admin:admin@localhost:5672/
+          EOF
+
+      - name: Restore production-replica database via otr-scripts
+        working-directory: otr-scripts
+        run: python src/main.py -s recovery --recovery-bucket production
+
+      - name: Wait for db healthy
+        run: |
+          for i in {1..40}; do
+            status=$(docker inspect -f '{{.State.Health.Status}}' otr-db 2>/dev/null || echo "starting")
+            if [ "$status" = "healthy" ]; then
+              echo "db healthy"; exit 0
+            fi
+            echo "db: $status"; sleep 3
+          done
+          docker logs otr-db
+          exit 1
+
+      - name: Run database migrations
+        run: bunx drizzle-kit migrate
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Run E2E tests
+        run: bun run test:e2e
+        working-directory: apps/web
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - name: Upload Playwright traces
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-traces
+          path: apps/web/test-results/
+          retention-days: 30
+
+      - name: Tear down containers
+        if: always()
+        working-directory: ${{ env.OTR_COMPOSE_DIR }}
+        run: docker compose down -v
