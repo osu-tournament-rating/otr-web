@@ -223,6 +223,7 @@ services:
     volumes:
       - /:/host:ro,rslave
     pid: host
+    # Don't rename, will break disaster recovery
     profiles:
       - 'node-exporter'
 
