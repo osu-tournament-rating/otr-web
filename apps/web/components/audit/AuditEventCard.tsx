@@ -90,7 +90,6 @@ function buildDescription(event: AuditEvent): React.ReactNode {
     <Link
       href={`/audit/${topEntitySlug}/${topEntity.entityId}`}
       className="text-primary font-medium hover:underline"
-      onClick={(e) => e.stopPropagation()}
     >
       {entityName}
     </Link>
@@ -113,7 +112,6 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
           className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -154,7 +152,6 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
           className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -189,7 +186,6 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
           className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -340,78 +336,71 @@ export default function AuditEventCard({
           isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
         )}
       >
-        <CollapsibleTrigger asChild disabled={!hasExpandableContent}>
-          <button
-            className={cn(
-              'flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm',
-              !hasExpandableContent && 'cursor-default'
-            )}
-          >
-            {/* User avatar */}
-            {event.actionUser?.osuId ? (
-              <OsuAvatar
-                osuId={event.actionUser.osuId}
-                username={event.actionUser.username}
-                size={28}
-                className="shrink-0"
-              />
-            ) : (
-              <Avatar className="h-7 w-7 shrink-0">
-                <AvatarFallback className="text-[11px]">
-                  {event.isSystem ? 'S' : '?'}
-                </AvatarFallback>
-              </Avatar>
-            )}
-
-            {/* User name + description */}
-            <span
-              data-testid="event-card-description"
-              className="min-w-0 flex-1"
-            >
-              {event.isSystem ? (
-                <span className="text-muted-foreground mr-1 italic">
-                  System
-                </span>
-              ) : event.actionUser ? (
-                event.actionUser.playerId ? (
-                  <Link
-                    href={`/players/${event.actionUser.playerId}`}
-                    className="text-primary mr-1 font-medium hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
-                  </Link>
-                ) : (
-                  <span className="text-foreground mr-1 font-medium">
-                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
-                  </span>
-                )
-              ) : (
-                <span className="text-muted-foreground mr-1 italic">
-                  Unknown
-                </span>
-              )}
-              {buildDescription(event)}
-            </span>
-
-            {/* Expand indicator */}
-            {hasExpandableContent && (
-              <ChevronRight
-                className={cn(
-                  'text-muted-foreground h-3.5 w-3.5 shrink-0 transition-transform',
-                  isOpen && 'rotate-90'
-                )}
-              />
-            )}
-
-            {/* Timestamp */}
-            <RelativeTime
-              data-testid="event-card-timestamp"
-              dateString={event.created}
-              className="text-muted-foreground shrink-0 text-xs"
+        <div className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm">
+          {/* User avatar */}
+          {event.actionUser?.osuId ? (
+            <OsuAvatar
+              osuId={event.actionUser.osuId}
+              username={event.actionUser.username}
+              size={28}
+              className="shrink-0"
             />
-          </button>
-        </CollapsibleTrigger>
+          ) : (
+            <Avatar className="h-7 w-7 shrink-0">
+              <AvatarFallback className="text-[11px]">
+                {event.isSystem ? 'S' : '?'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+
+          {/* User name + description */}
+          <span data-testid="event-card-description" className="min-w-0 flex-1">
+            {event.isSystem ? (
+              <span className="text-muted-foreground mr-1 italic">System</span>
+            ) : event.actionUser ? (
+              event.actionUser.playerId ? (
+                <Link
+                  href={`/players/${event.actionUser.playerId}`}
+                  className="text-primary mr-1 font-medium hover:underline"
+                >
+                  {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                </Link>
+              ) : (
+                <span className="text-foreground mr-1 font-medium">
+                  {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                </span>
+              )
+            ) : (
+              <span className="text-muted-foreground mr-1 italic">Unknown</span>
+            )}
+            {buildDescription(event)}
+          </span>
+
+          {/* Expand toggle */}
+          {hasExpandableContent && (
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                aria-label={isOpen ? 'Collapse details' : 'Expand details'}
+                className="text-muted-foreground hover:bg-accent/70 -mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded transition-colors"
+              >
+                <ChevronRight
+                  className={cn(
+                    'h-3.5 w-3.5 transition-transform',
+                    isOpen && 'rotate-90'
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+          )}
+
+          {/* Timestamp */}
+          <RelativeTime
+            data-testid="event-card-timestamp"
+            dateString={event.created}
+            className="text-muted-foreground shrink-0 text-xs"
+          />
+        </div>
 
         {/* Expanded diffs */}
         <CollapsibleContent data-testid="event-card-diff">
