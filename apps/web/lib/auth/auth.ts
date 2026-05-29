@@ -518,11 +518,11 @@ export const auth = betterAuth({
         type: 'number',
         required: true,
         input: true,
-        references: {
-          model: 'players',
-          field: 'id',
-          onDelete: 'cascade',
-        },
+        // The player_id -> players.id foreign key is defined and managed at the
+        // Drizzle/DB schema level. Better Auth's `references` is only consumed by
+        // its own (unused) migration generator, and as of v1.6 it eagerly
+        // resolves the target against Better Auth's model registry — where
+        // `players` is not a model — throwing during get-session. Omit it.
       },
     },
     deleteUser: {
