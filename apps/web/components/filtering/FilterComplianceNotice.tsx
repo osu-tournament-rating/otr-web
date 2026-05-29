@@ -74,7 +74,7 @@ export default function FilterComplianceNotice({
             <div className="space-y-2 border-t border-blue-200 pt-3 dark:border-blue-800">
               <p className="text-sm font-medium">Forum post text</p>
               <div className="flex items-center gap-2 rounded-md bg-blue-100/50 p-3 dark:bg-blue-900/20">
-                <code className="flex-1 break-all text-xs">
+                <code className="flex-1 text-xs break-all">
                   {forumPostString}
                 </code>
                 <Button

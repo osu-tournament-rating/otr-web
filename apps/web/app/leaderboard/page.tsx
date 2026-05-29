@@ -175,7 +175,7 @@ export default async function Page(props: {
           <CardHeader className="pb-3">
             <div className="flex flex-row items-center justify-between">
               <div className="flex flex-row items-center gap-2">
-                <Trophy className="text-primary h-6 w-6" />
+                <Trophy className="h-6 w-6 text-primary" />
                 <CardTitle className="text-xl font-bold">
                   Global Leaderboard
                 </CardTitle>

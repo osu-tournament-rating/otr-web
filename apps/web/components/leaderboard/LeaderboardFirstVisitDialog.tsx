@@ -95,7 +95,7 @@ export default function LeaderboardFirstVisitDialog() {
             className="relative overflow-hidden"
           >
             <span
-              className="bg-primary-foreground/20 absolute inset-0 origin-left"
+              className="absolute inset-0 origin-left bg-primary-foreground/20"
               style={{
                 transform: canDismiss ? 'scaleX(1)' : undefined,
                 transition: canDismiss

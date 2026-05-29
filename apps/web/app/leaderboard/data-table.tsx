@@ -59,7 +59,7 @@ export function LeaderboardDataTable<TData, TValue>({
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-foreground font-semibold"
+                    className="font-semibold text-foreground"
                   >
                     {header.isPlaceholder
                       ? null
@@ -92,7 +92,7 @@ export function LeaderboardDataTable<TData, TValue>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="bg-muted/10 h-24 text-center"
+                className="h-24 bg-muted/10 text-center"
               >
                 No results.
               </TableCell>

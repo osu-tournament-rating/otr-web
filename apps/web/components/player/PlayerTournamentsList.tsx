@@ -32,7 +32,7 @@ export default function PlayerTournamentsList({
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle
             data-testid="tournament-history-title"
             className="text-xl font-bold"
@@ -72,7 +72,7 @@ function NoResultsCard() {
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle
             data-testid="tournament-history-title"
             className="text-xl font-bold"

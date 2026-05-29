@@ -33,7 +33,7 @@ export default function TierCard({
   return (
     <Card
       className={cn(
-        'bg-popover relative flex flex-col items-center gap-2 rounded-2xl border-none p-3',
+        'relative flex flex-col items-center gap-2 rounded-2xl border-none bg-popover p-3',
         className
       )}
     >

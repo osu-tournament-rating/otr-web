@@ -56,10 +56,31 @@ function CustomXAxisTick({ x, y, payload }: CustomXAxisTickProps) {
     <g transform={`translate(${x},${y})`}>
       <foreignObject x={-12} y={0} width={24} height={24}>
         <div title={rulesetInfo?.text}>
-          <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
+          <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
         </div>
       </foreignObject>
     </g>
+  );
+}
+
+function CustomTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    payload: ChartDataItem;
+    value?: number;
+  }>;
+}) {
+  if (!active || !payload?.length) return null;
+
+  const item = payload[0].payload as ChartDataItem;
+  return (
+    <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <p className="font-bold">Tournaments: {formatChartNumber(item.count)}</p>
+      <p className="text-sm text-muted-foreground">Ruleset: {item.name}</p>
+    </div>
   );
 }
 
@@ -86,34 +107,11 @@ export default function TournamentsByRulesetChart({
     return { chartData: processedData, total: totalCount };
   }, [data]);
 
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: Array<{
-      payload: ChartDataItem;
-      value?: number;
-    }>;
-  }) => {
-    if (!active || !payload?.length) return null;
-
-    const item = payload[0].payload as ChartDataItem;
-    return (
-      <div className="bg-background rounded-lg border p-2 shadow-sm">
-        <p className="font-bold">
-          Tournaments: {formatChartNumber(item.count)}
-        </p>
-        <p className="text-muted-foreground text-sm">Ruleset: {item.name}</p>
-      </div>
-    );
-  };
-
   return (
     <Card data-testid="chart-tournaments-by-ruleset" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Gamepad2 className="text-primary h-6 w-6" />
+          <Gamepad2 className="h-6 w-6 text-primary" />
           Tournaments by Ruleset
         </CardTitle>
         <CardDescription>Verified tournaments by ruleset</CardDescription>

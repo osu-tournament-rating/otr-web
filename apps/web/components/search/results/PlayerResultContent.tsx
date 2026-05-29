@@ -48,7 +48,7 @@ export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
 
         {!!data.globalRank && (
           <div className="flex items-center gap-1">
-            <Globe className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+            <Globe className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
             <span className="text-xs">#{data.globalRank.toLocaleString()}</span>
           </div>
         )}
@@ -61,7 +61,7 @@ export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
               ruleset={data.ruleset}
               width={16}
               height={16}
-              className="fill-primary flex-shrink-0"
+              className="flex-shrink-0 fill-primary"
             />
           </SimpleTooltip>
         )}

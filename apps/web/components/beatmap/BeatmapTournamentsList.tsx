@@ -40,7 +40,7 @@ export default function BeatmapTournamentsList({
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
         </div>
       </CardHeader>
@@ -75,7 +75,7 @@ function NoResultsCard() {
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
         </div>
       </CardHeader>

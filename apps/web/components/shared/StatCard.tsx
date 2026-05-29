@@ -21,14 +21,14 @@ export default function StatCard({
     <Card
       data-testid={`stat-card-${label.toLowerCase().replace(/\s+/g, '-')}`}
       className={cn(
-        'bg-popover flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none !p-4',
+        'flex w-full flex-row items-center justify-start gap-3 rounded-lg border-none bg-popover !p-4',
         className
       )}
     >
-      {icon && <div className="text-primary flex-shrink-0">{icon}</div>}
+      {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
 
       <div className="flex min-w-0 flex-col">
-        <div className="text-muted-foreground text-sm">{label}</div>
+        <div className="text-sm text-muted-foreground">{label}</div>
         <div className={cn('text-lg font-semibold', valueClassName)}>
           {value}
         </div>

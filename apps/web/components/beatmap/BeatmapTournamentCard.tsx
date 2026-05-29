@@ -108,14 +108,14 @@ export default function BeatmapTournamentCard({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <Link href={`/tournaments/${tournament.tournament.id}`}>
-          <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
+          <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
             {tournament.tournament.name}
           </h2>
         </Link>
 
         <div className="flex w-full items-center gap-2 sm:w-auto">
           {tournament.tournament.abbreviation && (
-            <span className="text-muted-foreground font-mono text-sm">
+            <span className="font-mono text-sm text-muted-foreground">
               {tournament.tournament.abbreviation}
             </span>
           )}
@@ -123,7 +123,7 @@ export default function BeatmapTournamentCard({
       </div>
 
       <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <div className="text-muted-foreground flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-2 text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <VerificationBadge
             verificationStatus={tournament.tournament.verificationStatus}
             entityType="tournament"
@@ -185,7 +185,7 @@ export default function BeatmapTournamentCard({
           className={cn(
             '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
             'hover:bg-accent hover:text-accent-foreground',
-            'border-input border',
+            'border border-input',
             isDetailsVisible && 'bg-accent text-accent-foreground'
           )}
           onClick={(e) => {
@@ -212,7 +212,7 @@ export default function BeatmapTournamentCard({
         <div className="mt-4 border-t pt-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide">
+              <span className="text-xs tracking-wide text-muted-foreground uppercase">
                 Average Rating
               </span>
               <span className="flex items-center gap-1.5 text-lg font-semibold">
@@ -231,7 +231,7 @@ export default function BeatmapTournamentCard({
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide">
+              <span className="text-xs tracking-wide text-muted-foreground uppercase">
                 Average Score
               </span>
               <span className="text-lg font-semibold">
@@ -241,7 +241,7 @@ export default function BeatmapTournamentCard({
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide">
+              <span className="text-xs tracking-wide text-muted-foreground uppercase">
                 Most Common Mod
               </span>
               <div className="flex h-5 w-14 items-center">
@@ -255,42 +255,42 @@ export default function BeatmapTournamentCard({
           </div>
 
           <div className="mt-4 border-t pt-4">
-            <h4 className="text-muted-foreground mb-3 text-xs uppercase tracking-wide">
+            <h4 className="mb-3 text-xs tracking-wide text-muted-foreground uppercase">
               Matches
             </h4>
 
             {isLoadingMatches && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             )}
 
             {matchesError && (
-              <p className="text-destructive text-sm">{matchesError}</p>
+              <p className="text-sm text-destructive">{matchesError}</p>
             )}
 
             {matchesLoaded && matches.length === 0 && (
-              <p className="text-muted-foreground text-sm">No matches found</p>
+              <p className="text-sm text-muted-foreground">No matches found</p>
             )}
 
             {matchesLoaded && matches.length > 0 && (
-              <div className="bg-popover/50 rounded-lg">
+              <div className="rounded-lg bg-popover/50">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border/50 border-b hover:bg-transparent">
-                      <TableHead className="text-foreground font-semibold">
+                    <TableRow className="border-b border-border/50 hover:bg-transparent">
+                      <TableHead className="font-semibold text-foreground">
                         Match
                       </TableHead>
-                      <TableHead className="text-foreground font-semibold">
+                      <TableHead className="font-semibold text-foreground">
                         Mods
                       </TableHead>
-                      <TableHead className="text-foreground font-semibold">
+                      <TableHead className="font-semibold text-foreground">
                         Avg Rating
                       </TableHead>
-                      <TableHead className="text-foreground font-semibold">
+                      <TableHead className="font-semibold text-foreground">
                         Avg Score
                       </TableHead>
-                      <TableHead className="text-foreground font-semibold">
+                      <TableHead className="font-semibold text-foreground">
                         Date
                       </TableHead>
                     </TableRow>
@@ -305,7 +305,7 @@ export default function BeatmapTournamentCard({
                         return (
                           <TableRow
                             key={game.gameId}
-                            className="border-border/30 hover:bg-popover/80 border-b transition-colors"
+                            className="border-b border-border/30 transition-colors hover:bg-popover/80"
                           >
                             <TableCell className="py-2">
                               <Link
@@ -345,7 +345,7 @@ export default function BeatmapTournamentCard({
                                 ? game.avgScore.toLocaleString()
                                 : '—'}
                             </TableCell>
-                            <TableCell className="text-muted-foreground py-2">
+                            <TableCell className="py-2 text-muted-foreground">
                               {match.startTime
                                 ? format(
                                     new Date(match.startTime),

@@ -121,7 +121,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="h-(--header-height-px) border-b-muted bg-card sticky top-0 z-50 flex w-full flex-row items-center justify-between border-b px-4 shadow-sm">
+      <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
         <div className="flex items-center gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center">
@@ -167,7 +167,7 @@ export default function Header() {
             <SheetContent
               overlay={false}
               closeButton={false}
-              className="border-t-muted border-l-muted bg-card inset-y-16 w-full border-t p-6 sm:max-w-xs md:hidden"
+              className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
             >
               {/* Required for screen reader */}
               <DialogTitle hidden />
@@ -204,8 +204,8 @@ export default function Header() {
       {/* Sign-in banner */}
       <ClientOnly>
         {!currentUser && !isSessionPending && (
-          <div className="bg-accent/50 w-full py-1 text-center">
-            <p className="text-muted-foreground font-mono text-xs">
+          <div className="w-full bg-accent/50 py-1 text-center">
+            <p className="font-mono text-xs text-muted-foreground">
               Some features are not available while signed out.
             </p>
           </div>
@@ -255,7 +255,7 @@ function SubnavTrigger({
     <NavigationMenuTrigger
       data-slot="navigation-menu-trigger"
       className={cn(
-        'hover:bg-accent data-[state=open]:bg-accent group inline-flex h-9 w-full items-center justify-between px-2 transition-[color,box-shadow] hover:cursor-pointer md:hover:bg-transparent md:data-[state=open]:bg-transparent',
+        'group inline-flex h-9 w-full items-center justify-between px-2 transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
         active && 'bg-accent md:bg-transparent'
       )}
       onPointerDown={
@@ -315,8 +315,8 @@ function NavigationItem({
         {hasDropdown ? (
           <span
             className={cn(
-              'hover:text-primary focus:text-primary flex flex-row gap-2 rounded-md text-sm transition-colors',
-              isActive && 'text-primary font-bold'
+              'flex flex-row gap-2 rounded-md text-sm transition-colors hover:text-primary focus:text-primary',
+              isActive && 'font-bold text-primary'
             )}
           >
             {title}
@@ -329,7 +329,7 @@ function NavigationItem({
               'bg-transparent hover:bg-transparent',
               !hasDropdown &&
                 'hover:bg-accent focus:bg-accent md:hover:bg-transparent md:focus:bg-transparent',
-              isActive && 'bg-accent text-primary font-bold md:bg-transparent'
+              isActive && 'bg-accent font-bold text-primary md:bg-transparent'
             )}
           >
             {title}
@@ -340,7 +340,7 @@ function NavigationItem({
       {hasDropdown && (
         <NavigationMenuContent>
           {/* Seamlessly extend the nav border */}
-          <div className="h-10/11 border-muted pointer-events-none absolute bottom-0 left-0 hidden w-full rounded-b-xl border border-t-0 bg-transparent md:block" />
+          <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
           {dropdown.map(
             ({ title, href, icon: Icon, roles, requiresSession }) => {
               const isHidden =
@@ -356,15 +356,15 @@ function NavigationItem({
                   href={href}
                   hidden={isHidden}
                   className={cn(
-                    'hover:bg-accent whitespace-nowrap md:hover:bg-transparent',
+                    'whitespace-nowrap hover:bg-accent md:hover:bg-transparent',
                     pathname === href &&
-                      'bg-accent text-primary hover:text-primary focus:text-primary font-semibold md:bg-transparent'
+                      'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <Icon
                       className={cn(
-                        'hover:text-primary focus:text-primary size-5',
+                        'size-5 hover:text-primary focus:text-primary',
                         pathname === href && 'text-primary'
                       )}
                     />

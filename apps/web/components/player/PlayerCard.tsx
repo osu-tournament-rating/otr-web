@@ -15,7 +15,7 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
   return (
     <Card
       data-testid="player-card"
-      className="bg-popover flex flex-row flex-wrap justify-between border-none p-4"
+      className="flex flex-row flex-wrap justify-between border-none bg-popover p-4"
     >
       <div className="flex min-w-[250px] flex-1 items-center gap-3 rounded-lg">
         <OsuAvatar
@@ -23,7 +23,7 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
           osuId={player.osuId}
           username={player.username}
           size={64}
-          className="bg-accent hover:border-primary/80 transition-all"
+          className="bg-accent transition-all hover:border-primary/80"
         />
         <div className="flex items-center gap-2">
           <span data-testid="player-username" className="text-3xl font-medium">
@@ -35,7 +35,7 @@ export default function PlayerCard({ player, ruleset }: PlayerCardProps) {
             aria-label="View profile on osu! website"
             className="flex translate-y-px items-center"
           >
-            <ExternalLink className="text-muted-foreground/50 h-4 w-4" />
+            <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
           </Link>
         </div>
       </div>

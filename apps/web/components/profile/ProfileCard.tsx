@@ -90,7 +90,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center">
-        <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
+        <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
       </div>
     );
   }
@@ -152,7 +152,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <SheetClose asChild>
               <Link
                 href={`/players/${player.id}`}
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
               >
                 <User className="size-4" />
                 <span>My Profile</span>
@@ -161,7 +161,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           ) : (
             <Link
               href={`/players/${player.id}`}
-              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
             >
               <User className="size-4" />
               <span>My Profile</span>
@@ -172,7 +172,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <SheetClose asChild>
               <Link
                 href="/settings"
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
               >
                 <Settings className="size-4" />
                 <span>Settings</span>
@@ -181,7 +181,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           ) : (
             <Link
               href="/settings"
-              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
             >
               <Settings className="size-4" />
               <span>Settings</span>
@@ -190,13 +190,13 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 
           {isAdmin && (
             <>
-              <hr className="border-border my-1" />
+              <hr className="my-1 border-border" />
               {isMobileNav ? (
                 <>
                   <SheetClose asChild>
                     <Link
                       href="/admin"
-                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                     >
                       <ShieldAlert className="size-4" />
                       <span>Admin</span>
@@ -205,7 +205,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
                   <SheetClose asChild>
                     <Link
                       href="/admin/reports"
-                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                     >
                       <AlertTriangle className="size-4" />
                       <span className="flex items-center gap-2">
@@ -223,14 +223,14 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
                 <>
                   <Link
                     href="/admin"
-                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                   >
                     <ShieldAlert className="size-4" />
                     <span>Admin</span>
                   </Link>
                   <Link
                     href="/admin/reports"
-                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                   >
                     <AlertTriangle className="size-4" />
                     <span className="flex items-center gap-2">
@@ -247,9 +247,9 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             </>
           )}
 
-          <hr className="border-border my-1" />
+          <hr className="my-1 border-border" />
           <button
-            className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -274,7 +274,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
+      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
             <div className="absolute inset-0 backdrop-blur-md" />
@@ -344,7 +344,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
+          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
@@ -362,11 +362,11 @@ function UserAvatar({ player, showNotificationDot }: UserAvatarProps) {
         osuId={player.osuId}
         username={player.username}
         size={36}
-        className="hover:border-primary/80 transition-all"
+        className="transition-all hover:border-primary/80"
         fallback={<User className="size-4" />}
       />
       {showNotificationDot && (
-        <span className="absolute right-0 top-0 size-2.5 rounded-full bg-blue-500" />
+        <span className="absolute top-0 right-0 size-2.5 rounded-full bg-blue-500" />
       )}
     </div>
   );

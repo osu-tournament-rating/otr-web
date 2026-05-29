@@ -127,7 +127,7 @@ export default function BeatmapModDistributionChart({
           <CardTitle>Mod Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             No mod data available for this beatmap.
           </p>
         </CardContent>

@@ -165,7 +165,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {/* Abbreviation and admin actions */}
           <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="text-muted-foreground font-mono text-sm">
+            <span className="font-mono text-sm text-muted-foreground">
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">
@@ -201,7 +201,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
         <div className="flex flex-row items-center gap-2">
           {/* Tournament name */}
-          <h1 className="text-xl font-bold leading-tight sm:text-2xl md:text-3xl">
+          <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
             {tournament.name}
           </h1>
           <SimpleTooltip content="View tournament on osu! website">
@@ -224,7 +224,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
         </div>
 
         {/* Tournament metadata */}
-        <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
               <LazerBadge isLazer={tournament.isLazer} />
@@ -335,7 +335,7 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   return (
     <Card className="p-6 font-sans">
       <div className="flex items-center gap-2">
-        <BarChart3 className="text-primary h-6 w-6" />
+        <BarChart3 className="h-6 w-6 text-primary" />
         <h3 className="font-sans text-lg font-semibold">
           Tournament Statistics
         </h3>
@@ -437,9 +437,9 @@ export default async function Page({ params, searchParams }: PageProps) {
         <TabsContent value="matches" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Swords className="text-primary h-6 w-6" />
+              <Swords className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">Matches</h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({tableData.length})
               </span>
             </div>
@@ -455,11 +455,11 @@ export default async function Page({ params, searchParams }: PageProps) {
         <TabsContent value="beatmaps" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Music className="text-primary h-6 w-6" />
+              <Music className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">
                 Pooled Beatmaps
               </h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({visibleBeatmapsCount}
                 {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>

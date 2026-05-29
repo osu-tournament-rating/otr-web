@@ -18,7 +18,7 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-10">
       <header className="space-y-3">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="text-primary size-8" />
+          <ShieldCheck className="size-8 text-primary" />
           <div>
             <h1 className="text-3xl font-semibold">Admin</h1>
           </div>

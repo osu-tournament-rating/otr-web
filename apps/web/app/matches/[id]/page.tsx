@@ -83,9 +83,9 @@ export default async function Page({ params, searchParams }: PageProps) {
         <TabsContent value="games" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Gamepad2 className="text-primary h-6 w-6" />
+              <Gamepad2 className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">Games</h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({gameCount})
               </span>
             </div>
@@ -93,7 +93,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="text-muted-foreground size-6 animate-spin" />
+                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
                   </div>
                 }
               >
@@ -103,7 +103,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 />
               </Suspense>
             ) : (
-              <div className="text-muted-foreground flex h-32 items-center justify-center">
+              <div className="flex h-32 items-center justify-center text-muted-foreground">
                 No games recorded for this match
               </div>
             )}
@@ -116,12 +116,12 @@ export default async function Page({ params, searchParams }: PageProps) {
           ) : (
             <Card className="p-6 font-sans">
               <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <BarChart3 className="text-muted-foreground/50 h-12 w-12" />
+                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <p className="text-muted-foreground text-lg font-semibold">
+                  <p className="text-lg font-semibold text-muted-foreground">
                     Statistics Not Available
                   </p>
-                  <p className="text-muted-foreground max-w-md text-sm">
+                  <p className="max-w-md text-sm text-muted-foreground">
                     Match statistics are only available for verified matches.
                     This match is currently
                     {match.verificationStatus ===

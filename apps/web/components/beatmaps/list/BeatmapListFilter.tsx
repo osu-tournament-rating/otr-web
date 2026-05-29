@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Resolver } from 'react-hook-form';
+import { useForm, Resolver, Control } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
 import { Filter, X, Search, Loader2 } from 'lucide-react';
 import { Ruleset } from '@otr/core/osu';
@@ -49,6 +49,79 @@ const defaultFilterRanges = {
   gameCount: { min: 0, max: 500, step: 1 },
   tournamentCount: { min: 1, max: 100, step: 1 },
 };
+
+function RangeSliderField({
+  label,
+  minField,
+  maxField,
+  range,
+  control,
+}: {
+  label: string;
+  minField: keyof FilterFormData;
+  maxField: keyof FilterFormData;
+  range: { min: number; max: number; step: number };
+  control: Control<FilterFormData>;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={minField}
+      render={({ field: minFieldControl }) => (
+        <FormField
+          control={control}
+          name={maxField}
+          render={({ field: maxFieldControl }) => (
+            <FormItem>
+              <FormLabel className="text-xs">{label}</FormLabel>
+              <Slider
+                min={range.min}
+                max={range.max}
+                step={range.step}
+                value={[
+                  (minFieldControl.value as number) ?? range.min,
+                  (maxFieldControl.value as number) ?? range.max,
+                ]}
+                onValueChange={(vals) => {
+                  const [newMin, newMax] = vals;
+                  minFieldControl.onChange(newMin);
+                  maxFieldControl.onChange(newMax);
+                }}
+                minStepsBetweenThumbs={1}
+              />
+              <div className="flex justify-between gap-2">
+                <Input
+                  type="number"
+                  value={(minFieldControl.value as number) ?? range.min}
+                  min={range.min}
+                  max={(maxFieldControl.value as number) ?? range.max}
+                  step={range.step}
+                  className="w-16 p-1 text-center text-xs"
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    minFieldControl.onChange(val);
+                  }}
+                />
+                <Input
+                  type="number"
+                  value={(maxFieldControl.value as number) ?? range.max}
+                  min={(minFieldControl.value as number) ?? range.min}
+                  max={range.max}
+                  step={range.step}
+                  className="w-16 p-1 text-center text-xs"
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    maxFieldControl.onChange(val);
+                  }}
+                />
+              </div>
+            </FormItem>
+          )}
+        />
+      )}
+    />
+  );
+}
 
 export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   const [searchQuery, setSearchQuery] = useState(filter.q ?? '');
@@ -198,75 +271,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
         filter.maxTournamentCount !== r.tournamentCount.max),
   ].filter(Boolean).length;
 
-  const RangeSliderField = ({
-    label,
-    minField,
-    maxField,
-    range,
-  }: {
-    label: string;
-    minField: keyof FilterFormData;
-    maxField: keyof FilterFormData;
-    range: { min: number; max: number; step: number };
-  }) => (
-    <FormField
-      control={form.control}
-      name={minField}
-      render={({ field: minFieldControl }) => (
-        <FormField
-          control={form.control}
-          name={maxField}
-          render={({ field: maxFieldControl }) => (
-            <FormItem>
-              <FormLabel className="text-xs">{label}</FormLabel>
-              <Slider
-                min={range.min}
-                max={range.max}
-                step={range.step}
-                value={[
-                  (minFieldControl.value as number) ?? range.min,
-                  (maxFieldControl.value as number) ?? range.max,
-                ]}
-                onValueChange={(vals) => {
-                  const [newMin, newMax] = vals;
-                  minFieldControl.onChange(newMin);
-                  maxFieldControl.onChange(newMax);
-                }}
-                minStepsBetweenThumbs={1}
-              />
-              <div className="flex justify-between gap-2">
-                <Input
-                  type="number"
-                  value={(minFieldControl.value as number) ?? range.min}
-                  min={range.min}
-                  max={(maxFieldControl.value as number) ?? range.max}
-                  step={range.step}
-                  className="w-16 p-1 text-center text-xs"
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    minFieldControl.onChange(val);
-                  }}
-                />
-                <Input
-                  type="number"
-                  value={(maxFieldControl.value as number) ?? range.max}
-                  min={(minFieldControl.value as number) ?? range.min}
-                  max={range.max}
-                  step={range.step}
-                  className="w-16 p-1 text-center text-xs"
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    maxFieldControl.onChange(val);
-                  }}
-                />
-              </div>
-            </FormItem>
-          )}
-        />
-      )}
-    />
-  );
-
   return (
     <div className="flex items-center gap-2">
       <div className="relative">
@@ -353,6 +357,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minSr"
                 maxField="maxSr"
                 range={defaultFilterRanges.sr}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -360,6 +365,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minBpm"
                 maxField="maxBpm"
                 range={defaultFilterRanges.bpm}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -367,6 +373,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minCs"
                 maxField="maxCs"
                 range={defaultFilterRanges.cs}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -374,6 +381,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minAr"
                 maxField="maxAr"
                 range={defaultFilterRanges.ar}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -381,6 +389,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minOd"
                 maxField="maxOd"
                 range={defaultFilterRanges.od}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -388,6 +397,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minHp"
                 maxField="maxHp"
                 range={defaultFilterRanges.hp}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -395,6 +405,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minLength"
                 maxField="maxLength"
                 range={defaultFilterRanges.length}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -402,6 +413,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minGameCount"
                 maxField="maxGameCount"
                 range={defaultFilterRanges.gameCount}
+                control={form.control}
               />
 
               <RangeSliderField
@@ -409,6 +421,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                 minField="minTournamentCount"
                 maxField="maxTournamentCount"
                 range={defaultFilterRanges.tournamentCount}
+                control={form.control}
               />
 
               <div className="flex justify-between gap-2">

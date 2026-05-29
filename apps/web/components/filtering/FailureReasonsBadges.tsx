@@ -30,7 +30,7 @@ export default function FailureReasonsBadges({
   const masked = maskFailureReason(failureReason);
 
   if (masked === FilteringFailReason.None) {
-    return <div className="text-muted-foreground text-center">-</div>;
+    return <div className="text-center text-muted-foreground">-</div>;
   }
 
   const reasons = FilteringFailReasonEnumHelper.getMetadata(masked);

@@ -13,12 +13,12 @@ interface MatchResultContentProps {
 export function MatchResultContent({ data, query }: MatchResultContentProps) {
   return (
     <div className="flex w-full flex-row items-center gap-3 overflow-hidden">
-      <Swords className="text-primary h-5 w-5 flex-shrink-0" />
+      <Swords className="h-5 w-5 flex-shrink-0 text-primary" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate font-medium">
           {highlightMatch(data.name ?? 'Unknown match', query)}
         </span>
-        <span className="text-muted-foreground truncate text-xs">
+        <span className="truncate text-xs text-muted-foreground">
           in {data.tournamentName}
         </span>
       </div>

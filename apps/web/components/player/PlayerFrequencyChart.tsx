@@ -78,6 +78,70 @@ function isChartDataEntry(data: unknown): data is ChartDataEntry {
   );
 }
 
+// Custom tooltip component with error handling
+function CustomTooltip({
+  active,
+  payload,
+  imageErrors,
+  transparentAvatars,
+  onImageLoad,
+  onImageError,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: unknown }>;
+  imageErrors: Set<number>;
+  transparentAvatars: Set<number>;
+  onImageLoad: (
+    event: React.SyntheticEvent<HTMLImageElement>,
+    osuId: number
+  ) => void;
+  onImageError: (osuId: number) => void;
+}) {
+  if (!active || !payload?.length) return null;
+
+  const data = payload[0].payload;
+
+  if (!isChartDataEntry(data)) {
+    return null;
+  }
+
+  const hasImageError = imageErrors.has(data.osuId);
+  const isTransparent = transparentAvatars.has(data.osuId);
+  const shouldUseFallback = hasImageError || isTransparent;
+  const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
+
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg">
+      <div className="flex items-center gap-3">
+        {shouldUseFallback ? (
+          <div
+            className="rounded-full bg-accent"
+            style={{ width: avatarSize, height: avatarSize }}
+            aria-label={`${data.username} avatar`}
+          />
+        ) : (
+          <Image
+            src={data.avatarUrl}
+            alt={`${data.username} avatar`}
+            width={avatarSize}
+            height={avatarSize}
+            className="rounded-full"
+            style={{ imageRendering: 'crisp-edges' }}
+            onLoad={(e) => onImageLoad(e, data.osuId)}
+            onError={() => onImageError(data.osuId)}
+          />
+        )}
+        <div>
+          <p className="font-semibold">{data.username}</p>
+          <p className="text-sm text-muted-foreground">
+            Matches played: {data.frequency}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PlayerFrequencyChart({
   className,
   data,
@@ -274,62 +338,6 @@ export default function PlayerFrequencyChart({
     ]
   );
 
-  // Custom tooltip component with error handling
-  const CustomTooltip = useCallback(
-    ({
-      active,
-      payload,
-    }: {
-      active?: boolean;
-      payload?: Array<{ payload: unknown }>;
-    }) => {
-      if (!active || !payload?.length) return null;
-
-      const data = payload[0].payload;
-
-      if (!isChartDataEntry(data)) {
-        return null;
-      }
-
-      const hasImageError = imageErrors.has(data.osuId);
-      const isTransparent = transparentAvatars.has(data.osuId);
-      const shouldUseFallback = hasImageError || isTransparent;
-      const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
-
-      return (
-        <div className="rounded-lg border bg-background p-3 shadow-lg">
-          <div className="flex items-center gap-3">
-            {shouldUseFallback ? (
-              <div
-                className="rounded-full bg-accent"
-                style={{ width: avatarSize, height: avatarSize }}
-                aria-label={`${data.username} avatar`}
-              />
-            ) : (
-              <Image
-                src={data.avatarUrl}
-                alt={`${data.username} avatar`}
-                width={avatarSize}
-                height={avatarSize}
-                className="rounded-full"
-                style={{ imageRendering: 'crisp-edges' }}
-                onLoad={(e) => handleImageLoad(e, data.osuId)}
-                onError={() => handleImageError(data.osuId)}
-              />
-            )}
-            <div>
-              <p className="font-semibold">{data.username}</p>
-              <p className="text-sm text-muted-foreground">
-                Matches played: {data.frequency}
-              </p>
-            </div>
-          </div>
-        </div>
-      );
-    },
-    [imageErrors, transparentAvatars, handleImageError, handleImageLoad]
-  );
-
   if (chartData.desktop.length === 0) {
     return (
       <Card className={className}>
@@ -372,7 +380,16 @@ export default function PlayerFrequencyChart({
                 domain={[0, 'dataMax']}
                 tickFormatter={(value: number) => value.toString()}
               />
-              <ChartTooltip content={<CustomTooltip />} />
+              <ChartTooltip
+                content={
+                  <CustomTooltip
+                    imageErrors={imageErrors}
+                    transparentAvatars={transparentAvatars}
+                    onImageLoad={handleImageLoad}
+                    onImageError={handleImageError}
+                  />
+                }
+              />
               <Bar
                 dataKey="frequency"
                 fill={chartColor || defaultChartColor}
@@ -404,7 +421,16 @@ export default function PlayerFrequencyChart({
                 domain={[0, 'dataMax']}
                 tickFormatter={(value: number) => value.toString()}
               />
-              <ChartTooltip content={<CustomTooltip />} />
+              <ChartTooltip
+                content={
+                  <CustomTooltip
+                    imageErrors={imageErrors}
+                    transparentAvatars={transparentAvatars}
+                    onImageLoad={handleImageLoad}
+                    onImageError={handleImageError}
+                  />
+                }
+              />
               <Bar
                 dataKey="frequency"
                 fill={chartColor || defaultChartColor}

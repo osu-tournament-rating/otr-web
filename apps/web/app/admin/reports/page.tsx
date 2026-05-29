@@ -18,10 +18,10 @@ export default async function AdminReportsPage() {
     <div className="flex flex-col gap-10">
       <header className="space-y-3">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="text-primary size-8" />
+          <AlertTriangle className="size-8 text-primary" />
           <div>
             <h1 className="text-3xl font-semibold">Data Reports</h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Review and resolve user-submitted data issue reports
             </p>
           </div>

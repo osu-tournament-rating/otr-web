@@ -24,7 +24,6 @@ const eslintConfig = [
     // off here to scope this upgrade to dependency bumps. The classic
     // rules-of-hooks / exhaustive-deps checks remain active.
     rules: {
-      'react-hooks/static-components': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/set-state-in-render': 'off',
       'react-hooks/refs': 'off',

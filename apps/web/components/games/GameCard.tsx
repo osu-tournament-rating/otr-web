@@ -129,7 +129,7 @@ export default function GameCard({
     <div
       id={`game-${game.id}`}
       className={cn(
-        'bg-secondary flex flex-col space-y-2 rounded-xl p-3 transition-all duration-300',
+        'flex flex-col space-y-2 rounded-xl bg-secondary p-3 transition-all duration-300',
         highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
       )}
     >

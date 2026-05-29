@@ -13,8 +13,8 @@ export default function SpecPage() {
     <div className="bg-background text-foreground">
       <div className="space-y-4">
         <Alert className="border-warning/50 bg-warning/10 text-warning-foreground dark:border-warning/40 dark:bg-warning/10 dark:text-yellow-100">
-          <AlertTriangle className="text-warning-foreground h-4 w-4 dark:text-yellow-300" />
-          <AlertTitle className="text-warning-foreground font-semibold dark:text-yellow-300">
+          <AlertTriangle className="h-4 w-4 text-warning-foreground dark:text-yellow-300" />
+          <AlertTitle className="font-semibold text-warning-foreground dark:text-yellow-300">
             API Stability Notice
           </AlertTitle>
           <AlertDescription className="text-warning-foreground/90 dark:text-yellow-100/90">

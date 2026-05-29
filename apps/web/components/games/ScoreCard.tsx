@@ -148,12 +148,12 @@ export default function ScoreCard({
       id={`score-${score.id}`}
       data-team={Team[score.team]}
       className={cn(
-        'team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800',
+        'team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 **:z-10 dark:border-neutral-700 dark:bg-neutral-800',
         highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
       )}
     >
       {/* Background team color overlay */}
-      <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />
+      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
 
       {/* Team color on the side of the card */}
       <ScoreTeamColorBar />
@@ -208,7 +208,7 @@ export default function ScoreCard({
         {/* Row 2: Compact stats + Action icons */}
         <div className="flex items-center justify-between">
           <span
-            className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400"
+            className="text-xs text-neutral-500 tabular-nums dark:text-neutral-400"
             title={hitJudgments.map((j) => `${j.label}: ${j.value}`).join(', ')}
           >
             {hitJudgments.map((j) => j.value.slice(0, -1)).join('/')}
@@ -279,7 +279,7 @@ export default function ScoreCard({
                 <span className="label text-neutral-600 dark:text-neutral-400">
                   {item.label}
                 </span>
-                <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+                <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                   {item.value}
                 </span>
               </div>
@@ -291,7 +291,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Combo
               </span>
-              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+              <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                 {score.maxCombo}x
               </span>
             </div>
@@ -299,7 +299,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Accuracy
               </span>
-              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+              <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                 {formatAccuracy(score.accuracy)}
               </span>
             </div>

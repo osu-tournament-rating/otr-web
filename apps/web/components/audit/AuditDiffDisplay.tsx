@@ -92,7 +92,7 @@ export default function AuditDiffDisplay({
     >
       <span
         data-testid="diff-field-label"
-        className="text-muted-foreground w-28 shrink-0 font-medium"
+        className="w-28 shrink-0 font-medium text-muted-foreground"
       >
         {label}
       </span>
@@ -103,7 +103,7 @@ export default function AuditDiffDisplay({
         >
           {oldVal}
         </span>
-        <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
+        <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span
           data-testid="diff-new-value"
           className="rounded bg-green-500/10 px-1.5 py-0.5 text-green-600 dark:text-green-400"

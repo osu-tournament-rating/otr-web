@@ -28,7 +28,7 @@ export function ModeToggle() {
   if (!mounted) {
     return (
       <Button className="cursor-pointer" variant="ghost" size="icon" disabled>
-        <Sun className="rotate-0 scale-100 transition-all" />
+        <Sun className="scale-100 rotate-0 transition-all" />
       </Button>
     );
   }
@@ -41,9 +41,9 @@ export function ModeToggle() {
       onClick={toggleTheme}
     >
       {resolvedTheme === 'dark' ? (
-        <Sun className="rotate-0 scale-100 transition-all" />
+        <Sun className="scale-100 rotate-0 transition-all" />
       ) : (
-        <Moon className="rotate-0 scale-100 transition-all" />
+        <Moon className="scale-100 rotate-0 transition-all" />
       )}
     </Button>
   );

@@ -115,15 +115,15 @@ export default function SearchCommandDialog() {
               onValueChange={(value) => setQuery(value.trimStart())}
             />
             {isLoading && (
-              <LoaderCircle className="text-muted-foreground absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+              <LoaderCircle className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
           </div>
 
           <CommandList className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]">
             {!debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-8">
-                <Search className="text-muted-foreground/30 h-10 w-10" />
-                <p className="text-muted-foreground mt-3 text-sm">
+                <Search className="h-10 w-10 text-muted-foreground/30" />
+                <p className="mt-3 text-sm text-muted-foreground">
                   Start typing to search
                 </p>
               </div>
@@ -131,8 +131,8 @@ export default function SearchCommandDialog() {
 
             {debouncedQuery && debouncedQuery.trim().length < 2 && (
               <div className="flex flex-col items-center justify-center py-8">
-                <Search className="text-muted-foreground/30 h-10 w-10" />
-                <p className="text-muted-foreground mt-3 text-sm">
+                <Search className="h-10 w-10 text-muted-foreground/30" />
+                <p className="mt-3 text-sm text-muted-foreground">
                   Type at least 2 characters to search
                 </p>
               </div>
@@ -145,7 +145,7 @@ export default function SearchCommandDialog() {
                 <CommandEmpty>
                   <div className="text-center">
                     <p className="text-muted-foreground">No results found</p>
-                    <p className="text-muted-foreground/70 text-xs">
+                    <p className="text-xs text-muted-foreground/70">
                       Try adjusting your search terms
                     </p>
                   </div>

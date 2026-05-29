@@ -44,6 +44,35 @@ type SortField =
   | 'creator';
 type SortDirection = 'asc' | 'desc';
 
+function SortButton({
+  field,
+  children,
+  sortField,
+  sortDirection,
+  onSort,
+}: {
+  field: SortField;
+  children: React.ReactNode;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSort(field)}
+      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
+    >
+      {children}
+      {sortField === field &&
+        (sortDirection === 'asc' ? (
+          <ChevronUp className="h-3 w-3" />
+        ) : (
+          <ChevronDown className="h-3 w-3" />
+        ))}
+    </button>
+  );
+}
+
 export default function TournamentBeatmapsView({
   beatmaps,
   tournamentGames = [],
@@ -154,35 +183,14 @@ export default function TournamentBeatmapsView({
       });
   }, [beatmaps, sortField, sortDirection, tournamentGames]);
 
-  const SortButton = ({
-    field,
-    children,
-  }: {
-    field: SortField;
-    children: React.ReactNode;
-  }) => (
-    <button
-      onClick={() => handleSort(field)}
-      className="hover:text-foreground flex items-center gap-1 whitespace-nowrap transition-colors"
-    >
-      {children}
-      {sortField === field &&
-        (sortDirection === 'asc' ? (
-          <ChevronUp className="h-3 w-3" />
-        ) : (
-          <ChevronDown className="h-3 w-3" />
-        ))}
-    </button>
-  );
-
   if (beatmaps.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="text-muted-foreground mb-4 h-12 w-12" />
-        <h3 className="text-muted-foreground text-lg font-semibold">
+        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
+        <h3 className="text-lg font-semibold text-muted-foreground">
           No Beatmaps Found
         </h3>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           This tournament has no pooled beatmaps.
         </p>
       </div>
@@ -196,88 +204,169 @@ export default function TournamentBeatmapsView({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             {/* Header */}
-            <thead className="bg-muted/50 border-b">
+            <thead className="border-b bg-muted/50">
               <tr>
-                <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
-                  <SortButton field="osuId">
+                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton
+                    field="osuId"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="whitespace-nowrap">osu! ID</span>
                   </SortButton>
                 </th>
-                <th className="text-muted-foreground w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider">
-                  <SortButton field="title">Beatmap</SortButton>
+                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton
+                    field="title"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Beatmap
+                  </SortButton>
                 </th>
-                <th className="text-muted-foreground w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider">
-                  <SortButton field="difficulty">Difficulty</SortButton>
+                <th className="w-[9%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton
+                    field="difficulty"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Difficulty
+                  </SortButton>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
-                      <SortButton field="sr">
+                      <SortButton
+                        field="sr"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      >
                         <Star className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
-                      <SortButton field="length">
+                      <SortButton
+                        field="length"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      >
                         <Clock className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
-                      <SortButton field="bpm">
+                      <SortButton
+                        field="bpm"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      >
                         <Activity className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Circle Size">
-                    <SortButton field="cs">CS</SortButton>
+                    <SortButton
+                      field="cs"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      CS
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Approach Rate">
-                    <SortButton field="ar">AR</SortButton>
+                    <SortButton
+                      field="ar"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      AR
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Overall Difficulty">
-                    <SortButton field="od">OD</SortButton>
+                    <SortButton
+                      field="od"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      OD
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[3%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="HP Drain Rate">
-                    <SortButton field="hp">HP</SortButton>
+                    <SortButton
+                      field="hp"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      HP
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Most Common Mod">
-                    <SortButton field="mod">Mod</SortButton>
+                    <SortButton
+                      field="mod"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      Mod
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[4%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Number of Games">
                     <div className="flex justify-center">
-                      <SortButton field="gameCount">
+                      <SortButton
+                        field="gameCount"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      >
                         <Gamepad2 className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
-                  <SortButton field="creator">Creator</SortButton>
+                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton
+                    field="creator"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Creator
+                  </SortButton>
                 </th>
               </tr>
             </thead>
 
             {/* Body */}
-            <tbody className="divide-border divide-y">
+            <tbody className="divide-y divide-border">
               {sortedBeatmaps.map((beatmap) => {
                 const modData = getMostCommonModForBeatmap(
                   beatmap.osuId,
@@ -287,13 +376,13 @@ export default function TournamentBeatmapsView({
                 return (
                   <tr
                     key={beatmap.id}
-                    className="hover:bg-muted/30 group transition-colors"
+                    className="group transition-colors hover:bg-muted/30"
                   >
                     {/* osu! ID */}
                     <td className="px-2 py-2 text-center">
                       <Link
                         href={`/beatmaps/${beatmap.osuId}`}
-                        className="text-muted-foreground hover:text-primary text-xs transition-colors"
+                        className="text-xs text-muted-foreground transition-colors hover:text-primary"
                       >
                         {beatmap.osuId}
                       </Link>
@@ -321,8 +410,8 @@ export default function TournamentBeatmapsView({
                               </div>
                             </>
                           ) : (
-                            <div className="bg-muted flex h-full w-full items-center justify-center">
-                              <Music className="text-muted-foreground h-3 w-3" />
+                            <div className="flex h-full w-full items-center justify-center bg-muted">
+                              <Music className="h-3 w-3 text-muted-foreground" />
                             </div>
                           )}
                         </div>
@@ -331,12 +420,12 @@ export default function TournamentBeatmapsView({
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/beatmaps/${beatmap.osuId}`}
-                            className="hover:text-primary block transition-colors"
+                            className="block transition-colors hover:text-primary"
                           >
                             <p className="max-w-[160px] truncate text-xs font-medium">
                               {beatmap.beatmapset?.title || 'Unknown Title'}
                             </p>
-                            <p className="text-muted-foreground max-w-[140px] truncate text-xs">
+                            <p className="max-w-[140px] truncate text-xs text-muted-foreground">
                               by{' '}
                               {beatmap.beatmapset?.artist || 'Unknown Artist'}
                             </p>
@@ -404,7 +493,7 @@ export default function TournamentBeatmapsView({
                         {modData ? (
                           <SingleModIcon mods={modData.mod} size={28} />
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-xs text-muted-foreground">
                             N/A
                           </span>
                         )}
@@ -424,7 +513,7 @@ export default function TournamentBeatmapsView({
                         {beatmap.beatmapset?.creator ? (
                           <Link
                             href={`/players/${beatmap.beatmapset.creator.id}`}
-                            className="text-muted-foreground hover:text-primary flex max-w-[120px] items-center gap-1 text-xs transition-colors"
+                            className="flex max-w-[120px] items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
                           >
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
@@ -432,7 +521,7 @@ export default function TournamentBeatmapsView({
                             </span>
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-xs text-muted-foreground">
                             Unknown
                           </span>
                         )}

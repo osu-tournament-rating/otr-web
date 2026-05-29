@@ -42,19 +42,19 @@ export default function TournamentDataTable<TData, TValue>({
   });
 
   return (
-    <div className="bg-popover/50 rounded-lg">
+    <div className="rounded-lg bg-popover/50">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-border/50 border-b hover:bg-transparent"
+              className="border-b border-border/50 hover:bg-transparent"
             >
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-foreground font-semibold"
+                    className="font-semibold text-foreground"
                   >
                     {header.isPlaceholder
                       ? null
@@ -74,7 +74,7 @@ export default function TournamentDataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
-                className="border-border/30 hover:bg-popover/80 border-b transition-colors"
+                className="border-b border-border/30 transition-colors hover:bg-popover/80"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="py-3">
@@ -87,7 +87,7 @@ export default function TournamentDataTable<TData, TValue>({
             <TableRow className="hover:bg-transparent">
               <TableCell
                 colSpan={columns.length}
-                className="text-muted-foreground h-24 text-center"
+                className="h-24 text-center text-muted-foreground"
               >
                 No matches found.
               </TableCell>

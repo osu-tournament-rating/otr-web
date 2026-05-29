@@ -17,7 +17,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       const rank = getValue<number>() ?? 0;
       return (
         <div className="flex w-full justify-center">
-          <span className="text-foreground font-semibold">#{rank}</span>
+          <span className="font-semibold text-foreground">#{rank}</span>
         </div>
       );
     },
@@ -32,7 +32,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <Link
           href={`/leaderboard?country=${country}`}
-          className="text-muted-foreground flex w-full gap-2 align-baseline font-medium"
+          className="flex w-full gap-2 align-baseline font-medium text-muted-foreground"
         >
           <CountryFlag
             tooltipContent={country}
@@ -56,13 +56,13 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
             osuId={player.osuId}
             username={player.username}
             size={32}
-            className="ring-muted/20 flex-shrink-0 ring-2"
+            className="flex-shrink-0 ring-2 ring-muted/20"
           />
           <Link
             href={`/players/${player.id}?ruleset=${row.original.ruleset}`}
             className="group"
           >
-            <p className="text-foreground group-hover:text-primary max-w-[120px] truncate font-medium transition-colors duration-200 sm:max-w-full">
+            <p className="max-w-[120px] truncate font-medium text-foreground transition-colors duration-200 group-hover:text-primary sm:max-w-full">
               {player.username}
             </p>
           </Link>
@@ -104,7 +104,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <div className="flex min-w-[60px] justify-center">
           <SimpleTooltip content={`${rating.toFixed(2)} TR`}>
-            <p className="text-foreground font-medium">{rating.toFixed(0)}</p>
+            <p className="font-medium text-foreground">{rating.toFixed(0)}</p>
           </SimpleTooltip>
         </div>
       );
@@ -116,7 +116,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const tournaments = getValue<number>() ?? 0;
       return (
-        <p className="text-muted-foreground text-center font-medium">
+        <p className="text-center font-medium text-muted-foreground">
           {tournaments}
         </p>
       );
@@ -128,7 +128,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     cell: ({ getValue }) => {
       const matches = getValue<number>() ?? 0;
       return (
-        <p className="text-muted-foreground text-center font-medium">
+        <p className="text-center font-medium text-muted-foreground">
           {matches}
         </p>
       );
@@ -141,7 +141,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       const rate = getValue<number>() ?? 0;
       const percentage = Math.round(rate * 100);
       return (
-        <p className="text-muted-foreground text-center font-medium">
+        <p className="text-center font-medium text-muted-foreground">
           {percentage}%
         </p>
       );
