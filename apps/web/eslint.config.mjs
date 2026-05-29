@@ -31,7 +31,6 @@ const eslintConfig = [
       'react-hooks/refs': 'off',
       // Off: TanStack Table's useReactTable() is inherently incompatible with React Compiler memoization; nothing to fix.
       'react-hooks/incompatible-library': 'off',
-      'react-hooks/globals': 'off',
       'react-hooks/gating': 'off',
       'react-hooks/config': 'off',
       'react-hooks/unsupported-syntax': 'off',
