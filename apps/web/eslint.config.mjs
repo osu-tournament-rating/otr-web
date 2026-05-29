@@ -29,7 +29,6 @@ const eslintConfig = [
       'react-hooks/set-state-in-effect': 'off',
       // Off: idiomatic library usage reads refs during render (@tanstack/react-virtual scrollMargin, react-hook-form handleSubmit).
       'react-hooks/refs': 'off',
-      'react-hooks/purity': 'off',
       'react-hooks/preserve-manual-memoization': 'off',
       'react-hooks/incompatible-library': 'off',
       'react-hooks/use-memo': 'off',
