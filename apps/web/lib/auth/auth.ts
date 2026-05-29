@@ -75,6 +75,22 @@ const mapPlaymodeToRuleset = (playmode?: string | null) => {
   }
 };
 
+/**
+ * Creates an osu! API client authenticated with a user's existing access token.
+ *
+ * osu-api-v2-js v3 gates every request behind `await this.token_promise`, whose
+ * default value (`new Promise((r) => r)`) is never resolved — it is only
+ * replaced by `setNewToken()` / `createAsync()`. Constructing the client from a
+ * pre-obtained user token bypasses those, so we resolve the promise ourselves;
+ * otherwise every request hangs forever.
+ */
+const createUserOsuApiClient = (accessToken: string) => {
+  const api = new OsuApi({ access_token: accessToken, token_type: 'Bearer' });
+  (api as unknown as { token_promise: Promise<unknown> }).token_promise =
+    Promise.resolve();
+  return api;
+};
+
 const fetchOsuProfile = async (
   accessToken?: string | null
 ): Promise<User.Extended.WithStatisticsrulesets | null> => {
@@ -83,10 +99,7 @@ const fetchOsuProfile = async (
   }
 
   try {
-    const api = new OsuApi({
-      access_token: accessToken,
-      token_type: 'Bearer',
-    });
+    const api = createUserOsuApiClient(accessToken);
 
     return await api.getResourceOwner();
   } catch (error) {
@@ -314,10 +327,7 @@ const syncPlayerFriends = async ({
   let relations: User.Relation[] = [];
 
   try {
-    const api = new OsuApi({
-      access_token: accessToken,
-      token_type: 'Bearer',
-    });
+    const api = createUserOsuApiClient(accessToken);
 
     const fetched = await api.getFriends();
     relations = Array.isArray(fetched) ? fetched : [];
