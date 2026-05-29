@@ -50,6 +50,67 @@ const defaultFilterRanges = {
   tournamentCount: { min: 1, max: 100, step: 1 },
 };
 
+function buildSearchParams(values: FilterFormData) {
+  const params = new URLSearchParams();
+  const r = defaultFilterRanges;
+
+  if (values.q) params.set('q', values.q);
+  if (values.ruleset !== undefined)
+    params.set('ruleset', String(values.ruleset));
+  if (values.minSr !== undefined && values.minSr !== r.sr.min)
+    params.set('minSr', String(values.minSr));
+  if (values.maxSr !== undefined && values.maxSr !== r.sr.max)
+    params.set('maxSr', String(values.maxSr));
+  if (values.minBpm !== undefined && values.minBpm !== r.bpm.min)
+    params.set('minBpm', String(values.minBpm));
+  if (values.maxBpm !== undefined && values.maxBpm !== r.bpm.max)
+    params.set('maxBpm', String(values.maxBpm));
+  if (values.minCs !== undefined && values.minCs !== r.cs.min)
+    params.set('minCs', String(values.minCs));
+  if (values.maxCs !== undefined && values.maxCs !== r.cs.max)
+    params.set('maxCs', String(values.maxCs));
+  if (values.minAr !== undefined && values.minAr !== r.ar.min)
+    params.set('minAr', String(values.minAr));
+  if (values.maxAr !== undefined && values.maxAr !== r.ar.max)
+    params.set('maxAr', String(values.maxAr));
+  if (values.minOd !== undefined && values.minOd !== r.od.min)
+    params.set('minOd', String(values.minOd));
+  if (values.maxOd !== undefined && values.maxOd !== r.od.max)
+    params.set('maxOd', String(values.maxOd));
+  if (values.minHp !== undefined && values.minHp !== r.hp.min)
+    params.set('minHp', String(values.minHp));
+  if (values.maxHp !== undefined && values.maxHp !== r.hp.max)
+    params.set('maxHp', String(values.maxHp));
+  if (values.minLength !== undefined && values.minLength !== r.length.min)
+    params.set('minLength', String(values.minLength));
+  if (values.maxLength !== undefined && values.maxLength !== r.length.max)
+    params.set('maxLength', String(values.maxLength));
+  if (
+    values.minGameCount !== undefined &&
+    values.minGameCount !== r.gameCount.min
+  )
+    params.set('minGameCount', String(values.minGameCount));
+  if (
+    values.maxGameCount !== undefined &&
+    values.maxGameCount !== r.gameCount.max
+  )
+    params.set('maxGameCount', String(values.maxGameCount));
+  if (
+    values.minTournamentCount !== undefined &&
+    values.minTournamentCount !== r.tournamentCount.min
+  )
+    params.set('minTournamentCount', String(values.minTournamentCount));
+  if (
+    values.maxTournamentCount !== undefined &&
+    values.maxTournamentCount !== r.tournamentCount.max
+  )
+    params.set('maxTournamentCount', String(values.maxTournamentCount));
+  if (values.sort !== 'gameCount') params.set('sort', values.sort);
+  if (!values.descending) params.set('descending', 'false');
+
+  return params;
+}
+
 function RangeSliderField({
   label,
   minField,
@@ -167,67 +228,6 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
 
     return () => clearTimeout(timer);
   }, [searchQuery, filter.q, form, pathname, router]);
-
-  const buildSearchParams = (values: FilterFormData) => {
-    const params = new URLSearchParams();
-    const r = defaultFilterRanges;
-
-    if (values.q) params.set('q', values.q);
-    if (values.ruleset !== undefined)
-      params.set('ruleset', String(values.ruleset));
-    if (values.minSr !== undefined && values.minSr !== r.sr.min)
-      params.set('minSr', String(values.minSr));
-    if (values.maxSr !== undefined && values.maxSr !== r.sr.max)
-      params.set('maxSr', String(values.maxSr));
-    if (values.minBpm !== undefined && values.minBpm !== r.bpm.min)
-      params.set('minBpm', String(values.minBpm));
-    if (values.maxBpm !== undefined && values.maxBpm !== r.bpm.max)
-      params.set('maxBpm', String(values.maxBpm));
-    if (values.minCs !== undefined && values.minCs !== r.cs.min)
-      params.set('minCs', String(values.minCs));
-    if (values.maxCs !== undefined && values.maxCs !== r.cs.max)
-      params.set('maxCs', String(values.maxCs));
-    if (values.minAr !== undefined && values.minAr !== r.ar.min)
-      params.set('minAr', String(values.minAr));
-    if (values.maxAr !== undefined && values.maxAr !== r.ar.max)
-      params.set('maxAr', String(values.maxAr));
-    if (values.minOd !== undefined && values.minOd !== r.od.min)
-      params.set('minOd', String(values.minOd));
-    if (values.maxOd !== undefined && values.maxOd !== r.od.max)
-      params.set('maxOd', String(values.maxOd));
-    if (values.minHp !== undefined && values.minHp !== r.hp.min)
-      params.set('minHp', String(values.minHp));
-    if (values.maxHp !== undefined && values.maxHp !== r.hp.max)
-      params.set('maxHp', String(values.maxHp));
-    if (values.minLength !== undefined && values.minLength !== r.length.min)
-      params.set('minLength', String(values.minLength));
-    if (values.maxLength !== undefined && values.maxLength !== r.length.max)
-      params.set('maxLength', String(values.maxLength));
-    if (
-      values.minGameCount !== undefined &&
-      values.minGameCount !== r.gameCount.min
-    )
-      params.set('minGameCount', String(values.minGameCount));
-    if (
-      values.maxGameCount !== undefined &&
-      values.maxGameCount !== r.gameCount.max
-    )
-      params.set('maxGameCount', String(values.maxGameCount));
-    if (
-      values.minTournamentCount !== undefined &&
-      values.minTournamentCount !== r.tournamentCount.min
-    )
-      params.set('minTournamentCount', String(values.minTournamentCount));
-    if (
-      values.maxTournamentCount !== undefined &&
-      values.maxTournamentCount !== r.tournamentCount.max
-    )
-      params.set('maxTournamentCount', String(values.maxTournamentCount));
-    if (values.sort !== 'gameCount') params.set('sort', values.sort);
-    if (!values.descending) params.set('descending', 'false');
-
-    return params;
-  };
 
   const onSubmit = (values: FilterFormData) => {
     const params = buildSearchParams({

@@ -12,6 +12,10 @@ export function ModeToggle() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
 
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
   useHotkeys('CTRL+L', (e) => {
     e.preventDefault();
     toggleTheme();
@@ -20,10 +24,6 @@ export function ModeToggle() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-  };
 
   if (!mounted) {
     return (
