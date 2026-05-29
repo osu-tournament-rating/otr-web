@@ -87,5 +87,3 @@ const BaseSchema = createSelectSchema(table).omit({ searchVector: true });
 ## Rules
 
 - NEVER create migrations without the use of `bunx drizzle-kit generate`
-- NEVER run `bun run build`, always use `bunx tsc` and `bun run lint` instead
-- NEVER start the compose stack or dev server. If the dev server is offline, STOP and ask for the dev server to be run.
