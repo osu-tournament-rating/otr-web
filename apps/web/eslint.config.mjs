@@ -19,11 +19,17 @@ const eslintConfig = [
   ...nextTypescript,
   {
     // eslint-config-next 16 bundles eslint-plugin-react-hooks v7, which enables
-    // the new React Compiler ruleset. These rules were not enforced under the
-    // previous baseline; adopting them is a dedicated effort, so they are kept
-    // off here to scope this upgrade to dependency bumps. The classic
-    // rules-of-hooks / exhaustive-deps checks remain active.
+    // the new React Compiler ruleset. The rules below are deliberately kept off:
+    // our usage of these patterns is safe and idiomatic, so enforcing them would
+    // require widespread inline disables rather than improving the code. The
+    // classic rules-of-hooks / exhaustive-deps checks remain active, and the
+    // other React Compiler rules are enforced.
     rules: {
+      // setState inside effects is required for legitimate, best-practice cases
+      // throughout the app: SSR mount guards (next-themes `mounted`), client-only
+      // values that would otherwise cause hydration mismatches, loading flags
+      // before async data fetches, focus management, and resetting SSR state on
+      // navigation.
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/set-state-in-render': 'off',
       'react-hooks/refs': 'off',
