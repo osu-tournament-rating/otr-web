@@ -80,7 +80,7 @@ export default function TournamentsByYearChart({
   };
 
   return (
-    <Card className={className}>
+    <Card data-testid="chart-tournaments-by-year" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="text-primary h-6 w-6" />

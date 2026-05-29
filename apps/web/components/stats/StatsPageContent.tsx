@@ -52,9 +52,14 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <BarChart3 className="text-primary h-8 w-8" />
-          <h1 className="text-3xl font-bold">Platform Statistics</h1>
+          <h1 data-testid="stats-page-heading" className="text-3xl font-bold">
+            Platform Statistics
+          </h1>
         </div>
-        <p className="text-muted-foreground">
+        <p
+          data-testid="stats-page-description"
+          className="text-muted-foreground"
+        >
           Statistics covering all of osu! tournaments
         </p>
       </div>
