@@ -29,6 +29,7 @@ const eslintConfig = [
       'react-hooks/set-state-in-effect': 'off',
       // Off: idiomatic library usage reads refs during render (@tanstack/react-virtual scrollMargin, react-hook-form handleSubmit).
       'react-hooks/refs': 'off',
+      // Off: TanStack Table's useReactTable() is inherently incompatible with React Compiler memoization; nothing to fix.
       'react-hooks/incompatible-library': 'off',
       'react-hooks/use-memo': 'off',
       'react-hooks/component-hook-factories': 'off',
