@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, type ComponentProps } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip } from '../ui/chart';
@@ -240,7 +240,7 @@ export default function PlayerFrequencyChart({
               >
                 {shouldUseFallback ? (
                   <div
-                    className="bg-accent rounded-full"
+                    className="rounded-full bg-accent"
                     style={{ width: avatarSize, height: avatarSize }}
                     aria-label={`${player.username} avatar`}
                   />
@@ -297,11 +297,11 @@ export default function PlayerFrequencyChart({
       const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
 
       return (
-        <div className="bg-background rounded-lg border p-3 shadow-lg">
+        <div className="rounded-lg border bg-background p-3 shadow-lg">
           <div className="flex items-center gap-3">
             {shouldUseFallback ? (
               <div
-                className="bg-accent rounded-full"
+                className="rounded-full bg-accent"
                 style={{ width: avatarSize, height: avatarSize }}
                 aria-label={`${data.username} avatar`}
               />
@@ -319,7 +319,7 @@ export default function PlayerFrequencyChart({
             )}
             <div>
               <p className="font-semibold">{data.username}</p>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 Matches played: {data.frequency}
               </p>
             </div>
@@ -359,7 +359,11 @@ export default function PlayerFrequencyChart({
             >
               <XAxis
                 dataKey="username"
-                tick={createCustomXAxisTick(chartData.desktop)}
+                tick={
+                  createCustomXAxisTick(chartData.desktop) as ComponentProps<
+                    typeof XAxis
+                  >['tick']
+                }
                 interval={0}
                 height={CHART_CONSTANTS.X_AXIS_HEIGHT}
               />
@@ -387,7 +391,11 @@ export default function PlayerFrequencyChart({
             >
               <XAxis
                 dataKey="username"
-                tick={createCustomXAxisTick(chartData.mobile)}
+                tick={
+                  createCustomXAxisTick(chartData.mobile) as ComponentProps<
+                    typeof XAxis
+                  >['tick']
+                }
                 interval={0}
                 height={CHART_CONSTANTS.X_AXIS_HEIGHT}
               />

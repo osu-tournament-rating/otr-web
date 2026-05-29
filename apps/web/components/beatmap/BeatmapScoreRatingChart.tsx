@@ -163,7 +163,7 @@ export default function BeatmapScoreRatingChart({
     new Set(['nm', 'hr', 'hd', 'dt', 'other'])
   );
 
-  const handleLegendClick = (entry: { value: string }) => {
+  const handleLegendClick = (entry: { value?: string }) => {
     const modMap: Record<string, ModCategory> = {
       'No Mod': 'nm',
       'Hard Rock': 'hr',
@@ -171,7 +171,7 @@ export default function BeatmapScoreRatingChart({
       'Double Time': 'dt',
       Other: 'other',
     };
-    const mod = modMap[entry.value];
+    const mod = entry.value ? modMap[entry.value] : undefined;
     if (!mod) return;
 
     setVisibleMods((prev) => {
@@ -250,7 +250,7 @@ export default function BeatmapScoreRatingChart({
           <CardTitle className="text-center">Score vs Player Rating</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             No score data available for this beatmap.
           </p>
         </CardContent>
@@ -311,66 +311,82 @@ export default function BeatmapScoreRatingChart({
                 fontSize: 11,
                 color: colors.text,
                 paddingBottom: 10,
-                cursor: 'pointer',
               }}
-              onClick={handleLegendClick}
-              payload={[
-                ...(groupedData.nm.length > 0
-                  ? [
-                      {
-                        value: 'No Mod',
-                        type: 'square' as const,
-                        color: visibleMods.has('nm')
-                          ? 'var(--chart-1)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.hr.length > 0
-                  ? [
-                      {
-                        value: 'Hard Rock',
-                        type: 'square' as const,
-                        color: visibleMods.has('hr')
-                          ? 'var(--mod-hard-rock)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.hd.length > 0
-                  ? [
-                      {
-                        value: 'Hidden',
-                        type: 'square' as const,
-                        color: visibleMods.has('hd')
-                          ? 'var(--mod-hidden)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.dt.length > 0
-                  ? [
-                      {
-                        value: 'Double Time',
-                        type: 'square' as const,
-                        color: visibleMods.has('dt')
-                          ? 'var(--mod-double-time)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.other.length > 0
-                  ? [
-                      {
-                        value: 'Other',
-                        type: 'square' as const,
-                        color: visibleMods.has('other')
-                          ? 'var(--chart-3)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-              ]}
+              content={() => {
+                // recharts v3 derives Legend payload from chart series and no
+                // longer honors the `payload` prop, so we render the mod toggle
+                // legend ourselves via a custom content renderer.
+                const legendItems = [
+                  ...(groupedData.nm.length > 0
+                    ? [
+                        {
+                          value: 'No Mod',
+                          color: visibleMods.has('nm')
+                            ? 'var(--chart-1)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.hr.length > 0
+                    ? [
+                        {
+                          value: 'Hard Rock',
+                          color: visibleMods.has('hr')
+                            ? 'var(--mod-hard-rock)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.hd.length > 0
+                    ? [
+                        {
+                          value: 'Hidden',
+                          color: visibleMods.has('hd')
+                            ? 'var(--mod-hidden)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.dt.length > 0
+                    ? [
+                        {
+                          value: 'Double Time',
+                          color: visibleMods.has('dt')
+                            ? 'var(--mod-double-time)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.other.length > 0
+                    ? [
+                        {
+                          value: 'Other',
+                          color: visibleMods.has('other')
+                            ? 'var(--chart-3)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                ];
+
+                return (
+                  <ul className="flex list-none justify-end gap-3 p-0">
+                    {legendItems.map((item) => (
+                      <li
+                        key={item.value}
+                        className="flex cursor-pointer items-center gap-1"
+                        onClick={() => handleLegendClick(item)}
+                      >
+                        <span
+                          className="inline-block size-2.5"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        {item.value}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }}
             />
 
             {(Object.keys(densityByMod) as ModCategory[])

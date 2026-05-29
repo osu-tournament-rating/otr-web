@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';

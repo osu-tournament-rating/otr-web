@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { leaderboardFilterSchema } from '@/lib/validation-schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '../ui/form';
@@ -70,7 +70,9 @@ export default function LeaderboardFilter({
   );
 
   const form = useForm<z.infer<typeof leaderboardFilterSchema>>({
-    resolver: zodResolver(leaderboardFilterSchema),
+    resolver: zodResolver(leaderboardFilterSchema) as Resolver<
+      z.infer<typeof leaderboardFilterSchema>
+    >,
     defaultValues: normalizedFilter,
   });
 
@@ -108,7 +110,7 @@ export default function LeaderboardFilter({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="bg-popover flex items-center gap-2"
+          className="flex items-center gap-2 bg-popover"
         >
           <Filter className="h-4 w-4" />
           Filters
@@ -216,7 +218,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="text-muted-foreground flex justify-between text-sm">
+                      <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
                           value={
@@ -280,7 +282,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="text-muted-foreground flex justify-between text-sm">
+                      <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
                           value={
@@ -365,7 +367,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="text-muted-foreground flex justify-between text-sm">
+                      <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
                           value={
@@ -429,7 +431,7 @@ export default function LeaderboardFilter({
                         onPointerUp={form.handleSubmit(onSubmit)}
                         minStepsBetweenThumbs={1}
                       />
-                      <div className="text-muted-foreground flex justify-between text-sm">
+                      <div className="flex justify-between text-sm text-muted-foreground">
                         <Input
                           type="number"
                           value={

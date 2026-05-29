@@ -12,7 +12,7 @@ export const withNotFoundHandling = async <T>(
   try {
     return await invoke();
   } catch (error) {
-    if (error instanceof APIError && error.status_code === 404) {
+    if (error instanceof APIError && error.response?.status_code === 404) {
       return null;
     }
 
@@ -33,10 +33,13 @@ export const withApiErrorHandling = async <T>(
     return { status: 'success', data };
   } catch (error) {
     if (error instanceof APIError) {
-      if (error.status_code === 404) {
+      if (error.response?.status_code === 404) {
         return { status: 'not_found' };
       }
-      if (error.status_code === 401 || error.status_code === 403) {
+      if (
+        error.response?.status_code === 401 ||
+        error.response?.status_code === 403
+      ) {
         return { status: 'unauthorized' };
       }
     }

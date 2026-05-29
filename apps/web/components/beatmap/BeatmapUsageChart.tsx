@@ -75,7 +75,7 @@ export default function BeatmapUsageChart({
       <Card className={className}>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
-            <TrendingUp className="text-primary h-6 w-6" />
+            <TrendingUp className="h-6 w-6 text-primary" />
             <CardTitle className="text-xl font-bold">Usage Over Time</CardTitle>
           </div>
         </CardHeader>
@@ -87,7 +87,7 @@ export default function BeatmapUsageChart({
     <Card className={className}>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <TrendingUp className="text-primary h-6 w-6" />
+          <TrendingUp className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Usage Over Time</CardTitle>
         </div>
       </CardHeader>
@@ -133,7 +133,7 @@ export default function BeatmapUsageChart({
               }}
               labelStyle={{ color: colors.text }}
               labelFormatter={(value) => formatQuarterTick(value as string)}
-              formatter={(value: number, name: string) => [
+              formatter={(value, name) => [
                 value,
                 name === 'gameCount' ? 'Games Played' : 'Tournaments Pooled',
               ]}

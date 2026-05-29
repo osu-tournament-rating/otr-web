@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
 import { CurrentUserSchema } from '@/lib/orpc/schema/user';

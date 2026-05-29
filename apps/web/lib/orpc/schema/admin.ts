@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 export const AdminMassEnqueueInputSchema = z.object({
   beatmapIds: z.array(z.number().int().min(1).max(20_000_000)).default([]),

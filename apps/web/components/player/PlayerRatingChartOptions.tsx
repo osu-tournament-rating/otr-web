@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '../ui/form';
 import { Button } from '../ui/button';
@@ -24,7 +24,9 @@ export default function PlayerRatingChartOptions({
   onFilterChange,
 }: PlayerRatingChartOptionsProps) {
   const form = useForm<PlayerRatingChartFilterValues>({
-    resolver: zodResolver(playerRatingChartFilterSchema),
+    resolver: zodResolver(
+      playerRatingChartFilterSchema
+    ) as Resolver<PlayerRatingChartFilterValues>,
     values: filter,
     defaultValues: {
       showDecay: true,
@@ -63,7 +65,7 @@ export default function PlayerRatingChartOptions({
               control={form.control}
               name="showDecay"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
+                <FormItem className="flex flex-row items-center space-y-0 space-x-3 rounded-md border p-3">
                   <FormControl>
                     <Checkbox
                       checked={field.value}

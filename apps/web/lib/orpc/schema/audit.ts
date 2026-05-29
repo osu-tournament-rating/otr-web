@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
 // --- Audit Entry ---

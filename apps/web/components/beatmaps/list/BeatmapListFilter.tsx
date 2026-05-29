@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { useRouter, usePathname } from 'next/navigation';
 import { Filter, X, Search, Loader2 } from 'lucide-react';
 import { Ruleset } from '@otr/core/osu';
@@ -66,7 +66,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
   );
 
   const form = useForm<FilterFormData>({
-    resolver: zodResolver(beatmapListFilterSchema),
+    resolver: zodResolver(beatmapListFilterSchema) as Resolver<FilterFormData>,
     defaultValues: normalizedFilter,
   });
 
@@ -275,12 +275,12 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search beatmaps..."
-          className="border-border bg-card focus:border-primary h-9 w-48 rounded-lg border pl-8 text-sm md:w-64"
+          className="h-9 w-48 rounded-lg border border-border bg-card pl-8 text-sm focus:border-primary md:w-64"
         />
         {isSearching ? (
-          <Loader2 className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+          <Loader2 className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         ) : (
-          <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         )}
       </div>
 
@@ -288,12 +288,12 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="bg-popover flex items-center gap-2"
+            className="flex items-center gap-2 bg-popover"
           >
             <Filter className="h-4 w-4" />
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-primary text-primary-foreground ml-1 rounded-full px-1.5 py-0.5 text-xs">
+              <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}

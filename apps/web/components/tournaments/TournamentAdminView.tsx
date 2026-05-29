@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EditIcon, Loader2 } from 'lucide-react';
-import { ControllerFieldState, useForm } from 'react-hook-form';
+import { ControllerFieldState, useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 
 import { hasAdminScope } from '@/lib/auth/roles';
@@ -99,7 +99,9 @@ export default function TournamentAdminView({
     [tournament]
   );
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
-    resolver: zodResolver(tournamentEditFormSchema),
+    resolver: zodResolver(tournamentEditFormSchema) as Resolver<
+      z.infer<typeof tournamentEditFormSchema>
+    >,
     defaultValues: formDefaults,
     mode: 'all',
   });
@@ -336,7 +338,7 @@ export default function TournamentAdminView({
             </div>
 
             {/* Admin operation buttons */}
-            <div className="border-border flex items-center gap-6 border-b border-t py-3">
+            <div className="flex items-center gap-6 border-t border-b border-border py-3">
               {/* Verification & Safe Operations */}
               <div className="flex gap-2">
                 <AcceptPreVerificationStatusesButton tournament={tournament} />
@@ -344,13 +346,13 @@ export default function TournamentAdminView({
               </div>
 
               {/* Data Synchronization */}
-              <div className="border-border flex gap-2 border-l pl-6">
+              <div className="flex gap-2 border-l border-border pl-6">
                 <RefetchMatchDataButton tournament={tournament} />
                 <RefetchBeatmapDataButton tournament={tournament} />
               </div>
 
               {/* Destructive Operations */}
-              <div className="border-border flex gap-2 border-l pl-6">
+              <div className="flex gap-2 border-l border-border pl-6">
                 <DeleteTournamentBeatmapsButton tournament={tournament} />
                 <DeleteButton
                   entityType="tournament"

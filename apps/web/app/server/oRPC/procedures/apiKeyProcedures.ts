@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import { ORPCError } from '@orpc/server';
 
@@ -218,7 +218,7 @@ export const generateUserApiKey = protectedProcedure
     }
 
     return ApiKeyWithSecretSchema.parse({
-      ...toMetadataShape(created as ApiKeyResponse),
+      ...toMetadataShape(created as unknown as ApiKeyResponse),
       key: created.key,
     });
   });

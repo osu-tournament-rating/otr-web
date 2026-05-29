@@ -6,10 +6,9 @@ import {
 } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createFieldAttribute } from 'better-auth/db';
+import { apiKey } from '@better-auth/api-key';
 import {
   admin as adminPlugin,
-  apiKey,
   customSession,
   genericOAuth,
 } from 'better-auth/plugins';
@@ -199,7 +198,7 @@ const bannedLoginRedirectPlugin = () => ({
             create: {
               async before(
                 session: Session & Record<string, unknown>,
-                ctx?: GenericEndpointContext
+                ctx: GenericEndpointContext | null
               ) {
                 if (!ctx) {
                   return;
@@ -242,15 +241,13 @@ const bannedLoginRedirectPlugin = () => ({
                   'You have been banned from this application. Please contact support if you believe this is an error.';
 
                 if (isAuthCallback) {
-                  const origin =
-                    ctx.context.options.baseURL ??
-                    (() => {
-                      try {
-                        return new URL(ctx.context.baseURL).origin;
-                      } catch {
-                        return undefined;
-                      }
-                    })();
+                  const origin = (() => {
+                    try {
+                      return new URL(ctx.context.baseURL).origin;
+                    } catch {
+                      return undefined;
+                    }
+                  })();
 
                   const searchParams = new URLSearchParams();
 
@@ -517,7 +514,8 @@ export const auth = betterAuth({
   user: {
     modelName: 'auth_user',
     additionalFields: {
-      playerId: createFieldAttribute('number', {
+      playerId: {
+        type: 'number',
         required: true,
         input: true,
         references: {
@@ -525,7 +523,7 @@ export const auth = betterAuth({
           field: 'id',
           onDelete: 'cascade',
         },
-      }),
+      },
     },
     deleteUser: {
       enabled: true,

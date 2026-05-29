@@ -384,7 +384,9 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
     const verifiedKey = verification?.key ?? null;
 
     if (!verification?.valid || !verifiedKey) {
-      handleInvalidApiKeyVerification(verification);
+      handleInvalidApiKeyVerification(
+        verification as unknown as ApiKeyVerificationResponse
+      );
     }
 
     const activeKey = verifiedKey as NonNullable<typeof verifiedKey>;
@@ -397,7 +399,9 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       });
     }
 
-    const { id, userId, name, enabled } = activeKey;
+    // Better Auth's API key plugin (v1.6+) renamed `userId` to `referenceId`.
+    const { id, referenceId, name, enabled } = activeKey;
+    const userId = referenceId;
     let apiKeyActor: ApiKeyActor | null = null;
 
     try {
