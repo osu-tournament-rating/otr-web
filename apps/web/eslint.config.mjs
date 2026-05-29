@@ -25,13 +25,8 @@ const eslintConfig = [
     // classic rules-of-hooks / exhaustive-deps checks remain active, and the
     // other React Compiler rules are enforced.
     rules: {
-      // setState inside effects is required for legitimate, best-practice cases
-      // throughout the app: SSR mount guards (next-themes `mounted`), client-only
-      // values that would otherwise cause hydration mismatches, loading flags
-      // before async data fetches, focus management, and resetting SSR state on
-      // navigation.
+      // Off: required for SSR mount guards, client-only values (hydration), async loading flags, and focus management.
       'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/set-state-in-render': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/immutability': 'off',
       'react-hooks/error-boundaries': 'off',
