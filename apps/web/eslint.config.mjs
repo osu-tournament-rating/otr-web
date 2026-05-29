@@ -27,6 +27,7 @@ const eslintConfig = [
     rules: {
       // Off: required for SSR mount guards, client-only values (hydration), async loading flags, and focus management.
       'react-hooks/set-state-in-effect': 'off',
+      // Off: idiomatic library usage reads refs during render (@tanstack/react-virtual scrollMargin, react-hook-form handleSubmit).
       'react-hooks/refs': 'off',
       'react-hooks/immutability': 'off',
       'react-hooks/error-boundaries': 'off',
