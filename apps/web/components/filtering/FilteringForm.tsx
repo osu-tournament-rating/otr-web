@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Settings, LoaderCircle, Users } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Control, FieldPath } from 'react-hook-form';
+import { useForm, Control, FieldPath, Resolver } from 'react-hook-form';
 import { toast } from 'sonner';
 import { orpc } from '@/lib/orpc/orpc';
 import { Ruleset } from '@otr/core/osu';
@@ -44,7 +44,7 @@ const optionalNumberSchema = (
   z.preprocess(
     (val) => (val === '' || val === null ? undefined : val),
     z.coerce
-      .number({ invalid_type_error: 'Please enter a valid number' })
+      .number({ error: 'Please enter a valid number' })
       .min(options.min ?? -Infinity, options.minMsg)
       .max(options.max ?? Infinity, options.maxMsg)
       .int(options.integer ? { message: options.intMsg } : undefined)
@@ -54,8 +54,7 @@ const optionalNumberSchema = (
 const filteringFormSchema = z
   .object({
     ruleset: z.coerce.number({
-      invalid_type_error: 'Please select a ruleset',
-      required_error: 'Please select a ruleset',
+      error: 'Please select a ruleset',
     }),
     minRating: optionalNumberSchema({
       min: 100,
@@ -124,9 +123,9 @@ type FormSectionProps = {
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
   <div className="space-y-3 sm:space-y-4">
-    <div className="border-border flex items-center gap-2 rounded-md border-b pb-2 sm:gap-3 sm:pb-3">
+    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
       {icon}
-      <h3 className="text-foreground text-lg font-semibold sm:text-xl">
+      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
         {title}
       </h3>
     </div>
@@ -167,7 +166,7 @@ function NumberInput({
               placeholder={placeholder}
               {...field}
               value={field.value ?? ''}
-              className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary border-2 shadow-sm focus-visible:ring-1"
+              className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
           </FormControl>
           <FormMessage />
@@ -190,7 +189,7 @@ export default function FilteringForm({
   const initialValuesRef = useRef<FilteringFormValues | null>(null);
 
   const form = useForm<FilteringFormValues>({
-    resolver: zodResolver(filteringFormSchema),
+    resolver: zodResolver(filteringFormSchema) as Resolver<FilteringFormValues>,
     defaultValues: {
       ruleset: undefined,
       minRating: undefined,
@@ -299,10 +298,10 @@ export default function FilteringForm({
             className="space-y-4 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-6 lg:px-8"
           >
             <FormSection
-              icon={<Settings className="text-primary size-6" />}
+              icon={<Settings className="size-6 text-primary" />}
               title="Filter Criteria"
             >
-              <p className="text-muted-foreground mb-4 text-sm">
+              <p className="mb-4 text-sm text-muted-foreground">
                 Fields marked with * are required
               </p>
               <FormField
@@ -319,7 +318,7 @@ export default function FilteringForm({
                       value={field.value?.toString()}
                     >
                       <FormControl>
-                        <SelectTrigger className="border-input bg-card focus:border-primary focus:ring-primary border-2 shadow-sm focus:ring-1">
+                        <SelectTrigger className="border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
                           <SelectValue placeholder="Select a ruleset" />
                         </SelectTrigger>
                       </FormControl>
@@ -349,7 +348,7 @@ export default function FilteringForm({
             </FormSection>
 
             <FormSection
-              icon={<Users className="text-primary size-6" />}
+              icon={<Users className="size-6 text-primary" />}
               title="Player IDs"
             >
               <FormField
@@ -364,7 +363,7 @@ export default function FilteringForm({
                     <FormControl>
                       <Textarea
                         placeholder="Enter osu! player IDs (e.g. 1234567, 2345678, 3456789)"
-                        className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary min-h-[120px] border-2 shadow-sm focus-visible:ring-1 sm:min-h-[150px]"
+                        className="min-h-[120px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary sm:min-h-[150px]"
                         {...field}
                       />
                     </FormControl>
@@ -378,7 +377,7 @@ export default function FilteringForm({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-md text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl sm:py-6 sm:text-lg"
+                className="flex-1 rounded-md bg-primary text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
               >
                 {isLoading ? (
                   <LoaderCircle className="animate-spin" />
@@ -399,7 +398,7 @@ export default function FilteringForm({
                   initialValuesRef.current = form.getValues();
                 }}
                 disabled={isLoading}
-                className="hover:bg-secondary/80 rounded-md px-6 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl sm:px-8 sm:py-6 sm:text-lg"
+                className="rounded-md px-6 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-xl sm:px-8 sm:py-6 sm:text-lg"
               >
                 Reset
               </Button>

@@ -44,32 +44,70 @@ interface MatchStatsViewProps {
 }
 
 const StatsProcessingCard = React.memo(() => (
-  <Card className="bg-card/50 relative overflow-hidden p-6 md:p-8">
+  <Card className="relative overflow-hidden bg-card/50 p-6 md:p-8">
     <div className="flex flex-col items-center justify-center gap-4 py-8 md:py-12">
       <div className="relative">
-        <div className="bg-primary/20 absolute inset-0 animate-ping rounded-full" />
-        <div className="bg-primary/10 relative flex h-14 w-14 items-center justify-center rounded-full backdrop-blur-sm">
-          <BarChart3 className="text-primary h-7 w-7" />
+        <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
+          <BarChart3 className="h-7 w-7 text-primary" />
         </div>
       </div>
 
       <div className="flex flex-col items-center gap-3 text-center">
         <h3 className="text-xl font-semibold">Statistics Pending</h3>
-        <p className="text-muted-foreground max-w-md text-sm">
+        <p className="max-w-md text-sm text-muted-foreground">
           Match statistics will appear after ratings are generated. Please check
           back later.
         </p>
 
         <div className="mt-2 flex items-center gap-1.5">
-          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-0" />
-          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-150" />
-          <div className="bg-primary h-2 w-2 animate-pulse rounded-full delay-300" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-0" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-150" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-300" />
         </div>
       </div>
     </div>
   </Card>
 ));
 StatsProcessingCard.displayName = 'StatsProcessingCard';
+
+const SortButton = React.memo(function SortButton({
+  column,
+  children,
+  sortKey,
+  sortDirection,
+  onSort,
+}: {
+  column: SortKey;
+  children: React.ReactNode;
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = sortKey === column;
+  const sortIcon = !isActive ? (
+    <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
+  ) : sortDirection === 'asc' ? (
+    <ArrowUp className="ml-1 h-3 w-3" />
+  ) : (
+    <ArrowDown className="ml-1 h-3 w-3" />
+  );
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-ml-3 h-7 px-1 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent sm:px-2"
+      onClick={() => onSort(column)}
+      aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
+      aria-pressed={isActive}
+    >
+      <span className="truncate">{children}</span>
+      {sortIcon}
+    </Button>
+  );
+});
+SortButton.displayName = 'SortButton';
 
 export default function MatchStatsView({ match }: MatchStatsViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>(
@@ -152,36 +190,6 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
     [sortKey]
   );
 
-  const SortButton = React.memo(
-    ({ column, children }: { column: SortKey; children: React.ReactNode }) => {
-      const isActive = sortKey === column;
-      const sortIcon = useMemo(() => {
-        if (!isActive)
-          return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
-        return sortDirection === 'asc' ? (
-          <ArrowUp className="ml-1 h-3 w-3" />
-        ) : (
-          <ArrowDown className="ml-1 h-3 w-3" />
-        );
-      }, [isActive]);
-
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hover:text-foreground data-[state=open]:bg-accent -ml-3 h-7 px-1 text-xs hover:bg-transparent sm:px-2"
-          onClick={() => handleSort(column)}
-          aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
-          aria-pressed={isActive}
-        >
-          <span className="truncate">{children}</span>
-          {sortIcon}
-        </Button>
-      );
-    }
-  );
-  SortButton.displayName = 'SortButton';
-
   const isTeamMatch = processedPlayers.some((p) => p.team !== undefined);
   const is1v1Match = processedPlayers.length === 2;
 
@@ -193,8 +201,8 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
     <Card className="p-5 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-            <BarChart3 className="text-primary h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold">Match Performance</h3>
@@ -202,14 +210,14 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         </div>
         {averageRatingInfo && (
           <SimpleTooltip content="Average rating of players in this match">
-            <div className="border-primary/10 bg-primary/5 hover:border-primary/20 hover:bg-primary/10 ml-2 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-all duration-200 hover:shadow-sm">
+            <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
               <TierIcon
                 tier={averageRatingInfo.tier}
                 subTier={averageRatingInfo.subTier}
                 width={20}
                 height={20}
               />
-              <span className="text-foreground text-sm font-semibold">
+              <span className="text-sm font-semibold text-foreground">
                 {averageRatingInfo.rating} TR
               </span>
             </div>
@@ -236,13 +244,13 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         <MatchTeamScoresChart games={match.games} />
       )}
 
-      <div className="bg-card/50 overflow-hidden rounded-xl border">
-        <div className="bg-muted/30 border-b px-4 py-3.5">
+      <div className="overflow-hidden rounded-xl border bg-card/50">
+        <div className="border-b bg-muted/30 px-4 py-3.5">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold tracking-wide">
               Player Statistics
             </h4>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               Non-rating values are averaged
             </span>
           </div>
@@ -252,14 +260,26 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {/* Player column - always visible */}
-                <TableHead className="min-w-[160px] max-w-[160px] pl-5">
-                  <SortButton column="username">Player</SortButton>
+                <TableHead className="max-w-[160px] min-w-[160px] pl-5">
+                  <SortButton
+                    column="username"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Player
+                  </SortButton>
                 </TableHead>
 
                 {/* W-L column - visible in non-1v1 matches */}
                 {!is1v1Match && (
                   <TableHead className="w-[70px] text-center sm:w-[80px]">
-                    <SortButton column="netWins">
+                    <SortButton
+                      column="netWins"
+                      sortKey={sortKey}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
                       <SimpleTooltip content="Points won/lost this match">
                         <span aria-label="Wins and losses">W-L</span>
                       </SimpleTooltip>
@@ -269,19 +289,34 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
 
                 {/* Rating columns - always visible with responsive labels */}
                 <TableHead className="w-[60px] text-center sm:w-[70px]">
-                  <SortButton column="ratingBefore">
+                  <SortButton
+                    column="ratingBefore"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden sm:inline">Before</span>
                     <span className="sm:hidden">Pre</span>
                   </SortButton>
                 </TableHead>
                 <TableHead className="w-[60px] text-center sm:w-[70px]">
-                  <SortButton column="ratingAfter">
+                  <SortButton
+                    column="ratingAfter"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden sm:inline">After</span>
                     <span className="sm:hidden">Post</span>
                   </SortButton>
                 </TableHead>
                 <TableHead className="w-[70px] text-center sm:w-[80px]">
-                  <SortButton column="ratingDelta">
+                  <SortButton
+                    column="ratingDelta"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden sm:inline">Change</span>
                     <span className="sm:hidden">+/-</span>
                   </SortButton>
@@ -289,22 +324,44 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
 
                 {/* Performance metrics - hidden on mobile, visible on md+ */}
                 <TableHead className="hidden text-center md:table-cell md:w-[80px]">
-                  <SortButton column="averageScore">Score</SortButton>
+                  <SortButton
+                    column="averageScore"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Score
+                  </SortButton>
                 </TableHead>
                 <TableHead className="hidden text-center md:table-cell md:w-[70px]">
-                  <SortButton column="averageAccuracy">
+                  <SortButton
+                    column="averageAccuracy"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden lg:inline">Accuracy</span>
                     <span className="lg:hidden">Acc</span>
                   </SortButton>
                 </TableHead>
                 <TableHead className="hidden text-center md:table-cell md:w-[60px]">
-                  <SortButton column="averageMisses">
+                  <SortButton
+                    column="averageMisses"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden lg:inline">Misses</span>
                     <span className="lg:hidden">Miss</span>
                   </SortButton>
                 </TableHead>
                 <TableHead className="hidden text-center md:table-cell md:w-[70px]">
-                  <SortButton column="averagePlacement">
+                  <SortButton
+                    column="averagePlacement"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
                     <span className="hidden lg:inline">Placement</span>
                     <span className="lg:hidden">Pos</span>
                   </SortButton>
@@ -325,8 +382,8 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
         </div>
       </div>
       {isTeamMatch && (
-        <div className="bg-muted/50 mt-6 rounded-lg border p-4">
-          <p className="text-muted-foreground text-center text-sm">
+        <div className="mt-6 rounded-lg border bg-muted/50 p-4">
+          <p className="text-center text-sm text-muted-foreground">
             Team statistics coming soon
           </p>
         </div>

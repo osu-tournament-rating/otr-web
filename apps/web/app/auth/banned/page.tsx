@@ -40,22 +40,22 @@ export default async function BannedPage(props: BannedPageProps) {
   const reason = extractReason(params);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-12 pt-4 sm:pt-8">
-      <div className="border-border bg-background space-y-6 rounded-2xl border px-6 py-8 text-center shadow-sm sm:px-10 sm:py-12">
-        <div className="bg-destructive/10 text-destructive ring-destructive/30 mx-auto flex h-14 w-14 items-center justify-center rounded-full ring-1">
+    <main className="mx-auto w-full max-w-2xl px-4 pt-4 pb-12 sm:pt-8">
+      <div className="space-y-6 rounded-2xl border border-border bg-background px-6 py-8 text-center shadow-sm sm:px-10 sm:py-12">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
           <ShieldAlert aria-hidden="true" className="h-7 w-7" />
         </div>
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight">
             Account Suspended
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-sm text-muted-foreground sm:text-base">
             Your osu! Tournament Rating account has been temporarily disabled.
             If you believe this is an error, please contact the administrators.
           </p>
         </header>
         {reason ? (
-          <section className="border-destructive/30 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-left text-sm sm:text-base">
+          <section className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive sm:text-base">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="font-medium">Reason:</span>
               <span className="break-words">{reason}</span>

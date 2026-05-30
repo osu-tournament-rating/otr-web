@@ -431,12 +431,12 @@ export default function AdminDashboardClient() {
             </form>
 
             {searching ? (
-              <div className="text-muted-foreground flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 Searching…
               </div>
             ) : didSearch && !result ? (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 No authenticated players matched that username.
               </p>
             ) : result ? (
@@ -455,10 +455,10 @@ export default function AdminDashboardClient() {
                       }
                     />
                     <div className="flex flex-col">
-                      <span className="text-foreground font-medium">
+                      <span className="font-medium text-foreground">
                         {result.username}
                       </span>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>osu! ID {result.osuId}</span>
                         <span>•</span>
                         <Badge
@@ -531,8 +531,8 @@ export default function AdminDashboardClient() {
                   <div className="border-t">
                     <div className="flex items-center justify-between gap-3 p-4">
                       <div className="flex items-center gap-2">
-                        <KeyRound className="text-primary size-5" />
-                        <span className="text-foreground font-semibold">
+                        <KeyRound className="size-5 text-primary" />
+                        <span className="font-semibold text-foreground">
                           API keys
                         </span>
                       </div>
@@ -547,12 +547,12 @@ export default function AdminDashboardClient() {
 
                     <div className="mx-4 mb-4 overflow-hidden rounded-md border">
                       {apiKeysLoading ? (
-                        <div className="text-muted-foreground flex items-center gap-2 p-4 text-sm">
+                        <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
                           <Loader2 className="size-4 animate-spin" />
                           Loading API keys…
                         </div>
                       ) : apiKeyError ? (
-                        <div className="text-destructive p-4 text-sm">
+                        <div className="p-4 text-sm text-destructive">
                           {apiKeyError}
                         </div>
                       ) : apiKeys.length > 0 ? (
@@ -594,7 +594,7 @@ export default function AdminDashboardClient() {
                           </TableBody>
                         </Table>
                       ) : (
-                        <div className="text-muted-foreground p-4 text-sm">
+                        <div className="p-4 text-sm text-muted-foreground">
                           No active API keys found for this user.
                         </div>
                       )}
@@ -632,7 +632,7 @@ export default function AdminDashboardClient() {
                     className="font-mono text-sm"
                   />
                   {beatmapIdsInput.trim() && (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       {parsedBeatmapIds.length} unique beatmap
                       {parsedBeatmapIds.length === 1 ? '' : 's'} parsed
                     </p>
@@ -653,7 +653,7 @@ export default function AdminDashboardClient() {
                     className="font-mono text-sm"
                   />
                   {matchIdsInput.trim() && (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       {parsedMatchIds.length} unique match
                       {parsedMatchIds.length === 1 ? '' : 'es'} parsed
                     </p>
@@ -706,7 +706,7 @@ export default function AdminDashboardClient() {
                 <div className="rounded-lg border p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin" />
-                    <span className="text-foreground font-semibold">
+                    <span className="font-semibold text-foreground">
                       {progressMessage}
                     </span>
                   </div>
@@ -714,7 +714,7 @@ export default function AdminDashboardClient() {
                     <span
                       className={
                         progressPhase === 'beatmaps'
-                          ? 'text-foreground font-semibold'
+                          ? 'font-semibold text-foreground'
                           : 'text-muted-foreground'
                       }
                     >
@@ -724,7 +724,7 @@ export default function AdminDashboardClient() {
                     <span
                       className={
                         progressPhase === 'matches'
-                          ? 'text-foreground font-semibold'
+                          ? 'font-semibold text-foreground'
                           : 'text-muted-foreground'
                       }
                     >
@@ -741,7 +741,7 @@ export default function AdminDashboardClient() {
                       </span>
                     </div>
                     <Progress value={progressPercent} className="h-2 w-full" />
-                    <div className="text-muted-foreground text-right text-xs">
+                    <div className="text-right text-xs text-muted-foreground">
                       {progressPercent.toFixed(0)}% complete
                     </div>
                   </div>
@@ -751,14 +751,14 @@ export default function AdminDashboardClient() {
               {massEnqueueCompletionData && (
                 <div className="rounded-lg border p-4">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-foreground font-semibold">
+                    <span className="font-semibold text-foreground">
                       Results
                     </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <p className="text-muted-foreground text-xs">Beatmaps</p>
-                      <div className="text-foreground text-sm">
+                      <p className="text-xs text-muted-foreground">Beatmaps</p>
+                      <div className="text-sm text-foreground">
                         <span className="font-medium text-green-600 dark:text-green-400">
                           {massEnqueueCompletionData.beatmapsUpdated} enqueued
                         </span>
@@ -774,8 +774,8 @@ export default function AdminDashboardClient() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-muted-foreground text-xs">Matches</p>
-                      <div className="text-foreground text-sm">
+                      <p className="text-xs text-muted-foreground">Matches</p>
+                      <div className="text-sm text-foreground">
                         <span className="font-medium text-green-600 dark:text-green-400">
                           {massEnqueueCompletionData.matchesUpdated} enqueued
                         </span>
@@ -803,14 +803,14 @@ export default function AdminDashboardClient() {
             <AlertDialogTitle>Confirm ban</AlertDialogTitle>
             <AlertDialogDescription>
               Select a reason to ban{' '}
-              <span className="text-foreground font-semibold">
+              <span className="font-semibold text-foreground">
                 {pendingPlayer?.username ?? 'this player'}
               </span>
               . Their API keys and sessions will be disabled immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3">
-            <Label className="text-foreground text-sm font-medium">
+            <Label className="text-sm font-medium text-foreground">
               Ban reason
             </Label>
             <RadioGroup
@@ -827,13 +827,13 @@ export default function AdminDashboardClient() {
                   key={reason}
                   htmlFor={`ban-reason-${reason}`}
                   className={cn(
-                    'border-border bg-muted/20 hover:border-primary/60 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors',
+                    'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/20 p-3 transition-colors hover:border-primary/60',
                     banReason === reason && 'border-primary bg-primary/10'
                   )}
                 >
                   <RadioGroupItem value={reason} id={`ban-reason-${reason}`} />
                   <div className="space-y-1">
-                    <p className="text-foreground font-medium">{reason}</p>
+                    <p className="font-medium text-foreground">{reason}</p>
                   </div>
                 </label>
               ))}

@@ -31,6 +31,35 @@ interface BeatmapListTableProps {
 
 type SortField = BeatmapListSort;
 
+function SortButton({
+  field,
+  children,
+  currentSort,
+  isDescending,
+  onSort,
+}: {
+  field: SortField;
+  children: React.ReactNode;
+  currentSort: SortField;
+  isDescending: boolean;
+  onSort: (field: SortField) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSort(field)}
+      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
+    >
+      {children}
+      {currentSort === field &&
+        (isDescending ? (
+          <ChevronDown className="h-3 w-3" />
+        ) : (
+          <ChevronUp className="h-3 w-3" />
+        ))}
+    </button>
+  );
+}
+
 export default function BeatmapListTable({
   beatmaps,
   filter,
@@ -83,35 +112,14 @@ export default function BeatmapListTable({
     router.push(pathname + (params.size > 0 ? `?${params}` : ''));
   };
 
-  const SortButton = ({
-    field,
-    children,
-  }: {
-    field: SortField;
-    children: React.ReactNode;
-  }) => (
-    <button
-      onClick={() => handleSort(field)}
-      className="hover:text-foreground flex items-center gap-1 whitespace-nowrap transition-colors"
-    >
-      {children}
-      {currentSort === field &&
-        (isDescending ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronUp className="h-3 w-3" />
-        ))}
-    </button>
-  );
-
   if (beatmaps.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="text-muted-foreground mb-4 h-12 w-12" />
-        <h3 className="text-muted-foreground text-lg font-semibold">
+        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
+        <h3 className="text-lg font-semibold text-muted-foreground">
           No Beatmaps Found
         </h3>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Try adjusting your search filters.
         </p>
       </div>
@@ -123,77 +131,137 @@ export default function BeatmapListTable({
       <div className="overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
+            <thead className="border-b bg-muted/50">
               <tr>
-                <th className="text-muted-foreground w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   ID
                 </th>
-                <th className="text-muted-foreground w-[20%] px-2 py-2 text-left text-xs font-medium tracking-wider">
+                <th className="w-[20%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
                   Difficulty
                 </th>
-                <th className="text-muted-foreground w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider">
-                  <SortButton field="creator">Creator</SortButton>
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
+                  <SortButton
+                    field="creator"
+                    currentSort={currentSort}
+                    isDescending={isDescending}
+                    onSort={handleSort}
+                  >
+                    Creator
+                  </SortButton>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Star Rating">
                     <div className="flex justify-center">
-                      <SortButton field="sr">
+                      <SortButton
+                        field="sr"
+                        currentSort={currentSort}
+                        isDescending={isDescending}
+                        onSort={handleSort}
+                      >
                         <Star className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="BPM">
                     <div className="flex justify-center">
-                      <SortButton field="bpm">
+                      <SortButton
+                        field="bpm"
+                        currentSort={currentSort}
+                        isDescending={isDescending}
+                        onSort={handleSort}
+                      >
                         <Activity className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Circle Size">
-                    <SortButton field="cs">CS</SortButton>
+                    <SortButton
+                      field="cs"
+                      currentSort={currentSort}
+                      isDescending={isDescending}
+                      onSort={handleSort}
+                    >
+                      CS
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Approach Rate">
-                    <SortButton field="ar">AR</SortButton>
+                    <SortButton
+                      field="ar"
+                      currentSort={currentSort}
+                      isDescending={isDescending}
+                      onSort={handleSort}
+                    >
+                      AR
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Overall Difficulty">
-                    <SortButton field="od">OD</SortButton>
+                    <SortButton
+                      field="od"
+                      currentSort={currentSort}
+                      isDescending={isDescending}
+                      onSort={handleSort}
+                    >
+                      OD
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="HP Drain Rate">
-                    <SortButton field="hp">HP</SortButton>
+                    <SortButton
+                      field="hp"
+                      currentSort={currentSort}
+                      isDescending={isDescending}
+                      onSort={handleSort}
+                    >
+                      HP
+                    </SortButton>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Length">
                     <div className="flex justify-center">
-                      <SortButton field="length">
+                      <SortButton
+                        field="length"
+                        currentSort={currentSort}
+                        isDescending={isDescending}
+                        onSort={handleSort}
+                      >
                         <Clock className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Verified Tournaments">
                     <div className="flex justify-center">
-                      <SortButton field="tournamentCount">
+                      <SortButton
+                        field="tournamentCount"
+                        currentSort={currentSort}
+                        isDescending={isDescending}
+                        onSort={handleSort}
+                      >
                         <Trophy className="h-3 w-3" />
                       </SortButton>
                     </div>
                   </SimpleTooltip>
                 </th>
-                <th className="text-muted-foreground w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider">
+                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
                   <SimpleTooltip content="Verified Games">
                     <div className="flex justify-center">
-                      <SortButton field="gameCount">
+                      <SortButton
+                        field="gameCount"
+                        currentSort={currentSort}
+                        isDescending={isDescending}
+                        onSort={handleSort}
+                      >
                         <Gamepad2 className="h-3 w-3" />
                       </SortButton>
                     </div>
@@ -202,11 +270,11 @@ export default function BeatmapListTable({
               </tr>
             </thead>
 
-            <tbody className="divide-border divide-y">
+            <tbody className="divide-y divide-border">
               {beatmaps.map((beatmap, index) => (
                 <tr
                   key={beatmap.id}
-                  className={`hover:bg-muted/30 group cursor-pointer transition-colors ${
+                  className={`group cursor-pointer transition-colors hover:bg-muted/30 ${
                     index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
                   }`}
                   onClick={() => router.push(`/beatmaps/${beatmap.osuId}`)}
@@ -214,7 +282,7 @@ export default function BeatmapListTable({
                   <td className="px-2 py-2 text-center">
                     <Link
                       href={`/beatmaps/${beatmap.osuId}`}
-                      className="text-muted-foreground hover:text-primary text-xs transition-colors"
+                      className="text-xs text-muted-foreground transition-colors hover:text-primary"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {beatmap.osuId}
@@ -241,8 +309,8 @@ export default function BeatmapListTable({
                             </div>
                           </>
                         ) : (
-                          <div className="bg-muted flex h-full w-full items-center justify-center">
-                            <Music className="text-muted-foreground h-3 w-3" />
+                          <div className="flex h-full w-full items-center justify-center bg-muted">
+                            <Music className="h-3 w-3 text-muted-foreground" />
                           </div>
                         )}
                       </div>
@@ -250,13 +318,13 @@ export default function BeatmapListTable({
                       <div className="min-w-0 flex-1">
                         <Link
                           href={`/beatmaps/${beatmap.osuId}`}
-                          className="hover:text-primary block transition-colors"
+                          className="block transition-colors hover:text-primary"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <p className="max-w-[280px] truncate text-xs font-medium">
                             {beatmap.artist} - {beatmap.title}
                           </p>
-                          <p className="text-muted-foreground max-w-[240px] truncate text-xs">
+                          <p className="max-w-[240px] truncate text-xs text-muted-foreground">
                             [{beatmap.diffName}]
                           </p>
                         </Link>
@@ -265,7 +333,7 @@ export default function BeatmapListTable({
                   </td>
 
                   <td className="px-2 py-2">
-                    <span className="text-muted-foreground max-w-[100px] truncate text-xs">
+                    <span className="max-w-[100px] truncate text-xs text-muted-foreground">
                       {beatmap.creator ?? 'Unknown'}
                     </span>
                   </td>

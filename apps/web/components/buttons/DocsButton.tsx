@@ -10,7 +10,7 @@ export default function DocsButton() {
       <SimpleTooltip content="Read the docs">
         <Button
           aria-label="Docs"
-          className="hover:text-primary cursor-pointer"
+          className="cursor-pointer hover:text-primary"
           variant="ghost"
           size="icon"
         >

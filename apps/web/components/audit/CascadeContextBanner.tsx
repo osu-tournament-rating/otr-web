@@ -45,7 +45,7 @@ export default function CascadeContextBanner({
         Part of{' '}
         <Link
           href={`/audit/${slug}/${context.topEntityId}`}
-          className="text-primary font-medium hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {entityName}
         </Link>{' '}

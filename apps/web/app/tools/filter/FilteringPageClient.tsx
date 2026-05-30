@@ -17,14 +17,14 @@ export default function FilteringPageClient() {
         <h1 className="text-2xl font-bold sm:text-3xl">
           Tournament Registrant Filtering
         </h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
+        <p className="text-sm text-muted-foreground sm:text-base">
           Filter your tournament registrants based on rating eligibility
           criteria.
         </p>
       </div>
       <Alert className="border-warning/50 bg-warning/10 dark:border-warning/50 dark:bg-warning/10">
-        <AlertTriangle className="text-warning-foreground h-4 w-4 dark:text-yellow-400" />
-        <AlertTitle className="text-warning-foreground font-bold dark:text-yellow-100">
+        <AlertTriangle className="h-4 w-4 text-warning-foreground dark:text-yellow-400" />
+        <AlertTitle className="font-bold text-warning-foreground dark:text-yellow-100">
           Host Compliance
         </AlertTitle>
         <AlertDescription className="text-warning-foreground/90 dark:text-yellow-100/90">

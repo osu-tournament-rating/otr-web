@@ -16,7 +16,7 @@ import {
   Download,
 } from 'lucide-react';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { ORPCError } from '@orpc/client';
@@ -59,7 +59,7 @@ export function FilterReportView() {
   const [results, setResults] = useState<FilteringResult | null>(null);
 
   const form = useForm<FilterReportForm>({
-    resolver: zodResolver(filterReportSchema),
+    resolver: zodResolver(filterReportSchema) as Resolver<FilterReportForm>,
     defaultValues: {
       reportId: '',
     },
@@ -136,14 +136,14 @@ export function FilterReportView() {
         <Card>
           <CardContent className="py-8 sm:py-12">
             <div className="mx-auto flex max-w-md flex-col items-center gap-4">
-              <div className="bg-muted/50 flex h-16 w-16 items-center justify-center rounded-full">
-                <FileText className="text-primary h-8 w-8" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+                <FileText className="h-8 w-8 text-primary" />
               </div>
               <div className="text-center">
                 <h2 className="text-xl font-semibold">
                   Look Up a Filter Report
                 </h2>
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Enter a report ID to view detailed filtering results for
                   tournament participants.
                 </p>
@@ -192,16 +192,16 @@ export function FilterReportView() {
           {/* Report Header Card — hero card with identity + stats */}
           <Card className="p-6">
             {/* Identity section */}
-            <div className="bg-popover flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 rounded-lg bg-popover p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-muted/50 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
-                  <ClipboardCheck className="text-primary h-6 w-6" />
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-muted/50">
+                  <ClipboardCheck className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-medium">
                     Filter Report #{report.id}
                   </h2>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-muted-foreground">
                     Generated on{' '}
                     {new Date(report.created).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -252,7 +252,7 @@ export function FilterReportView() {
                 valueClassName="text-red-600 dark:text-red-500"
               />
               <StatCard
-                icon={<Users className="text-primary h-5 w-5" />}
+                icon={<Users className="h-5 w-5 text-primary" />}
                 label="Total Players"
                 value={results.filteringResults.length}
               />
@@ -261,7 +261,7 @@ export function FilterReportView() {
                   icon={
                     <RulesetIcon
                       ruleset={report.request.ruleset}
-                      className="fill-primary size-5"
+                      className="size-5 fill-primary"
                     />
                   }
                   label="Ruleset"
@@ -278,7 +278,7 @@ export function FilterReportView() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Filter className="text-primary h-6 w-6" />
+                  <Filter className="h-6 w-6 text-primary" />
                   <CardTitle className="text-xl font-bold">
                     Filter Criteria
                   </CardTitle>
@@ -290,7 +290,7 @@ export function FilterReportView() {
                     icon={
                       <RulesetIcon
                         ruleset={report.request.ruleset}
-                        className="fill-primary size-5"
+                        className="size-5 fill-primary"
                       />
                     }
                     label="Ruleset"
@@ -299,7 +299,7 @@ export function FilterReportView() {
                     }
                   />
                   <StatCard
-                    icon={<TrendingUp className="text-primary h-5 w-5" />}
+                    icon={<TrendingUp className="h-5 w-5 text-primary" />}
                     label="Min. Rating"
                     value={report.request.minRating ?? 'Not set'}
                     valueClassName={
@@ -309,7 +309,7 @@ export function FilterReportView() {
                     }
                   />
                   <StatCard
-                    icon={<TrendingDown className="text-primary h-5 w-5" />}
+                    icon={<TrendingDown className="h-5 w-5 text-primary" />}
                     label="Max Rating"
                     value={report.request.maxRating ?? 'Not set'}
                     valueClassName={
@@ -328,7 +328,7 @@ export function FilterReportView() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ListFilter className="text-primary h-6 w-6" />
+                  <ListFilter className="h-6 w-6 text-primary" />
                   <CardTitle className="text-xl font-bold">Results</CardTitle>
                 </div>
                 <Button

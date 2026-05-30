@@ -56,12 +56,12 @@ export default function TournamentCard({
   const cardContent = (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
+        <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
           {tournament.name}
         </h2>
 
         <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-2">
-          <span className="text-muted-foreground font-mono text-sm">
+          <span className="font-mono text-sm text-muted-foreground">
             {tournament.abbreviation}
           </span>
           {allowAdminView && (
@@ -80,7 +80,7 @@ export default function TournamentCard({
         </div>
       </div>
 
-      <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
             <VerificationBadge

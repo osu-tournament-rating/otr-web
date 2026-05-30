@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { ORPCError } from '@orpc/server';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';

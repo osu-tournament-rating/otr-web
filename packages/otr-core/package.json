@@ -17,9 +17,9 @@
     "./logging/*": "./src/logging/*"
   },
   "peerDependencies": {
-    "drizzle-orm": "^0.44.5"
+    "drizzle-orm": "^0.45.2"
   },
   "dependencies": {
-    "pino": "^9.6.0"
+    "pino": "^10.3.1"
   }
 }

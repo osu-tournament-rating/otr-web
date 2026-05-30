@@ -130,7 +130,7 @@ export default async function BeatmapPage({ params }: PageProps) {
         <Card className="py-12">
           <CardContent className="flex flex-col items-center justify-center text-center">
             <h2 className="text-lg font-semibold">No Tournament Data</h2>
-            <p className="text-muted-foreground mt-2 max-w-md text-sm">
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
               This beatmap has not been used in any verified tournaments yet.
             </p>
           </CardContent>

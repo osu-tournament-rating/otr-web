@@ -12,6 +12,10 @@ export function ModeToggle() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
 
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
   useHotkeys('CTRL+L', (e) => {
     e.preventDefault();
     toggleTheme();
@@ -21,29 +25,18 @@ export function ModeToggle() {
     setMounted(true);
   }, []);
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-  };
-
-  if (!mounted) {
-    return (
-      <Button className="cursor-pointer" variant="ghost" size="icon" disabled>
-        <Sun className="rotate-0 scale-100 transition-all" />
-      </Button>
-    );
-  }
-
   return (
     <Button
       className="cursor-pointer"
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
+      aria-label="Toggle theme"
     >
-      {resolvedTheme === 'dark' ? (
-        <Sun className="rotate-0 scale-100 transition-all" />
+      {mounted && resolvedTheme === 'dark' ? (
+        <Moon className="scale-100 rotate-0 transition-all" />
       ) : (
-        <Moon className="rotate-0 scale-100 transition-all" />
+        <Sun className="scale-100 rotate-0 transition-all" />
       )}
     </Button>
   );

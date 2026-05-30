@@ -89,7 +89,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   const entityLink = (
     <Link
       href={`/audit/${topEntitySlug}/${topEntity.entityId}`}
-      className="text-primary font-medium hover:underline"
+      className="font-medium text-primary hover:underline"
     >
       {entityName}
     </Link>
@@ -111,7 +111,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       const tournamentLink = (
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -151,7 +151,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         {' in '}
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -185,7 +185,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         {' in '}
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -244,17 +244,17 @@ function CascadeChildEntries({
   return (
     <div
       className={cn(
-        'bg-muted/20 border-border px-3 py-2',
+        'border-border bg-muted/20 px-3 py-2',
         !hasTopLevelDiffs && 'border-t'
       )}
     >
       <div className="flex flex-col gap-2 pl-9">
-        <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Affected {childPlural}
         </span>
 
         {isLoading && (
-          <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
             Loading…
           </div>
@@ -274,7 +274,7 @@ function CascadeChildEntries({
             <div key={entry.id} className="flex flex-col gap-1">
               <Link
                 href={`/audit/${childSlug}/${entryId}`}
-                className="text-primary text-xs font-medium hover:underline"
+                className="text-xs font-medium text-primary hover:underline"
               >
                 {entryLabel}
               </Link>
@@ -291,7 +291,7 @@ function CascadeChildEntries({
                   ))}
                 </div>
               ) : (
-                <span className="text-muted-foreground pl-3 text-xs italic">
+                <span className="pl-3 text-xs text-muted-foreground italic">
                   {event.action === 'deletion'
                     ? '(deleted)'
                     : '(no field changes)'}
@@ -302,7 +302,7 @@ function CascadeChildEntries({
         })}
 
         {data && data.hasMore && (
-          <span className="text-muted-foreground text-xs italic">
+          <span className="text-xs text-muted-foreground italic">
             … and more (showing first {data.entries.length})
           </span>
         )}
@@ -330,7 +330,7 @@ export default function AuditEventCard({
     >
       <div
         className={cn(
-          'border-border border-b border-l-2 transition-colors',
+          'border-b border-l-2 border-border transition-colors',
           ACTION_BORDER_COLORS[event.action],
           event.isSystem && 'border-l-amber-400',
           isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
@@ -356,22 +356,22 @@ export default function AuditEventCard({
           {/* User name + description */}
           <span data-testid="event-card-description" className="min-w-0 flex-1">
             {event.isSystem ? (
-              <span className="text-muted-foreground mr-1 italic">System</span>
+              <span className="mr-1 text-muted-foreground italic">System</span>
             ) : event.actionUser ? (
               event.actionUser.playerId ? (
                 <Link
                   href={`/players/${event.actionUser.playerId}`}
-                  className="text-primary mr-1 font-medium hover:underline"
+                  className="mr-1 font-medium text-primary hover:underline"
                 >
                   {event.actionUser.username ?? `User ${event.actionUser.id}`}
                 </Link>
               ) : (
-                <span className="text-foreground mr-1 font-medium">
+                <span className="mr-1 font-medium text-foreground">
                   {event.actionUser.username ?? `User ${event.actionUser.id}`}
                 </span>
               )
             ) : (
-              <span className="text-muted-foreground mr-1 italic">Unknown</span>
+              <span className="mr-1 text-muted-foreground italic">Unknown</span>
             )}
             {buildDescription(event)}
           </span>
@@ -382,7 +382,7 @@ export default function AuditEventCard({
               <button
                 type="button"
                 aria-label={isOpen ? 'Collapse details' : 'Expand details'}
-                className="text-muted-foreground hover:bg-accent/70 -mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded transition-colors"
+                className="-mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/70"
               >
                 <ChevronRight
                   className={cn(
@@ -398,14 +398,14 @@ export default function AuditEventCard({
           <RelativeTime
             data-testid="event-card-timestamp"
             dateString={event.created}
-            className="text-muted-foreground shrink-0 text-xs"
+            className="shrink-0 text-xs text-muted-foreground"
           />
         </div>
 
         {/* Expanded diffs */}
         <CollapsibleContent data-testid="event-card-diff">
           {changes && changeCount > 0 && (
-            <div className="bg-muted/20 border-border border-t px-3 py-2">
+            <div className="border-t border-border bg-muted/20 px-3 py-2">
               <div className="flex flex-col gap-1 pl-9">
                 {Object.entries(changes).map(([fieldName, change]) => (
                   <AuditDiffDisplay

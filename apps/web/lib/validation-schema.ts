@@ -14,9 +14,12 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
-import { EnumLike, z } from 'zod';
+import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
+
+/** Enum-like object shape (replaces zod v3's removed `EnumLike` type) */
+type EnumLike = Record<string, string | number>;
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
@@ -32,7 +35,7 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
 /** Schema that ensures a numeric input is assignable to a given enumeration */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce
-    .number({ invalid_type_error: 'Required' })
+    .number({ error: 'Required' })
     .refine((val) => Object.values(enumType).includes(val));
 
 /** Schema that will convert string input of 'true' or 'false' to a boolean */

@@ -51,7 +51,7 @@ export default function PlayerRatingStatsCard({
               </span>
             }
             icon={
-              <div className="bg-muted/50 relative flex h-12 w-12 items-center justify-center rounded-full">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
                 <TierIcon
                   tier={(rating.tierProgress.currentTier as TierName) || ''}
                   subTier={rating.tierProgress.currentSubTier ?? undefined}
@@ -73,7 +73,7 @@ export default function PlayerRatingStatsCard({
                 <TRText />
               </span>
             }
-            icon={<BarChart4 className="text-primary h-5 w-5" />}
+            icon={<BarChart4 className="h-5 w-5 text-primary" />}
             className="lg:col-span-1"
           />
 
@@ -81,7 +81,7 @@ export default function PlayerRatingStatsCard({
           <StatCard
             label="Global"
             value={`#${rating.globalRank.toLocaleString()}`}
-            icon={<Globe className="text-primary h-5 w-5" />}
+            icon={<Globe className="h-5 w-5 text-primary" />}
             className="lg:col-span-1"
           />
 
@@ -100,28 +100,28 @@ export default function PlayerRatingStatsCard({
                 <span>{`#${rating.countryRank.toLocaleString()}`}</span>
               </div>
             }
-            icon={<Flag className="text-primary h-5 w-5" />}
+            icon={<Flag className="h-5 w-5 text-primary" />}
           />
 
           {/* Percentile Card */}
           <StatCard
             label="Percentile"
             value={formatPercentage(rating.percentile)}
-            icon={<PercentCircle className="text-primary h-6 w-6" />}
+            icon={<PercentCircle className="h-6 w-6 text-primary" />}
           />
 
           {/* Tournaments Card */}
           <StatCard
             label="Tournaments"
             value={rating.tournamentsPlayed || 0}
-            icon={<Trophy className="text-primary h-6 w-6" />}
+            icon={<Trophy className="h-6 w-6 text-primary" />}
           />
 
           {/* Matches Card */}
           <StatCard
             label="Matches"
             value={rating.matchesPlayed || 0}
-            icon={<Swords className="text-primary h-6 w-6" />}
+            icon={<Swords className="h-6 w-6 text-primary" />}
           />
         </div>
 

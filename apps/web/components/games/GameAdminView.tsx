@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ControllerFieldState, useForm } from 'react-hook-form';
+import { ControllerFieldState, useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import {
   Dialog,
@@ -96,7 +96,9 @@ export default function GameAdminView({ game }: { game: Game }) {
   };
 
   const form = useForm<z.infer<typeof gameEditFormSchema>>({
-    resolver: zodResolver(gameEditFormSchema),
+    resolver: zodResolver(gameEditFormSchema) as Resolver<
+      z.infer<typeof gameEditFormSchema>
+    >,
     defaultValues,
     mode: 'all',
   });
@@ -243,7 +245,7 @@ export default function GameAdminView({ game }: { game: Game }) {
               control={form.control}
               name="isFreeMod"
               render={({ field: { value, onChange }, fieldState }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     {/* Disabled because this is a property set on the
                      DTO but isn't configurable or in the database */}

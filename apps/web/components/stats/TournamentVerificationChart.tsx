@@ -143,7 +143,7 @@ export default function TournamentVerificationChart({
     <Card data-testid="chart-tournament-verification" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CheckCircle className="text-primary h-6 w-6" />
+          <CheckCircle className="h-6 w-6 text-primary" />
           Tournament Verification Status
         </CardTitle>
         <CardDescription>

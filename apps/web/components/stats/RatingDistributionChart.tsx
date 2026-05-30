@@ -67,7 +67,7 @@ function CustomTooltip(props: ExtendedTooltipProps) {
   const lineData = payload.find((p) => p.dataKey === 'cumulativePercentage');
 
   return (
-    <div className="bg-background rounded-lg border p-2 shadow-sm">
+    <div className="rounded-lg border bg-background p-2 shadow-sm">
       <div className="flex items-center gap-2">
         {data.tier && (
           <TierIcon
@@ -90,12 +90,12 @@ function CustomTooltip(props: ExtendedTooltipProps) {
         </div>
       </div>
       {barData && (
-        <p className="text-muted-foreground mt-2 text-sm">
+        <p className="mt-2 text-sm text-muted-foreground">
           Players: {formatChartNumber(barData.value as number)}
         </p>
       )}
       {lineData && (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Cumulative: {formatPercentage(lineData.value as number, 1)}
         </p>
       )}
@@ -107,6 +107,39 @@ interface CustomXAxisTickProps {
   x?: number;
   y?: number;
   payload?: { value: number };
+  tierData?: { tier: string; baseRating: number }[];
+}
+
+function CustomXAxisTickWithData({
+  x,
+  y,
+  payload,
+  tierData = [],
+}: CustomXAxisTickProps) {
+  if (x === undefined || y === undefined || !payload) {
+    return null;
+  }
+
+  const tier = tierData.find((t) => t.baseRating === payload.value);
+
+  if (!tier) return null;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <foreignObject x={-12} y={5} width={24} height={24}>
+        <SimpleTooltip content={`${tier.tier} (${tier.baseRating} TR)`}>
+          <div>
+            <TierIcon
+              tier={tier.tier as TierName}
+              subTier={1}
+              width={24}
+              height={24}
+            />
+          </div>
+        </SimpleTooltip>
+      </foreignObject>
+    </g>
+  );
 }
 
 export default function RatingDistributionChart({
@@ -118,33 +151,6 @@ export default function RatingDistributionChart({
   const rulesetInfo = RulesetEnumHelper.getMetadata(ruleset);
   const { chartData, tierData, isEmpty } = useRatingDistribution({ ratings });
 
-  const CustomXAxisTickWithData = ({ x, y, payload }: CustomXAxisTickProps) => {
-    if (x === undefined || y === undefined || !payload) {
-      return null;
-    }
-
-    const tier = tierData.find((t) => t.baseRating === payload.value);
-
-    if (!tier) return null;
-
-    return (
-      <g transform={`translate(${x},${y})`}>
-        <foreignObject x={-12} y={5} width={24} height={24}>
-          <SimpleTooltip content={`${tier.tier} (${tier.baseRating} TR)`}>
-            <div>
-              <TierIcon
-                tier={tier.tier as TierName}
-                subTier={1}
-                width={24}
-                height={24}
-              />
-            </div>
-          </SimpleTooltip>
-        </foreignObject>
-      </g>
-    );
-  };
-
   if (isEmpty) {
     return (
       <Card
@@ -153,7 +159,7 @@ export default function RatingDistributionChart({
       >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
+            <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
             {rulesetInfo?.text} Rating Distribution
           </CardTitle>
         </CardHeader>
@@ -173,7 +179,7 @@ export default function RatingDistributionChart({
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <RulesetIcon ruleset={ruleset} className="fill-primary h-6 w-6" />
+          <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
           {rulesetInfo?.text} Rating Distribution
         </CardTitle>
       </CardHeader>
@@ -193,7 +199,7 @@ export default function RatingDistributionChart({
             />
             <XAxis
               dataKey="rating"
-              tick={<CustomXAxisTickWithData />}
+              tick={<CustomXAxisTickWithData tierData={tierData} />}
               tickLine={false}
               axisLine={{ stroke: CHART_COLORS.mutedForeground }}
               interval="preserveStartEnd"

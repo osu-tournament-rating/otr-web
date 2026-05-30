@@ -76,9 +76,9 @@ type FormSectionProps = {
 
 const FormSection = ({ icon, title, children }: FormSectionProps) => (
   <div className="space-y-4 sm:space-y-6">
-    <div className="border-border flex items-center gap-2 rounded-md border-b pb-2 sm:gap-3 sm:pb-3">
+    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
       {icon}
-      <h3 className="text-foreground text-lg font-semibold sm:text-xl">
+      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
         {title}
       </h3>
     </div>
@@ -171,7 +171,7 @@ export default function TournamentSubmissionForm() {
             className="flex flex-row items-center gap-1"
             href={`/tournaments/${result.id}`}
           >
-            <LinkIcon className="text-primary size-4" />
+            <LinkIcon className="size-4 text-primary" />
             <span className="text-primary">Click to view</span>
           </Link>
         </div>
@@ -197,7 +197,7 @@ export default function TournamentSubmissionForm() {
           className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
         >
           <FormSection
-            icon={<Trophy className="text-primary size-6" />}
+            icon={<Trophy className="size-6 text-primary" />}
             title="Information"
           >
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -381,7 +381,7 @@ export default function TournamentSubmissionForm() {
                   checked={rejectOnSubmit}
                   onClick={() => setRejectOnSubmit((prev) => !prev)}
                 />
-                <FormLabel className="text-foreground font-medium">
+                <FormLabel className="font-medium text-foreground">
                   Reject this tournament on submission
                 </FormLabel>
                 {rejectOnSubmit && (
@@ -431,7 +431,7 @@ export default function TournamentSubmissionForm() {
           </div>
 
           <FormSection
-            icon={<Database className="text-primary h-6 w-6" />}
+            icon={<Database className="h-6 w-6 text-primary" />}
             title="Data"
           >
             <FormField
@@ -502,7 +502,7 @@ export default function TournamentSubmissionForm() {
 
           <Button
             type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl sm:py-6 sm:text-lg"
+            className="w-full rounded-md bg-primary py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -539,7 +539,7 @@ export default function TournamentSubmissionForm() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
+              className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
                 setShowBeatmapWarning(false);
                 setBeatmapWarningConfirmed(true);

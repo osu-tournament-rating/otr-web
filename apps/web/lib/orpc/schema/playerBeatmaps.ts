@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { Mods } from '@otr/core/osu';
 import { RulesetSchema } from './constants';
 import { TournamentListItemSchema } from './tournament';

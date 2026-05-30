@@ -34,7 +34,7 @@ export function BeatmapResultContent({
         <span className="min-w-0 truncate font-medium">
           {highlightMatch(displayTitle, query)}
         </span>
-        <span className="text-muted-foreground min-w-0 truncate text-xs">
+        <span className="min-w-0 truncate text-xs text-muted-foreground">
           [{highlightMatch(data.diffName, query)}]
           {data.creator && ` by ${data.creator}`}
         </span>
@@ -42,7 +42,7 @@ export function BeatmapResultContent({
 
       <div className="flex flex-shrink-0 items-center gap-3">
         <div className="flex items-center gap-1">
-          <Star className="text-primary h-3.5 w-3.5" />
+          <Star className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-medium">{data.sr.toFixed(2)}</span>
         </div>
         <SimpleTooltip
@@ -52,11 +52,11 @@ export function BeatmapResultContent({
             ruleset={data.ruleset}
             width={16}
             height={16}
-            className="fill-primary flex-shrink-0"
+            className="flex-shrink-0 fill-primary"
           />
         </SimpleTooltip>
         {data.gameCount > 0 && (
-          <div className="text-muted-foreground flex items-center gap-1 text-xs">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Gamepad2 className="h-3 w-3" />
             <span>{data.gameCount.toLocaleString()}</span>
           </div>

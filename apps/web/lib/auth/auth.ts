@@ -6,10 +6,9 @@ import {
 } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createFieldAttribute } from 'better-auth/db';
+import { apiKey } from '@better-auth/api-key';
 import {
   admin as adminPlugin,
-  apiKey,
   customSession,
   genericOAuth,
 } from 'better-auth/plugins';
@@ -76,6 +75,22 @@ const mapPlaymodeToRuleset = (playmode?: string | null) => {
   }
 };
 
+/**
+ * Creates an osu! API client authenticated with a user's existing access token.
+ *
+ * osu-api-v2-js v3 gates every request behind `await this.token_promise`, whose
+ * default value (`new Promise((r) => r)`) is never resolved — it is only
+ * replaced by `setNewToken()` / `createAsync()`. Constructing the client from a
+ * pre-obtained user token bypasses those, so we resolve the promise ourselves;
+ * otherwise every request hangs forever.
+ */
+const createUserOsuApiClient = (accessToken: string) => {
+  const api = new OsuApi({ access_token: accessToken, token_type: 'Bearer' });
+  (api as unknown as { token_promise: Promise<unknown> }).token_promise =
+    Promise.resolve();
+  return api;
+};
+
 const fetchOsuProfile = async (
   accessToken?: string | null
 ): Promise<User.Extended.WithStatisticsrulesets | null> => {
@@ -84,10 +99,7 @@ const fetchOsuProfile = async (
   }
 
   try {
-    const api = new OsuApi({
-      access_token: accessToken,
-      token_type: 'Bearer',
-    });
+    const api = createUserOsuApiClient(accessToken);
 
     return await api.getResourceOwner();
   } catch (error) {
@@ -199,7 +211,7 @@ const bannedLoginRedirectPlugin = () => ({
             create: {
               async before(
                 session: Session & Record<string, unknown>,
-                ctx?: GenericEndpointContext
+                ctx: GenericEndpointContext | null
               ) {
                 if (!ctx) {
                   return;
@@ -242,15 +254,13 @@ const bannedLoginRedirectPlugin = () => ({
                   'You have been banned from this application. Please contact support if you believe this is an error.';
 
                 if (isAuthCallback) {
-                  const origin =
-                    ctx.context.options.baseURL ??
-                    (() => {
-                      try {
-                        return new URL(ctx.context.baseURL).origin;
-                      } catch {
-                        return undefined;
-                      }
-                    })();
+                  const origin = (() => {
+                    try {
+                      return new URL(ctx.context.baseURL).origin;
+                    } catch {
+                      return undefined;
+                    }
+                  })();
 
                   const searchParams = new URLSearchParams();
 
@@ -317,10 +327,7 @@ const syncPlayerFriends = async ({
   let relations: User.Relation[] = [];
 
   try {
-    const api = new OsuApi({
-      access_token: accessToken,
-      token_type: 'Bearer',
-    });
+    const api = createUserOsuApiClient(accessToken);
 
     const fetched = await api.getFriends();
     relations = Array.isArray(fetched) ? fetched : [];
@@ -517,15 +524,16 @@ export const auth = betterAuth({
   user: {
     modelName: 'auth_user',
     additionalFields: {
-      playerId: createFieldAttribute('number', {
+      playerId: {
+        type: 'number',
         required: true,
         input: true,
-        references: {
-          model: 'players',
-          field: 'id',
-          onDelete: 'cascade',
-        },
-      }),
+        // The player_id -> players.id foreign key is defined and managed at the
+        // Drizzle/DB schema level. Better Auth's `references` is only consumed by
+        // its own (unused) migration generator, and as of v1.6 it eagerly
+        // resolves the target against Better Auth's model registry — where
+        // `players` is not a model — throwing during get-session. Omit it.
+      },
     },
     deleteUser: {
       enabled: true,

@@ -25,7 +25,7 @@ export default function HomeActionCards({
         />
       ) : (
         <Card className="flex size-full flex-row items-center gap-4 border border-none p-6">
-          <div className="text-primary mt-1">
+          <div className="mt-1 text-primary">
             <User size={24} />
           </div>
           <div className="flex flex-col gap-1">

@@ -1,14 +1,16 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   ScatterChart,
+  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
   Legend,
-  ReferenceArea,
+  useXAxisScale,
+  useYAxisScale,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
@@ -153,6 +155,60 @@ const MOD_COLORS: Record<ModCategory, string> = {
   other: 'var(--chart-3)',
 };
 
+interface DensityCellsProps {
+  densityByMod: Record<ModCategory, DensityCell[]>;
+  visibleMods: Set<ModCategory>;
+}
+
+/**
+ * Draws every density cell as a single SVG layer using the axis scales from
+ * recharts. Rendering one component beats emitting a `<ReferenceArea>` per cell:
+ * each ReferenceArea subscribes to recharts' internal store, so a few hundred of
+ * them made every mod toggle re-reconcile the whole chart (~1-2s). Here a toggle
+ * only re-renders this one component's plain `<rect>`s.
+ */
+function DensityCells({ densityByMod, visibleMods }: DensityCellsProps) {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+
+  if (!xScale || !yScale) return null;
+
+  const rects: ReactNode[] = [];
+  for (const mod of Object.keys(densityByMod) as ModCategory[]) {
+    if (!visibleMods.has(mod)) continue;
+    const cells = densityByMod[mod];
+    if (!cells) continue;
+
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const px1 = xScale(cell.x1);
+      const px2 = xScale(cell.x2);
+      const py1 = yScale(cell.y1);
+      const py2 = yScale(cell.y2);
+      if (px1 == null || px2 == null || py1 == null || py2 == null) continue;
+
+      rects.push(
+        <rect
+          key={`density-${mod}-${i}`}
+          x={Math.min(px1, px2)}
+          y={Math.min(py1, py2)}
+          width={Math.abs(px2 - px1)}
+          height={Math.abs(py2 - py1)}
+          shapeRendering="crispEdges"
+          style={{
+            fill: MOD_COLORS[mod],
+            fillOpacity:
+              DENSITY_MIN_OPACITY +
+              cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY),
+          }}
+        />
+      );
+    }
+  }
+
+  return <g className="density-cells">{rects}</g>;
+}
+
 export default function BeatmapScoreRatingChart({
   data,
   className,
@@ -163,7 +219,7 @@ export default function BeatmapScoreRatingChart({
     new Set(['nm', 'hr', 'hd', 'dt', 'other'])
   );
 
-  const handleLegendClick = (entry: { value: string }) => {
+  const handleLegendClick = (entry: { value?: string }) => {
     const modMap: Record<string, ModCategory> = {
       'No Mod': 'nm',
       'Hard Rock': 'hr',
@@ -171,7 +227,7 @@ export default function BeatmapScoreRatingChart({
       'Double Time': 'dt',
       Other: 'other',
     };
-    const mod = modMap[entry.value];
+    const mod = entry.value ? modMap[entry.value] : undefined;
     if (!mod) return;
 
     setVisibleMods((prev) => {
@@ -235,6 +291,17 @@ export default function BeatmapScoreRatingChart({
       };
     }, [data]);
 
+  // Two invisible anchor points at the domain corners are enough for recharts
+  // v3 to build the axis scales; feeding the full dataset here would render a
+  // transparent SVG node per score and make mod toggles re-render slowly.
+  const scaleAnchors = useMemo(
+    () => [
+      { playerRating: xDomain[0], score: yDomain[0] },
+      { playerRating: xDomain[1], score: yDomain[1] },
+    ],
+    [xDomain, yDomain]
+  );
+
   const chartConfig: ChartConfig = {
     nm: { label: 'No Mod', color: 'var(--chart-1)' },
     hr: { label: 'Hard Rock', color: 'var(--mod-hard-rock)' },
@@ -250,7 +317,7 @@ export default function BeatmapScoreRatingChart({
           <CardTitle className="text-center">Score vs Player Rating</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             No score data available for this beatmap.
           </p>
         </CardContent>
@@ -311,87 +378,99 @@ export default function BeatmapScoreRatingChart({
                 fontSize: 11,
                 color: colors.text,
                 paddingBottom: 10,
-                cursor: 'pointer',
               }}
-              onClick={handleLegendClick}
-              payload={[
-                ...(groupedData.nm.length > 0
-                  ? [
-                      {
-                        value: 'No Mod',
-                        type: 'square' as const,
-                        color: visibleMods.has('nm')
-                          ? 'var(--chart-1)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.hr.length > 0
-                  ? [
-                      {
-                        value: 'Hard Rock',
-                        type: 'square' as const,
-                        color: visibleMods.has('hr')
-                          ? 'var(--mod-hard-rock)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.hd.length > 0
-                  ? [
-                      {
-                        value: 'Hidden',
-                        type: 'square' as const,
-                        color: visibleMods.has('hd')
-                          ? 'var(--mod-hidden)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.dt.length > 0
-                  ? [
-                      {
-                        value: 'Double Time',
-                        type: 'square' as const,
-                        color: visibleMods.has('dt')
-                          ? 'var(--mod-double-time)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-                ...(groupedData.other.length > 0
-                  ? [
-                      {
-                        value: 'Other',
-                        type: 'square' as const,
-                        color: visibleMods.has('other')
-                          ? 'var(--chart-3)'
-                          : 'rgba(128,128,128,0.3)',
-                      },
-                    ]
-                  : []),
-              ]}
+              content={() => {
+                // recharts v3 derives Legend payload from chart series and no
+                // longer honors the `payload` prop, so we render the mod toggle
+                // legend ourselves via a custom content renderer.
+                const legendItems = [
+                  ...(groupedData.nm.length > 0
+                    ? [
+                        {
+                          value: 'No Mod',
+                          color: visibleMods.has('nm')
+                            ? 'var(--chart-1)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.hr.length > 0
+                    ? [
+                        {
+                          value: 'Hard Rock',
+                          color: visibleMods.has('hr')
+                            ? 'var(--mod-hard-rock)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.hd.length > 0
+                    ? [
+                        {
+                          value: 'Hidden',
+                          color: visibleMods.has('hd')
+                            ? 'var(--mod-hidden)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.dt.length > 0
+                    ? [
+                        {
+                          value: 'Double Time',
+                          color: visibleMods.has('dt')
+                            ? 'var(--mod-double-time)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                  ...(groupedData.other.length > 0
+                    ? [
+                        {
+                          value: 'Other',
+                          color: visibleMods.has('other')
+                            ? 'var(--chart-3)'
+                            : 'rgba(128,128,128,0.3)',
+                        },
+                      ]
+                    : []),
+                ];
+
+                return (
+                  <ul className="flex list-none justify-end gap-3 p-0">
+                    {legendItems.map((item) => (
+                      <li
+                        key={item.value}
+                        className="flex cursor-pointer items-center gap-1"
+                        onClick={() => handleLegendClick(item)}
+                      >
+                        <span
+                          className="inline-block size-2.5"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        {item.value}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }}
             />
 
-            {(Object.keys(densityByMod) as ModCategory[])
-              .filter((mod) => visibleMods.has(mod))
-              .map((mod) =>
-                densityByMod[mod]?.map((cell, i) => (
-                  <ReferenceArea
-                    key={`density-${mod}-${i}`}
-                    x1={cell.x1}
-                    x2={cell.x2}
-                    y1={cell.y1}
-                    y2={cell.y2}
-                    fill={MOD_COLORS[mod]}
-                    fillOpacity={
-                      DENSITY_MIN_OPACITY +
-                      cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
-                    }
-                    stroke="none"
-                  />
-                ))
-              )}
+            {/* Invisible series so recharts v3 establishes the axis scales the
+              density ReferenceAreas position against. Without a registered
+              graphical item, v3 derives no scale from domain/ticks alone. */}
+            <Scatter
+              data={scaleAnchors}
+              dataKey="score"
+              fillOpacity={0}
+              legendType="none"
+              isAnimationActive={false}
+            />
+
+            <DensityCells
+              densityByMod={densityByMod}
+              visibleMods={visibleMods}
+            />
           </ScatterChart>
         </ChartContainer>
       </CardContent>

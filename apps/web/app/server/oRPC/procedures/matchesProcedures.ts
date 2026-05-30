@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import { alias } from 'drizzle-orm/pg-core';
 import { asc, desc, eq, inArray } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
 import { AdminNoteSchema, AdminNoteUserSchema } from '@/lib/orpc/schema/common';

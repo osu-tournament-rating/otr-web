@@ -33,7 +33,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-inter flex min-h-screen flex-col">
+      <body className="flex min-h-screen flex-col font-inter">
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <TooltipProvider>
             <SessionProvider user={session}>

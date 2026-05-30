@@ -178,7 +178,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
         <p className="flex items-center gap-2">
           <strong>Ruleset:</strong>
           <SimpleTooltip content={rulesetLabel}>
-            <RulesetIcon ruleset={ruleset} className="fill-primary h-4 w-4" />
+            <RulesetIcon ruleset={ruleset} className="h-4 w-4 fill-primary" />
           </SimpleTooltip>
         </p>
         {childMatch.osuId && (
@@ -332,7 +332,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
                   )}
                 </Button>
               </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
             {renderChildMatchesList()}

@@ -101,7 +101,7 @@ export default function PlayerRatingChartTable({
                 {point.volatilityDelta.toFixed(2)}
               </TableCell>
             )}
-            <TableCell className="text-muted-foreground max-w-[300px] overflow-y-clip truncate">
+            <TableCell className="max-w-[300px] truncate overflow-y-clip text-muted-foreground">
               {point.match?.id && point.match?.name ? (
                 <Link
                   href={`/matches/${point.match.id}`}

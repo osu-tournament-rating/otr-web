@@ -263,12 +263,12 @@ export default function AdminReportsClient() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-muted-foreground flex items-center gap-3 py-8 text-sm">
+            <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
               Loading reports...
             </div>
           ) : reports.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               No reports found
             </p>
           ) : (
@@ -317,7 +317,7 @@ export default function AdminReportsClient() {
                           : '[Deleted User]'}
                       </TableCell>
                       <TableCell>{getStatusBadge(report.status)}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
+                      <TableCell className="text-xs text-muted-foreground">
                         {formatDateTime(report.created)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -357,7 +357,7 @@ export default function AdminReportsClient() {
             <div className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Reporter
                   </Label>
                   <p className="text-sm font-medium">
@@ -368,7 +368,7 @@ export default function AdminReportsClient() {
                   </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Status
                   </Label>
                   <div className="mt-1">
@@ -376,7 +376,7 @@ export default function AdminReportsClient() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Created
                   </Label>
                   <p className="text-sm">
@@ -385,7 +385,7 @@ export default function AdminReportsClient() {
                 </div>
                 {selectedReport.resolvedAt && (
                   <div>
-                    <Label className="text-muted-foreground text-xs">
+                    <Label className="text-xs text-muted-foreground">
                       Resolved
                     </Label>
                     <p className="text-sm">
@@ -401,7 +401,7 @@ export default function AdminReportsClient() {
                 selectedReport.suggestedChanges as Record<string, string>
               ).length > 0 && (
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Reported Fields
                   </Label>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -420,10 +420,10 @@ export default function AdminReportsClient() {
                 selectedReport.suggestedChanges as Record<string, string>
               ).some((v) => v) && (
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Suggested Changes
                   </Label>
-                  <p className="bg-muted/50 mt-2 whitespace-pre-wrap rounded-md p-3 text-sm">
+                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap">
                     {Object.values(
                       selectedReport.suggestedChanges as Record<string, string>
                     )[0] ?? '—'}
@@ -432,10 +432,10 @@ export default function AdminReportsClient() {
               )}
 
               <div>
-                <Label className="text-muted-foreground text-xs">
+                <Label className="text-xs text-muted-foreground">
                   Justification
                 </Label>
-                <p className="bg-muted/50 mt-2 rounded-md p-3 text-sm">
+                <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
                   {selectedReport.justification}
                 </p>
               </div>
@@ -501,10 +501,10 @@ export default function AdminReportsClient() {
 
               {selectedReport.adminNote && (
                 <div>
-                  <Label className="text-muted-foreground text-xs">
+                  <Label className="text-xs text-muted-foreground">
                     Admin Note
                   </Label>
-                  <p className="bg-muted/50 mt-2 rounded-md p-3 text-sm">
+                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
                     {selectedReport.adminNote}
                   </p>
                 </div>

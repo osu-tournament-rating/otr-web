@@ -19,7 +19,7 @@ export default function TournamentPlayerStatsView({
   if (!playerStats || playerStats.length === 0) {
     return (
       <div className={className}>
-        <p className="text-muted-foreground py-8 text-center">
+        <p className="py-8 text-center text-muted-foreground">
           No player statistics available for this tournament.
         </p>
       </div>

@@ -15,7 +15,7 @@ import {
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Search, ArrowUp, ArrowDown, Filter, X, Calendar } from 'lucide-react';
-import { useForm, Control, UseFormReturn } from 'react-hook-form';
+import { useForm, Resolver, Control, UseFormReturn } from 'react-hook-form';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Ruleset,
@@ -147,14 +147,14 @@ const SearchInput = ({
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Search tournaments..."
               type="search"
-              className="border-border bg-card focus:border-primary h-10 rounded-lg border-2 pl-10 text-base"
+              className="h-10 rounded-lg border-2 border-border bg-card pl-10 text-base focus:border-primary"
               onKeyDown={onKeyDown}
             />
           </FormControl>
         </FormItem>
       )}
     />
-    <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform" />
+    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
   </div>
 );
 
@@ -342,7 +342,7 @@ const FilterPanel = ({
                   onPointerUp={() => form.handleSubmit(onSubmit)()}
                   minStepsBetweenThumbs={1}
                 />
-                <div className="text-muted-foreground flex justify-between text-sm">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <Input
                     type="number"
                     value={minField.value ?? RANK_RANGE_MIN}
@@ -483,8 +483,8 @@ const FilterPanel = ({
                     <CalendarComponent
                       mode="range"
                       captionLayout="dropdown"
-                      fromYear={2007}
-                      toYear={new Date().getFullYear() + 1}
+                      startMonth={new Date(2007, 0)}
+                      endMonth={new Date(new Date().getFullYear() + 1, 11)}
                       selected={{
                         from: dateMinField.value,
                         to: dateMaxField.value,
@@ -558,7 +558,9 @@ export default function TournamentListFilter({
   );
 
   const form = useForm<FilterFormData>({
-    resolver: zodResolver(tournamentListFilterSchema),
+    resolver: zodResolver(
+      tournamentListFilterSchema
+    ) as Resolver<FilterFormData>,
     defaultValues: normalizedFilter,
     mode: 'all',
   });
@@ -662,12 +664,12 @@ export default function TournamentListFilter({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="bg-popover flex items-center gap-2"
+                  className="flex items-center gap-2 bg-popover"
                 >
                   <Filter className="h-4 w-4" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="bg-primary text-primary-foreground flex h-5 w-5 items-center justify-center rounded-full text-xs">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                       {activeFilterCount}
                     </span>
                   )}

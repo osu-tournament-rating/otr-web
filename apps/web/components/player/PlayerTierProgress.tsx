@@ -18,11 +18,11 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
   if (!tierProgress.nextMajorTier) return null;
 
   return (
-    <div className="bg-muted/50 rounded-lg p-4">
+    <div className="rounded-lg bg-muted/50 p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xl font-semibold">Tier Progress</span>
         <span className="text-muted-foreground">
-          <span className="text-primary font-semibold">
+          <span className="font-semibold text-primary">
             {ratingNeeded.toFixed(0)}
           </span>
           <span className="inline-block w-[0.125em]" />
@@ -51,7 +51,7 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
         <div className="flex flex-1 items-center gap-2">
           {[3, 2, 1].map((subtier) => (
             <div key={subtier} className="flex flex-1 flex-col">
-              <div className="text-muted-foreground mb-2 text-center font-medium">
+              <div className="mb-2 text-center font-medium text-muted-foreground">
                 {subtier === 3 ? 'III' : subtier === 2 ? 'II' : 'I'}
               </div>
               <Progress
@@ -63,7 +63,7 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
                     100
                   )
                 )}
-                className="bg-accent h-1 w-full"
+                className="h-1 w-full bg-accent"
               />
             </div>
           ))}

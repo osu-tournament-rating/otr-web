@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
@@ -643,7 +643,6 @@ export const getBeatmapStats = publicProcedure
             ? {
                 id: beatmap.beatmapsetId!,
                 osuId: beatmap.beatmapsetOsuId,
-                searchVector: '',
                 artist: beatmap.artist ?? 'Unknown',
                 title: beatmap.title ?? 'Unknown',
                 creatorId: beatmap.creatorId,

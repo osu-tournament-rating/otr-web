@@ -36,6 +36,27 @@ interface ChartDataItem {
   count: number;
 }
 
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ value?: number }>;
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <p className="font-bold">
+        Tournaments: {formatChartNumber(payload[0].value || 0)}
+      </p>
+      <p className="text-sm text-muted-foreground">Lobby Size: {label}</p>
+    </div>
+  );
+}
+
 export default function TournamentsByLobbySizeChart({
   data,
   className,
@@ -54,32 +75,11 @@ export default function TournamentsByLobbySizeChart({
     return { chartData: processedData, total: totalCount };
   }, [data]);
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: Array<{ value?: number }>;
-    label?: string;
-  }) => {
-    if (!active || !payload?.length) return null;
-
-    return (
-      <div className="bg-background rounded-lg border p-2 shadow-sm">
-        <p className="font-bold">
-          Tournaments: {formatChartNumber(payload[0].value || 0)}
-        </p>
-        <p className="text-muted-foreground text-sm">Lobby Size: {label}</p>
-      </div>
-    );
-  };
-
   return (
     <Card data-testid="chart-tournaments-by-lobby-size" className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="text-primary h-6 w-6" />
+          <Users className="h-6 w-6 text-primary" />
           Tournaments by Team Size
         </CardTitle>
         <CardDescription>Verified tournaments by team size</CardDescription>

@@ -242,7 +242,7 @@ export default function TournamentMatchesAdminView({
   return (
     <div className="space-y-2">
       {/* Admin action bar */}
-      <div className="bg-muted/30 flex items-center justify-between rounded-lg border p-3">
+      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
         <div className="flex items-center gap-2">
           <Checkbox
             checked={
@@ -251,7 +251,7 @@ export default function TournamentMatchesAdminView({
             onCheckedChange={handleSelectAll}
             aria-label="Select all matches"
           />
-          <span className="text-muted-foreground text-sm">
+          <span className="text-sm text-muted-foreground">
             {selectedMatchIds.size > 0
               ? `${selectedMatchIds.size} selected`
               : 'Select all'}
@@ -286,7 +286,7 @@ export default function TournamentMatchesAdminView({
 
                 {/* Match summary section */}
                 <div className="flex-1 space-y-3 overflow-y-auto py-2">
-                  <div className="bg-muted/30 rounded-lg border p-3">
+                  <div className="rounded-lg border bg-muted/30 p-3">
                     <p className="mb-2 text-sm font-medium">
                       Matches to be removed:
                     </p>
@@ -298,12 +298,12 @@ export default function TournamentMatchesAdminView({
                         return (
                           <div
                             key={matchId}
-                            className="hover:bg-muted/50 rounded px-2 py-1 text-sm"
+                            className="rounded px-2 py-1 text-sm hover:bg-muted/50"
                           >
                             <div className="flex items-start gap-2">
                               <Link
                                 href={`/matches/${match.id}`}
-                                className="text-muted-foreground hover:text-primary min-w-[3rem] underline decoration-dotted underline-offset-2"
+                                className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
                               >
                                 #{match.id}
                               </Link>
@@ -317,7 +317,7 @@ export default function TournamentMatchesAdminView({
                     </div>
                   </div>
 
-                  <div className="text-muted-foreground space-y-1 text-sm">
+                  <div className="space-y-1 text-sm text-muted-foreground">
                     <p>
                       • This will permanently delete the selected matches from
                       the tournament

@@ -142,7 +142,7 @@ export default function PlayerModStatsChart({
           {hasEasyMod && (
             <span className="flex items-center">
               <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
-                <InfoIcon className="text-muted-foreground h-5 w-5" />
+                <InfoIcon className="h-5 w-5 text-muted-foreground" />
               </SimpleTooltip>
             </span>
           )}

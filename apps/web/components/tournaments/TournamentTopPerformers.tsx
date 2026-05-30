@@ -71,11 +71,11 @@ export default function TournamentTopPerformers({
           return (
             <div
               key={stats.player.id}
-              className="hover:bg-muted/50 flex items-center gap-3 rounded-lg border p-3"
+              className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
             >
               <div className="flex items-center gap-2">
                 {getPositionIcon(position)}
-                <span className="text-muted-foreground text-sm font-medium">
+                <span className="text-sm font-medium text-muted-foreground">
                   #{position}
                 </span>
               </div>
@@ -100,7 +100,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {stats.averageMatchCost.toFixed(2)}
                   </div>
-                  <div className="text-muted-foreground text-xs">
+                  <div className="text-xs text-muted-foreground">
                     Match Cost
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {stats.averagePlacement.toFixed(1)}
                   </div>
-                  <div className="text-muted-foreground text-xs">
+                  <div className="text-xs text-muted-foreground">
                     Avg. Placement
                   </div>
                 </div>
@@ -118,7 +118,7 @@ export default function TournamentTopPerformers({
                   <div className="font-medium">
                     {(stats.gamesPlayed / stats.matchesPlayed).toFixed(1)}
                   </div>
-                  <div className="text-muted-foreground text-xs">
+                  <div className="text-xs text-muted-foreground">
                     Avg. Games
                   </div>
                 </div>
@@ -130,7 +130,7 @@ export default function TournamentTopPerformers({
                     {trChange >= 0 ? '+' : ''}
                     {trChange.toFixed(1)}
                   </div>
-                  <div className="text-muted-foreground text-xs">
+                  <div className="text-xs text-muted-foreground">
                     <TRText />
                   </div>
                 </div>

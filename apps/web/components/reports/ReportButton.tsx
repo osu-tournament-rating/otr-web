@@ -2,7 +2,7 @@
 
 import { Flag, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -63,7 +63,7 @@ export default function ReportButton({
   const [open, setOpen] = useState(false);
 
   const form = useForm<ReportFormData>({
-    resolver: zodResolver(reportFormSchema),
+    resolver: zodResolver(reportFormSchema) as Resolver<ReportFormData>,
     defaultValues: {
       selectedFields: [],
       suggestedChanges: '',
@@ -157,7 +157,7 @@ export default function ReportButton({
                       return (
                         <div
                           key={reportableField}
-                          className="bg-muted/30 flex items-center gap-2 rounded-md px-2 py-1.5"
+                          className="flex items-center gap-2 rounded-md bg-muted/30 px-2 py-1.5"
                         >
                           <Checkbox
                             id={checkboxId}
@@ -180,7 +180,7 @@ export default function ReportButton({
                             <span className="text-xs font-medium">
                               {formatFieldName(reportableField)}
                             </span>
-                            <span className="text-muted-foreground truncate font-mono text-xs">
+                            <span className="truncate font-mono text-xs text-muted-foreground">
                               {currentValues[reportableField] || '—'}
                             </span>
                           </label>

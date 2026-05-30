@@ -49,16 +49,16 @@ export default function PlayerTournamentCard({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <Link href={`/tournaments/${tournament.id}`}>
-          <h2 className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
+          <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
             {tournament.name}
           </h2>
         </Link>
 
         <div className="flex w-full items-center gap-2 sm:w-auto">
-          <span className="text-muted-foreground font-mono text-sm">
+          <span className="font-mono text-sm text-muted-foreground">
             {tournament.abbreviation}
           </span>
-          <div className="text-muted-foreground flex items-center gap-1 text-sm">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Swords className="h-4 w-4" />
             <span>
               {tournament.matchesWon}-{tournament.matchesLost}
@@ -69,7 +69,7 @@ export default function PlayerTournamentCard({
       </div>
 
       <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <div className="text-muted-foreground flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-2 text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <VerificationBadge
             verificationStatus={tournament.verificationStatus}
             rejectionReason={tournament.rejectionReason}
@@ -121,7 +121,7 @@ export default function PlayerTournamentCard({
           className={cn(
             '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
             'hover:bg-accent hover:text-accent-foreground',
-            'border-input border',
+            'border border-input',
             isMatchesVisible && 'bg-accent text-accent-foreground'
           )}
           onClick={(e) => {
@@ -153,7 +153,7 @@ export default function PlayerTournamentCard({
               <>
                 <div className="border-t" />
                 <div className="flex items-center justify-center p-4">
-                  <span className="text-muted-foreground text-sm">
+                  <span className="text-sm text-muted-foreground">
                     No matches found
                   </span>
                 </div>
