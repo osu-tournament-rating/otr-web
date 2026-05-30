@@ -3,7 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import {
   updateMatchAdminHandler,
   type UpdateMatchAdminArgs,
-} from '../adminProcedures';
+} from '../matchAdminHandlers';
 import * as schema from '@otr/core/db/schema';
 import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 import type { DatabaseClient } from '@/lib/db';
