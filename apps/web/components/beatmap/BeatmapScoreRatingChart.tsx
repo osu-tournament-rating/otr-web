@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import { useMemo, useState } from 'react';
 import {
   ScatterChart,
+  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -265,7 +266,10 @@ export default function BeatmapScoreRatingChart({
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <ScatterChart margin={{ top: 25, right: 20, bottom: 25, left: 10 }}>
+          <ScatterChart
+            data={data}
+            margin={{ top: 25, right: 20, bottom: 25, left: 10 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
             <XAxis
               type="number"
@@ -387,6 +391,16 @@ export default function BeatmapScoreRatingChart({
                   </ul>
                 );
               }}
+            />
+
+            {/* Invisible series so recharts v3 establishes the axis scales the
+              density ReferenceAreas position against. Without a registered
+              graphical item, v3 derives no scale from domain/ticks alone. */}
+            <Scatter
+              dataKey="score"
+              fillOpacity={0}
+              legendType="none"
+              isAnimationActive={false}
             />
 
             {(Object.keys(densityByMod) as ModCategory[])
