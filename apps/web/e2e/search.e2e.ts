@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   ROUTES,
+  Ruleset,
   TEST_PLAYER_ID,
   TEST_PUBLIC_TOURNAMENT_ID,
   TEST_MATCH_ID,
@@ -143,11 +144,16 @@ test.describe('Global Website Search', () => {
       await expect(result).toBeVisible({ timeout: 10000 });
       await result.click();
 
+      // The dialog always appends the player's ruleset (the rating ruleset,
+      // falling back to the non-null default_ruleset), so the destination is
+      // always /players/:id?ruleset=:int — never the bare profile path.
       await page.waitForURL(
-        new RegExp('/players/' + TEST_PLAYER_ID + '(\\?|$)'),
+        new RegExp('/players/' + TEST_PLAYER_ID + '\\?ruleset=\\d+'),
         { timeout: 10000 }
       );
-      expect(page.url()).toContain('/players/' + TEST_PLAYER_ID);
+      expect(page.url()).toMatch(
+        new RegExp('/players/' + TEST_PLAYER_ID + '\\?ruleset=\\d+')
+      );
     });
 
     test('player result links to the profile for its ruleset', async ({
@@ -167,12 +173,15 @@ test.describe('Global Website Search', () => {
       await expect(result).toBeVisible({ timeout: 10000 });
       await result.click();
 
-      // The dialog routes per-ruleset when a rating ruleset is present,
-      // otherwise to the bare profile; both resolve under the player route.
-      await page.waitForURL(new RegExp('/players/' + TEST_PLAYER_ID), {
-        timeout: 10000,
-      });
-      expect(page.url()).toContain('/players/' + TEST_PLAYER_ID);
+      // Stage's rating/default ruleset is osu!, so the result routes there
+      // explicitly via the ruleset query param.
+      await page.waitForURL(
+        new RegExp('/players/' + TEST_PLAYER_ID + '\\?ruleset=' + Ruleset.Osu),
+        { timeout: 10000 }
+      );
+      expect(page.url()).toContain(
+        '/players/' + TEST_PLAYER_ID + '?ruleset=' + Ruleset.Osu
+      );
     });
 
     test('tournament query by name navigates to the tournament', async ({
