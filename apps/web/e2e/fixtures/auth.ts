@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { type APIRequestContext, type Page } from '@playwright/test';
 
 /**
  * Players that already have `auth_users` rows in the dev database. Admin status is
@@ -39,12 +39,15 @@ export async function signInPlayer(
     data: { playerId },
   });
 
-  expect(
-    response.ok(),
-    `e2e sign-in failed for player ${playerId} (${response.status()}): ${await response
-      .text()
-      .catch(() => '')}`
-  ).toBeTruthy();
+  // Only read the body / build the message on failure — passing them to
+  // expect() eagerly would run an extra request and surface a misleading
+  // "sign-in failed" line in the trace even on success.
+  if (!response.ok()) {
+    const body = await response.text().catch(() => '');
+    throw new Error(
+      `e2e sign-in failed for player ${playerId} (${response.status()}): ${body}`
+    );
+  }
 }
 
 /**
