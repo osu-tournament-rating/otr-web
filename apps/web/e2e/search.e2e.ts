@@ -6,19 +6,19 @@ import {
   TEST_MATCH_ID,
   TEST_BEATMAP_OSU_ID,
 } from './fixtures/test-config';
+import { STORAGE_STATE } from './fixtures/auth';
 
 /**
  * Global website search (issue #700).
  *
  * The command-style search dialog is gated behind an authenticated session:
  * `SearchCommandDialog` renders `null` without a session and the `/search`
- * endpoint is a `protectedProcedure`. The e2e suite runs unauthenticated, so
- * the trigger never mounts. We therefore:
- *   - Always assert the gate (trigger absent, Cmd/Ctrl+K is a no-op, banner shown).
- *   - Encode every checklist query→navigation scenario as the full
- *     open → type → wait → click → assert-navigation flow, skipped when the
- *     trigger is absent so the intended behavior stays documented and runnable
- *     once a session is available.
+ * endpoint is a `protectedProcedure`. We split coverage accordingly:
+ *   - "Trigger and Gating" runs signed-out and asserts the gate (trigger absent,
+ *     Cmd/Ctrl+K is a no-op, limited-features banner shown).
+ *   - "Open via Header Affordances" and "Query Results and Navigation" run with a
+ *     baked regular-user session (see fixtures/auth.ts) and exercise every
+ *     checklist query→navigation scenario for real: open → type → click → assert.
  */
 
 const SEARCH_TRIGGER = '[data-testid="search-trigger-button"]';
@@ -97,15 +97,13 @@ test.describe('Global Website Search', () => {
   });
 
   test.describe('Open via Header Affordances', () => {
+    test.use({ storageState: STORAGE_STATE.user });
+
     test('search button opens the command dialog with an input', async ({
       page,
     }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
-
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
 
       await openSearchViaButton(page);
       await expect(page.locator(SEARCH_INPUT)).toBeVisible({ timeout: 10000 });
@@ -118,10 +116,6 @@ test.describe('Global Website Search', () => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
-
       await page.keyboard.press('ControlOrMeta+KeyK');
       await expect(page.locator(SEARCH_DIALOG)).toBeVisible({ timeout: 10000 });
       await expect(page.locator(SEARCH_INPUT)).toBeVisible({ timeout: 10000 });
@@ -129,15 +123,13 @@ test.describe('Global Website Search', () => {
   });
 
   test.describe('Query Results and Navigation', () => {
+    test.use({ storageState: STORAGE_STATE.user });
+
     test('player query "Stage" navigates to the player profile', async ({
       page,
     }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
-
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
 
       await openSearchViaButton(page);
       await typeQuery(page, 'Stage');
@@ -164,10 +156,6 @@ test.describe('Global Website Search', () => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
-
       await openSearchViaButton(page);
       await typeQuery(page, 'Stage');
 
@@ -192,10 +180,6 @@ test.describe('Global Website Search', () => {
     }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
-
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
 
       await openSearchViaButton(page);
       await typeQuery(page, "Dio's Autumn Singles");
@@ -224,10 +208,6 @@ test.describe('Global Website Search', () => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
-
       await openSearchViaButton(page);
       await typeQuery(page, 'DAS');
 
@@ -249,10 +229,6 @@ test.describe('Global Website Search', () => {
     test('match query navigates to the match', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
-
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
 
       await openSearchViaButton(page);
       await typeQuery(page, 'DAS: (Menty) vs (LINKI)');
@@ -277,10 +253,6 @@ test.describe('Global Website Search', () => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
-
       await openSearchViaButton(page);
       await typeQuery(page, 'KAC 2012 ULTIMATE MEDLEY');
 
@@ -304,10 +276,6 @@ test.describe('Global Website Search', () => {
     test('beatmap query by artist returns a result', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
-
-      if (!(await searchTriggerVisible(page))) {
-        test.skip(true, 'Search trigger is gated behind an active session');
-      }
 
       await openSearchViaButton(page);
       await typeQuery(page, 'FLOOR LEGENDS -KAC 2012-');
