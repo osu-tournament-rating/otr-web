@@ -109,6 +109,7 @@ export default function LeaderboardFilter({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          data-testid="leaderboard-filter-button"
           variant="outline"
           className="flex items-center gap-2 bg-popover"
         >
@@ -116,7 +117,11 @@ export default function LeaderboardFilter({
           Filters
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="z-1 w-80 p-4" align="end">
+      <PopoverContent
+        data-testid="leaderboard-filter-popover"
+        className="z-1 w-80 p-4"
+        align="end"
+      >
         <Form {...form}>
           <form className="items-center space-y-4">
             {/* Ruleset select */}
@@ -127,6 +132,7 @@ export default function LeaderboardFilter({
                 <FormItem>
                   <FormControl>
                     <ToggleGroup
+                      data-testid="leaderboard-filter-ruleset-group"
                       className="w-full gap-2"
                       {...field}
                       value={String(field.value)}
@@ -143,6 +149,7 @@ export default function LeaderboardFilter({
                         .map(([ruleset]) => (
                           <ToggleGroupItem
                             key={`sort-${ruleset}`}
+                            data-testid={`leaderboard-filter-ruleset-${ruleset}`}
                             className="px-0"
                             value={ruleset}
                             aria-label={Ruleset[Number(ruleset)]}
@@ -493,7 +500,7 @@ export default function LeaderboardFilter({
               control={form.control}
               name="tiers"
               render={({ field }) => (
-                <FormItem>
+                <FormItem data-testid="leaderboard-filter-tiers">
                   <FormLabel>Tiers</FormLabel>
                   <MultipleSelect
                     selected={field.value ?? []}
@@ -510,6 +517,7 @@ export default function LeaderboardFilter({
             {/* Clear filters button */}
             <div className="flex justify-end gap-2">
               <Button
+                data-testid="leaderboard-filter-clear-button"
                 type="button"
                 variant="outline"
                 onClick={() => {

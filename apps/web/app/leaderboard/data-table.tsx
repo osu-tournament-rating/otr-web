@@ -51,7 +51,7 @@ export function LeaderboardDataTable<TData, TValue>({
 
   return (
     <div className="overflow-x-auto rounded-lg border">
-      <Table>
+      <Table data-testid="leaderboard-table">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-muted/50">
@@ -78,6 +78,7 @@ export function LeaderboardDataTable<TData, TValue>({
             table.getRowModel().rows.map((row, index) => (
               <TableRow
                 key={row.id}
+                data-testid={`leaderboard-row-${(row.original as LeaderboardEntry).player?.id}`}
                 data-state={row.getIsSelected() && 'selected'}
                 className={getRowClassName(row, index)}
               >

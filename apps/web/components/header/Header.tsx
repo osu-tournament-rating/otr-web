@@ -121,10 +121,17 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm">
+      <header
+        data-testid="header"
+        className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm"
+      >
         <div className="flex items-center gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link
+            href="/"
+            data-testid="header-logo"
+            className="flex items-center"
+          >
             <Image
               src={'/logos/small.svg'}
               alt="o!TR Logo"
@@ -304,6 +311,8 @@ function NavigationItem({
   const isVisible =
     roles?.length === 0 || roles?.some((role) => scopes.includes(role));
 
+  const navTestId = `nav-${title.toLowerCase()}`;
+
   return (
     <NavigationMenuItem className={cn('w-full', !isVisible && 'hidden')}>
       <SubnavTrigger
@@ -314,6 +323,7 @@ function NavigationItem({
       >
         {hasDropdown ? (
           <span
+            data-testid={navTestId}
             className={cn(
               'flex flex-row gap-2 rounded-md text-sm transition-colors hover:text-primary focus:text-primary',
               isActive && 'font-bold text-primary'
@@ -324,6 +334,7 @@ function NavigationItem({
         ) : (
           <NavLink
             isMobile={isMobile}
+            data-testid={navTestId}
             href={href}
             className={cn(
               'bg-transparent hover:bg-transparent',

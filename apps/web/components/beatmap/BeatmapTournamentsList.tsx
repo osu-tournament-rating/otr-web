@@ -37,7 +37,7 @@ export default function BeatmapTournamentsList({
   }
 
   return (
-    <Card>
+    <Card data-testid="beatmap-tournaments-list">
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
           <Trophy className="h-6 w-6 text-primary" />
@@ -54,6 +54,7 @@ export default function BeatmapTournamentsList({
         ))}
         {tournaments.length > displayCount && (
           <Button
+            data-testid="beatmap-tournaments-show-more"
             variant="outline"
             className="w-full justify-center"
             onClick={() =>

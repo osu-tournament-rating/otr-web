@@ -198,7 +198,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
   }
 
   return (
-    <Card className="p-5 md:p-6">
+    <Card data-testid="player-stats-table" className="p-5 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">

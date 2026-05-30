@@ -166,6 +166,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
               </span>
             ) : (
               <Link
+                data-testid="beatmap-link"
                 href={`/beatmaps/${game.beatmap?.osuId}`}
                 className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >

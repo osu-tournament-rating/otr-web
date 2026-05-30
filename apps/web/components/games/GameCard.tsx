@@ -185,7 +185,10 @@ export default function GameCard({
         </div>
       )}
       {outcomeText && (
-        <div className="mt-2 rounded-md border border-neutral-300 p-2 text-center dark:border-neutral-700">
+        <div
+          data-testid="game-outcome"
+          className="mt-2 rounded-md border border-neutral-300 p-2 text-center dark:border-neutral-700"
+        >
           <p
             className={`text-lg font-semibold ${
               outcomeText.includes('wins')

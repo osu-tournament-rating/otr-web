@@ -274,6 +274,7 @@ export default function BeatmapListTable({
               {beatmaps.map((beatmap, index) => (
                 <tr
                   key={beatmap.id}
+                  data-testid={`beatmap-list-row-${beatmap.osuId}`}
                   className={`group cursor-pointer transition-colors hover:bg-muted/30 ${
                     index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
                   }`}

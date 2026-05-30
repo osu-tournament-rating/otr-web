@@ -330,7 +330,7 @@ export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
   }
 
   return (
-    <Card className="p-4 pb-0">
+    <Card data-testid="team-scores-chart" className="p-4 pb-0">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <LineChartIcon className="h-5 w-5 text-primary" />

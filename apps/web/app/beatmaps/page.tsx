@@ -170,10 +170,11 @@ export default async function Page(props: {
       </Card>
 
       {totalPages > 1 && (
-        <Pagination className="mt-4">
+        <Pagination data-testid="beatmap-pagination" className="mt-4">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
+                data-testid="beatmap-pagination-prev"
                 href={
                   currentPage > 1
                     ? createUri(filter, currentPage - 1)
@@ -188,6 +189,7 @@ export default async function Page(props: {
             {renderPageNumbers()}
             <PaginationItem>
               <PaginationNext
+                data-testid="beatmap-pagination-next"
                 href={
                   currentPage < totalPages
                     ? createUri(filter, currentPage + 1)

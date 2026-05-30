@@ -122,7 +122,7 @@ export default function BeatmapModDistributionChart({
 
   if (processedData.length === 0) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-mod-distribution-chart" className={className}>
         <CardHeader className="items-center">
           <CardTitle>Mod Distribution</CardTitle>
         </CardHeader>
@@ -136,7 +136,7 @@ export default function BeatmapModDistributionChart({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-mod-distribution-chart" className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
       </CardHeader>

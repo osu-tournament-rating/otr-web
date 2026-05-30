@@ -165,7 +165,7 @@ export default function TournamentCard({
   );
 
   return (
-    <Card className="p-4 font-sans sm:p-6">
+    <Card data-testid="tournament-card" className="p-4 font-sans sm:p-6">
       {titleIsLink ? (
         <Link href={`/tournaments/${tournament.id}`} className="block">
           {cardContent}

@@ -312,7 +312,7 @@ export default function BeatmapScoreRatingChart({
 
   if (data.length === 0) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-score-rating-chart" className={className}>
         <CardHeader>
           <CardTitle className="text-center">Score vs Player Rating</CardTitle>
         </CardHeader>
@@ -326,7 +326,7 @@ export default function BeatmapScoreRatingChart({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-score-rating-chart" className={className}>
       <CardHeader>
         <CardTitle className="text-center">Score vs Player Rating</CardTitle>
       </CardHeader>

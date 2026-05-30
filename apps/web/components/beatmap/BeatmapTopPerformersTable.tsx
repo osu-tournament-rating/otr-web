@@ -106,7 +106,7 @@ export default function BeatmapTopPerformersTable({
 
   if (performers.length === 0) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-top-performers" className={className}>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
             <Medal className="h-6 w-6 text-primary" />
@@ -123,7 +123,7 @@ export default function BeatmapTopPerformersTable({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-top-performers" className={className}>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
           <Medal className="h-6 w-6 text-primary" />

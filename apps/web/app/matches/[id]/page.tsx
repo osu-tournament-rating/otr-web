@@ -71,12 +71,16 @@ export default async function Page({ params, searchParams }: PageProps) {
       <MatchCard match={match} />
 
       <Tabs value={currentTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList data-testid="match-tabs" className="grid w-full grid-cols-2">
           <TabsTrigger value="games" asChild>
-            <Link href={createTabHref('games')}>Games</Link>
+            <Link href={createTabHref('games')} data-testid="tab-trigger-games">
+              Games
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="stats" asChild>
-            <Link href={createTabHref('stats')}>Stats</Link>
+            <Link href={createTabHref('stats')} data-testid="tab-trigger-stats">
+              Stats
+            </Link>
           </TabsTrigger>
         </TabsList>
 

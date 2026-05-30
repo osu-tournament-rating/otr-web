@@ -16,7 +16,10 @@ export default function BeatmapStatsCard({ summary }: BeatmapStatsCardProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div
+      data-testid="beatmap-stats-card"
+      className="grid grid-cols-2 gap-2 md:grid-cols-4"
+    >
       <StatCard
         icon={<Gamepad2 className="h-5 w-5" />}
         label="Games Played"

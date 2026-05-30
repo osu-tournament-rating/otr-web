@@ -23,19 +23,27 @@ export default function LeaderboardTabs({
 }: LeaderboardTabsProps) {
   return (
     <Tabs value={currentTab} className="w-auto">
-      <TabsList>
+      <TabsList data-testid="leaderboard-tabs">
         <TabsTrigger value="all" asChild>
-          <Link href={allTabHref}>All</Link>
+          <Link href={allTabHref} data-testid="leaderboard-tab-all">
+            All
+          </Link>
         </TabsTrigger>
         {hasFriends ? (
           <TabsTrigger value="friends" asChild>
-            <Link href={friendsTabHref}>Friends</Link>
+            <Link href={friendsTabHref} data-testid="leaderboard-tab-friends">
+              Friends
+            </Link>
           </TabsTrigger>
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
-                <TabsTrigger value="friends" disabled>
+                <TabsTrigger
+                  value="friends"
+                  disabled
+                  data-testid="leaderboard-tab-friends"
+                >
                   Friends
                 </TabsTrigger>
               </span>
