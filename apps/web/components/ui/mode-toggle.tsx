@@ -25,25 +25,18 @@ export function ModeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button className="cursor-pointer" variant="ghost" size="icon" disabled>
-        <Sun className="scale-100 rotate-0 transition-all" />
-      </Button>
-    );
-  }
-
   return (
     <Button
       className="cursor-pointer"
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
+      aria-label="Toggle theme"
     >
-      {resolvedTheme === 'dark' ? (
-        <Sun className="scale-100 rotate-0 transition-all" />
-      ) : (
+      {mounted && resolvedTheme === 'dark' ? (
         <Moon className="scale-100 rotate-0 transition-all" />
+      ) : (
+        <Sun className="scale-100 rotate-0 transition-all" />
       )}
     </Button>
   );
