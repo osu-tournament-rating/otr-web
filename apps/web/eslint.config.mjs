@@ -25,11 +25,8 @@ const eslintConfig = [
     // classic rules-of-hooks / exhaustive-deps checks remain active, and the
     // other React Compiler rules are enforced.
     rules: {
-      // Off: required for SSR mount guards, client-only values (hydration), async loading flags, and focus management.
       'react-hooks/set-state-in-effect': 'off',
-      // Off: idiomatic library usage reads refs during render (@tanstack/react-virtual scrollMargin, react-hook-form handleSubmit).
       'react-hooks/refs': 'off',
-      // Off: TanStack Table's useReactTable() is inherently incompatible with React Compiler memoization; nothing to fix.
       'react-hooks/incompatible-library': 'off',
     },
   },
