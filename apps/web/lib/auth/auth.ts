@@ -13,6 +13,7 @@ import {
   genericOAuth,
 } from 'better-auth/plugins';
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
+import { e2eTestAuthPlugin, isE2eAuthEnabled } from './e2e-test-auth-plugin';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@otr/core/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -625,6 +626,8 @@ export const auth = betterAuth({
         },
       ],
     }),
+    // Test-only: present only when running the e2e suite (never in production).
+    ...(isE2eAuthEnabled() ? [e2eTestAuthPlugin()] : []),
     customSession(async ({ user, session }) => {
       const account = await db.query.auth_accounts.findFirst({
         where: and(

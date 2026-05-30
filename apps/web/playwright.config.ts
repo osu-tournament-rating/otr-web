@@ -15,15 +15,21 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
   ],
   webServer: {
     command:
-      'NEXT_PUBLIC_APP_BASE_URL=http://localhost:3001 bun run build && bun run start -p 3001',
+      'NEXT_PUBLIC_APP_BASE_URL=http://localhost:3001 E2E_TEST_AUTH=true bun run build && E2E_TEST_AUTH=true bun run start -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: { E2E_TEST_AUTH: 'true' },
   },
 });
