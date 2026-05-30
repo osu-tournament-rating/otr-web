@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   ScatterChart,
   Scatter,
@@ -9,7 +9,8 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-  ReferenceArea,
+  useXAxisScale,
+  useYAxisScale,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
@@ -154,6 +155,60 @@ const MOD_COLORS: Record<ModCategory, string> = {
   other: 'var(--chart-3)',
 };
 
+interface DensityCellsProps {
+  densityByMod: Record<ModCategory, DensityCell[]>;
+  visibleMods: Set<ModCategory>;
+}
+
+/**
+ * Draws every density cell as a single SVG layer using the axis scales from
+ * recharts. Rendering one component beats emitting a `<ReferenceArea>` per cell:
+ * each ReferenceArea subscribes to recharts' internal store, so a few hundred of
+ * them made every mod toggle re-reconcile the whole chart (~1-2s). Here a toggle
+ * only re-renders this one component's plain `<rect>`s.
+ */
+function DensityCells({ densityByMod, visibleMods }: DensityCellsProps) {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+
+  if (!xScale || !yScale) return null;
+
+  const rects: ReactNode[] = [];
+  for (const mod of Object.keys(densityByMod) as ModCategory[]) {
+    if (!visibleMods.has(mod)) continue;
+    const cells = densityByMod[mod];
+    if (!cells) continue;
+
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const px1 = xScale(cell.x1);
+      const px2 = xScale(cell.x2);
+      const py1 = yScale(cell.y1);
+      const py2 = yScale(cell.y2);
+      if (px1 == null || px2 == null || py1 == null || py2 == null) continue;
+
+      rects.push(
+        <rect
+          key={`density-${mod}-${i}`}
+          x={Math.min(px1, px2)}
+          y={Math.min(py1, py2)}
+          width={Math.abs(px2 - px1)}
+          height={Math.abs(py2 - py1)}
+          shapeRendering="crispEdges"
+          style={{
+            fill: MOD_COLORS[mod],
+            fillOpacity:
+              DENSITY_MIN_OPACITY +
+              cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY),
+          }}
+        />
+      );
+    }
+  }
+
+  return <g className="density-cells">{rects}</g>;
+}
+
 export default function BeatmapScoreRatingChart({
   data,
   className,
@@ -236,6 +291,17 @@ export default function BeatmapScoreRatingChart({
       };
     }, [data]);
 
+  // Two invisible anchor points at the domain corners are enough for recharts
+  // v3 to build the axis scales; feeding the full dataset here would render a
+  // transparent SVG node per score and make mod toggles re-render slowly.
+  const scaleAnchors = useMemo(
+    () => [
+      { playerRating: xDomain[0], score: yDomain[0] },
+      { playerRating: xDomain[1], score: yDomain[1] },
+    ],
+    [xDomain, yDomain]
+  );
+
   const chartConfig: ChartConfig = {
     nm: { label: 'No Mod', color: 'var(--chart-1)' },
     hr: { label: 'Hard Rock', color: 'var(--mod-hard-rock)' },
@@ -266,10 +332,7 @@ export default function BeatmapScoreRatingChart({
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <ScatterChart
-            data={data}
-            margin={{ top: 25, right: 20, bottom: 25, left: 10 }}
-          >
+          <ScatterChart margin={{ top: 25, right: 20, bottom: 25, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
             <XAxis
               type="number"
@@ -397,31 +460,17 @@ export default function BeatmapScoreRatingChart({
               density ReferenceAreas position against. Without a registered
               graphical item, v3 derives no scale from domain/ticks alone. */}
             <Scatter
+              data={scaleAnchors}
               dataKey="score"
               fillOpacity={0}
               legendType="none"
               isAnimationActive={false}
             />
 
-            {(Object.keys(densityByMod) as ModCategory[])
-              .filter((mod) => visibleMods.has(mod))
-              .map((mod) =>
-                densityByMod[mod]?.map((cell, i) => (
-                  <ReferenceArea
-                    key={`density-${mod}-${i}`}
-                    x1={cell.x1}
-                    x2={cell.x2}
-                    y1={cell.y1}
-                    y2={cell.y2}
-                    fill={MOD_COLORS[mod]}
-                    fillOpacity={
-                      DENSITY_MIN_OPACITY +
-                      cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY)
-                    }
-                    stroke="none"
-                  />
-                ))
-              )}
+            <DensityCells
+              densityByMod={densityByMod}
+              visibleMods={visibleMods}
+            />
           </ScatterChart>
         </ChartContainer>
       </CardContent>
