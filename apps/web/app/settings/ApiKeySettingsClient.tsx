@@ -184,7 +184,7 @@ export default function ApiKeySettingsClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="settings-api-keys-section">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -213,7 +213,12 @@ export default function ApiKeySettingsClient({
                 required
               />
             </div>
-            <Button type="submit" disabled={isGenerating} className="sm:w-auto">
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              className="sm:w-auto"
+              data-testid="settings-create-api-key-button"
+            >
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />

@@ -46,7 +46,10 @@ export default async function BannedPage(props: BannedPageProps) {
           <ShieldAlert aria-hidden="true" className="h-7 w-7" />
         </div>
         <header className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1
+            data-testid="banned-heading"
+            className="text-3xl font-semibold tracking-tight"
+          >
             Account Suspended
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
@@ -58,7 +61,9 @@ export default async function BannedPage(props: BannedPageProps) {
           <section className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive sm:text-base">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="font-medium">Reason:</span>
-              <span className="break-words">{reason}</span>
+              <span data-testid="banned-reason" className="break-words">
+                {reason}
+              </span>
             </div>
           </section>
         ) : null}

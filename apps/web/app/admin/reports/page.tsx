@@ -15,12 +15,17 @@ export default async function AdminReportsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10" data-testid="admin-reports">
       <header className="space-y-3">
         <div className="flex items-center gap-3">
           <AlertTriangle className="size-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-semibold">Data Reports</h1>
+            <h1
+              className="text-3xl font-semibold"
+              data-testid="admin-reports-heading"
+            >
+              Data Reports
+            </h1>
             <p className="text-sm text-muted-foreground">
               Review and resolve user-submitted data issue reports
             </p>

@@ -83,7 +83,7 @@ export default function FriendsSyncClient({
   };
 
   return (
-    <Card>
+    <Card data-testid="settings-friends-sync-section">
       <CardHeader>
         <div className="flex items-center gap-3">
           <Users className="size-6 text-primary" />
@@ -102,7 +102,11 @@ export default function FriendsSyncClient({
         </p>
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleSyncFriends} disabled={isSyncing}>
+          <Button
+            onClick={handleSyncFriends}
+            disabled={isSyncing}
+            data-testid="settings-sync-friends-button"
+          >
             {isSyncing ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />

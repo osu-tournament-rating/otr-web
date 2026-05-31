@@ -130,7 +130,10 @@ export function FilterReportView() {
   const hasReport = report && results;
 
   return (
-    <div className="flex flex-col gap-4 md:gap-2">
+    <div
+      data-testid="filter-report-view"
+      className="flex flex-col gap-4 md:gap-2"
+    >
       {/* Search Card — hero style when empty, compact when loaded */}
       {!hasReport ? (
         <Card>
@@ -149,7 +152,11 @@ export function FilterReportView() {
                 </p>
               </div>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+                <form
+                  data-testid="filter-report-form"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="w-full"
+                >
                   <FormField
                     control={form.control}
                     name="reportId"
@@ -159,6 +166,7 @@ export function FilterReportView() {
                         <div className="flex gap-2">
                           <FormControl>
                             <Input
+                              data-testid="filter-report-id-input"
                               placeholder="Enter report ID"
                               type="text"
                               {...field}
@@ -167,6 +175,7 @@ export function FilterReportView() {
                           </FormControl>
                           <Button
                             type="submit"
+                            data-testid="filter-report-submit"
                             disabled={isLoading}
                             aria-label="Load filter report"
                           >

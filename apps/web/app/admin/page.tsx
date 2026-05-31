@@ -15,12 +15,14 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10" data-testid="admin-dashboard">
       <header className="space-y-3">
         <div className="flex items-center gap-3">
           <ShieldCheck className="size-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-semibold">Admin</h1>
+            <h1 className="text-3xl font-semibold" data-testid="admin-heading">
+              Admin
+            </h1>
           </div>
         </div>
       </header>

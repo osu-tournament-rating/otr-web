@@ -161,6 +161,7 @@ function NumberInput({
           <LabelWithTooltip label={label} tooltip={tooltip} />
           <FormControl>
             <Input
+              data-testid={`filter-${name}`}
               type="text"
               inputMode={isInteger ? 'numeric' : 'decimal'}
               placeholder={placeholder}
@@ -294,6 +295,7 @@ export default function FilteringForm({
       <Card className="w-full overflow-hidden">
         <Form {...form}>
           <form
+            data-testid="filter-form"
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-6 lg:px-8"
           >
@@ -318,7 +320,10 @@ export default function FilteringForm({
                       value={field.value?.toString()}
                     >
                       <FormControl>
-                        <SelectTrigger className="border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                        <SelectTrigger
+                          data-testid="filter-ruleset"
+                          className="border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                        >
                           <SelectValue placeholder="Select a ruleset" />
                         </SelectTrigger>
                       </FormControl>
@@ -362,6 +367,7 @@ export default function FilteringForm({
                     />
                     <FormControl>
                       <Textarea
+                        data-testid="filter-player-ids"
                         placeholder="Enter osu! player IDs (e.g. 1234567, 2345678, 3456789)"
                         className="min-h-[120px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary sm:min-h-[150px]"
                         {...field}
@@ -376,6 +382,7 @@ export default function FilteringForm({
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Button
                 type="submit"
+                data-testid="filter-submit-button"
                 disabled={isLoading}
                 className="flex-1 rounded-md bg-primary text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
               >
@@ -407,7 +414,7 @@ export default function FilteringForm({
         </Form>
       </Card>
       {filteringResults && (
-        <>
+        <div data-testid="filter-results">
           <FilterComplianceNotice
             filterReportId={filteringResults.filterReportId}
           />
@@ -415,7 +422,7 @@ export default function FilteringForm({
             results={filteringResults}
             onDownloadCSV={handleDownloadCSV}
           />
-        </>
+        </div>
       )}
     </>
   );
