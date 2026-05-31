@@ -13,15 +13,15 @@ import { db } from '@/lib/db';
  * flows without going through the osu! OAuth dance.
  *
  * Safety: the plugin is only added to the auth instance when {@link isE2eAuthEnabled}
- * is true, and the endpoint re-checks the flag on every request. It refuses to run
- * in production regardless of the env flag.
+ * is true, and the endpoint re-checks the flag on every request. The flag must be
+ * left unset (or false) in staging/prod configs — Playwright tests the production
+ * build (`next start`, NODE_ENV=production), so the gate cannot key off NODE_ENV.
  *
  * Endpoint: `POST /api/auth/e2e/sign-in` with body `{ playerId }`. The player must
  * already have an `auth_users` row (created on first real login); admin vs. non-admin
  * is derived from that user's `users.scopes`, exactly like a genuine session.
  */
-export const isE2eAuthEnabled = () =>
-  process.env.E2E_TEST_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+export const isE2eAuthEnabled = () => process.env.E2E_TEST_AUTH === 'true';
 
 export const e2eTestAuthPlugin = () =>
   ({
