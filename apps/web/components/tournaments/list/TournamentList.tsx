@@ -185,7 +185,10 @@ export default function TournamentList({
                     <ListItemSkeleton />
                   ) : null
                 ) : (
-                  <Link href={`/tournaments/${tournamentData[item.index].id}`}>
+                  <Link
+                    href={`/tournaments/${tournamentData[item.index].id}`}
+                    data-testid="tournament-list-item"
+                  >
                     <TournamentCard
                       tournament={tournamentData[item.index]}
                       displayStatusText

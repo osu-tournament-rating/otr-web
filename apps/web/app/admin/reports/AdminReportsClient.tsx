@@ -226,7 +226,7 @@ export default function AdminReportsClient() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card data-testid="admin-reports-card">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -243,7 +243,10 @@ export default function AdminReportsClient() {
                 )
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger
+                className="w-[180px]"
+                data-testid="admin-reports-status-filter"
+              >
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -268,11 +271,17 @@ export default function AdminReportsClient() {
               Loading reports...
             </div>
           ) : reports.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
+            <p
+              className="py-8 text-center text-sm text-muted-foreground"
+              data-testid="admin-reports-empty"
+            >
               No reports found
             </p>
           ) : (
-            <div className="overflow-hidden rounded-md border">
+            <div
+              className="overflow-hidden rounded-md border"
+              data-testid="admin-reports-list"
+            >
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -287,7 +296,7 @@ export default function AdminReportsClient() {
                 </TableHeader>
                 <TableBody>
                   {reports.map((report) => (
-                    <TableRow key={report.id}>
+                    <TableRow key={report.id} data-testid="admin-reports-row">
                       <TableCell className="font-mono text-xs">
                         {report.id}
                       </TableCell>
@@ -306,6 +315,7 @@ export default function AdminReportsClient() {
                             report.matchId
                           )}
                           className="text-primary"
+                          data-testid="admin-reports-entity-link"
                         >
                           #{report.entityId}
                         </Link>
@@ -326,6 +336,7 @@ export default function AdminReportsClient() {
                           size="icon"
                           onClick={() => handleViewDetails(report)}
                           title="View details"
+                          data-testid="admin-reports-view-details"
                         >
                           <Eye className="size-4" />
                         </Button>

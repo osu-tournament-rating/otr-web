@@ -12,7 +12,10 @@ export default function SpecPage() {
   return (
     <div className="bg-background text-foreground">
       <div className="space-y-4">
-        <Alert className="border-warning/50 bg-warning/10 text-warning-foreground dark:border-warning/40 dark:bg-warning/10 dark:text-yellow-100">
+        <Alert
+          data-testid="api-stability-notice"
+          className="border-warning/50 bg-warning/10 text-warning-foreground dark:border-warning/40 dark:bg-warning/10 dark:text-yellow-100"
+        >
           <AlertTriangle className="h-4 w-4 text-warning-foreground dark:text-yellow-300" />
           <AlertTitle className="font-semibold text-warning-foreground dark:text-yellow-300">
             API Stability Notice
@@ -25,6 +28,7 @@ export default function SpecPage() {
         </Alert>
         <div
           id="scalar-api-reference"
+          data-testid="scalar-api-reference"
           className="w-full"
           style={{
             minHeight: 'calc(100vh - var(--header-height-px))',

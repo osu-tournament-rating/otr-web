@@ -72,7 +72,7 @@ export default function BeatmapUsageChart({
 
   if (data.length < 2) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-usage-chart" className={className}>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" />
@@ -84,7 +84,7 @@ export default function BeatmapUsageChart({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-usage-chart" className={className}>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
           <TrendingUp className="h-6 w-6 text-primary" />

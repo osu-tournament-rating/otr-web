@@ -143,6 +143,7 @@ const SearchInput = ({
           <FormControl>
             <Input
               {...field}
+              data-testid="tournament-search-input"
               value={searchQuery}
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Search tournaments..."
@@ -663,6 +664,7 @@ export default function TournamentListFilter({
             <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  data-testid="tournament-filters-button"
                   variant="outline"
                   className="flex items-center gap-2 bg-popover"
                 >

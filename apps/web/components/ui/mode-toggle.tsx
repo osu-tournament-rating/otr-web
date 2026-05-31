@@ -27,6 +27,7 @@ export function ModeToggle() {
 
   return (
     <Button
+      data-testid="header-theme-toggle"
       className="cursor-pointer"
       variant="ghost"
       size="icon"

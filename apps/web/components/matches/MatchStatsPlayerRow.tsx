@@ -44,6 +44,7 @@ const MatchStatsPlayerRow = React.memo(function MatchStatsPlayerRow({
 
   return (
     <TableRow
+      data-testid={`player-stats-row-${player.playerId}`}
       className={cn(
         'group transition-colors hover:bg-muted/50',
         player.won && 'bg-green-500/5 hover:bg-green-500/10'

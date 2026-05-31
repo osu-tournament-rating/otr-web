@@ -386,7 +386,7 @@ export default function AdminDashboardClient() {
   return (
     <TooltipProvider delayDuration={100}>
       <div className="space-y-6">
-        <Card>
+        <Card data-testid="admin-tool-user-lookup">
           <CardHeader>
             <CardTitle>User lookup</CardTitle>
             <CardDescription>
@@ -397,6 +397,7 @@ export default function AdminDashboardClient() {
             <form
               onSubmit={handleSubmit}
               className="flex flex-col gap-3 sm:flex-row sm:items-end"
+              data-testid="admin-user-lookup-form"
             >
               <div className="flex-1">
                 <Label
@@ -606,7 +607,7 @@ export default function AdminDashboardClient() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-testid="admin-tool-mass-enqueue">
           <CardHeader>
             <CardTitle>Mass enqueue</CardTitle>
             <CardDescription>

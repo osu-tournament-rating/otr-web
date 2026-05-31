@@ -46,6 +46,7 @@ export function CountrySearchSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          data-testid="leaderboard-filter-country-button"
           variant="outline"
           role="combobox"
           aria-expanded={open}

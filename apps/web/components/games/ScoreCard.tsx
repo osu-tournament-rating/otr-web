@@ -179,6 +179,7 @@ export default function ScoreCard({
               />
             )}
             <Link
+              data-testid="score-player-link"
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >
@@ -243,6 +244,7 @@ export default function ScoreCard({
               />
             )}
             <Link
+              data-testid="score-player-link"
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >

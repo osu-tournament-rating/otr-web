@@ -181,6 +181,7 @@ export default function BeatmapTournamentCard({
         </div>
 
         <Button
+          data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
           variant="outline"
           className={cn(
             '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',

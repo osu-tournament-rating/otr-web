@@ -117,7 +117,11 @@ export default async function Page(props: {
     if (startPage > 1) {
       pages.push(
         <PaginationItem key={1}>
-          <Link href={createUri(1)} className="px-4">
+          <Link
+            href={createUri(1)}
+            data-testid="leaderboard-pagination-page-1"
+            className="px-4"
+          >
             1
           </Link>
         </PaginationItem>
@@ -137,6 +141,7 @@ export default async function Page(props: {
         <PaginationItem key={i}>
           <Link
             href={createUri(i)}
+            data-testid={`leaderboard-pagination-page-${i}`}
             className={`px-2 sm:px-4 ${i === page ? 'font-bold' : ''}`}
           >
             {i}
@@ -156,7 +161,11 @@ export default async function Page(props: {
     if (endPage < totalPages) {
       pages.push(
         <PaginationItem key={totalPages}>
-          <Link href={createUri(totalPages)} className="px-4">
+          <Link
+            href={createUri(totalPages)}
+            data-testid={`leaderboard-pagination-page-${totalPages}`}
+            className="px-4"
+          >
             {totalPages}
           </Link>
         </PaginationItem>
@@ -171,12 +180,15 @@ export default async function Page(props: {
       <LeaderboardFirstVisitDialog />
       {/* Leaderboard Table */}
       {data && (
-        <Card>
+        <Card data-testid="leaderboard-card">
           <CardHeader className="pb-3">
             <div className="flex flex-row items-center justify-between">
               <div className="flex flex-row items-center gap-2">
                 <Trophy className="h-6 w-6 text-primary" />
-                <CardTitle className="text-xl font-bold">
+                <CardTitle
+                  data-testid="leaderboard-title"
+                  className="text-xl font-bold"
+                >
                   Global Leaderboard
                 </CardTitle>
               </div>
@@ -205,10 +217,11 @@ export default async function Page(props: {
       )}
 
       {/* Pagination */}
-      <Pagination className="mt-4">
+      <Pagination data-testid="leaderboard-pagination" className="mt-4">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
+              data-testid="leaderboard-pagination-prev"
               href={page > 1 ? createUri(page - 1) : createUri(1)}
               aria-disabled={page <= 1}
               className={page <= 1 ? 'cursor-not-allowed opacity-50' : ''}
@@ -217,6 +230,7 @@ export default async function Page(props: {
           {renderPageNumbers()}
           <PaginationItem>
             <PaginationNext
+              data-testid="leaderboard-pagination-next"
               href={
                 page < totalPages
                   ? String(createUri(page + 1))

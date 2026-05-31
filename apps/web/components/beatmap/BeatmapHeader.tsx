@@ -52,6 +52,7 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
                 <Link
+                  data-testid="beatmap-external-link"
                   href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
                   target="_blank"
                   rel="noopener noreferrer"

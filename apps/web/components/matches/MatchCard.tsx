@@ -145,13 +145,17 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
               <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
                 <span>Played in</span>
                 <Link
+                  data-testid="match-tournament-link"
                   className="font-semibold text-white transition-colors hover:text-white/80"
                   href={`/tournaments/${match.tournament?.id}`}
                 >
                   {match.tournament?.name}
                 </Link>
               </span>
-              <p className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
+              <p
+                data-testid="match-name"
+                className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
+              >
                 {match.name || `Match ${match.id}`}
               </p>
             </div>

@@ -193,6 +193,7 @@ export default function TournamentSubmissionForm() {
     <Card className="w-full overflow-hidden">
       <Form {...form}>
         <form
+          data-testid="tournament-submission-form"
           onSubmit={handleFormSubmit}
           className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
         >
@@ -501,6 +502,7 @@ export default function TournamentSubmissionForm() {
           </FormSection>
 
           <Button
+            data-testid="tournament-submit-button"
             type="submit"
             className="w-full rounded-md bg-primary py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
             disabled={isSubmitting}

@@ -275,6 +275,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
     <div className="flex items-center gap-2">
       <div className="relative">
         <Input
+          data-testid="beatmap-search-input"
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -291,6 +292,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
+            data-testid="beatmap-filter-button"
             variant="outline"
             className="flex items-center gap-2 bg-popover"
           >
@@ -303,7 +305,11 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-4" align="end">
+        <PopoverContent
+          data-testid="beatmap-filter-popover"
+          className="w-80 p-4"
+          align="end"
+        >
           <Form {...form}>
             <form className="space-y-4">
               <FormField
@@ -426,6 +432,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
 
               <div className="flex justify-between gap-2">
                 <Button
+                  data-testid="beatmap-filter-clear"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -435,6 +442,7 @@ export default function BeatmapListFilter({ filter }: BeatmapListFilterProps) {
                   Clear
                 </Button>
                 <Button
+                  data-testid="beatmap-filter-apply"
                   type="button"
                   size="sm"
                   onClick={form.handleSubmit(onSubmit)}

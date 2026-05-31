@@ -91,6 +91,7 @@ export default function SearchCommandDialog() {
   return (
     <>
       <Button
+        data-testid="search-trigger-button"
         variant="ghost"
         size="icon"
         aria-label="Search"
@@ -107,9 +108,10 @@ export default function SearchCommandDialog() {
         description="Search players, tournaments, matches, and beatmaps"
         contentClassName="md:max-w-[612px] [&>button:last-child]:hidden"
       >
-        <Command shouldFilter={false} loop>
+        <Command data-testid="search-dialog" shouldFilter={false} loop>
           <div className="relative">
             <CommandInput
+              data-testid="search-input"
               placeholder="Search players, tournaments, matches..."
               value={query}
               onValueChange={(value) => setQuery(value.trimStart())}
@@ -119,7 +121,10 @@ export default function SearchCommandDialog() {
             )}
           </div>
 
-          <CommandList className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]">
+          <CommandList
+            data-testid="search-results-list"
+            className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]"
+          >
             {!debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-8">
                 <Search className="h-10 w-10 text-muted-foreground/30" />
@@ -156,6 +161,7 @@ export default function SearchCommandDialog() {
               <>
                 {data.players.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-players"
                     heading={<GroupHeading icon={User} label="Players" />}
                   >
                     {data.players.map((player) => (
@@ -186,6 +192,7 @@ export default function SearchCommandDialog() {
 
                 {data.tournaments.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-tournaments"
                     heading={<GroupHeading icon={Trophy} label="Tournaments" />}
                   >
                     {data.tournaments.map((tournament) => (
@@ -208,6 +215,7 @@ export default function SearchCommandDialog() {
 
                 {data.matches.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-matches"
                     heading={<GroupHeading icon={Swords} label="Matches" />}
                   >
                     {data.matches.map((match) => (
@@ -228,6 +236,7 @@ export default function SearchCommandDialog() {
 
                 {data.beatmaps.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-beatmaps"
                     heading={<GroupHeading icon={Music} label="Beatmaps" />}
                   >
                     {data.beatmaps.map((beatmap) => (

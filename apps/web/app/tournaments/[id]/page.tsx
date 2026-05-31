@@ -418,23 +418,35 @@ export default async function Page({ params, searchParams }: PageProps) {
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <TournamentHeader tournament={tournament} />
 
-      <Tabs value={currentTab} className="w-full">
+      <Tabs value={currentTab} data-testid="tournament-tabs" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="matches" asChild>
-            <Link href={createTabHref('matches')}>Matches</Link>
+            <Link href={createTabHref('matches')} data-testid="tab-matches">
+              Matches
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="beatmaps" asChild>
-            <Link href={createTabHref('beatmaps')}>Beatmaps</Link>
+            <Link href={createTabHref('beatmaps')} data-testid="tab-beatmaps">
+              Beatmaps
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="ratings" asChild>
-            <Link href={createTabHref('ratings')}>Ratings</Link>
+            <Link href={createTabHref('ratings')} data-testid="tab-ratings">
+              Ratings
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="stats" asChild>
-            <Link href={createTabHref('stats')}>Stats</Link>
+            <Link href={createTabHref('stats')} data-testid="tab-stats">
+              Stats
+            </Link>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="matches" className="mt-4">
+        <TabsContent
+          value="matches"
+          data-testid="tab-content-matches"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
               <Swords className="h-6 w-6 text-primary" />
@@ -452,7 +464,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="beatmaps" className="mt-4">
+        <TabsContent
+          value="beatmaps"
+          data-testid="tab-content-beatmaps"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
               <Music className="h-6 w-6 text-primary" />
@@ -473,7 +489,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ratings" className="mt-4">
+        <TabsContent
+          value="ratings"
+          data-testid="tab-content-ratings"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <TournamentRatingsView
               playerStats={tournament.playerTournamentStats ?? []}
@@ -481,7 +501,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="stats" className="mt-4 space-y-4">
+        <TabsContent
+          value="stats"
+          data-testid="tab-content-stats"
+          className="mt-4 space-y-4"
+        >
           <TournamentStatsCard tournament={tournament} />
           <TournamentPlayerStatsView
             playerStats={tournament.playerTournamentStats ?? []}

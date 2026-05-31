@@ -15,7 +15,10 @@ export default function HomeActionCards({
   playerId,
 }: HomeActionCardsProps) {
   return (
-    <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div
+      data-testid="home-action-cards"
+      className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3"
+    >
       {isLoggedIn && playerId ? (
         <LinkCard
           title="My Profile"
@@ -24,7 +27,10 @@ export default function HomeActionCards({
           href={`/players/${playerId}`}
         />
       ) : (
-        <Card className="flex size-full flex-row items-center gap-4 border border-none p-6">
+        <Card
+          data-testid="home-login-button"
+          className="flex size-full flex-row items-center gap-4 border border-none p-6"
+        >
           <div className="mt-1 text-primary">
             <User size={24} />
           </div>
