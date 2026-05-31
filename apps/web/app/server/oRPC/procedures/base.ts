@@ -18,6 +18,7 @@ import {
   formatUserDescriptor,
   formatProcedurePath,
 } from './logging/helpers';
+import { assertOutsideMaintenanceWindow } from './shared/maintenanceWindow';
 
 type ApiKeyActor = {
   userId: string;
@@ -705,3 +706,17 @@ export const protectedProcedure = base
   .use(withMetrics)
   .use(withRequestLogging)
   .use(withErrorBoundary);
+
+// Blocks data mutations during the daily maintenance window (11:45–12:15 UTC)
+// so the public archives stay consistent with the data the processor runs
+// against. See issue #763.
+const withMaintenanceWindowGuard = base.middleware(
+  async ({ context, next }) => {
+    assertOutsideMaintenanceWindow(context.headers);
+    return next();
+  }
+);
+
+export const adminMutationProcedure = protectedProcedure.use(
+  withMaintenanceWindowGuard
+);

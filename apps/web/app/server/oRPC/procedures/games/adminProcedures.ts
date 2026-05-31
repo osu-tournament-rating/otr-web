@@ -16,13 +16,13 @@ import {
 } from '@/lib/orpc/schema/match';
 import { GameWarningFlags, VerificationStatus } from '@otr/core/osu';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure, protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 const FALLBACK_DATETIME = '2007-09-17 00:00:00';
 
-export const updateGameAdmin = protectedProcedure
+export const updateGameAdmin = adminMutationProcedure
   .input(GameAdminUpdateInputSchema)
   .output(GameAdminMutationResponseSchema)
   .route({
@@ -94,7 +94,7 @@ export const updateGameAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const deleteGameAdmin = protectedProcedure
+export const deleteGameAdmin = adminMutationProcedure
   .input(GameAdminDeleteInputSchema)
   .output(GameAdminMutationResponseSchema)
   .route({
@@ -124,7 +124,7 @@ export const deleteGameAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const mergeGameAdmin = protectedProcedure
+export const mergeGameAdmin = adminMutationProcedure
   .input(GameAdminMergeInputSchema)
   .output(GameAdminMergeResponseSchema)
   .route({

@@ -8,7 +8,7 @@ import {
   type TournamentBeatmapAdminMutationInput,
 } from '@/lib/orpc/schema/tournament';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import { Ruleset } from '@otr/core/osu';
@@ -269,7 +269,7 @@ export async function manageTournamentBeatmapsAdminHandler({
   } as const;
 }
 
-export const manageTournamentBeatmapsAdmin = protectedProcedure
+export const manageTournamentBeatmapsAdmin = adminMutationProcedure
   .input(TournamentBeatmapAdminMutationInputSchema)
   .output(TournamentBeatmapAdminMutationResponseSchema)
   .route({

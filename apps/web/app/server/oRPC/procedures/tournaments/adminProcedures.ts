@@ -22,7 +22,7 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import type { DatabaseClient } from '@/lib/db';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import {
@@ -385,7 +385,7 @@ export async function updateTournamentAdminHandler({
   return { success: true } as const;
 }
 
-export const updateTournamentAdmin = protectedProcedure
+export const updateTournamentAdmin = adminMutationProcedure
   .input(TournamentAdminUpdateInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -443,7 +443,7 @@ async function alignTournamentChildRulesets(
     .where(inArray(schema.gameScores.gameId, gameIds));
 }
 
-export const resetTournamentAutomatedChecks = protectedProcedure
+export const resetTournamentAutomatedChecks = adminMutationProcedure
   .input(TournamentResetAutomatedChecksInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -456,7 +456,7 @@ export const resetTournamentAutomatedChecks = protectedProcedure
     resetTournamentAutomatedChecksHandler({ input, context })
   );
 
-export const acceptTournamentPreVerificationStatuses = protectedProcedure
+export const acceptTournamentPreVerificationStatuses = adminMutationProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -676,7 +676,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
     return { success: true } as const;
   });
 
-export const deleteTournamentAdmin = protectedProcedure
+export const deleteTournamentAdmin = adminMutationProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -706,7 +706,7 @@ export const deleteTournamentAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const deleteTournamentBeatmapsAdmin = protectedProcedure
+export const deleteTournamentBeatmapsAdmin = adminMutationProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -725,7 +725,7 @@ export const deleteTournamentBeatmapsAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const refetchTournamentMatchData = protectedProcedure
+export const refetchTournamentMatchData = adminMutationProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentRefetchMatchDataResponseSchema)
   .route({
@@ -738,7 +738,7 @@ export const refetchTournamentMatchData = protectedProcedure
     refetchTournamentMatchDataHandler({ input, context })
   );
 
-export const refetchTournamentBeatmaps = protectedProcedure
+export const refetchTournamentBeatmaps = adminMutationProcedure
   .input(TournamentIdInputSchema)
   .output(TournamentRefetchBeatmapDataResponseSchema)
   .route({

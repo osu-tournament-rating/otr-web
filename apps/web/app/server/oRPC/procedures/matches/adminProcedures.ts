@@ -13,11 +13,11 @@ import {
   MatchAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import { updateMatchAdminHandler } from './matchAdminHandlers';
 
-export const updateMatchAdmin = protectedProcedure
+export const updateMatchAdmin = adminMutationProcedure
   .input(MatchAdminUpdateInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
@@ -28,7 +28,7 @@ export const updateMatchAdmin = protectedProcedure
   })
   .handler(({ input, context }) => updateMatchAdminHandler({ input, context }));
 
-export const mergeMatchAdmin = protectedProcedure
+export const mergeMatchAdmin = adminMutationProcedure
   .input(MatchAdminMergeInputSchema)
   .output(MatchAdminMergeResponseSchema)
   .route({
@@ -121,7 +121,7 @@ export const mergeMatchAdmin = protectedProcedure
     );
   });
 
-export const deleteMatchAdmin = protectedProcedure
+export const deleteMatchAdmin = adminMutationProcedure
   .input(MatchAdminDeleteInputSchema)
   .output(MatchAdminMutationResponseSchema)
   .route({
@@ -160,7 +160,7 @@ export const deleteMatchAdmin = protectedProcedure
     );
   });
 
-export const deleteMatchPlayerScoresAdmin = protectedProcedure
+export const deleteMatchPlayerScoresAdmin = adminMutationProcedure
   .input(MatchAdminDeletePlayerScoresInputSchema)
   .output(MatchAdminDeletePlayerScoresResponseSchema)
   .route({

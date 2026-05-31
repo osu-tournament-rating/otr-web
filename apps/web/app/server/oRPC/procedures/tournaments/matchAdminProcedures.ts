@@ -10,14 +10,14 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import { publishFetchMatchMessage } from '@/lib/queue/publishers';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 
 const QUEUE_FAILURE_WARNING =
   'We could not queue match data fetches. Please contact the o!TR developers.';
 
-export const manageTournamentMatchesAdmin = protectedProcedure
+export const manageTournamentMatchesAdmin = adminMutationProcedure
   .input(TournamentMatchAdminMutationInputSchema)
   .output(TournamentMatchAdminMutationResponseSchema)
   .route({

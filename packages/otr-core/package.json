@@ -10,6 +10,8 @@
     "./db/*": "./src/db/*",
     "./osu": "./src/osu/enums.ts",
     "./osu/*": "./src/osu/*",
+    "./maintenance": "./src/maintenance/window.ts",
+    "./maintenance/*": "./src/maintenance/*",
     "./queues": "./src/queues/index.ts",
     "./queues/*": "./src/queues/*",
     "./messages/*": "./src/messages/*",
