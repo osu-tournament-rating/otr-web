@@ -104,6 +104,31 @@ const expectBlocked = (error: CapturedError) => {
 };
 
 test.describe('Maintenance window', () => {
+  test('shows the site banner during the window', async ({ page }) => {
+    await page.setExtraHTTPHeaders({
+      'x-e2e-maintenance-window': 'active',
+    });
+
+    await page.goto('/');
+
+    await expect(page.locator('[data-testid="maintenance-window-banner"]'))
+      .toContainText(
+        'Ratings are pending recalculation, performance may be degraded'
+      );
+  });
+
+  test('hides the site banner outside the window', async ({ page }) => {
+    await page.setExtraHTTPHeaders({
+      'x-e2e-maintenance-window': 'inactive',
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page.locator('[data-testid="maintenance-window-banner"]')
+    ).toHaveCount(0);
+  });
+
   test('blocks admins from deleting data during the window', async ({
     baseURL,
   }) => {

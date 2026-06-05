@@ -707,7 +707,7 @@ export const protectedProcedure = base
   .use(withRequestLogging)
   .use(withErrorBoundary);
 
-// Blocks data mutations during the daily maintenance window (11:45–12:15 UTC)
+// Blocks data mutations during the weekly maintenance window
 // so the public archives stay consistent with the data the processor runs
 // against. See issue #763.
 const withMaintenanceWindowGuard = base.middleware(
