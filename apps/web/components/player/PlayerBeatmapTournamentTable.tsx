@@ -131,7 +131,7 @@ export default function PlayerBeatmapTournamentTable({
                           {tournament.verificationStatus ===
                           VerificationStatus.Verified ? (
                             tournament.mostCommonMod === Mods.None ? (
-                              <span>N/A</span>
+                              '—'
                             ) : (
                               <ModIconset
                                 mods={tournament.mostCommonMod ?? Mods.None}
