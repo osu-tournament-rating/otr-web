@@ -229,7 +229,7 @@ different host ports.
   database via `otr-scripts`, runs Drizzle migrations, installs Chromium, and runs
   `bun run test:e2e` from `apps/web`.
 - Main CI is `.github/workflows/ci.yml`; it installs with `bun install
-  --frozen-lockfile`, then runs `bun test`, `bun run lint`, `bunx tsc --noEmit`,
+--frozen-lockfile`, then runs `bun test`, `bun run lint`, `bunx tsc --noEmit`,
   `bunx prettier . --check`, `bun run build`, and the worker binary build.
 
 Run the local CI-equivalent checks before broad changes:
