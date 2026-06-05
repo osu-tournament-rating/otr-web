@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import SimpleTooltip from '../simple-tooltip';
-import { Mods } from '@otr/core/osu';
+import { Mods, VerificationStatus } from '@otr/core/osu';
 
 interface PlayerBeatmapTournamentTableProps {
   tournaments: BeatmapTournamentListItem[];
@@ -128,21 +128,29 @@ export default function PlayerBeatmapTournamentTable({
                       </TableCell>
                       <TableCell className="py-2 text-muted-foreground">
                         <div className="flex h-7 items-center justify-center">
-                          {tournament.mostCommonMod === Mods.None ? (
-                            <span>N/A</span>
+                          {tournament.verificationStatus ===
+                          VerificationStatus.Verified ? (
+                            tournament.mostCommonMod === Mods.None ? (
+                              '—'
+                            ) : (
+                              <ModIconset
+                                mods={tournament.mostCommonMod ?? Mods.None}
+                                className="flex h-full items-center"
+                                iconClassName="h-7"
+                                alwaysExpanded={true}
+                              />
+                            )
                           ) : (
-                            <ModIconset
-                              mods={tournament.mostCommonMod ?? Mods.None}
-                              className="flex h-full items-center"
-                              iconClassName="h-7"
-                              alwaysExpanded={true}
-                            />
+                            '—'
                           )}
                         </div>
                       </TableCell>
                       <TableCell className="py-2 text-sm text-muted-foreground">
                         <div className="text-center">
-                          {tournament.gamesPlayed ?? 0}
+                          {tournament.verificationStatus ===
+                          VerificationStatus.Verified
+                            ? (tournament.gamesPlayed ?? 0)
+                            : '—'}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -17,7 +17,10 @@ import {
 import { GameWarningFlags, VerificationStatus } from '@otr/core/osu';
 
 import { adminMutationProcedure, protectedProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+} from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 const FALLBACK_DATETIME = '2007-09-17 00:00:00';
@@ -33,6 +36,7 @@ export const updateGameAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const existing = await context.db.query.games.findFirst({
       columns: {
@@ -105,6 +109,7 @@ export const deleteGameAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const deleted = await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, () =>
@@ -135,6 +140,7 @@ export const mergeGameAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const childIds = Array.from(new Set(input.childGameIds));
 

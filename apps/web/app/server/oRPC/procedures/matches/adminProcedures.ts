@@ -14,7 +14,10 @@ import {
 } from '@/lib/orpc/schema/match';
 
 import { adminMutationProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+} from '../shared/adminGuard';
 import { updateMatchAdminHandler } from './matchAdminHandlers';
 
 export const updateMatchAdmin = adminMutationProcedure
@@ -39,6 +42,7 @@ export const mergeMatchAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const childIds = Array.from(new Set(input.childMatchIds));
 
@@ -132,6 +136,7 @@ export const deleteMatchAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     return context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
@@ -171,6 +176,7 @@ export const deleteMatchPlayerScoresAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     return context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {

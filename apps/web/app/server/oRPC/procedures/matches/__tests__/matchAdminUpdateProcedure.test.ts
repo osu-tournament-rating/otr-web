@@ -150,6 +150,24 @@ describe('updateMatchAdminHandler', () => {
       },
     };
 
+  const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
+
+  it('rejects updates during the admin data mutation freeze window', async () => {
+    await expect(
+      updateMatchAdminHandler({
+        input: baseInput,
+        context: {
+          db: null as unknown as DatabaseClient,
+          session: adminSession,
+          adminDataMutationDate: new Date('2026-06-02T12:00:00.000Z'),
+        },
+      })
+    ).rejects.toMatchObject({
+      code: 'SERVICE_UNAVAILABLE',
+      status: 503,
+    });
+  });
+
   it('does not include submittedByUserId in match update', async () => {
     const db = new UpdateMatchTestDb({
       id: 1,
@@ -163,6 +181,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -185,6 +204,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -206,6 +226,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -227,6 +248,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -248,6 +270,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -266,6 +289,7 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 

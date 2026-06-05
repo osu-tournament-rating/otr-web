@@ -13,7 +13,11 @@ import {
 import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+  type AdminDataMutationClockContext,
+} from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import {
   publishFetchBeatmapMessage,
@@ -25,7 +29,7 @@ const REFETCH_QUEUE_WARNING = 'Failed to enqueue match or beatmap fetches';
 const BATCH_SIZE = 500;
 const BATCH_DELAY_MS = 100;
 
-interface MassEnqueueContext {
+interface MassEnqueueContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -62,6 +66,7 @@ function delay(ms: number): Promise<void> {
  */
 export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const { beatmapIds, matchIds, priority } = input;
 
