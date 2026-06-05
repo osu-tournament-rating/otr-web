@@ -1,5 +1,5 @@
 /**
- * Daily maintenance window during which tournament data must not change.
+ * Weekly maintenance window during which tournament data must not change.
  *
  * The osu! rating processor runs at 12:00 UTC. We freeze data mutations and
  * external fetches for fifteen minutes either side of that run so the public
@@ -14,16 +14,24 @@ export const MAINTENANCE_WINDOW_START_UTC_MINUTES = 11 * 60 + 45;
 /** End of the window, in minutes past midnight UTC (12:15 UTC). */
 export const MAINTENANCE_WINDOW_END_UTC_MINUTES = 12 * 60 + 15;
 
+/** Maintenance window day of week in UTC (Tuesday). */
+export const MAINTENANCE_WINDOW_UTC_DAY = 2;
+
 /** Human-readable label for messages and logs. */
-export const MAINTENANCE_WINDOW_LABEL = '11:45–12:15 UTC';
+export const MAINTENANCE_WINDOW_LABEL = 'Tuesdays 11:45-12:15 UTC';
 
 /**
- * Returns whether the supplied instant falls within the daily maintenance
- * window. The start boundary is inclusive and the end boundary is exclusive.
+ * Returns whether the supplied instant falls within the weekly maintenance
+ * window. The day and time are evaluated in UTC. The start boundary is
+ * inclusive and the end boundary is exclusive.
  *
  * @param now Instant to evaluate.
  */
 export function isWithinMaintenanceWindow(now: Date): boolean {
+  if (now.getUTCDay() !== MAINTENANCE_WINDOW_UTC_DAY) {
+    return false;
+  }
+
   const minutesUtc = now.getUTCHours() * 60 + now.getUTCMinutes();
 
   return (

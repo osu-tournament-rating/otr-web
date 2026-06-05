@@ -3,7 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import { isWithinMaintenanceWindow } from '../window';
 
 const at = (hours: number, minutes: number): Date =>
-  new Date(Date.UTC(2026, 0, 1, hours, minutes, 0, 0));
+  new Date(Date.UTC(2026, 0, 6, hours, minutes, 0, 0));
 
 describe('isWithinMaintenanceWindow', () => {
   it('returns false just before the window opens (11:44 UTC)', () => {
@@ -30,12 +30,18 @@ describe('isWithinMaintenanceWindow', () => {
     expect(isWithinMaintenanceWindow(at(0, 0))).toBe(false);
   });
 
+  it('returns false at the maintenance time on a non-Tuesday', () => {
+    expect(isWithinMaintenanceWindow(new Date('2026-01-07T12:00:00Z'))).toBe(
+      false
+    );
+  });
+
   it('evaluates against UTC regardless of local offset', () => {
-    // 11:50 UTC expressed via an explicit UTC timestamp.
-    expect(isWithinMaintenanceWindow(new Date('2026-01-01T11:50:00Z'))).toBe(
+    // 11:50 UTC on a Tuesday expressed via an explicit UTC timestamp.
+    expect(isWithinMaintenanceWindow(new Date('2026-01-06T11:50:00Z'))).toBe(
       true
     );
-    expect(isWithinMaintenanceWindow(new Date('2026-01-01T13:50:00Z'))).toBe(
+    expect(isWithinMaintenanceWindow(new Date('2026-01-06T13:50:00Z'))).toBe(
       false
     );
   });
