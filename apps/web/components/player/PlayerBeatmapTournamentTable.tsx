@@ -144,7 +144,7 @@ export default function PlayerBeatmapTournamentTable({
                         <div className="text-center">
                           {tournament.verificationStatus ===
                           VerificationStatus.Verified
-                            ? tournament.gamesPlayed ?? 0
+                            ? (tournament.gamesPlayed ?? 0)
                             : 'N/A'}
                         </div>
                       </TableCell>

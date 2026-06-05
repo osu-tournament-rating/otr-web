@@ -561,9 +561,7 @@ export const getPlayerBeatmaps = publicProcedure
       FROM join_pooled_beatmaps jpb
       INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
       WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-        ${input.ruleset != null
-          ? sql`AND t.ruleset = ${input.ruleset}`
-          : sql``}
+        ${input.ruleset != null ? sql`AND t.ruleset = ${input.ruleset}` : sql``}
     )`;
     const gameCountExpr = sql<number>`(
       SELECT COUNT(g.id)
@@ -571,12 +569,10 @@ export const getPlayerBeatmaps = publicProcedure
       INNER JOIN matches m ON m.id = g.match_id
       INNER JOIN tournaments t ON t.id = m.tournament_id
       WHERE g.beatmap_id = ${schema.beatmaps.id}
-        AND g.verification_status = ${VerificationStatus.Verified}
-        AND m.verification_status = ${VerificationStatus.Verified}
         AND t.verification_status = ${VerificationStatus.Verified}
-        ${input.ruleset != null
-          ? sql`AND t.ruleset = ${input.ruleset}`
-          : sql``}
+        AND m.verification_status = ${VerificationStatus.Verified}
+        AND g.verification_status = ${VerificationStatus.Verified}
+        ${input.ruleset != null ? sql`AND t.ruleset = ${input.ruleset}` : sql``}
     )`;
 
     const beatmapOrderingRows = await context.db

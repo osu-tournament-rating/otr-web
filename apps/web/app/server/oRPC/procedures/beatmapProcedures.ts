@@ -167,9 +167,7 @@ export const getBeatmapStats = publicProcedure
               schema.joinPooledBeatmaps.tournamentsPooledInId
             )
           )
-          .where(
-            eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)
-          ),
+          .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)),
         context.db
           .select({
             quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
@@ -240,9 +238,7 @@ export const getBeatmapStats = publicProcedure
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           )
-          .where(
-            eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)
-          )
+          .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId))
           .groupBy(
             schema.tournaments.id,
             schema.tournaments.name,
