@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import SimpleTooltip from '../simple-tooltip';
-import { Mods } from '@otr/core/osu';
+import { Mods, VerificationStatus } from '@otr/core/osu';
 
 interface PlayerBeatmapTournamentTableProps {
   tournaments: BeatmapTournamentListItem[];
@@ -142,7 +142,10 @@ export default function PlayerBeatmapTournamentTable({
                       </TableCell>
                       <TableCell className="py-2 text-sm text-muted-foreground">
                         <div className="text-center">
-                          {tournament.gamesPlayed ?? 0}
+                          {tournament.verificationStatus ===
+                          VerificationStatus.Verified
+                            ? tournament.gamesPlayed ?? 0
+                            : 'N/A'}
                         </div>
                       </TableCell>
                     </TableRow>
