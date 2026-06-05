@@ -29,6 +29,7 @@ import {
 import { Button } from '../ui/button';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { VerificationStatus } from '@otr/core/osu';
 import { format } from 'date-fns';
 import { formatUTCDate } from '@/lib/utils/date';
 import { orpc } from '@/lib/orpc/orpc';
@@ -165,8 +166,10 @@ export default function BeatmapTournamentCard({
           <div className="flex items-center gap-1.5">
             <Gamepad2 className="h-4 w-4 flex-shrink-0" />
             <span>
-              {tournament.gameCount}{' '}
-              {tournament.gameCount === 1 ? 'game' : 'games'}
+              {tournament.tournament.verificationStatus ===
+              VerificationStatus.Verified
+                ? `${tournament.gameCount} ${tournament.gameCount === 1 ? 'game' : 'games'}`
+                : 'N/A'}
             </span>
           </div>
 
@@ -183,6 +186,10 @@ export default function BeatmapTournamentCard({
         <Button
           data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
           variant="outline"
+          disabled={
+            tournament.tournament.verificationStatus !==
+            VerificationStatus.Verified
+          }
           className={cn(
             '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
             'hover:bg-accent hover:text-accent-foreground',

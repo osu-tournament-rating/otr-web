@@ -532,10 +532,6 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, playerId),
-          eq(
-            schema.tournaments.verificationStatus,
-            VerificationStatus.Verified
-          ),
           // Filter by the tournament ruleset because mania variants reuse the same
           // beatmap ruleset (e.g., 4k/7k both map back to Mania = 3).
           input.ruleset != null
@@ -561,22 +557,11 @@ export const getPlayerBeatmaps = publicProcedure
     }
 
     const tournamentCountExpr = sql<number>`(
-      SELECT COUNT(DISTINCT tournament_id) FROM (
-        SELECT jpb.tournaments_pooled_in_id AS tournament_id
-        FROM join_pooled_beatmaps jpb
-        INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
-        WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
-          AND t.verification_status = ${VerificationStatus.Verified}
-        UNION
-        SELECT t.id AS tournament_id
-        FROM games g
-        INNER JOIN matches m ON m.id = g.match_id
-        INNER JOIN tournaments t ON t.id = m.tournament_id
-        WHERE g.beatmap_id = ${schema.beatmaps.id}
-          AND t.verification_status = ${VerificationStatus.Verified}
-          AND m.verification_status = ${VerificationStatus.Verified}
-          AND g.verification_status = ${VerificationStatus.Verified}
-      ) AS combined_tournaments
+      SELECT COUNT(DISTINCT jpb.tournaments_pooled_in_id)
+      FROM join_pooled_beatmaps jpb
+      INNER JOIN tournaments t ON t.id = jpb.tournaments_pooled_in_id
+      WHERE jpb.pooled_beatmaps_id = ${schema.beatmaps.id}
+        ${input.ruleset != null ? sql`AND t.ruleset = ${input.ruleset}` : sql``}
     )`;
     const gameCountExpr = sql<number>`(
       SELECT COUNT(g.id)
@@ -587,6 +572,7 @@ export const getPlayerBeatmaps = publicProcedure
         AND t.verification_status = ${VerificationStatus.Verified}
         AND m.verification_status = ${VerificationStatus.Verified}
         AND g.verification_status = ${VerificationStatus.Verified}
+        ${input.ruleset != null ? sql`AND t.ruleset = ${input.ruleset}` : sql``}
     )`;
 
     const beatmapOrderingRows = await context.db
@@ -615,10 +601,6 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, playerId),
-          eq(
-            schema.tournaments.verificationStatus,
-            VerificationStatus.Verified
-          ),
           // Keep ordering scoped to the tournament ruleset so pagination stays in sync
           // when a player switches between ruleset tabs.
           input.ruleset != null
@@ -720,10 +702,6 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           inArray(schema.beatmaps.id, beatmapIds),
-          eq(
-            schema.tournaments.verificationStatus,
-            VerificationStatus.Verified
-          ),
           // Ensure hydrated tournaments also belong to the requested ruleset.
           input.ruleset != null
             ? eq(schema.tournaments.ruleset, input.ruleset)
