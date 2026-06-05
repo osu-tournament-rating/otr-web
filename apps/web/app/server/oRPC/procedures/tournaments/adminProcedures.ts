@@ -23,7 +23,11 @@ import {
 import type { DatabaseClient } from '@/lib/db';
 
 import { protectedProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+  type AdminDataMutationClockContext,
+} from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import {
   GameWarningFlags,
@@ -45,7 +49,7 @@ export const REFETCH_QUEUE_WARNING =
 export const AUTOMATION_QUEUE_WARNING =
   'We could not queue automated checks. Please contact the o!TR developers.';
 
-interface RefetchMatchDataContext {
+interface RefetchMatchDataContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -65,6 +69,7 @@ export async function refetchTournamentMatchDataHandler({
   context,
 }: RefetchMatchDataArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const matches: Array<{ id: number; osuId: number; isLazer: boolean }> =
     await context.db.transaction((tx) =>
@@ -151,7 +156,7 @@ export async function refetchTournamentMatchDataHandler({
   } as const;
 }
 
-interface RefetchBeatmapDataContext {
+interface RefetchBeatmapDataContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -171,6 +176,7 @@ export async function refetchTournamentBeatmapsHandler({
   context,
 }: RefetchBeatmapDataArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const beatmapRows = await context.db
     .select({
@@ -240,7 +246,7 @@ export async function refetchTournamentBeatmapsHandler({
   } as const;
 }
 
-interface ResetAutomatedChecksContext {
+interface ResetAutomatedChecksContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -260,6 +266,7 @@ export async function resetTournamentAutomatedChecksHandler({
   context,
 }: ResetAutomatedChecksArgs) {
   ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const warnings: string[] = [];
   const correlationId = getCorrelationId(context);
@@ -286,7 +293,7 @@ export async function resetTournamentAutomatedChecksHandler({
   } as const;
 }
 
-interface UpdateTournamentAdminContext {
+interface UpdateTournamentAdminContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -306,6 +313,7 @@ export async function updateTournamentAdminHandler({
   context,
 }: UpdateTournamentAdminArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const existing = await context.db.query.tournaments.findFirst({
     columns: {
@@ -467,6 +475,7 @@ export const acceptTournamentPreVerificationStatuses = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
@@ -687,6 +696,7 @@ export const deleteTournamentAdmin = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const deleted = await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, () =>
@@ -717,6 +727,7 @@ export const deleteTournamentBeatmapsAdmin = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     await context.db
       .delete(schema.joinPooledBeatmaps)
