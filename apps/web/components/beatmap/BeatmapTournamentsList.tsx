@@ -82,7 +82,7 @@ function NoResultsCard() {
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
         <p className="text-muted-foreground">
-          This beatmap has not been used in any verified tournaments.
+          This beatmap has not been pooled in any tournaments.
         </p>
       </CardContent>
     </Card>

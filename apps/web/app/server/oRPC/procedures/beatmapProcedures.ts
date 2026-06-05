@@ -168,13 +168,7 @@ export const getBeatmapStats = publicProcedure
             )
           )
           .where(
-            and(
-              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
+            eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)
           ),
         context.db
           .select({
@@ -247,13 +241,7 @@ export const getBeatmapStats = publicProcedure
             )
           )
           .where(
-            and(
-              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
+            eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)
           )
           .groupBy(
             schema.tournaments.id,
