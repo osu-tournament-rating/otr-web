@@ -8,7 +8,7 @@ import {
   type TournamentBeatmapAdminMutationInput,
 } from '@/lib/orpc/schema/tournament';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import {
   ensureAdminDataMutationAllowed,
   ensureAdminSession,
@@ -274,7 +274,7 @@ export async function manageTournamentBeatmapsAdminHandler({
   } as const;
 }
 
-export const manageTournamentBeatmapsAdmin = protectedProcedure
+export const manageTournamentBeatmapsAdmin = adminMutationProcedure
   .input(TournamentBeatmapAdminMutationInputSchema)
   .output(TournamentBeatmapAdminMutationResponseSchema)
   .route({

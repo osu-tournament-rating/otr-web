@@ -30,6 +30,9 @@ export default defineConfig({
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
-    env: { E2E_TEST_AUTH: 'true' },
+    // Disable time-based gating for the suite; the maintenance-window spec
+    // forces the window per-request via the `x-e2e-maintenance-window` header,
+    // which takes precedence over this flag.
+    env: { E2E_TEST_AUTH: 'true', MAINTENANCE_WINDOW_ENABLED: 'false' },
   },
 });

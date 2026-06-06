@@ -9,7 +9,7 @@ import {
   GameScoreAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure } from '../base';
 import {
   ensureAdminDataMutationAllowed,
   ensureAdminSession,
@@ -17,7 +17,7 @@ import {
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
-export const updateScoreAdmin = protectedProcedure
+export const updateScoreAdmin = adminMutationProcedure
   .input(GameScoreAdminUpdateInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({
@@ -71,7 +71,7 @@ export const updateScoreAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const deleteScoreAdmin = protectedProcedure
+export const deleteScoreAdmin = adminMutationProcedure
   .input(GameScoreAdminDeleteInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({

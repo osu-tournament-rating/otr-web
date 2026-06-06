@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import type { DatabaseClient } from '../db';
 import { consoleLogger, type Logger } from '../logging/logger';
 import type { QueueConsumer } from '@otr/core/queues';
+import { deferIfMaintenanceWindow } from '../maintenance/gate';
 import type { RateLimiter } from '../rate-limiter';
 import { OsuTrackClient } from './client';
 
@@ -26,6 +27,7 @@ export interface OsuTrackPlayerWorkerOptions extends OsuTrackPlayerWorkerEvents 
   rateLimiter: RateLimiter;
   db: DatabaseClient;
   logger?: Logger;
+  maintenanceWindowEnabled?: boolean;
 }
 
 const defaultLogger = consoleLogger;
@@ -37,6 +39,7 @@ export class OsuTrackPlayerWorker {
   private readonly db: DatabaseClient;
   private readonly logger: Logger;
   private readonly events: OsuTrackPlayerWorkerEvents;
+  private readonly maintenanceWindowEnabled: boolean;
 
   constructor(options: OsuTrackPlayerWorkerOptions) {
     this.queue = options.queue;
@@ -47,6 +50,7 @@ export class OsuTrackPlayerWorker {
     this.events = {
       onPlayer: options.onPlayer,
     };
+    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled ?? true;
   }
 
   async start() {
@@ -56,6 +60,15 @@ export class OsuTrackPlayerWorker {
         correlationId: envelope.correlationId,
         osuPlayerId: envelope.osuPlayerId,
       });
+
+      const deferred = await deferIfMaintenanceWindow({
+        enabled: this.maintenanceWindowEnabled,
+        message,
+        logger: msgLogger,
+      });
+      if (deferred) {
+        return;
+      }
 
       msgLogger.info('processing osu!track player fetch');
 

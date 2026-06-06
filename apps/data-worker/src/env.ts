@@ -47,6 +47,29 @@ const parseBooleanEnv = (name: keyof NodeJS.ProcessEnv) => {
   throw new Error(`${String(name)} must be either "true" or "false"`);
 };
 
+const parseBooleanEnvWithDefault = (
+  name: keyof NodeJS.ProcessEnv,
+  defaultValue: boolean
+) => {
+  const raw = process.env[name];
+
+  if (raw === undefined || raw.trim() === '') {
+    return defaultValue;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+
+  if (normalized === 'true') {
+    return true;
+  }
+
+  if (normalized === 'false') {
+    return false;
+  }
+
+  throw new Error(`${String(name)} must be either "true" or "false"`);
+};
+
 const osuClientId = parseIntegerEnv('DATA_WORKER_OSU_CLIENT_ID');
 
 const parseRateLimit = (
@@ -104,6 +127,11 @@ export const dataWorkerEnv = {
   osuApiRateLimit,
   osuTrackRateLimit,
   amqpUrl: requireEnv('RABBITMQ_AMQP_URL'),
+  // Defaults to enabled so existing deployments without the var stay protected.
+  maintenanceWindowEnabled: parseBooleanEnvWithDefault(
+    'MAINTENANCE_WINDOW_ENABLED',
+    true
+  ),
   playerAutoRefetch: {
     osu: playerOsuAutoRefetch,
     osuTrack: playerOsuTrackAutoRefetch,
