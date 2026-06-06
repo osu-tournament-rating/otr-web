@@ -111,10 +111,11 @@ test.describe('Maintenance window', () => {
 
     await page.goto('/');
 
-    await expect(page.locator('[data-testid="maintenance-window-banner"]'))
-      .toContainText(
-        'Ratings are pending recalculation, performance may be degraded'
-      );
+    await expect(
+      page.locator('[data-testid="maintenance-window-banner"]')
+    ).toContainText(
+      'Ratings are pending recalculation, performance may be degraded'
+    );
   });
 
   test('hides the site banner outside the window', async ({ page }) => {

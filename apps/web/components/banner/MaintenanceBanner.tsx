@@ -4,9 +4,7 @@ type MaintenanceBannerProps = {
   headers: Headers;
 };
 
-export default function MaintenanceBanner({
-  headers,
-}: MaintenanceBannerProps) {
+export default function MaintenanceBanner({ headers }: MaintenanceBannerProps) {
   if (!resolveMaintenanceWindowActive(headers)) {
     return null;
   }
