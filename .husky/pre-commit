@@ -5,12 +5,20 @@ set -e
 # Ensure the hook runs from the repository root
 cd "$(dirname "$0")/.."
 
-echo "Linting..."
-bun run lint
+staged_files="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if [ -n "$staged_files" ]; then
+  echo "Formatting staged files..."
+  printf '%s\n' "$staged_files" | xargs bunx prettier --write --ignore-unknown
+  printf '%s\n' "$staged_files" | xargs git add --
+else
+  echo "No staged files to format."
+fi
 
 echo "Type checking..."
 bunx tsc
 
-git add .
+echo "Linting..."
+bun run lint
 
 echo "Pre-commit checks passed!"
