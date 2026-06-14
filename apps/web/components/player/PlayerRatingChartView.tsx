@@ -10,7 +10,6 @@ import {
   ReferenceLine,
   DotProps,
   Legend,
-  ResponsiveContainer,
 } from 'recharts';
 import PlayerRatingChartTooltip from './PlayerRatingChartTooltip';
 import { capitalize } from '@/lib/utils';
@@ -263,76 +262,72 @@ export default function PlayerRatingChartView({
       config={chartConfig}
       className="max-h-[375px] min-h-[300px] w-full"
     >
-      <ResponsiveContainer>
-        <LineChart data={chartData}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={chartColors.grid}
-            vertical={false}
-          />
-          <XAxis
-            type="number"
-            dataKey="timestampValue"
-            domain={['dataMin', 'dataMax']}
-            scale="time"
-            stroke={chartColors.text}
-            tick={{ fill: chartColors.text, fontSize: 12 }}
-            tickLine={{ stroke: chartColors.grid }}
-            fontFamily="sans-serif"
-            ticks={xAxisTickMarks}
-            tickFormatter={formatXAxisTick}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            stroke={chartColors.text}
-            tick={{ fill: chartColors.text, fontSize: 12 }}
-            tickLine={{ stroke: chartColors.grid }}
-            tickFormatter={formatYAxisTick}
-            domain={yAxisConfig.domain}
-            ticks={yAxisConfig.ticks}
-            width={CHART_CONSTANTS.Y_AXIS_WIDTH}
-          />
-          <RechartsTooltip
-            content={<PlayerRatingChartTooltip activeTab={activeTab} />}
-            cursor={{
-              stroke: chartColors.text,
-              strokeWidth: 1,
-              strokeDasharray: '3 3',
+      <LineChart data={chartData}>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke={chartColors.grid}
+          vertical={false}
+        />
+        <XAxis
+          type="number"
+          dataKey="timestampValue"
+          domain={['dataMin', 'dataMax']}
+          scale="time"
+          stroke={chartColors.text}
+          tick={{ fill: chartColors.text, fontSize: 12 }}
+          tickLine={{ stroke: chartColors.grid }}
+          fontFamily="sans-serif"
+          ticks={xAxisTickMarks}
+          tickFormatter={formatXAxisTick}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          stroke={chartColors.text}
+          tick={{ fill: chartColors.text, fontSize: 12 }}
+          tickLine={{ stroke: chartColors.grid }}
+          tickFormatter={formatYAxisTick}
+          domain={yAxisConfig.domain}
+          ticks={yAxisConfig.ticks}
+          width={CHART_CONSTANTS.Y_AXIS_WIDTH}
+        />
+        <RechartsTooltip
+          content={<PlayerRatingChartTooltip activeTab={activeTab} />}
+          cursor={{
+            stroke: chartColors.text,
+            strokeWidth: 1,
+            strokeDasharray: '3 3',
+          }}
+        />
+        <Legend />
+        {activeTab === 'rating' && highestRating && (
+          <ReferenceLine
+            y={highestRating}
+            label={{
+              value: 'Peak',
+              position: 'insideTopLeft',
+              fill: chartColors.text,
+              fontSize: 12,
             }}
+            stroke={chartColors.rating}
+            strokeDasharray="4 4"
+            strokeWidth={1.5}
           />
-          <Legend />
-          {activeTab === 'rating' && highestRating && (
-            <ReferenceLine
-              y={highestRating}
-              label={{
-                value: 'Peak',
-                position: 'insideTopLeft',
-                fill: chartColors.text,
-                fontSize: 12,
-              }}
-              stroke={chartColors.rating}
-              strokeDasharray="4 4"
-              strokeWidth={1.5}
-            />
-          )}
-          <Line
-            type="monotone"
-            dataKey={`${activeTab}After`}
-            name={capitalize(activeTab)}
-            stroke={
-              activeTab === 'rating'
-                ? chartColors.rating
-                : chartColors.volatility
-            }
-            strokeWidth={CHART_CONSTANTS.LINE_WIDTH}
-            dot={false}
-            activeDot={(props: unknown) =>
-              renderActiveDot(props as DotProps) || <></>
-            }
-            connectNulls
-          />
-        </LineChart>
-      </ResponsiveContainer>
+        )}
+        <Line
+          type="monotone"
+          dataKey={`${activeTab}After`}
+          name={capitalize(activeTab)}
+          stroke={
+            activeTab === 'rating' ? chartColors.rating : chartColors.volatility
+          }
+          strokeWidth={CHART_CONSTANTS.LINE_WIDTH}
+          dot={false}
+          activeDot={(props: unknown) =>
+            renderActiveDot(props as DotProps) || <></>
+          }
+          connectNulls
+        />
+      </LineChart>
     </ChartContainer>
   );
 }
