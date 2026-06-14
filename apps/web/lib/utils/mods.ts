@@ -137,3 +137,115 @@ export function getMostCommonModForBeatmap(
     gameCount: beatmapGames.length,
   };
 }
+
+/**
+ * Resolves which mods to display for a single game.
+ *
+ * For non-freemod games the game's own mods are authoritative. For freemod
+ * games we display what players actually played: if every score shares a single
+ * mod combination we show that combination (erring on the side of reality),
+ * otherwise we fall back to the "FM" icon to signal that combinations varied.
+ *
+ * Shared with the game header (GameCardHeader) so the beatmap page resolves the
+ * "most common mod" the same way instead of trusting the raw (often NoMod) game
+ * mods of freemod lobbies.
+ */
+export function resolveGameDisplayMods(
+  game: { isFreeMod: boolean; mods: Mods },
+  scores: { mods: number }[]
+): { mods: Mods; freemod: boolean } {
+  if (!game.isFreeMod) {
+    return { mods: game.mods, freemod: false };
+  }
+
+  // NoFail is never shown and shouldn't split otherwise-identical combinations.
+  const mask = ~Mods.NoFail;
+  const uniqueCombos = new Set(scores.map((s) => s.mods & mask));
+
+  if (uniqueCombos.size === 1) {
+    const [common] = uniqueCombos;
+    return { mods: common as Mods, freemod: false };
+  }
+
+  // No scores, or genuinely differing combinations -> keep the "FM" icon.
+  return { mods: Mods.None, freemod: true };
+}
+
+/**
+ * Whether per-score mods diverge from the game's own mods. Only meaningful when
+ * the game records no mods of its own (freemod lobbies where each player picks).
+ */
+function hasModsVaryingFromGame(
+  gameMods: number,
+  scores: { mods: number }[]
+): boolean {
+  if (gameMods !== Mods.None) return false;
+  const mask = ~Mods.NoFail;
+  return scores.some((s) => (s.mods & mask) !== (gameMods & mask));
+}
+
+/**
+ * Derives whether a game is freemod, matching how the match endpoints compute
+ * it: either the game carries the freemod-allowed flag, or the per-score mods
+ * vary from the game's mods.
+ */
+export function deriveGameIsFreeMod(
+  gameMods: number,
+  scores: { mods: number }[]
+): boolean {
+  return (
+    (gameMods & Mods.FreeModAllowed) === Mods.FreeModAllowed ||
+    hasModsVaryingFromGame(gameMods, scores)
+  );
+}
+
+/**
+ * Server-side convenience: resolve the display mods for a game from its raw mods
+ * bitmask and the mods of its scores (freemod state derived, not supplied).
+ */
+export function resolveGameModsFromScores(
+  gameMods: Mods,
+  scoreMods: number[]
+): { mods: Mods; freemod: boolean } {
+  const scores = scoreMods.map((mods) => ({ mods }));
+  return resolveGameDisplayMods(
+    { isFreeMod: deriveGameIsFreeMod(gameMods, scores), mods: gameMods },
+    scores
+  );
+}
+
+/**
+ * Picks the most common display mods across a set of games, each resolved via
+ * {@link resolveGameModsFromScores}. Ties resolve to the first-seen combination,
+ * mirroring SQL MODE() determinism over ordered input. Returns NoMod (NM) for an
+ * empty set.
+ */
+export function mostCommonDisplayMods(
+  games: Array<{ mods: Mods; scoreMods: number[] }>
+): { mods: Mods; freemod: boolean } {
+  const counts = new Map<
+    string,
+    { value: { mods: Mods; freemod: boolean }; count: number }
+  >();
+
+  for (const game of games) {
+    const resolved = resolveGameModsFromScores(game.mods, game.scoreMods);
+    const key = resolved.freemod ? 'fm' : String(resolved.mods);
+    const entry = counts.get(key);
+    if (entry) {
+      entry.count += 1;
+    } else {
+      counts.set(key, { value: resolved, count: 1 });
+    }
+  }
+
+  let best: { value: { mods: Mods; freemod: boolean }; count: number } | null =
+    null;
+  for (const entry of counts.values()) {
+    if (!best || entry.count > best.count) {
+      best = entry;
+    }
+  }
+
+  return best?.value ?? { mods: Mods.None, freemod: false };
+}
