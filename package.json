@@ -6,10 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "bun run --filter web lint && bun run --filter data-worker lint",
-    "build": "bun run --filter web build && bun run --filter data-worker build",
-    "start": "bun run --filter web start && bun run --filter data-worker start",
-    "dev": "sh -c 'trap \"kill -TERM 0\" INT TERM EXIT; bun run --filter web dev & bun run --filter data-worker dev' & wait",
+    "lint": "bun run --filter '*' --parallel lint",
+    "build": "bun run --filter '*' --parallel build",
+    "start": "bun run --filter '*' --parallel start",
+    "dev": "bun run --filter web dev",
+    "dev:all": "bun run --filter '*' --parallel dev",
+    "dev:worker": "bun run --filter data-worker dev",
     "format": "bunx prettier . --write"
   },
   "dependencies": {

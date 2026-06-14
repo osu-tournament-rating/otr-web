@@ -78,8 +78,8 @@ Good seeded routes (from `apps/web/e2e/fixtures/test-config.ts`): `/stats`,
 ## Run — human path
 
 ```bash
-bun run --filter web dev   # web only, :3000
-bun run dev                # web + data-worker together
+bun run dev                # web only, :3000 (data-worker not started)
+bun run dev:all            # web + data-worker together
 ```
 
 `apps/web` `dev` already runs Turbopack under Next 16; `dev:turbo` is the explicit alias.

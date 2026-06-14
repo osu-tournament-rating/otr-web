@@ -36,10 +36,16 @@ Install dependencies exactly as CI does:
 bun install --frozen-lockfile
 ```
 
-Run both apps in development:
+Run the web app in development (default — the data-worker is not started):
 
 ```sh
 bun run dev
+```
+
+Run both apps (web + data-worker) in development:
+
+```sh
+bun run dev:all
 ```
 
 Run individual development servers:
@@ -47,7 +53,7 @@ Run individual development servers:
 ```sh
 bun run --filter web dev
 bun run --filter web dev:turbo
-bun run --filter data-worker dev
+bun run dev:worker
 ```
 
 Build all apps:

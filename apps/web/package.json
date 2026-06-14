@@ -7,7 +7,7 @@
     "dev:turbo": "bun run next dev --turbopack",
     "build": "bun run next build",
     "start": "bun run next start",
-    "lint": "bun run eslint .",
+    "lint": "bun run eslint . --cache --cache-location node_modules/.cache/eslint/",
     "format": "bun run prettier . --write --ignore-unknown",
     "prepare": "husky",
     "test:e2e": "playwright test",
