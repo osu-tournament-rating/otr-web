@@ -183,31 +183,30 @@ export default function BeatmapTournamentCard({
           )}
         </div>
 
-        <Button
-          data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
-          variant="outline"
-          disabled={
-            tournament.tournament.verificationStatus !==
-            VerificationStatus.Verified
-          }
-          className={cn(
-            '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
-            'hover:bg-accent hover:text-accent-foreground',
-            'border border-input',
-            isDetailsVisible && 'bg-accent text-accent-foreground'
-          )}
-          onClick={(e) => {
-            e.preventDefault();
-            setIsDetailsVisible(!isDetailsVisible);
-          }}
-        >
-          {isDetailsVisible ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-          Details
-        </Button>
+        {tournament.tournament.verificationStatus ===
+          VerificationStatus.Verified && (
+          <Button
+            data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
+            variant="outline"
+            className={cn(
+              '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
+              'hover:bg-accent hover:text-accent-foreground',
+              'border border-input',
+              isDetailsVisible && 'bg-accent text-accent-foreground'
+            )}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsDetailsVisible(!isDetailsVisible);
+            }}
+          >
+            {isDetailsVisible ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            Details
+          </Button>
+        )}
       </div>
     </div>
   );
