@@ -2,7 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LineChartIcon, Info, Calendar } from 'lucide-react';
+import {
+  LineChartIcon,
+  Info,
+  Calendar,
+  Table as TableIcon,
+} from 'lucide-react';
 import PlayerRatingChartOptions, {
   PlayerRatingChartFilterValues,
 } from './PlayerRatingChartOptions';
@@ -21,6 +26,9 @@ import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
+import TierIcon from '../icons/TierIcon';
+import TRText from '../rating/TRText';
+import { getTierFromRating } from '@/lib/utils/tierData';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { RatingAdjustmentType } from '@otr/core/osu';
 
@@ -200,31 +208,76 @@ export default function PlayerRatingChart({
     }
   };
 
+  const { tier: peakTier, subTier: peakSubTier } = getTierFromRating(
+    highestRating ?? 0
+  );
+
   return (
     <Card data-testid="player-rating-chart" className="p-6 font-sans">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <LineChartIcon className="h-6 w-6 text-primary" />
-          <h3 className="font-sans text-lg font-semibold">Rating History</h3>
-          <SimpleTooltip content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay.">
-            <Info className="h-4 w-4 text-muted-foreground" />
-          </SimpleTooltip>
-        </div>
+      {/* One controlled Tabs spans the header (toggle) and the body (panels) */}
+      <Tabs
+        value={viewMode}
+        onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
+      >
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <LineChartIcon className="h-6 w-6 text-primary" />
+            <h3 className="font-sans text-lg font-semibold">Rating History</h3>
+            <SimpleTooltip content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating.">
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </SimpleTooltip>
 
-        <div className="flex gap-2">
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'rating' | 'volatility')}
-          >
-            <TabsList className="font-sans">
-              <TabsTrigger value="rating">Rating</TabsTrigger>
-              <TabsTrigger value="volatility">Volatility</TabsTrigger>
+            {/* Quiet, always-visible peak chip (issue #722: peak is no longer
+                a big card that reads like the current rating) */}
+            {highestRating != null && (
+              <>
+                <span className="h-4 w-px bg-border" />
+                <SimpleTooltip
+                  side="bottom"
+                  content="Highest rating ever reached"
+                >
+                  <span
+                    className="inline-flex cursor-help items-center gap-2 rounded-md bg-popover px-2.5 py-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    tabIndex={0}
+                    aria-label={`Peak rating ${highestRating.toFixed(0)}`}
+                  >
+                    <TierIcon
+                      tier={peakTier}
+                      subTier={peakSubTier}
+                      width={16}
+                      height={16}
+                    />
+                    <span className="flex items-baseline gap-1">
+                      <span className="text-sm font-semibold text-foreground">
+                        {highestRating.toFixed(0)}
+                      </span>
+                      <TRText />
+                      <span className="text-xs text-muted-foreground">
+                        peak
+                      </span>
+                    </span>
+                  </span>
+                </SimpleTooltip>
+              </>
+            )}
+          </div>
+
+          {/* Header control cluster: Chart/Table, time range, then Options
+              stay on a single row in that order at every width (issue #722) */}
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <TabsList data-testid="rating-chart-toggle" className="font-sans">
+              <TabsTrigger value="chart">
+                <LineChartIcon className="mr-1.5 h-4 w-4" />
+                Chart
+              </TabsTrigger>
+              <TabsTrigger value="table">
+                <TableIcon className="mr-1.5 h-4 w-4" />
+                Table
+              </TabsTrigger>
             </TabsList>
-          </Tabs>
 
-          <div className="flex gap-2">
             <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-              <SelectTrigger className="w-full font-sans sm:w-[160px]">
+              <SelectTrigger className="flex-1 font-sans sm:w-[160px] sm:flex-none">
                 <Calendar className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="Time Range" />
               </SelectTrigger>
@@ -239,27 +292,33 @@ export default function PlayerRatingChart({
               </SelectContent>
             </Select>
 
+            <span className="hidden h-5 w-px bg-border sm:block" />
+
             <PlayerRatingChartOptions
               filter={filterValues}
               onFilterChange={setFilterValues}
             />
           </div>
         </div>
-      </div>
 
-      <PlayerRatingChartSummaryStats
-        data={filteredData}
-        highestRating={highestRating}
-      />
+        {/* Rating/Volatility series toggle (demoted from the header) paired
+            with the compact Total Change so the row carries no dead space */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as 'rating' | 'volatility')}
+          >
+            <TabsList className="font-sans">
+              <TabsTrigger value="rating">Rating</TabsTrigger>
+              <TabsTrigger value="volatility">Volatility</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-      <Tabs
-        defaultValue="chart"
-        onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
-      >
-        <TabsList data-testid="rating-chart-toggle" className="font-sans">
-          <TabsTrigger value="chart">Chart</TabsTrigger>
-          <TabsTrigger value="table">Table</TabsTrigger>
-        </TabsList>
+          <PlayerRatingChartSummaryStats
+            data={filteredData}
+            rangeLabel={timeRange === 'all' ? undefined : 'in range'}
+          />
+        </div>
 
         <TabsContent value="chart">
           <PlayerRatingChartView
