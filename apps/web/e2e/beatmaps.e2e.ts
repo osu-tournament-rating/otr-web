@@ -277,6 +277,9 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
+      // The details toggle is only rendered for verified tournaments, so this
+      // selector targets verified tournaments only. Non-verified (e.g. rejected)
+      // tournaments have no toggle and no expandable details.
       const toggle = page.locator(
         '[data-testid^="beatmap-tournament-details-toggle-"]'
       );
