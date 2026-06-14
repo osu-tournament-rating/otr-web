@@ -9,6 +9,7 @@ import { GameReportableFields } from '@/lib/orpc/schema/report';
 import {
   AdminNoteRouteTarget,
   AuditEntityType,
+  Mods,
   ReportEntityType,
 } from '@otr/core/osu';
 import AuditButton from '../audit/AuditButton';
@@ -23,11 +24,38 @@ import GameAdminView from './GameAdminView';
 import { Button } from '../ui/button';
 import SimpleTooltip from '../simple-tooltip';
 
+/**
+ * Determines which mods to display in the game header.
+ *
+ * For non-freemod games the game's own mods are authoritative. For freemod
+ * games we display what players actually played: if every score shares a single
+ * mod combination we show that combination (erring on the side of reality),
+ * otherwise we fall back to the "FM" icon to signal that combinations varied.
+ */
+function getHeaderMods(game: Game): { mods: Mods; freemod: boolean } {
+  if (!game.isFreeMod) {
+    return { mods: game.mods, freemod: false };
+  }
+
+  // NoFail is never shown and shouldn't split otherwise-identical combinations.
+  const mask = ~Mods.NoFail;
+  const uniqueCombos = new Set(game.scores.map((s) => s.mods & mask));
+
+  if (uniqueCombos.size === 1) {
+    const [common] = uniqueCombos;
+    return { mods: common as Mods, freemod: false };
+  }
+
+  // No scores, or genuinely differing combinations -> keep the "FM" icon.
+  return { mods: Mods.None, freemod: true };
+}
+
 export default function GameCardHeader({ game }: { game: Game }) {
   const startTime = game.startTime ? new Date(game.startTime) : null;
   const endTime = game.endTime ? new Date(game.endTime) : null;
   const isDeletedBeatmap =
     !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
+  const headerMods = getHeaderMods(game);
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
@@ -176,8 +204,8 @@ export default function GameCardHeader({ game }: { game: Game }) {
             )}
           </div>
           <ModIconset
-            mods={game.mods}
-            freemod={game.isFreeMod}
+            mods={headerMods.mods}
+            freemod={headerMods.freemod}
             className="flex min-w-1/8 flex-row items-end justify-end"
             iconClassName="max-h-8 sm:max-h-12"
           />
