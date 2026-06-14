@@ -251,13 +251,18 @@ export default function BeatmapTournamentCard({
               <span className="text-xs tracking-wide text-muted-foreground uppercase">
                 Most Common Mod
               </span>
-              <div className="flex h-5 w-14 items-center">
-                <ModIconset
-                  mods={tournament.mostCommonMod}
-                  className="flex h-full items-center"
-                  iconClassName="h-5"
-                />
-              </div>
+              {tournament.gameCount > 0 ? (
+                <div className="flex h-5 w-14 items-center">
+                  <ModIconset
+                    mods={tournament.mostCommonMod}
+                    freemod={tournament.mostCommonModFreemod}
+                    className="flex h-full items-center"
+                    iconClassName="h-5"
+                  />
+                </div>
+              ) : (
+                <span className="text-lg font-semibold">—</span>
+              )}
             </div>
           </div>
 
@@ -326,6 +331,7 @@ export default function BeatmapTournamentCard({
                               <div className="flex h-5 w-14 items-center">
                                 <ModIconset
                                   mods={game.mods}
+                                  freemod={game.freemod}
                                   className="flex h-full items-center"
                                   iconClassName="h-5"
                                 />

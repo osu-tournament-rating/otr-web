@@ -12,8 +12,8 @@ import {
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
+import { deriveGameIsFreeMod } from '@/lib/utils/mods';
 import {
-  Mods,
   RatingAdjustmentType,
   Ruleset,
   ScoringType,
@@ -24,17 +24,6 @@ import {
 
 import { publicProcedure } from './base';
 import { KeyTypeSchema, resolveMatchId } from './shared/keyType';
-
-const MODS_FREE_MOD_ALLOWED = 522_171_579;
-
-function hasModsVaryingFromGame(
-  gameMods: number,
-  scores: { mods: number }[]
-): boolean {
-  if (gameMods !== Mods.None) return false;
-  const mask = ~Mods.NoFail;
-  return scores.some((s) => (s.mods & mask) !== (gameMods & mask));
-}
 
 type AdminNote = ReturnType<(typeof AdminNoteSchema)['parse']>;
 
@@ -722,9 +711,7 @@ export const getMatch = publicProcedure
         verificationStatus: game.verificationStatus as VerificationStatus,
         rejectionReason: game.rejectionReason,
         warningFlags: game.warningFlags,
-        isFreeMod:
-          (game.mods & MODS_FREE_MOD_ALLOWED) === MODS_FREE_MOD_ALLOWED ||
-          hasModsVaryingFromGame(game.mods, scores),
+        isFreeMod: deriveGameIsFreeMod(game.mods, scores),
         beatmap,
         adminNotes: gameAdminNotesByGameId.get(game.id) ?? [],
         scores,
