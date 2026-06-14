@@ -82,7 +82,7 @@ bun run dev                # web only, :3000 (data-worker not started)
 bun run dev:all            # web + data-worker together
 ```
 
-`apps/web` `dev` already runs Turbopack under Next 16; `dev:turbo` is the explicit alias.
+`apps/web` `dev` and `build` run Turbopack explicitly (`--turbopack`) under Next 16.
 
 ## Test (secondary — not for screenshots)
 

@@ -52,7 +52,6 @@ Run individual development servers:
 
 ```sh
 bun run --filter web dev
-bun run --filter web dev:turbo
 bun run dev:worker
 ```
 
