@@ -1,14 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  BarChart,
-  XAxis,
-  YAxis,
-  Bar,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
+import { BarChart, XAxis, YAxis, Bar, Cell } from 'recharts';
 import {
   ChartConfig,
   ChartContainer,
@@ -156,60 +149,58 @@ export default function TournamentVerificationChart({
           config={chartConfig}
           className="mx-auto max-h-[300px] w-full"
         >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              accessibilityLayer
-              data={chartData}
-              margin={CHART_CONSTANTS.VERTICAL_MARGIN}
-              layout="vertical"
-            >
-              <YAxis
-                dataKey="status"
-                type="category"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tick={{ fontSize: 14, fill: 'var(--foreground)' }}
-                interval={0}
-              />
-              <XAxis type="number" hide />
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    className="font-sans"
-                    labelFormatter={(value) => value}
-                    formatter={(value, name, entry) => (
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: entry.payload.fill }}
-                          />
-                          <span className="font-medium">
-                            {formatChartNumber(value as number)}
-                          </span>
-                        </div>
-                        <span className="text-muted-foreground">
-                          (
-                          {formatPercentage(
-                            (entry.payload as ChartDataEntry).percentage,
-                            1
-                          )}
-                          )
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            margin={CHART_CONSTANTS.VERTICAL_MARGIN}
+            layout="vertical"
+          >
+            <YAxis
+              dataKey="status"
+              type="category"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tick={{ fontSize: 14, fill: 'var(--foreground)' }}
+              interval={0}
+            />
+            <XAxis type="number" hide />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  className="font-sans"
+                  labelFormatter={(value) => value}
+                  formatter={(value, name, entry) => (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: entry.payload.fill }}
+                        />
+                        <span className="font-medium">
+                          {formatChartNumber(value as number)}
                         </span>
                       </div>
-                    )}
-                  />
-                }
-              />
-              <Bar dataKey="count" radius={5} maxBarSize={60}>
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                      <span className="text-muted-foreground">
+                        (
+                        {formatPercentage(
+                          (entry.payload as ChartDataEntry).percentage,
+                          1
+                        )}
+                        )
+                      </span>
+                    </div>
+                  )}
+                />
+              }
+            />
+            <Bar dataKey="count" radius={5} maxBarSize={60}>
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>

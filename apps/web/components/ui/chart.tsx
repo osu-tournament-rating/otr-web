@@ -24,6 +24,16 @@ type ChartContextProps = {
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+/**
+ * recharts v3's `ResponsiveContainer` defaults `initialDimension` to
+ * `{ width: -1, height: -1 }` and logs a console warning ("The width(-1) and
+ * height(-1) of chart should be greater than 0...") whenever it renders before
+ * it can measure its parent.
+ *
+ * Seeding an initial size suppresses the warning without altering the UI
+ */
+const CHART_INITIAL_DIMENSION = { width: 800, height: 450 } as const;
+
 function useChart() {
   const context = React.useContext(ChartContext);
 
@@ -61,7 +71,9 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <RechartsPrimitive.ResponsiveContainer
+          initialDimension={CHART_INITIAL_DIMENSION}
+        >
           {children}
         </RechartsPrimitive.ResponsiveContainer>
       </div>
