@@ -1,13 +1,6 @@
 import { Card } from '@/components/ui/card';
 import TierIcon from '@/components/icons/TierIcon';
-import {
-  Trophy,
-  Globe,
-  Flag,
-  Swords,
-  PercentCircle,
-  BarChart4,
-} from 'lucide-react';
+import { Trophy, Globe, Swords, PercentCircle, BarChart4 } from 'lucide-react';
 import { getTierString, TierName } from '@/lib/utils/tierData';
 import TRText from '../rating/TRText';
 import StatCard from '../shared/StatCard';
@@ -37,7 +30,7 @@ export default function PlayerRatingStatsCard({
     <Card className="p-6 font-sans">
       <PlayerCard player={rating.player} ruleset={rating.ruleset} />
       <div className="flex flex-col gap-4">
-        {/* Stats Cards */}
+        {/* Stats grid: six cards fill exactly two rows at every breakpoint */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {/* Tier Card */}
           <StatCard
@@ -74,54 +67,64 @@ export default function PlayerRatingStatsCard({
               </span>
             }
             icon={<BarChart4 className="h-5 w-5 text-primary" />}
-            className="lg:col-span-1"
-          />
-
-          {/* Global Rank Card */}
-          <StatCard
-            label="Global"
-            value={`#${rating.globalRank.toLocaleString()}`}
-            icon={<Globe className="h-5 w-5 text-primary" />}
-            className="lg:col-span-1"
-          />
-
-          {/* Country Rank Card */}
-          <StatCard
-            label="Country"
-            value={
-              <div className="flex items-center gap-1.5">
-                <Link
-                  href={`/leaderboard?country=${rating.player.country}&ruleset=${currentRuleset}`}
-                  className="transition-opacity hover:opacity-80"
-                  title={`View ${rating.player.country} leaderboard`}
-                >
-                  <CountryFlag country={rating.player.country} />
-                </Link>
-                <span>{`#${rating.countryRank.toLocaleString()}`}</span>
-              </div>
-            }
-            icon={<Flag className="h-5 w-5 text-primary" />}
           />
 
           {/* Percentile Card */}
           <StatCard
             label="Percentile"
             value={formatPercentage(rating.percentile)}
-            icon={<PercentCircle className="h-6 w-6 text-primary" />}
+            icon={<PercentCircle className="h-5 w-5 text-primary" />}
           />
+
+          {/* Combined rank card: Global and Country grouped side by side */}
+          <Card className="col-span-2 flex w-full flex-row items-stretch rounded-lg border-none bg-popover !p-0 md:col-span-3 lg:col-span-2">
+            <div
+              data-testid="stat-card-global"
+              className="flex flex-1 items-center gap-3 p-4"
+            >
+              <Globe className="h-5 w-5 flex-shrink-0 text-primary" />
+              <div className="flex min-w-0 flex-col">
+                <span className="text-sm text-muted-foreground">Global</span>
+                <span className="text-lg font-semibold">
+                  {`#${rating.globalRank.toLocaleString()}`}
+                </span>
+              </div>
+            </div>
+
+            <div className="my-3 w-px bg-border" />
+
+            <div
+              data-testid="stat-card-country"
+              className="flex flex-1 items-center gap-3 p-4"
+            >
+              <Link
+                href={`/leaderboard?country=${rating.player.country}&ruleset=${currentRuleset}`}
+                className="flex-shrink-0 transition-opacity hover:opacity-80"
+                title={`View ${rating.player.country} leaderboard`}
+              >
+                <CountryFlag country={rating.player.country} />
+              </Link>
+              <div className="flex min-w-0 flex-col">
+                <span className="text-sm text-muted-foreground">Country</span>
+                <span className="text-lg font-semibold">
+                  {`#${rating.countryRank.toLocaleString()}`}
+                </span>
+              </div>
+            </div>
+          </Card>
 
           {/* Tournaments Card */}
           <StatCard
             label="Tournaments"
             value={rating.tournamentsPlayed || 0}
-            icon={<Trophy className="h-6 w-6 text-primary" />}
+            icon={<Trophy className="h-5 w-5 text-primary" />}
           />
 
           {/* Matches Card */}
           <StatCard
             label="Matches"
             value={rating.matchesPlayed || 0}
-            icon={<Swords className="h-6 w-6 text-primary" />}
+            icon={<Swords className="h-5 w-5 text-primary" />}
           />
         </div>
 
