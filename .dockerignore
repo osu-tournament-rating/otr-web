@@ -19,3 +19,19 @@ bun.lockb
 npm-debug.log
 yarn-error.log
 coverage
+
+# Tests, reports, and files not needed in any image build context.
+# NOTE: globs here are non-recursive — `*.md` strips only root-level docs,
+# preserving nested assets like apps/web/public/icons/grades/README.md.
+# Do NOT exclude scripts/ or apps/web/drizzle/ — the migrate service needs them.
+apps/web/playwright-report
+apps/web/test-results
+apps/web/e2e
+apps/data-worker/tests
+monitoring
+docker-compose*.yml
+Dockerfile
+apps/**/Dockerfile
+*.md
+LICENSE
+.prettierrc

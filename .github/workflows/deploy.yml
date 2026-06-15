@@ -63,6 +63,8 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: ${{ steps.tags.outputs.web }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
 
       - name: Build and push data worker image
         uses: docker/build-push-action@v6
@@ -71,6 +73,8 @@ jobs:
           file: apps/data-worker/Dockerfile
           push: true
           tags: ${{ steps.tags.outputs.data-worker }}
+          cache-from: type=gha,scope=data-worker
+          cache-to: type=gha,scope=data-worker,mode=max
 
   deploy:
     name: Copy assets & deploy
