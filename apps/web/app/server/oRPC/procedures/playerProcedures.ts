@@ -12,6 +12,7 @@ import {
 import {
   PlayerStatsSchema,
   PlayerCompactSchema,
+  PlayerViewerMatchupsSchema,
   type PlayerStats,
   type PlayerFrequency,
   type PlayerRatingAdjustment,
@@ -28,7 +29,7 @@ import {
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
-import { KeyTypeSchema, resolvePlayerId } from './shared/keyType';
+import { KeyTypeSchema, resolvePlayerId, type KeyType } from './shared/keyType';
 
 export const getPlayer = publicProcedure
   .input(
@@ -1136,6 +1137,135 @@ export const getPlayerStats = publicProcedure
     };
 
     return PlayerStatsSchema.parse(response);
+  });
+
+type ViewerMatchupsArgs = {
+  db: DatabaseClient;
+  viewerPlayerId: number | null | undefined;
+  id: number | string;
+  keyType: KeyType;
+  ruleset?: number;
+  dateMin?: string;
+  dateMax?: string;
+};
+
+// Computes how many matches a viewer has played with (as teammate) and against
+// (as opponent) a given profile player. Extracted from the procedure so it can
+// be unit-tested with a mocked database client.
+export const computeViewerMatchups = async ({
+  db,
+  viewerPlayerId,
+  id,
+  keyType,
+  ruleset,
+  dateMin,
+  dateMax,
+}: ViewerMatchupsArgs): Promise<{
+  matchesWith: number;
+  matchesAgainst: number;
+}> => {
+  const profilePlayerId = await resolvePlayerId(db, id, keyType);
+
+  // No viewer, or the viewer is looking at their own profile: nothing to count.
+  if (!viewerPlayerId || viewerPlayerId === profilePlayerId) {
+    return { matchesWith: 0, matchesAgainst: 0 };
+  }
+
+  const player = await db.query.players.findFirst({
+    where: (players, { eq }) => eq(players.id, profilePlayerId),
+  });
+
+  if (!player) {
+    throw new ORPCError('NOT_FOUND', { message: 'Player not found' });
+  }
+
+  const playerDefaultRuleset = VALID_RULESETS.has(
+    player.defaultRuleset as Ruleset
+  )
+    ? (player.defaultRuleset as Ruleset)
+    : Ruleset.Osu;
+
+  const resolvedRuleset =
+    ruleset != null && VALID_RULESETS.has(ruleset as Ruleset)
+      ? (ruleset as Ruleset)
+      : playerDefaultRuleset;
+
+  const bounds = resolveDateBounds(dateMin, dateMax);
+
+  const filters = [
+    eq(schema.playerMatchStats.playerId, profilePlayerId),
+    eq(schema.tournaments.ruleset, resolvedRuleset),
+  ];
+
+  if (bounds.start) {
+    filters.push(gte(schema.matches.startTime, bounds.start));
+  }
+
+  if (bounds.end) {
+    filters.push(lte(schema.matches.startTime, bounds.end));
+  }
+
+  const [row] = await db
+    .select({
+      matchesWith: sql<number>`COUNT(*) FILTER (WHERE ${viewerPlayerId} = ANY(${schema.playerMatchStats.teammateIds}))`,
+      matchesAgainst: sql<number>`COUNT(*) FILTER (WHERE ${viewerPlayerId} = ANY(${schema.playerMatchStats.opponentIds}))`,
+    })
+    .from(schema.playerMatchStats)
+    .innerJoin(
+      schema.matches,
+      eq(schema.matches.id, schema.playerMatchStats.matchId)
+    )
+    .innerJoin(
+      schema.tournaments,
+      eq(schema.tournaments.id, schema.matches.tournamentId)
+    )
+    .where(and(...filters));
+
+  return {
+    matchesWith: toNumber(row?.matchesWith),
+    matchesAgainst: toNumber(row?.matchesAgainst),
+  };
+};
+
+export const getPlayerViewerMatchups = publicProcedure
+  .input(
+    z.object({
+      id: z.union([z.number().int().positive(), z.string().min(1)]),
+      keyType: KeyTypeSchema,
+      ruleset: z.number().int().optional(),
+      dateMin: z.string().optional(),
+      dateMax: z.string().optional(),
+    })
+  )
+  .output(PlayerViewerMatchupsSchema)
+  .route({
+    summary: 'Get viewer head-to-head matchup counts',
+    description:
+      'Counts how many matches the logged-in viewer has played with (as a ' +
+      'teammate) and against (as an opponent) the requested profile player. ' +
+      'Returns zeros for anonymous viewers or when viewing your own profile.',
+    tags: ['players'],
+    method: 'GET',
+    path: '/players/{id}/viewer-matchups',
+  })
+  .handler(async ({ input, context }) => {
+    const session = context.session as
+      | { dbPlayer?: { id?: number | null } | null }
+      | null
+      | undefined;
+    const viewerPlayerId = session?.dbPlayer?.id;
+
+    const result = await computeViewerMatchups({
+      db: context.db,
+      viewerPlayerId,
+      id: input.id,
+      keyType: input.keyType,
+      ruleset: input.ruleset,
+      dateMin: input.dateMin,
+      dateMax: input.dateMax,
+    });
+
+    return PlayerViewerMatchupsSchema.parse(result);
   });
 
 // Public helper to resolve a fuzzy search key (username, osuId, or internal id)

@@ -126,6 +126,11 @@ export const PlayerStatsRequestSchema = z.object({
   dateMax: z.string().optional(),
 });
 
+export const PlayerViewerMatchupsSchema = z.object({
+  matchesWith: z.number().int().nonnegative(),
+  matchesAgainst: z.number().int().nonnegative(),
+});
+
 export type PlayerCompact = z.infer<typeof PlayerCompactSchema>;
 export type PlayerFrequency = z.infer<typeof PlayerFrequencySchema>;
 export type PlayerModStats = z.infer<typeof PlayerModStatsSchema>;
@@ -139,3 +144,4 @@ export type AggregatePlayerMatchStats = z.infer<
 >;
 export type PlayerStats = z.infer<typeof PlayerStatsSchema>;
 export type PlayerStatsRequest = z.infer<typeof PlayerStatsRequestSchema>;
+export type PlayerViewerMatchups = z.infer<typeof PlayerViewerMatchupsSchema>;

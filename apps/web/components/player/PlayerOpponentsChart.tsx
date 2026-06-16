@@ -6,11 +6,15 @@ import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 interface PlayerOpponentsChartProps {
   className?: string;
   opponents: PlayerFrequency[];
+  viewerMatchCount?: number;
+  profileUsername?: string;
 }
 
 export default function PlayerOpponentsChart({
   className,
   opponents,
+  viewerMatchCount,
+  profileUsername,
 }: PlayerOpponentsChartProps) {
   return (
     <PlayerFrequencyChart
@@ -21,6 +25,8 @@ export default function PlayerOpponentsChart({
       description="Most frequently played against opponents"
       emptyMessage="No opponent data available"
       chartColor="var(--chart-2)"
+      viewerMatchCount={viewerMatchCount}
+      profileUsername={profileUsername}
     />
   );
 }

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '../ui/card';
 import Image from 'next/image';
+import { Handshake, Swords } from 'lucide-react';
 
 // Constants for chart configuration
 const CHART_CONSTANTS = {
@@ -50,6 +51,52 @@ interface PlayerFrequencyChartProps {
   description?: string;
   emptyMessage?: string;
   chartColor?: string;
+  viewerMatchCount?: number;
+  profileUsername?: string;
+}
+
+// Variant: tinted-pill
+function ViewerMatchupIndicator({
+  type,
+  count,
+  profileUsername,
+}: {
+  type: ChartType;
+  count: number;
+  profileUsername?: string;
+}) {
+  const isTeammates = type === 'teammates';
+  const Icon = isTeammates ? Handshake : Swords;
+  const matchLabel = count === 1 ? 'match' : 'matches';
+  const timeLabel = count === 1 ? 'time' : 'times';
+  const target = profileUsername ?? 'this player';
+  const visibleText = isTeammates
+    ? `${count} ${matchLabel} together`
+    : `faced ${count} ${timeLabel}`;
+  const ariaLabel = isTeammates
+    ? `You and ${target} played ${count} ${matchLabel} together`
+    : `You faced ${target} ${count} ${timeLabel}`;
+
+  const tint = isTeammates
+    ? 'bg-primary/10 text-primary'
+    : 'bg-chart-2/10 text-chart-2';
+
+  return (
+    <span
+      role="note"
+      aria-label={ariaLabel}
+      className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-xs leading-none font-medium ${tint}`}
+    >
+      <Icon
+        className="size-3.5 shrink-0"
+        strokeWidth={2.25}
+        aria-hidden="true"
+      />
+      <span className="truncate tabular-nums">
+        <span aria-hidden="true">{visibleText}</span>
+      </span>
+    </span>
+  );
 }
 
 // Type guard for PlayerFrequency
@@ -150,6 +197,8 @@ export default function PlayerFrequencyChart({
   description,
   emptyMessage,
   chartColor,
+  viewerMatchCount,
+  profileUsername,
 }: PlayerFrequencyChartProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -356,6 +405,15 @@ export default function PlayerFrequencyChart({
       <CardHeader className="items-center">
         <CardTitle>{title || defaultTitle}</CardTitle>
         <CardDescription>{description || defaultDescription}</CardDescription>
+        {/* === VIEWER_MATCHUP_INDICATOR:START === */}
+        {viewerMatchCount && viewerMatchCount > 0 ? (
+          <ViewerMatchupIndicator
+            type={type}
+            count={viewerMatchCount}
+            profileUsername={profileUsername}
+          />
+        ) : null}
+        {/* === VIEWER_MATCHUP_INDICATOR:END === */}
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">
         {/* Desktop version */}

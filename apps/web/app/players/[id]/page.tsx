@@ -11,7 +11,11 @@ import { Card } from '@/components/ui/card';
 import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerStatsCached } from '@/lib/orpc/queries/playerStats';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
-import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
+import { getPlayerViewerMatchupsCached } from '@/lib/orpc/queries/playerViewerMatchups';
+import type {
+  PlayerStats,
+  PlayerViewerMatchups,
+} from '@/lib/orpc/schema/playerStats';
 import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
 import { Ruleset } from '@otr/core/osu';
 import { Metadata } from 'next';
@@ -166,6 +170,39 @@ async function getBeatmaps(
   }
 }
 
+async function getViewerMatchups(
+  playerId: number,
+  ruleset: Ruleset,
+  searchParams: { [key: string]: string | string[] | undefined }
+): Promise<PlayerViewerMatchups> {
+  const fallback: PlayerViewerMatchups = {
+    matchesWith: 0,
+    matchesAgainst: 0,
+  };
+
+  if (!playerId || playerId <= 0) {
+    return fallback;
+  }
+
+  const dateMin = searchParams.dateMin
+    ? new Date(searchParams.dateMin as string)
+    : undefined;
+  const dateMax = searchParams.dateMax
+    ? new Date(searchParams.dateMax as string)
+    : undefined;
+
+  try {
+    return (
+      (await fetchOrpcOptional(() =>
+        getPlayerViewerMatchupsCached(playerId, dateMin, dateMax, ruleset)
+      )) ?? fallback
+    );
+  } catch (error) {
+    console.error('Failed to fetch viewer matchups:', error);
+    return fallback;
+  }
+}
+
 export default async function PlayerPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const { id } = parseParamsOrNotFound(
@@ -220,6 +257,15 @@ export default async function PlayerPage(props: PageProps) {
   const playerBeatmapsResponse = await getBeatmaps(
     canonicalPlayerId,
     currentRuleset
+  );
+
+  // Viewer-specific head-to-head matchup counts (how many matches the logged-in
+  // viewer has played with/against this profile player). Defaults to zeros for
+  // anonymous viewers, own profile, or on any failure so it never breaks the page.
+  const viewerMatchups = await getViewerMatchups(
+    canonicalPlayerId,
+    currentRuleset,
+    searchParams
   );
 
   const chartHighestRating = playerData.rating?.adjustments?.length
@@ -279,12 +325,16 @@ export default async function PlayerPage(props: PageProps) {
                 <PlayerTeammatesChart
                   className="w-full"
                   teammates={playerData.frequentTeammates}
+                  viewerMatchCount={viewerMatchups.matchesWith}
+                  profileUsername={playerData.playerInfo.username}
                 />
               )}
               {playerData.frequentOpponents && (
                 <PlayerOpponentsChart
                   className="w-full"
                   opponents={playerData.frequentOpponents}
+                  viewerMatchCount={viewerMatchups.matchesAgainst}
+                  profileUsername={playerData.playerInfo.username}
                 />
               )}
             </div>
