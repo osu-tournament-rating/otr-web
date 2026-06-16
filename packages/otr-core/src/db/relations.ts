@@ -61,7 +61,7 @@ export const authUsersRelations = relations(auth_users, ({ one, many }) => ({
 
 export const authApiKeysRelations = relations(apiKeys, ({ one }) => ({
   user: one(auth_users, {
-    fields: [apiKeys.userId],
+    fields: [apiKeys.referenceId],
     references: [auth_users.id],
   }),
 }));
