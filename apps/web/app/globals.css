@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/*
+ * Inter is loaded via <link> tags in app/layout.tsx, NOT a CSS @import. Turbopack
+ * (the production build pipeline since the Next 16 upgrade) strips remote
+ * `@import url(...)` rules from the bundled CSS, which silently dropped the web font
+ */
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));

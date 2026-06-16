@@ -146,7 +146,7 @@ export const getUserApiKeys = protectedProcedure
   })
   .handler(async ({ context }) => {
     const records = await context.db.query.apiKeys.findMany({
-      where: eq(schema.apiKeys.userId, context.session.user.id),
+      where: eq(schema.apiKeys.referenceId, context.session.user.id),
     });
 
     records.sort((a, b) => {
@@ -179,7 +179,7 @@ export const generateUserApiKey = protectedProcedure
   })
   .handler(async ({ context, input }) => {
     const existing = await context.db.query.apiKeys.findMany({
-      where: eq(schema.apiKeys.userId, context.session.user.id),
+      where: eq(schema.apiKeys.referenceId, context.session.user.id),
     });
 
     if (existing.length >= MAX_API_KEYS_PER_USER) {
@@ -244,7 +244,7 @@ export const deleteUserApiKey = protectedProcedure
     const keyRecord = await context.db.query.apiKeys.findFirst({
       where: and(
         eq(schema.apiKeys.id, input.keyId),
-        eq(schema.apiKeys.userId, context.session.user.id)
+        eq(schema.apiKeys.referenceId, context.session.user.id)
       ),
     });
 
