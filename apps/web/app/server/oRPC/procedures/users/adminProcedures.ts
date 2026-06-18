@@ -143,7 +143,7 @@ export const listUserApiKeysAdmin = protectedProcedure
 
     const records = await context.db.query.apiKeys.findMany({
       where: and(
-        eq(schema.apiKeys.userId, authUser.id),
+        eq(schema.apiKeys.referenceId, authUser.id),
         eq(schema.apiKeys.enabled, true),
         or(
           isNull(schema.apiKeys.expiresAt),
@@ -194,7 +194,7 @@ export const banUserAdmin = protectedProcedure
       await tx
         .update(schema.apiKeys)
         .set({ enabled: false })
-        .where(eq(schema.apiKeys.userId, authUser.id));
+        .where(eq(schema.apiKeys.referenceId, authUser.id));
 
       await tx
         .update(schema.auth_sessions)
