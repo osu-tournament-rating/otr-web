@@ -1,10 +1,13 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
 
 import {
+  MarkReportViewedInputSchema,
+  MyReportListResponseSchema,
+  MyUnreadReportCountResponseSchema,
   ReportCreateInputSchema,
   ReportGetInputSchema,
   ReportListInputSchema,
@@ -18,6 +21,7 @@ import {
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import { hasUnreadAdminUpdate } from './reportReadStatus';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
@@ -514,4 +518,124 @@ export const markReportsViewed = protectedProcedure
       .where(eq(schema.users.id, adminUserId));
 
     return { success: true };
+  });
+
+const unreadUpdateCondition = (userId: number) =>
+  and(
+    eq(schema.dataReports.reporterUserId, userId),
+    isNotNull(schema.dataReports.resolvedAt),
+    or(
+      isNull(schema.dataReports.reporterViewedAt),
+      gt(schema.dataReports.resolvedAt, schema.dataReports.reporterViewedAt)
+    )
+  );
+
+export const listMyReports = protectedProcedure
+  .output(MyReportListResponseSchema)
+  .route({
+    summary: "List the current user's own reports",
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/mine',
+  })
+  .handler(async ({ context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const reports = await context.db.query.dataReports.findMany({
+      where: eq(schema.dataReports.reporterUserId, userId),
+      orderBy: desc(schema.dataReports.created),
+    });
+
+    const mappedReports = await Promise.all(
+      reports.map(async (report) => ({
+        id: report.id,
+        entityType: report.entityType,
+        entityId: report.entityId,
+        suggestedChanges: report.suggestedChanges as Record<string, string>,
+        justification: report.justification,
+        status: report.status,
+        adminNote: report.adminNote,
+        created: report.created,
+        resolvedAt: report.resolvedAt,
+        entityDisplayName: await getEntityDisplayName(
+          context.db,
+          report.entityType,
+          report.entityId
+        ),
+        matchId: await getMatchIdForEntity(
+          context.db,
+          report.entityType,
+          report.entityId
+        ),
+        hasUnreadUpdate: hasUnreadAdminUpdate(report),
+      }))
+    );
+
+    return { reports: mappedReports };
+  });
+
+export const markMyReportViewed = protectedProcedure
+  .input(MarkReportViewedInputSchema)
+  .output(ReportMutationResponseSchema)
+  .route({
+    summary: "Mark one of the current user's reports as viewed",
+    tags: ['reports'],
+    method: 'POST',
+    path: '/reports/{reportId}/mark-viewed',
+  })
+  .handler(async ({ input, context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const updated = await context.db
+      .update(schema.dataReports)
+      .set({ reporterViewedAt: NOW })
+      .where(
+        and(
+          eq(schema.dataReports.id, input.reportId),
+          eq(schema.dataReports.reporterUserId, userId)
+        )
+      )
+      .returning({ id: schema.dataReports.id });
+
+    if (updated.length === 0) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'Report not found',
+      });
+    }
+
+    return { success: true, reportId: input.reportId };
+  });
+
+export const getMyUnreadReportCount = protectedProcedure
+  .output(MyUnreadReportCountResponseSchema)
+  .route({
+    summary: "Count the current user's reports with unread admin updates",
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/mine/unread-count',
+  })
+  .handler(async ({ context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const [result] = await context.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.dataReports)
+      .where(unreadUpdateCondition(userId));
+
+    return { count: result?.count ?? 0 };
   });
