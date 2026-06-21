@@ -1878,6 +1878,10 @@ export const dataReports = pgTable(
       withTimezone: true,
       mode: 'string',
     }),
+    reporterViewedAt: timestamp('reporter_viewed_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
   },
   (table) => [
     index('ix_data_reports_entity_type_entity_id').using(

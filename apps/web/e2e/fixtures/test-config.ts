@@ -32,6 +32,7 @@ export const ROUTES = {
   beatmap: (id: number) => `/beatmaps/${id}`,
   match: (id: number) => `/matches/${id}`,
   settings: '/settings',
+  reports: '/reports',
   admin: '/admin',
   adminReports: '/admin/reports',
   filter: '/tools/filter',

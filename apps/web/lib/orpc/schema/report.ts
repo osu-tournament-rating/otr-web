@@ -116,6 +116,28 @@ export const ReportListResponseSchema = z.object({
   totalCount: z.number().int().nonnegative(),
 });
 
+/**
+ * Read-only view of a report for the user who created it. Intentionally omits
+ * reporter/resolver identity and exposes whether an admin update is unread.
+ */
+export const MyReportSchema = reportBaseSchema.extend({
+  entityDisplayName: z.string(),
+  matchId: z.number().int().positive().optional(),
+  hasUnreadUpdate: z.boolean(),
+});
+
+export const MyReportListResponseSchema = z.object({
+  reports: z.array(MyReportSchema),
+});
+
+export const MarkReportViewedInputSchema = z.object({
+  reportId: z.number().int().positive(),
+});
+
+export const MyUnreadReportCountResponseSchema = z.object({
+  count: z.number().int().nonnegative(),
+});
+
 export const ReportMutationResponseSchema = z.object({
   success: z.boolean(),
   reportId: z.number().int().positive().optional(),
@@ -138,4 +160,11 @@ export const UnseenReportCountResponseSchema = z.object({
 
 export type UnseenReportCountResponse = z.infer<
   typeof UnseenReportCountResponseSchema
+>;
+
+export type MyReport = z.infer<typeof MyReportSchema>;
+export type MyReportListResponse = z.infer<typeof MyReportListResponseSchema>;
+export type MarkReportViewedInput = z.infer<typeof MarkReportViewedInputSchema>;
+export type MyUnreadReportCountResponse = z.infer<
+  typeof MyUnreadReportCountResponseSchema
 >;
