@@ -536,7 +536,7 @@ export const listMyReports = protectedProcedure
     summary: "List the current user's own reports",
     tags: ['reports'],
     method: 'GET',
-    path: '/reports/mine',
+    path: '/reports/me',
   })
   .handler(async ({ context }) => {
     const userId = context.session?.dbUser?.id;
@@ -622,7 +622,7 @@ export const getMyUnreadReportCount = protectedProcedure
     summary: "Count the current user's reports with unread admin updates",
     tags: ['reports'],
     method: 'GET',
-    path: '/reports/mine/unread-count',
+    path: '/reports/me/unread-count',
   })
   .handler(async ({ context }) => {
     const userId = context.session?.dbUser?.id;
