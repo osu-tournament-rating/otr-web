@@ -223,7 +223,10 @@ export default function MyReportsClient() {
       </Card>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogContent
+          className="max-h-[85vh] max-w-2xl overflow-y-auto"
+          data-testid="my-report-detail"
+        >
           <DialogHeader>
             <DialogTitle>Report Details</DialogTitle>
             <DialogDescription>
