@@ -51,8 +51,7 @@ bunx drizzle-kit migrate
 bun run --filter web dev
 ```
 
-Run it in the background and wait for `:3000` to answer (Turbopack; ~first request
-compiles on demand):
+Run it in the background and wait for `:3000` to answer:
 
 ```bash
 for i in $(seq 1 60); do
@@ -132,7 +131,7 @@ Requires extra env beyond the web app: `DATA_WORKER_OSU_CLIENT_ID/SECRET` and th
 
 - **`curl :3000` returns 000 / connection refused** — server not up yet (Turbopack compiles
   the first request) or not started. Check the dev log; wait and re-poll.
-- **Blank charts / empty tables** — the DB isn't seeded. Restore a replica (see
+- **Blank charts / empty tables** — the DB isn't seeded. STOP and ensure the user restores a proper replica (see
   Prerequisites), don't expect data from `docker compose up` alone.
 - **MCP screenshot is blank or shows an error page** — you navigated before the route
   compiled, or hit :3001 with no server. Re-navigate `:3000` after the readiness poll.
