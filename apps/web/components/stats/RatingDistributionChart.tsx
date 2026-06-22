@@ -15,9 +15,6 @@ import {
 } from 'recharts';
 import TierIcon from '@/components/icons/TierIcon';
 import { Ruleset } from '@otr/core/osu';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import RulesetIcon from '../icons/RulesetIcon';
 import SimpleTooltip from '../simple-tooltip';
 import { useRatingDistribution } from '@/lib/hooks/useRatingDistribution';
 import {
@@ -27,6 +24,7 @@ import {
   formatPercentage,
 } from '@/lib/utils/chart';
 import { validTiers } from '@/components/icons/TierIcon';
+import { cn } from '@/lib/utils';
 
 type TierName = (typeof validTiers)[number];
 
@@ -148,127 +146,104 @@ export default function RatingDistributionChart({
   className,
   userRating,
 }: RatingDistributionChartProps) {
-  const rulesetInfo = RulesetEnumHelper.getMetadata(ruleset);
   const { chartData, tierData, isEmpty } = useRatingDistribution({ ratings });
 
   if (isEmpty) {
     return (
-      <Card
+      <div
         data-testid={`chart-rating-distribution-${ruleset}`}
-        className={className}
+        className={cn('flex h-[250px] items-center justify-center', className)}
       >
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
-            {rulesetInfo?.text} Rating Distribution
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex h-[325px] items-center justify-center">
-          <p className="text-muted-foreground">
-            No data available for this ruleset.
-          </p>
-        </CardContent>
-      </Card>
+        <p className="text-muted-foreground">
+          No data available for this ruleset.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card
+    <div
       data-testid={`chart-rating-distribution-${ruleset}`}
       className={className}
     >
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <RulesetIcon ruleset={ruleset} className="h-6 w-6 fill-primary" />
-          {rulesetInfo?.text} Rating Distribution
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer
-          width="100%"
-          height={CHART_CONSTANTS.DEFAULT_HEIGHT}
-        >
-          <ComposedChart
-            data={chartData}
-            margin={CHART_CONSTANTS.DEFAULT_MARGIN}
+      <ResponsiveContainer width="100%" height={CHART_CONSTANTS.DEFAULT_HEIGHT}>
+        <ComposedChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke={CHART_COLORS.mutedForeground}
+          />
+          <XAxis
+            dataKey="rating"
+            tick={<CustomXAxisTickWithData tierData={tierData} />}
+            tickLine={false}
+            axisLine={{ stroke: CHART_COLORS.mutedForeground }}
+            interval="preserveStartEnd"
+            ticks={tierData.map((t) => t.baseRating)}
+          />
+          <YAxis
+            yAxisId="left"
+            tickFormatter={formatChartNumber}
+            tickLine={false}
+            axisLine={false}
+            className="text-xs"
+            stroke={CHART_COLORS.mutedForeground}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tickFormatter={(value) => `${value}%`}
+            tickLine={false}
+            axisLine={false}
+            className="text-xs"
+            stroke={CHART_COLORS.mutedForeground}
+            domain={[0, 100]}
+          />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: CHART_COLORS.accent }}
+          />
+          <Bar
+            dataKey="count"
+            radius={CHART_CONSTANTS.BORDER_RADIUS}
+            yAxisId="left"
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke={CHART_COLORS.mutedForeground}
-            />
-            <XAxis
-              dataKey="rating"
-              tick={<CustomXAxisTickWithData tierData={tierData} />}
-              tickLine={false}
-              axisLine={{ stroke: CHART_COLORS.mutedForeground }}
-              interval="preserveStartEnd"
-              ticks={tierData.map((t) => t.baseRating)}
-            />
-            <YAxis
-              yAxisId="left"
-              tickFormatter={formatChartNumber}
-              tickLine={false}
-              axisLine={false}
-              className="text-xs"
-              stroke={CHART_COLORS.mutedForeground}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tickFormatter={(value) => `${value}%`}
-              tickLine={false}
-              axisLine={false}
-              className="text-xs"
-              stroke={CHART_COLORS.mutedForeground}
-              domain={[0, 100]}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: CHART_COLORS.accent }}
-            />
-            <Bar
-              dataKey="count"
-              radius={CHART_CONSTANTS.BORDER_RADIUS}
-              yAxisId="left"
-            >
-              {chartData.map((entry) => (
-                <Cell
-                  key={`cell-${entry.rating}`}
-                  fill={entry.tier?.color || CHART_COLORS.primary}
-                />
-              ))}
-            </Bar>
-            <Line
-              type="monotone"
-              dataKey="cumulativePercentage"
-              stroke={CHART_COLORS.primary}
-              strokeWidth={2}
-              dot={false}
-              yAxisId="right"
-            />
-            {userRating !== undefined && (
-              <ReferenceLine
-                x={
-                  Math.floor(userRating / CHART_CONSTANTS.BUCKET_SIZE) *
-                  CHART_CONSTANTS.BUCKET_SIZE
-                }
-                yAxisId="left"
-                stroke="#22c55e"
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                label={{
-                  value: 'You',
-                  position: 'top',
-                  fill: '#22c55e',
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
+            {chartData.map((entry) => (
+              <Cell
+                key={`cell-${entry.rating}`}
+                fill={entry.tier?.color || CHART_COLORS.primary}
               />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+            ))}
+          </Bar>
+          <Line
+            type="monotone"
+            dataKey="cumulativePercentage"
+            stroke={CHART_COLORS.primary}
+            strokeWidth={2}
+            dot={false}
+            yAxisId="right"
+          />
+          {userRating !== undefined && (
+            <ReferenceLine
+              x={
+                Math.floor(userRating / CHART_CONSTANTS.BUCKET_SIZE) *
+                CHART_CONSTANTS.BUCKET_SIZE
+              }
+              yAxisId="left"
+              stroke="#22c55e"
+              strokeDasharray="4 4"
+              strokeWidth={2}
+              label={{
+                value: 'You',
+                position: 'top',
+                fill: '#22c55e',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            />
+          )}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

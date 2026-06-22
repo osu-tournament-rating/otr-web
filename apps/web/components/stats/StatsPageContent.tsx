@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { PlatformStats } from '@/lib/orpc/schema/stats';
 import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
-import RatingDistributionChart from './RatingDistributionChart';
+import RatingDistributionTabs from './RatingDistributionTabs';
 import { Ruleset } from '@otr/core/osu';
 import TournamentsByYearChart from './TournamentsByYearChart';
 import TournamentsByRulesetChart from './TournamentsByRulesetChart';
@@ -77,21 +77,11 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
         />
       </div>
 
-      {/* Rating Distribution Charts */}
-      <div className="grid grid-cols-1 gap-6">
-        {Object.entries(ratingStats.ratingsByRuleset)
-          .filter(
-            ([rulesetKey]) => parseInt(rulesetKey, 10) !== Ruleset.ManiaOther
-          )
-          .map(([rulesetKey, ratings]) => (
-            <RatingDistributionChart
-              key={rulesetKey}
-              ruleset={parseInt(rulesetKey, 10) as Ruleset}
-              ratings={ratings}
-              userRating={userRatings[parseInt(rulesetKey, 10)]}
-            />
-          ))}
-      </div>
+      {/* Rating Distribution */}
+      <RatingDistributionTabs
+        ratingsByRuleset={ratingStats.ratingsByRuleset}
+        userRatings={userRatings}
+      />
     </div>
   );
 }
