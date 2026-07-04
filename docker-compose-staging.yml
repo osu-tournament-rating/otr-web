@@ -70,7 +70,7 @@ services:
     container_name: otr-staging-web
     restart: unless-stopped
     ports:
-      - '3100:3000'
+      - '${WEB_PORT:-3100}:3000'
     depends_on:
       db:
         condition: service_healthy
@@ -186,7 +186,7 @@ services:
     container_name: otr-staging-grafana
     restart: unless-stopped
     ports:
-      - '3101:3000'
+      - '${GRAFANA_PORT:-3101}:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
