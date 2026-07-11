@@ -1,0 +1,44 @@
+discovery.docker "docker" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "5s"
+}
+
+discovery.relabel "docker_logs" {
+	targets = []
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "service"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_id"]
+		target_label  = "container_id"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_image"]
+		target_label  = "image"
+	}
+}
+
+loki.source.docker "docker" {
+	host             = "unix:///var/run/docker.sock"
+	targets          = discovery.docker.docker.targets
+	forward_to       = [loki.write.default.receiver]
+	relabel_rules    = discovery.relabel.docker_logs.rules
+	refresh_interval = "5s"
+}
+
+loki.write "default" {
+	endpoint {
+		url = "http://otr-staging-loki:3100/loki/api/v1/push"
+	}
+}

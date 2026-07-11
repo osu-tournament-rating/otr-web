@@ -123,7 +123,7 @@ services:
       start_period: 10s
 
   prometheus:
-    image: prom/prometheus:v3.0.1
+    image: prom/prometheus:v3.13.1
     container_name: otr-staging-prometheus
     restart: unless-stopped
     entrypoint:
@@ -147,7 +147,7 @@ services:
       - postgres-exporter
 
   loki:
-    image: grafana/loki:3.4.1
+    image: grafana/loki:3.7.3
     container_name: otr-staging-loki
     restart: unless-stopped
     command:
@@ -155,34 +155,25 @@ services:
     volumes:
       - loki-data:/loki
       - ./monitoring/staging/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
 
-  promtail:
-    image: grafana/promtail:3.4.1
-    container_name: otr-staging-promtail
+  alloy:
+    image: grafana/alloy:v1.17.1
+    container_name: otr-staging-alloy
     restart: unless-stopped
     command:
-      - '-config.file=/etc/promtail/promtail-config.yaml'
+      - run
+      - '--storage.path=/var/lib/alloy/data'
+      - /etc/alloy/config.alloy
     volumes:
-      - ./monitoring/staging/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - ./monitoring/staging/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - promtail-positions:/tmp
+      - alloy-data:/var/lib/alloy/data
     depends_on:
       loki:
-        condition: service_healthy
+        condition: service_started
 
   grafana:
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana:13.1.0
     container_name: otr-staging-grafana
     restart: unless-stopped
     ports:
@@ -202,7 +193,7 @@ services:
       - loki
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.17.0
+    image: prometheuscommunity/postgres-exporter:v0.20.1
     container_name: otr-staging-postgres-exporter
     restart: unless-stopped
     environment:
@@ -218,5 +209,5 @@ volumes:
   rabbitmq-data:
   prometheus-data:
   grafana-data:
-  promtail-positions:
+  alloy-data:
   loki-data:
