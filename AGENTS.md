@@ -10,7 +10,7 @@ These instructions apply to the entire repository. Work from the repository root
 - `apps/data-worker/` contains Bun workers for queue consumption, osu! and osu!track ingestion, automation checks, statistics, and scheduled refetching.
 - `packages/otr-core/` is the shared contract layer for the Drizzle schema, relations, domain enums, messages, queues, logging, and maintenance-window helpers.
 - `apps/web/drizzle/` contains ordered SQL migrations and Drizzle metadata generated from the shared schema.
-- `scripts/` contains local, migration, and E2E database helpers. `monitoring/` contains deployment observability configuration.
+- `scripts/` contains local, migration, and E2E database helpers. `monitoring/` contains deployment observability configuration. Do not invoke these.
 
 Use `@/` for web-local imports and `@otr/core` or `@otr/core/*` for shared code. Do not duplicate shared contracts inside an application workspace.
 
@@ -100,10 +100,7 @@ Branch: <short-kebab-case-description>
 
 Commit:
 <Imperative verb> <specific outcome>
-
-<Optional explanation of why, compatibility impact, or validation details>
-
-Refs #<issue>  # optional
+(#<issue>)  # optional
 ```
 
 - Branch names use two to five meaningful lowercase kebab-case terms, such as
