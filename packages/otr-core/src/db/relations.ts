@@ -9,6 +9,7 @@ import {
   beatmapsets,
   users,
   filterReports,
+  auditEvents,
   games,
   gameAudits,
   gameRosters,
@@ -100,6 +101,7 @@ export const filterReportsRelations = relations(
 );
 
 export const usersRelations = relations(users, ({ one, many }) => ({
+  auditEvents: many(auditEvents),
   filterReports: many(filterReports),
   gameAdminNotes: many(gameAdminNotes),
   gameScoreAdminNotes: many(gameScoreAdminNotes),
@@ -132,7 +134,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
 }));
 
+export const auditEventsRelations = relations(auditEvents, ({ one, many }) => ({
+  actionUser: one(users, {
+    fields: [auditEvents.actionUserId],
+    references: [users.id],
+  }),
+  gameAudits: many(gameAudits),
+  gameScoreAudits: many(gameScoreAudits),
+  matchAudits: many(matchAudits),
+  tournamentAudits: many(tournamentAudits),
+}));
+
 export const gameAuditsRelations = relations(gameAudits, ({ one }) => ({
+  event: one(auditEvents, {
+    fields: [gameAudits.eventId],
+    references: [auditEvents.id],
+  }),
   game: one(games, {
     fields: [gameAudits.referenceId],
     references: [games.id],
@@ -177,6 +194,10 @@ export const gameScoresRelations = relations(gameScores, ({ one, many }) => ({
 export const gameScoreAuditsRelations = relations(
   gameScoreAudits,
   ({ one }) => ({
+    event: one(auditEvents, {
+      fields: [gameScoreAudits.eventId],
+      references: [auditEvents.id],
+    }),
     gameScore: one(gameScores, {
       fields: [gameScoreAudits.referenceId],
       references: [gameScores.id],
@@ -258,6 +279,10 @@ export const gameScoreAdminNotesRelations = relations(
 );
 
 export const matchAuditsRelations = relations(matchAudits, ({ one }) => ({
+  event: one(auditEvents, {
+    fields: [matchAudits.eventId],
+    references: [auditEvents.id],
+  }),
   match: one(matches, {
     fields: [matchAudits.referenceId],
     references: [matches.id],
@@ -422,6 +447,10 @@ export const tournamentAdminNotesRelations = relations(
 export const tournamentAuditsRelations = relations(
   tournamentAudits,
   ({ one }) => ({
+    event: one(auditEvents, {
+      fields: [tournamentAudits.eventId],
+      references: [auditEvents.id],
+    }),
     tournament: one(tournaments, {
       fields: [tournamentAudits.referenceId],
       references: [tournaments.id],

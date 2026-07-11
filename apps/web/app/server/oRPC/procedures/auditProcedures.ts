@@ -1,4 +1,5 @@
 import { and, desc, eq, isNotNull, lt, or, sql, inArray } from 'drizzle-orm';
+import { ORPCError } from '@orpc/server';
 import * as schema from '@otr/core/db/schema';
 import { AuditEntityType, AuditActionType } from '@otr/core/osu';
 
@@ -23,6 +24,7 @@ import {
   getAdminNotesTable,
   getAdminNotesTableNameString,
   getParentEntityJoinInfo,
+  buildAuditEventKeyExpression,
   getTableNameString,
   ALL_AUDIT_TABLES,
   LIGHT_AUDIT_TABLES,
@@ -38,13 +40,15 @@ import {
   resolveEntityNamesBatched,
   resolveUserIds,
   resolveTournamentNames,
+  decodeEventFeedCursor,
+  encodeEventFeedCursor,
   type ReferencedUser,
   type GroupedAuditRow,
-  type AssembledEvent,
 } from './audit/helpers';
 
 type AuditRow = {
   id: number;
+  eventId: number | null;
   created: string;
   referenceIdLock: number;
   referenceId: number | null;
@@ -55,6 +59,10 @@ type AuditRow = {
   playerId: number | null;
   osuId: number | null;
   username: string | null;
+};
+
+type InternalAuditEntry = AuditEntry & {
+  eventId: number | null;
 };
 
 /** Validate that a field name is a safe SQL identifier (alphanumeric + underscore) */
@@ -69,7 +77,7 @@ function mapAuditRow(
   entityType: AuditEntityType,
   userMap?: Map<number, ReferencedUser>,
   precomputedChanges?: Record<string, unknown> | null
-): AuditEntry {
+): InternalAuditEntry {
   const changes =
     precomputedChanges !== undefined
       ? precomputedChanges
@@ -81,6 +89,7 @@ function mapAuditRow(
 
   return {
     id: row.id,
+    eventId: row.eventId,
     entityType,
     referenceIdLock: row.referenceIdLock,
     referenceId: row.referenceId,
@@ -148,7 +157,7 @@ async function queryAuditEntries(
     changeValue?: string;
     cursorTimestamp?: string;
   }
-): Promise<AuditEntry[]> {
+): Promise<InternalAuditEntry[]> {
   const table = getAuditTable(entityType);
 
   const conditions = [];
@@ -222,6 +231,7 @@ async function queryAuditEntries(
   let query = db
     .select({
       id: table.id,
+      eventId: table.eventId,
       created: table.created,
       referenceIdLock: table.referenceIdLock,
       referenceId: table.referenceId,
@@ -284,12 +294,18 @@ function tryParseJsonValue(value: string): unknown {
 }
 
 type GroupedEventRow = {
+  event_key: string;
+  event_id: string | null;
+  event_created: string;
   entity_type: number;
   action_user_id: number | null;
   created: string;
-  action_type: number;
+  action_types: number[];
   parent_entity_id: number | null;
   count: number;
+  entry_count: number;
+  verification_status_values: string[];
+  changed_fields: string[];
   sample_changes: unknown;
   sample_entity_id: number;
 };
@@ -393,7 +409,7 @@ export const getEntityAuditTimeline = publicProcedure
             ids: auditIds,
             limit: auditIds.length,
           })
-        : Promise.resolve([] as AuditEntry[]),
+        : Promise.resolve([] as InternalAuditEntry[]),
       noteIds.length > 0
         ? (async () => {
             const notesTable = getAdminNotesTable(entityType);
@@ -425,16 +441,26 @@ export const getEntityAuditTimeline = publicProcedure
     // Detect cascade context for entries that changed verificationStatus
     const cascadePairs = new Map<
       string,
-      { actionUserId: number | null; created: string }
+      {
+        eventId: number | null;
+        actionUserId: number | null;
+        actionType: AuditActionType;
+        created: string;
+      }
     >();
     for (const entry of trimmedEntries) {
       if (!entry.changes) continue;
       const changes = entry.changes as Record<string, unknown>;
       if (changes.verificationStatus || changes.verification_status) {
-        const key = `${entry.actionUserId}:${entry.created}`;
+        const key =
+          entry.eventId !== null
+            ? `event:${entry.eventId}`
+            : `legacy:${entry.actionUserId}:${entry.created}:${entry.actionType}`;
         if (!cascadePairs.has(key)) {
           cascadePairs.set(key, {
+            eventId: entry.eventId,
             actionUserId: entry.actionUserId,
+            actionType: entry.actionType,
             created: entry.created,
           });
         }
@@ -472,32 +498,40 @@ export const getEntityAuditTimeline = publicProcedure
         // Batch all sibling queries in parallel
         const pairEntries = Array.from(cascadePairs.entries());
         const siblingResults = await Promise.all(
-          pairEntries.map(([, { actionUserId, created }]) => {
-            const siblingQueries = ALL_AUDIT_TABLES.map(
-              ({ entityType: et }) => {
-                const info = getParentEntityJoinInfo(et);
-                const userCondition =
-                  actionUserId !== null
-                    ? sql`a.action_user_id = ${actionUserId}`
-                    : sql`a.action_user_id IS NULL`;
-                return sql`
+          pairEntries.map(
+            ([, { eventId, actionUserId, actionType, created }]) => {
+              const siblingQueries = ALL_AUDIT_TABLES.map(
+                ({ entityType: et }) => {
+                  const info = getParentEntityJoinInfo(et);
+                  const userCondition =
+                    actionUserId !== null
+                      ? sql`a.action_user_id = ${actionUserId}`
+                      : sql`a.action_user_id IS NULL`;
+                  const eventIdentityCondition =
+                    eventId !== null
+                      ? sql`a.event_id = ${eventId}
+                        AND a.created = ${created}::timestamptz`
+                      : sql`${userCondition}
+                        AND a.created = ${created}::timestamptz
+                        AND a.action_type = ${actionType}`;
+                  return sql`
                 SELECT
                   ${et}::int AS entity_type,
                   COUNT(*)::int AS cnt,
                   (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_id,
                   (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes
                 FROM ${sql.raw(info.fromClause)}
-                WHERE ${userCondition}
-                  AND a.created = ${created}::timestamptz
+                WHERE ${eventIdentityCondition}
                   AND ${sql.raw(info.parentIdExpr)} = ${parentTournamentId}
                 GROUP BY entity_type
               `;
-              }
-            );
-            return context.db.execute(
-              sql`${sql.join(siblingQueries, sql` UNION ALL `)}`
-            );
-          })
+                }
+              );
+              return context.db.execute(
+                sql`${sql.join(siblingQueries, sql` UNION ALL `)}`
+              );
+            }
+          )
         );
 
         // Process results and collect IDs for batched resolution
@@ -646,13 +680,17 @@ export const getEntityAuditTimeline = publicProcedure
 
     // Map entries to EntityTimelineEvent (with cascadeContext or null)
     const auditItems: EntityTimelineItem[] = trimmedEntries.map((entry) => {
-      const key = `${entry.actionUserId}:${entry.created}`;
+      const key =
+        entry.eventId !== null
+          ? `event:${entry.eventId}`
+          : `legacy:${entry.actionUserId}:${entry.created}:${entry.actionType}`;
       const ctx = cascadeContextMap.get(key) ?? null;
+      const { eventId: _eventId, ...publicEntry } = entry;
 
       return {
         type: 'audit' as const,
         data: {
-          entry,
+          entry: publicEntry,
           cascadeContext: ctx,
         } satisfies EntityTimelineEvent,
       };
@@ -692,6 +730,16 @@ export const getAuditEventFeed = publicProcedure
       entityId,
       showSystem,
     } = input;
+    let decodedCursor: ReturnType<typeof decodeEventFeedCursor> | null = null;
+    if (cursor) {
+      try {
+        decodedCursor = decodeEventFeedCursor(cursor);
+      } catch {
+        throw new ORPCError('BAD_REQUEST', {
+          message: 'Invalid audit event cursor',
+        });
+      }
+    }
 
     // Group field filters by entity type for per-table application
     const fieldsByEntityType = new Map<AuditEntityType, string[]>();
@@ -718,9 +766,16 @@ export const getAuditEventFeed = publicProcedure
       tablesToQuery = [...LIGHT_AUDIT_TABLES];
     }
 
-    // Build per-table grouping queries with GROUP BY (actionUserId, created, actionType, parentEntityId)
-    const tableQueries = tablesToQuery.map(({ entityType }) => {
+    if (tablesToQuery.length === 0) {
+      return { events: [], nextCursor: null, hasMore: false };
+    }
+
+    // First find only the newest matching timestamps per table. The expensive
+    // JSON aggregation then runs over that bounded window rather than an entire
+    // audit table (game_score_audits is especially large).
+    const tableQueryParts = tablesToQuery.map(({ entityType }) => {
       const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
+      const eventKeyExpr = buildAuditEventKeyExpression(parentIdExpr);
 
       const conditions: ReturnType<typeof sql>[] = [];
 
@@ -733,8 +788,18 @@ export const getAuditEventFeed = publicProcedure
         conditions.push(sql`a.action_user_id = ${adminUserId}`);
       }
 
-      if (cursor) {
-        conditions.push(sql`a.created < ${cursor}::timestamptz`);
+      if (decodedCursor) {
+        conditions.push(
+          decodedCursor.eventKey !== null
+            ? sql`(
+                a.created < ${decodedCursor.created}::timestamptz
+                OR (
+                  a.created = ${decodedCursor.created}::timestamptz
+                  AND ${eventKeyExpr} < ${decodedCursor.eventKey}
+                )
+              )`
+            : sql`a.created < ${decodedCursor.created}::timestamptz`
+        );
       }
 
       if (actionTypes && actionTypes.length > 0) {
@@ -779,50 +844,154 @@ export const getAuditEventFeed = publicProcedure
         conditions.length > 0
           ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
           : sql``;
+      const boundedWhereClause =
+        conditions.length > 0
+          ? sql`WHERE ${sql.join(conditions, sql` AND `)}
+              AND a.created IN (SELECT created FROM candidate_timestamps)`
+          : sql`WHERE a.created IN (SELECT created FROM candidate_timestamps)`;
 
-      return sql`
+      const candidateTimestampQuery = sql`
+        SELECT recent.created
+        FROM (
+          SELECT DISTINCT a.created
+          FROM ${sql.raw(fromClause)}
+          ${whereClause}
+          ORDER BY a.created DESC
+          LIMIT ${limit + 1}
+        ) recent
+      `;
+
+      const groupedQuery = sql`
         SELECT
+          ${eventKeyExpr} AS event_key,
+          a.event_id::text AS event_id,
           ${entityType}::int AS entity_type,
           a.action_user_id,
           a.created,
-          a.action_type,
+          ARRAY_AGG(DISTINCT a.action_type ORDER BY a.action_type) AS action_types,
           ${sql.raw(parentIdExpr)} AS parent_entity_id,
-          COUNT(*)::int AS count,
+          COUNT(DISTINCT a.reference_id_lock)::int AS count,
+          COUNT(*)::int AS entry_count,
+          ARRAY_AGG(
+            DISTINCT CASE
+              WHEN normalized_changes.verification_status_change IS NULL THEN
+                'unchanged'
+              ELSE
+                COALESCE(
+                  normalized_changes.verification_status_change ->> 'newValue',
+                  normalized_changes.verification_status_change ->> 'NewValue',
+                  normalized_changes.verification_status_change ->> 'new_value',
+                  'null'
+                )
+            END
+          ) AS verification_status_values,
+          ARRAY(
+            SELECT DISTINCT field_name
+            FROM unnest(array_agg(a.changes)) AS grouped_changes(change)
+            CROSS JOIN LATERAL jsonb_object_keys(
+              COALESCE(grouped_changes.change, '{}'::jsonb)
+            ) AS fields(field_name)
+            ORDER BY field_name
+          ) AS changed_fields,
           (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes,
           (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_entity_id
         FROM ${sql.raw(fromClause)}
-        ${whereClause}
-        GROUP BY a.action_user_id, a.created, a.action_type, parent_entity_id
+        CROSS JOIN LATERAL (
+          SELECT COALESCE(
+            a.changes -> 'verification_status',
+            a.changes -> 'verificationStatus',
+            a.changes -> 'VerificationStatus'
+          ) AS verification_status_change
+        ) normalized_changes
+        ${boundedWhereClause}
+        GROUP BY
+          ${eventKeyExpr},
+          a.event_id,
+          a.action_user_id,
+          a.created,
+          parent_entity_id
       `;
+
+      return { candidateTimestampQuery, groupedQuery };
     });
 
+    const candidateTimestampQueries = tableQueryParts.map(
+      ({ candidateTimestampQuery }) => candidateTimestampQuery
+    );
+    const groupedQueries = tableQueryParts.map(
+      ({ groupedQuery }) => groupedQuery
+    );
+
+    const cursorCondition = decodedCursor
+      ? decodedCursor.eventKey !== null
+        ? sql`WHERE
+            created < ${decodedCursor.created}::timestamptz
+            OR (
+              created = ${decodedCursor.created}::timestamptz
+              AND event_key < ${decodedCursor.eventKey}
+            )`
+        : sql`WHERE created < ${decodedCursor.created}::timestamptz`
+      : sql``;
+
     const query = sql`
-      SELECT * FROM (
-        ${sql.join(tableQueries, sql` UNION ALL `)}
-      ) combined
-      ORDER BY created DESC
-      LIMIT ${limit + 1}
+      WITH candidate_timestamps AS MATERIALIZED (
+        ${sql.join(candidateTimestampQueries, sql` UNION ALL `)}
+      ),
+      grouped_rows AS MATERIALIZED (
+        ${sql.join(groupedQueries, sql` UNION ALL `)}
+      ),
+      event_candidates AS (
+        SELECT event_key, MAX(created) AS created
+        FROM grouped_rows
+        GROUP BY event_key
+      ),
+      paged_events AS (
+        SELECT event_key, created
+        FROM event_candidates
+        ${cursorCondition}
+        ORDER BY created DESC, event_key DESC
+        LIMIT ${limit + 1}
+      )
+      SELECT
+        grouped_rows.*,
+        paged_events.created AS event_created
+      FROM paged_events
+      JOIN grouped_rows USING (event_key)
+      ORDER BY
+        paged_events.created DESC,
+        paged_events.event_key DESC,
+        grouped_rows.entity_type,
+        grouped_rows.parent_entity_id NULLS LAST
     `;
 
     const result = await context.db.execute(query);
     const rows = result.rows as GroupedEventRow[];
-
-    const hasMore = rows.length > limit;
-    const trimmedRows = hasMore ? rows.slice(0, limit) : rows;
+    const pagedEventKeys = [...new Set(rows.map((row) => row.event_key))];
+    const hasMore = pagedEventKeys.length > limit;
+    const selectedEventKeys = pagedEventKeys.slice(0, limit);
+    const selectedEventKeySet = new Set(selectedEventKeys);
+    const trimmedRows = rows.filter((row) =>
+      selectedEventKeySet.has(row.event_key)
+    );
 
     // Convert raw rows to GroupedAuditRow for assembleEvents
     const groupedRows: GroupedAuditRow[] = trimmedRows.map((row) => ({
+      eventKey: row.event_key,
+      eventId: row.event_id === null ? null : Number(row.event_id),
       actionUserId: row.action_user_id,
       created: row.created,
-      actionType: row.action_type as AuditActionType,
+      actionTypes: row.action_types as AuditActionType[],
       entityType: row.entity_type as AuditEntityType,
       parentEntityId: row.parent_entity_id,
       entryCount: row.count,
+      auditEntryCount: row.entry_count,
+      verificationStatusValues: row.verification_status_values ?? [],
+      changedFields: row.changed_fields ?? [],
       sampleChanges: row.sample_changes as Record<string, unknown> | null,
       sampleEntityId: row.sample_entity_id,
     }));
 
-    // Assemble events (merges by actionUserId + created for cascade detection)
+    // Assemble only after every row belonging to the selected events is loaded.
     const assembledEvents = assembleEvents(groupedRows);
 
     // --- Enrich events ---
@@ -1006,6 +1175,8 @@ export const getAuditEventFeed = publicProcedure
       );
 
       return {
+        eventKey: event.eventKey,
+        eventId: event.eventId,
         action: event.action,
         actionUserId: event.actionUserId,
         actionUser: actionUser
@@ -1023,6 +1194,7 @@ export const getAuditEventFeed = publicProcedure
           entityId: event.topEntityId,
           entityName: topEntityName,
           count: event.topEntityCount,
+          entryCount: event.topEntryCount,
         },
         childLevel,
         isCascade: event.isCascade,
@@ -1033,14 +1205,16 @@ export const getAuditEventFeed = publicProcedure
       };
     });
 
-    // Use earliestCreated for cursor to avoid pagination duplicates
-    // when system events have been aggregated across multiple timestamps
-    const lastAssembled = assembledEvents[assembledEvents.length - 1] as
-      | AssembledEvent
-      | undefined;
+    const lastEventKey = selectedEventKeys[selectedEventKeys.length - 1];
+    const lastEventRow = lastEventKey
+      ? trimmedRows.find((row) => row.event_key === lastEventKey)
+      : undefined;
     const nextCursor =
-      hasMore && lastAssembled
-        ? (lastAssembled.earliestCreated ?? lastAssembled.created)
+      hasMore && lastEventKey && lastEventRow
+        ? encodeEventFeedCursor({
+            created: lastEventRow.event_created,
+            eventKey: lastEventKey,
+          })
         : null;
 
     return { events, nextCursor, hasMore };
@@ -1056,26 +1230,43 @@ export const getEventDetails = publicProcedure
     path: '/audit/event-details',
   })
   .handler(async ({ input, context }) => {
-    const { actionUserId, created, entityType, cursor, limit } = input;
+    const {
+      eventKey,
+      eventId,
+      actionUserId,
+      created,
+      entityType,
+      cursor,
+      limit,
+    } = input;
 
     // Determine which tables to query
     const tablesToQuery =
       entityType !== undefined ? [{ entityType }] : [...ALL_AUDIT_TABLES];
 
     const tableQueries = tablesToQuery.map(({ entityType: et }) => {
-      const tableName = getTableNameString(et);
+      const { fromClause, parentIdExpr } = getParentEntityJoinInfo(et);
+      const eventKeyExpr = buildAuditEventKeyExpression(parentIdExpr);
       const userCondition =
         actionUserId !== null
           ? sql`a.action_user_id = ${actionUserId}`
           : sql`a.action_user_id IS NULL`;
 
-      const conditions = [
-        userCondition,
-        sql`a.created = ${created}::timestamptz`,
-      ];
+      const conditions = eventId
+        ? [
+            sql`a.event_id = ${eventId}`,
+            sql`a.created = ${created}::timestamptz`,
+          ]
+        : eventKey
+          ? [
+              userCondition,
+              sql`a.created = ${created}::timestamptz`,
+              sql`${eventKeyExpr} = ${eventKey}`,
+            ]
+          : [userCondition, sql`a.created = ${created}::timestamptz`];
 
       if (cursor !== undefined) {
-        conditions.push(sql`a.id < ${cursor}`);
+        conditions.push(sql`(a.id::bigint * 4 + ${et}) < ${cursor}`);
       }
 
       return sql`
@@ -1088,11 +1279,12 @@ export const getEventDetails = publicProcedure
           a.action_user_id,
           a.action_type,
           a.changes,
+          (a.id::bigint * 4 + ${et}) AS entry_cursor,
           u.id AS user_id,
           p.id AS player_id,
           p.osu_id,
           p.username
-        FROM ${sql.raw(tableName)} a
+        FROM ${sql.raw(fromClause)}
         LEFT JOIN users u ON u.id = a.action_user_id
         LEFT JOIN players p ON p.id = u.player_id
         WHERE ${sql.join(conditions, sql` AND `)}
@@ -1103,7 +1295,7 @@ export const getEventDetails = publicProcedure
       SELECT * FROM (
         ${sql.join(tableQueries, sql` UNION ALL `)}
       ) combined
-      ORDER BY id DESC
+      ORDER BY entry_cursor DESC
       LIMIT ${limit + 1}
     `;
 
@@ -1117,6 +1309,7 @@ export const getEventDetails = publicProcedure
       action_user_id: number | null;
       action_type: number;
       changes: unknown;
+      entry_cursor: string;
       user_id: number | null;
       player_id: number | null;
       osu_id: string | null; // bigint returned as string by node-postgres
@@ -1185,7 +1378,7 @@ export const getEventDetails = publicProcedure
 
     const nextCursor =
       hasMore && trimmedRows.length > 0
-        ? trimmedRows[trimmedRows.length - 1].id
+        ? Number(trimmedRows[trimmedRows.length - 1].entry_cursor)
         : null;
 
     return { entries, nextCursor, hasMore };

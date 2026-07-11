@@ -110,10 +110,7 @@ export default function AuditEventFeed(): React.JSX.Element {
             className="divide-y divide-border rounded-lg border border-border"
           >
             {allEvents.map((event) => (
-              <AuditEventCard
-                key={`${event.created}-${event.actionUserId}-${event.topEntity.entityType}-${event.topEntity.entityId}`}
-                event={event}
-              />
+              <AuditEventCard key={event.eventKey} event={event} />
             ))}
           </div>
 
