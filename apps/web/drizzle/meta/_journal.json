@@ -134,6 +134,13 @@
       "when": 1782011749454,
       "tag": "0018_soft_miek",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1783795697198,
+      "tag": "0019_restore-cleared-tournament-submitters",
+      "breakpoints": true
     }
   ]
 }
