@@ -2,6 +2,7 @@
 .github
 .vscode
 .husky
+.agents
 node_modules
 .bun
 .bun_tmp
