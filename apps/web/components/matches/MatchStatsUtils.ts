@@ -23,8 +23,8 @@ export type HighlightIcon =
   | 'Swords'
   | 'Users'
   | 'Gamepad2'
-  | 'Gauge'
-  | 'Trophy'
+  | 'TrendingUp'
+  | 'Medal'
   | 'Crosshair';
 
 export interface HighlightStat {
@@ -266,7 +266,7 @@ export function calculateHighlightStats(
       value:
         averageRating === null ? '—' : Math.round(averageRating).toString(),
       sublabel: averageRating === null ? 'Ratings unavailable' : undefined,
-      icon: 'Gauge',
+      icon: 'TrendingUp',
       metric: averageRating === null ? undefined : 'TR',
       tierIcon: averageTier
         ? { tier: averageTier.tier, subTier: averageTier.subTier }
@@ -276,7 +276,7 @@ export function calculateHighlightStats(
       id: 'match-cost',
       label: 'Top Match Cost',
       value: topMatchCost.matchCost.toFixed(2),
-      icon: 'Trophy',
+      icon: 'Medal',
       player: createHighlightPlayer(topMatchCost),
     },
     {

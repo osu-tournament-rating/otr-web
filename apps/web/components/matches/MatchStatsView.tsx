@@ -340,7 +340,7 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    Cost
+                    MC
                   </SortButton>
                 </TableHead>
                 <TableHead

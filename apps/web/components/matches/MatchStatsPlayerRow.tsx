@@ -22,7 +22,10 @@ function TeamBadge({
   const label = team === 'red' ? 'Red' : 'Blue';
 
   return (
-    <Badge variant="outline" className="gap-1.5 px-1.5 py-0 font-normal">
+    <Badge
+      variant="outline"
+      className="gap-1.5 bg-popover px-1.5 py-0 font-normal text-popover-foreground"
+    >
       <span
         className="size-1.5 rounded-full"
         style={{ backgroundColor: `var(--team-${team})` }}
@@ -92,8 +95,14 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 {player.team && <TeamBadge team={player.team} />}
                 {player.won && (
-                  <Badge className="bg-primary/10 px-1.5 py-0 text-primary">
-                    <Trophy className="size-3" aria-hidden="true" />
+                  <Badge
+                    variant="outline"
+                    className="bg-popover px-1.5 py-0 text-popover-foreground"
+                  >
+                    <Trophy
+                      className="size-3 text-primary"
+                      aria-hidden="true"
+                    />
                     Winner
                   </Badge>
                 )}

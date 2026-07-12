@@ -133,9 +133,10 @@ describe('match statistics processing', () => {
       sublabel: 'Blue wins',
     });
     expect(summary.find((stat) => stat.id === 'rated-games')?.value).toBe('1');
-    expect(summary.find((stat) => stat.id === 'average-rating')?.value).toBe(
-      '1455'
-    );
+    expect(summary.find((stat) => stat.id === 'average-rating')).toMatchObject({
+      value: '1455',
+      icon: 'TrendingUp',
+    });
     expect(summary.find((stat) => stat.id === 'match-cost')).toMatchObject({
       value: '1.30',
       player: { id: 20, username: 'Blue player' },

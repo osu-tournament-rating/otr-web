@@ -2,10 +2,10 @@ import Link from 'next/link';
 import {
   Crosshair,
   Gamepad2,
-  Gauge,
   HelpCircle,
   Swords,
-  Trophy,
+  TrendingUp,
+  Medal,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,8 +22,8 @@ const iconMap: Record<HighlightIcon, LucideIcon> = {
   Swords,
   Users,
   Gamepad2,
-  Gauge,
-  Trophy,
+  TrendingUp,
+  Medal,
   Crosshair,
 };
 

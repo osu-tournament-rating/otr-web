@@ -152,7 +152,7 @@ function TeamScoreTooltip({ active, payload }: TooltipProps) {
       : `${point.winner === 'red' ? 'Red' : 'Blue'} wins by ${Math.abs(point.scoreDifference).toLocaleString()}`;
 
   return (
-    <div className="max-w-72 rounded-lg border bg-background p-3 text-xs shadow-md">
+    <div className="max-w-72 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-md">
       <div className="flex items-center justify-between gap-3 text-muted-foreground">
         <span>Game {point.mapNumber}</span>
         <span>{point.mods}</span>

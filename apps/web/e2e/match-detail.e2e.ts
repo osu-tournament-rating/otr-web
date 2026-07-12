@@ -173,6 +173,7 @@ test.describe('Match Detail Page', () => {
         );
 
       await expect(costHeader).toHaveAttribute('aria-sort', 'descending');
+      await expect(costSort).toContainText('MC');
       const descendingCosts = await getMatchCosts();
       expect(descendingCosts).toEqual(
         [...descendingCosts].sort((first, second) => second - first)
