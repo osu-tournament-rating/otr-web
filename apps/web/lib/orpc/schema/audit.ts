@@ -84,6 +84,10 @@ export const AuditEventChildLevelSchema = z.object({
 });
 
 export const AuditEventSchema = z.object({
+  /** Stable feed identity, including a deterministic fallback for legacy rows. */
+  eventKey: z.string().min(1),
+  /** Stable database event ID for new audit rows; null for legacy history. */
+  eventId: z.number().int().positive().nullable(),
   /** Semantic action derived from top-level entity's verificationStatus change */
   action: AuditEventActionSchema,
   /** Who performed the action (null = system) */
@@ -100,6 +104,8 @@ export const AuditEventSchema = z.object({
     entityName: z.string().nullable(),
     /** How many entities of this type were affected (usually 1 for cascades) */
     count: z.number().int(),
+    /** How many audit rows were written for those entities in this event. */
+    entryCount: z.number().int(),
   }),
   /** One sublevel child count (immediate children affected by cascade) */
   childLevel: AuditEventChildLevelSchema.nullable(),
@@ -147,6 +153,10 @@ export const EventFeedResponseSchema = z.object({
 // --- Event Details Input/Response (expandable view of a single event) ---
 
 export const EventDetailsInputSchema = z.object({
+  /** Exact feed identity for legacy events without an eventId. */
+  eventKey: z.string().min(1).optional(),
+  /** Prefer this stable identifier for new events; legacy callers use actor + timestamp. */
+  eventId: z.number().int().positive().optional(),
   actionUserId: z.number().int().nullable(),
   created: z.string(),
   entityType: z.nativeEnum(AuditEntityType).optional(),

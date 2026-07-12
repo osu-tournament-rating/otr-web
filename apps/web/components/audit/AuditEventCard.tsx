@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import type { AuditEvent, AuditEventAction } from '@/lib/orpc/schema/audit';
+import type {
+  AuditEntry,
+  AuditEvent,
+  AuditEventAction,
+} from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { orpc } from '@/lib/orpc/orpc';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
@@ -70,6 +75,12 @@ const ACTION_BORDER_COLORS: Record<AuditEventAction, string> = {
 
 type AuditEventCardProps = {
   event: AuditEvent;
+};
+
+type EventDetailsResponse = {
+  entries: AuditEntry[];
+  nextCursor: number | null;
+  hasMore: boolean;
 };
 
 function buildDescription(event: AuditEvent): React.ReactNode {
@@ -208,49 +219,68 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   );
 }
 
-function CascadeChildEntries({
+function EventEntityEntries({
   event,
-  hasTopLevelDiffs,
+  entityType,
 }: {
   event: AuditEvent;
-  hasTopLevelDiffs: boolean;
+  entityType: AuditEntityType;
 }) {
-  const childEntityType = event.childLevel?.entityType ?? null;
+  const getKey = (
+    _pageIndex: number,
+    previousPageData: EventDetailsResponse | null
+  ) => {
+    if (previousPageData && !previousPageData.hasMore) return null;
 
-  const { data, isLoading } = useSWR(
-    childEntityType
-      ? ['cascade-children', event.actionUserId, event.created, childEntityType]
-      : null,
-    () =>
-      orpc.audit.eventDetails({
-        actionUserId: event.actionUserId,
-        created: event.created,
-        entityType: childEntityType!,
-        limit: 50,
-      }),
-    {
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      dedupingInterval: 60_000,
-    }
-  );
+    return [
+      'audit-event-entities',
+      event.eventKey,
+      event.eventId,
+      event.actionUserId,
+      event.created,
+      entityType,
+      previousPageData?.nextCursor ?? null,
+    ] as const;
+  };
 
-  if (!childEntityType) return null;
+  const { data, size, setSize, isLoading, isValidating, error, mutate } =
+    useSWRInfinite(
+      getKey,
+      async ([, , , , , , cursor]) =>
+        orpc.audit.eventDetails({
+          eventKey: event.eventKey,
+          eventId: event.eventId ?? undefined,
+          actionUserId: event.actionUserId,
+          created: event.created,
+          entityType,
+          cursor: cursor ?? undefined,
+          limit: 50,
+        }),
+      {
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+        dedupingInterval: 60_000,
+      }
+    );
+  const pages = data ?? [];
+  const entries = pages.flatMap((page) => page.entries);
+  const hasMore = pages[pages.length - 1]?.hasMore ?? false;
 
-  const childSlug = entityTypeToSlug(childEntityType);
-  const childPlural = ENTITY_TYPE_PLURALS[childEntityType];
-  const childLabel = ENTITY_TYPE_LABELS[childEntityType];
+  const entitySlug = entityTypeToSlug(entityType);
+  const entityPlural = ENTITY_TYPE_PLURALS[entityType];
+  const entityLabel = ENTITY_TYPE_LABELS[entityType];
+  const isRepeatedTopEntity =
+    entityType === event.topEntity.entityType &&
+    event.topEntity.count === 1 &&
+    event.topEntity.entryCount > 1;
 
   return (
-    <div
-      className={cn(
-        'border-border bg-muted/20 px-3 py-2',
-        !hasTopLevelDiffs && 'border-t'
-      )}
-    >
+    <div className="border-t border-border bg-muted/20 px-3 py-2">
       <div className="flex flex-col gap-2 pl-9">
         <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Affected {childPlural}
+          {isRepeatedTopEntity
+            ? 'Changes in this event'
+            : `Affected ${entityPlural}`}
         </span>
 
         {isLoading && (
@@ -260,20 +290,35 @@ function CascadeChildEntries({
           </div>
         )}
 
-        {data?.entries.map((entry) => {
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-destructive">
+            <span>Unable to load audit entries.</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void mutate()}
+              disabled={isValidating}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {entries.map((entry) => {
           const changes = entry.changes as Record<
             string,
             { originalValue: unknown; newValue: unknown }
           > | null;
           const entryLabel =
             entry.entityName ??
-            `${childLabel.charAt(0).toUpperCase() + childLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
+            `${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
           const entryId = entry.referenceId ?? entry.referenceIdLock;
 
           return (
             <div key={entry.id} className="flex flex-col gap-1">
               <Link
-                href={`/audit/${childSlug}/${entryId}`}
+                href={`/audit/${entitySlug}/${entryId}`}
                 className="text-xs font-medium text-primary hover:underline"
               >
                 {entryLabel}
@@ -285,7 +330,7 @@ function CascadeChildEntries({
                       key={fieldName}
                       fieldName={fieldName}
                       change={change}
-                      entityType={childEntityType}
+                      entityType={entityType}
                       referencedUsers={entry.referencedUsers}
                     />
                   ))}
@@ -301,10 +346,18 @@ function CascadeChildEntries({
           );
         })}
 
-        {data && data.hasMore && (
-          <span className="text-xs text-muted-foreground italic">
-            … and more (showing first {data.entries.length})
-          </span>
+        {hasMore && !error && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            onClick={() => setSize(size + 1)}
+            disabled={isValidating}
+          >
+            {isValidating && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Load more
+          </Button>
         )}
       </div>
     </div>
@@ -319,7 +372,8 @@ export default function AuditEventCard({
     { originalValue: unknown; newValue: unknown }
   > | null;
   const changeCount = changes ? Object.keys(changes).length : 0;
-  const hasExpandableContent = changeCount > 0 || event.isCascade;
+  const hasExpandableContent =
+    changeCount > 0 || event.isCascade || event.topEntity.entryCount > 1;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -404,7 +458,7 @@ export default function AuditEventCard({
 
         {/* Expanded diffs */}
         <CollapsibleContent data-testid="event-card-diff">
-          {changes && changeCount > 0 && (
+          {changes && changeCount > 0 && event.topEntity.entryCount === 1 && (
             <div className="border-t border-border bg-muted/20 px-3 py-2">
               <div className="flex flex-col gap-1 pl-9">
                 {Object.entries(changes).map(([fieldName, change]) => (
@@ -419,10 +473,16 @@ export default function AuditEventCard({
               </div>
             </div>
           )}
-          {event.isCascade && isOpen && (
-            <CascadeChildEntries
+          {event.topEntity.entryCount > 1 && isOpen && (
+            <EventEntityEntries
               event={event}
-              hasTopLevelDiffs={changeCount > 0}
+              entityType={event.topEntity.entityType}
+            />
+          )}
+          {event.isCascade && event.childLevel && isOpen && (
+            <EventEntityEntries
+              event={event}
+              entityType={event.childLevel.entityType}
             />
           )}
         </CollapsibleContent>

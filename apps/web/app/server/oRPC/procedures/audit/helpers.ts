@@ -128,6 +128,23 @@ export function getParentEntityJoinInfo(entityType: AuditEntityType): {
   }
 }
 
+/** Build the stable event key used by both the feed and legacy detail lookup. */
+export function buildAuditEventKeyExpression(parentIdExpr: string): SQL {
+  return sql`
+    CASE
+      WHEN a.event_id IS NOT NULL THEN 'event:' || a.event_id::text
+      ELSE 'legacy:'
+        || COALESCE(a.action_user_id::text, 'system') || ':'
+        || to_char(
+          a.created AT TIME ZONE 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'
+        ) || ':'
+        || a.action_type::text || ':'
+        || COALESCE((${sql.raw(parentIdExpr)})::text, 'none')
+    END
+  `;
+}
+
 /**
  * Compare two values for equality, handling objects/arrays via JSON serialization.
  */
@@ -143,7 +160,7 @@ function valuesAreEqual(a: unknown, b: unknown): boolean {
 
 /**
  * Normalizes inner change value keys (originalValue/newValue) to camelCase.
- * Handles both PascalCase (NewValue/OriginalValue) and camelCase inputs.
+ * Handles PascalCase, camelCase, and snake_case inputs.
  */
 function normalizeChangeValue(value: unknown): unknown {
   if (typeof value !== 'object' || value === null) return value;
@@ -152,7 +169,7 @@ function normalizeChangeValue(value: unknown): unknown {
   const result: Record<string, unknown> = {};
 
   for (const [key, v] of Object.entries(obj)) {
-    const lowerKey = key.toLowerCase();
+    const lowerKey = key.replaceAll('_', '').toLowerCase();
     if (lowerKey === 'originalvalue') {
       result['originalValue'] = v;
     } else if (lowerKey === 'newvalue') {
@@ -179,9 +196,11 @@ export function camelizeChangesKeys(
 
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(changes)) {
-    const camelKey = key.replace(/_([a-z])/g, (_, c: string) =>
+    const snakeCamelKey = key.replace(/_([a-z])/g, (_, c: string) =>
       c.toUpperCase()
     );
+    const camelKey =
+      snakeCamelKey.charAt(0).toLowerCase() + snakeCamelKey.slice(1);
     const normalizedValue = normalizeChangeValue(value);
 
     // Skip fields where originalValue equals newValue (no actual change)
@@ -242,16 +261,62 @@ export function camelToSnake(s: string): string {
 
 // --- Event Assembly ---
 
+export type EventFeedCursor = {
+  created: string;
+  eventKey: string | null;
+};
+
+/** Encode a stable event cursor while keeping the public wire type a string. */
+export function encodeEventFeedCursor(cursor: {
+  created: string;
+  eventKey: string;
+}): string {
+  return JSON.stringify(cursor);
+}
+
+/**
+ * Decode the current composite cursor or the legacy raw timestamp cursor.
+ * Legacy cursors intentionally have no tie-break key.
+ */
+export function decodeEventFeedCursor(cursor: string): EventFeedCursor {
+  try {
+    const parsed = JSON.parse(cursor) as Partial<EventFeedCursor>;
+    if (
+      typeof parsed.created === 'string' &&
+      typeof parsed.eventKey === 'string' &&
+      !Number.isNaN(new Date(parsed.created).getTime())
+    ) {
+      return { created: parsed.created, eventKey: parsed.eventKey };
+    }
+  } catch {
+    // Fall through to the legacy timestamp form.
+  }
+
+  if (!Number.isNaN(new Date(cursor).getTime())) {
+    return { created: cursor, eventKey: null };
+  }
+
+  throw new Error('Invalid audit event cursor');
+}
+
 /**
  * A raw grouped row from the per-table SQL query, before cross-table merging.
  */
 export type GroupedAuditRow = {
+  eventKey: string;
+  eventId: number | null;
   actionUserId: number | null;
   created: string;
-  actionType: AuditActionType;
+  actionTypes: AuditActionType[];
   entityType: AuditEntityType;
   parentEntityId: number | null;
+  /** Number of distinct entities represented by this SQL group. */
   entryCount: number;
+  /** Number of audit rows represented by this SQL group. */
+  auditEntryCount: number;
+  /** Distinct verificationStatus.newValue values; "null" means an explicit clear. */
+  verificationStatusValues: string[];
+  changedFields: string[];
   sampleChanges: Record<string, unknown> | null;
   sampleEntityId: number;
 };
@@ -331,15 +396,16 @@ export function extractChangedFields(
 
 /** Assembled event type returned by assembleEvents() */
 export type AssembledEvent = {
+  eventKey: string;
+  eventId: number | null;
   action: AuditEventAction;
   actionUserId: number | null;
   created: string;
-  /** Earliest timestamp in this group (for cursor-safe pagination of aggregated system events) */
-  earliestCreated?: string;
   isSystem: boolean;
   topEntityType: AuditEntityType;
   topEntityId: number;
   topEntityCount: number;
+  topEntryCount: number;
   childEntityType: AuditEntityType | null;
   childAffectedCount: number;
   isCascade: boolean;
@@ -348,148 +414,145 @@ export type AssembledEvent = {
   sampleChanges: Record<string, unknown> | null;
 };
 
+function classifyGroupedAuditRow(row: GroupedAuditRow): AuditEventAction {
+  const actionTypes = new Set(row.actionTypes);
+  if (actionTypes.size !== 1) return 'update';
+
+  const actionType = actionTypes.values().next().value!;
+  if (
+    actionType === AuditActionType.Created ||
+    actionType === AuditActionType.Deleted
+  ) {
+    return classifyAction(actionType, null, row.actionUserId === null);
+  }
+
+  const verificationStatusValues = new Set(row.verificationStatusValues);
+  if (verificationStatusValues.size !== 1) return 'update';
+
+  const rawStatus = verificationStatusValues.values().next().value!;
+  if (rawStatus === 'null' || rawStatus === 'unchanged') return 'update';
+
+  return classifyAction(
+    actionType,
+    {
+      verificationStatus: {
+        originalValue: null,
+        newValue: Number(rawStatus),
+      },
+    },
+    row.actionUserId === null
+  );
+}
+
 /**
  * Assemble grouped rows from multiple audit tables into audit events.
  *
- * Groups rows by (actionUserId, created, actionType) — entries sharing these values
- * came from the same PostgreSQL transaction (cascade operations).
+ * Groups rows by the event key selected by the database query. New rows use the
+ * durable audit event ID; legacy rows use a deterministic compatibility key.
  *
  * For each group:
  * 1. Identifies the top-level entity by hierarchy (lowest enum = highest in hierarchy)
  * 2. Classifies the action from the top-level entity's changes
  * 3. Computes one-sublevel child count
  *
- * System events (actionUserId=null) are further aggregated by
- * (parentEntityId, classifiedAction, hourBucket) to collapse per-match
- * rows into summary events.
  */
 export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
-  // Group by (actionUserId, created, actionType) — same transaction
   const eventMap = new Map<string, GroupedAuditRow[]>();
   for (const row of rows) {
-    const key = `${row.actionUserId}:${row.created}:${row.actionType}`;
-    const existing = eventMap.get(key);
+    const existing = eventMap.get(row.eventKey);
     if (existing) {
       existing.push(row);
     } else {
-      eventMap.set(key, [row]);
+      eventMap.set(row.eventKey, [row]);
     }
   }
 
   const events: AssembledEvent[] = [];
 
-  for (const [, groupRows] of eventMap) {
+  for (const [eventKey, groupRows] of eventMap) {
     // Sort by entity hierarchy: Tournament(0) < Match(1) < Game(2) < Score(3)
-    groupRows.sort((a, b) => a.entityType - b.entityType);
+    groupRows.sort(
+      (a, b) =>
+        a.entityType - b.entityType || b.sampleEntityId - a.sampleEntityId
+    );
 
     const topRow = groupRows[0]!;
+    const topRows = groupRows.filter(
+      (row) => row.entityType === topRow.entityType
+    );
     const isSystem = topRow.actionUserId === null;
     const normalizedChanges = camelizeChangesKeys(topRow.sampleChanges);
-    const action = classifyAction(
-      topRow.actionType,
-      normalizedChanges,
-      isSystem
+    const classifiedActions = new Set(
+      topRows.map((row) => classifyGroupedAuditRow(row))
     );
+    const action =
+      classifiedActions.size === 1
+        ? classifiedActions.values().next().value!
+        : ('update' as const);
 
     // Determine if this is a cascade (multiple entity types)
     const entityTypes = new Set(groupRows.map((r) => r.entityType));
     const isCascade = entityTypes.size > 1;
 
+    const topEntityCount = topRows.reduce(
+      (total, row) => total + row.entryCount,
+      0
+    );
+    const topEntryCount = topRows.reduce(
+      (total, row) => total + row.auditEntryCount,
+      0
+    );
+    const changedFields = new Set<string>();
+    for (const row of topRows) {
+      for (const field of row.changedFields) {
+        changedFields.add(
+          field.replace(/_([a-z])/g, (_, character: string) =>
+            character.toUpperCase()
+          )
+        );
+      }
+    }
+
+    const parentEntityId = groupRows.every(
+      (row) => row.parentEntityId === topRow.parentEntityId
+    )
+      ? topRow.parentEntityId
+      : null;
+
     // Compute one-sublevel child count
     const childType = getImmediateChildType(topRow.entityType);
     let childAffectedCount = 0;
     if (childType !== null) {
-      for (const r of groupRows) {
-        if (r.entityType === childType) {
-          childAffectedCount += r.entryCount;
-        }
-      }
+      childAffectedCount = groupRows
+        .filter((row) => row.entityType === childType)
+        .reduce((total, row) => total + row.entryCount, 0);
     }
 
     events.push({
+      eventKey,
+      eventId: topRow.eventId,
       action,
       actionUserId: topRow.actionUserId,
       created: topRow.created,
       isSystem,
       topEntityType: topRow.entityType,
       topEntityId: topRow.sampleEntityId,
-      topEntityCount: topRow.entryCount,
+      topEntityCount,
+      topEntryCount,
       childEntityType: childType,
       childAffectedCount,
       isCascade,
-      parentEntityId: topRow.parentEntityId,
-      changedFields: extractChangedFields(normalizedChanges),
+      parentEntityId,
+      changedFields: [...changedFields].sort(),
       sampleChanges: normalizedChanges,
     });
   }
 
-  // --- Post-processing: aggregate system events ---
-  // System events are processed individually per entity, each with a unique
-  // timestamp. Re-group them by (parentEntityId, action, hourBucket) to
-  // produce summary rows like "System pre-verified N matches in Tournament X".
-  const systemEvents: AssembledEvent[] = [];
-  const adminEvents: AssembledEvent[] = [];
-
-  for (const event of events) {
-    if (event.isSystem) {
-      systemEvents.push(event);
-    } else {
-      adminEvents.push(event);
-    }
-  }
-
-  const aggregatedSystem: AssembledEvent[] = [];
-  if (systemEvents.length > 0) {
-    const systemGroupMap = new Map<string, AssembledEvent[]>();
-    for (const event of systemEvents) {
-      const hourBucket = Math.floor(
-        new Date(event.created).getTime() / 3600000
-      );
-      const key = `${event.parentEntityId}:${event.action}:${hourBucket}`;
-      const existing = systemGroupMap.get(key);
-      if (existing) {
-        existing.push(event);
-      } else {
-        systemGroupMap.set(key, [event]);
-      }
-    }
-
-    for (const [, group] of systemGroupMap) {
-      if (group.length === 1) {
-        aggregatedSystem.push(group[0]!);
-        continue;
-      }
-
-      // Sort by timestamp descending to pick the latest as the display timestamp
-      group.sort(
-        (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
-      );
-
-      const latest = group[0]!;
-      const earliest = group[group.length - 1]!;
-
-      // Sum topEntityCount across all events in the group
-      let totalCount = 0;
-      for (const e of group) {
-        totalCount += e.topEntityCount;
-      }
-
-      aggregatedSystem.push({
-        ...latest,
-        topEntityCount: totalCount,
-        earliestCreated: earliest.created,
-      });
-    }
-  }
-
-  const allEvents = [...adminEvents, ...aggregatedSystem];
-
-  // Sort by timestamp descending
-  allEvents.sort(
-    (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+  return events.sort(
+    (a, b) =>
+      new Date(b.created).getTime() - new Date(a.created).getTime() ||
+      b.eventKey.localeCompare(a.eventKey)
   );
-
-  return allEvents;
 }
 
 /**

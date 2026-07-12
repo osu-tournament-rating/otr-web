@@ -267,6 +267,33 @@ export const filterReports = pgTable(
   ]
 );
 
+export const auditEvents = pgTable(
+  'audit_events',
+  {
+    id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({
+      name: 'audit_events_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      cache: 1,
+    }),
+    created: timestamp({ withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    actionUserId: integer('action_user_id'),
+  },
+  (table) => [
+    index('ix_audit_events_action_user_id').using(
+      'btree',
+      table.actionUserId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_audit_events_created').using(
+      'btree',
+      table.created.asc().nullsLast().op('timestamptz_ops')
+    ),
+  ]
+);
+
 export const gameAudits = pgTable(
   'game_audits',
   {
@@ -278,6 +305,7 @@ export const gameAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -309,6 +337,11 @@ export const gameAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_game_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [games.id],
@@ -455,6 +488,7 @@ export const gameScoreAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -486,6 +520,11 @@ export const gameScoreAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_game_score_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [gameScores.id],
@@ -812,6 +851,7 @@ export const matchAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -843,6 +883,11 @@ export const matchAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_match_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [matches.id],
@@ -1541,6 +1586,7 @@ export const tournamentAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -1572,6 +1618,11 @@ export const tournamentAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_tournament_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [tournaments.id],

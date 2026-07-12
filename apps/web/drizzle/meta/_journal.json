@@ -141,6 +141,13 @@
       "when": 1783795697198,
       "tag": "0019_restore-cleared-tournament-submitters",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783803347413,
+      "tag": "0020_audit-event-tracking",
+      "breakpoints": true
     }
   ]
 }
