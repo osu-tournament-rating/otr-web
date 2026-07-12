@@ -1,21 +1,26 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { ChartTooltip, ChartContainer } from '@/components/ui/chart';
-import { Card } from '@/components/ui/card';
-import { LineChart as LineChartIcon, Trophy } from 'lucide-react';
+import { useMemo } from 'react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { LineChart as LineChartIcon } from 'lucide-react';
 
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  type ChartConfig,
+} from '@/components/ui/chart';
+import { Card } from '@/components/ui/card';
 import { Game } from '@/lib/orpc/schema/match';
-import { Mods, Team, VerificationStatus } from '@otr/core/osu';
 import { ModsEnumHelper } from '@/lib/enum-helpers';
-import { cn } from '@/lib/utils';
+import { Mods, Team, VerificationStatus } from '@otr/core/osu';
 
 interface TeamScoresChartProps {
   games: Game[] | undefined;
 }
 
-interface ChartDataPoint {
+export interface TeamScoreChartPoint {
   mapNumber: number;
   mapLabel: string;
   redScore: number;
@@ -24,400 +29,251 @@ interface ChartDataPoint {
   beatmapTitle: string;
   beatmapArtist: string;
   beatmapDifficulty: string;
-  beatmapId: number;
   mods: string;
   scoreDifference: number;
-  cumulativeRedScore: number;
-  cumulativeBlueScore: number;
 }
 
 const CHART_CONFIG = {
   redScore: {
-    label: 'Red Team',
-    color: '#ef4444',
+    label: 'Red team',
+    color: 'var(--team-red)',
   },
   blueScore: {
-    label: 'Blue Team',
-    color: '#3b82f6',
+    label: 'Blue team',
+    color: 'var(--team-blue)',
   },
-} as const;
+} satisfies ChartConfig;
 
 function formatMods(mods: number): string {
   if (mods === 0 || mods === Mods.None) return 'NM';
 
-  const modFlags = ModsEnumHelper.getFlags(mods as Mods);
-  const modTexts = modFlags
+  const modTexts = ModsEnumHelper.getFlags(mods as Mods)
     .map((flag) => ModsEnumHelper.metadata[flag].text)
-    .filter((text) => text);
+    .filter(Boolean);
 
   return modTexts.length > 0 ? modTexts.join(' ') : 'NM';
 }
 
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    dataKey: string;
-    value: number;
-    payload: ChartDataPoint;
-  }>;
-  label?: string;
+export function buildTeamScoreChartData(
+  games: Game[] | undefined
+): TeamScoreChartPoint[] {
+  if (!games?.length) return [];
+
+  return games.flatMap((game, gameIndex): TeamScoreChartPoint[] => {
+    if (game.verificationStatus !== VerificationStatus.Verified) {
+      return [];
+    }
+
+    const verifiedScores = game.scores.filter(
+      (score) => score.verificationStatus === VerificationStatus.Verified
+    );
+    const redScores = verifiedScores.filter((score) => score.team === Team.Red);
+    const blueScores = verifiedScores.filter(
+      (score) => score.team === Team.Blue
+    );
+
+    if (redScores.length === 0 && blueScores.length === 0) {
+      return [];
+    }
+
+    const redScore = redScores.reduce((total, score) => total + score.score, 0);
+    const blueScore = blueScores.reduce(
+      (total, score) => total + score.score,
+      0
+    );
+    const scoreDifference = redScore - blueScore;
+
+    return [
+      {
+        mapNumber: gameIndex + 1,
+        mapLabel: `${gameIndex + 1}`,
+        redScore,
+        blueScore,
+        winner:
+          scoreDifference > 0 ? 'red' : scoreDifference < 0 ? 'blue' : 'tie',
+        beatmapTitle: game.beatmap?.beatmapset?.title ?? 'Unknown title',
+        beatmapArtist: game.beatmap?.beatmapset?.artist ?? 'Unknown artist',
+        beatmapDifficulty: game.beatmap?.diffName ?? 'Unknown difficulty',
+        mods: formatMods(game.mods ?? 0),
+        scoreDifference,
+      },
+    ];
+  });
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
-  if (!active || !payload || payload.length === 0) return null;
+function getYAxis(data: TeamScoreChartPoint[]) {
+  const scores = data.flatMap((point) => [point.redScore, point.blueScore]);
 
-  const data = payload[0].payload as ChartDataPoint;
-  const isRedWin = data.winner === 'red';
-  const isBlueWin = data.winner === 'blue';
-  const isTie = data.winner === 'tie';
+  if (scores.length === 0) {
+    return {
+      domain: [0, 100_000] as [number, number],
+      ticks: [0, 25_000, 50_000, 75_000, 100_000],
+    };
+  }
+
+  const minimum = Math.min(...scores);
+  const maximum = Math.max(...scores);
+  const spread = maximum - minimum;
+  const padding = Math.max(spread * 0.1, 5_000);
+  const domainMinimum = Math.max(
+    0,
+    Math.floor((minimum - padding) / 5_000) * 5_000
+  );
+  let domainMaximum = Math.ceil((maximum + padding) / 5_000) * 5_000;
+
+  if (domainMaximum <= domainMinimum) {
+    domainMaximum = domainMinimum + 20_000;
+  }
+
+  const interval = (domainMaximum - domainMinimum) / 4;
+
+  return {
+    domain: [domainMinimum, domainMaximum] as [number, number],
+    ticks: Array.from(
+      { length: 5 },
+      (_, index) => domainMinimum + interval * index
+    ),
+  };
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload: TeamScoreChartPoint }>;
+}
+
+function TeamScoreTooltip({ active, payload }: TooltipProps) {
+  const point = payload?.[0]?.payload;
+
+  if (!active || !point) return null;
+
+  const result =
+    point.winner === 'tie'
+      ? 'Map tied'
+      : `${point.winner === 'red' ? 'Red' : 'Blue'} wins by ${Math.abs(point.scoreDifference).toLocaleString()}`;
 
   return (
-    <div className="rounded-xl border border-border/50 bg-background/95 p-4 shadow-2xl backdrop-blur-sm">
-      {/* Header with map info */}
-      <div className="mb-3 border-b border-border/30 pb-3">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-lg',
-                isRedWin && 'bg-red-500/15',
-                isBlueWin && 'bg-blue-500/15',
-                isTie && 'bg-yellow-500/15'
-              )}
-            >
-              <Trophy
-                className={cn(
-                  'h-4 w-4',
-                  isRedWin && 'text-red-500',
-                  isBlueWin && 'text-blue-500',
-                  isTie && 'text-yellow-500'
-                )}
-              />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Map {data.mapNumber}</p>
-              <p className="text-xs text-muted-foreground">
-                {isTie
-                  ? 'Tied'
-                  : `${data.winner === 'red' ? 'Red' : 'Blue'} wins`}
-              </p>
-            </div>
-          </div>
-          {data.mods !== 'NM' && (
-            <div className="rounded-md bg-primary/10 px-2 py-1">
-              <span className="text-xs font-medium text-primary">
-                {data.mods}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Beatmap info */}
-        <div className="mt-2">
-          <p className="text-xs font-medium text-foreground">
-            {data.beatmapArtist} - {data.beatmapTitle}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            [{data.beatmapDifficulty}]
-          </p>
-        </div>
+    <div className="max-w-72 rounded-lg border bg-background p-3 text-xs shadow-md">
+      <div className="flex items-center justify-between gap-3 text-muted-foreground">
+        <span>Game {point.mapNumber}</span>
+        <span>{point.mods}</span>
       </div>
+      <p className="mt-1 truncate text-sm font-medium">
+        {point.beatmapArtist} – {point.beatmapTitle}
+      </p>
+      <p className="truncate text-muted-foreground">
+        [{point.beatmapDifficulty}]
+      </p>
 
-      {/* Scores section */}
-      <div className="space-y-3">
-        {/* Map scores */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">
-            Map Scores
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div
-              className={cn(
-                'rounded-lg border p-2.5',
-                isRedWin
-                  ? 'border-red-500/30 bg-red-500/5'
-                  : 'border-border/50 bg-card/50'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-red-500" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  Red
-                </span>
-              </div>
-              <p className="mt-1 text-sm font-bold">
-                {data.redScore.toLocaleString()}
-              </p>
-            </div>
-            <div
-              className={cn(
-                'rounded-lg border p-2.5',
-                isBlueWin
-                  ? 'border-blue-500/30 bg-blue-500/5'
-                  : 'border-border/50 bg-card/50'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  Blue
-                </span>
-              </div>
-              <p className="mt-1 text-sm font-bold">
-                {data.blueScore.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Score difference */}
-        <div className="rounded-lg bg-muted/30 p-2.5">
-          <p className="text-xs text-muted-foreground">Score Difference</p>
-          <p className="mt-0.5 text-sm font-semibold">
-            {Math.abs(data.scoreDifference).toLocaleString()} points{' '}
+      <div className="mt-3 space-y-1.5 border-t pt-2.5 tabular-nums">
+        <div className="flex items-center justify-between gap-6">
+          <span className="flex items-center gap-1.5">
             <span
-              className={cn(
-                'text-xs',
-                isRedWin && 'text-red-500',
-                isBlueWin && 'text-blue-500',
-                isTie && 'text-yellow-500'
-              )}
-            >
-              {isTie
-                ? '(Tied)'
-                : data.winner === 'red'
-                  ? 'for Red'
-                  : 'for Blue'}
-            </span>
-          </p>
+              className="size-2 rounded-full bg-(--team-red)"
+              aria-hidden="true"
+            />
+            Red team
+          </span>
+          <span className="font-medium">{point.redScore.toLocaleString()}</span>
         </div>
-
-        {/* Cumulative scores */}
-        <div className="border-t border-border/30 pt-2.5">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Total Match Score
-          </p>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-sm font-semibold">
-                {data.cumulativeRedScore.toLocaleString()}
-              </span>
-            </div>
-            <span className="text-xs text-muted-foreground">vs</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">
-                {data.cumulativeBlueScore.toLocaleString()}
-              </span>
-              <div className="h-2 w-2 rounded-full bg-blue-500" />
-            </div>
-          </div>
+        <div className="flex items-center justify-between gap-6">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="size-2 rounded-full bg-(--team-blue)"
+              aria-hidden="true"
+            />
+            Blue team
+          </span>
+          <span className="font-medium">
+            {point.blueScore.toLocaleString()}
+          </span>
         </div>
       </div>
+
+      <p className="mt-2 border-t pt-2 text-muted-foreground">{result}</p>
     </div>
   );
 }
 
-interface CustomDotProps {
-  cx?: number;
-  cy?: number;
-  payload?: ChartDataPoint;
+function formatAxisScore(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
+  return value.toString();
 }
 
-function CustomDot(props: CustomDotProps) {
-  const { cx, cy, payload } = props;
-
-  if (!payload || !cx || !cy) return null;
-
-  const isWinner = payload.winner === 'red' || payload.winner === 'blue';
-
-  if (!isWinner) return null;
-
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={4}
-      fill={payload.winner === 'red' ? '#ef4444' : '#3b82f6'}
-      stroke="#fff"
-      strokeWidth={2}
-    />
-  );
+function formatGameCount(value: number): string {
+  return `${value} ${value === 1 ? 'game' : 'games'}`;
 }
 
 export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
-  const chartData = useMemo(() => {
-    if (!games || games.length === 0) return [];
+  const chartData = useMemo(() => buildTeamScoreChartData(games), [games]);
+  const { domain, ticks } = useMemo(() => getYAxis(chartData), [chartData]);
+  const redWins = chartData.filter((point) => point.winner === 'red').length;
+  const blueWins = chartData.filter((point) => point.winner === 'blue').length;
+  const ties = chartData.filter((point) => point.winner === 'tie').length;
 
-    let cumulativeRed = 0;
-    let cumulativeBlue = 0;
-
-    const getTeamScore = (team: Team) => (game: Game) =>
-      game.scores
-        .filter((score) => score.team === team)
-        .reduce((total, score) => total + score.score, 0);
-
-    const redScoreForGame = getTeamScore(Team.Red);
-    const blueScoreForGame = getTeamScore(Team.Blue);
-
-    return games
-      .filter((game) => game.verificationStatus === VerificationStatus.Verified)
-      .map((game, index) => {
-        const redScore = redScoreForGame(game);
-        const blueScore = blueScoreForGame(game);
-        const scoreDifference = redScore - blueScore;
-
-        cumulativeRed += redScore;
-        cumulativeBlue += blueScore;
-
-        let winner: 'red' | 'blue' | 'tie' = 'tie';
-        if (scoreDifference > 0) winner = 'red';
-        else if (scoreDifference < 0) winner = 'blue';
-
-        return {
-          mapNumber: index + 1,
-          mapLabel: `${index + 1}`,
-          redScore,
-          blueScore,
-          winner,
-          beatmapTitle: game.beatmap?.beatmapset?.title || 'Unknown',
-          beatmapArtist: game.beatmap?.beatmapset?.artist || 'Unknown',
-          beatmapDifficulty: game.beatmap?.diffName || 'Unknown',
-          beatmapId: game.beatmap?.osuId || 0,
-          mods: formatMods(game.mods || 0),
-          scoreDifference,
-          cumulativeRedScore: cumulativeRed,
-          cumulativeBlueScore: cumulativeBlue,
-        } as ChartDataPoint;
-      });
-  }, [games]);
-
-  // y-axis tick generation: 5 ticks, rounded to nearest 5k of domain
-  const { domain, ticks } = useMemo(() => {
-    if (chartData.length === 0)
-      return { domain: [0, 100000], ticks: [0, 25000, 50000, 75000, 100000] };
-
-    // Find min and max values across all scores
-    let minScore = Infinity;
-    let maxScore = -Infinity;
-
-    chartData.forEach((point) => {
-      minScore = Math.min(minScore, point.redScore, point.blueScore);
-      maxScore = Math.max(maxScore, point.redScore, point.blueScore);
-    });
-
-    // Round to nearest 5000
-    const roundToNearest5k = (value: number, roundDown: boolean) => {
-      const factor = 5000;
-      if (roundDown) {
-        return Math.floor(value / factor) * factor;
-      }
-      return Math.ceil(value / factor) * factor;
-    };
-
-    // Calculate domain with padding
-    const domainMin = Math.max(0, roundToNearest5k(minScore - 5000, true));
-    const domainMax = roundToNearest5k(maxScore + 5000, false);
-
-    const interval = (domainMax - domainMin) / 4;
-    const ticks = Array.from({ length: 5 }, (_, i) => domainMin + interval * i);
-
-    return { domain: [domainMin, domainMax], ticks };
-  }, [chartData]);
-
-  if (!games || games.length === 0) {
+  if (chartData.length === 0) {
     return null;
   }
 
   return (
-    <Card data-testid="team-scores-chart" className="p-4 pb-0">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <LineChartIcon className="h-5 w-5 text-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
+    <Card data-testid="team-scores-chart" className="gap-4 !p-4 sm:!p-6">
+      <div className="flex items-start gap-2">
+        <LineChartIcon className="mt-0.5 size-6 shrink-0 text-primary" />
+        <div>
           <h3 className="text-lg font-semibold">Team Score Progression</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Red vs Blue team scores across all beatmaps
+          <p className="text-sm text-muted-foreground">
+            Verified team totals across {chartData.length}{' '}
+            {chartData.length === 1 ? 'game' : 'games'}
           </p>
         </div>
       </div>
 
       <ChartContainer
         config={CHART_CONFIG}
-        className="h-[250px] w-full sm:h-[300px] md:h-[350px] lg:h-[400px]"
+        className="aspect-auto h-[240px] w-full sm:h-[300px]"
+        role="img"
+        aria-label={`Line chart of verified team scores. Red won ${formatGameCount(redWins)}, Blue won ${formatGameCount(blueWins)}, and ${formatGameCount(ties)} ${ties === 1 ? 'was' : 'were'} tied.`}
       >
         <LineChart
           data={chartData}
-          margin={{ top: 10, right: 10, left: 0, bottom: 30 }}
+          margin={{ top: 4, right: 12, left: 0, bottom: 0 }}
         >
-          <CartesianGrid
-            strokeDasharray="3 3"
-            className="stroke-muted/30"
-            vertical={false}
-          />
-
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis
             dataKey="mapLabel"
-            tick={{ fontSize: 11 }}
-            interval={0}
-            label={{
-              value: 'Beatmap',
-              position: 'insideBottom',
-              offset: -5,
-              style: { fontSize: 11, fill: 'var(--muted-foreground)' },
-            }}
+            tickLine={false}
+            axisLine={false}
+            minTickGap={20}
+            tickMargin={8}
           />
-
           <YAxis
             domain={domain}
             ticks={ticks}
-            tick={{ fontSize: 10 }}
-            tickFormatter={(value) => {
-              if (value >= 1000000) {
-                return `${(value / 1000000).toFixed(1)}M`;
-              } else if (value >= 1000) {
-                return `${(value / 1000).toFixed(0)}k`;
-              }
-              return value.toString();
-            }}
-            label={{
-              value: 'Score',
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontSize: 11, fill: 'var(--muted-foreground)' },
-            }}
+            tickFormatter={formatAxisScore}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={6}
+            width={44}
           />
-
-          <ChartTooltip
-            content={<CustomTooltip />}
-            cursor={{ strokeDasharray: '3 3' }}
-          />
-
+          <ChartTooltip content={<TeamScoreTooltip />} />
+          <ChartLegend content={<ChartLegendContent />} />
           <Line
             type="monotone"
             dataKey="redScore"
-            stroke="#ef4444"
+            stroke="var(--color-redScore)"
             strokeWidth={2.5}
-            dot={(props) => {
-              const { key, ...dotProps } = props;
-              return <CustomDot key={key} {...dotProps} />;
-            }}
-            activeDot={{ r: 6, strokeWidth: 0 }}
-            animationDuration={1000}
+            dot={{ r: 3, fill: 'var(--color-redScore)', strokeWidth: 0 }}
+            activeDot={{ r: 5, strokeWidth: 0 }}
+            isAnimationActive={false}
           />
-
           <Line
             type="monotone"
             dataKey="blueScore"
-            stroke="#3b82f6"
+            stroke="var(--color-blueScore)"
             strokeWidth={2.5}
-            dot={(props) => {
-              const { key, ...dotProps } = props;
-              return <CustomDot key={key} {...dotProps} />;
-            }}
-            activeDot={{ r: 6, strokeWidth: 0 }}
-            animationDuration={1000}
+            dot={{ r: 3, fill: 'var(--color-blueScore)', strokeWidth: 0 }}
+            activeDot={{ r: 5, strokeWidth: 0 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ChartContainer>

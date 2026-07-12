@@ -65,6 +65,14 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;
   const gameCount = match.games?.length ?? 0;
+  const statsUnavailableReason =
+    match.verificationStatus === VerificationStatus.PreVerified
+      ? 'awaiting verification'
+      : match.verificationStatus === VerificationStatus.Rejected
+        ? 'rejected'
+        : match.verificationStatus === VerificationStatus.PreRejected
+          ? 'flagged for review'
+          : 'pending processing';
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
@@ -118,26 +126,18 @@ export default async function Page({ params, searchParams }: PageProps) {
           {isVerified ? (
             <MatchStatsView match={match} />
           ) : (
-            <Card className="p-6 font-sans">
-              <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <p className="text-lg font-semibold text-muted-foreground">
+            <Card className="!p-6">
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <BarChart3 className="size-6" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold">
                     Statistics Not Available
                   </p>
-                  <p className="max-w-md text-sm text-muted-foreground">
+                  <p className="mt-1 max-w-md text-sm text-muted-foreground">
                     Match statistics are only available for verified matches.
-                    This match is currently
-                    {match.verificationStatus ===
-                      VerificationStatus.PreVerified &&
-                      ' awaiting verification'}
-                    {match.verificationStatus === VerificationStatus.Rejected &&
-                      ' rejected'}
-                    {match.verificationStatus ===
-                      VerificationStatus.PreRejected && ' flagged for review'}
-                    {match.verificationStatus === VerificationStatus.None &&
-                      ' pending processing'}
-                    .
+                    This match is currently {statsUnavailableReason}.
                   </p>
                 </div>
               </div>
