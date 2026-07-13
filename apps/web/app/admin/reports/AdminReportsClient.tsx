@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Eye, Loader2, RotateCcw, X } from 'lucide-react';
+import { Check, ExternalLink, Eye, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -380,186 +380,211 @@ export default function AdminReportsClient() {
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent
-          className="max-h-[85vh] max-w-2xl overflow-y-auto"
+          className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl"
           data-testid="admin-report-detail"
         >
-          <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
-            <DialogDescription>
-              Report #{selectedReport?.id} •{' '}
-              {selectedReport &&
-                ReportEntityTypeEnumHelper.getMetadata(
-                  selectedReport.entityType
-                ).text}{' '}
-              #{selectedReport?.entityId}
-            </DialogDescription>
-          </DialogHeader>
-
           {selectedReport && (
-            <div className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Reporter
-                  </Label>
-                  <p className="text-sm font-medium">
+            <>
+              <DialogHeader className="border-b px-6 pt-6 pr-12 pb-5 text-left">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  {getStatusBadge(selectedReport.status)}
+                  <p className="text-sm text-muted-foreground">
+                    Report #{selectedReport.id}
+                  </p>
+                </div>
+                <DialogTitle className="text-xl leading-tight">
+                  {selectedReport.reason.label}
+                </DialogTitle>
+                <DialogDescription className="leading-relaxed">
+                  Submitted by{' '}
+                  <span className="font-medium text-foreground">
                     {selectedReport.reporter
                       ? (selectedReport.reporter.player.username ??
                         `User #${selectedReport.reporter.id}`)
                       : '[Deleted User]'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Status
-                  </Label>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedReport.status)}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Created
-                  </Label>
-                  <p className="text-sm">
-                    {formatDateTime(selectedReport.created)}
-                  </p>
-                </div>
-                {selectedReport.resolvedAt && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Resolved
+                  </span>{' '}
+                  on {formatDateTime(selectedReport.created)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="max-h-[calc(90vh-9rem)] overflow-y-auto">
+                <div className="space-y-6 px-6 py-5">
+                  <section aria-labelledby="reported-item-heading">
+                    <Label
+                      id="reported-item-heading"
+                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    >
+                      Reported item
                     </Label>
-                    <p className="text-sm">
-                      {formatDateTime(selectedReport.resolvedAt)}
-                      {selectedReport.resolvedBy?.player.username &&
-                        ` by ${selectedReport.resolvedBy.player.username}`}
+                    <div className="mt-2 flex items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4">
+                      <div className="min-w-0">
+                        <p className="font-medium [overflow-wrap:anywhere]">
+                          {selectedReport.entityDisplayName}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {
+                            ReportEntityTypeEnumHelper.getMetadata(
+                              selectedReport.entityType
+                            ).text
+                          }{' '}
+                          #{selectedReport.entityId}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0"
+                        asChild
+                      >
+                        <Link
+                          href={getEntityLink(
+                            selectedReport.entityType,
+                            selectedReport.entityId,
+                            selectedReport.matchId
+                          )}
+                        >
+                          View
+                          <ExternalLink className="size-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </section>
+
+                  <section aria-labelledby="reporter-note-heading">
+                    <Label
+                      id="reporter-note-heading"
+                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    >
+                      Reporter&apos;s note
+                    </Label>
+                    <p
+                      className={cn(
+                        'mt-2 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap',
+                        !selectedReport.additionalInformation &&
+                          'text-muted-foreground italic'
+                      )}
+                    >
+                      {selectedReport.additionalInformation ||
+                        'No additional information was provided.'}
                     </p>
+                  </section>
+
+                  {Object.keys(selectedLegacyChanges).length > 0 && (
+                    <section className="rounded-lg border p-4">
+                      <Label className="text-xs text-muted-foreground">
+                        Legacy report details
+                      </Label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {Object.keys(selectedLegacyChanges).map((field) => (
+                          <Badge key={field} variant="secondary">
+                            {formatFieldName(field)}
+                          </Badge>
+                        ))}
+                      </div>
+                      {Object.values(selectedLegacyChanges).some(
+                        (value) => value
+                      ) && (
+                        <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                          {Object.values(selectedLegacyChanges)[0] ?? '—'}
+                        </p>
+                      )}
+                    </section>
+                  )}
+                </div>
+
+                {selectedReport.status === ReportStatus.Pending ? (
+                  <div className="border-t bg-muted/30 px-6 py-5">
+                    <div>
+                      <Label htmlFor="admin-note">Decision note</Label>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Optional context that will be visible to the reporter.
+                      </p>
+                      <Textarea
+                        id="admin-note"
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                        placeholder="Explain your decision"
+                        className="mt-3 bg-background"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleResolve(ReportStatus.Rejected)}
+                        disabled={resolving}
+                      >
+                        {resolving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <X className="mr-2 size-4" />
+                        )}
+                        Dismiss
+                      </Button>
+                      <Button
+                        onClick={() => handleResolve(ReportStatus.Approved)}
+                        disabled={resolving}
+                        className="bg-success text-success-foreground hover:bg-success/90"
+                      >
+                        {resolving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <Check className="mr-2 size-4" />
+                        )}
+                        Confirm report
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-t bg-muted/30 px-6 py-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <Label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                          Decision
+                        </Label>
+                        <p className="mt-1 text-sm">
+                          {formatDateTime(selectedReport.resolvedAt)}
+                          {selectedReport.resolvedBy?.player.username &&
+                            ` by ${selectedReport.resolvedBy.player.username}`}
+                        </p>
+                        {selectedReport.adminNote && (
+                          <p className="mt-2 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                            {selectedReport.adminNote}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={handleReopen}
+                        disabled={reopening}
+                        className="shrink-0"
+                      >
+                        {reopening ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <RotateCcw className="mr-2 size-4" />
+                        )}
+                        Reopen
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <Label className="text-xs text-muted-foreground">
-                    Reason
-                  </Label>
-                  <p className="mt-1 text-sm font-medium">
-                    {selectedReport.reason.label}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <Label className="text-xs text-muted-foreground">
-                    Reported item
-                  </Label>
-                  <p className="mt-1 text-sm font-medium">
-                    {selectedReport.entityDisplayName}
-                  </p>
-                </div>
+            </>
+          )}
+          {!selectedReport && (
+            <>
+              <DialogHeader className="px-6 pt-6 pr-12 pb-5 text-left">
+                <DialogTitle>Report details</DialogTitle>
+                <DialogDescription>
+                  Loading report information…
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-3 border-t px-6 py-8 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Loading report…
               </div>
-
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  Additional information
-                </Label>
-                <p className="mt-2 rounded-lg border bg-muted/30 p-4 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                  {selectedReport.additionalInformation ||
-                    'No additional information was provided.'}
-                </p>
-              </div>
-
-              {Object.keys(selectedLegacyChanges).length > 0 && (
-                <div className="rounded-lg border p-4">
-                  <Label className="text-xs text-muted-foreground">
-                    Legacy report details
-                  </Label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.keys(selectedLegacyChanges).map((field) => (
-                      <Badge key={field} variant="secondary">
-                        {formatFieldName(field)}
-                      </Badge>
-                    ))}
-                  </div>
-                  {Object.values(selectedLegacyChanges).some(
-                    (value) => value
-                  ) && (
-                    <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                      {Object.values(selectedLegacyChanges)[0] ?? '—'}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {selectedReport.status === ReportStatus.Pending && (
-                <div className="space-y-4 border-t pt-4">
-                  <div>
-                    <Label htmlFor="admin-note">Admin note (optional)</Label>
-                    <Textarea
-                      id="admin-note"
-                      value={adminNote}
-                      onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="Add a note about your decision"
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleResolve(ReportStatus.Rejected)}
-                      disabled={resolving}
-                    >
-                      {resolving ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <X className="mr-2 size-4" />
-                      )}
-                      Dismiss
-                    </Button>
-                    <Button
-                      onClick={() => handleResolve(ReportStatus.Approved)}
-                      disabled={resolving}
-                      className="bg-success text-success-foreground hover:bg-success/90"
-                    >
-                      {resolving ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <Check className="mr-2 size-4" />
-                      )}
-                      Confirm
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {selectedReport.status !== ReportStatus.Pending && (
-                <div className="flex justify-end border-t pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleReopen}
-                    disabled={reopening}
-                  >
-                    {reopening ? (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    ) : (
-                      <RotateCcw className="mr-2 size-4" />
-                    )}
-                    Reopen
-                  </Button>
-                </div>
-              )}
-
-              {selectedReport.adminNote && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Admin note
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-                    {selectedReport.adminNote}
-                  </p>
-                </div>
-              )}
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
