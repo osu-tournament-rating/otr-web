@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'bun:test';
 
-import { ReportEntityType } from '@otr/core/osu';
+import { ReportEntityType, ReportStatus } from '@otr/core/osu';
 
-import { ReportCreateInputSchema } from '@/lib/orpc/schema/report';
+import {
+  ReportCreateInputSchema,
+  ReportResolveInputSchema,
+} from '@/lib/orpc/schema/report';
 
 import {
   normalizeReportCreateContent,
@@ -58,6 +61,38 @@ describe('ReportCreateInputSchema', () => {
         additionalInformation: 'a'.repeat(2001),
       }).success
     ).toBe(false);
+  });
+});
+
+describe('ReportResolveInputSchema', () => {
+  const validInput = {
+    reportId: 1,
+    status: ReportStatus.Approved,
+    adminNote: 'The reported data was corrected.',
+  };
+
+  it('requires a non-empty comment', () => {
+    expect(
+      ReportResolveInputSchema.safeParse({
+        ...validInput,
+        adminNote: undefined,
+      }).success
+    ).toBe(false);
+    expect(
+      ReportResolveInputSchema.safeParse({
+        ...validInput,
+        adminNote: '   ',
+      }).success
+    ).toBe(false);
+  });
+
+  it('trims a supplied comment', () => {
+    expect(
+      ReportResolveInputSchema.parse({
+        ...validInput,
+        adminNote: '  The reported data was corrected.  ',
+      }).adminNote
+    ).toBe('The reported data was corrected.');
   });
 });
 

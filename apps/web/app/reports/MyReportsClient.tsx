@@ -354,7 +354,7 @@ export default function MyReportsClient() {
               {selectedReport.adminNote && (
                 <div>
                   <Label className="text-xs text-muted-foreground">
-                    Admin Response
+                    Comment
                   </Label>
                   <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
                     {selectedReport.adminNote}

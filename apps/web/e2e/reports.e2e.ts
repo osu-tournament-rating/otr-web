@@ -106,6 +106,75 @@ test.describe('Your Reports', () => {
         page.locator('[data-testid="admin-reports-heading"]')
       ).toBeVisible({ timeout: 10000 });
     });
+
+    test('requires a comment before closing a report', async ({ page }) => {
+      const userClient = createOrpcClientForRole('user');
+      const adminClient = createOrpcClientForRole('admin');
+      const templateResponse = await userClient.reports.templates({
+        entityType: ReportEntityType.Tournament,
+      });
+      const template = templateResponse.templates.at(0);
+      if (!template) {
+        throw new Error('No tournament report templates were returned');
+      }
+
+      const created = await userClient.reports.create({
+        entityType: ReportEntityType.Tournament,
+        entityId: TEST_TOURNAMENT_ID,
+        reasonKey: template.key,
+        additionalInformation: `E2E admin resolution ${randomUUID()}`,
+      });
+      const reportId = created.reportId;
+      if (!reportId) {
+        throw new Error('The test report was not created');
+      }
+
+      await page.goto(ROUTES.adminReports);
+      await page.waitForLoadState('networkidle');
+
+      const reportRow = page.locator(
+        `[data-testid="admin-reports-row"][data-report-id="${reportId}"]`
+      );
+      await expect(reportRow).toBeVisible({ timeout: 10000 });
+      await reportRow.getByTestId('admin-reports-view-details').click();
+
+      const dialog = page.getByTestId('admin-report-detail');
+      const reason = dialog.getByRole('textbox', {
+        name: 'Comment',
+      });
+      const dismiss = dialog.getByRole('button', { name: 'Dismiss' });
+      const confirm = dialog.getByRole('button', { name: 'Confirm report' });
+
+      await expect(reason).toBeVisible();
+      await expect(dismiss).toBeDisabled();
+      await expect(confirm).toBeDisabled();
+
+      await reason.fill('   ');
+      await expect(dismiss).toBeDisabled();
+      await expect(confirm).toBeDisabled();
+
+      const comment = `Confirmed by E2E ${randomUUID()}`;
+      await reason.fill(comment);
+      await expect(dismiss).toBeEnabled();
+      await expect(confirm).toBeEnabled();
+      await confirm.click();
+
+      await expect(
+        page.getByText('Report confirmed', { exact: true })
+      ).toBeVisible({ timeout: 10000 });
+      await expect
+        .poll(async () => {
+          const report = await adminClient.reports.get({ reportId });
+          return {
+            status: report.status,
+            adminNote: report.adminNote,
+          };
+        })
+        .toEqual({
+          status: ReportStatus.Approved,
+          adminNote: comment,
+        });
+    });
   });
 
   test.describe('Regular user role', () => {
@@ -281,7 +350,7 @@ test.describe('Your Reports', () => {
       await adminClient.reports.resolve({
         reportId: created.reportId!,
         status: ReportStatus.Approved,
-        adminNote: 'E2E admin response',
+        adminNote: 'E2E admin comment',
       });
 
       // Act: view the reports list and target the exact seeded report. Other
@@ -297,13 +366,11 @@ test.describe('Your Reports', () => {
       ).toBeVisible({ timeout: 10000 });
       await reportRow.click();
 
-      // Assert: the detail view is read-only and surfaces the admin response.
+      // Assert: the detail view is read-only and surfaces the admin comment.
       const dialog = page.locator('[data-testid="my-report-detail"]');
       await expect(dialog).toBeVisible({ timeout: 10000 });
-      await expect(
-        dialog.getByText('Admin Response', { exact: true })
-      ).toBeVisible();
-      await expect(dialog.getByText('E2E admin response')).toBeVisible();
+      await expect(dialog.getByText('Comment', { exact: true })).toBeVisible();
+      await expect(dialog.getByText('E2E admin comment')).toBeVisible();
       await expect(
         dialog.getByRole('button', { name: /confirm|dismiss|reopen/i })
       ).toHaveCount(0);

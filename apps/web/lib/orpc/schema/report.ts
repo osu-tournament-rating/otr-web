@@ -54,7 +54,7 @@ export const ReportResolveInputSchema = z.object({
     z.literal(ReportStatus.Approved),
     z.literal(ReportStatus.Rejected),
   ]),
-  adminNote: z.string().max(500).optional(),
+  adminNote: z.string().trim().min(1, 'Comment is required').max(500),
 });
 
 export const ReportGetInputSchema = z.object({

@@ -147,20 +147,21 @@ export default function AdminReportsClient() {
 
   const handleResolve = useCallback(
     async (status: ReportStatus.Approved | ReportStatus.Rejected) => {
-      if (!selectedReport) return;
+      const comment = adminNote.trim();
+      if (!selectedReport || !comment) return;
 
       setResolving(true);
       try {
         await orpc.reports.resolve({
           reportId: selectedReport.id,
           status,
-          adminNote: adminNote.trim() || undefined,
+          adminNote: comment,
         });
 
         setReports((prev) =>
           prev.map((r) =>
             r.id === selectedReport.id
-              ? { ...r, status, adminNote: adminNote.trim() || null }
+              ? { ...r, status, adminNote: comment }
               : r
           )
         );
@@ -495,24 +496,28 @@ export default function AdminReportsClient() {
                 {selectedReport.status === ReportStatus.Pending ? (
                   <div className="border-t bg-muted/30 px-6 py-5">
                     <div>
-                      <Label htmlFor="admin-note">Decision note</Label>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Optional context that will be visible to the reporter.
-                      </p>
+                      <Label htmlFor="admin-note">
+                        Comment{' '}
+                        <span className="text-destructive" aria-hidden="true">
+                          *
+                        </span>
+                      </Label>
                       <Textarea
                         id="admin-note"
                         value={adminNote}
                         onChange={(e) => setAdminNote(e.target.value)}
-                        placeholder="Explain your decision"
+                        placeholder="Enter a comment"
                         className="mt-3 bg-background"
                         rows={3}
+                        maxLength={500}
+                        required
                       />
                     </div>
                     <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                       <Button
                         variant="outline"
                         onClick={() => handleResolve(ReportStatus.Rejected)}
-                        disabled={resolving}
+                        disabled={resolving || !adminNote.trim()}
                       >
                         {resolving ? (
                           <Loader2 className="mr-2 size-4 animate-spin" />
@@ -523,7 +528,7 @@ export default function AdminReportsClient() {
                       </Button>
                       <Button
                         onClick={() => handleResolve(ReportStatus.Approved)}
-                        disabled={resolving}
+                        disabled={resolving || !adminNote.trim()}
                         className="bg-success text-success-foreground hover:bg-success/90"
                       >
                         {resolving ? (
@@ -540,7 +545,7 @@ export default function AdminReportsClient() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                       <div>
                         <Label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                          Decision
+                          Comment
                         </Label>
                         <p className="mt-1 text-sm">
                           {formatDateTime(selectedReport.resolvedAt)}
