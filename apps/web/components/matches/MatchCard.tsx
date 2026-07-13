@@ -8,7 +8,6 @@ import {
   ReportEntityType,
 } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
-import { MatchReportableFields } from '@/lib/orpc/schema/report';
 import { formatUTCDate } from '@/lib/utils/date';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
@@ -115,12 +114,6 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entityType={ReportEntityType.Match}
                 entityId={match.id}
                 entityDisplayName={match.name || `Match ${match.id}`}
-                reportableFields={MatchReportableFields}
-                currentValues={{
-                  name: match.name,
-                  startTime: match.startTime ?? '',
-                  endTime: match.endTime ?? '',
-                }}
                 darkMode={true}
               />
               <AuditButton

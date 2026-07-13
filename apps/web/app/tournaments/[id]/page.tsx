@@ -41,7 +41,6 @@ import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeat
 import TournamentMatchesAdminView from '@/components/tournaments/TournamentMatchesAdminView';
 import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
 import ReportButton from '@/components/reports/ReportButton';
-import { TournamentReportableFields } from '@/lib/orpc/schema/report';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
@@ -173,16 +172,6 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
                 entityType={ReportEntityType.Tournament}
                 entityId={tournament.id}
                 entityDisplayName={tournament.name}
-                reportableFields={TournamentReportableFields}
-                currentValues={{
-                  name: tournament.name,
-                  abbreviation: tournament.abbreviation,
-                  forumUrl: tournament.forumUrl,
-                  rankRangeLowerBound: String(tournament.rankRangeLowerBound),
-                  lobbySize: String(tournament.lobbySize),
-                  startTime: tournament.startTime ?? '',
-                  endTime: tournament.endTime ?? '',
-                }}
               />
               <AuditButton
                 entityType={AuditEntityType.Tournament}

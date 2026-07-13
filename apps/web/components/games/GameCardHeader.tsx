@@ -5,7 +5,6 @@ import { ExternalLink } from 'lucide-react';
 
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enum-helpers';
 import { Game } from '@/lib/orpc/schema/match';
-import { GameReportableFields } from '@/lib/orpc/schema/report';
 import {
   AdminNoteRouteTarget,
   AuditEntityType,
@@ -104,15 +103,6 @@ export default function GameCardHeader({ game }: { game: Game }) {
                   ? `${game.beatmap.beatmapset.title} [${game.beatmap.diffName}]`
                   : `Game ${game.id}`
               }
-              reportableFields={GameReportableFields}
-              currentValues={{
-                ruleset: String(game.ruleset),
-                scoringType: String(game.scoringType),
-                teamType: String(game.teamType),
-                mods: String(game.mods),
-                startTime: game.startTime ?? '',
-                endTime: game.endTime ?? '',
-              }}
               darkMode={true}
             />
             <AuditButton

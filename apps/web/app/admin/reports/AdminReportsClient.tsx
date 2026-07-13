@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Eye, Loader2, RotateCcw, X } from 'lucide-react';
+import { Check, ExternalLink, Eye, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -64,6 +64,23 @@ const formatFieldName = (field: string) => {
     .trim();
 };
 
+const getLegacySuggestedChanges = (
+  report: Pick<Report, 'reason' | 'suggestedChanges'>
+): Record<string, string> => {
+  const changes = report.suggestedChanges as Record<string, string>;
+  const entries = Object.entries(changes);
+
+  if (
+    entries.length === 1 &&
+    entries[0]?.[0] === 'reason' &&
+    entries[0][1] === report.reason.label
+  ) {
+    return {};
+  }
+
+  return changes;
+};
+
 function getEntityLink(
   entityType: ReportEntityType,
   entityId: number,
@@ -94,6 +111,9 @@ export default function AdminReportsClient() {
   const [resolving, setResolving] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [adminNote, setAdminNote] = useState('');
+  const selectedLegacyChanges = selectedReport
+    ? getLegacySuggestedChanges(selectedReport)
+    : {};
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -127,20 +147,21 @@ export default function AdminReportsClient() {
 
   const handleResolve = useCallback(
     async (status: ReportStatus.Approved | ReportStatus.Rejected) => {
-      if (!selectedReport) return;
+      const comment = adminNote.trim();
+      if (!selectedReport || !comment) return;
 
       setResolving(true);
       try {
         await orpc.reports.resolve({
           reportId: selectedReport.id,
           status,
-          adminNote: adminNote.trim() || undefined,
+          adminNote: comment,
         });
 
         setReports((prev) =>
           prev.map((r) =>
             r.id === selectedReport.id
-              ? { ...r, status, adminNote: adminNote.trim() || null }
+              ? { ...r, status, adminNote: comment }
               : r
           )
         );
@@ -216,7 +237,7 @@ export default function AdminReportsClient() {
         }
         className={cn(
           status === ReportStatus.Approved &&
-            'bg-green-600 hover:bg-green-600/80'
+            'bg-success text-success-foreground hover:bg-success/90'
         )}
       >
         {metadata.text}
@@ -279,7 +300,7 @@ export default function AdminReportsClient() {
             </p>
           ) : (
             <div
-              className="overflow-hidden rounded-md border"
+              className="overflow-x-auto rounded-lg border"
               data-testid="admin-reports-list"
             >
               <Table>
@@ -288,6 +309,7 @@ export default function AdminReportsClient() {
                     <TableHead>ID</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Entity</TableHead>
+                    <TableHead>Reason</TableHead>
                     <TableHead>Reporter</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
@@ -296,7 +318,11 @@ export default function AdminReportsClient() {
                 </TableHeader>
                 <TableBody>
                   {reports.map((report) => (
-                    <TableRow key={report.id} data-testid="admin-reports-row">
+                    <TableRow
+                      key={report.id}
+                      data-testid="admin-reports-row"
+                      data-report-id={report.id}
+                    >
                       <TableCell className="font-mono text-xs">
                         {report.id}
                       </TableCell>
@@ -319,6 +345,9 @@ export default function AdminReportsClient() {
                         >
                           #{report.entityId}
                         </Link>
+                      </TableCell>
+                      <TableCell className="min-w-48 font-medium">
+                        {report.reason.label}
                       </TableCell>
                       <TableCell>
                         {report.reporter
@@ -351,176 +380,216 @@ export default function AdminReportsClient() {
       </Card>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
-            <DialogDescription>
-              Report #{selectedReport?.id} •{' '}
-              {selectedReport &&
-                ReportEntityTypeEnumHelper.getMetadata(
-                  selectedReport.entityType
-                ).text}{' '}
-              #{selectedReport?.entityId}
-            </DialogDescription>
-          </DialogHeader>
-
+        <DialogContent
+          className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl"
+          data-testid="admin-report-detail"
+        >
           {selectedReport && (
-            <div className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Reporter
-                  </Label>
-                  <p className="text-sm font-medium">
+            <>
+              <DialogHeader className="border-b px-6 pt-6 pr-12 pb-5 text-left">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  {getStatusBadge(selectedReport.status)}
+                  <p className="text-sm text-muted-foreground">
+                    Report #{selectedReport.id}
+                  </p>
+                </div>
+                <DialogTitle className="text-xl leading-tight">
+                  {selectedReport.reason.label}
+                </DialogTitle>
+                <DialogDescription className="leading-relaxed">
+                  Submitted by{' '}
+                  <span className="font-medium text-foreground">
                     {selectedReport.reporter
                       ? (selectedReport.reporter.player.username ??
                         `User #${selectedReport.reporter.id}`)
                       : '[Deleted User]'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Status
-                  </Label>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedReport.status)}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Created
-                  </Label>
-                  <p className="text-sm">
-                    {formatDateTime(selectedReport.created)}
-                  </p>
-                </div>
-                {selectedReport.resolvedAt && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Resolved
+                  </span>{' '}
+                  on {formatDateTime(selectedReport.created)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="max-h-[calc(90vh-9rem)] overflow-y-auto">
+                <div className="space-y-6 px-6 py-5">
+                  <section aria-labelledby="reported-item-heading">
+                    <Label
+                      id="reported-item-heading"
+                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    >
+                      Reported item
                     </Label>
-                    <p className="text-sm">
-                      {formatDateTime(selectedReport.resolvedAt)}
-                      {selectedReport.resolvedBy?.player.username &&
-                        ` by ${selectedReport.resolvedBy.player.username}`}
+                    <div className="mt-2 flex items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4">
+                      <div className="min-w-0">
+                        <p className="font-medium [overflow-wrap:anywhere]">
+                          {selectedReport.entityDisplayName}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {
+                            ReportEntityTypeEnumHelper.getMetadata(
+                              selectedReport.entityType
+                            ).text
+                          }{' '}
+                          #{selectedReport.entityId}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0"
+                        asChild
+                      >
+                        <Link
+                          href={getEntityLink(
+                            selectedReport.entityType,
+                            selectedReport.entityId,
+                            selectedReport.matchId
+                          )}
+                        >
+                          View
+                          <ExternalLink className="size-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </section>
+
+                  <section aria-labelledby="reporter-note-heading">
+                    <Label
+                      id="reporter-note-heading"
+                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    >
+                      Reporter&apos;s note
+                    </Label>
+                    <p
+                      className={cn(
+                        'mt-2 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap',
+                        !selectedReport.additionalInformation &&
+                          'text-muted-foreground italic'
+                      )}
+                    >
+                      {selectedReport.additionalInformation ||
+                        'No additional information was provided.'}
                     </p>
+                  </section>
+
+                  {Object.keys(selectedLegacyChanges).length > 0 && (
+                    <section className="rounded-lg border p-4">
+                      <Label className="text-xs text-muted-foreground">
+                        Legacy report details
+                      </Label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {Object.keys(selectedLegacyChanges).map((field) => (
+                          <Badge key={field} variant="secondary">
+                            {formatFieldName(field)}
+                          </Badge>
+                        ))}
+                      </div>
+                      {Object.values(selectedLegacyChanges).some(
+                        (value) => value
+                      ) && (
+                        <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                          {Object.values(selectedLegacyChanges)[0] ?? '—'}
+                        </p>
+                      )}
+                    </section>
+                  )}
+                </div>
+
+                {selectedReport.status === ReportStatus.Pending ? (
+                  <div className="border-t bg-muted/30 px-6 py-5">
+                    <div>
+                      <Label htmlFor="admin-note">
+                        Comment{' '}
+                        <span className="text-destructive" aria-hidden="true">
+                          *
+                        </span>
+                      </Label>
+                      <Textarea
+                        id="admin-note"
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                        placeholder="Enter a comment"
+                        className="mt-3 bg-background"
+                        rows={3}
+                        maxLength={500}
+                        required
+                      />
+                    </div>
+                    <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleResolve(ReportStatus.Rejected)}
+                        disabled={resolving || !adminNote.trim()}
+                      >
+                        {resolving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <X className="mr-2 size-4" />
+                        )}
+                        Dismiss
+                      </Button>
+                      <Button
+                        onClick={() => handleResolve(ReportStatus.Approved)}
+                        disabled={resolving || !adminNote.trim()}
+                        className="bg-success text-success-foreground hover:bg-success/90"
+                      >
+                        {resolving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <Check className="mr-2 size-4" />
+                        )}
+                        Confirm report
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-t bg-muted/30 px-6 py-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <Label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                          Comment
+                        </Label>
+                        <p className="mt-1 text-sm">
+                          {formatDateTime(selectedReport.resolvedAt)}
+                          {selectedReport.resolvedBy?.player.username &&
+                            ` by ${selectedReport.resolvedBy.player.username}`}
+                        </p>
+                        {selectedReport.adminNote && (
+                          <p className="mt-2 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                            {selectedReport.adminNote}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={handleReopen}
+                        disabled={reopening}
+                        className="shrink-0"
+                      >
+                        {reopening ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <RotateCcw className="mr-2 size-4" />
+                        )}
+                        Reopen
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {Object.keys(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).length > 0 && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Reported Fields
-                  </Label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.keys(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    ).map((field) => (
-                      <Badge key={field} variant="secondary">
-                        {formatFieldName(field)}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {Object.values(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).some((v) => v) && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Suggested Changes
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap">
-                    {Object.values(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    )[0] ?? '—'}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  Justification
-                </Label>
-                <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-                  {selectedReport.justification}
-                </p>
+            </>
+          )}
+          {!selectedReport && (
+            <>
+              <DialogHeader className="px-6 pt-6 pr-12 pb-5 text-left">
+                <DialogTitle>Report details</DialogTitle>
+                <DialogDescription>
+                  Loading report information…
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-3 border-t px-6 py-8 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Loading report…
               </div>
-
-              {selectedReport.status === ReportStatus.Pending && (
-                <div className="space-y-4 border-t pt-4">
-                  <div>
-                    <Label htmlFor="admin-note">Admin Note (optional)</Label>
-                    <Textarea
-                      id="admin-note"
-                      value={adminNote}
-                      onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="Add a note about your decision"
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleResolve(ReportStatus.Rejected)}
-                      disabled={resolving}
-                    >
-                      {resolving ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <X className="mr-2 size-4" />
-                      )}
-                      Dismiss
-                    </Button>
-                    <Button
-                      onClick={() => handleResolve(ReportStatus.Approved)}
-                      disabled={resolving}
-                      className="bg-green-600 hover:bg-green-600/90"
-                    >
-                      {resolving ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <Check className="mr-2 size-4" />
-                      )}
-                      Confirm
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {selectedReport.status !== ReportStatus.Pending && (
-                <div className="flex justify-end border-t pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleReopen}
-                    disabled={reopening}
-                  >
-                    {reopening ? (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    ) : (
-                      <RotateCcw className="mr-2 size-4" />
-                    )}
-                    Reopen
-                  </Button>
-                </div>
-              )}
-
-              {selectedReport.adminNote && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Admin Note
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-                    {selectedReport.adminNote}
-                  </p>
-                </div>
-              )}
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

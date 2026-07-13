@@ -91,6 +91,7 @@ import {
   createReport,
   getMyUnreadReportCount,
   getReport,
+  getReportTemplates,
   getUnseenReportCount,
   listMyReports,
   listReports,
@@ -116,6 +117,7 @@ export const router = base.router({
     massEnqueue,
   },
   reports: {
+    templates: getReportTemplates,
     create: createReport,
     list: listReports,
     get: getReport,

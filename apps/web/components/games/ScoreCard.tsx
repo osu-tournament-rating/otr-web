@@ -6,7 +6,6 @@ import { Clock } from 'lucide-react';
 
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { ScoreReportableFields } from '@/lib/orpc/schema/report';
 import {
   AdminNoteRouteTarget,
   ReportEntityType,
@@ -42,7 +41,7 @@ export default function ScoreCard({
 
   /** Shared descendant-selector overrides for icon button slots */
   const iconSlotStyles =
-    'relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
+    'relative [&_button]:h-6 [&_button]:w-6 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
 
   const hitJudgments = (() => {
     switch (score.ruleset) {
@@ -83,21 +82,14 @@ export default function ScoreCard({
 
   const renderActionIcons = () => (
     <>
-      {/* Hover-only icons — collapse to zero width, reveal on hover */}
-      <div className="flex max-w-0 items-center gap-1 overflow-hidden transition-all duration-200 group-hover:max-w-xs">
+      {/* Keep actions available on touch screens; collapse them until hover or
+          keyboard focus where pointer hover is available. */}
+      <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 sm:max-w-0 sm:group-focus-within:max-w-xs sm:group-hover:max-w-xs">
         <div className={iconSlotStyles}>
           <ReportButton
             entityType={ReportEntityType.Score}
             entityId={score.id}
             entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-            reportableFields={ScoreReportableFields}
-            currentValues={{
-              score: String(score.score),
-              accuracy: String(score.accuracy),
-              maxCombo: String(score.maxCombo),
-              mods: String(score.mods),
-              team: String(score.team),
-            }}
           />
         </div>
         <div className={iconSlotStyles}>
