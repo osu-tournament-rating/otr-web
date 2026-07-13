@@ -103,6 +103,12 @@ test.describe('Match Detail Page', () => {
       await expect(
         page.locator('[data-testid="player-stats-table"]')
       ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="match-stats-summary"]')
+      ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('heading', { name: 'Match Statistics' })
+      ).toBeVisible();
     });
 
     test('navigating to stats tab via trigger reveals statistics', async ({
@@ -132,6 +138,9 @@ test.describe('Match Detail Page', () => {
       await expect(chart.locator('.recharts-wrapper')).toBeVisible({
         timeout: 15000,
       });
+      await expect(chart.getByRole('img')).toHaveAccessibleName(
+        /Line chart of verified team scores/
+      );
     });
 
     test('displays player statistics rows', async ({ page }) => {
@@ -143,6 +152,84 @@ test.describe('Match Detail Page', () => {
 
       const count = await statRows.count();
       expect(count).toBeGreaterThan(0);
+    });
+
+    test('sort controls expose state and reorder player rows', async ({
+      page,
+    }) => {
+      await page.goto(`${ROUTES.match(TEST_MATCH_ID)}?tab=stats`);
+      await page.waitForLoadState('networkidle');
+
+      const costSort = page.getByRole('button', {
+        name: 'Sort by match cost, ascending',
+      });
+      const costHeader = page.locator('[data-testid="match-cost-header"]');
+      const rows = page.locator('[data-testid^="player-stats-row-"]');
+      const getMatchCosts = () =>
+        rows.evaluateAll((elements) =>
+          elements.map((element) =>
+            Number(element.getAttribute('data-match-cost'))
+          )
+        );
+
+      await expect(costHeader).toHaveAttribute('aria-sort', 'descending');
+      await expect(costSort).toContainText('MC');
+      const descendingCosts = await getMatchCosts();
+      expect(descendingCosts).toEqual(
+        [...descendingCosts].sort((first, second) => second - first)
+      );
+
+      await costSort.click();
+      await expect(costHeader).toHaveAttribute('aria-sort', 'ascending');
+      const ascendingCosts = await getMatchCosts();
+      expect(ascendingCosts).toEqual(
+        [...ascendingCosts].sort((first, second) => first - second)
+      );
+    });
+
+    test('mobile player cards keep every metric visible without page overflow', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${ROUTES.match(TEST_MATCH_ID)}?tab=stats`);
+      await page.waitForLoadState('networkidle');
+
+      const firstPlayer = page
+        .locator('[data-testid^="player-stats-row-"]')
+        .first();
+      await expect(firstPlayer).toBeVisible({ timeout: 10000 });
+
+      for (const label of [
+        'Match cost',
+        'Record',
+        'Avg. score',
+        'Accuracy',
+        'Misses',
+        'Placement',
+      ]) {
+        await expect(
+          firstPlayer.getByText(label, { exact: true })
+        ).toBeVisible();
+      }
+
+      const hasPageOverflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth
+      );
+      expect(hasPageOverflow).toBe(false);
+
+      await page.getByLabel('Sort players by').click();
+      await page.getByRole('option', { name: 'Player' }).click();
+      await expect(page.getByLabel('Sort players by')).toContainText('Player');
+
+      const directionButton = page.getByRole('button', {
+        name: 'Sort descending',
+      });
+      await directionButton.click();
+      await expect(
+        page.getByRole('button', { name: 'Sort ascending' })
+      ).toBeVisible();
     });
   });
 

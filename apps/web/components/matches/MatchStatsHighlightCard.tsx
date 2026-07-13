@@ -1,69 +1,31 @@
-import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Card } from '@/components/ui/card';
 import {
-  Zap,
   Crosshair,
-  TrendingUp,
-  Medal,
-  Shield,
-  Trophy,
-  Swords,
-  LucideIcon,
+  Gamepad2,
   HelpCircle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { HighlightStat, HighlightColor } from './MatchStatsUtils';
-import TierIcon from '@/components/icons/TierIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
-
-const AVATAR_SIZE = {
-  WIDTH: 24,
-  HEIGHT: 24,
-} as const;
-
-const TIER_ICON_SIZE = {
-  WIDTH: 20,
-  HEIGHT: 20,
-} as const;
-
-const iconMap: Record<string, LucideIcon> = {
-  Zap,
-  Crosshair,
+  Swords,
   TrendingUp,
   Medal,
-  Shield,
-  Trophy,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+
+import SimpleTooltip from '@/components/simple-tooltip';
+import TierIcon from '@/components/icons/TierIcon';
+import TRText from '@/components/rating/TRText';
+import { Card } from '@/components/ui/card';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
+import { getTierString } from '@/lib/utils/tierData';
+import { HighlightIcon, HighlightStat } from './MatchStatsUtils';
+
+const iconMap: Record<HighlightIcon, LucideIcon> = {
   Swords,
+  Users,
+  Gamepad2,
+  TrendingUp,
+  Medal,
+  Crosshair,
 };
-
-const colorStyles: Record<HighlightColor, string> = {
-  blue: 'border-blue-500/30 bg-blue-500/[0.08]',
-  red: 'border-red-500/30 bg-red-500/[0.08]',
-  purple: 'border-purple-500/30 bg-purple-500/[0.08]',
-  orange: 'border-orange-500/30 bg-orange-500/[0.08]',
-  green: 'border-green-500/30 bg-green-500/[0.08]',
-  amber: 'border-amber-500/30 bg-amber-500/[0.08]',
-} as const;
-
-const iconColorStyles: Record<HighlightColor, string> = {
-  blue: 'text-blue-500 dark:text-blue-400',
-  red: 'text-red-500 dark:text-red-400',
-  purple: 'text-purple-500 dark:text-purple-400',
-  orange: 'text-orange-500 dark:text-orange-400',
-  green: 'text-green-500 dark:text-green-400',
-  amber: 'text-amber-500 dark:text-amber-400',
-} as const;
-
-const iconBgStyles: Record<HighlightColor, string> = {
-  blue: 'bg-blue-500/15 dark:bg-blue-400/20',
-  red: 'bg-red-500/15 dark:bg-red-400/20',
-  purple: 'bg-purple-500/15 dark:bg-purple-400/20',
-  orange: 'bg-orange-500/15 dark:bg-orange-400/20',
-  green: 'bg-green-500/15 dark:bg-green-400/20',
-  amber: 'bg-amber-500/15 dark:bg-amber-400/20',
-} as const;
 
 interface MatchStatsHighlightCardProps {
   stat: HighlightStat;
@@ -72,122 +34,88 @@ interface MatchStatsHighlightCardProps {
 export default function MatchStatsHighlightCard({
   stat,
 }: MatchStatsHighlightCardProps) {
-  const Icon = iconMap[stat.icon] || TrendingUp;
-  const [imageError, setImageError] = useState(false);
-
-  const ariaLabel = useMemo(
-    () =>
-      `${stat.label}: ${stat.value}${stat.sublabel ? ` - ${stat.sublabel}` : ''}`,
-    [stat.label, stat.value, stat.sublabel]
-  );
+  const Icon = iconMap[stat.icon];
+  const ariaLabel = `${stat.label}: ${stat.value}${stat.sublabel ? `, ${stat.sublabel}` : ''}`;
 
   return (
     <Card
-      className={cn(
-        'group relative overflow-hidden rounded-xl border-2',
-        'p-4',
-        'h-full min-h-[115px]',
-        'backdrop-blur-sm',
-        colorStyles[stat.color]
-      )}
+      className="h-full gap-0 border-0 bg-popover !p-4 shadow-none"
       role="article"
       aria-label={ariaLabel}
     >
-      <div className="flex h-full flex-col">
-        {/* Header with icon and label */}
-        <div className="mb-2 flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={cn(
-                'flex items-center justify-center',
-                'h-8 w-8 rounded-lg',
-                iconBgStyles[stat.color]
-              )}
-              aria-hidden="true"
-            >
-              <Icon className={cn('h-4 w-4', iconColorStyles[stat.color])} />
-            </div>
-            <div className="flex items-center gap-1">
-              <h3 className="text-xs font-medium text-muted-foreground/80">
-                {stat.label}
-              </h3>
-              {stat.helpText && (
-                <SimpleTooltip content={stat.helpText}>
-                  <HelpCircle className="h-3 w-3 cursor-help text-muted-foreground/50 transition-colors hover:text-muted-foreground" />
-                </SimpleTooltip>
-              )}
-            </div>
-          </div>
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="size-4" aria-hidden="true" />
         </div>
 
-        {/* Value and player info */}
-        <div className="flex flex-1 flex-col justify-center">
-          <div className="space-y-1">
-            <div className="flex items-baseline gap-1.5">
-              <p className="text-2xl font-bold tracking-tight text-foreground">
-                {stat.value}
-              </p>
-              {stat.metric && (
-                <span className="text-[10px] font-medium text-muted-foreground/50 uppercase">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-1">
+            <span className="text-sm leading-tight text-muted-foreground">
+              {stat.label}
+            </span>
+            {stat.helpText && (
+              <SimpleTooltip content={stat.helpText}>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  aria-label={`About ${stat.label}`}
+                >
+                  <HelpCircle className="size-3.5" aria-hidden="true" />
+                </button>
+              </SimpleTooltip>
+            )}
+          </div>
+
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="text-lg font-semibold tracking-tight tabular-nums">
+              {stat.value}
+            </span>
+            {stat.metric &&
+              (stat.metric === 'TR' ? (
+                <TRText />
+              ) : (
+                <span className="text-xs text-muted-foreground">
                   {stat.metric}
                 </span>
-              )}
-            </div>
+              ))}
+          </div>
 
-            {/* Secondary info container with consistent height */}
-            <div className="flex min-h-[24px] items-center">
-              {stat.tierIcon && (
-                <div className="flex items-center gap-1.5">
-                  <TierIcon
-                    tier={stat.tierIcon.tier}
-                    subTier={stat.tierIcon.subTier}
-                    width={TIER_ICON_SIZE.WIDTH}
-                    height={TIER_ICON_SIZE.HEIGHT}
-                    className="flex-shrink-0"
-                  />
-                  <span className="text-[10px] font-medium text-muted-foreground sm:text-[11px] lg:text-[10px]">
-                    {stat.tierIcon.tier}
-                    {stat.tierIcon.subTier &&
-                      ` ${stat.tierIcon.subTier === 1 ? 'I' : stat.tierIcon.subTier === 2 ? 'II' : 'III'}`}
-                  </span>
-                </div>
-              )}
+          <div className="mt-1 flex min-h-6 min-w-0 items-center">
+            {stat.player && (
+              <Link
+                href={`/players/${stat.player.id}`}
+                className="flex min-w-0 items-center gap-1.5 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <OsuAvatar
+                  osuId={stat.player.osuId}
+                  username={stat.player.username}
+                  size={22}
+                  className="shrink-0"
+                />
+                <span className="truncate">{stat.player.username}</span>
+              </Link>
+            )}
 
-              {stat.player && (
-                <Link
-                  href={`/players/${stat.player.id}`}
-                  className="group/player inline-flex items-center gap-1.5"
-                >
-                  <div className="relative flex-shrink-0">
-                    {!imageError ? (
-                      <Image
-                        src={stat.player.avatarUrl}
-                        alt={stat.player.username}
-                        width={AVATAR_SIZE.WIDTH}
-                        height={AVATAR_SIZE.HEIGHT}
-                        className="rounded-full shadow-sm ring-2 ring-background transition-transform duration-200 group-hover/player:scale-110"
-                        onError={() => setImageError(true)}
-                      />
-                    ) : (
-                      <div
-                        className="h-[24px] w-[24px] rounded-full bg-muted shadow-sm ring-2 ring-background"
-                        role="img"
-                        aria-label={`${stat.player.username} avatar placeholder`}
-                      />
-                    )}
-                  </div>
-                  <span className="truncate text-xs font-medium text-muted-foreground transition-colors group-hover/player:text-foreground">
-                    {stat.player.username}
-                  </span>
-                </Link>
-              )}
+            {stat.tierIcon && (
+              <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                <TierIcon
+                  tier={stat.tierIcon.tier}
+                  subTier={stat.tierIcon.subTier}
+                  width={20}
+                  height={20}
+                  className="shrink-0"
+                />
+                <span className="truncate">
+                  {getTierString(stat.tierIcon.tier, stat.tierIcon.subTier)}
+                </span>
+              </div>
+            )}
 
-              {!stat.player && !stat.tierIcon && stat.sublabel && (
-                <p className="text-xs font-medium text-muted-foreground">
-                  {stat.sublabel}
-                </p>
-              )}
-            </div>
+            {!stat.player && !stat.tierIcon && stat.sublabel && (
+              <span className="truncate text-xs text-muted-foreground">
+                {stat.sublabel}
+              </span>
+            )}
           </div>
         </div>
       </div>

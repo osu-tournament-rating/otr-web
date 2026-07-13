@@ -1,26 +1,17 @@
 import {
   MatchDetail,
   MatchPlayer,
-  MatchWinRecord,
   PlayerMatchStats,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
-import { Team } from '@otr/core/osu';
-import { TierName } from '@/lib/utils/tierData';
+import { Team, VerificationStatus } from '@otr/core/osu';
+import { TierName, getTierFromRating } from '@/lib/utils/tierData';
 import { formatAccuracy } from '@/lib/utils/format';
-
-export type HighlightColor =
-  | 'blue'
-  | 'red'
-  | 'purple'
-  | 'orange'
-  | 'green'
-  | 'amber';
 
 export interface HighlightPlayer {
   id: number;
+  osuId: number;
   username: string;
-  avatarUrl: string;
 }
 
 export interface HighlightTierIcon {
@@ -28,16 +19,22 @@ export interface HighlightTierIcon {
   subTier: number | undefined;
 }
 
+export type HighlightIcon =
+  | 'Swords'
+  | 'Users'
+  | 'Gamepad2'
+  | 'TrendingUp'
+  | 'Medal'
+  | 'Crosshair';
+
 export interface HighlightStat {
   id: string;
   label: string;
   value: string;
   sublabel?: string;
-  icon: string;
-  color: HighlightColor;
+  icon: HighlightIcon;
   player?: HighlightPlayer;
   tierIcon?: HighlightTierIcon;
-  isSpecial?: boolean;
   metric?: string;
   helpText?: string;
 }
@@ -48,12 +45,12 @@ export interface ProcessedPlayerStats {
   playerId: number;
   username: string;
   osuId: number;
-  avatarUrl: string;
   team?: TeamColor;
   won: boolean;
   gamesWon: number;
   gamesLost: number;
   gamesPlayed: number;
+  matchCost: number;
   ratingBefore: number | null;
   ratingAfter: number | null;
   ratingDelta: number | null;
@@ -74,208 +71,226 @@ const SCORE_THRESHOLDS = {
 } as const;
 
 const PRECISION = {
-  RATING_DECIMAL: 1,
   ACCURACY_DECIMAL: 2,
-  MISSES_DECIMAL: 1,
-  PLACEMENT_DECIMAL: 1,
 } as const;
+
+function getRosterTeamMap(match: MatchDetail): Map<number, TeamColor> {
+  const playerTeams = new Map<number, TeamColor>();
+
+  for (const roster of match.rosters ?? []) {
+    const team =
+      roster.team === Team.Red
+        ? 'red'
+        : roster.team === Team.Blue
+          ? 'blue'
+          : undefined;
+
+    if (!team) continue;
+
+    for (const playerId of roster.roster) {
+      playerTeams.set(playerId, team);
+    }
+  }
+
+  return playerTeams;
+}
 
 export function processMatchStatistics(
   match: MatchDetail,
   players: MatchPlayer[]
 ): ProcessedPlayerStats[] {
-  if (
-    !match?.playerMatchStats ||
-    !Array.isArray(match.playerMatchStats) ||
-    match.playerMatchStats.length === 0
-  ) {
+  if (!match.playerMatchStats?.length) {
     return [];
   }
 
-  const playerMap = new Map(players.map((p) => [p.id, p]));
-
+  const playerMap = new Map(players.map((player) => [player.id, player]));
+  const playerTeamMap = getRosterTeamMap(match);
   const ratingAdjustmentMap = new Map<number, RatingAdjustment>();
 
-  // Map rating adjustments to players using the playerId field
-  if (match.ratingAdjustments && match.ratingAdjustments.length > 0) {
-    match.ratingAdjustments.forEach((adjustment) => {
+  for (const adjustment of match.ratingAdjustments ?? []) {
+    if (!ratingAdjustmentMap.has(adjustment.playerId)) {
       ratingAdjustmentMap.set(adjustment.playerId, adjustment);
-    });
+    }
   }
 
-  const processed: ProcessedPlayerStats[] = [];
+  return match.playerMatchStats.flatMap(
+    (playerStats: PlayerMatchStats): ProcessedPlayerStats[] => {
+      const playerInfo = playerMap.get(playerStats.playerId);
+      const ratingAdjustment = ratingAdjustmentMap.get(playerStats.playerId);
 
-  match.playerMatchStats.forEach((playerStats: PlayerMatchStats) => {
-    const playerId = playerStats.playerId;
-    const playerInfo = playerMap.get(playerId);
-    const ratingAdjustment = ratingAdjustmentMap.get(playerId);
+      if (!playerInfo) return [];
 
-    if (!playerInfo) return;
-
-    processed.push({
-      playerId,
-      username: playerInfo.username,
-      osuId: playerInfo.osuId,
-      avatarUrl: `https://a.ppy.sh/${playerInfo.osuId}`,
-      won: playerStats.won,
-      gamesWon: playerStats.gamesWon,
-      gamesLost: playerStats.gamesLost,
-      gamesPlayed: playerStats.gamesPlayed,
-      ratingBefore: ratingAdjustment?.ratingBefore ?? null,
-      ratingAfter: ratingAdjustment?.ratingAfter ?? null,
-      ratingDelta: ratingAdjustment?.ratingDelta ?? null,
-      volatilityBefore: ratingAdjustment?.volatilityBefore ?? null,
-      volatilityAfter: ratingAdjustment?.volatilityAfter ?? null,
-      volatilityDelta: ratingAdjustment?.volatilityDelta ?? null,
-      averageScore: playerStats.averageScore,
-      averageAccuracy: playerStats.averageAccuracy,
-      averageMisses: playerStats.averageMisses,
-      averagePlacement: playerStats.averagePlacement,
-    });
-  });
-
-  return processed;
+      return [
+        {
+          playerId: playerStats.playerId,
+          username: playerInfo.username,
+          osuId: playerInfo.osuId,
+          team: playerTeamMap.get(playerStats.playerId),
+          won: Boolean(
+            match.winRecord &&
+            !match.winRecord.isTied &&
+            match.winRecord.winnerRoster?.includes(playerStats.playerId)
+          ),
+          gamesWon: playerStats.gamesWon,
+          gamesLost: playerStats.gamesLost,
+          gamesPlayed: playerStats.gamesPlayed,
+          matchCost: playerStats.matchCost,
+          ratingBefore: ratingAdjustment?.ratingBefore ?? null,
+          ratingAfter: ratingAdjustment?.ratingAfter ?? null,
+          ratingDelta: ratingAdjustment?.ratingDelta ?? null,
+          volatilityBefore: ratingAdjustment?.volatilityBefore ?? null,
+          volatilityAfter: ratingAdjustment?.volatilityAfter ?? null,
+          volatilityDelta: ratingAdjustment?.volatilityDelta ?? null,
+          averageScore: playerStats.averageScore,
+          averageAccuracy: playerStats.averageAccuracy,
+          averageMisses: playerStats.averageMisses,
+          averagePlacement: playerStats.averagePlacement,
+        },
+      ];
+    }
+  );
 }
 
 function createHighlightPlayer(player: ProcessedPlayerStats): HighlightPlayer {
   return {
     id: player.playerId,
+    osuId: player.osuId,
     username: player.username,
-    avatarUrl: player.avatarUrl,
+  };
+}
+
+function createResultStat(
+  match: MatchDetail,
+  players: ProcessedPlayerStats[]
+): HighlightStat {
+  const winRecord = match.winRecord;
+
+  if (winRecord) {
+    const teamScores = new Map<Team, number>();
+
+    if (winRecord.winnerTeam !== null) {
+      teamScores.set(winRecord.winnerTeam, winRecord.winnerPoints);
+    }
+    if (winRecord.loserTeam !== null) {
+      teamScores.set(winRecord.loserTeam, winRecord.loserPoints);
+    }
+
+    const redScore = teamScores.get(Team.Red);
+    const blueScore = teamScores.get(Team.Blue);
+    const winner = players.find((player) =>
+      winRecord.winnerRoster?.includes(player.playerId)
+    );
+
+    return {
+      id: 'match-result',
+      label: 'Match Result',
+      value:
+        redScore !== undefined && blueScore !== undefined
+          ? `${redScore} – ${blueScore}`
+          : `${winRecord.winnerPoints} – ${winRecord.loserPoints}`,
+      sublabel: winRecord.isTied
+        ? 'Draw'
+        : winRecord.winnerTeam === Team.Red
+          ? 'Red wins'
+          : winRecord.winnerTeam === Team.Blue
+            ? 'Blue wins'
+            : winner
+              ? `${winner.username} wins`
+              : 'Final score',
+      icon: 'Swords',
+      helpText: winRecord.isTied
+        ? 'A draw can result when games are rejected during verification.'
+        : undefined,
+    };
+  }
+
+  return {
+    id: 'match-result',
+    label: 'Match Result',
+    value: '—',
+    sublabel: 'Result unavailable',
+    icon: 'Swords',
   };
 }
 
 export function calculateHighlightStats(
   players: ProcessedPlayerStats[],
-  matchWinRecord?: MatchWinRecord | null
+  match: MatchDetail
 ): HighlightStat[] {
-  const highlights: HighlightStat[] = [];
-
   if (players.length === 0) {
-    return highlights;
+    return [];
   }
 
-  // Calculate total match score using matchWinRecord if available, otherwise use player stats
-  if (matchWinRecord) {
-    // Use the actual match scoreline from the win record
-    const winnerScore = matchWinRecord.winnerPoints;
-    const loserScore = matchWinRecord.loserPoints;
-
-    const isRedWinner = matchWinRecord.winnerTeam === Team.Red;
-    const isBlueWinner = matchWinRecord.winnerTeam === Team.Blue;
-    const isTied = matchWinRecord.isTied;
-
-    // Team match - show in team color order
-    const redScore = isRedWinner ? winnerScore : loserScore;
-    const blueScore = isBlueWinner ? winnerScore : loserScore;
-
-    highlights.push({
-      id: 'match-score',
-      label: 'Match Result',
-      value: `${redScore} - ${blueScore}`,
-      sublabel: isTied ? 'Draw' : isRedWinner ? 'Red wins' : 'Blue wins',
-      icon: 'Swords',
-      color: isTied ? 'purple' : isRedWinner ? 'red' : 'blue',
-      helpText: isTied
-        ? 'Ties can occur when some games are rejected due to disconnects or other data verification issues'
-        : undefined,
-    });
-  }
-
-  const topAccuracy = players.reduce((prev, curr) =>
-    curr.averageAccuracy > prev.averageAccuracy ? curr : prev
+  const ratedGames = (match.games ?? []).filter(
+    (game) => game.verificationStatus === VerificationStatus.Verified
+  ).length;
+  const playersWithRatings = players.filter(
+    (player): player is ProcessedPlayerStats & { ratingAfter: number } =>
+      player.ratingAfter !== null
+  );
+  const averageRating = playersWithRatings.length
+    ? playersWithRatings.reduce(
+        (total, player) => total + player.ratingAfter,
+        0
+      ) / playersWithRatings.length
+    : null;
+  const averageTier =
+    averageRating === null ? null : getTierFromRating(averageRating);
+  const topMatchCost = players.reduce((previous, current) =>
+    current.matchCost > previous.matchCost ? current : previous
+  );
+  const topAccuracy = players.reduce((previous, current) =>
+    current.averageAccuracy > previous.averageAccuracy ? current : previous
   );
 
-  highlights.push({
-    id: 'accuracy',
-    label: 'Top Accuracy',
-    value: formatAccuracy(
-      topAccuracy.averageAccuracy,
-      PRECISION.ACCURACY_DECIMAL
-    ),
-    sublabel: topAccuracy.username,
-    icon: 'Crosshair',
-    color: 'blue',
-    player: createHighlightPlayer(topAccuracy),
-    isSpecial: topAccuracy.averageAccuracy >= 0.95,
-    metric: 'avg',
-  });
-  const topScorer = players.reduce((prev, curr) =>
-    curr.averageScore > prev.averageScore ? curr : prev
-  );
-
-  highlights.push({
-    id: 'top-scorer',
-    label: 'Highest Score',
-    value: formatScore(topScorer.averageScore),
-    sublabel: topScorer.username,
-    icon: 'Trophy',
-    color: 'purple',
-    player: createHighlightPlayer(topScorer),
-    isSpecial: true,
-    metric: 'avg',
-  });
-
-  if (players.length > 2) {
-    const mostGames = players.reduce((prev, curr) =>
-      curr.gamesPlayed > prev.gamesPlayed ? curr : prev
-    );
-
-    const winRate =
-      mostGames.gamesPlayed > 0
-        ? ((mostGames.gamesWon / mostGames.gamesPlayed) * 100).toFixed(0)
-        : '0';
-
-    highlights.push({
-      id: 'perma-lobbied',
-      label: 'Most Played',
-      value: `${mostGames.gamesPlayed}`,
-      sublabel: `${mostGames.username} • ${winRate}% WR`,
-      icon: 'Medal',
-      color: 'red',
-      player: createHighlightPlayer(mostGames),
-      isSpecial: mostGames.gamesPlayed >= 10,
-      metric: 'maps',
-    });
-  }
-  const leastMisses = players.reduce((prev, curr) =>
-    curr.averageMisses < prev.averageMisses ? curr : prev
-  );
-
-  highlights.push({
-    id: 'consistency',
-    label: 'Most Consistent',
-    value: `${leastMisses.averageMisses.toFixed(PRECISION.MISSES_DECIMAL)}`,
-    sublabel: leastMisses.username,
-    icon: 'Shield',
-    color: 'orange',
-    player: createHighlightPlayer(leastMisses),
-    isSpecial: leastMisses.averageMisses <= 5,
-    metric: 'misses',
-  });
-  const validRatings = players.filter(
-    (p): p is ProcessedPlayerStats & { ratingDelta: number } =>
-      p.ratingDelta !== null
-  );
-  if (validRatings.length > 0) {
-    const biggestGain = validRatings.reduce((prev, curr) =>
-      curr.ratingDelta > prev.ratingDelta ? curr : prev
-    );
-
-    highlights.push({
-      id: 'biggest-gain',
-      label: 'Top Performance',
-      value: `${biggestGain.ratingDelta > 0 ? '+' : ''}${biggestGain.ratingDelta.toFixed(0)}`,
-      sublabel: biggestGain.username,
+  return [
+    createResultStat(match, players),
+    {
+      id: 'players',
+      label: 'Players',
+      value: players.length.toLocaleString(),
+      sublabel: players.length === 1 ? 'Participant' : 'Participants',
+      icon: 'Users',
+    },
+    {
+      id: 'rated-games',
+      label: 'Rated Games',
+      value: ratedGames.toLocaleString(),
+      sublabel: ratedGames === 1 ? 'Verified game' : 'Verified games',
+      icon: 'Gamepad2',
+      helpText: 'Only verified games contribute to match statistics.',
+    },
+    {
+      id: 'average-rating',
+      label: 'Average Rating',
+      value:
+        averageRating === null ? '—' : Math.round(averageRating).toString(),
+      sublabel: averageRating === null ? 'Ratings unavailable' : undefined,
       icon: 'TrendingUp',
-      color: 'green',
-      player: createHighlightPlayer(biggestGain),
-      isSpecial: biggestGain.ratingDelta >= 20,
-      metric: 'TR',
-    });
-  }
-
-  return highlights;
+      metric: averageRating === null ? undefined : 'TR',
+      tierIcon: averageTier
+        ? { tier: averageTier.tier, subTier: averageTier.subTier }
+        : undefined,
+    },
+    {
+      id: 'match-cost',
+      label: 'Top Match Cost',
+      value: topMatchCost.matchCost.toFixed(2),
+      icon: 'Medal',
+      player: createHighlightPlayer(topMatchCost),
+    },
+    {
+      id: 'accuracy',
+      label: 'Top Accuracy',
+      value: formatAccuracy(
+        topAccuracy.averageAccuracy,
+        PRECISION.ACCURACY_DECIMAL
+      ),
+      icon: 'Crosshair',
+      metric: 'avg',
+      player: createHighlightPlayer(topAccuracy),
+    },
+  ];
 }
 
 export function formatScore(score: number): string {

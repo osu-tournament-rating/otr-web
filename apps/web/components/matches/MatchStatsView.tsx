@@ -1,10 +1,17 @@
 'use client';
 
-import React, { useMemo, useState, useCallback } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, BarChart3 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -12,116 +19,151 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import SimpleTooltip from '@/components/simple-tooltip';
-import TierIcon from '@/components/icons/TierIcon';
 import { MatchDetail } from '@/lib/orpc/schema/match';
-import { getTierFromRating } from '@/lib/utils/tierData';
 import MatchStatsHighlightCard from './MatchStatsHighlightCard';
 import MatchStatsPlayerRow from './MatchStatsPlayerRow';
 import MatchTeamScoresChart from './MatchTeamScoresChart';
 import {
   calculateHighlightStats,
-  ProcessedPlayerStats,
   processMatchStatistics,
+  type ProcessedPlayerStats,
 } from './MatchStatsUtils';
 
-const UI_CONSTANTS = {
-  DEFAULT_SORT_KEY: 'ratingDelta' as const,
-  DEFAULT_SORT_DIRECTION: 'desc' as const,
-  GRID_LAYOUTS: {
-    FOUR_CARDS: 'grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4',
-    FIVE_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5',
-    SIX_CARDS: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6',
-    DEFAULT: 'grid-cols-2 md:grid-cols-3',
-  },
-} as const;
-
-type SortKey = keyof ProcessedPlayerStats | 'netWins';
+type SortKey =
+  | 'username'
+  | 'netWins'
+  | 'gamesPlayed'
+  | 'matchCost'
+  | 'ratingAfter'
+  | 'ratingDelta'
+  | 'averageScore'
+  | 'averageAccuracy'
+  | 'averageMisses'
+  | 'averagePlacement';
 type SortDirection = 'asc' | 'desc';
+
+const DEFAULT_SORT_KEY: SortKey = 'matchCost';
+const DEFAULT_SORT_DIRECTION: SortDirection = 'desc';
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: 'username', label: 'Player' },
+  { value: 'matchCost', label: 'Match cost' },
+  { value: 'ratingAfter', label: 'Rating' },
+  { value: 'ratingDelta', label: 'Rating change' },
+  { value: 'averageScore', label: 'Average score' },
+  { value: 'averageAccuracy', label: 'Accuracy' },
+  { value: 'averageMisses', label: 'Misses' },
+  { value: 'averagePlacement', label: 'Placement' },
+];
 
 interface MatchStatsViewProps {
   match: MatchDetail;
 }
 
-const StatsProcessingCard = React.memo(() => (
-  <Card className="relative overflow-hidden bg-card/50 p-6 md:p-8">
-    <div className="flex flex-col items-center justify-center gap-4 py-8 md:py-12">
-      <div className="relative">
-        <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm">
-          <BarChart3 className="h-7 w-7 text-primary" />
+function StatsProcessingCard() {
+  return (
+    <Card className="!p-6">
+      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+        <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <BarChart3 className="size-6" aria-hidden="true" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Statistics Pending</h3>
+          <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            Match statistics will appear after ratings are generated. Check back
+            after the next ratings update.
+          </p>
         </div>
       </div>
+    </Card>
+  );
+}
 
-      <div className="flex flex-col items-center gap-3 text-center">
-        <h3 className="text-xl font-semibold">Statistics Pending</h3>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Match statistics will appear after ratings are generated. Please check
-          back later.
-        </p>
-
-        <div className="mt-2 flex items-center gap-1.5">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-0" />
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-150" />
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary delay-300" />
-        </div>
-      </div>
-    </div>
-  </Card>
-));
-StatsProcessingCard.displayName = 'StatsProcessingCard';
-
-const SortButton = React.memo(function SortButton({
+function SortButton({
   column,
+  label,
   children,
   sortKey,
   sortDirection,
   onSort,
 }: {
   column: SortKey;
-  children: React.ReactNode;
+  label: string;
+  children: ReactNode;
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
 }) {
   const isActive = sortKey === column;
-  const sortIcon = !isActive ? (
-    <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
-  ) : sortDirection === 'asc' ? (
-    <ArrowUp className="ml-1 h-3 w-3" />
-  ) : (
-    <ArrowDown className="ml-1 h-3 w-3" />
-  );
+  const nextDirection =
+    isActive && sortDirection === 'asc'
+      ? 'descending'
+      : isActive || column === 'username'
+        ? 'ascending'
+        : 'descending';
+  const Icon = !isActive
+    ? ArrowUpDown
+    : sortDirection === 'asc'
+      ? ArrowUp
+      : ArrowDown;
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      className="-ml-3 h-7 px-1 text-xs hover:bg-transparent hover:text-foreground data-[state=open]:bg-accent sm:px-2"
+      className="h-8 gap-1 px-1 text-xs hover:bg-muted hover:text-foreground"
       onClick={() => onSort(column)}
-      aria-label={`Sort by ${children} ${isActive ? (sortDirection === 'asc' ? 'descending' : 'ascending') : ''}`}
-      aria-pressed={isActive}
+      aria-label={`Sort by ${label}, ${nextDirection}`}
     >
-      <span className="truncate">{children}</span>
-      {sortIcon}
+      {children}
+      <Icon
+        className={isActive ? 'size-3.5' : 'size-3.5 opacity-45'}
+        aria-hidden="true"
+      />
     </Button>
   );
-});
-SortButton.displayName = 'SortButton';
+}
+
+function getSortValue(
+  player: ProcessedPlayerStats,
+  sortKey: SortKey
+): string | number | null {
+  if (sortKey === 'netWins') {
+    return player.gamesWon - player.gamesLost;
+  }
+
+  return player[sortKey];
+}
+
+function getAriaSort(
+  column: SortKey,
+  sortKey: SortKey,
+  sortDirection: SortDirection
+): 'ascending' | 'descending' | 'none' {
+  if (column !== sortKey) return 'none';
+  return sortDirection === 'asc' ? 'ascending' : 'descending';
+}
 
 export default function MatchStatsView({ match }: MatchStatsViewProps) {
-  const [sortKey, setSortKey] = useState<SortKey>(
-    UI_CONSTANTS.DEFAULT_SORT_KEY
-  );
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
   const [sortDirection, setSortDirection] = useState<SortDirection>(
-    UI_CONSTANTS.DEFAULT_SORT_DIRECTION
+    DEFAULT_SORT_DIRECTION
+  );
+  const hasRecordedResult = Boolean(match.winRecord);
+  const recordSortKey: SortKey = hasRecordedResult ? 'netWins' : 'gamesPlayed';
+  const sortOptions = useMemo(
+    () => [
+      SORT_OPTIONS[0],
+      {
+        value: recordSortKey,
+        label: hasRecordedResult ? 'Record' : 'Games played',
+      },
+      ...SORT_OPTIONS.slice(1),
+    ],
+    [hasRecordedResult, recordSortKey]
   );
 
-  const hasCompleteStats =
-    match &&
-    match.playerMatchStats &&
-    Array.isArray(match.playerMatchStats) &&
-    match.playerMatchStats.length > 0;
+  const hasCompleteStats = Boolean(match.playerMatchStats?.length);
   const processedPlayers = useMemo(
     () =>
       hasCompleteStats
@@ -130,49 +172,28 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
     [match, hasCompleteStats]
   );
   const highlightStats = useMemo(
-    () => calculateHighlightStats(processedPlayers, match.winRecord),
-    [processedPlayers, match.winRecord]
+    () => calculateHighlightStats(processedPlayers, match),
+    [processedPlayers, match]
   );
-
-  // Calculate average rating for the pill
-  const averageRatingInfo = useMemo(() => {
-    const playersWithRatings = processedPlayers.filter(
-      (p) => p.ratingAfter !== null
-    );
-    if (playersWithRatings.length === 0) return null;
-
-    const ratings = playersWithRatings.map((p) => p.ratingAfter as number);
-    const averageRating =
-      ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-    const tierInfo = getTierFromRating(averageRating);
-
-    return {
-      rating: Math.round(averageRating),
-      tier: tierInfo.tier,
-      subTier: tierInfo.subTier,
-    };
-  }, [processedPlayers]);
   const sortedPlayers = useMemo(() => {
-    return [...processedPlayers].sort((a, b) => {
-      let aVal: string | number | boolean | null | undefined;
-      let bVal: string | number | boolean | null | undefined;
+    return [...processedPlayers].sort((first, second) => {
+      const firstValue = getSortValue(first, sortKey);
+      const secondValue = getSortValue(second, sortKey);
 
-      // Special handling for netWins (W-L column)
-      if (sortKey === 'netWins') {
-        aVal = a.gamesWon - a.gamesLost;
-        bVal = b.gamesWon - b.gamesLost;
-      } else {
-        aVal = a[sortKey as keyof ProcessedPlayerStats];
-        bVal = b[sortKey as keyof ProcessedPlayerStats];
+      if (firstValue === null && secondValue === null) {
+        return first.username.localeCompare(second.username);
       }
+      if (firstValue === null) return 1;
+      if (secondValue === null) return -1;
 
-      if (aVal == null && bVal == null) return 0;
-      if (aVal == null) return sortDirection === 'asc' ? -1 : 1;
-      if (bVal == null) return sortDirection === 'asc' ? 1 : -1;
       const comparison =
-        typeof aVal === 'string' && typeof bVal === 'string'
-          ? aVal.localeCompare(bVal)
-          : (aVal as number) - (bVal as number);
+        typeof firstValue === 'string' && typeof secondValue === 'string'
+          ? firstValue.localeCompare(secondValue)
+          : (firstValue as number) - (secondValue as number);
+
+      if (comparison === 0) {
+        return first.username.localeCompare(second.username);
+      }
 
       return sortDirection === 'asc' ? comparison : -comparison;
     });
@@ -181,88 +202,111 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
   const handleSort = useCallback(
     (key: SortKey) => {
       if (sortKey === key) {
-        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-      } else {
-        setSortKey(key);
-        setSortDirection('desc');
+        setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+        return;
       }
+
+      setSortKey(key);
+      setSortDirection(key === 'username' ? 'asc' : 'desc');
     },
     [sortKey]
   );
 
-  const isTeamMatch = processedPlayers.some((p) => p.team !== undefined);
-  const is1v1Match = processedPlayers.length === 2;
+  const handleMobileSort = (value: string) => {
+    const key = value as SortKey;
+    setSortKey(key);
+    setSortDirection(key === 'username' ? 'asc' : 'desc');
+  };
 
   if (!hasCompleteStats) {
     return <StatsProcessingCard />;
   }
 
   return (
-    <Card data-testid="player-stats-table" className="p-5 md:p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <BarChart3 className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-semibold">Match Performance</h3>
+    <div className="space-y-4">
+      <Card data-testid="match-stats-summary" className="gap-4 !p-4 sm:!p-6">
+        <div className="flex items-start gap-2">
+          <BarChart3 className="mt-0.5 size-6 shrink-0 text-primary" />
+          <div>
+            <h3 className="text-lg font-semibold">Match Statistics</h3>
+            <p className="text-sm text-muted-foreground">
+              Performance across verified games in this match
+            </p>
           </div>
         </div>
-        {averageRatingInfo && (
-          <SimpleTooltip content="Average rating of players in this match">
-            <div className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3.5 py-1.5 text-sm transition-all duration-200 hover:border-primary/20 hover:bg-primary/10 hover:shadow-sm">
-              <TierIcon
-                tier={averageRatingInfo.tier}
-                subTier={averageRatingInfo.subTier}
-                width={20}
-                height={20}
-              />
-              <span className="text-sm font-semibold text-foreground">
-                {averageRatingInfo.rating} TR
-              </span>
+
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-3">
+          {highlightStats.map((stat) => (
+            <MatchStatsHighlightCard key={stat.id} stat={stat} />
+          ))}
+        </div>
+      </Card>
+
+      <MatchTeamScoresChart games={match.games} />
+
+      <Card data-testid="player-stats-table" className="gap-4 !p-4 sm:!p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-2">
+            <BarChart3 className="mt-0.5 size-6 shrink-0 text-primary" />
+            <div>
+              <h3 className="text-lg font-semibold">Player Performance</h3>
+              <p className="text-sm text-muted-foreground">
+                Score, accuracy, misses, and placement are per-game averages
+              </p>
             </div>
-          </SimpleTooltip>
-        )}
-      </div>
+          </div>
 
-      <div
-        className={`grid gap-3 ${
-          highlightStats.length === 5
-            ? UI_CONSTANTS.GRID_LAYOUTS.FIVE_CARDS
-            : highlightStats.length === 6
-              ? UI_CONSTANTS.GRID_LAYOUTS.SIX_CARDS
-              : UI_CONSTANTS.GRID_LAYOUTS.DEFAULT
-        }`}
-      >
-        {highlightStats.map((stat) => (
-          <MatchStatsHighlightCard key={stat.id} stat={stat} />
-        ))}
-      </div>
-
-      {/* Team scores chart */}
-      {match.games && match.games.length > 0 && (
-        <MatchTeamScoresChart games={match.games} />
-      )}
-
-      <div className="overflow-hidden rounded-xl border bg-card/50">
-        <div className="border-b bg-muted/30 px-4 py-3.5">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold tracking-wide">
-              Player Statistics
-            </h4>
-            <span className="text-xs text-muted-foreground">
-              Non-rating values are averaged
-            </span>
+          <div className="flex items-center gap-2 lg:hidden">
+            <Select value={sortKey} onValueChange={handleMobileSort}>
+              <SelectTrigger
+                className="h-8 min-w-0 flex-1 sm:w-40 sm:flex-none"
+                aria-label="Sort players by"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() =>
+                setSortDirection((current) =>
+                  current === 'asc' ? 'desc' : 'asc'
+                )
+              }
+              aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+            >
+              {sortDirection === 'asc' ? (
+                <ArrowUp className="size-4" aria-hidden="true" />
+              ) : (
+                <ArrowDown className="size-4" aria-hidden="true" />
+              )}
+            </Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <Table role="table" aria-label="Player performance statistics">
-            <TableHeader>
+
+        <div className="overflow-hidden rounded-lg border">
+          <Table
+            className="block w-full lg:table lg:min-w-[860px]"
+            aria-label="Player performance statistics"
+          >
+            <TableHeader className="hidden bg-muted/50 lg:table-header-group">
               <TableRow className="hover:bg-transparent">
-                {/* Player column - always visible */}
-                <TableHead className="max-w-[160px] min-w-[160px] pl-5">
+                <TableHead
+                  className="pl-4"
+                  aria-sort={getAriaSort('username', sortKey, sortDirection)}
+                >
                   <SortButton
                     column="username"
+                    label="player"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -270,62 +314,74 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
                     Player
                   </SortButton>
                 </TableHead>
-
-                {/* W-L column - visible in non-1v1 matches */}
-                {!is1v1Match && (
-                  <TableHead className="w-[70px] text-center sm:w-[80px]">
-                    <SortButton
-                      column="netWins"
-                      sortKey={sortKey}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    >
-                      <SimpleTooltip content="Points won/lost this match">
-                        <span aria-label="Wins and losses">W-L</span>
-                      </SimpleTooltip>
-                    </SortButton>
-                  </TableHead>
-                )}
-
-                {/* Rating columns - always visible with responsive labels */}
-                <TableHead className="w-[60px] text-center sm:w-[70px]">
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort(recordSortKey, sortKey, sortDirection)}
+                >
                   <SortButton
-                    column="ratingBefore"
+                    column={recordSortKey}
+                    label={hasRecordedResult ? 'record' : 'games played'}
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden sm:inline">Before</span>
-                    <span className="sm:hidden">Pre</span>
+                    {hasRecordedResult ? 'Record' : 'Games'}
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[60px] text-center sm:w-[70px]">
+                <TableHead
+                  data-testid="match-cost-header"
+                  className="text-center"
+                  aria-sort={getAriaSort('matchCost', sortKey, sortDirection)}
+                >
+                  <SortButton
+                    column="matchCost"
+                    label="match cost"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    MC
+                  </SortButton>
+                </TableHead>
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort('ratingAfter', sortKey, sortDirection)}
+                >
                   <SortButton
                     column="ratingAfter"
+                    label="rating"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden sm:inline">After</span>
-                    <span className="sm:hidden">Post</span>
+                    Rating
                   </SortButton>
                 </TableHead>
-                <TableHead className="w-[70px] text-center sm:w-[80px]">
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort('ratingDelta', sortKey, sortDirection)}
+                >
                   <SortButton
                     column="ratingDelta"
+                    label="rating change"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden sm:inline">Change</span>
-                    <span className="sm:hidden">+/-</span>
+                    Change
                   </SortButton>
                 </TableHead>
-
-                {/* Performance metrics - hidden on mobile, visible on md+ */}
-                <TableHead className="hidden text-center md:table-cell md:w-[80px]">
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort(
+                    'averageScore',
+                    sortKey,
+                    sortDirection
+                  )}
+                >
                   <SortButton
                     column="averageScore"
+                    label="average score"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -333,61 +389,74 @@ export default function MatchStatsView({ match }: MatchStatsViewProps) {
                     Score
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort(
+                    'averageAccuracy',
+                    sortKey,
+                    sortDirection
+                  )}
+                >
                   <SortButton
                     column="averageAccuracy"
+                    label="accuracy"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden lg:inline">Accuracy</span>
-                    <span className="lg:hidden">Acc</span>
+                    Accuracy
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden text-center md:table-cell md:w-[60px]">
+                <TableHead
+                  className="text-center"
+                  aria-sort={getAriaSort(
+                    'averageMisses',
+                    sortKey,
+                    sortDirection
+                  )}
+                >
                   <SortButton
                     column="averageMisses"
+                    label="misses"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden lg:inline">Misses</span>
-                    <span className="lg:hidden">Miss</span>
+                    Misses
                   </SortButton>
                 </TableHead>
-                <TableHead className="hidden text-center md:table-cell md:w-[70px]">
+                <TableHead
+                  className="pr-4 text-center"
+                  aria-sort={getAriaSort(
+                    'averagePlacement',
+                    sortKey,
+                    sortDirection
+                  )}
+                >
                   <SortButton
                     column="averagePlacement"
+                    label="placement"
                     sortKey={sortKey}
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   >
-                    <span className="hidden lg:inline">Placement</span>
-                    <span className="lg:hidden">Pos</span>
+                    Placement
                   </SortButton>
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="block lg:table-row-group">
               {sortedPlayers.map((player) => (
                 <MatchStatsPlayerRow
                   key={player.playerId}
                   player={player}
-                  showPerformanceMetrics={true}
-                  showWLColumn={!is1v1Match}
+                  showRecord={hasRecordedResult}
                 />
               ))}
             </TableBody>
           </Table>
         </div>
-      </div>
-      {isTeamMatch && (
-        <div className="mt-6 rounded-lg border bg-muted/50 p-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Team statistics coming soon
-          </p>
-        </div>
-      )}
-    </Card>
+      </Card>
+    </div>
   );
 }
