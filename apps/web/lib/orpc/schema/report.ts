@@ -5,53 +5,40 @@ import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
 import { dataReportSelectSchema } from './base';
 import { RulesetSchema } from './constants';
 
-export const TournamentReportableFields = [
-  'name',
-  'abbreviation',
-  'forumUrl',
-  'rankRangeLowerBound',
-  'lobbySize',
-  'startTime',
-  'endTime',
-] as const;
+export const ReportReasonSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+});
 
-export const MatchReportableFields = ['name', 'startTime', 'endTime'] as const;
+export const ReportCreateInputSchema = z
+  .object({
+    entityType: z.nativeEnum(ReportEntityType),
+    entityId: z.number().int().positive(),
+    reasonKey: z.string().trim().min(1).optional(),
+    additionalInformation: z.string().trim().max(2000).optional(),
+    suggestedChanges: z.record(z.string(), z.string()).optional(),
+    justification: z.string().min(1).optional(),
+  })
+  .superRefine((input, context) => {
+    const isLegacyInput =
+      input.suggestedChanges !== undefined && input.justification !== undefined;
 
-export const GameReportableFields = [
-  'ruleset',
-  'scoringType',
-  'teamType',
-  'mods',
-  'startTime',
-  'endTime',
-] as const;
+    if (!input.reasonKey && !isLegacyInput) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Reason is required',
+        path: ['reasonKey'],
+      });
+    }
+  });
 
-export const ScoreReportableFields = [
-  'score',
-  'accuracy',
-  'maxCombo',
-  'mods',
-  'team',
-] as const;
-
-export type TournamentReportableField =
-  (typeof TournamentReportableFields)[number];
-export type MatchReportableField = (typeof MatchReportableFields)[number];
-export type GameReportableField = (typeof GameReportableFields)[number];
-export type ScoreReportableField = (typeof ScoreReportableFields)[number];
-
-export const ReportableFieldsMap = {
-  [ReportEntityType.Tournament]: TournamentReportableFields,
-  [ReportEntityType.Match]: MatchReportableFields,
-  [ReportEntityType.Game]: GameReportableFields,
-  [ReportEntityType.Score]: ScoreReportableFields,
-} as const;
-
-export const ReportCreateInputSchema = z.object({
+export const ReportTemplatesInputSchema = z.object({
   entityType: z.nativeEnum(ReportEntityType),
-  entityId: z.number().int().positive(),
-  suggestedChanges: z.record(z.string(), z.string()),
-  justification: z.string().min(1),
+});
+
+export const ReportTemplatesResponseSchema = z.object({
+  entityType: z.nativeEnum(ReportEntityType),
+  templates: z.array(ReportReasonSchema),
 });
 
 export const ReportListInputSchema = z.object({
@@ -68,7 +55,6 @@ export const ReportResolveInputSchema = z.object({
     z.literal(ReportStatus.Rejected),
   ]),
   adminNote: z.string().max(500).optional(),
-  applyChanges: z.boolean().default(false),
 });
 
 export const ReportGetInputSchema = z.object({
@@ -105,6 +91,8 @@ const reportBaseSchema = dataReportSelectSchema.pick({
 });
 
 export const ReportSchema = reportBaseSchema.extend({
+  reason: ReportReasonSchema,
+  additionalInformation: z.string().nullable(),
   reporter: reportUserSchema.nullable(),
   resolvedBy: reportUserSchema.nullable(),
   entityDisplayName: z.string(),
@@ -121,6 +109,8 @@ export const ReportListResponseSchema = z.object({
  * reporter/resolver identity and exposes whether an admin update is unread.
  */
 export const MyReportSchema = reportBaseSchema.extend({
+  reason: ReportReasonSchema,
+  additionalInformation: z.string().nullable(),
   entityDisplayName: z.string(),
   matchId: z.number().int().positive().optional(),
   hasUnreadUpdate: z.boolean(),
@@ -144,6 +134,11 @@ export const ReportMutationResponseSchema = z.object({
 });
 
 export type ReportCreateInput = z.infer<typeof ReportCreateInputSchema>;
+export type ReportReason = z.infer<typeof ReportReasonSchema>;
+export type ReportTemplatesInput = z.infer<typeof ReportTemplatesInputSchema>;
+export type ReportTemplatesResponse = z.infer<
+  typeof ReportTemplatesResponseSchema
+>;
 export type ReportListInput = z.infer<typeof ReportListInputSchema>;
 export type ReportResolveInput = z.infer<typeof ReportResolveInputSchema>;
 export type ReportGetInput = z.infer<typeof ReportGetInputSchema>;

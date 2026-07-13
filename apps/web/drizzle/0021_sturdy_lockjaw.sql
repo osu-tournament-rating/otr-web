@@ -1,0 +1,1 @@
+ALTER TABLE "data_reports" ADD COLUMN "reason_key" text DEFAULT 'something-else' NOT NULL;

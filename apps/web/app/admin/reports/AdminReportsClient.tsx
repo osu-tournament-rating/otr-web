@@ -64,6 +64,23 @@ const formatFieldName = (field: string) => {
     .trim();
 };
 
+const getLegacySuggestedChanges = (
+  report: Pick<Report, 'reason' | 'suggestedChanges'>
+): Record<string, string> => {
+  const changes = report.suggestedChanges as Record<string, string>;
+  const entries = Object.entries(changes);
+
+  if (
+    entries.length === 1 &&
+    entries[0]?.[0] === 'reason' &&
+    entries[0][1] === report.reason.label
+  ) {
+    return {};
+  }
+
+  return changes;
+};
+
 function getEntityLink(
   entityType: ReportEntityType,
   entityId: number,
@@ -94,6 +111,9 @@ export default function AdminReportsClient() {
   const [resolving, setResolving] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [adminNote, setAdminNote] = useState('');
+  const selectedLegacyChanges = selectedReport
+    ? getLegacySuggestedChanges(selectedReport)
+    : {};
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -216,7 +236,7 @@ export default function AdminReportsClient() {
         }
         className={cn(
           status === ReportStatus.Approved &&
-            'bg-green-600 hover:bg-green-600/80'
+            'bg-success text-success-foreground hover:bg-success/90'
         )}
       >
         {metadata.text}
@@ -279,7 +299,7 @@ export default function AdminReportsClient() {
             </p>
           ) : (
             <div
-              className="overflow-hidden rounded-md border"
+              className="overflow-x-auto rounded-lg border"
               data-testid="admin-reports-list"
             >
               <Table>
@@ -288,6 +308,7 @@ export default function AdminReportsClient() {
                     <TableHead>ID</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Entity</TableHead>
+                    <TableHead>Reason</TableHead>
                     <TableHead>Reporter</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
@@ -296,7 +317,11 @@ export default function AdminReportsClient() {
                 </TableHeader>
                 <TableBody>
                   {reports.map((report) => (
-                    <TableRow key={report.id} data-testid="admin-reports-row">
+                    <TableRow
+                      key={report.id}
+                      data-testid="admin-reports-row"
+                      data-report-id={report.id}
+                    >
                       <TableCell className="font-mono text-xs">
                         {report.id}
                       </TableCell>
@@ -319,6 +344,9 @@ export default function AdminReportsClient() {
                         >
                           #{report.entityId}
                         </Link>
+                      </TableCell>
+                      <TableCell className="min-w-48 font-medium">
+                        {report.reason.label}
                       </TableCell>
                       <TableCell>
                         {report.reporter
@@ -351,7 +379,10 @@ export default function AdminReportsClient() {
       </Card>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogContent
+          className="max-h-[85vh] max-w-2xl overflow-y-auto"
+          data-testid="admin-report-detail"
+        >
           <DialogHeader>
             <DialogTitle>Report Details</DialogTitle>
             <DialogDescription>
@@ -408,53 +439,61 @@ export default function AdminReportsClient() {
                 )}
               </div>
 
-              {Object.keys(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).length > 0 && (
-                <div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border bg-muted/30 p-4">
                   <Label className="text-xs text-muted-foreground">
-                    Reported Fields
+                    Reason
+                  </Label>
+                  <p className="mt-1 text-sm font-medium">
+                    {selectedReport.reason.label}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <Label className="text-xs text-muted-foreground">
+                    Reported item
+                  </Label>
+                  <p className="mt-1 text-sm font-medium">
+                    {selectedReport.entityDisplayName}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Additional information
+                </Label>
+                <p className="mt-2 rounded-lg border bg-muted/30 p-4 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                  {selectedReport.additionalInformation ||
+                    'No additional information was provided.'}
+                </p>
+              </div>
+
+              {Object.keys(selectedLegacyChanges).length > 0 && (
+                <div className="rounded-lg border p-4">
+                  <Label className="text-xs text-muted-foreground">
+                    Legacy report details
                   </Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.keys(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    ).map((field) => (
+                    {Object.keys(selectedLegacyChanges).map((field) => (
                       <Badge key={field} variant="secondary">
                         {formatFieldName(field)}
                       </Badge>
                     ))}
                   </div>
+                  {Object.values(selectedLegacyChanges).some(
+                    (value) => value
+                  ) && (
+                    <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                      {Object.values(selectedLegacyChanges)[0] ?? '—'}
+                    </p>
+                  )}
                 </div>
               )}
-
-              {Object.values(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).some((v) => v) && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Suggested Changes
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap">
-                    {Object.values(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    )[0] ?? '—'}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  Justification
-                </Label>
-                <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-                  {selectedReport.justification}
-                </p>
-              </div>
 
               {selectedReport.status === ReportStatus.Pending && (
                 <div className="space-y-4 border-t pt-4">
                   <div>
-                    <Label htmlFor="admin-note">Admin Note (optional)</Label>
+                    <Label htmlFor="admin-note">Admin note (optional)</Label>
                     <Textarea
                       id="admin-note"
                       value={adminNote}
@@ -480,7 +519,7 @@ export default function AdminReportsClient() {
                     <Button
                       onClick={() => handleResolve(ReportStatus.Approved)}
                       disabled={resolving}
-                      className="bg-green-600 hover:bg-green-600/90"
+                      className="bg-success text-success-foreground hover:bg-success/90"
                     >
                       {resolving ? (
                         <Loader2 className="mr-2 size-4 animate-spin" />
@@ -513,7 +552,7 @@ export default function AdminReportsClient() {
               {selectedReport.adminNote && (
                 <div>
                   <Label className="text-xs text-muted-foreground">
-                    Admin Note
+                    Admin note
                   </Label>
                   <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
                     {selectedReport.adminNote}

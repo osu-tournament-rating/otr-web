@@ -1,20 +1,22 @@
 'use client';
 
-import { Flag, Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Flag, Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 import { z } from 'zod';
 
 import { ReportEntityType } from '@otr/core/osu';
 
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -22,13 +24,20 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import SimpleTooltip from '@/components/simple-tooltip';
 import { ReportEntityTypeEnumHelper } from '@/lib/enum-helpers';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
@@ -38,15 +47,19 @@ interface ReportButtonProps {
   entityType: ReportEntityType;
   entityId: number;
   entityDisplayName: string;
-  reportableFields: readonly string[];
-  currentValues: Record<string, string | null>;
   darkMode?: boolean;
 }
 
+const MAX_ADDITIONAL_INFORMATION_LENGTH = 2_000;
+
 const reportFormSchema = z.object({
-  selectedFields: z.array(z.string()),
-  suggestedChanges: z.string(),
-  justification: z.string().min(1, 'Justification is required'),
+  reasonKey: z.string().min(1, 'Select a reason'),
+  additionalInformation: z
+    .string()
+    .max(
+      MAX_ADDITIONAL_INFORMATION_LENGTH,
+      `Additional information must be ${MAX_ADDITIONAL_INFORMATION_LENGTH.toLocaleString()} characters or fewer`
+    ),
 });
 
 type ReportFormData = z.infer<typeof reportFormSchema>;
@@ -55,8 +68,6 @@ export default function ReportButton({
   entityType,
   entityId,
   entityDisplayName,
-  reportableFields,
-  currentValues,
   darkMode,
 }: ReportButtonProps) {
   const session = useSession();
@@ -65,54 +76,80 @@ export default function ReportButton({
   const form = useForm<ReportFormData>({
     resolver: zodResolver(reportFormSchema) as Resolver<ReportFormData>,
     defaultValues: {
-      selectedFields: [],
-      suggestedChanges: '',
-      justification: '',
+      reasonKey: '',
+      additionalInformation: '',
     },
+    mode: 'onChange',
   });
+
+  const {
+    data: templateData,
+    error: templateError,
+    isLoading: templatesLoading,
+    isValidating: templatesValidating,
+    mutate: reloadTemplates,
+  } = useSWR(
+    open && session ? ['report-templates', entityType] : null,
+    () => orpc.reports.templates({ entityType }),
+    {
+      dedupingInterval: 60_000,
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  );
 
   if (!session) {
     return null;
   }
 
   const entityMetadata = ReportEntityTypeEnumHelper.getMetadata(entityType);
+  const templates = templateData?.templates ?? [];
+  const isLoadingTemplates =
+    templates.length === 0 &&
+    (templatesLoading || (templatesValidating && !templateData));
+  const failedToLoadTemplates = Boolean(
+    templateError && templates.length === 0 && !isLoadingTemplates
+  );
+  const hasNoTemplates = Boolean(
+    templateData && templates.length === 0 && !templateError
+  );
+  const templatesUnavailable =
+    isLoadingTemplates || failedToLoadTemplates || hasNoTemplates;
+  const isSubmitting = form.formState.isSubmitting;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (isSubmitting) return;
+    setOpen(nextOpen);
+  };
 
   async function onSubmit(data: ReportFormData) {
-    const suggestedChanges: Record<string, string> = {};
-    if (data.selectedFields.length > 0 && data.suggestedChanges.trim()) {
-      for (const field of data.selectedFields) {
-        suggestedChanges[field] = data.suggestedChanges.trim();
-      }
-    }
+    const additionalInformation = data.additionalInformation.trim();
 
     try {
       await orpc.reports.create({
         entityType,
         entityId,
-        suggestedChanges,
-        justification: data.justification,
+        reasonKey: data.reasonKey,
+        additionalInformation: additionalInformation || undefined,
       });
 
       form.reset();
       setOpen(false);
       toast.success('Report submitted successfully');
     } catch {
-      toast.error('Failed to submit report');
+      toast.error('Failed to submit report. Please try again.');
     }
   }
 
-  const formatFieldName = (field: string) => {
-    return field
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str) => str.toUpperCase())
-      .trim();
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <SimpleTooltip content="Report an issue">
         <DialogTrigger asChild>
           <Button
+            aria-label={`Report an issue with ${entityDisplayName} (${entityMetadata.text})`}
+            data-testid="report-button"
+            data-entity-type={entityType}
+            data-entity-id={entityId}
             className={cn(
               'relative h-6 w-6',
               darkMode
@@ -123,6 +160,7 @@ export default function ReportButton({
             size="icon"
           >
             <Flag
+              aria-hidden="true"
               className={cn(
                 'h-3 w-3',
                 darkMode
@@ -133,109 +171,147 @@ export default function ReportButton({
           </Button>
         </DialogTrigger>
       </SimpleTooltip>
-      <DialogContent className="max-h-[85vh] overflow-y-auto p-4">
+
+      <DialogContent
+        data-testid="report-dialog"
+        data-entity-type={entityType}
+        data-entity-id={entityId}
+        className="max-h-[calc(100vh-2rem)] gap-5 overflow-y-auto border-border bg-card p-5 shadow-none sm:max-w-lg sm:p-6"
+      >
         <DialogHeader className="space-y-1">
-          <DialogTitle>Report Data Issue</DialogTitle>
+          <DialogTitle>Report a data issue</DialogTitle>
           <DialogDescription>
             Report an issue with{' '}
-            <span className="font-semibold">{entityDisplayName}</span> (
-            {entityMetadata.text})
+            <span className="font-medium text-foreground">
+              {entityDisplayName}
+            </span>{' '}
+            ({entityMetadata.text})
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
-              name="selectedFields"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select fields to report</FormLabel>
-                  <div className="grid grid-cols-2 gap-2">
-                    {reportableFields.map((reportableField) => {
-                      const checkboxId = `report-field-${reportableField}`;
-                      return (
-                        <div
-                          key={reportableField}
-                          className="flex items-center gap-2 rounded-md bg-muted/30 px-2 py-1.5"
-                        >
-                          <Checkbox
-                            id={checkboxId}
-                            checked={field.value?.includes(reportableField)}
-                            onCheckedChange={(checked) => {
-                              const vals = field.value || [];
-                              if (checked) {
-                                field.onChange([...vals, reportableField]);
-                              } else {
-                                field.onChange(
-                                  vals.filter((v) => v !== reportableField)
-                                );
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={checkboxId}
-                            className="flex min-w-0 flex-1 cursor-pointer flex-col"
-                          >
-                            <span className="text-xs font-medium">
-                              {formatFieldName(reportableField)}
-                            </span>
-                            <span className="truncate font-mono text-xs text-muted-foreground">
-                              {currentValues[reportableField] || '—'}
-                            </span>
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="suggestedChanges"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Suggested changes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe what the correct values should be"
-                      className="min-h-20 resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="justification"
+              name="reasonKey"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Justification <span className="text-red-500">*</span>
+                    Reason{' '}
+                    <span aria-hidden="true" className="text-destructive">
+                      *
+                    </span>
+                    <span className="sr-only"> (required)</span>
                   </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Please explain why this data is incorrect and provide any supporting evidence"
-                      className="min-h-20 resize-none"
-                      {...field}
-                    />
-                  </FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={templatesUnavailable || isSubmitting}
+                  >
+                    <FormControl>
+                      <SelectTrigger
+                        aria-required="true"
+                        className="w-full bg-background shadow-none"
+                      >
+                        <SelectValue
+                          placeholder={
+                            isLoadingTemplates
+                              ? 'Loading reasons...'
+                              : 'Select a reason'
+                          }
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="shadow-none">
+                      {templates.map((template) => (
+                        <SelectItem key={template.key} value={template.key}>
+                          {template.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <FormDescription
+                    role={
+                      failedToLoadTemplates || hasNoTemplates
+                        ? 'alert'
+                        : 'status'
+                    }
+                    aria-live="polite"
+                    className={cn(
+                      'flex items-center gap-2',
+                      (failedToLoadTemplates || hasNoTemplates) &&
+                        'text-destructive'
+                    )}
+                  >
+                    {isLoadingTemplates ? (
+                      <>
+                        <Loader2
+                          className="size-3.5 animate-spin"
+                          aria-hidden="true"
+                        />
+                        Loading report reasons...
+                      </>
+                    ) : failedToLoadTemplates ? (
+                      'Report reasons could not be loaded.'
+                    ) : hasNoTemplates ? (
+                      'No report reasons are available.'
+                    ) : (
+                      'Choose the option that best describes the issue.'
+                    )}
+                  </FormDescription>
+
+                  {failedToLoadTemplates && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit shadow-none"
+                      onClick={() => void reloadTemplates()}
+                    >
+                      <RefreshCw aria-hidden="true" />
+                      Retry
+                    </Button>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="flex justify-between space-x-2">
+            <FormField
+              control={form.control}
+              name="additionalInformation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Additional information{' '}
+                    <span className="font-normal text-muted-foreground">
+                      (optional)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add corrections, supporting links, or other context"
+                      className="min-h-28 resize-y bg-background shadow-none"
+                      maxLength={MAX_ADDITIONAL_INFORMATION_LENGTH}
+                      disabled={isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Include anything that may help an admin review the report.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="border-t pt-4">
               <Button
                 type="button"
-                variant="secondary"
-                size="sm"
+                variant="outline"
+                className="shadow-none"
+                disabled={isSubmitting}
                 onClick={() => {
                   form.reset();
                   setOpen(false);
@@ -245,20 +321,23 @@ export default function ReportButton({
               </Button>
               <Button
                 type="submit"
-                size="sm"
+                className="min-w-32 shadow-none"
                 disabled={
+                  templatesUnavailable ||
                   !form.formState.isValid ||
-                  !form.formState.isDirty ||
-                  form.formState.isSubmitting
+                  isSubmitting
                 }
               >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="animate-spin" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                    Submitting...
+                  </>
                 ) : (
-                  'Submit Report'
+                  'Submit report'
                 )}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

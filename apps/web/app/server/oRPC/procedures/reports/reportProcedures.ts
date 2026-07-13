@@ -4,6 +4,7 @@ import { and, desc, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
 
+import type { DatabaseClient } from '@/lib/db';
 import {
   MarkReportViewedInputSchema,
   MyReportListResponseSchema,
@@ -16,17 +17,25 @@ import {
   ReportReopenInputSchema,
   ReportResolveInputSchema,
   ReportSchema,
+  ReportTemplatesInputSchema,
+  ReportTemplatesResponseSchema,
   UnseenReportCountResponseSchema,
+  type ReportCreateInput,
 } from '@/lib/orpc/schema/report';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  normalizeReportCreateContent,
+  normalizeStoredReportContent,
+} from './reportContent';
 import { hasUnreadAdminUpdate } from './reportReadStatus';
+import { getReportReasons, isReportReasonKeyValid } from './reportTemplates';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
 async function getMatchIdForEntity(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<number | undefined> {
@@ -56,7 +65,7 @@ async function getMatchIdForEntity(
 }
 
 async function getEntityDisplayName(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<string> {
@@ -115,7 +124,7 @@ async function getEntityDisplayName(
 }
 
 async function verifyEntityExists(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<boolean> {
@@ -153,6 +162,81 @@ async function verifyEntityExists(
   }
 }
 
+export const getReportTemplates = protectedProcedure
+  .input(ReportTemplatesInputSchema)
+  .output(ReportTemplatesResponseSchema)
+  .route({
+    summary: 'List data report reasons',
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/templates',
+  })
+  .handler(async ({ input }) => ({
+    entityType: input.entityType,
+    templates: [...getReportReasons(input.entityType)],
+  }));
+
+interface CreateReportContext {
+  db: DatabaseClient;
+  session: {
+    dbUser?: {
+      id: number;
+    } | null;
+  } | null;
+}
+
+export interface CreateReportHandlerArgs {
+  input: ReportCreateInput;
+  context: CreateReportContext;
+}
+
+export async function createReportHandler({
+  input,
+  context,
+}: CreateReportHandlerArgs) {
+  const userId = context.session?.dbUser?.id;
+  if (!userId) {
+    throw new ORPCError('UNAUTHORIZED', {
+      message: 'User not authenticated',
+    });
+  }
+
+  const reportContent = normalizeReportCreateContent(input);
+
+  if (!isReportReasonKeyValid(input.entityType, reportContent.reasonKey)) {
+    throw new ORPCError('BAD_REQUEST', {
+      message: 'Invalid reason for this report type',
+    });
+  }
+
+  const entityExists = await verifyEntityExists(
+    context.db,
+    input.entityType,
+    input.entityId
+  );
+
+  if (!entityExists) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Entity not found',
+    });
+  }
+
+  const [created] = await context.db
+    .insert(schema.dataReports)
+    .values({
+      entityType: input.entityType,
+      entityId: input.entityId,
+      reasonKey: reportContent.reasonKey,
+      suggestedChanges: reportContent.suggestedChanges,
+      justification: reportContent.justification,
+      status: ReportStatus.Pending,
+      reporterUserId: userId,
+    })
+    .returning({ id: schema.dataReports.id });
+
+  return { success: true, reportId: created.id };
+}
+
 export const createReport = protectedProcedure
   .input(ReportCreateInputSchema)
   .output(ReportMutationResponseSchema)
@@ -162,40 +246,7 @@ export const createReport = protectedProcedure
     method: 'POST',
     path: '/reports',
   })
-  .handler(async ({ input, context }) => {
-    const userId = context.session?.dbUser?.id;
-    if (!userId) {
-      throw new ORPCError('UNAUTHORIZED', {
-        message: 'User not authenticated',
-      });
-    }
-
-    const entityExists = await verifyEntityExists(
-      context.db,
-      input.entityType,
-      input.entityId
-    );
-
-    if (!entityExists) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Entity not found',
-      });
-    }
-
-    const [created] = await context.db
-      .insert(schema.dataReports)
-      .values({
-        entityType: input.entityType,
-        entityId: input.entityId,
-        suggestedChanges: input.suggestedChanges,
-        justification: input.justification,
-        status: ReportStatus.Pending,
-        reporterUserId: userId,
-      })
-      .returning({ id: schema.dataReports.id });
-
-    return { success: true, reportId: created.id };
-  });
+  .handler(createReportHandler);
 
 export const listReports = protectedProcedure
   .input(ReportListInputSchema)
@@ -269,6 +320,7 @@ export const listReports = protectedProcedure
         entityId: report.entityId,
         suggestedChanges: report.suggestedChanges as Record<string, string>,
         justification: report.justification,
+        ...normalizeStoredReportContent(report),
         status: report.status,
         adminNote: report.adminNote,
         created: report.created,
@@ -362,6 +414,7 @@ export const getReport = protectedProcedure
       entityId: report.entityId,
       suggestedChanges: report.suggestedChanges as Record<string, string>,
       justification: report.justification,
+      ...normalizeStoredReportContent(report),
       status: report.status,
       adminNote: report.adminNote,
       created: report.created,
@@ -558,6 +611,7 @@ export const listMyReports = protectedProcedure
         entityId: report.entityId,
         suggestedChanges: report.suggestedChanges as Record<string, string>,
         justification: report.justification,
+        ...normalizeStoredReportContent(report),
         status: report.status,
         adminNote: report.adminNote,
         created: report.created,

@@ -54,6 +54,23 @@ const formatFieldName = (field: string) =>
     .replace(/^./, (str) => str.toUpperCase())
     .trim();
 
+const getLegacySuggestedChanges = (
+  report: Pick<MyReport, 'reason' | 'suggestedChanges'>
+): Record<string, string> => {
+  const changes = report.suggestedChanges as Record<string, string>;
+  const entries = Object.entries(changes);
+
+  if (
+    entries.length === 1 &&
+    entries[0]?.[0] === 'reason' &&
+    entries[0][1] === report.reason.label
+  ) {
+    return {};
+  }
+
+  return changes;
+};
+
 function getEntityLink(
   entityType: ReportEntityType,
   entityId: number,
@@ -85,7 +102,8 @@ function getStatusBadge(status: ReportStatus) {
             : 'destructive'
       }
       className={cn(
-        status === ReportStatus.Approved && 'bg-green-600 hover:bg-green-600/80'
+        status === ReportStatus.Approved &&
+          'bg-success text-success-foreground hover:bg-success/90'
       )}
     >
       {metadata.text}
@@ -98,6 +116,9 @@ export default function MyReportsClient() {
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<MyReport | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const selectedLegacyChanges = selectedReport
+    ? getLegacySuggestedChanges(selectedReport)
+    : {};
 
   useEffect(() => {
     let active = true;
@@ -159,7 +180,7 @@ export default function MyReportsClient() {
             </p>
           ) : (
             <div
-              className="overflow-hidden rounded-md border"
+              className="overflow-x-auto rounded-lg border"
               data-testid="my-reports-list"
             >
               <Table>
@@ -168,6 +189,7 @@ export default function MyReportsClient() {
                     <TableHead className="w-8" />
                     <TableHead>Type</TableHead>
                     <TableHead>Entity</TableHead>
+                    <TableHead>Reason</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Submitted</TableHead>
                   </TableRow>
@@ -177,6 +199,7 @@ export default function MyReportsClient() {
                     <TableRow
                       key={report.id}
                       data-testid="my-reports-row"
+                      data-report-id={report.id}
                       tabIndex={0}
                       role="button"
                       aria-label={`View report for ${report.entityDisplayName}`}
@@ -208,6 +231,9 @@ export default function MyReportsClient() {
                       </TableCell>
                       <TableCell className="max-w-[20rem] truncate">
                         {report.entityDisplayName}
+                      </TableCell>
+                      <TableCell className="min-w-48 font-medium">
+                        {report.reason.label}
                       </TableCell>
                       <TableCell>{getStatusBadge(report.status)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
@@ -286,48 +312,44 @@ export default function MyReportsClient() {
                 )}
               </div>
 
-              {Object.keys(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).length > 0 && (
-                <div>
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <Label className="text-xs text-muted-foreground">Reason</Label>
+                <p className="mt-1 text-sm font-medium">
+                  {selectedReport.reason.label}
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  Additional information
+                </Label>
+                <p className="mt-2 rounded-lg border bg-muted/30 p-4 text-sm wrap-anywhere whitespace-pre-wrap">
+                  {selectedReport.additionalInformation ||
+                    'No additional information was provided.'}
+                </p>
+              </div>
+
+              {Object.keys(selectedLegacyChanges).length > 0 && (
+                <div className="rounded-lg border p-4">
                   <Label className="text-xs text-muted-foreground">
-                    Reported Fields
+                    Original report details
                   </Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.keys(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    ).map((field) => (
+                    {Object.keys(selectedLegacyChanges).map((field) => (
                       <Badge key={field} variant="secondary">
                         {formatFieldName(field)}
                       </Badge>
                     ))}
                   </div>
+                  {Object.values(selectedLegacyChanges).some(
+                    (value) => value
+                  ) && (
+                    <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
+                      {Object.values(selectedLegacyChanges)[0] ?? '—'}
+                    </p>
+                  )}
                 </div>
               )}
-
-              {Object.values(
-                selectedReport.suggestedChanges as Record<string, string>
-              ).some((v) => v) && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Suggested Changes
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                    {Object.values(
-                      selectedReport.suggestedChanges as Record<string, string>
-                    )[0] ?? '—'}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  Your Justification
-                </Label>
-                <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm [overflow-wrap:anywhere]">
-                  {selectedReport.justification}
-                </p>
-              </div>
 
               {selectedReport.adminNote && (
                 <div>

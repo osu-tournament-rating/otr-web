@@ -1916,6 +1916,7 @@ export const dataReports = pgTable(
     }),
     entityType: integer('entity_type').notNull(),
     entityId: integer('entity_id').notNull(),
+    reasonKey: text('reason_key').default('something-else').notNull(),
     suggestedChanges: jsonb('suggested_changes').notNull(),
     justification: text('justification').notNull(),
     status: integer('status').default(0).notNull(),
