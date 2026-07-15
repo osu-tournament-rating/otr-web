@@ -7,6 +7,7 @@ export const GET = ApiReference({
   url: '/spec.json',
   pageTitle: 'o!TR API Reference',
   cdn: SCALAR_CDN_URL,
+  theme: 'default',
   showDeveloperTools: 'never',
   hideClientButton: true,
   hideTestRequestButton: true,

@@ -17,6 +17,7 @@ test.describe('API Reference Page', () => {
               const specification = await response.json();
               const container = document.querySelector(selector);
               container.dataset.scalarMounted = 'true';
+              container.dataset.scalarTheme = configuration.theme;
               container.textContent = specification.info.title;
             },
           };
@@ -34,6 +35,10 @@ test.describe('API Reference Page', () => {
     await expect(page.locator('#app')).toHaveAttribute(
       'data-scalar-mounted',
       'true'
+    );
+    await expect(page.locator('#app')).toHaveAttribute(
+      'data-scalar-theme',
+      'default'
     );
     await expect(page.locator('#app')).toHaveText('o!TR API');
   });

@@ -17,6 +17,7 @@ describe('Scalar API reference route', () => {
       '<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference">'
     );
     expect(html).toContain('"url": "/spec.json"');
+    expect(html).toContain('"theme": "default"');
     expect(html).toContain('"showDeveloperTools": "never"');
     expect(html).toContain('"hideClientButton": true');
     expect(html).toContain('"hideTestRequestButton": true');
