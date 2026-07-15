@@ -43,16 +43,18 @@ test.describe('API Reference Page', () => {
     await expect(page.locator('#app')).toHaveText('o!TR API');
   });
 
-  test('publishes the API stability notice in the OpenAPI document', async ({
-    request,
-  }) => {
+  test('publishes only populated public API metadata', async ({ request }) => {
     const response = await request.get('/spec.json');
     const specification = (await response.json()) as {
       info?: { description?: string };
+      paths?: Record<string, unknown>;
+      tags?: Array<{ name?: string }>;
     };
 
     expect(response.ok()).toBe(true);
     expect(response.headers()['cache-control']).toBe('public, max-age=60');
+    expect(Object.keys(specification.paths ?? {})).not.toHaveLength(0);
+    expect(specification.tags?.map((tag) => tag.name)).toEqual(['public']);
     expect(specification.info?.description).toContain('API Stability Notice');
     expect(specification.info?.description).toContain(
       'Breaking changes may be introduced at any time without advance notice.'
