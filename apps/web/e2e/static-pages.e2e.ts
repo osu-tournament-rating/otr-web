@@ -2,34 +2,56 @@ import { test, expect } from '@playwright/test';
 import { ROUTES } from './fixtures/test-config';
 
 test.describe('API Reference Page', () => {
-  test('displays the API Stability Notice alert', async ({ page }) => {
-    await page.goto(ROUTES.spec);
-    // Avoid waiting on the external Scalar CDN script, which may be slow or
-    // blocked in CI. The static DOM is available after the document loads.
-    await page.waitForLoadState('domcontentloaded');
+  const scalarCdn = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.62.5';
 
-    const notice = page.locator('[data-testid="api-stability-notice"]');
-    await expect(notice).toBeVisible({ timeout: 10000 });
-    await expect(notice).toContainText('API Stability Notice');
+  test('boots the pinned Scalar reference with the public spec', async ({
+    page,
+  }) => {
+    await page.route(scalarCdn, async (route) => {
+      await route.fulfill({
+        contentType: 'application/javascript',
+        body: `
+          window.Scalar = {
+            async createApiReference(selector, configuration) {
+              const response = await fetch(configuration.url);
+              const specification = await response.json();
+              const container = document.querySelector(selector);
+              container.dataset.scalarMounted = 'true';
+              container.textContent = specification.info.title;
+            },
+          };
+        `,
+      });
+    });
+
+    const response = await page.goto(ROUTES.spec, {
+      waitUntil: 'domcontentloaded',
+    });
+
+    expect(response?.status()).toBe(200);
+    expect(response?.headers()['content-type']).toContain('text/html');
+    await expect(page).toHaveTitle('o!TR API Reference');
+    await expect(page.locator('#app')).toHaveAttribute(
+      'data-scalar-mounted',
+      'true'
+    );
+    await expect(page.locator('#app')).toHaveText('o!TR API');
   });
 
-  test('renders the scalar api reference container', async ({ page }) => {
-    await page.goto(ROUTES.spec);
-    await page.waitForLoadState('domcontentloaded');
+  test('publishes the API stability notice in the OpenAPI document', async ({
+    request,
+  }) => {
+    const response = await request.get('/spec.json');
+    const specification = (await response.json()) as {
+      info?: { description?: string };
+    };
 
-    // The container is hydrated by an external script; we only assert it is
-    // present in the DOM, not that the API doc has finished rendering.
-    const container = page.locator('#scalar-api-reference');
-    await expect(container).toBeAttached({ timeout: 10000 });
-  });
-
-  test('has a non-empty page title referencing the API', async ({ page }) => {
-    await page.goto(ROUTES.spec);
-    await page.waitForLoadState('domcontentloaded');
-
-    const title = await page.title();
-    expect(title.length).toBeGreaterThan(0);
-    expect(title).toContain('API');
+    expect(response.ok()).toBe(true);
+    expect(response.headers()['cache-control']).toBe('public, max-age=60');
+    expect(specification.info?.description).toContain('API Stability Notice');
+    expect(specification.info?.description).toContain(
+      'Breaking changes may be introduced at any time without advance notice.'
+    );
   });
 });
 

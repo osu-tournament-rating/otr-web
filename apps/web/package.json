@@ -42,6 +42,7 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "@scalar/nextjs-api-reference": "0.11.9",
     "@tanstack/react-table": "^8.21.2",
     "@tanstack/react-virtual": "^3.13.26",
     "@uidotdev/usehooks": "^2.4.1",

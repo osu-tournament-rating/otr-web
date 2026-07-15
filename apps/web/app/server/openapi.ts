@@ -258,7 +258,9 @@ export const generatePublicOpenAPISpec = async () => {
     info: {
       title: 'o!TR API',
       version: '1.0.0',
-      description: 'osu! Tournament Rating API',
+      description: `osu! Tournament Rating API
+
+> **API Stability Notice:** The o!TR public API is still evolving and is not considered fully stable. Breaking changes may be introduced at any time without advance notice.`,
     },
     servers: buildServers(),
     tags,
