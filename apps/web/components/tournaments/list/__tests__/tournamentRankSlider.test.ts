@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
+  RANK_RANGE_DEFAULT_MAX,
   RANK_RANGE_MAX,
   RANK_SLIDER_MAX,
   moveRankBySliderStops,
@@ -10,6 +11,11 @@ import {
 } from '../tournamentRankSlider';
 
 describe('tournament rank slider', () => {
+  it('keeps the default below the slider ceiling', () => {
+    expect(RANK_RANGE_DEFAULT_MAX).toBe(200_000);
+    expect(RANK_RANGE_MAX).toBeGreaterThan(RANK_RANGE_DEFAULT_MAX);
+  });
+
   it('uses the requested step at each increasing threshold', () => {
     expect(moveRankBySliderStops(999, 1)).toBe(1_000);
     expect(moveRankBySliderStops(1_000, 1)).toBe(1_100);

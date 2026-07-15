@@ -1,5 +1,6 @@
 export const RANK_RANGE_MIN = 1;
 export const RANK_RANGE_MAX = 1_000_000;
+export const RANK_RANGE_DEFAULT_MAX = 200_000;
 export const RANK_SLIDER_MIN = 0;
 export const RANK_SLIDER_MAX = 100;
 export const RANK_SLIDER_STEP = 0.0001;

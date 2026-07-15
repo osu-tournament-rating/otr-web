@@ -194,8 +194,9 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
 
       await page.locator('[data-testid="tournament-filters-button"]').click();
+      await page.locator('[data-testid="tournament-status-filter"]').click();
       await page
-        .getByRole('checkbox', { name: 'Verified', exact: true })
+        .getByRole('menuitemcheckbox', { name: 'Verified', exact: true })
         .click();
       await page.waitForURL(/verificationStatus=4/);
       await page.getByRole('button', { name: 'Done', exact: true }).click();
@@ -210,6 +211,51 @@ test.describe('Tournaments', () => {
           url.pathname === ROUTES.tournaments &&
           !url.searchParams.has('verificationStatus')
       );
+    });
+
+    test('rank restriction defaults to 200000 and accepts larger values', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await page.locator('[data-testid="tournament-filters-button"]').click();
+
+      const maximumRank = page.locator('#tournament-max-rank');
+      await expect(maximumRank).toHaveValue('200000');
+      await maximumRank.fill('250000');
+      await maximumRank.blur();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get('maxRankRange'))
+        .toBe('250000');
+    });
+
+    test('filters by multiple rejection reasons from a checkbox menu', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await page.locator('[data-testid="tournament-filters-button"]').click();
+      await page
+        .locator('[data-testid="tournament-rejection-reason-filter"]')
+        .click();
+
+      await page
+        .getByRole('menuitemcheckbox', {
+          name: 'No Verified Matches',
+          exact: true,
+        })
+        .click();
+      await page
+        .getByRole('menuitemcheckbox', {
+          name: 'Abnormal Format',
+          exact: true,
+        })
+        .click();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get('rejectionReason'))
+        .toBe('9');
     });
 
     test('empty search offers a clear path back to the archive', async ({

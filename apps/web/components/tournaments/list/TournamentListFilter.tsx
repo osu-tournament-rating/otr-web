@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowDown,
   ArrowUp,
+  ChevronDown,
   Filter,
   Search,
   SlidersHorizontal,
@@ -23,13 +24,19 @@ import { useDebounce } from '@uidotdev/usehooks';
 import {
   Ruleset,
   TournamentQuerySortType,
+  TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
 import { z } from 'zod';
 
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -60,7 +67,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { LobbySizeEnumHelper, RulesetEnumHelper } from '@/lib/enum-helpers';
+import {
+  LobbySizeEnumHelper,
+  RulesetEnumHelper,
+  TournamentRejectionReasonEnumHelper,
+} from '@/lib/enum-helpers';
 import { type TournamentListFilter as TournamentListFilterType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -70,6 +81,7 @@ import {
 } from '@/lib/validation-schema';
 import {
   RANK_RANGE_MAX,
+  RANK_RANGE_DEFAULT_MAX,
   RANK_RANGE_MIN,
   RANK_SLIDER_MAX,
   RANK_SLIDER_MIN,
@@ -112,6 +124,15 @@ const verificationStatusOptions = [
 ] as const;
 
 const lobbySizeOptions = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+const rejectionReasonOptions = Object.entries(
+  TournamentRejectionReasonEnumHelper.metadata
+)
+  .filter(([value]) => Number(value) !== TournamentRejectionReason.None)
+  .map(([value, metadata]) => ({
+    value: Number(value) as TournamentRejectionReason,
+    label: metadata.text,
+  }));
 
 type FilterFormData = z.infer<typeof tournamentListFilterSchema>;
 type ApplyFilterPatch = (patch: Partial<FilterFormData>) => void;
@@ -340,6 +361,66 @@ function RulesetFilter({
   );
 }
 
+function MultiSelectDropdown({
+  label,
+  placeholder,
+  options,
+  selectedValues,
+  onCheckedChange,
+  testId,
+}: {
+  label: string;
+  placeholder: string;
+  options: readonly { value: number; label: string }[];
+  selectedValues: readonly number[];
+  onCheckedChange: (value: number, checked: boolean) => void;
+  testId?: string;
+}) {
+  const selectedLabels = options
+    .filter((option) => selectedValues.includes(option.value))
+    .map((option) => option.label);
+  const summary =
+    selectedLabels.length === 0
+      ? placeholder
+      : selectedLabels.length === 1
+        ? selectedLabels[0]
+        : `${selectedLabels.length} selected`;
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          data-testid={testId}
+          aria-label={`${label}: ${summary}`}
+          className="w-full justify-between bg-background font-normal dark:bg-input/50 dark:shadow-none"
+        >
+          <span className="truncate">{summary}</span>
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="w-[var(--radix-dropdown-menu-trigger-width)]"
+      >
+        {options.map((option) => (
+          <DropdownMenuCheckboxItem
+            key={option.value}
+            checked={selectedValues.includes(option.value)}
+            onCheckedChange={(checked) =>
+              onCheckedChange(option.value, checked === true)
+            }
+            onSelect={(event) => event.preventDefault()}
+          >
+            {option.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function FilterPanel({
   control,
   applyPatch,
@@ -357,33 +438,21 @@ function FilterPanel({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Status</FormLabel>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-1">
-              {verificationStatusOptions.map(({ value, label }) => {
-                const isSelected = (field.value ?? []).includes(value);
-                return (
-                  <div key={value} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`status-${value}`}
-                      checked={isSelected}
-                      onCheckedChange={(checked) => {
-                        const current = field.value ?? [];
-                        const verificationStatus = checked
-                          ? [...current, value]
-                          : current.filter((status) => status !== value);
-                        field.onChange(verificationStatus);
-                        applyPatch({ verificationStatus });
-                      }}
-                    />
-                    <label
-                      htmlFor={`status-${value}`}
-                      className="cursor-pointer text-sm"
-                    >
-                      {label}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
+            <MultiSelectDropdown
+              label="Status"
+              placeholder="Any status"
+              options={verificationStatusOptions}
+              selectedValues={field.value ?? []}
+              testId="tournament-status-filter"
+              onCheckedChange={(value, checked) => {
+                const current = field.value ?? [];
+                const verificationStatus = checked
+                  ? [...current, value as VerificationStatus]
+                  : current.filter((status) => status !== value);
+                field.onChange(verificationStatus);
+                applyPatch({ verificationStatus });
+              }}
+            />
           </FormItem>
         )}
       />
@@ -394,37 +463,58 @@ function FilterPanel({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Team size</FormLabel>
-            <div className="grid grid-cols-4 gap-3 pt-1">
-              {lobbySizeOptions.map((size) => {
-                const isSelected = (field.value ?? []).includes(size);
-                return (
-                  <div key={size} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`lobby-${size}`}
-                      checked={isSelected}
-                      onCheckedChange={(checked) => {
-                        const current = field.value ?? [];
-                        const lobbySize = checked
-                          ? [...current, size]
-                          : current.filter(
-                              (currentSize) => currentSize !== size
-                            );
-                        field.onChange(lobbySize);
-                        applyPatch({ lobbySize });
-                      }}
-                    />
-                    <label
-                      htmlFor={`lobby-${size}`}
-                      className="cursor-pointer text-sm"
-                    >
-                      {LobbySizeEnumHelper.toString(size)}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
+            <MultiSelectDropdown
+              label="Team size"
+              placeholder="Any team size"
+              options={lobbySizeOptions.map((size) => ({
+                value: size,
+                label: LobbySizeEnumHelper.toString(size),
+              }))}
+              selectedValues={field.value ?? []}
+              testId="tournament-team-size-filter"
+              onCheckedChange={(value, checked) => {
+                const current = field.value ?? [];
+                const lobbySize = checked
+                  ? [...current, value]
+                  : current.filter((currentSize) => currentSize !== value);
+                field.onChange(lobbySize);
+                applyPatch({ lobbySize });
+              }}
+            />
           </FormItem>
         )}
+      />
+
+      <FormField
+        control={control}
+        name="rejectionReason"
+        render={({ field }) => {
+          const selectedReasons = rejectionReasonOptions
+            .filter(({ value }) => ((field.value ?? 0) & value) === value)
+            .map(({ value }) => value);
+
+          return (
+            <FormItem>
+              <FormLabel>Rejection reason</FormLabel>
+              <MultiSelectDropdown
+                label="Rejection reason"
+                placeholder="Any rejection reason"
+                options={rejectionReasonOptions}
+                selectedValues={selectedReasons}
+                testId="tournament-rejection-reason-filter"
+                onCheckedChange={(value, checked) => {
+                  const current = field.value ?? 0;
+                  const rejectionReason = checked
+                    ? current | value
+                    : current & ~value;
+                  const nextValue = rejectionReason || undefined;
+                  field.onChange(nextValue);
+                  applyPatch({ rejectionReason: nextValue });
+                }}
+              />
+            </FormItem>
+          );
+        }}
       />
 
       <FormField
@@ -436,7 +526,7 @@ function FilterPanel({
             name="maxRankRange"
             render={({ field: maxField }) => {
               const minRank = minField.value ?? RANK_RANGE_MIN;
-              const maxRank = maxField.value ?? RANK_RANGE_MAX;
+              const maxRank = maxField.value ?? RANK_RANGE_DEFAULT_MAX;
 
               return (
                 <FormItem>
@@ -688,10 +778,12 @@ function countAdvancedFilters(filter: FilterFormData): number {
   return [
     filter.verified,
     Boolean(filter.verificationStatus?.length),
+    filter.rejectionReason !== undefined,
     Boolean(filter.lobbySize?.length),
     Boolean(filter.dateMin || filter.dateMax),
     filter.minRankRange !== undefined && filter.minRankRange !== RANK_RANGE_MIN,
-    filter.maxRankRange !== undefined && filter.maxRankRange !== RANK_RANGE_MAX,
+    filter.maxRankRange !== undefined &&
+      filter.maxRankRange !== RANK_RANGE_DEFAULT_MAX,
   ].filter(Boolean).length;
 }
 
@@ -731,6 +823,22 @@ function ActiveFilterSummary({
     });
   }
 
+  if (filter.rejectionReason !== undefined) {
+    const labels = rejectionReasonOptions
+      .filter(
+        ({ value }) =>
+          ((filter.rejectionReason ?? TournamentRejectionReason.None) &
+            value) ===
+          value
+      )
+      .map(({ label }) => label);
+    filters.push({
+      key: 'rejection-reason',
+      label: `Reason: ${labels.slice(0, 2).join(', ')}${labels.length > 2 ? ` +${labels.length - 2}` : ''}`,
+      clear: () => applyPatch({ rejectionReason: undefined }),
+    });
+  }
+
   if (filter.lobbySize?.length) {
     filters.push({
       key: 'lobby',
@@ -755,15 +863,15 @@ function ActiveFilterSummary({
     (filter.minRankRange !== undefined &&
       filter.minRankRange !== RANK_RANGE_MIN) ||
     (filter.maxRankRange !== undefined &&
-      filter.maxRankRange !== RANK_RANGE_MAX)
+      filter.maxRankRange !== RANK_RANGE_DEFAULT_MAX)
   ) {
     filters.push({
       key: 'rank',
-      label: `Rank: ${(filter.minRankRange ?? RANK_RANGE_MIN).toLocaleString()} – ${(filter.maxRankRange ?? RANK_RANGE_MAX).toLocaleString()}`,
+      label: `Rank: ${(filter.minRankRange ?? RANK_RANGE_MIN).toLocaleString()} – ${(filter.maxRankRange ?? RANK_RANGE_DEFAULT_MAX).toLocaleString()}`,
       clear: () =>
         applyPatch({
           minRankRange: RANK_RANGE_MIN,
-          maxRankRange: RANK_RANGE_MAX,
+          maxRankRange: RANK_RANGE_DEFAULT_MAX,
         }),
     });
   }

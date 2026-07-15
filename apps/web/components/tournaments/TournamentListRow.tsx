@@ -1,8 +1,10 @@
 import { CalendarDays, ChevronRight, Target, Users } from 'lucide-react';
+import { VerificationStatus } from '@otr/core/osu';
 
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { LazerBadge } from '@/components/badges/LazerBadge';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { formatRankRange } from '@/lib/utils/number';
@@ -63,6 +65,15 @@ export default function TournamentListRow({
     tournament.startTime,
     tournament.endTime
   );
+  const isAwaitingReview = ![
+    VerificationStatus.Verified,
+    VerificationStatus.Rejected,
+  ].includes(tournament.verificationStatus);
+  const rulesetLabel =
+    RulesetEnumHelper.getMetadata(tournament.ruleset).text.replace(
+      'osu!',
+      ''
+    ) || 'osu!';
 
   return (
     <div
@@ -70,24 +81,36 @@ export default function TournamentListRow({
       className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.7fr)_minmax(230px,0.6fr)] lg:items-center lg:gap-5"
     >
       <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h2 className="min-w-0 text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
-            {tournament.name}
-          </h2>
-          <span className="font-mono text-xs text-muted-foreground">
-            {tournament.abbreviation}
-          </span>
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <VerificationBadge
             verificationStatus={tournament.verificationStatus}
             rejectionReason={tournament.rejectionReason}
             entityType="tournament"
-            displayText
             verifierUsername={tournament.verifiedByUsername ?? undefined}
           />
-          <LazerBadge isLazer={tournament.isLazer} />
+          <h2 className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
+            {tournament.name}
+          </h2>
+          <span className="shrink-0 font-mono text-xs text-muted-foreground">
+            {tournament.abbreviation}
+          </span>
         </div>
+        {(isAwaitingReview || tournament.isLazer) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {isAwaitingReview && (
+              <SimpleTooltip content="Awaiting admin review">
+                <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning">
+                  <span
+                    className="size-1.5 rounded-full bg-current"
+                    aria-hidden="true"
+                  />
+                  Awaiting review
+                </span>
+              </SimpleTooltip>
+            )}
+            {tournament.isLazer && <LazerBadge isLazer={tournament.isLazer} />}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-x-4 text-sm text-muted-foreground">
@@ -97,7 +120,7 @@ export default function TournamentListRow({
             className="size-4 shrink-0 fill-current"
             aria-hidden="true"
           />
-          {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
+          {rulesetLabel}
         </span>
         <span className="inline-flex w-12 shrink-0 items-center gap-1.5">
           <Users className="size-4 shrink-0" aria-hidden="true" />
