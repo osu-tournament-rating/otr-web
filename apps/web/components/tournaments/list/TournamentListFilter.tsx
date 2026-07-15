@@ -1039,7 +1039,7 @@ export default function TournamentListFilter({
   return (
     <Form {...form}>
       <form onSubmit={(event) => event.preventDefault()} className="space-y-3">
-        <div className="flex flex-col gap-2 md:flex-row">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <SearchInput
             searchQuery={searchQuery}
             onQueryChange={handleSetQuery}
@@ -1047,58 +1047,69 @@ export default function TournamentListFilter({
             control={form.control}
           />
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 md:flex md:shrink-0">
-            <SortControls control={form.control} applyPatch={applyPatch} />
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex md:shrink-0 md:items-center md:border-l md:pl-4">
+            <div
+              role="group"
+              aria-label="Tournament sorting"
+              className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex"
+            >
+              <SortControls control={form.control} applyPatch={applyPatch} />
+            </div>
 
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  data-testid="tournament-filters-button"
-                  type="button"
-                  variant="outline"
-                  className="h-10 gap-2 bg-background dark:bg-input/50 dark:shadow-none"
-                  aria-label={`Advanced filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
-                >
-                  <Filter aria-hidden="true" />
-                  <span>Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                aria-describedby={undefined}
-                className="w-full gap-0 sm:max-w-md dark:bg-popover"
-              >
-                <SheetHeader className="border-b pr-12">
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal
-                      className="size-5 text-primary"
-                      aria-hidden="true"
-                    />
-                    <SheetTitle>Filter tournaments</SheetTitle>
-                  </div>
-                </SheetHeader>
-                <div className="flex-1 overflow-y-auto px-4 pb-6">
-                  <FilterPanel control={form.control} applyPatch={applyPatch} />
-                </div>
-                <SheetFooter className="grid grid-cols-2 border-t bg-background dark:bg-muted">
+            <div className="border-l pl-2 md:pl-4">
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
                   <Button
+                    data-testid="tournament-filters-button"
                     type="button"
                     variant="outline"
-                    onClick={handleClearFilters}
+                    className="h-10 gap-2 bg-background dark:bg-input/50 dark:shadow-none"
+                    aria-label={`Advanced filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
                   >
-                    <X aria-hidden="true" />
-                    Clear all
+                    <Filter aria-hidden="true" />
+                    <span>Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                        {activeFilterCount}
+                      </span>
+                    )}
                   </Button>
-                  <SheetClose asChild>
-                    <Button type="button">Done</Button>
-                  </SheetClose>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+                </SheetTrigger>
+                <SheetContent
+                  aria-describedby={undefined}
+                  className="w-full gap-0 sm:max-w-md dark:bg-popover"
+                >
+                  <SheetHeader className="border-b pr-12">
+                    <div className="flex items-center gap-2">
+                      <SlidersHorizontal
+                        className="size-5 text-primary"
+                        aria-hidden="true"
+                      />
+                      <SheetTitle>Filter tournaments</SheetTitle>
+                    </div>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-y-auto px-4 pb-6">
+                    <FilterPanel
+                      control={form.control}
+                      applyPatch={applyPatch}
+                    />
+                  </div>
+                  <SheetFooter className="grid grid-cols-2 border-t bg-background dark:bg-muted">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClearFilters}
+                    >
+                      <X aria-hidden="true" />
+                      Clear all
+                    </Button>
+                    <SheetClose asChild>
+                      <Button type="button">Done</Button>
+                    </SheetClose>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
 
