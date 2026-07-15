@@ -212,11 +212,11 @@ function ListHeader() {
   return (
     <div
       aria-hidden="true"
-      className="hidden grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.7fr)_minmax(230px,0.6fr)] gap-5 border-b bg-muted/30 px-5 py-2.5 text-xs font-medium text-muted-foreground lg:grid dark:bg-secondary/45"
+      className="hidden grid-cols-[minmax(0,1fr)_18rem_230px] gap-5 border-b bg-muted/30 px-5 py-2.5 text-xs font-medium text-muted-foreground lg:grid dark:bg-secondary/45"
     >
       <span>Tournament</span>
       <span>Format</span>
-      <span className="text-right">Tournament dates</span>
+      <span className="text-right">Dates</span>
     </div>
   );
 }
@@ -236,7 +236,7 @@ function InitialLoadingState() {
 
 function ListItemSkeleton({ label }: { label?: string }) {
   return (
-    <div className="grid min-h-28 gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.7fr)_minmax(230px,0.6fr)] lg:items-center lg:gap-5">
+    <div className="grid min-h-28 gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_18rem_230px] lg:items-center lg:gap-5">
       {label && <span className="sr-only">{label}</span>}
       <div className="space-y-3">
         <Skeleton className="h-5 w-3/5" />

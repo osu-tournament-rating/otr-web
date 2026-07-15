@@ -46,6 +46,63 @@ test.describe('Tournaments', () => {
       await expect(search).toBeVisible({ timeout: 10000 });
     });
 
+    test('previews admin notes without shifting tournament rows', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const items = page.locator('[data-testid="tournament-list-item"]');
+      await expect(items.first()).toBeVisible({ timeout: 10000 });
+
+      const noteSlots = page.locator(
+        '[data-testid="tournament-admin-note-slot"]'
+      );
+      await expect(noteSlots).toHaveCount(await items.count());
+
+      const slotWidths = await noteSlots.evaluateAll((slots) =>
+        slots.map((slot) => slot.getBoundingClientRect().width)
+      );
+      expect(new Set(slotWidths)).toEqual(new Set([20]));
+
+      const noteTriggers = page.locator(
+        '[data-testid="tournament-admin-notes-trigger"]'
+      );
+      await noteTriggers.first().scrollIntoViewIfNeeded();
+      await expect(noteTriggers.first()).toBeVisible();
+      expect(await noteTriggers.count()).toBeLessThan(await noteSlots.count());
+
+      const trigger = noteTriggers.first();
+      const row = trigger.locator(
+        'xpath=ancestor::*[@data-testid="tournament-list-item"]'
+      );
+      const abbreviation = row.locator(
+        '[data-testid="tournament-abbreviation"]'
+      );
+      const rowBoxBeforeHover = await row.boundingBox();
+      const abbreviationBox = await abbreviation.boundingBox();
+      const triggerBox = await trigger.boundingBox();
+
+      expect(abbreviationBox).not.toBeNull();
+      expect(triggerBox).not.toBeNull();
+      expect(triggerBox!.x).toBeGreaterThanOrEqual(
+        abbreviationBox!.x + abbreviationBox!.width
+      );
+
+      await trigger.hover();
+      const tooltip = page.getByRole('tooltip').filter({
+        has: page.locator('[data-testid="tournament-admin-notes-content"]'),
+      });
+      await expect(tooltip.last()).toBeVisible();
+      await expect(tooltip.last()).toContainText(
+        /By .+ on [A-Z][a-z]{2} \d{2}, \d{4}/
+      );
+      await expect(tooltip.last().locator(':scope > span > svg')).toHaveCount(
+        0
+      );
+      expect(await row.boundingBox()).toEqual(rowBoxBeforeHover);
+    });
+
     test('search by title returns matching tournaments', async ({ page }) => {
       await page.goto(ROUTES.tournaments);
       await page.waitForLoadState('networkidle');

@@ -1,11 +1,23 @@
-import { CalendarDays, ChevronRight, Target, Users } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronRight,
+  StickyNote,
+  Target,
+  Users,
+} from 'lucide-react';
 import { VerificationStatus } from '@otr/core/osu';
 
+import AdminNoteContent from '@/components/admin-notes/AdminNoteContent';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import { LazerBadge } from '@/components/badges/LazerBadge';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import { type AdminNotePreview } from '@/lib/orpc/schema/common';
 import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
 import { formatRankRange } from '@/lib/utils/number';
 
@@ -56,6 +68,48 @@ function formatTournamentDates(
     : 'Dates unavailable';
 }
 
+function AdminNotesTooltip({
+  notes,
+  tournamentName,
+}: {
+  notes: AdminNotePreview[];
+  tournamentName: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          data-testid="tournament-admin-notes-trigger"
+          tabIndex={0}
+          aria-label={`${notes.length} admin ${notes.length === 1 ? 'note' : 'notes'} for ${tournamentName}`}
+          className="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <StickyNote className="size-4" aria-hidden="true" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        align="start"
+        sideOffset={8}
+        collisionPadding={16}
+        hideArrow
+        className="w-80 max-w-[calc(100vw-2rem)] border bg-popover p-0 text-sm text-popover-foreground shadow-lg"
+      >
+        <div
+          data-testid="tournament-admin-notes-content"
+          className="max-h-64 divide-y overflow-y-auto"
+        >
+          {notes.map((note) => (
+            <div key={note.id} className="p-3">
+              <AdminNoteContent note={note} authorLink={false} />
+            </div>
+          ))}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export default function TournamentListRow({
   tournament,
 }: {
@@ -78,7 +132,7 @@ export default function TournamentListRow({
   return (
     <div
       data-testid="tournament-card"
-      className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.7fr)_minmax(230px,0.6fr)] lg:items-center lg:gap-5"
+      className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_18rem_230px] lg:items-center lg:gap-5"
     >
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
@@ -91,22 +145,34 @@ export default function TournamentListRow({
           <h2 className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
             {tournament.name}
           </h2>
-          <span className="shrink-0 font-mono text-xs text-muted-foreground">
+          <span
+            data-testid="tournament-abbreviation"
+            className="shrink-0 font-mono text-xs text-muted-foreground"
+          >
             {tournament.abbreviation}
+          </span>
+          <span
+            data-testid="tournament-admin-note-slot"
+            className="inline-flex size-5 shrink-0 items-center justify-center"
+          >
+            {tournament.adminNotes.length > 0 && (
+              <AdminNotesTooltip
+                notes={tournament.adminNotes}
+                tournamentName={tournament.name}
+              />
+            )}
           </span>
         </div>
         {(isAwaitingReview || tournament.isLazer) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {isAwaitingReview && (
-              <SimpleTooltip content="Awaiting admin review">
-                <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning">
-                  <span
-                    className="size-1.5 rounded-full bg-current"
-                    aria-hidden="true"
-                  />
-                  Awaiting review
-                </span>
-              </SimpleTooltip>
+              <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning">
+                <span
+                  className="size-1.5 rounded-full bg-current"
+                  aria-hidden="true"
+                />
+                Awaiting review
+              </span>
             )}
             {tournament.isLazer && <LazerBadge isLazer={tournament.isLazer} />}
           </div>
