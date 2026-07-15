@@ -5,14 +5,21 @@ import * as SliderPrimitive from '@radix-ui/react-slider';
 
 import { cn } from '@/lib/utils';
 
+type SliderProps = React.ComponentProps<typeof SliderPrimitive.Root> & {
+  getThumbProps?: (
+    index: number
+  ) => React.ComponentProps<typeof SliderPrimitive.Thumb>;
+};
+
 function Slider({
   className,
   defaultValue,
+  getThumbProps,
   value,
   min = 0,
   max = 100,
   ...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+}: SliderProps) {
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
@@ -49,13 +56,21 @@ function Slider({
           )}
         />
       </SliderPrimitive.Track>
-      {Array.from({ length: _values.length }, (_, index) => (
-        <SliderPrimitive.Thumb
-          data-slot="slider-thumb"
-          key={index}
-          className="block size-4 shrink-0 rounded-full border border-primary bg-background shadow-sm ring-ring/50 transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-        />
-      ))}
+      {Array.from({ length: _values.length }, (_, index) => {
+        const thumbProps = getThumbProps?.(index);
+
+        return (
+          <SliderPrimitive.Thumb
+            {...thumbProps}
+            data-slot="slider-thumb"
+            key={index}
+            className={cn(
+              'block size-4 shrink-0 rounded-full border border-primary bg-background shadow-sm ring-ring/50 transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50',
+              thumbProps?.className
+            )}
+          />
+        );
+      })}
     </SliderPrimitive.Root>
   );
 }
