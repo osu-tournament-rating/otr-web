@@ -5,8 +5,20 @@ import { LazerBadge } from '@/components/badges/LazerBadge';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
-import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
+
+const monthDayFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+const fullDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 function formatRankRangeDisplay(rankRange: number): string {
   return rankRange === 1 ? 'Open rank' : formatRankRange(rankRange);
@@ -16,14 +28,30 @@ function formatTournamentDates(
   startTime: Date | string | null,
   endTime: Date | string | null
 ): string {
-  const startDate = startTime ? formatUTCDate(new Date(startTime)) : null;
-  const endDate = endTime ? formatUTCDate(new Date(endTime)) : null;
+  const startDate = startTime ? new Date(startTime) : null;
+  const endDate = endTime ? new Date(endTime) : null;
 
   if (startDate && endDate) {
-    return startDate === endDate ? startDate : `${startDate} – ${endDate}`;
+    const sameDay =
+      startDate.getUTCFullYear() === endDate.getUTCFullYear() &&
+      startDate.getUTCMonth() === endDate.getUTCMonth() &&
+      startDate.getUTCDate() === endDate.getUTCDate();
+
+    if (sameDay) {
+      return fullDateFormatter.format(startDate);
+    }
+
+    if (startDate.getUTCFullYear() === endDate.getUTCFullYear()) {
+      return `${monthDayFormatter.format(startDate)} – ${fullDateFormatter.format(endDate)}`;
+    }
+
+    return `${fullDateFormatter.format(startDate)} – ${fullDateFormatter.format(endDate)}`;
   }
 
-  return startDate ?? endDate ?? 'Dates unavailable';
+  const availableDate = startDate ?? endDate;
+  return availableDate
+    ? fullDateFormatter.format(availableDate)
+    : 'Dates unavailable';
 }
 
 export default function TournamentListRow({
@@ -39,7 +67,7 @@ export default function TournamentListRow({
   return (
     <div
       data-testid="tournament-card"
-      className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.7fr)_minmax(230px,0.6fr)] lg:items-center lg:gap-5"
+      className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.7fr)_minmax(230px,0.6fr)] lg:items-center lg:gap-5"
     >
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -62,8 +90,8 @@ export default function TournamentListRow({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
+      <div className="flex items-center gap-x-4 text-sm text-muted-foreground">
+        <span className="inline-flex w-28 shrink-0 items-center gap-1.5">
           <RulesetIcon
             ruleset={tournament.ruleset}
             className="size-4 shrink-0 fill-current"
@@ -71,11 +99,11 @@ export default function TournamentListRow({
           />
           {RulesetEnumHelper.getMetadata(tournament.ruleset).text}
         </span>
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex w-12 shrink-0 items-center gap-1.5">
           <Users className="size-4 shrink-0" aria-hidden="true" />
           {tournament.lobbySize}v{tournament.lobbySize}
         </span>
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex w-24 shrink-0 items-center gap-1.5">
           <Target className="size-4 shrink-0" aria-hidden="true" />
           {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
         </span>
