@@ -151,6 +151,7 @@ const fromDateInputValue = (value: string) =>
 
 function useSearchInput(initialQuery: string) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [synchronizedQuery, setSynchronizedQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
 
   const handleSetQuery = useCallback((input: string) => {
@@ -159,12 +160,15 @@ function useSearchInput(initialQuery: string) {
 
   useEffect(() => {
     setSearchQuery(initialQuery);
+    setSynchronizedQuery(initialQuery);
   }, [initialQuery]);
 
   return {
     searchQuery,
     debouncedQuery,
     handleSetQuery,
+    isSynchronizing:
+      synchronizedQuery !== initialQuery && searchQuery !== initialQuery,
   };
 }
 
@@ -911,9 +915,8 @@ function ActiveFilterSummary({
 export default function TournamentListFilter({
   filter,
 }: TournamentListFilterProps) {
-  const { searchQuery, debouncedQuery, handleSetQuery } = useSearchInput(
-    filter.searchQuery ?? ''
-  );
+  const { searchQuery, debouncedQuery, handleSetQuery, isSynchronizing } =
+    useSearchInput(filter.searchQuery ?? '');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -1006,12 +1009,19 @@ export default function TournamentListFilter({
 
   useEffect(() => {
     if (
+      !isSynchronizing &&
       debouncedQuery === searchQuery &&
       debouncedQuery !== (filter.searchQuery ?? '')
     ) {
       applyPatch({ searchQuery: debouncedQuery });
     }
-  }, [applyPatch, debouncedQuery, filter.searchQuery, searchQuery]);
+  }, [
+    applyPatch,
+    debouncedQuery,
+    filter.searchQuery,
+    isSynchronizing,
+    searchQuery,
+  ]);
 
   const handleSearchKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {

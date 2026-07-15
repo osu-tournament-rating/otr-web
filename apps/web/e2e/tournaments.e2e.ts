@@ -5,6 +5,8 @@ import {
   Ruleset,
 } from './fixtures/test-config';
 
+const SEARCH_DEBOUNCE_SETTLE_MS = 600;
+
 test.describe('Tournaments', () => {
   test.describe('Listing and Search', () => {
     test('loads the tournaments page with a list of tournaments', async ({
@@ -110,7 +112,6 @@ test.describe('Tournaments', () => {
       const search = page.locator('[data-testid="tournament-search-input"]');
       await expect(search).toBeVisible({ timeout: 10000 });
       await search.fill('Dio');
-      await search.press('Enter');
 
       await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
       await page.waitForLoadState('networkidle');
@@ -327,6 +328,7 @@ test.describe('Tournaments', () => {
       await page.waitForURL(
         /searchQuery=definitely-not-a-real-tournament-12345/
       );
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
 
       const emptyState = page.locator('[data-testid="tournament-empty-state"]');
       await expect(emptyState).toBeVisible();
@@ -336,9 +338,38 @@ test.describe('Tournaments', () => {
       await page.waitForURL(
         (url) => url.pathname === ROUTES.tournaments && url.search === ''
       );
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+      expect(new URL(page.url()).searchParams.get('searchQuery')).toBeNull();
+      await expect(search).toHaveValue('');
       await expect(
         page.locator('[data-testid="tournament-list-item"]').first()
       ).toBeVisible();
+    });
+
+    test('browser back restores the previous search query', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const search = page.locator('[data-testid="tournament-search-input"]');
+      await search.fill('Dio');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+
+      await search.fill('DAS');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=DAS/i, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+
+      await page.goBack();
+      await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
+      await expect(search).toHaveValue('Dio');
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+      expect(new URL(page.url()).searchParams.get('searchQuery')).toBe('Dio');
+      await expect(search).toHaveValue('Dio');
     });
 
     test('combination of search and ruleset filters works together', async ({
