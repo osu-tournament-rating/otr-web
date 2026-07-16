@@ -17,13 +17,12 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { toast } from 'sonner';
-import Link from 'next/link';
-import { format } from 'date-fns';
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { useSession } from '@/lib/hooks/useSession';
 import { useRouter } from 'next/navigation';
 import { AdminNote } from './types';
 import { getAdminNoteMutations } from './adminNoteMutations';
+import AdminNoteContent from './AdminNoteContent';
 
 export default function AdminNoteListItem({
   note,
@@ -75,20 +74,10 @@ export default function AdminNoteListItem({
   };
 
   return (
-    <div className="flex flex-col">
-      <p className="text-foreground">{note.note}</p>
-      <div className="flex items-end gap-2">
-        <p className="text-sm text-muted-foreground">
-          By{' '}
-          <Link
-            href={`/players/${note.adminUser.player.id}`}
-            className="font-semibold text-primary"
-          >
-            {note.adminUser.player.username}
-          </Link>{' '}
-          on {format(new Date(note.created), 'MMM dd, yyyy')}
-        </p>
-        {showModificationButtons && (
+    <AdminNoteContent
+      note={note}
+      footerActions={
+        showModificationButtons ? (
           <>
             {/* Edit Dialog */}
             <AlertDialog>
@@ -138,8 +127,8 @@ export default function AdminNoteListItem({
               </AlertDialogContent>
             </AlertDialog>
           </>
-        )}
-      </div>
-    </div>
+        ) : undefined
+      }
+    />
   );
 }

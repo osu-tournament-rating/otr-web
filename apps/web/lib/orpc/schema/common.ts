@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { tournamentAdminNoteSelectSchema, userSelectSchema } from './base';
 import { PlayerSchema } from './player';
 
@@ -21,3 +23,20 @@ const adminNoteBaseSchema = tournamentAdminNoteSelectSchema.pick({
 export const AdminNoteSchema = adminNoteBaseSchema.extend({
   adminUser: AdminNoteUserSchema,
 });
+
+export const AdminNotePreviewSchema = adminNoteBaseSchema
+  .pick({
+    id: true,
+    note: true,
+    created: true,
+  })
+  .extend({
+    adminUser: z.object({
+      player: PlayerSchema.pick({
+        id: true,
+        username: true,
+      }),
+    }),
+  });
+
+export type AdminNotePreview = z.infer<typeof AdminNotePreviewSchema>;

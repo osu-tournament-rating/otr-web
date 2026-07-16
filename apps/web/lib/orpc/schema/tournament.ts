@@ -11,7 +11,7 @@ import {
   VerificationStatusSchema,
 } from './constants';
 import type { VerificationStatusValue } from './constants';
-import { AdminNoteSchema } from './common';
+import { AdminNotePreviewSchema, AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
 import { TournamentQuerySortType } from '@otr/core/osu';
@@ -56,11 +56,14 @@ export const TournamentListItemSchema = tournamentSelectSchema
     verificationStatus: VerificationStatusSchema,
     submittedByUsername: z.string().nullable(),
     verifiedByUsername: z.string().nullable(),
+    adminNotes: z.array(AdminNotePreviewSchema).default([]),
   });
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
 
-export const PlayerTournamentListItemSchema = TournamentListItemSchema.extend({
+export const PlayerTournamentListItemSchema = TournamentListItemSchema.omit({
+  adminNotes: true,
+}).extend({
   matchesWon: z.number().int(),
   matchesLost: z.number().int(),
 });

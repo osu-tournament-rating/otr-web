@@ -5,6 +5,8 @@ import {
   Ruleset,
 } from './fixtures/test-config';
 
+const SEARCH_DEBOUNCE_SETTLE_MS = 600;
+
 test.describe('Tournaments', () => {
   test.describe('Listing and Search', () => {
     test('loads the tournaments page with a list of tournaments', async ({
@@ -13,9 +15,29 @@ test.describe('Tournaments', () => {
       await page.goto(ROUTES.tournaments);
       await page.waitForLoadState('networkidle');
 
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Tournaments' })
+      ).toBeVisible();
+      await expect(
+        page.getByText(/browse tournament submissions and their review status/i)
+      ).toBeVisible();
+      await expect(
+        page.getByText(/only verified data is included in ratings/i)
+      ).toBeVisible();
+
       const items = page.locator('[data-testid="tournament-list-item"]');
       await expect(items.first()).toBeVisible({ timeout: 10000 });
       expect(await items.count()).toBeGreaterThan(0);
+
+      const results = page.locator('[data-testid="tournament-results"]');
+      await expect(results).toBeVisible();
+      await expect(results.locator('[data-slot="card"]')).toHaveCount(0);
+      await expect(
+        results.getByText('Tournament', { exact: true })
+      ).toBeVisible();
+      await expect(
+        results.getByText('Tournament and review status', { exact: true })
+      ).toHaveCount(0);
     });
 
     test('displays the search input', async ({ page }) => {
@@ -26,6 +48,63 @@ test.describe('Tournaments', () => {
       await expect(search).toBeVisible({ timeout: 10000 });
     });
 
+    test('previews admin notes without shifting tournament rows', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const items = page.locator('[data-testid="tournament-list-item"]');
+      await expect(items.first()).toBeVisible({ timeout: 10000 });
+
+      const noteSlots = page.locator(
+        '[data-testid="tournament-admin-note-slot"]'
+      );
+      await expect(noteSlots).toHaveCount(await items.count());
+
+      const slotWidths = await noteSlots.evaluateAll((slots) =>
+        slots.map((slot) => slot.getBoundingClientRect().width)
+      );
+      expect(new Set(slotWidths)).toEqual(new Set([20]));
+
+      const noteTriggers = page.locator(
+        '[data-testid="tournament-admin-notes-trigger"]'
+      );
+      await noteTriggers.first().scrollIntoViewIfNeeded();
+      await expect(noteTriggers.first()).toBeVisible();
+      expect(await noteTriggers.count()).toBeLessThan(await noteSlots.count());
+
+      const trigger = noteTriggers.first();
+      const row = trigger.locator(
+        'xpath=ancestor::*[@data-testid="tournament-list-item"]'
+      );
+      const abbreviation = row.locator(
+        '[data-testid="tournament-abbreviation"]'
+      );
+      const rowBoxBeforeHover = await row.boundingBox();
+      const abbreviationBox = await abbreviation.boundingBox();
+      const triggerBox = await trigger.boundingBox();
+
+      expect(abbreviationBox).not.toBeNull();
+      expect(triggerBox).not.toBeNull();
+      expect(triggerBox!.x).toBeGreaterThanOrEqual(
+        abbreviationBox!.x + abbreviationBox!.width
+      );
+
+      await trigger.hover();
+      const tooltip = page.getByRole('tooltip').filter({
+        has: page.locator('[data-testid="tournament-admin-notes-content"]'),
+      });
+      await expect(tooltip.last()).toBeVisible();
+      await expect(tooltip.last()).toContainText(
+        /By .+ on [A-Z][a-z]{2} \d{2}, \d{4}/
+      );
+      await expect(tooltip.last().locator(':scope > span > svg')).toHaveCount(
+        0
+      );
+      expect(await row.boundingBox()).toEqual(rowBoxBeforeHover);
+    });
+
     test('search by title returns matching tournaments', async ({ page }) => {
       await page.goto(ROUTES.tournaments);
       await page.waitForLoadState('networkidle');
@@ -33,7 +112,6 @@ test.describe('Tournaments', () => {
       const search = page.locator('[data-testid="tournament-search-input"]');
       await expect(search).toBeVisible({ timeout: 10000 });
       await search.fill('Dio');
-      await search.press('Enter');
 
       await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
       await page.waitForLoadState('networkidle');
@@ -89,9 +167,209 @@ test.describe('Tournaments', () => {
       await expect(filtersButton).toBeVisible({ timeout: 10000 });
       await filtersButton.click();
 
-      await expect(page.getByText('Ruleset').first()).toBeVisible({
-        timeout: 10000,
+      const filterSheet = page.getByRole('dialog', {
+        name: 'Filter tournaments',
       });
+      await expect(filterSheet).toBeVisible({ timeout: 10000 });
+      await expect(
+        filterSheet.getByText('Status', { exact: true })
+      ).toBeVisible();
+      await expect(filterSheet.getByText(/current review state/i)).toHaveCount(
+        0
+      );
+      await expect(filterSheet.getByText(/find events within/i)).toHaveCount(0);
+      await expect(filterSheet.getByText(/narrow submissions by/i)).toHaveCount(
+        0
+      );
+    });
+
+    test('rank slider uses tiered keyboard steps', async ({ page }) => {
+      const thresholds = [
+        { current: 999, next: 1_000 },
+        { current: 1_000, next: 1_100 },
+        { current: 5_000, next: 5_500 },
+        { current: 10_000, next: 11_000 },
+      ];
+
+      for (const { current, next } of thresholds) {
+        await page.goto(`${ROUTES.tournaments}?minRankRange=${current}`);
+        await page.waitForLoadState('networkidle');
+        await page.locator('[data-testid="tournament-filters-button"]').click();
+
+        const minimumRank = page.getByRole('slider', {
+          name: 'Minimum rank',
+        });
+        await minimumRank.press('ArrowRight');
+
+        await expect(page.locator('#tournament-min-rank')).toHaveValue(
+          String(next)
+        );
+        await expect
+          .poll(
+            () => new URL(page.url()).searchParams.get('minRankRange') ?? '1'
+          )
+          .toBe(String(next));
+      }
+    });
+
+    test('quick ruleset filter updates and clears the URL', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      await page.getByRole('button', { name: 'taiko', exact: true }).click();
+      await page.waitForURL(/ruleset=1/);
+
+      await page.getByRole('button', { name: 'All', exact: true }).click();
+      await page.waitForURL(
+        (url) =>
+          url.pathname === ROUTES.tournaments &&
+          !url.searchParams.has('ruleset')
+      );
+    });
+
+    test('sort direction exposes its state and updates the URL', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const direction = page.locator(
+        '[data-testid="tournament-sort-direction"]'
+      );
+      await expect(direction).toHaveAccessibleName(/sort order is descending/i);
+      await direction.click();
+
+      await page.waitForURL(/descending=false/);
+      await expect(direction).toHaveAccessibleName(/sort order is ascending/i);
+    });
+
+    test('advanced status filter stays visible and can be removed', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="tournament-filters-button"]').click();
+      await page.locator('[data-testid="tournament-status-filter"]').click();
+      await page
+        .getByRole('menuitemcheckbox', { name: 'Verified', exact: true })
+        .click();
+      await page.waitForURL(/verificationStatus=4/);
+      await page.getByRole('button', { name: 'Done', exact: true }).click();
+
+      const activeFilter = page.getByRole('button', {
+        name: 'Remove Status: Verified filter',
+      });
+      await expect(activeFilter).toBeVisible();
+      await activeFilter.click();
+      await page.waitForURL(
+        (url) =>
+          url.pathname === ROUTES.tournaments &&
+          !url.searchParams.has('verificationStatus')
+      );
+    });
+
+    test('rank restriction defaults to 200000 and accepts larger values', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await page.locator('[data-testid="tournament-filters-button"]').click();
+
+      const maximumRank = page.locator('#tournament-max-rank');
+      await expect(maximumRank).toHaveValue('200000');
+      await maximumRank.fill('250000');
+      await maximumRank.blur();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get('maxRankRange'))
+        .toBe('250000');
+    });
+
+    test('filters by multiple rejection reasons from a checkbox menu', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await page.locator('[data-testid="tournament-filters-button"]').click();
+      await page
+        .locator('[data-testid="tournament-rejection-reason-filter"]')
+        .click();
+
+      await page
+        .getByRole('menuitemcheckbox', {
+          name: 'No Verified Matches',
+          exact: true,
+        })
+        .click();
+      await page
+        .getByRole('menuitemcheckbox', {
+          name: 'Abnormal Format',
+          exact: true,
+        })
+        .click();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get('rejectionReason'))
+        .toBe('9');
+    });
+
+    test('empty search offers a clear path back to the archive', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const search = page.locator('[data-testid="tournament-search-input"]');
+      await search.fill('definitely-not-a-real-tournament-12345');
+      await search.press('Enter');
+      await page.waitForURL(
+        /searchQuery=definitely-not-a-real-tournament-12345/
+      );
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+
+      const emptyState = page.locator('[data-testid="tournament-empty-state"]');
+      await expect(emptyState).toBeVisible();
+      await expect(emptyState.getByText('No tournaments match')).toBeVisible();
+      await emptyState.getByRole('link', { name: 'Clear filters' }).click();
+
+      await page.waitForURL(
+        (url) => url.pathname === ROUTES.tournaments && url.search === ''
+      );
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+      expect(new URL(page.url()).searchParams.get('searchQuery')).toBeNull();
+      await expect(search).toHaveValue('');
+      await expect(
+        page.locator('[data-testid="tournament-list-item"]').first()
+      ).toBeVisible();
+    });
+
+    test('browser back restores the previous search query', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const search = page.locator('[data-testid="tournament-search-input"]');
+      await search.fill('Dio');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+
+      await search.fill('DAS');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=DAS/i, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+
+      await page.goBack();
+      await page.waitForURL(/searchQuery=Dio/i, { timeout: 10000 });
+      await expect(search).toHaveValue('Dio');
+      await page.waitForTimeout(SEARCH_DEBOUNCE_SETTLE_MS);
+      expect(new URL(page.url()).searchParams.get('searchQuery')).toBe('Dio');
+      await expect(search).toHaveValue('Dio');
     });
 
     test('combination of search and ruleset filters works together', async ({
