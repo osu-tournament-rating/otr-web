@@ -143,6 +143,9 @@ export default function BeatmapHeader({
             <div className="mt-5">
               <AudioPreviewButton
                 beatmapsetOsuId={beatmap.beatmapset?.osuId}
+                artist={beatmap.beatmapset?.artist}
+                title={beatmap.beatmapset?.title}
+                difficulty={beatmap.diffName}
                 className="border border-white/15 bg-white text-black hover:bg-white/90"
               />
             </div>

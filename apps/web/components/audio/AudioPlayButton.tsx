@@ -2,7 +2,11 @@
 
 import { Play, Pause, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAudioPlayer, useIsPlaying } from '@/lib/hooks/useAudioPlayer';
+import {
+  useAudioPlayer,
+  useIsPlaying,
+  useIsPreviewActive,
+} from '@/lib/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
 import SimpleTooltip from '@/components/simple-tooltip';
 
@@ -17,6 +21,9 @@ interface AudioPlayButtonProps {
   variant?: 'ghost' | 'default';
   className?: string;
   showTooltip?: boolean;
+  artist?: string;
+  title?: string;
+  difficulty?: string;
 }
 
 export default function AudioPlayButton({
@@ -25,9 +32,13 @@ export default function AudioPlayButton({
   variant = 'ghost',
   className,
   showTooltip = true,
+  artist,
+  title,
+  difficulty,
 }: AudioPlayButtonProps) {
   const { state, togglePlayPause } = useAudioPlayer();
   const isPlaying = useIsPlaying(beatmapsetOsuId);
+  const isActive = useIsPreviewActive(beatmapsetOsuId);
   const isLoading =
     state.isLoading && state.currentlyPlaying === beatmapsetOsuId;
 
@@ -35,21 +46,48 @@ export default function AudioPlayButton({
     e.stopPropagation();
     e.preventDefault();
     if (beatmapsetOsuId) {
-      togglePlayPause(beatmapsetOsuId);
+      togglePlayPause({
+        beatmapsetOsuId,
+        artist,
+        title,
+        difficulty,
+      });
     }
   };
 
   if (!beatmapsetOsuId) return null;
 
   const Icon = isLoading ? Loader2 : isPlaying ? Pause : Play;
+  const actionLabel = isLoading
+    ? 'Loading preview'
+    : isPlaying
+      ? 'Pause preview'
+      : isActive
+        ? 'Resume preview'
+        : 'Play preview';
 
   const button = (
     <Button
       variant={variant}
       size="icon"
-      className={cn(sizeConfig[size].button, className)}
+      className={cn(
+        sizeConfig[size].button,
+        isActive &&
+          'ring-1 ring-primary/70 ring-offset-1 ring-offset-background',
+        className
+      )}
       onClick={handleClick}
-      aria-label={isPlaying ? 'Pause preview' : 'Play preview'}
+      aria-label={actionLabel}
+      aria-pressed={isActive}
+      data-preview-state={
+        isLoading
+          ? 'loading'
+          : isPlaying
+            ? 'playing'
+            : isActive
+              ? 'paused'
+              : 'idle'
+      }
     >
       <Icon
         className={cn(sizeConfig[size].icon, isLoading && 'animate-spin')}
@@ -59,9 +97,5 @@ export default function AudioPlayButton({
 
   if (!showTooltip) return button;
 
-  return (
-    <SimpleTooltip content={isPlaying ? 'Pause preview' : 'Play preview'}>
-      {button}
-    </SimpleTooltip>
-  );
+  return <SimpleTooltip content={actionLabel}>{button}</SimpleTooltip>;
 }

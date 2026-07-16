@@ -9,6 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 
+import {
+  normalizeAudioPreviewTrack,
+  type AudioPreviewSource,
+  type AudioPreviewTrack,
+} from '@/lib/audio/preview';
+
 const VOLUME_STORAGE_KEY = 'otr-audio-player-volume';
 const DEFAULT_VOLUME = 0.25;
 
@@ -20,33 +26,43 @@ function getStoredVolume(): number {
   return isNaN(parsed) ? DEFAULT_VOLUME : Math.max(0, Math.min(1, parsed));
 }
 
-interface AudioPlayerState {
+export interface AudioPlayerState {
   currentlyPlaying: number | null;
+  currentTrack: AudioPreviewTrack | null;
   volume: number;
   isLoading: boolean;
+  isPlaying: boolean;
   currentTime: number;
   duration: number;
+  error: string | null;
 }
 
 interface AudioPlayerContextType {
   state: AudioPlayerState;
-  play: (beatmapsetOsuId: number) => void;
+  play: (source: AudioPreviewSource) => void;
   pause: () => void;
-  togglePlayPause: (beatmapsetOsuId: number) => void;
+  close: () => void;
+  togglePlayPause: (source: AudioPreviewSource) => void;
   setVolume: (volume: number) => void;
   seek: (time: number) => void;
 }
 
+const initialState: AudioPlayerState = {
+  currentlyPlaying: null,
+  currentTrack: null,
+  volume: DEFAULT_VOLUME,
+  isLoading: false,
+  isPlaying: false,
+  currentTime: 0,
+  duration: 0,
+  error: null,
+};
+
 export const AudioPlayerContext = createContext<AudioPlayerContextType>({
-  state: {
-    currentlyPlaying: null,
-    volume: 0.25,
-    isLoading: false,
-    currentTime: 0,
-    duration: 0,
-  },
+  state: initialState,
   play: () => {},
   pause: () => {},
+  close: () => {},
   togglePlayPause: () => {},
   setVolume: () => {},
   seek: () => {},
@@ -54,11 +70,8 @@ export const AudioPlayerContext = createContext<AudioPlayerContextType>({
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AudioPlayerState>(() => ({
-    currentlyPlaying: null,
+    ...initialState,
     volume: getStoredVolume(),
-    isLoading: false,
-    currentTime: 0,
-    duration: 0,
   }));
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -67,44 +80,73 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     const storedVolume = getStoredVolume();
     audioRef.current = new Audio();
     audioRef.current.volume = storedVolume;
-    setState((prev) => ({ ...prev, volume: storedVolume }));
+    setState((previous) => ({ ...previous, volume: storedVolume }));
 
     const audio = audioRef.current;
 
     const handleEnded = () => {
-      setState((prev) => ({
-        ...prev,
-        currentlyPlaying: null,
-        currentTime: 0,
-        duration: 0,
+      setState((previous) => ({
+        ...previous,
+        isLoading: false,
+        isPlaying: false,
+        currentTime: previous.duration,
       }));
     };
 
     const handleError = () => {
-      setState((prev) => ({
-        ...prev,
-        currentlyPlaying: null,
+      setState((previous) => ({
+        ...previous,
         isLoading: false,
-        currentTime: 0,
-        duration: 0,
+        isPlaying: false,
+        error: 'Preview unavailable',
       }));
     };
 
     const handleCanPlay = () => {
-      setState((prev) => ({ ...prev, isLoading: false }));
+      setState((previous) => ({ ...previous, isLoading: false }));
+    };
+
+    const handlePlaying = () => {
+      setState((previous) => ({
+        ...previous,
+        isLoading: false,
+        isPlaying: true,
+        error: null,
+      }));
+    };
+
+    const handlePause = () => {
+      setState((previous) => ({
+        ...previous,
+        isLoading: false,
+        isPlaying: false,
+      }));
+    };
+
+    const handleWaiting = () => {
+      setState((previous) => ({ ...previous, isLoading: true }));
     };
 
     const handleTimeUpdate = () => {
-      setState((prev) => ({ ...prev, currentTime: audio.currentTime }));
+      setState((previous) => ({
+        ...previous,
+        currentTime: audio.currentTime,
+      }));
     };
 
     const handleLoadedMetadata = () => {
-      setState((prev) => ({ ...prev, duration: audio.duration }));
+      setState((previous) => ({
+        ...previous,
+        duration: Number.isFinite(audio.duration) ? audio.duration : 0,
+      }));
     };
 
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('playing', handlePlaying);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('waiting', handleWaiting);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 
@@ -112,6 +154,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('playing', handlePlaying);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.pause();
@@ -119,28 +164,34 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const play = useCallback(
-    (beatmapsetOsuId: number) => {
+    (source: AudioPreviewSource) => {
       const audio = audioRef.current;
       if (!audio) return;
 
-      const url = `https://b.ppy.sh/preview/${beatmapsetOsuId}.mp3`;
+      const track = normalizeAudioPreviewTrack(source);
+      const isCurrentTrack = state.currentlyPlaying === track.beatmapsetOsuId;
 
-      if (state.currentlyPlaying === beatmapsetOsuId && audio.paused) {
-        audio.play();
-        return;
+      setState((previous) => ({
+        ...previous,
+        currentlyPlaying: track.beatmapsetOsuId,
+        currentTrack: track,
+        isLoading: true,
+        error: null,
+        ...(!isCurrentTrack
+          ? { currentTime: 0, duration: 0, isPlaying: false }
+          : {}),
+      }));
+
+      if (!isCurrentTrack) {
+        audio.src = `https://b.ppy.sh/preview/${track.beatmapsetOsuId}.mp3`;
       }
 
-      setState((prev) => ({
-        ...prev,
-        isLoading: true,
-        currentlyPlaying: beatmapsetOsuId,
-      }));
-      audio.src = url;
-      audio.play().catch(() => {
-        setState((prev) => ({
-          ...prev,
-          currentlyPlaying: null,
+      void audio.play().catch(() => {
+        setState((previous) => ({
+          ...previous,
           isLoading: false,
+          isPlaying: false,
+          error: 'Preview unavailable',
         }));
       });
     },
@@ -149,42 +200,74 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
-    setState((prev) => ({
-      ...prev,
-      currentlyPlaying: null,
-      currentTime: 0,
-      duration: 0,
+    setState((previous) => ({
+      ...previous,
+      isLoading: false,
+      isPlaying: false,
+    }));
+  }, []);
+
+  const close = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    }
+
+    setState((previous) => ({
+      ...initialState,
+      volume: previous.volume,
     }));
   }, []);
 
   const togglePlayPause = useCallback(
-    (beatmapsetOsuId: number) => {
-      if (state.currentlyPlaying === beatmapsetOsuId) {
+    (source: AudioPreviewSource) => {
+      const track = normalizeAudioPreviewTrack(source);
+      if (
+        state.currentlyPlaying === track.beatmapsetOsuId &&
+        (state.isPlaying || state.isLoading)
+      ) {
         pause();
       } else {
-        play(beatmapsetOsuId);
+        play(track);
       }
     },
-    [state.currentlyPlaying, play, pause]
+    [state.currentlyPlaying, state.isLoading, state.isPlaying, play, pause]
   );
 
   const setVolume = useCallback((volume: number) => {
+    const safeVolume = Math.max(0, Math.min(1, volume));
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      audioRef.current.volume = safeVolume;
     }
-    localStorage.setItem(VOLUME_STORAGE_KEY, volume.toString());
-    setState((prev) => ({ ...prev, volume }));
+    localStorage.setItem(VOLUME_STORAGE_KEY, safeVolume.toString());
+    setState((previous) => ({ ...previous, volume: safeVolume }));
   }, []);
 
   const seek = useCallback((time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const safeTime = Math.max(
+      0,
+      Math.min(Number.isFinite(audio.duration) ? audio.duration : time, time)
+    );
+    audio.currentTime = safeTime;
+    setState((previous) => ({ ...previous, currentTime: safeTime }));
   }, []);
 
   return (
     <AudioPlayerContext.Provider
-      value={{ state, play, pause, togglePlayPause, setVolume, seek }}
+      value={{
+        state,
+        play,
+        pause,
+        close,
+        togglePlayPause,
+        setVolume,
+        seek,
+      }}
     >
       {children}
     </AudioPlayerContext.Provider>

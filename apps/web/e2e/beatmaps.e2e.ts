@@ -1,5 +1,64 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { TEST_BEATMAP_OSU_ID, ROUTES } from './fixtures/test-config';
+
+async function installMockPreviewAudio(page: Page) {
+  await page.addInitScript(() => {
+    class PreviewAudioMock extends EventTarget {
+      private source = '';
+      private previewTime = 0;
+
+      paused = true;
+      duration = 30;
+      volume = 0.25;
+
+      get src() {
+        return this.source;
+      }
+
+      set src(value: string) {
+        this.source = value;
+        this.previewTime = 0;
+        queueMicrotask(() => {
+          this.dispatchEvent(new Event('loadedmetadata'));
+          this.dispatchEvent(new Event('canplay'));
+        });
+      }
+
+      get currentTime() {
+        return this.previewTime;
+      }
+
+      set currentTime(value: number) {
+        this.previewTime = value;
+        queueMicrotask(() => this.dispatchEvent(new Event('timeupdate')));
+      }
+
+      play() {
+        this.paused = false;
+        queueMicrotask(() => this.dispatchEvent(new Event('playing')));
+        return Promise.resolve();
+      }
+
+      pause() {
+        if (this.paused) return;
+        this.paused = true;
+        this.dispatchEvent(new Event('pause'));
+      }
+
+      load() {}
+
+      removeAttribute(name: string) {
+        if (name === 'src') this.source = '';
+      }
+    }
+
+    Object.defineProperty(window, 'Audio', {
+      configurable: true,
+      writable: true,
+      value: PreviewAudioMock,
+    });
+  });
+}
 
 test.describe('Beatmaps Listing Page', () => {
   test.describe('Page Load', () => {
@@ -39,7 +98,10 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(firstRow.getByText(/verified games/).last()).toBeVisible();
     });
 
-    test('audio preview does not navigate the row', async ({ page }) => {
+    test('audio transport plays, pauses, scrubs, changes volume, and closes without navigating', async ({
+      page,
+    }) => {
+      await installMockPreviewAudio(page);
       await page.goto(ROUTES.beatmaps);
       const firstRow = page
         .locator('[data-testid^="beatmap-list-row-"]')
@@ -49,6 +111,38 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(preview).toBeVisible({ timeout: 10000 });
       const before = page.url();
       await preview.click();
+      await expect(page).toHaveURL(before);
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toBeVisible();
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      await expect(transport.getByText('Now previewing')).toBeVisible();
+
+      await transport.getByRole('button', { name: 'Pause preview' }).click();
+      await expect(transport).toHaveAttribute('data-player-state', 'paused');
+      await expect(
+        firstRow.getByRole('button', { name: 'Resume preview' })
+      ).toBeVisible();
+
+      const position = transport.getByRole('slider', {
+        name: 'Preview position',
+      });
+      await position.press('End');
+      await expect(position).toHaveAttribute('aria-valuetext', '0:30 of 0:30');
+
+      const volume = transport.getByRole('slider', {
+        name: 'Preview volume',
+      });
+      await volume.press('Home');
+      await expect(volume).toHaveAttribute('aria-valuetext', '0 percent');
+      await expect(
+        transport.getByRole('button', { name: 'Unmute preview' })
+      ).toBeVisible();
+
+      await transport
+        .getByRole('button', { name: 'Close audio preview' })
+        .click();
+      await expect(transport).toBeHidden();
       await expect(page).toHaveURL(before);
     });
 
@@ -186,6 +280,23 @@ test.describe('Beatmap Detail Page', () => {
       await expect(difficulty).toBeVisible({ timeout: 10000 });
       await expect(difficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
       await expect(difficulty.getByText(/ SR/)).toBeVisible();
+    });
+
+    test('hero preview opens the identified cinematic transport', async ({
+      page,
+    }) => {
+      await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+      const preview = page.locator('header button[data-preview-state]').first();
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      await expect(preview).toHaveAccessibleName('Play preview');
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toBeVisible();
+      await expect(transport).toContainText(/\[.+\]/);
+      await expect(preview).toHaveAttribute('data-preview-state', 'playing');
     });
 
     test('page title contains beatmap metadata', async ({ page }) => {

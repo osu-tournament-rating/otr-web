@@ -113,6 +113,9 @@ export default function BeatmapListTable({
                   <span className="pointer-events-auto inline-flex rounded-full bg-black/65 p-1 text-white shadow-lg backdrop-blur-sm">
                     <AudioPlayButton
                       beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                      artist={beatmap.artist}
+                      title={beatmap.title}
+                      difficulty={beatmap.diffName}
                       size="md"
                       variant="ghost"
                       className="rounded-full text-white hover:bg-white/20 hover:text-white"

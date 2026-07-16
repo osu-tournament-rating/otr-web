@@ -402,6 +402,9 @@ export default function TournamentBeatmapsView({
                               <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
                                 <AudioPlayButton
                                   beatmapsetOsuId={beatmap.beatmapset.osuId}
+                                  artist={beatmap.beatmapset.artist}
+                                  title={beatmap.beatmapset.title}
+                                  difficulty={beatmap.diffName}
                                   size="sm"
                                   variant="ghost"
                                   className="text-white hover:bg-white/20 hover:text-white"

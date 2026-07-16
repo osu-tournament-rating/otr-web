@@ -10,5 +10,17 @@ export function useAudioPlayer() {
 export function useIsPlaying(beatmapsetOsuId: number | undefined): boolean {
   const { state } = useAudioPlayer();
   if (!beatmapsetOsuId) return false;
+  return (
+    state.currentlyPlaying === beatmapsetOsuId &&
+    state.isPlaying &&
+    !state.isLoading
+  );
+}
+
+export function useIsPreviewActive(
+  beatmapsetOsuId: number | undefined
+): boolean {
+  const { state } = useAudioPlayer();
+  if (!beatmapsetOsuId) return false;
   return state.currentlyPlaying === beatmapsetOsuId;
 }
