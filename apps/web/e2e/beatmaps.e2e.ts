@@ -30,7 +30,13 @@ async function installMockPreviewAudio(page: Page) {
 
       set currentTime(value: number) {
         this.previewTime = value;
-        queueMicrotask(() => this.dispatchEvent(new Event('timeupdate')));
+        queueMicrotask(() => {
+          this.dispatchEvent(new Event('timeupdate'));
+          if (!this.paused && this.previewTime >= this.duration) {
+            this.paused = true;
+            this.dispatchEvent(new Event('ended'));
+          }
+        });
       }
 
       play() {
@@ -116,16 +122,23 @@ test.describe('Beatmaps Listing Page', () => {
       const transport = page.locator('[data-testid="audio-preview-transport"]');
       await expect(transport).toBeVisible();
       await expect(transport).toHaveAttribute('data-player-state', 'playing');
-      await expect(transport.getByText('Now previewing')).toBeVisible();
+      await expect(
+        transport.getByText('Preview', { exact: true })
+      ).toBeVisible();
 
-      await transport.getByRole('button', { name: 'Pause preview' }).click();
+      await transport
+        .getByRole('button', { name: 'Pause beatmap preview' })
+        .click();
       await expect(transport).toHaveAttribute('data-player-state', 'paused');
+      await expect(
+        transport.getByRole('button', { name: 'Play beatmap preview' })
+      ).toBeVisible();
       await expect(
         firstRow.getByRole('button', { name: 'Resume preview' })
       ).toBeVisible();
 
       const position = transport.getByRole('slider', {
-        name: 'Preview position',
+        name: 'Preview progress',
       });
       await position.press('End');
       await expect(position).toHaveAttribute('aria-valuetext', '0:30 of 0:30');
@@ -139,11 +152,61 @@ test.describe('Beatmaps Listing Page', () => {
         transport.getByRole('button', { name: 'Unmute preview' })
       ).toBeVisible();
 
+      const safeSpacing = await page.evaluate(() => {
+        const transportElement = document.querySelector(
+          '[data-testid="audio-preview-transport"]'
+        );
+        return {
+          bodyPadding: Number.parseFloat(
+            getComputedStyle(document.body).paddingBottom
+          ),
+          transportHeight:
+            transportElement?.getBoundingClientRect().height ??
+            Number.MAX_VALUE,
+        };
+      });
+      expect(safeSpacing.bodyPadding).toBeGreaterThanOrEqual(
+        safeSpacing.transportHeight
+      );
+
       await transport
         .getByRole('button', { name: 'Close audio preview' })
         .click();
       await expect(transport).toBeHidden();
       await expect(page).toHaveURL(before);
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.classList.contains('audio-transport-visible')
+        )
+      ).toBe(false);
+    });
+
+    test('audio transport hides when preview playback ends', async ({
+      page,
+    }) => {
+      await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+      const preview = firstRow.getByRole('button', { name: 'Play preview' });
+
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      await transport
+        .getByRole('slider', { name: 'Preview progress' })
+        .press('End');
+
+      await expect(transport).toBeHidden();
+      await expect(preview).toHaveAttribute('data-preview-state', 'idle');
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.classList.contains('audio-transport-visible')
+        )
+      ).toBe(false);
     });
 
     test('page title contains expected text', async ({ page }) => {
@@ -295,7 +358,9 @@ test.describe('Beatmap Detail Page', () => {
 
       const transport = page.locator('[data-testid="audio-preview-transport"]');
       await expect(transport).toBeVisible();
-      await expect(transport).toContainText(/\[.+\]/);
+      await expect(
+        transport.getByText('Preview', { exact: true })
+      ).toBeVisible();
       await expect(preview).toHaveAttribute('data-preview-state', 'playing');
     });
 

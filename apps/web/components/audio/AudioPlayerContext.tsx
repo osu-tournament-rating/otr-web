@@ -86,10 +86,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     const handleEnded = () => {
       setState((previous) => ({
-        ...previous,
-        isLoading: false,
-        isPlaying: false,
-        currentTime: previous.duration,
+        ...initialState,
+        volume: previous.volume,
       }));
     };
 

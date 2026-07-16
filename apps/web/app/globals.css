@@ -11,6 +11,23 @@
   @tailwindcss /animate;
   body {
     letter-spacing: var(--tracking-normal);
+    transition: padding-bottom 150ms ease;
+  }
+
+  html.audio-transport-visible body {
+    padding-bottom: 8rem;
+  }
+
+  @media (min-width: 640px) {
+    html.audio-transport-visible body {
+      padding-bottom: 5.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body {
+      transition: none;
+    }
   }
 }
 
