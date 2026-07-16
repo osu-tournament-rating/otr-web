@@ -1,11 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy } from 'lucide-react';
+import { Library, Plus } from 'lucide-react';
 import { useState } from 'react';
-import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
+
 import BeatmapTournamentCard from './BeatmapTournamentCard';
+import { Button } from '@/components/ui/button';
+import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
 
 interface BeatmapTournamentsListProps {
   tournaments: BeatmapTournamentUsage[];
@@ -16,10 +16,7 @@ export default function BeatmapTournamentsList({
   tournaments,
   beatmapOsuId,
 }: BeatmapTournamentsListProps) {
-  const NUM_INITIAL_DISPLAY = 5;
-  const NUM_LOAD_MORE = 25;
-  const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
-
+  const [displayCount, setDisplayCount] = useState(6);
   const sortedTournaments = [...tournaments].sort((a, b) => {
     const dateA = a.tournament.endTime
       ? new Date(a.tournament.endTime).getTime()
@@ -30,61 +27,53 @@ export default function BeatmapTournamentsList({
     return dateB - dateA;
   });
 
-  const displayedTournaments = sortedTournaments.slice(0, displayCount);
-
-  if (tournaments.length === 0) {
-    return <NoResultsCard />;
-  }
-
   return (
-    <Card data-testid="beatmap-tournaments-list">
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
+    <section
+      data-testid="beatmap-tournaments-list"
+      className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none"
+    >
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Library className="size-4 text-primary" aria-hidden="true" />
+          <h2 className="font-semibold">Tournament pools</h2>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
-        {displayedTournaments.map((tournament) => (
-          <BeatmapTournamentCard
-            key={tournament.tournament.id}
-            tournament={tournament}
-            beatmapOsuId={beatmapOsuId}
-          />
-        ))}
-        {tournaments.length > displayCount && (
+        <span className="text-xs text-muted-foreground">
+          {tournaments.length} records
+        </span>
+      </div>
+
+      {tournaments.length === 0 ? (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          No pool records.
+        </p>
+      ) : (
+        <div className="divide-y">
+          {sortedTournaments.slice(0, displayCount).map((tournament) => (
+            <BeatmapTournamentCard
+              key={tournament.tournament.id}
+              tournament={tournament}
+              beatmapOsuId={beatmapOsuId}
+            />
+          ))}
+        </div>
+      )}
+
+      {tournaments.length > displayCount && (
+        <div className="border-t p-3">
           <Button
             data-testid="beatmap-tournaments-show-more"
+            type="button"
             variant="outline"
-            className="w-full justify-center"
+            className="w-full"
             onClick={() =>
-              setDisplayCount(
-                Math.min(displayCount + NUM_LOAD_MORE, tournaments.length)
-              )
+              setDisplayCount(Math.min(displayCount + 20, tournaments.length))
             }
           >
-            Show More ({tournaments.length - displayCount} more)
+            <Plus aria-hidden="true" />
+            Show {Math.min(20, tournaments.length - displayCount)} more
           </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function NoResultsCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-muted-foreground">
-          This beatmap has not been pooled in any tournaments.
-        </p>
-      </CardContent>
-    </Card>
+      )}
+    </section>
   );
 }

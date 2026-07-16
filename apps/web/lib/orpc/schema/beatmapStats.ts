@@ -65,6 +65,7 @@ export const BeatmapTopPerformerSchema = z.object({
 export const BeatmapStatsSummarySchema = z.object({
   totalGameCount: z.number().int().nonnegative(),
   totalTournamentCount: z.number().int().nonnegative(),
+  verifiedPlayedTournamentCount: z.number().int().nonnegative(),
   totalPlayerCount: z.number().int().nonnegative(),
   firstPlayedAt: z.string().nullable(),
   lastPlayedAt: z.string().nullable(),
@@ -87,8 +88,16 @@ export const BeatmapWithDetailsSchema = BeatmapForStatsSchema.extend({
   creators: z.array(PlayerCompactSchema),
 });
 
+export const RelatedBeatmapDifficultySchema = z.object({
+  osuId: z.number().int().positive(),
+  diffName: z.string(),
+  ruleset: RulesetSchema,
+  sr: z.number().nonnegative(),
+});
+
 export const BeatmapStatsResponseSchema = z.object({
   beatmap: BeatmapWithDetailsSchema,
+  relatedDifficulties: z.array(RelatedBeatmapDifficultySchema),
   summary: BeatmapStatsSummarySchema,
   usageOverTime: z.array(BeatmapUsagePointSchema),
   tournaments: z.array(BeatmapTournamentUsageSchema),
@@ -137,6 +146,9 @@ export type BeatmapScoreRatingPoint = z.infer<
 export type BeatmapTopPerformer = z.infer<typeof BeatmapTopPerformerSchema>;
 export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;
 export type BeatmapWithDetails = z.infer<typeof BeatmapWithDetailsSchema>;
+export type RelatedBeatmapDifficulty = z.infer<
+  typeof RelatedBeatmapDifficultySchema
+>;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;
 export type BeatmapTournamentMatchRequest = z.infer<
   typeof BeatmapTournamentMatchRequestSchema

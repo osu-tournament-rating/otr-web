@@ -314,7 +314,7 @@ export default function BeatmapScoreRatingChart({
     return (
       <Card data-testid="beatmap-score-rating-chart" className={className}>
         <CardHeader>
-          <CardTitle className="text-center">Score vs Player Rating</CardTitle>
+          <CardTitle className="text-center">Score vs player TR</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-sm text-muted-foreground">
@@ -328,7 +328,7 @@ export default function BeatmapScoreRatingChart({
   return (
     <Card data-testid="beatmap-score-rating-chart" className={className}>
       <CardHeader>
-        <CardTitle className="text-center">Score vs Player Rating</CardTitle>
+        <CardTitle className="text-center">Score vs player TR</CardTitle>
       </CardHeader>
       <CardContent className="font-sans">
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -337,7 +337,7 @@ export default function BeatmapScoreRatingChart({
             <XAxis
               type="number"
               dataKey="playerRating"
-              name="Rating"
+              name="TR"
               domain={xDomain}
               ticks={xTicks}
               tick={{ fill: colors.text, fontSize: 11 }}
@@ -345,7 +345,7 @@ export default function BeatmapScoreRatingChart({
               axisLine={{ stroke: colors.grid }}
               tickFormatter={(v) => v.toFixed(0)}
               label={{
-                value: 'Player Rating',
+                value: 'Player TR',
                 position: 'insideBottom',
                 offset: -15,
                 fill: colors.text,

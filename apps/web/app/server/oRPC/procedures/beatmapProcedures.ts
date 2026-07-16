@@ -18,6 +18,7 @@ import {
   mostCommonDisplayMods,
   resolveGameModsFromScores,
 } from '@/lib/utils/mods';
+import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmapDifficulties';
 
 import { publicProcedure } from './base';
 import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
@@ -483,6 +484,11 @@ export const getBeatmapStats = publicProcedure
 
       const beatmap = beatmapRow[0]!;
 
+      const relatedDifficultyRows = await getRelatedBeatmapDifficulties(
+        context.db,
+        beatmap.beatmapsetId
+      );
+
       const creators = creatorsRows.map((row) => ({
         id: row.id,
         osuId: row.osuId,
@@ -495,6 +501,9 @@ export const getBeatmapStats = publicProcedure
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
         totalTournamentCount: Number(
           pooledTournamentCountRow[0]?.totalTournamentCount ?? 0
+        ),
+        verifiedPlayedTournamentCount: Number(
+          summaryRow[0]?.totalTournamentCount ?? 0
         ),
         totalPlayerCount: Number(summaryRow[0]?.totalPlayerCount ?? 0),
         firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,
@@ -718,6 +727,12 @@ export const getBeatmapStats = publicProcedure
             : null,
           creators,
         },
+        relatedDifficulties: relatedDifficultyRows.map((difficulty) => ({
+          osuId: difficulty.osuId,
+          diffName: difficulty.diffName,
+          ruleset: difficulty.ruleset as Ruleset,
+          sr: difficulty.sr,
+        })),
         summary,
         usageOverTime,
         tournaments,

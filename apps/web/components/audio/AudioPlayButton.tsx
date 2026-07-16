@@ -49,6 +49,7 @@ export default function AudioPlayButton({
       size="icon"
       className={cn(sizeConfig[size].button, className)}
       onClick={handleClick}
+      aria-label={isPlaying ? 'Pause preview' : 'Play preview'}
     >
       <Icon
         className={cn(sizeConfig[size].icon, isLoading && 'animate-spin')}

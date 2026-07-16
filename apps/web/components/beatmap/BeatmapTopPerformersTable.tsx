@@ -1,180 +1,96 @@
-'use client';
-
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { Medal, MoveUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { Medal } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
-import { OsuAvatar } from '../ui/osu-avatar';
+
 import ModIconset from '@/components/icons/ModIconset';
-import { formatAccuracy } from '@/lib/utils/format';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
+import { cn } from '@/lib/utils';
+import { formatAccuracy } from '@/lib/utils/format';
 
 interface BeatmapTopPerformersTableProps {
   performers: BeatmapTopPerformer[];
   className?: string;
 }
 
-const columnHelper = createColumnHelper<BeatmapTopPerformer>();
-
-const columns = [
-  columnHelper.display({
-    id: 'rank',
-    header: '#',
-    cell: ({ row }) => (
-      <span className="font-medium text-muted-foreground">
-        #{row.index + 1}
-      </span>
-    ),
-  }),
-  columnHelper.accessor('player.username', {
-    header: 'Player',
-    cell: ({ row }) => {
-      const player = row.original.player;
-      return (
-        <Link
-          href={`/players/${player.id}`}
-          className="flex items-center gap-2"
-        >
-          <OsuAvatar
-            osuId={player.osuId}
-            username={player.username}
-            size={24}
-          />
-          <span>{player.username}</span>
-        </Link>
-      );
-    },
-    enableSorting: false,
-  }),
-  columnHelper.accessor('score', {
-    header: 'Score',
-    cell: ({ row }) => (
-      <Link
-        href={`/matches/${row.original.matchId}?scoreId=${row.original.scoreId}`}
-        className="text-primary"
-      >
-        {row.original.score.toLocaleString()}
-      </Link>
-    ),
-    enableSorting: false,
-  }),
-  columnHelper.accessor('accuracy', {
-    header: 'Accuracy',
-    cell: ({ getValue }) => {
-      const acc = getValue();
-      return acc !== null ? formatAccuracy(acc) : '-';
-    },
-    enableSorting: false,
-  }),
-  columnHelper.accessor('mods', {
-    header: 'Mods',
-    cell: ({ getValue }) => (
-      <div className="flex h-5 w-14 items-center">
-        <ModIconset
-          mods={getValue()}
-          className="flex h-full items-center"
-          iconClassName="h-5"
-        />
-      </div>
-    ),
-    enableSorting: false,
-  }),
-];
-
 export default function BeatmapTopPerformersTable({
   performers,
   className,
 }: BeatmapTopPerformersTableProps) {
-  const table = useReactTable({
-    data: performers,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (performers.length === 0) {
-    return (
-      <Card data-testid="beatmap-top-performers" className={className}>
-        <CardHeader>
-          <div className="flex flex-row items-center gap-2">
-            <Medal className="h-6 w-6 text-primary" />
-            <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No score data available.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card data-testid="beatmap-top-performers" className={className}>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Medal className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
+    <section
+      data-testid="beatmap-top-performers"
+      className={cn(
+        'overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none',
+        className
+      )}
+    >
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Medal className="size-4 text-primary" aria-hidden="true" />
+          <h2 className="font-semibold">Top verified plays</h2>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-lg bg-popover/50">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-b border-border/50 hover:bg-transparent"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="font-semibold text-foreground"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-border/30 transition-colors hover:bg-popover/80"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+        <span className="text-xs text-muted-foreground">
+          {performers.length} shown
+        </span>
+      </div>
+
+      {performers.length === 0 ? (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          No verified scores.
+        </p>
+      ) : (
+        <ol className="divide-y">
+          {performers.map((performer, index) => (
+            <li
+              key={performer.scoreId}
+              className="group grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/35 sm:grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:gap-4 dark:hover:bg-secondary/60"
+            >
+              <span className="font-mono text-xs font-semibold text-muted-foreground">
+                #{index + 1}
+              </span>
+              <Link
+                href={`/players/${performer.player.id}`}
+                prefetch={false}
+                className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <OsuAvatar
+                  osuId={performer.player.osuId}
+                  username={performer.player.username}
+                  size={32}
+                />
+                <span className="truncate font-medium group-hover:text-primary">
+                  {performer.player.username}
+                </span>
+              </Link>
+
+              <div className="col-start-2 flex items-center gap-3 text-xs text-muted-foreground sm:col-start-auto">
+                <span>
+                  {performer.accuracy !== null
+                    ? formatAccuracy(performer.accuracy)
+                    : '—'}
+                </span>
+                <div className="flex h-5 w-14 items-center">
+                  <ModIconset
+                    mods={performer.mods}
+                    className="flex h-full items-center"
+                    iconClassName="h-5"
+                  />
+                </div>
+              </div>
+
+              <Link
+                href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
+                prefetch={false}
+                aria-label={`View ${performer.player.username}'s score`}
+                className="col-start-2 inline-flex items-center gap-1 justify-self-start rounded-sm font-mono text-sm font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:col-start-auto sm:justify-self-end"
+              >
+                {performer.score.toLocaleString()}
+                <MoveUpRight className="size-3.5" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }

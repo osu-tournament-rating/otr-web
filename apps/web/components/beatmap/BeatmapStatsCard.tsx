@@ -1,45 +1,51 @@
-'use client';
+import { Gamepad2, Library, Trophy, UsersRound } from 'lucide-react';
 
-import { Calendar, Gamepad2, Trophy, Users } from 'lucide-react';
-import StatCard from '../shared/StatCard';
 import type { BeatmapStatsSummary } from '@/lib/orpc/schema/beatmapStats';
-import { format } from 'date-fns';
 
 interface BeatmapStatsCardProps {
   summary: BeatmapStatsSummary;
 }
 
 export default function BeatmapStatsCard({ summary }: BeatmapStatsCardProps) {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
+  const stats = [
+    {
+      label: 'Verified games',
+      value: summary.totalGameCount,
+      icon: Gamepad2,
+    },
+    {
+      label: 'Tournaments played',
+      value: summary.verifiedPlayedTournamentCount,
+      icon: Trophy,
+    },
+    {
+      label: 'Verified players',
+      value: summary.totalPlayerCount,
+      icon: UsersRound,
+    },
+    {
+      label: 'Pool records',
+      value: summary.totalTournamentCount,
+      icon: Library,
+    },
+  ];
 
   return (
-    <div
+    <dl
       data-testid="beatmap-stats-card"
-      className="grid grid-cols-2 gap-2 md:grid-cols-4"
+      className="grid grid-cols-2 divide-x divide-y overflow-hidden rounded-lg border bg-muted/20 sm:grid-cols-4 sm:divide-y-0 dark:bg-muted/45"
     >
-      <StatCard
-        icon={<Gamepad2 className="h-5 w-5" />}
-        label="Games Played"
-        value={summary.totalGameCount.toLocaleString()}
-      />
-      <StatCard
-        icon={<Trophy className="h-5 w-5" />}
-        label="Tournaments"
-        value={summary.totalTournamentCount.toLocaleString()}
-      />
-      <StatCard
-        icon={<Users className="h-5 w-5" />}
-        label="Unique Players"
-        value={summary.totalPlayerCount.toLocaleString()}
-      />
-      <StatCard
-        icon={<Calendar className="h-5 w-5" />}
-        label="First Played"
-        value={formatDate(summary.firstPlayedAt)}
-      />
-    </div>
+      {stats.map(({ label, value, icon: Icon }) => (
+        <div key={label} className="min-w-0 p-3 sm:p-4">
+          <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Icon className="size-3.5" aria-hidden="true" />
+            {label}
+          </dt>
+          <dd className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+            {value.toLocaleString()}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

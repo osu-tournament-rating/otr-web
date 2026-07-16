@@ -25,6 +25,33 @@ test.describe('Beatmaps Listing Page', () => {
       expect(href).toContain('/beatmaps/');
     });
 
+    test('shows explicit map and verified evidence metadata', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmaps);
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await expect(firstRow.getByText(/ SR/).first()).toBeVisible();
+      await expect(firstRow.getByText(/ BPM/).first()).toBeVisible();
+      await expect(firstRow.getByText(/verified games/).last()).toBeVisible();
+    });
+
+    test('audio preview does not navigate the row', async ({ page }) => {
+      await page.goto(ROUTES.beatmaps);
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+      const preview = firstRow.getByRole('button', { name: 'Play preview' });
+
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      const before = page.url();
+      await preview.click();
+      await expect(page).toHaveURL(before);
+    });
+
     test('page title contains expected text', async ({ page }) => {
       await page.goto(ROUTES.beatmaps);
       await page.waitForLoadState('networkidle');
@@ -77,6 +104,16 @@ test.describe('Beatmaps Listing Page', () => {
         page.locator('[data-testid="beatmap-filter-clear"]')
       ).toBeVisible({ timeout: 10000 });
     });
+
+    test('ruleset and sort controls persist in the URL', async ({ page }) => {
+      await page.goto(ROUTES.beatmaps);
+      await page.getByRole('button', { name: 'taiko', exact: true }).click();
+      await page.waitForURL(/ruleset=1/);
+
+      await page.locator('[data-testid="beatmap-sort-select"]').click();
+      await page.getByRole('option', { name: 'SR (star rating)' }).click();
+      await page.waitForURL(/sort=sr/);
+    });
   });
 
   test.describe('Pagination', () => {
@@ -110,6 +147,22 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
     });
   });
+
+  test('does not create page-level horizontal overflow on mobile', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(ROUTES.beatmaps);
+    await expect(
+      page.locator('[data-testid^="beatmap-list-row-"]').first()
+    ).toBeVisible({ timeout: 10000 });
+
+    const dimensions = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
+  });
 });
 
 test.describe('Beatmap Detail Page', () => {
@@ -122,6 +175,17 @@ test.describe('Beatmap Detail Page', () => {
         '[data-testid="beatmap-external-link"]'
       );
       await expect(externalLink).toBeVisible({ timeout: 10000 });
+    });
+
+    test('shows the same-set difficulty navigator', async ({ page }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+      const difficulty = page
+        .locator('[data-testid^="related-difficulty-"]')
+        .first();
+      await expect(difficulty).toBeVisible({ timeout: 10000 });
+      await expect(difficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
+      await expect(difficulty.getByText(/ SR/)).toBeVisible();
     });
 
     test('page title contains beatmap metadata', async ({ page }) => {
@@ -147,7 +211,7 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText(/★/).first()).toBeVisible({
+      await expect(page.getByText(/ SR/).first()).toBeVisible({
         timeout: 10000,
       });
       await expect(page.getByText(/BPM/).first()).toBeVisible({
@@ -161,13 +225,24 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText(/^CS /).first()).toBeVisible({
-        timeout: 10000,
-      });
-      await expect(page.getByText(/^AR /).first()).toBeVisible({
+      await expect(page.getByText('CS / AR / OD / HP')).toBeVisible({
         timeout: 10000,
       });
     });
+  });
+
+  test('detail dashboard fits a mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
+      timeout: 10000,
+    });
+
+    const dimensions = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
   });
 
   test.describe('Usage Statistics', () => {

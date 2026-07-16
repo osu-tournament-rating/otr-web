@@ -1,48 +1,34 @@
 'use client';
 
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import { formatRankRange } from '@/lib/utils/number';
-import Link from 'next/link';
-import VerificationBadge from '../badges/VerificationBadge';
-import { LazerBadge } from '../badges/LazerBadge';
-import { Card } from '../ui/card';
+import { VerificationStatus } from '@otr/core/osu';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
-import RulesetIcon from '../icons/RulesetIcon';
-import ModIconset from '../icons/ModIconset';
-import TierIcon from '../icons/TierIcon';
-import {
-  Users,
-  Target,
-  Calendar,
-  Eye,
-  EyeOff,
+  CalendarDays,
+  ChevronDown,
+  ExternalLink,
   Gamepad2,
   Loader2,
+  Target,
+  Users,
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { VerificationStatus } from '@otr/core/osu';
-import { format } from 'date-fns';
-import { formatUTCDate } from '@/lib/utils/date';
-import { orpc } from '@/lib/orpc/orpc';
-import { getTierFromRating } from '@/lib/utils/tierData';
-import type {
-  BeatmapTournamentUsage,
-  BeatmapTournamentMatch,
-} from '@/lib/orpc/schema/beatmapStats';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-function formatRankRangeDisplay(rankRange: number): string {
-  if (rankRange === 1) return 'Open';
-  return formatRankRange(rankRange);
-}
+import VerificationBadge from '@/components/badges/VerificationBadge';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import ModIconset from '@/components/icons/ModIconset';
+import TierIcon from '@/components/icons/TierIcon';
+import { LazerBadge } from '@/components/badges/LazerBadge';
+import { Button } from '@/components/ui/button';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import { orpc } from '@/lib/orpc/orpc';
+import type {
+  BeatmapTournamentMatch,
+  BeatmapTournamentUsage,
+} from '@/lib/orpc/schema/beatmapStats';
+import { cn } from '@/lib/utils';
+import { formatUTCDate } from '@/lib/utils/date';
+import { formatRankRange } from '@/lib/utils/number';
+import { getTierFromRating } from '@/lib/utils/tierData';
 
 interface BeatmapTournamentCardProps {
   tournament: BeatmapTournamentUsage;
@@ -53,330 +39,244 @@ export default function BeatmapTournamentCard({
   tournament,
   beatmapOsuId,
 }: BeatmapTournamentCardProps) {
-  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-  const [matches, setMatches] = useState<BeatmapTournamentMatch[]>([]);
-  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
-  const [matchesLoaded, setMatchesLoaded] = useState(false);
-  const [matchesError, setMatchesError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [matches, setMatches] = useState<BeatmapTournamentMatch[] | null>(null);
+  const [error, setError] = useState(false);
+  const isVerified =
+    tournament.tournament.verificationStatus === VerificationStatus.Verified;
 
   useEffect(() => {
-    if (!isDetailsVisible || matchesLoaded || isLoadingMatches) {
-      return;
-    }
+    if (!isOpen || matches || error || !isVerified) return;
 
-    const loadMatches = async () => {
-      setIsLoadingMatches(true);
-      setMatchesError(null);
+    let active = true;
+    void orpc.beatmaps
+      .tournamentMatches({
+        beatmapId: beatmapOsuId,
+        keyType: 'osu',
+        tournamentId: tournament.tournament.id,
+      })
+      .then((response) => {
+        if (active) setMatches(response.matches);
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
 
-      try {
-        const response = await orpc.beatmaps.tournamentMatches({
-          beatmapId: beatmapOsuId,
-          keyType: 'osu',
-          tournamentId: tournament.tournament.id,
-        });
-        setMatches(response.matches);
-        setMatchesLoaded(true);
-      } catch (error) {
-        console.error('Failed to load matches', error);
-        setMatchesError('Failed to load matches');
-      } finally {
-        setIsLoadingMatches(false);
-      }
+    return () => {
+      active = false;
     };
-
-    loadMatches();
   }, [
-    isDetailsVisible,
-    matchesLoaded,
-    isLoadingMatches,
     beatmapOsuId,
+    error,
+    isOpen,
+    isVerified,
+    matches,
     tournament.tournament.id,
   ]);
 
-  const startDate = tournament.tournament.startTime
-    ? new Date(tournament.tournament.startTime)
-    : null;
-  const endDate = tournament.tournament.endTime
-    ? new Date(tournament.tournament.endTime)
-    : null;
+  const rulesetLabel =
+    RulesetEnumHelper.getMetadata(tournament.tournament.ruleset).text.replace(
+      'osu!',
+      ''
+    ) || 'osu!';
+  const dates = formatDates(
+    tournament.tournament.startTime,
+    tournament.tournament.endTime
+  );
 
-  const tierInfo =
-    tournament.avgRating != null
-      ? getTierFromRating(tournament.avgRating)
-      : null;
-
-  const cardContent = (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <Link href={`/tournaments/${tournament.tournament.id}`}>
-          <h2 className="text-lg leading-tight font-semibold sm:text-xl md:text-2xl">
-            {tournament.tournament.name}
-          </h2>
-        </Link>
-
-        <div className="flex w-full items-center gap-2 sm:w-auto">
+  return (
+    <article className="px-4 py-4 transition-colors hover:bg-muted/25 dark:hover:bg-secondary/45">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <VerificationBadge
+              verificationStatus={tournament.tournament.verificationStatus}
+              entityType="tournament"
+              displayText
+            />
+            {tournament.tournament.isLazer && (
+              <LazerBadge isLazer={tournament.tournament.isLazer} />
+            )}
+          </div>
+          <Link
+            href={`/tournaments/${tournament.tournament.id}`}
+            prefetch={false}
+            className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-sm font-semibold hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <span className="truncate">{tournament.tournament.name}</span>
+            <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+          </Link>
           {tournament.tournament.abbreviation && (
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="ml-2 font-mono text-xs text-muted-foreground">
               {tournament.tournament.abbreviation}
             </span>
           )}
         </div>
-      </div>
 
-      <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex flex-col gap-2 text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <VerificationBadge
-            verificationStatus={tournament.tournament.verificationStatus}
-            entityType="tournament"
-            displayText={true}
-          />
-
-          <LazerBadge isLazer={tournament.tournament.isLazer} />
-
-          <div className="flex items-center gap-1.5">
-            <RulesetIcon
-              ruleset={tournament.tournament.ruleset}
-              width={16}
-              height={16}
-              className="flex-shrink-0 fill-current"
-            />
-            <span className="truncate">
-              {
-                RulesetEnumHelper.getMetadata(tournament.tournament.ruleset)
-                  .text
-              }
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Users className="h-4 w-4 flex-shrink-0" />
-            <span>
-              {tournament.tournament.lobbySize}v
-              {tournament.tournament.lobbySize}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Target className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">
-              {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Gamepad2 className="h-4 w-4 flex-shrink-0" />
-            <span>
-              {tournament.tournament.verificationStatus ===
-              VerificationStatus.Verified
-                ? `${tournament.gameCount} ${tournament.gameCount === 1 ? 'game' : 'games'}`
-                : 'N/A'}
-            </span>
-          </div>
-
-          {startDate && endDate && (
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate text-xs sm:text-sm">
-                {formatUTCDate(startDate)} - {formatUTCDate(endDate)}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {tournament.tournament.verificationStatus ===
-          VerificationStatus.Verified && (
+        {isVerified && tournament.gameCount > 0 && (
           <Button
             data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
-            variant="outline"
-            className={cn(
-              '-my-1 ml-auto h-8 gap-2 px-3 text-sm sm:ml-0',
-              'hover:bg-accent hover:text-accent-foreground',
-              'border border-input',
-              isDetailsVisible && 'bg-accent text-accent-foreground'
-            )}
-            onClick={(e) => {
-              e.preventDefault();
-              setIsDetailsVisible(!isDetailsVisible);
-            }}
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-expanded={isOpen}
+            aria-controls={`tournament-matches-${tournament.tournament.id}`}
+            onClick={() => setIsOpen((value) => !value)}
+            className="shrink-0"
           >
-            {isDetailsVisible ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            Details
+            Games
+            <ChevronDown
+              className={cn('transition-transform', isOpen && 'rotate-180')}
+              aria-hidden="true"
+            />
           </Button>
         )}
       </div>
-    </div>
-  );
 
-  return (
-    <Card className="p-4 font-sans sm:p-6">
-      {cardContent}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <RulesetIcon
+            ruleset={tournament.tournament.ruleset}
+            className="size-3.5 fill-current"
+            aria-hidden="true"
+          />
+          {rulesetLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Users className="size-3.5" aria-hidden="true" />
+          {tournament.tournament.lobbySize}v{tournament.tournament.lobbySize}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Target className="size-3.5" aria-hidden="true" />
+          {tournament.rankRangeLowerBound === 1
+            ? 'Open rank'
+            : formatRankRange(tournament.rankRangeLowerBound)}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarDays className="size-3.5" aria-hidden="true" />
+          {dates}
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+          <Gamepad2 className="size-3.5" aria-hidden="true" />
+          {isVerified
+            ? `${tournament.gameCount} verified ${tournament.gameCount === 1 ? 'game' : 'games'}`
+            : 'Pool record only'}
+        </span>
+      </div>
 
-      {isDetailsVisible && (
-        <div className="mt-4 border-t pt-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs tracking-wide text-muted-foreground uppercase">
-                Average Rating
-              </span>
-              <span className="flex items-center gap-1.5 text-lg font-semibold">
-                {tierInfo ? (
-                  <TierIcon
-                    tier={tierInfo.tier}
-                    subTier={tierInfo.subTier}
-                    width={20}
-                    height={20}
-                    tooltip
-                  />
-                ) : null}
-                {tournament.avgRating != null
-                  ? tournament.avgRating.toLocaleString()
-                  : '—'}
-              </span>
+      {isOpen && (
+        <div
+          id={`tournament-matches-${tournament.tournament.id}`}
+          className="mt-4 rounded-lg border bg-background dark:bg-input/25"
+        >
+          {!matches && !error && (
+            <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Loading games
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs tracking-wide text-muted-foreground uppercase">
-                Average Score
-              </span>
-              <span className="text-lg font-semibold">
-                {tournament.avgScore != null
-                  ? tournament.avgScore.toLocaleString()
-                  : '—'}
-              </span>
+          )}
+          {error && (
+            <div className="px-4 py-6 text-center text-sm text-destructive">
+              Games could not load.
+              <Button
+                type="button"
+                variant="link"
+                className="ml-1 h-auto p-0"
+                onClick={() => setError(false)}
+              >
+                Retry
+              </Button>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs tracking-wide text-muted-foreground uppercase">
-                Most Common Mod
-              </span>
-              {tournament.gameCount > 0 ? (
-                <div className="flex h-5 w-14 items-center">
-                  <ModIconset
-                    mods={tournament.mostCommonMod}
-                    freemod={tournament.mostCommonModFreemod}
-                    className="flex h-full items-center"
-                    iconClassName="h-5"
+          )}
+          {matches?.length === 0 && (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              No verified games.
+            </p>
+          )}
+          {matches && matches.length > 0 && (
+            <div className="divide-y">
+              {matches.flatMap((match) =>
+                match.games.map((game) => (
+                  <TournamentGameRow
+                    key={game.gameId}
+                    match={match}
+                    game={game}
                   />
-                </div>
-              ) : (
-                <span className="text-lg font-semibold">—</span>
+                ))
               )}
             </div>
-          </div>
-
-          <div className="mt-4 border-t pt-4">
-            <h4 className="mb-3 text-xs tracking-wide text-muted-foreground uppercase">
-              Matches
-            </h4>
-
-            {isLoadingMatches && (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            )}
-
-            {matchesError && (
-              <p className="text-sm text-destructive">{matchesError}</p>
-            )}
-
-            {matchesLoaded && matches.length === 0 && (
-              <p className="text-sm text-muted-foreground">No matches found</p>
-            )}
-
-            {matchesLoaded && matches.length > 0 && (
-              <div className="rounded-lg bg-popover/50">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b border-border/50 hover:bg-transparent">
-                      <TableHead className="font-semibold text-foreground">
-                        Match
-                      </TableHead>
-                      <TableHead className="font-semibold text-foreground">
-                        Mods
-                      </TableHead>
-                      <TableHead className="font-semibold text-foreground">
-                        Avg Rating
-                      </TableHead>
-                      <TableHead className="font-semibold text-foreground">
-                        Avg Score
-                      </TableHead>
-                      <TableHead className="font-semibold text-foreground">
-                        Date
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {matches.flatMap((match) =>
-                      match.games.map((game) => {
-                        const gameTierInfo =
-                          game.avgRating != null
-                            ? getTierFromRating(game.avgRating)
-                            : null;
-                        return (
-                          <TableRow
-                            key={game.gameId}
-                            className="border-b border-border/30 transition-colors hover:bg-popover/80"
-                          >
-                            <TableCell className="py-2">
-                              <Link
-                                href={`/matches/${match.matchId}?gameId=${game.gameId}`}
-                                className="truncate font-medium"
-                              >
-                                {match.matchName}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="py-2">
-                              <div className="flex h-5 w-14 items-center">
-                                <ModIconset
-                                  mods={game.mods}
-                                  freemod={game.freemod}
-                                  className="flex h-full items-center"
-                                  iconClassName="h-5"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-2">
-                              <span className="flex items-center gap-1">
-                                {gameTierInfo ? (
-                                  <TierIcon
-                                    tier={gameTierInfo.tier}
-                                    subTier={gameTierInfo.subTier}
-                                    width={16}
-                                    height={16}
-                                    tooltip
-                                  />
-                                ) : null}
-                                {game.avgRating != null
-                                  ? game.avgRating.toLocaleString()
-                                  : '—'}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-2">
-                              {game.avgScore != null
-                                ? game.avgScore.toLocaleString()
-                                : '—'}
-                            </TableCell>
-                            <TableCell className="py-2 text-muted-foreground">
-                              {match.startTime
-                                ? format(
-                                    new Date(match.startTime),
-                                    'MMM d, yyyy'
-                                  )
-                                : null}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       )}
-    </Card>
+    </article>
   );
+}
+
+function TournamentGameRow({
+  match,
+  game,
+}: {
+  match: BeatmapTournamentMatch;
+  game: BeatmapTournamentMatch['games'][number];
+}) {
+  const tier =
+    game.avgRating !== null ? getTierFromRating(game.avgRating) : null;
+
+  return (
+    <Link
+      href={`/matches/${match.matchId}?gameId=${game.gameId}`}
+      prefetch={false}
+      className="group/game grid gap-2 px-3 py-3 transition-colors hover:bg-muted/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium group-hover/game:text-primary">
+          {match.matchName}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Game {game.gameNumber}
+          {match.startTime
+            ? ` · ${formatUTCDate(new Date(match.startTime))}`
+            : ''}
+        </p>
+      </div>
+      <div className="flex h-5 w-14 items-center">
+        <ModIconset
+          mods={game.mods}
+          freemod={game.freemod}
+          className="flex h-full items-center"
+          iconClassName="h-5"
+        />
+      </div>
+      <div className="flex items-center gap-4 text-xs text-muted-foreground sm:justify-end">
+        <span className="inline-flex items-center gap-1">
+          {tier && (
+            <TierIcon
+              tier={tier.tier}
+              subTier={tier.subTier}
+              width={15}
+              height={15}
+              tooltip
+            />
+          )}
+          {game.avgRating !== null
+            ? `${game.avgRating.toLocaleString()} avg TR`
+            : 'No TR'}
+        </span>
+        <span>
+          {game.avgScore !== null
+            ? `${game.avgScore.toLocaleString()} avg score`
+            : 'No score'}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function formatDates(start: string | null, end: string | null): string {
+  if (!start && !end) return 'Dates unavailable';
+  const formattedStart = start ? formatUTCDate(new Date(start)) : null;
+  const formattedEnd = end ? formatUTCDate(new Date(end)) : null;
+  if (formattedStart && formattedEnd)
+    return `${formattedStart} – ${formattedEnd}`;
+  return formattedStart ?? formattedEnd ?? 'Dates unavailable';
 }

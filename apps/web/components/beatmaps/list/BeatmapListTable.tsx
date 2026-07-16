@@ -1,396 +1,231 @@
 'use client';
 
 import {
-  Star,
-  Clock,
   Activity,
-  ChevronUp,
-  ChevronDown,
-  Trophy,
+  ChevronRight,
+  Clock3,
   Gamepad2,
-  Music,
+  Music2,
+  SearchX,
+  Star,
+  Trophy,
+  UserRound,
 } from 'lucide-react';
-import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
 
+import AudioPlayButton from '@/components/audio/AudioPlayButton';
+import BeatmapCover from '@/components/beatmaps/BeatmapCover';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
+import {
+  getBeatmapDisplayRuleset,
+  getBeatmapRulesetLabel,
+} from '@/lib/beatmaps/presentation';
 import { formatDuration } from '@/lib/utils/date';
-import SimpleTooltip from '@/components/simple-tooltip';
-import BeatmapBackground from '@/components/games/BeatmapBackground';
-import type {
-  BeatmapListItem,
-  BeatmapListSort,
-} from '@/lib/orpc/schema/beatmapList';
-import type { beatmapListFilterSchema } from '@/lib/validation-schema';
-import type { z } from 'zod';
 
 interface BeatmapListTableProps {
   beatmaps: BeatmapListItem[];
-  filter: z.infer<typeof beatmapListFilterSchema>;
-}
-
-type SortField = BeatmapListSort;
-
-function SortButton({
-  field,
-  children,
-  currentSort,
-  isDescending,
-  onSort,
-}: {
-  field: SortField;
-  children: React.ReactNode;
-  currentSort: SortField;
-  isDescending: boolean;
-  onSort: (field: SortField) => void;
-}) {
-  return (
-    <button
-      onClick={() => onSort(field)}
-      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
-    >
-      {children}
-      {currentSort === field &&
-        (isDescending ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronUp className="h-3 w-3" />
-        ))}
-    </button>
-  );
+  isFiltered?: boolean;
 }
 
 export default function BeatmapListTable({
   beatmaps,
-  filter,
+  isFiltered = false,
 }: BeatmapListTableProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const currentSort = filter.sort;
-  const isDescending = filter.descending;
-
-  const handleSort = (field: SortField) => {
-    const params = new URLSearchParams();
-
-    if (filter.q) params.set('q', filter.q);
-    if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
-    if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
-    if (filter.minBpm !== undefined)
-      params.set('minBpm', String(filter.minBpm));
-    if (filter.maxBpm !== undefined)
-      params.set('maxBpm', String(filter.maxBpm));
-    if (filter.minCs !== undefined) params.set('minCs', String(filter.minCs));
-    if (filter.maxCs !== undefined) params.set('maxCs', String(filter.maxCs));
-    if (filter.minAr !== undefined) params.set('minAr', String(filter.minAr));
-    if (filter.maxAr !== undefined) params.set('maxAr', String(filter.maxAr));
-    if (filter.minOd !== undefined) params.set('minOd', String(filter.minOd));
-    if (filter.maxOd !== undefined) params.set('maxOd', String(filter.maxOd));
-    if (filter.minHp !== undefined) params.set('minHp', String(filter.minHp));
-    if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
-    if (filter.minLength !== undefined)
-      params.set('minLength', String(filter.minLength));
-    if (filter.maxLength !== undefined)
-      params.set('maxLength', String(filter.maxLength));
-    if (filter.minGameCount !== undefined)
-      params.set('minGameCount', String(filter.minGameCount));
-    if (filter.maxGameCount !== undefined)
-      params.set('maxGameCount', String(filter.maxGameCount));
-    if (filter.minTournamentCount !== undefined)
-      params.set('minTournamentCount', String(filter.minTournamentCount));
-    if (filter.maxTournamentCount !== undefined)
-      params.set('maxTournamentCount', String(filter.maxTournamentCount));
-
-    params.set('sort', field);
-
-    if (currentSort === field) {
-      params.set('descending', String(!isDescending));
-    } else {
-      params.set('descending', 'true');
-    }
-
-    router.push(pathname + (params.size > 0 ? `?${params}` : ''));
-  };
-
   if (beatmaps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-muted-foreground">
-          No Beatmaps Found
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Try adjusting your search filters.
+      <div
+        data-testid="beatmap-empty-state"
+        className="flex min-h-72 flex-col items-center justify-center px-5 py-12 text-center"
+      >
+        <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted dark:bg-secondary">
+          <SearchX
+            className="size-6 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </span>
+        <h2 className="text-lg font-semibold">
+          {isFiltered ? 'No beatmaps match' : 'No verified beatmaps yet'}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isFiltered ? 'Try fewer filters.' : 'The archive is empty.'}
         </p>
+        {isFiltered && (
+          <Link
+            href="/beatmaps"
+            className="mt-5 inline-flex h-9 items-center rounded-md border bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            Clear filters
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  ID
-                </th>
-                <th className="w-[20%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
-                  Difficulty
-                </th>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
-                  <SortButton
-                    field="creator"
-                    currentSort={currentSort}
-                    isDescending={isDescending}
-                    onSort={handleSort}
-                  >
-                    Creator
-                  </SortButton>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Star Rating">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="sr"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Star className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="BPM">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="bpm"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Activity className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Circle Size">
-                    <SortButton
-                      field="cs"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      CS
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Approach Rate">
-                    <SortButton
-                      field="ar"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      AR
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Overall Difficulty">
-                    <SortButton
-                      field="od"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      OD
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="HP Drain Rate">
-                    <SortButton
-                      field="hp"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      HP
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Length">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="length"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Clock className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Verified Tournaments">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="tournamentCount"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Trophy className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Verified Games">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="gameCount"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Gamepad2 className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-              </tr>
-            </thead>
+    <div role="list" aria-label="Verified tournament beatmaps">
+      <div
+        aria-hidden="true"
+        className="hidden grid-cols-[14rem_minmax(0,1fr)_17rem] gap-5 border-b bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground lg:grid dark:bg-secondary/45"
+      >
+        <span>Cover</span>
+        <span>Beatmap</span>
+        <span>Tournament evidence</span>
+      </div>
 
-            <tbody className="divide-y divide-border">
-              {beatmaps.map((beatmap, index) => (
-                <tr
-                  key={beatmap.id}
-                  data-testid={`beatmap-list-row-${beatmap.osuId}`}
-                  className={`group cursor-pointer transition-colors hover:bg-muted/30 ${
-                    index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
-                  }`}
-                  onClick={() => router.push(`/beatmaps/${beatmap.osuId}`)}
-                >
-                  <td className="px-2 py-2 text-center">
-                    <Link
-                      href={`/beatmaps/${beatmap.osuId}`}
-                      className="text-xs text-muted-foreground transition-colors hover:text-primary"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {beatmap.osuId}
-                    </Link>
-                  </td>
+      <div className="divide-y">
+        {beatmaps.map((beatmap, index) => {
+          const href = `/beatmaps/${beatmap.osuId}`;
+          const ruleset = getBeatmapDisplayRuleset(
+            beatmap.ruleset,
+            beatmap.diffName
+          );
+          const rulesetLabel = getBeatmapRulesetLabel(
+            beatmap.ruleset,
+            beatmap.diffName
+          );
 
-                  <td className="px-2 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="group/thumbnail relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
-                        {beatmap.beatmapsetOsuId ? (
-                          <>
-                            <BeatmapBackground
-                              beatmapsetId={beatmap.beatmapsetOsuId}
-                              alt={`${beatmap.title} cover`}
-                            />
-                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
-                              <AudioPlayButton
-                                beatmapsetOsuId={beatmap.beatmapsetOsuId}
-                                size="sm"
-                                variant="ghost"
-                                className="text-white hover:bg-white/20 hover:text-white"
-                                showTooltip={false}
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-muted">
-                            <Music className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
+          return (
+            <article
+              key={beatmap.id}
+              role="listitem"
+              data-testid={`beatmap-list-row-${beatmap.osuId}`}
+              className="group relative grid gap-3 p-3 transition-colors hover:bg-muted/35 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-4 sm:p-4 lg:grid-cols-[14rem_minmax(0,1fr)_17rem] lg:items-center lg:gap-5 dark:hover:bg-secondary/60"
+            >
+              <Link
+                href={href}
+                prefetch={false}
+                aria-label={`View ${beatmap.artist} - ${beatmap.title} [${beatmap.diffName}]`}
+                className="absolute inset-0 z-10 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset"
+              />
 
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/beatmaps/${beatmap.osuId}`}
-                          className="block transition-colors hover:text-primary"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <p className="max-w-[280px] truncate text-xs font-medium">
-                            {beatmap.artist} - {beatmap.title}
-                          </p>
-                          <p className="max-w-[240px] truncate text-xs text-muted-foreground">
-                            [{beatmap.diffName}]
-                          </p>
-                        </Link>
-                      </div>
-                    </div>
-                  </td>
+              <BeatmapCover
+                beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                alt={`${beatmap.artist} - ${beatmap.title} cover`}
+                sizes="(max-width: 639px) calc(100vw - 2rem), 224px"
+                priority={index === 0}
+                className="h-32 w-full rounded-lg shadow-sm sm:h-24"
+                imageClassName="transition-transform duration-500 group-hover:scale-[1.035]"
+              />
 
-                  <td className="px-2 py-2">
-                    <span className="max-w-[100px] truncate text-xs text-muted-foreground">
-                      {beatmap.creator ?? 'Unknown'}
-                    </span>
-                  </td>
+              <div className="pointer-events-none absolute top-[5.5rem] right-6 z-20 sm:top-auto sm:right-auto sm:bottom-7 sm:left-[12.25rem] lg:bottom-auto lg:left-[12.25rem]">
+                {beatmap.beatmapsetOsuId ? (
+                  <span className="pointer-events-auto inline-flex rounded-full bg-black/65 p-1 text-white shadow-lg backdrop-blur-sm">
+                    <AudioPlayButton
+                      beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                      size="md"
+                      variant="ghost"
+                      className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                    />
+                  </span>
+                ) : null}
+              </div>
 
-                  <td className="px-2 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                      <span className="text-xs font-medium">
-                        {beatmap.sr.toFixed(2)}
-                      </span>
-                    </div>
-                  </td>
+              <div className="min-w-0">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg">
+                      {beatmap.artist} – {beatmap.title}
+                    </h2>
+                    <p className="mt-0.5 truncate text-sm font-medium text-foreground/85">
+                      [{beatmap.diffName}]
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary lg:hidden"
+                    aria-hidden="true"
+                  />
+                </div>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{Math.round(beatmap.bpm)}</span>
-                  </td>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground sm:text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    <RulesetIcon
+                      ruleset={ruleset}
+                      className="size-4 shrink-0 fill-current"
+                      aria-hidden="true"
+                    />
+                    {rulesetLabel}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                    <Star className="size-4 text-primary" aria-hidden="true" />
+                    {beatmap.sr.toFixed(2)} SR
+                    <span className="sr-only">star rating</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Activity className="size-4" aria-hidden="true" />
+                    {Math.round(beatmap.bpm)} BPM
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock3 className="size-4" aria-hidden="true" />
+                    {formatDuration(Number(beatmap.totalLength))}
+                  </span>
+                </div>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.cs.toFixed(1)}</span>
-                  </td>
+                <p className="mt-2 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                  <UserRound className="size-3.5 shrink-0" aria-hidden="true" />
+                  Mapped by {beatmap.creator ?? 'Unknown mapper'}
+                  <span aria-hidden="true">·</span>
+                  <span className="font-mono">#{beatmap.osuId}</span>
+                </p>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.ar.toFixed(1)}</span>
-                  </td>
+                <div className="mt-3 flex gap-4 border-t pt-3 text-xs sm:hidden">
+                  <EvidenceCount
+                    icon={Gamepad2}
+                    value={beatmap.verifiedGameCount}
+                    label="verified games"
+                  />
+                  <EvidenceCount
+                    icon={Trophy}
+                    value={beatmap.verifiedTournamentCount}
+                    label="verified tournaments"
+                  />
+                </div>
+              </div>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.od.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.hp.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">
-                      {formatDuration(Number(beatmap.totalLength))}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs font-medium">
-                      {beatmap.verifiedTournamentCount}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs font-medium">
-                      {beatmap.verifiedGameCount}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              <div className="hidden grid-cols-2 gap-3 sm:grid lg:grid-cols-1">
+                <EvidenceCount
+                  icon={Gamepad2}
+                  value={beatmap.verifiedGameCount}
+                  label="verified games"
+                />
+                <EvidenceCount
+                  icon={Trophy}
+                  value={beatmap.verifiedTournamentCount}
+                  label="verified tournaments"
+                />
+                <ChevronRight
+                  className="absolute right-4 hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary lg:block"
+                  aria-hidden="true"
+                />
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function EvidenceCount({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof Music2;
+  value: number;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2 text-muted-foreground">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted dark:bg-secondary">
+        <Icon className="size-4" aria-hidden="true" />
+      </span>
+      <span>
+        <strong className="block text-sm leading-tight font-semibold text-foreground">
+          {value.toLocaleString()}
+        </strong>
+        <span className="whitespace-nowrap">{label}</span>
+      </span>
+    </span>
   );
 }
