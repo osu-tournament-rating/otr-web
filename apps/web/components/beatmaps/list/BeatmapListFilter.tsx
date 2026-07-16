@@ -269,7 +269,7 @@ export default function BeatmapListFilter({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 md:flex-row">
+      <div className="flex flex-col gap-2 md:flex-row md:gap-4">
         <div className="relative min-w-0 flex-1">
           {isSearching ? (
             <Loader2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -289,125 +289,101 @@ export default function BeatmapListFilter({
           />
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] gap-2 md:flex">
-          <Select
-            value={filter.sort}
-            onValueChange={(value) =>
-              applyPatch({ sort: value as BeatmapListSort })
-            }
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex md:shrink-0 md:items-center md:gap-4 md:border-l md:pl-4">
+          <div
+            role="group"
+            aria-label="Beatmap sorting"
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex"
           >
-            <SelectTrigger
-              data-testid="beatmap-sort-select"
-              aria-label="Sort beatmaps by"
-              className="h-10 min-w-0 bg-background md:w-48 dark:bg-input/50 dark:shadow-none"
+            <Select
+              value={filter.sort}
+              onValueChange={(value) =>
+                applyPatch({ sort: value as BeatmapListSort })
+              }
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                data-testid="beatmap-sort-direction"
-                aria-label={`Sort order is ${filter.descending ? 'descending' : 'ascending'}`}
-                onClick={() => applyPatch({ descending: !filter.descending })}
-                className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
+              <SelectTrigger
+                data-testid="beatmap-sort-select"
+                aria-label="Sort beatmaps by"
+                className="h-10 w-full min-w-0 bg-background md:w-48 dark:bg-input/50 dark:shadow-none"
               >
-                {filter.descending ? <ArrowDown /> : <ArrowUp />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {filter.descending ? 'Descending order' : 'Ascending order'}
-            </TooltipContent>
-          </Tooltip>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Sheet
-            open={isOpen}
-            onOpenChange={(open) => {
-              setIsOpen(open);
-              if (open) setDraft(filter);
-            }}
-          >
-            <SheetTrigger asChild>
-              <Button
-                data-testid="beatmap-filter-button"
-                type="button"
-                variant="outline"
-                className="h-10 gap-2 bg-background md:w-auto dark:bg-input/50 dark:shadow-none"
-              >
-                <Filter aria-hidden="true" />
-                Filters
-                {countAdvancedFilters(filter) > 0 && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                    {countAdvancedFilters(filter)}
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent
-              data-testid="beatmap-filter-popover"
-              className="w-full gap-0 sm:max-w-md"
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  data-testid="beatmap-sort-direction"
+                  aria-label={`Sort order is ${filter.descending ? 'descending' : 'ascending'}`}
+                  onClick={() => applyPatch({ descending: !filter.descending })}
+                  className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
+                >
+                  {filter.descending ? <ArrowDown /> : <ArrowUp />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {filter.descending ? 'Descending order' : 'Ascending order'}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          <div className="border-l pl-2 md:pl-4">
+            <Sheet
+              open={isOpen}
+              onOpenChange={(open) => {
+                setIsOpen(open);
+                if (open) setDraft(filter);
+              }}
             >
-              <SheetHeader className="border-b px-5 py-4">
-                <SheetTitle className="flex items-center gap-2">
-                  <SlidersHorizontal className="size-5 text-primary" />
-                  Filter beatmaps
-                </SheetTitle>
-                <SheetDescription className="sr-only">
-                  Set beatmap and verified usage ranges.
-                </SheetDescription>
-              </SheetHeader>
+              <SheetTrigger asChild>
+                <Button
+                  data-testid="beatmap-filter-button"
+                  type="button"
+                  variant="outline"
+                  className="h-10 gap-2 bg-background md:w-auto dark:bg-input/50 dark:shadow-none"
+                >
+                  <Filter aria-hidden="true" />
+                  Filters
+                  {countAdvancedFilters(filter) > 0 && (
+                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                      {countAdvancedFilters(filter)}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                data-testid="beatmap-filter-popover"
+                className="w-full gap-0 sm:max-w-md"
+              >
+                <SheetHeader className="border-b px-5 py-4">
+                  <SheetTitle className="flex items-center gap-2">
+                    <SlidersHorizontal className="size-5 text-primary" />
+                    Filter beatmaps
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Set beatmap and verified usage ranges.
+                  </SheetDescription>
+                </SheetHeader>
 
-              <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
-                <div className="space-y-5">
-                  {rangeDefinitions.map((definition) => (
-                    <RangeInputs
-                      key={definition.key}
-                      label={definition.label}
-                      min={definition.min}
-                      max={definition.max}
-                      step={definition.step}
-                      minValue={draft[definition.minKey]}
-                      maxValue={draft[definition.maxKey]}
-                      onMinChange={(value) =>
-                        setDraft((current) => ({
-                          ...current,
-                          [definition.minKey]: value,
-                        }))
-                      }
-                      onMaxChange={(value) =>
-                        setDraft((current) => ({
-                          ...current,
-                          [definition.maxKey]: value,
-                        }))
-                      }
-                    />
-                  ))}
-                </div>
-
-                <fieldset>
-                  <legend className="mb-3 text-sm font-medium">
-                    Map attributes
-                  </legend>
-                  <div className="grid grid-cols-2 gap-4">
-                    {attributeDefinitions.map((definition) => (
+                <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+                  <div className="space-y-5">
+                    {rangeDefinitions.map((definition) => (
                       <RangeInputs
                         key={definition.key}
-                        compact
                         label={definition.label}
-                        min={0}
+                        min={definition.min}
                         max={definition.max}
-                        step={0.1}
+                        step={definition.step}
                         minValue={draft[definition.minKey]}
                         maxValue={draft[definition.maxKey]}
                         onMinChange={(value) =>
@@ -425,32 +401,64 @@ export default function BeatmapListFilter({
                       />
                     ))}
                   </div>
-                </fieldset>
-              </div>
 
-              <SheetFooter className="grid grid-cols-2 border-t p-4">
-                <Button
-                  data-testid="beatmap-filter-clear"
-                  type="button"
-                  variant="outline"
-                  onClick={clearAdvanced}
-                >
-                  <X aria-hidden="true" />
-                  Clear
-                </Button>
-                <Button
-                  data-testid="beatmap-filter-apply"
-                  type="button"
-                  onClick={() => {
-                    navigate({ ...draft, q: query, page: undefined });
-                    setIsOpen(false);
-                  }}
-                >
-                  Done
-                </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+                  <fieldset>
+                    <legend className="mb-3 text-sm font-medium">
+                      Map attributes
+                    </legend>
+                    <div className="grid grid-cols-2 gap-4">
+                      {attributeDefinitions.map((definition) => (
+                        <RangeInputs
+                          key={definition.key}
+                          compact
+                          label={definition.label}
+                          min={0}
+                          max={definition.max}
+                          step={0.1}
+                          minValue={draft[definition.minKey]}
+                          maxValue={draft[definition.maxKey]}
+                          onMinChange={(value) =>
+                            setDraft((current) => ({
+                              ...current,
+                              [definition.minKey]: value,
+                            }))
+                          }
+                          onMaxChange={(value) =>
+                            setDraft((current) => ({
+                              ...current,
+                              [definition.maxKey]: value,
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </fieldset>
+                </div>
+
+                <SheetFooter className="grid grid-cols-2 border-t p-4">
+                  <Button
+                    data-testid="beatmap-filter-clear"
+                    type="button"
+                    variant="outline"
+                    onClick={clearAdvanced}
+                  >
+                    <X aria-hidden="true" />
+                    Clear
+                  </Button>
+                  <Button
+                    data-testid="beatmap-filter-apply"
+                    type="button"
+                    onClick={() => {
+                      navigate({ ...draft, q: query, page: undefined });
+                      setIsOpen(false);
+                    }}
+                  >
+                    Done
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 
