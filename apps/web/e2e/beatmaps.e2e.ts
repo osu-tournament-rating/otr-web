@@ -90,7 +90,7 @@ test.describe('Beatmaps Listing Page', () => {
       expect(href).toContain('/beatmaps/');
     });
 
-    test('shows explicit map and verified evidence metadata', async ({
+    test('shows map metadata, tournament evidence, and top mods', async ({
       page,
     }) => {
       await page.goto(ROUTES.beatmaps);
@@ -101,7 +101,21 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await expect(firstRow.getByText(/ SR/).first()).toBeVisible();
       await expect(firstRow.getByText(/ BPM/).first()).toBeVisible();
-      await expect(firstRow.getByText(/verified games/).last()).toBeVisible();
+      await expect(
+        firstRow.getByText('games', { exact: true }).last()
+      ).toBeVisible();
+
+      const topMods = firstRow.getByRole('list', {
+        name: 'Top mods by score usage',
+      });
+      await expect(topMods).toBeVisible();
+      const displayedMods = topMods.locator('li');
+      expect(await displayedMods.count()).toBeGreaterThan(0);
+      expect(await displayedMods.count()).toBeLessThanOrEqual(3);
+      await expect(displayedMods.first()).toContainText(/%/);
+
+      await expect(page.getByText(/verified games/i)).toHaveCount(0);
+      await expect(page.locator('header svg.lucide-music')).toBeVisible();
     });
 
     test('audio transport plays, pauses, scrubs, changes volume, and closes without navigating', async ({
@@ -305,20 +319,88 @@ test.describe('Beatmaps Listing Page', () => {
     });
   });
 
-  test('does not create page-level horizontal overflow on mobile', async ({
+  test('does not create page-level horizontal overflow across card breakpoints', async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(ROUTES.beatmaps);
-    await expect(
-      page.locator('[data-testid^="beatmap-list-row-"]').first()
-    ).toBeVisible({ timeout: 10000 });
+    for (const width of [390, 768, 1023, 1024]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(ROUTES.beatmaps);
+      await expect(
+        page.locator('[data-testid^="beatmap-list-row-"]').first()
+      ).toBeVisible({ timeout: 10000 });
 
-    const dimensions = await page.evaluate(() => ({
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-    }));
-    expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
+      await expect
+        .poll(
+          () =>
+            page.evaluate(
+              () =>
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth
+            ),
+          { timeout: 10000 }
+        )
+        .toBe(0);
+    }
+  });
+
+  test('keeps cards compact and aligned at the tablet breakpoint', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.goto(ROUTES.beatmaps);
+
+    const firstRow = page.locator('[data-testid^="beatmap-list-row-"]').first();
+    await expect(firstRow).toBeVisible({ timeout: 10000 });
+
+    const cover = firstRow.locator('[data-testid="beatmap-cover-cell"]');
+    const content = firstRow.locator('[data-testid="beatmap-card-content"]');
+    const usage = firstRow.locator('[data-testid="beatmap-usage-summary"]');
+    const games = firstRow.locator('[data-testid="beatmap-games-count"]');
+    const tournaments = firstRow.locator(
+      '[data-testid="beatmap-tournaments-count"]'
+    );
+    const preview = firstRow.getByRole('button', { name: 'Play preview' });
+    const [
+      rowBox,
+      coverBox,
+      contentBox,
+      usageBox,
+      gamesBox,
+      tournamentsBox,
+      previewBox,
+    ] = await Promise.all([
+      firstRow.boundingBox(),
+      cover.boundingBox(),
+      content.boundingBox(),
+      usage.boundingBox(),
+      games.boundingBox(),
+      tournaments.boundingBox(),
+      preview.boundingBox(),
+    ]);
+
+    expect(rowBox).not.toBeNull();
+    expect(coverBox).not.toBeNull();
+    expect(contentBox).not.toBeNull();
+    expect(usageBox).not.toBeNull();
+    expect(gamesBox).not.toBeNull();
+    expect(tournamentsBox).not.toBeNull();
+    expect(previewBox).not.toBeNull();
+    expect(rowBox!.height - coverBox!.height).toBeLessThanOrEqual(34);
+    expect(Math.abs(coverBox!.height - contentBox!.height)).toBeLessThanOrEqual(
+      1
+    );
+    expect(usageBox!.y + usageBox!.height).toBeLessThanOrEqual(
+      contentBox!.y + contentBox!.height + 1
+    );
+    expect(Math.abs(gamesBox!.y - tournamentsBox!.y)).toBeLessThanOrEqual(2);
+    expect(previewBox!.x).toBeGreaterThanOrEqual(coverBox!.x);
+    expect(previewBox!.y).toBeGreaterThanOrEqual(coverBox!.y);
+    expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(
+      coverBox!.x + coverBox!.width
+    );
+    expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(
+      coverBox!.y + coverBox!.height
+    );
   });
 });
 
@@ -337,12 +419,37 @@ test.describe('Beatmap Detail Page', () => {
     test('shows the same-set difficulty navigator', async ({ page }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
 
-      const difficulty = page
-        .locator('[data-testid^="related-difficulty-"]')
+      const activeDifficulty = page.locator(
+        '[data-testid^="related-difficulty-"][aria-current="page"]:visible'
+      );
+
+      await expect(activeDifficulty).toBeVisible({ timeout: 10000 });
+      await expect(activeDifficulty).toBeInViewport();
+      await expect(activeDifficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
+      await expect(activeDifficulty.getByText(/ SR/)).toBeVisible();
+
+      const collapsedDifficulty = page
+        .locator(
+          '[data-testid^="related-difficulty-"]:not([aria-current="page"]):visible'
+        )
         .first();
-      await expect(difficulty).toBeVisible({ timeout: 10000 });
-      await expect(difficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
-      await expect(difficulty.getByText(/ SR/)).toBeVisible();
+      if ((await collapsedDifficulty.count()) > 0) {
+        await expect(collapsedDifficulty).toHaveAccessibleName(/star rating/);
+        const box = await collapsedDifficulty.boundingBox();
+        expect(box?.width).toBeLessThanOrEqual(42);
+        expect(box?.height).toBeGreaterThanOrEqual(40);
+        const iconColors = await collapsedDifficulty
+          .locator('svg')
+          .evaluate((icon) => {
+            const iconStyle = getComputedStyle(icon);
+            const pathStyle = getComputedStyle(icon.querySelector('path')!);
+            return { color: iconStyle.color, fill: pathStyle.fill };
+          });
+        expect(iconColors.fill).toBe(iconColors.color);
+
+        await collapsedDifficulty.hover();
+        await expect(page.getByRole('tooltip')).toContainText(/ SR/);
+      }
     });
 
     test('hero preview opens the identified cinematic transport', async ({
@@ -401,9 +508,14 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText('CS / AR / OD / HP')).toBeVisible({
-        timeout: 10000,
-      });
+      const attributes = page.getByRole('heading', { name: 'Attributes' });
+      await expect(attributes).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('abbr[title="Circle size"]')).toBeVisible();
+      await expect(page.locator('abbr[title="Approach rate"]')).toBeVisible();
+      await expect(
+        page.locator('abbr[title="Overall difficulty"]')
+      ).toBeVisible();
+      await expect(page.locator('abbr[title="HP drain"]')).toBeVisible();
     });
   });
 
@@ -414,11 +526,17 @@ test.describe('Beatmap Detail Page', () => {
       timeout: 10000,
     });
 
-    const dimensions = await page.evaluate(() => ({
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-    }));
-    expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              document.documentElement.scrollWidth -
+              document.documentElement.clientWidth
+          ),
+        { timeout: 10000 }
+      )
+      .toBe(0);
   });
 
   test.describe('Usage Statistics', () => {
@@ -467,6 +585,11 @@ test.describe('Beatmap Detail Page', () => {
       await expect(chart.first().locator('.recharts-wrapper')).toBeVisible({
         timeout: 10000,
       });
+      await expect(chart.locator('.density-cells rect').first()).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Score vs TR' })
+      ).toHaveCount(1);
+      await expect(page.getByText(/SR does not affect TR/i)).toHaveCount(0);
     });
 
     test('displays tournament usage list', async ({ page }) => {
@@ -487,6 +610,38 @@ test.describe('Beatmap Detail Page', () => {
         '[data-testid="beatmap-top-performers"]'
       );
       await expect(topPerformers).toBeVisible({ timeout: 10000 });
+      await expect(
+        topPerformers.getByRole('heading', { name: 'Top plays' })
+      ).toBeVisible();
+      await expect(topPerformers.getByText(/verified/i)).toHaveCount(0);
+
+      const metricBoxes = await topPerformers
+        .locator('[data-testid="beatmap-top-play-metrics"]')
+        .evaluateAll((elements) =>
+          elements.map((element) => element.getBoundingClientRect().x)
+        );
+      const scoreBoxes = await topPerformers
+        .locator('[data-testid="beatmap-top-play-score"]')
+        .evaluateAll((elements) =>
+          elements.map((element) => {
+            const bounds = element.getBoundingClientRect();
+            return { x: bounds.x, width: bounds.width };
+          })
+        );
+
+      expect(metricBoxes.length).toBeGreaterThan(1);
+      expect(Math.max(...metricBoxes) - Math.min(...metricBoxes)).toBeLessThan(
+        1
+      );
+      expect(scoreBoxes.length).toBeGreaterThan(1);
+      expect(
+        Math.max(...scoreBoxes.map(({ x }) => x)) -
+          Math.min(...scoreBoxes.map(({ x }) => x))
+      ).toBeLessThan(1);
+      expect(
+        Math.max(...scoreBoxes.map(({ width }) => width)) -
+          Math.min(...scoreBoxes.map(({ width }) => width))
+      ).toBeLessThan(1);
     });
   });
 

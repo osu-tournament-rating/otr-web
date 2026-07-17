@@ -9,7 +9,7 @@ interface BeatmapStatsCardProps {
 export default function BeatmapStatsCard({ summary }: BeatmapStatsCardProps) {
   const stats = [
     {
-      label: 'Verified games',
+      label: 'Games',
       value: summary.totalGameCount,
       icon: Gamepad2,
     },
@@ -19,7 +19,7 @@ export default function BeatmapStatsCard({ summary }: BeatmapStatsCardProps) {
       icon: Trophy,
     },
     {
-      label: 'Verified players',
+      label: 'Players',
       value: summary.totalPlayerCount,
       icon: UsersRound,
     },

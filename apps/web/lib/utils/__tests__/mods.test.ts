@@ -3,10 +3,67 @@ import { describe, expect, it } from 'bun:test';
 import { Mods } from '@otr/core/osu';
 import {
   deriveGameIsFreeMod,
+  getBeatmapBaseMod,
+  getTopBeatmapBaseMods,
   mostCommonDisplayMods,
   resolveGameDisplayMods,
   resolveGameModsFromScores,
 } from '../mods';
+
+describe('getBeatmapBaseMod', () => {
+  it('uses the requested priority for combination mods', () => {
+    expect(getBeatmapBaseMod(Mods.Hidden | Mods.DoubleTime)).toBe('DT');
+    expect(getBeatmapBaseMod(Mods.Hidden | Mods.HardRock)).toBe('HR');
+    expect(getBeatmapBaseMod(Mods.Hidden | Mods.Easy)).toBe('HD');
+    expect(getBeatmapBaseMod(Mods.Easy | Mods.Flashlight)).toBe('EZ');
+  });
+
+  it('groups Nightcore with DT and unsupported mods into Other', () => {
+    expect(getBeatmapBaseMod(Mods.Nightcore)).toBe('DT');
+    expect(getBeatmapBaseMod(Mods.None)).toBe('NM');
+    expect(getBeatmapBaseMod(Mods.Flashlight)).toBe('Other');
+    expect(getBeatmapBaseMod(Mods.NoFail)).toBe('Other');
+  });
+});
+
+describe('getTopBeatmapBaseMods', () => {
+  it('combines base categories and returns the top three percentages', () => {
+    expect(
+      getTopBeatmapBaseMods([
+        { mods: Mods.Hidden | Mods.DoubleTime, scoreCount: 3 },
+        { mods: Mods.Nightcore, scoreCount: 1 },
+        { mods: Mods.HardRock, scoreCount: 3 },
+        { mods: Mods.Hidden, scoreCount: 2 },
+        { mods: Mods.Easy, scoreCount: 1 },
+      ])
+    ).toEqual([
+      { mod: 'DT', percentage: 40 },
+      { mod: 'HR', percentage: 30 },
+      { mod: 'HD', percentage: 20 },
+    ]);
+  });
+
+  it('uses base-mod priority to break count ties', () => {
+    expect(
+      getTopBeatmapBaseMods([
+        { mods: Mods.None, scoreCount: 1 },
+        { mods: Mods.Easy, scoreCount: 1 },
+        { mods: Mods.Hidden, scoreCount: 1 },
+        { mods: Mods.HardRock, scoreCount: 1 },
+      ]).map(({ mod }) => mod)
+    ).toEqual(['HR', 'HD', 'EZ']);
+  });
+
+  it('returns no usage for empty or invalid counts', () => {
+    expect(getTopBeatmapBaseMods([])).toEqual([]);
+    expect(
+      getTopBeatmapBaseMods([
+        { mods: Mods.Hidden, scoreCount: 0 },
+        { mods: Mods.HardRock, scoreCount: Number.NaN },
+      ])
+    ).toEqual([]);
+  });
+});
 
 describe('resolveGameDisplayMods', () => {
   it('uses the game mods when the game is not freemod', () => {

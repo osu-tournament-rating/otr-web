@@ -16,7 +16,7 @@ export default function BeatmapDetailError({ reset }: { reset: () => void }) {
         <Button asChild variant="outline">
           <Link href="/beatmaps">
             <ArrowLeft aria-hidden="true" />
-            Archive
+            Beatmaps
           </Link>
         </Button>
         <Button type="button" onClick={reset}>

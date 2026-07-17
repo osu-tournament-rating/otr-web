@@ -61,8 +61,8 @@ interface BeatmapListFilterProps {
 }
 
 const sortOptions: readonly { value: BeatmapListSort; label: string }[] = [
-  { value: 'gameCount', label: 'Verified games' },
-  { value: 'tournamentCount', label: 'Verified tournaments' },
+  { value: 'gameCount', label: 'Games' },
+  { value: 'tournamentCount', label: 'Tournaments' },
   { value: 'sr', label: 'SR (star rating)' },
   { value: 'bpm', label: 'BPM' },
   { value: 'length', label: 'Duration' },
@@ -103,7 +103,7 @@ const rangeDefinitions = [
   },
   {
     key: 'games',
-    label: 'Verified games',
+    label: 'Games',
     minKey: 'minGameCount',
     maxKey: 'maxGameCount',
     min: 0,
@@ -112,7 +112,7 @@ const rangeDefinitions = [
   },
   {
     key: 'tournaments',
-    label: 'Verified tournaments',
+    label: 'Tournaments',
     minKey: 'minTournamentCount',
     maxKey: 'maxTournamentCount',
     min: 0,
@@ -371,7 +371,7 @@ export default function BeatmapListFilter({
                     Filter beatmaps
                   </SheetTitle>
                   <SheetDescription className="sr-only">
-                    Set beatmap and verified usage ranges.
+                    Set beatmap and tournament usage ranges.
                   </SheetDescription>
                 </SheetHeader>
 

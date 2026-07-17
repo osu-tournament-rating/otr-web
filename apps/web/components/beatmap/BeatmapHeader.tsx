@@ -10,20 +10,22 @@ import {
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
+  getDifficultyColor,
 } from '@/lib/beatmaps/presentation';
 import type {
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
 } from '@/lib/orpc/schema/beatmapStats';
-import { cn } from '@/lib/utils';
 
 interface BeatmapHeaderProps {
   beatmap: BeatmapWithDetails;
@@ -71,7 +73,7 @@ export default function BeatmapHeader({
             >
               <Link href="/beatmaps">
                 <ArrowLeft aria-hidden="true" />
-                Archive
+                Beatmaps
               </Link>
             </Button>
             <Button
@@ -110,7 +112,11 @@ export default function BeatmapHeader({
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/85">
               <span className="inline-flex items-center gap-1.5 font-semibold text-white">
-                <Star className="size-4 text-primary" aria-hidden="true" />
+                <Star
+                  className="size-4"
+                  style={{ color: getDifficultyColor(beatmap.sr) }}
+                  aria-hidden="true"
+                />
                 {beatmap.sr.toFixed(2)} SR
                 <span className="sr-only">star rating</span>
               </span>
@@ -168,6 +174,24 @@ function DifficultyNavigator({
   currentOsuId: number;
   difficulties: RelatedBeatmapDifficulty[];
 }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const activeDifficulty = scroller?.querySelector<HTMLElement>(
+      '[aria-current="page"]'
+    );
+
+    if (!scroller || !activeDifficulty) return;
+
+    const scrollerBounds = scroller.getBoundingClientRect();
+    const activeBounds = activeDifficulty.getBoundingClientRect();
+    scroller.scrollLeft +=
+      activeBounds.left -
+      scrollerBounds.left -
+      (scrollerBounds.width - activeBounds.width) / 2;
+  }, [currentOsuId, difficulties.length]);
+
   if (difficulties.length === 0) return null;
 
   return (
@@ -180,39 +204,68 @@ function DifficultyNavigator({
           {difficulties.length} in set
         </span>
       </div>
-      <div className="flex snap-x gap-2 overflow-x-auto px-4 pt-2 pb-4 sm:px-5">
+      <div
+        ref={scrollerRef}
+        className="flex snap-x gap-2 overflow-x-auto px-4 pt-2 pb-4 sm:px-5"
+      >
         {difficulties.map((difficulty) => {
           const isCurrent = difficulty.osuId === currentOsuId;
           const ruleset = getBeatmapDisplayRuleset(
             difficulty.ruleset,
             difficulty.diffName
           );
+          const formattedRating = `${difficulty.sr.toFixed(2)} SR`;
+          const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
+          const difficultyIcon = (
+            <RulesetIcon
+              ruleset={ruleset}
+              className="size-5 shrink-0 fill-current [&_path]:fill-current"
+              style={{ color: getDifficultyColor(difficulty.sr) }}
+              aria-hidden="true"
+            />
+          );
+
+          if (isCurrent) {
+            return (
+              <Link
+                key={difficulty.osuId}
+                data-testid={`related-difficulty-${difficulty.osuId}`}
+                href={`/beatmaps/${difficulty.osuId}`}
+                prefetch={false}
+                aria-current="page"
+                aria-label={accessibleLabel}
+                className="flex min-h-10 max-w-64 min-w-40 snap-start items-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm transition-colors hover:bg-primary/15 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-primary/15 dark:hover:bg-primary/20"
+              >
+                {difficultyIcon}
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {difficulty.diffName}
+                </span>
+                <span className="shrink-0 font-mono text-xs font-semibold text-muted-foreground">
+                  {formattedRating}
+                </span>
+              </Link>
+            );
+          }
 
           return (
-            <Link
+            <SimpleTooltip
               key={difficulty.osuId}
-              data-testid={`related-difficulty-${difficulty.osuId}`}
-              href={`/beatmaps/${difficulty.osuId}`}
-              prefetch={false}
-              aria-current={isCurrent ? 'page' : undefined}
-              className={cn(
-                'flex max-w-64 min-w-40 snap-start items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40',
-                isCurrent &&
-                  'border-primary bg-primary/10 text-primary dark:bg-primary/15'
-              )}
+              content={
+                <span>
+                  {difficulty.diffName} · {formattedRating}
+                </span>
+              }
             >
-              <RulesetIcon
-                ruleset={ruleset}
-                className="size-4 shrink-0 fill-current"
-                aria-hidden="true"
-              />
-              <span className="min-w-0 flex-1 truncate">
-                {difficulty.diffName}
-              </span>
-              <span className="shrink-0 font-mono text-xs font-semibold">
-                {difficulty.sr.toFixed(2)} SR
-              </span>
-            </Link>
+              <Link
+                data-testid={`related-difficulty-${difficulty.osuId}`}
+                href={`/beatmaps/${difficulty.osuId}`}
+                prefetch={false}
+                aria-label={accessibleLabel}
+                className="flex size-10 shrink-0 snap-start items-center justify-center rounded-lg border bg-background transition-colors hover:border-primary/50 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40"
+              >
+                {difficultyIcon}
+              </Link>
+            </SimpleTooltip>
           );
         })}
       </div>

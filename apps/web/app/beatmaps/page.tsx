@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { Disc3 } from 'lucide-react';
+import { Music } from 'lucide-react';
 import Link from 'next/link';
 
 import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
@@ -17,7 +17,7 @@ import { beatmapListFilterSchema } from '@/lib/validation-schema';
 
 export const metadata: Metadata = {
   title: 'Beatmaps',
-  description: 'Browse verified tournament beatmaps.',
+  description: 'Browse tournament beatmaps and observed play data.',
 };
 
 type FilterData = ReturnType<typeof beatmapListFilterSchema.parse>;
@@ -107,18 +107,18 @@ export default async function Page(props: {
     <div className="container mx-auto px-4 py-6 sm:px-0 sm:py-0">
       <header className="mb-6 border-b pb-6">
         <div className="flex items-center gap-3">
-          <Disc3 className="size-7 text-primary" aria-hidden="true" />
+          <Music className="size-7 text-primary" aria-hidden="true" />
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             Beatmaps
           </h1>
         </div>
         <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-          Verified tournament maps and observed play data.
+          Tournament maps and observed play data.
         </p>
       </header>
 
       <section
-        aria-label="Beatmap archive"
+        aria-label="Beatmap listing"
         data-testid="beatmap-results"
         className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
       >
@@ -132,7 +132,7 @@ export default async function Page(props: {
         />
 
         {data.totalPages > 1 && (
-          <ArchivePagination
+          <BeatmapPagination
             filter={filter}
             currentPage={data.page}
             totalPages={data.totalPages}
@@ -143,7 +143,7 @@ export default async function Page(props: {
   );
 }
 
-function ArchivePagination({
+function BeatmapPagination({
   filter,
   currentPage,
   totalPages,

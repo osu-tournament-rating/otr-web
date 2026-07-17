@@ -12,7 +12,7 @@ export default function BeatmapsError({ reset }: { reset: () => void }) {
       </span>
       <h1 className="text-xl font-semibold">Beatmaps could not load</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        The archive is temporarily unavailable.
+        The beatmap listing is temporarily unavailable.
       </p>
       <Button type="button" variant="outline" onClick={reset} className="mt-5">
         <RefreshCw aria-hidden="true" />

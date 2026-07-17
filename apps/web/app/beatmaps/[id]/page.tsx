@@ -85,7 +85,7 @@ export default async function BeatmapPage({ params }: PageProps) {
           <section className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
             <div className="flex items-center gap-2 border-b px-4 py-3">
               <Gamepad2 className="size-4 text-primary" aria-hidden="true" />
-              <h2 className="font-semibold">Verified usage</h2>
+              <h2 className="font-semibold">Tournament usage</h2>
             </div>
             <div className="p-3 sm:p-4">
               <BeatmapStatsCard summary={stats.summary} />
@@ -103,14 +103,9 @@ export default async function BeatmapPage({ params }: PageProps) {
           </section>
 
           <section className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="size-4 text-primary" aria-hidden="true" />
-                <h2 className="font-semibold">Observed score &amp; TR</h2>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Verified scores · SR does not affect TR
-              </span>
+            <div className="flex items-center gap-2 border-b px-4 py-3">
+              <BarChart3 className="size-4 text-primary" aria-hidden="true" />
+              <h2 className="font-semibold">Score vs TR</h2>
             </div>
             <BeatmapScoreRatingChart
               data={stats.scoreRatingData}

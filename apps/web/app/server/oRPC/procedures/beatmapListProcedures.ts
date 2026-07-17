@@ -8,11 +8,12 @@ import {
   eq,
   gte,
   ilike,
+  inArray,
   lte,
   sql,
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import { Ruleset } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
@@ -21,6 +22,7 @@ import {
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
 import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
+import { getTopBeatmapBaseMods } from '@/lib/utils/mods';
 import { publicProcedure } from './base';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -262,6 +264,68 @@ export const listBeatmaps = publicProcedure
       const totalCount = countResult[0]?.count ?? 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
+      const pageBeatmapIds = rows.map((row) => row.id);
+      const groupedModRows =
+        pageBeatmapIds.length === 0
+          ? []
+          : await context.db
+              .select({
+                beatmapId: schema.games.beatmapId,
+                mods: schema.gameScores.mods,
+                scoreCount: sql<number>`COUNT(*)`,
+              })
+              .from(schema.gameScores)
+              .innerJoin(
+                schema.games,
+                eq(schema.games.id, schema.gameScores.gameId)
+              )
+              .innerJoin(
+                schema.matches,
+                eq(schema.matches.id, schema.games.matchId)
+              )
+              .innerJoin(
+                schema.tournaments,
+                eq(schema.tournaments.id, schema.matches.tournamentId)
+              )
+              .where(
+                and(
+                  inArray(schema.games.beatmapId, pageBeatmapIds),
+                  eq(
+                    schema.tournaments.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.matches.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.games.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.gameScores.verificationStatus,
+                    VerificationStatus.Verified
+                  )
+                )
+              )
+              .groupBy(schema.games.beatmapId, schema.gameScores.mods);
+
+      const groupedModsByBeatmap = new Map<
+        number,
+        Array<{ mods: number; scoreCount: number }>
+      >();
+
+      for (const row of groupedModRows) {
+        if (row.beatmapId === null) continue;
+
+        const groupedMods = groupedModsByBeatmap.get(row.beatmapId) ?? [];
+        groupedMods.push({
+          mods: row.mods,
+          scoreCount: Number(row.scoreCount),
+        });
+        groupedModsByBeatmap.set(row.beatmapId, groupedMods);
+      }
+
       const items = rows.map((row) =>
         BeatmapListItemSchema.parse({
           id: row.id,
@@ -281,6 +345,9 @@ export const listBeatmaps = publicProcedure
           creator: row.creator ?? null,
           verifiedTournamentCount: Number(row.verifiedTournamentCount) || 0,
           verifiedGameCount: Number(row.verifiedGameCount) || 0,
+          topMods: getTopBeatmapBaseMods(
+            groupedModsByBeatmap.get(row.id) ?? []
+          ),
         })
       );
 

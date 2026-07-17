@@ -1,18 +1,16 @@
 'use client';
 
-import { useTheme } from 'next-themes';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import {
   ScatterChart,
   Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
-  Legend,
   useXAxisScale,
   useYAxisScale,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { ChartContainer, ChartConfig } from '../ui/chart';
 import type { BeatmapScoreRatingPoint } from '@/lib/orpc/schema/beatmapStats';
 
@@ -20,34 +18,6 @@ interface BeatmapScoreRatingChartProps {
   data: BeatmapScoreRatingPoint[];
   className?: string;
 }
-
-const MOD_FLAGS = {
-  None: 0,
-  NoFail: 1,
-  Hidden: 8,
-  HardRock: 16,
-  DoubleTime: 64,
-  Nightcore: 512,
-  SpunOut: 4096,
-} as const;
-
-type ModCategory = 'nm' | 'hd' | 'hr' | 'dt' | 'other';
-
-const getModCategory = (mods: number): ModCategory => {
-  const cleanMods = mods & ~MOD_FLAGS.NoFail & ~MOD_FLAGS.SpunOut;
-
-  if (cleanMods === MOD_FLAGS.None) return 'nm';
-  if (cleanMods === MOD_FLAGS.HardRock) return 'hr';
-  if (cleanMods === MOD_FLAGS.Hidden) return 'hd';
-  if (cleanMods === MOD_FLAGS.DoubleTime || cleanMods === MOD_FLAGS.Nightcore)
-    return 'dt';
-  return 'other';
-};
-
-const getChartColors = (theme?: string) => ({
-  grid: theme === 'dark' ? 'rgba(55, 65, 81, 0.4)' : 'rgba(156, 163, 175, 0.4)',
-  text: theme === 'dark' ? '#9ca3af' : '#6b7280',
-});
 
 interface DensityCell {
   x1: number;
@@ -59,17 +29,26 @@ interface DensityCell {
 
 const DENSITY_X_BINS = 20;
 const DENSITY_Y_BINS = 15;
-const DENSITY_MIN_OPACITY = 0.15;
-const DENSITY_MAX_OPACITY = 1.0;
+const DENSITY_MIN_OPACITY = 0.12;
+const DENSITY_MAX_OPACITY = 0.9;
 
 const RATING_BASE_UNIT = 100;
 const SCORE_STEP = 50000;
+
+const chartConfig = {
+  density: {
+    label: 'Play density',
+    color: 'var(--primary)',
+  },
+} satisfies ChartConfig;
 
 const getNiceStep = (
   range: number,
   baseUnit: number,
   targetTicks: number = 8
 ): number => {
+  if (range <= 0) return baseUnit;
+
   const rawStep = range / targetTicks;
   const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
   const normalized = rawStep / magnitude;
@@ -82,9 +61,17 @@ const getNiceStep = (
 const getNiceDomain = (
   min: number,
   max: number,
-  step: number
+  step: number,
+  minimumAllowed: number = Number.NEGATIVE_INFINITY
 ): [number, number] => {
-  return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
+  const domainMin = Math.floor(min / step) * step;
+  const domainMax = Math.ceil(max / step) * step;
+
+  if (domainMin === domainMax) {
+    return [Math.max(minimumAllowed, domainMin - step), domainMax + step];
+  }
+
+  return [Math.max(minimumAllowed, domainMin), domainMax];
 };
 
 const generateTicks = (min: number, max: number, step: number): number[] => {
@@ -128,6 +115,7 @@ const computeDensityGrid = (
 
   const maxCount = Math.max(...grid.flat());
   if (maxCount === 0) return [];
+  const maxLogCount = Math.log1p(maxCount);
 
   const cells: DensityCell[] = [];
   for (let i = 0; i < DENSITY_X_BINS; i++) {
@@ -138,7 +126,7 @@ const computeDensityGrid = (
           x2: xMin + (i + 1) * xBinSize,
           y1: yMin + j * yBinSize,
           y2: yMin + (j + 1) * yBinSize,
-          density: grid[i][j] / maxCount,
+          density: Math.log1p(grid[i][j]) / maxLogCount,
         });
       }
     }
@@ -147,153 +135,89 @@ const computeDensityGrid = (
   return cells;
 };
 
-const MOD_COLORS: Record<ModCategory, string> = {
-  nm: 'var(--chart-1)',
-  hr: 'var(--mod-hard-rock)',
-  hd: 'var(--mod-hidden)',
-  dt: 'var(--mod-double-time)',
-  other: 'var(--chart-3)',
-};
-
 interface DensityCellsProps {
-  densityByMod: Record<ModCategory, DensityCell[]>;
-  visibleMods: Set<ModCategory>;
+  cells: DensityCell[];
 }
 
 /**
  * Draws every density cell as a single SVG layer using the axis scales from
- * recharts. Rendering one component beats emitting a `<ReferenceArea>` per cell:
- * each ReferenceArea subscribes to recharts' internal store, so a few hundred of
- * them made every mod toggle re-reconcile the whole chart (~1-2s). Here a toggle
- * only re-renders this one component's plain `<rect>`s.
+ * recharts. Plain rects avoid the store subscription and reconciliation cost of
+ * emitting a `<ReferenceArea>` for every occupied cell.
  */
-function DensityCells({ densityByMod, visibleMods }: DensityCellsProps) {
+function DensityCells({ cells }: DensityCellsProps) {
   const xScale = useXAxisScale();
   const yScale = useYAxisScale();
 
   if (!xScale || !yScale) return null;
 
-  const rects: ReactNode[] = [];
-  for (const mod of Object.keys(densityByMod) as ModCategory[]) {
-    if (!visibleMods.has(mod)) continue;
-    const cells = densityByMod[mod];
-    if (!cells) continue;
+  return (
+    <g className="density-cells" aria-hidden="true">
+      {cells.map((cell, index) => {
+        const px1 = xScale(cell.x1);
+        const px2 = xScale(cell.x2);
+        const py1 = yScale(cell.y1);
+        const py2 = yScale(cell.y2);
+        if (px1 == null || px2 == null || py1 == null || py2 == null)
+          return null;
 
-    for (let i = 0; i < cells.length; i++) {
-      const cell = cells[i];
-      const px1 = xScale(cell.x1);
-      const px2 = xScale(cell.x2);
-      const py1 = yScale(cell.y1);
-      const py2 = yScale(cell.y2);
-      if (px1 == null || px2 == null || py1 == null || py2 == null) continue;
-
-      rects.push(
-        <rect
-          key={`density-${mod}-${i}`}
-          x={Math.min(px1, px2)}
-          y={Math.min(py1, py2)}
-          width={Math.abs(px2 - px1)}
-          height={Math.abs(py2 - py1)}
-          shapeRendering="crispEdges"
-          style={{
-            fill: MOD_COLORS[mod],
-            fillOpacity:
-              DENSITY_MIN_OPACITY +
-              cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY),
-          }}
-        />
-      );
-    }
-  }
-
-  return <g className="density-cells">{rects}</g>;
+        return (
+          <rect
+            key={`density-${index}`}
+            x={Math.min(px1, px2)}
+            y={Math.min(py1, py2)}
+            width={Math.abs(px2 - px1)}
+            height={Math.abs(py2 - py1)}
+            shapeRendering="crispEdges"
+            style={{
+              fill: 'var(--color-density)',
+              fillOpacity:
+                DENSITY_MIN_OPACITY +
+                cell.density * (DENSITY_MAX_OPACITY - DENSITY_MIN_OPACITY),
+            }}
+          />
+        );
+      })}
+    </g>
+  );
 }
 
 export default function BeatmapScoreRatingChart({
   data,
   className,
 }: BeatmapScoreRatingChartProps) {
-  const { theme } = useTheme();
-  const colors = getChartColors(theme);
-  const [visibleMods, setVisibleMods] = useState<Set<ModCategory>>(
-    new Set(['nm', 'hr', 'hd', 'dt', 'other'])
-  );
-
-  const handleLegendClick = (entry: { value?: string }) => {
-    const modMap: Record<string, ModCategory> = {
-      'No Mod': 'nm',
-      'Hard Rock': 'hr',
-      Hidden: 'hd',
-      'Double Time': 'dt',
-      Other: 'other',
-    };
-    const mod = entry.value ? modMap[entry.value] : undefined;
-    if (!mod) return;
-
-    setVisibleMods((prev) => {
-      const next = new Set(prev);
-      if (next.has(mod)) {
-        next.delete(mod);
-      } else {
-        next.add(mod);
-      }
-      return next;
-    });
-  };
-
-  const { groupedData, densityByMod, xDomain, yDomain, xTicks, yTicks } =
-    useMemo(() => {
-      const grouped = {
-        nm: data.filter((d) => getModCategory(d.mods) === 'nm'),
-        hr: data.filter((d) => getModCategory(d.mods) === 'hr'),
-        hd: data.filter((d) => getModCategory(d.mods) === 'hd'),
-        dt: data.filter((d) => getModCategory(d.mods) === 'dt'),
-        other: data.filter((d) => getModCategory(d.mods) === 'other'),
-      };
-
-      if (data.length === 0) {
-        return {
-          groupedData: grouped,
-          densityByMod: {} as Record<ModCategory, DensityCell[]>,
-          xDomain: [0, 1] as [number, number],
-          yDomain: [0, 1] as [number, number],
-          xTicks: [] as number[],
-          yTicks: [] as number[],
-        };
-      }
-
-      const xValues = data.map((d) => d.playerRating);
-      const yValues = data.map((d) => d.score);
-      const xMin = Math.min(...xValues);
-      const xMax = Math.max(...xValues);
-      const yMin = Math.min(...yValues);
-      const yMax = Math.max(...yValues);
-
-      const xStep = getNiceStep(xMax - xMin, RATING_BASE_UNIT);
-      const xDom = getNiceDomain(xMin, xMax, xStep);
-      const yDom = getNiceDomain(yMin, yMax, SCORE_STEP);
-
-      const density: Record<ModCategory, DensityCell[]> = {
-        nm: computeDensityGrid(grouped.nm, xDom, yDom),
-        hr: computeDensityGrid(grouped.hr, xDom, yDom),
-        hd: computeDensityGrid(grouped.hd, xDom, yDom),
-        dt: computeDensityGrid(grouped.dt, xDom, yDom),
-        other: computeDensityGrid(grouped.other, xDom, yDom),
-      };
-
+  const { densityCells, xDomain, yDomain, xTicks, yTicks } = useMemo(() => {
+    if (data.length === 0) {
       return {
-        groupedData: grouped,
-        densityByMod: density,
-        xDomain: xDom,
-        yDomain: yDom,
-        xTicks: generateTicks(xDom[0], xDom[1], xStep),
-        yTicks: generateTicks(yDom[0], yDom[1], SCORE_STEP),
+        densityCells: [] as DensityCell[],
+        xDomain: [0, 1] as [number, number],
+        yDomain: [0, 1] as [number, number],
+        xTicks: [] as number[],
+        yTicks: [] as number[],
       };
-    }, [data]);
+    }
+
+    const xValues = data.map((d) => d.playerRating);
+    const yValues = data.map((d) => d.score);
+    const xMin = Math.min(...xValues);
+    const xMax = Math.max(...xValues);
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
+
+    const xStep = getNiceStep(xMax - xMin, RATING_BASE_UNIT);
+    const xDom = getNiceDomain(xMin, xMax, xStep, 0);
+    const yDom = getNiceDomain(yMin, yMax, SCORE_STEP, 0);
+
+    return {
+      densityCells: computeDensityGrid(data, xDom, yDom),
+      xDomain: xDom,
+      yDomain: yDom,
+      xTicks: generateTicks(xDom[0], xDom[1], xStep),
+      yTicks: generateTicks(yDom[0], yDom[1], SCORE_STEP),
+    };
+  }, [data]);
 
   // Two invisible anchor points at the domain corners are enough for recharts
-  // v3 to build the axis scales; feeding the full dataset here would render a
-  // transparent SVG node per score and make mod toggles re-render slowly.
+  // v3 to build the axis scales without rendering a transparent node per score.
   const scaleAnchors = useMemo(
     () => [
       { playerRating: xDomain[0], score: yDomain[0] },
@@ -302,20 +226,9 @@ export default function BeatmapScoreRatingChart({
     [xDomain, yDomain]
   );
 
-  const chartConfig: ChartConfig = {
-    nm: { label: 'No Mod', color: 'var(--chart-1)' },
-    hr: { label: 'Hard Rock', color: 'var(--mod-hard-rock)' },
-    hd: { label: 'Hidden', color: 'var(--mod-hidden)' },
-    dt: { label: 'Double Time', color: 'var(--mod-double-time)' },
-    other: { label: 'Other', color: 'var(--chart-3)' },
-  };
-
   if (data.length === 0) {
     return (
       <Card data-testid="beatmap-score-rating-chart" className={className}>
-        <CardHeader>
-          <CardTitle className="text-center">Score vs player TR</CardTitle>
-        </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-sm text-muted-foreground">
             No score data available for this beatmap.
@@ -327,28 +240,34 @@ export default function BeatmapScoreRatingChart({
 
   return (
     <Card data-testid="beatmap-score-rating-chart" className={className}>
-      <CardHeader>
-        <CardTitle className="text-center">Score vs player TR</CardTitle>
-      </CardHeader>
       <CardContent className="font-sans">
-        <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <ScatterChart margin={{ top: 25, right: 20, bottom: 25, left: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+        <ChartContainer
+          config={chartConfig}
+          className="h-[350px] w-full"
+          role="img"
+          aria-label="Score versus player TR density heatmap"
+        >
+          <ScatterChart margin={{ top: 8, right: 20, bottom: 25, left: 10 }}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--border)"
+              strokeOpacity={0.65}
+            />
             <XAxis
               type="number"
               dataKey="playerRating"
               name="TR"
               domain={xDomain}
               ticks={xTicks}
-              tick={{ fill: colors.text, fontSize: 11 }}
-              tickLine={{ stroke: colors.grid }}
-              axisLine={{ stroke: colors.grid }}
+              tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+              tickLine={{ stroke: 'var(--border)' }}
+              axisLine={{ stroke: 'var(--border)' }}
               tickFormatter={(v) => v.toFixed(0)}
               label={{
-                value: 'Player TR',
+                value: 'TR',
                 position: 'insideBottom',
                 offset: -15,
-                fill: colors.text,
+                fill: 'var(--muted-foreground)',
                 fontSize: 11,
               }}
             />
@@ -358,101 +277,17 @@ export default function BeatmapScoreRatingChart({
               name="Score"
               domain={yDomain}
               ticks={yTicks}
-              tick={{ fill: colors.text, fontSize: 11 }}
-              tickLine={{ stroke: colors.grid }}
-              axisLine={{ stroke: colors.grid }}
+              tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+              tickLine={{ stroke: 'var(--border)' }}
+              axisLine={{ stroke: 'var(--border)' }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
               label={{
                 value: 'Score',
                 angle: -90,
                 position: 'insideLeft',
                 offset: 5,
-                fill: colors.text,
+                fill: 'var(--muted-foreground)',
                 fontSize: 11,
-              }}
-            />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              wrapperStyle={{
-                fontSize: 11,
-                color: colors.text,
-                paddingBottom: 10,
-              }}
-              content={() => {
-                // recharts v3 derives Legend payload from chart series and no
-                // longer honors the `payload` prop, so we render the mod toggle
-                // legend ourselves via a custom content renderer.
-                const legendItems = [
-                  ...(groupedData.nm.length > 0
-                    ? [
-                        {
-                          value: 'No Mod',
-                          color: visibleMods.has('nm')
-                            ? 'var(--chart-1)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.hr.length > 0
-                    ? [
-                        {
-                          value: 'Hard Rock',
-                          color: visibleMods.has('hr')
-                            ? 'var(--mod-hard-rock)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.hd.length > 0
-                    ? [
-                        {
-                          value: 'Hidden',
-                          color: visibleMods.has('hd')
-                            ? 'var(--mod-hidden)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.dt.length > 0
-                    ? [
-                        {
-                          value: 'Double Time',
-                          color: visibleMods.has('dt')
-                            ? 'var(--mod-double-time)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                  ...(groupedData.other.length > 0
-                    ? [
-                        {
-                          value: 'Other',
-                          color: visibleMods.has('other')
-                            ? 'var(--chart-3)'
-                            : 'rgba(128,128,128,0.3)',
-                        },
-                      ]
-                    : []),
-                ];
-
-                return (
-                  <ul className="flex list-none justify-end gap-3 p-0">
-                    {legendItems.map((item) => (
-                      <li
-                        key={item.value}
-                        className="flex cursor-pointer items-center gap-1"
-                        onClick={() => handleLegendClick(item)}
-                      >
-                        <span
-                          className="inline-block size-2.5"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        {item.value}
-                      </li>
-                    ))}
-                  </ul>
-                );
               }}
             />
 
@@ -467,10 +302,7 @@ export default function BeatmapScoreRatingChart({
               isAnimationActive={false}
             />
 
-            <DensityCells
-              densityByMod={densityByMod}
-              visibleMods={visibleMods}
-            />
+            <DensityCells cells={densityCells} />
           </ScatterChart>
         </ChartContainer>
       </CardContent>

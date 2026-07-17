@@ -27,7 +27,7 @@ export default function BeatmapTopPerformersTable({
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <Medal className="size-4 text-primary" aria-hidden="true" />
-          <h2 className="font-semibold">Top verified plays</h2>
+          <h2 className="font-semibold">Top plays</h2>
         </div>
         <span className="text-xs text-muted-foreground">
           {performers.length} shown
@@ -36,14 +36,14 @@ export default function BeatmapTopPerformersTable({
 
       {performers.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-          No verified scores.
+          No scores.
         </p>
       ) : (
         <ol className="divide-y">
           {performers.map((performer, index) => (
             <li
               key={performer.scoreId}
-              className="group grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/35 sm:grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:gap-4 dark:hover:bg-secondary/60"
+              className="group grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/35 sm:grid-cols-[2rem_minmax(0,1fr)_8rem_8rem] sm:gap-4 dark:hover:bg-secondary/60"
             >
               <span className="font-mono text-xs font-semibold text-muted-foreground">
                 #{index + 1}
@@ -63,8 +63,11 @@ export default function BeatmapTopPerformersTable({
                 </span>
               </Link>
 
-              <div className="col-start-2 flex items-center gap-3 text-xs text-muted-foreground sm:col-start-auto">
-                <span>
+              <div
+                data-testid="beatmap-top-play-metrics"
+                className="col-start-2 flex items-center gap-3 text-xs text-muted-foreground sm:col-start-auto sm:w-full sm:justify-end"
+              >
+                <span className="tabular-nums">
                   {performer.accuracy !== null
                     ? formatAccuracy(performer.accuracy)
                     : '—'}
@@ -82,7 +85,8 @@ export default function BeatmapTopPerformersTable({
                 href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
                 prefetch={false}
                 aria-label={`View ${performer.player.username}'s score`}
-                className="col-start-2 inline-flex items-center gap-1 justify-self-start rounded-sm font-mono text-sm font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:col-start-auto sm:justify-self-end"
+                data-testid="beatmap-top-play-score"
+                className="col-start-2 inline-flex items-center gap-1 justify-self-start rounded-sm font-mono text-sm font-semibold text-primary tabular-nums hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:col-start-auto sm:w-full sm:justify-end sm:justify-self-end"
               >
                 {performer.score.toLocaleString()}
                 <MoveUpRight className="size-3.5" aria-hidden="true" />

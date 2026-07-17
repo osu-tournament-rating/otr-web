@@ -44,6 +44,11 @@ export default function BeatmapTournamentCard({
   const [error, setError] = useState(false);
   const isVerified =
     tournament.tournament.verificationStatus === VerificationStatus.Verified;
+  const shouldDisplayVerificationBadge =
+    tournament.tournament.verificationStatus !== VerificationStatus.Verified &&
+    tournament.tournament.verificationStatus !== VerificationStatus.PreVerified;
+  const hasTournamentBadges =
+    shouldDisplayVerificationBadge || tournament.tournament.isLazer;
 
   useEffect(() => {
     if (!isOpen || matches || error || !isVerified) return;
@@ -88,20 +93,27 @@ export default function BeatmapTournamentCard({
     <article className="px-4 py-4 transition-colors hover:bg-muted/25 dark:hover:bg-secondary/45">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <VerificationBadge
-              verificationStatus={tournament.tournament.verificationStatus}
-              entityType="tournament"
-              displayText
-            />
-            {tournament.tournament.isLazer && (
-              <LazerBadge isLazer={tournament.tournament.isLazer} />
-            )}
-          </div>
+          {hasTournamentBadges && (
+            <div className="flex flex-wrap items-center gap-2">
+              {shouldDisplayVerificationBadge && (
+                <VerificationBadge
+                  verificationStatus={tournament.tournament.verificationStatus}
+                  entityType="tournament"
+                  displayText
+                />
+              )}
+              {tournament.tournament.isLazer && (
+                <LazerBadge isLazer={tournament.tournament.isLazer} />
+              )}
+            </div>
+          )}
           <Link
             href={`/tournaments/${tournament.tournament.id}`}
             prefetch={false}
-            className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-sm font-semibold hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className={cn(
+              'inline-flex max-w-full items-center gap-1.5 rounded-sm font-semibold hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              hasTournamentBadges && 'mt-2'
+            )}
           >
             <span className="truncate">{tournament.tournament.name}</span>
             <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
@@ -159,7 +171,7 @@ export default function BeatmapTournamentCard({
         <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
           <Gamepad2 className="size-3.5" aria-hidden="true" />
           {isVerified
-            ? `${tournament.gameCount} verified ${tournament.gameCount === 1 ? 'game' : 'games'}`
+            ? `${tournament.gameCount} ${tournament.gameCount === 1 ? 'game' : 'games'}`
             : 'Pool record only'}
         </span>
       </div>
@@ -190,7 +202,7 @@ export default function BeatmapTournamentCard({
           )}
           {matches?.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-              No verified games.
+              No games.
             </p>
           )}
           {matches && matches.length > 0 && (

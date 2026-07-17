@@ -62,6 +62,7 @@ The E2E suite requires its configured database, RabbitMQ, and auth fixtures. Use
 - Keep TypeScript strict. Follow the existing Prettier configuration: single quotes, ES5 trailing commas, and Tailwind class sorting.
 - Default to React Server Components for initial and URL-driven data. Add `'use client'` only for browser state, effects, or interaction.
 - Reuse typed oRPC query helpers, SWR patterns, request caching, shared UI primitives, `cn`, and existing formatting utilities before adding alternatives.
+- Keep data-visualization copy minimal and functional. Do not repeat surrounding page context in chart titles, legends, or explanatory caveats; verification is an eligibility invariant on surfaces that already contain verified-only data, not recurring UI copy.
 - Validate request and external inputs with the existing Zod and oRPC patterns. Preserve typed errors and explicit authorization checks.
 - Procedures live under `apps/web/app/server/oRPC/procedures/` and must be registered in the router. A `public` route tag changes the OpenAPI surface; it does not make API-key authentication optional at `/api`.
 - Preserve session, role, API-key, maintenance-window, audit, transaction, queue metadata, and correlation-ID behavior when editing those paths.

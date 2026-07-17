@@ -1,6 +1,68 @@
 import { Mods } from '@otr/core/osu';
 import { ModsEnumHelper } from '../enum-helpers';
 
+export const beatmapBaseMods = ['DT', 'HR', 'HD', 'EZ', 'NM', 'Other'] as const;
+
+export type BeatmapBaseMod = (typeof beatmapBaseMods)[number];
+
+export interface BeatmapBaseModUsage {
+  mod: BeatmapBaseMod;
+  percentage: number;
+}
+
+const beatmapBaseModPriority = new Map(
+  beatmapBaseMods.map((mod, index) => [mod, index])
+);
+
+/**
+ * Collapses a score's mod combination into the base mod used by beatmap cards.
+ * Conflicting combinations deliberately follow DT > HR > HD > EZ; every
+ * remaining non-empty combination is grouped into Other.
+ */
+export function getBeatmapBaseMod(mods: number): BeatmapBaseMod {
+  if ((mods & (Mods.DoubleTime | Mods.Nightcore)) !== 0) return 'DT';
+  if ((mods & Mods.HardRock) !== 0) return 'HR';
+  if ((mods & Mods.Hidden) !== 0) return 'HD';
+  if ((mods & Mods.Easy) !== 0) return 'EZ';
+  if (mods === Mods.None) return 'NM';
+  return 'Other';
+}
+
+/**
+ * Aggregates grouped score-mod counts into the three most-used base mods.
+ * Percentages always use all supplied score rows as their denominator, even
+ * when more than three categories are present.
+ */
+export function getTopBeatmapBaseMods(
+  rows: Array<{ mods: number; scoreCount: number }>
+): BeatmapBaseModUsage[] {
+  const counts = new Map<BeatmapBaseMod, number>();
+  let totalScoreCount = 0;
+
+  for (const row of rows) {
+    if (!Number.isFinite(row.scoreCount) || row.scoreCount <= 0) continue;
+
+    const mod = getBeatmapBaseMod(row.mods);
+    counts.set(mod, (counts.get(mod) ?? 0) + row.scoreCount);
+    totalScoreCount += row.scoreCount;
+  }
+
+  if (totalScoreCount === 0) return [];
+
+  return Array.from(counts.entries())
+    .sort(
+      ([leftMod, leftCount], [rightMod, rightCount]) =>
+        rightCount - leftCount ||
+        (beatmapBaseModPriority.get(leftMod) ?? Number.MAX_SAFE_INTEGER) -
+          (beatmapBaseModPriority.get(rightMod) ?? Number.MAX_SAFE_INTEGER)
+    )
+    .slice(0, 3)
+    .map(([mod, scoreCount]) => ({
+      mod,
+      percentage: (scoreCount / totalScoreCount) * 100,
+    }));
+}
+
 /** Mod multipliers (ScoreV2, common tournament mods) */
 const modMultipliers: Record<number, number> = {
   [Mods.HardRock]: 1.1,

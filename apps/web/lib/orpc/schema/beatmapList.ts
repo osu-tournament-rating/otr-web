@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { beatmapBaseMods } from '@/lib/utils/mods';
 import { RulesetSchema } from './constants';
 
 export const BeatmapListSortSchema = z.enum([
@@ -42,6 +43,11 @@ export const BeatmapListRequestSchema = z.object({
   descending: z.boolean().default(true),
 });
 
+export const BeatmapListTopModSchema = z.object({
+  mod: z.enum(beatmapBaseMods),
+  percentage: z.number().min(0).max(100),
+});
+
 export const BeatmapListItemSchema = z.object({
   id: z.number().int(),
   osuId: z.number(),
@@ -60,6 +66,7 @@ export const BeatmapListItemSchema = z.object({
   creator: z.string().nullable(),
   verifiedTournamentCount: z.number().int().nonnegative(),
   verifiedGameCount: z.number().int().nonnegative(),
+  topMods: z.array(BeatmapListTopModSchema).max(3).optional(),
 });
 
 export const BeatmapListResponseSchema = z.object({
