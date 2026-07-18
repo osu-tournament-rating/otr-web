@@ -5,13 +5,14 @@ import {
   ChevronRight,
   Clock3,
   Gamepad2,
+  Layers,
   SearchX,
   Star,
   Trophy,
   UserRound,
-  type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
@@ -131,7 +132,7 @@ export default function BeatmapListTable({
 
               <div
                 data-testid="beatmap-card-content"
-                className="min-w-0 sm:flex sm:flex-col sm:justify-center xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-6"
+                className="min-w-0 sm:flex sm:flex-col sm:justify-center"
               >
                 <div className="min-w-0">
                   <div className="flex items-start gap-2">
@@ -149,32 +150,76 @@ export default function BeatmapListTable({
                     />
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground sm:text-sm">
-                    <span className="inline-flex items-center gap-1.5">
-                      <RulesetIcon
-                        ruleset={ruleset}
-                        className="size-4 shrink-0 fill-current"
-                        aria-hidden="true"
-                      />
-                      {rulesetLabel}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                      <Star
-                        className="size-4"
-                        style={{ color: getDifficultyColor(beatmap.sr) }}
-                        aria-hidden="true"
-                      />
-                      {beatmap.sr.toFixed(2)} SR
-                      <span className="sr-only">star rating</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Activity className="size-4" aria-hidden="true" />
-                      {Math.round(beatmap.bpm)} BPM
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock3 className="size-4" aria-hidden="true" />
-                      {formatDuration(Number(beatmap.totalLength))}
-                    </span>
+                  <div
+                    data-testid="beatmap-usage-summary"
+                    className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground sm:text-sm"
+                  >
+                    <Metric
+                      icon={
+                        <RulesetIcon
+                          ruleset={ruleset}
+                          className="size-4 shrink-0 fill-current"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={rulesetLabel}
+                    />
+                    <Metric
+                      icon={
+                        <Star
+                          className="size-4 shrink-0"
+                          style={{ color: getDifficultyColor(beatmap.sr) }}
+                          aria-hidden="true"
+                        />
+                      }
+                      value={beatmap.sr.toFixed(2)}
+                      unit="SR"
+                      ariaLabel={`${beatmap.sr.toFixed(2)} star rating`}
+                    />
+                    <Metric
+                      icon={
+                        <Activity
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={Math.round(beatmap.bpm)}
+                      unit="BPM"
+                      ariaLabel={`${Math.round(beatmap.bpm)} BPM`}
+                    />
+                    <Metric
+                      icon={
+                        <Clock3
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={formatDuration(Number(beatmap.totalLength))}
+                      ariaLabel={`${formatDuration(Number(beatmap.totalLength))} duration`}
+                    />
+                    <Metric
+                      icon={
+                        <Gamepad2
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={beatmap.verifiedGameCount.toLocaleString()}
+                      ariaLabel={`${beatmap.verifiedGameCount.toLocaleString()} verified games`}
+                      testId="beatmap-games-count"
+                    />
+                    <Metric
+                      icon={
+                        <Trophy
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={beatmap.verifiedTournamentCount.toLocaleString()}
+                      ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString()} verified tournaments`}
+                      testId="beatmap-tournaments-count"
+                    />
+                    <TopModsBreakdown mods={topMods} />
                   </div>
 
                   <p className="mt-1.5 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
@@ -186,27 +231,6 @@ export default function BeatmapListTable({
                     <span aria-hidden="true">·</span>
                     <span className="font-mono">#{beatmap.osuId}</span>
                   </p>
-                </div>
-
-                <div
-                  data-testid="beatmap-usage-summary"
-                  className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t pt-2.5 text-xs text-muted-foreground xl:mt-0 xl:max-w-[34rem] xl:justify-end xl:border-t-0 xl:border-l xl:pt-0 xl:pl-6"
-                >
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                    <EvidenceCount
-                      icon={Gamepad2}
-                      value={beatmap.verifiedGameCount}
-                      label="games"
-                      testId="beatmap-games-count"
-                    />
-                    <TopModsBreakdown mods={topMods} />
-                  </div>
-                  <EvidenceCount
-                    icon={Trophy}
-                    value={beatmap.verifiedTournamentCount}
-                    label="tournaments"
-                    testId="beatmap-tournaments-count"
-                  />
                 </div>
               </div>
             </article>
@@ -223,32 +247,40 @@ function TopModsBreakdown({
   mods: NonNullable<BeatmapListItem['topMods']>;
 }) {
   if (mods.length === 0) {
-    return <span className="text-[11px]">No mod data</span>;
+    return (
+      <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <Layers className="size-4 shrink-0" aria-hidden="true" />
+        <span className="text-[11px] sm:text-xs">No mod data</span>
+      </div>
+    );
   }
 
   return (
-    <ul
-      data-testid="beatmap-top-mods"
-      aria-label="Top mods by score usage"
-      className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]"
-    >
-      {mods.map(({ mod, percentage }) => (
-        <li
-          key={mod}
-          className="inline-flex items-center gap-1 whitespace-nowrap text-muted-foreground"
-        >
-          <span
-            className="size-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: baseModColors[mod] }}
-            aria-hidden="true"
-          />
-          <span className="font-semibold text-foreground">{mod}</span>
-          <span className="tabular-nums">
-            {formatModPercentage(percentage)}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="inline-flex min-w-0 items-center gap-1.5">
+      <Layers className="size-4 shrink-0" aria-hidden="true" />
+      <ul
+        data-testid="beatmap-top-mods"
+        aria-label="Top mods by score usage"
+        className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:text-xs"
+      >
+        {mods.map(({ mod, percentage }) => (
+          <li
+            key={mod}
+            className="inline-flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+          >
+            <span
+              className="size-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: baseModColors[mod] }}
+              aria-hidden="true"
+            />
+            <span className="font-medium text-foreground">{mod}</span>
+            <span className="tabular-nums">
+              {formatModPercentage(percentage)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -256,27 +288,28 @@ function formatModPercentage(percentage: number): string {
   return `${percentage < 10 ? percentage.toFixed(1) : Math.round(percentage)}%`;
 }
 
-function EvidenceCount({
-  icon: Icon,
+function Metric({
+  icon,
   value,
-  label,
+  unit,
+  ariaLabel,
   testId,
 }: {
-  icon: LucideIcon;
-  value: number;
-  label: string;
-  testId: string;
+  icon: ReactNode;
+  value: ReactNode;
+  unit?: string;
+  ariaLabel?: string;
+  testId?: string;
 }) {
   return (
     <span
       data-testid={testId}
+      aria-label={ariaLabel}
       className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground"
     >
-      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-      <strong className="font-semibold text-foreground tabular-nums">
-        {value.toLocaleString()}
-      </strong>
-      <span>{label}</span>
+      {icon}
+      <span className="font-medium text-foreground tabular-nums">{value}</span>
+      {unit ? <span className="text-[11px] sm:text-xs">{unit}</span> : null}
     </span>
   );
 }

@@ -99,11 +99,18 @@ test.describe('Beatmaps Listing Page', () => {
         .first();
 
       await expect(firstRow).toBeVisible({ timeout: 10000 });
-      await expect(firstRow.getByText(/ SR/).first()).toBeVisible();
-      await expect(firstRow.getByText(/ BPM/).first()).toBeVisible();
+      await expect(firstRow.getByLabel(/\d+\.\d{2} star rating/)).toBeVisible();
+      await expect(firstRow.getByLabel(/\d+ BPM/)).toBeVisible();
       await expect(
-        firstRow.getByText('games', { exact: true }).last()
-      ).toBeVisible();
+        firstRow.locator('[data-testid="beatmap-games-count"]')
+      ).toHaveAccessibleName(/\d[\d,]* verified games/);
+      await expect(
+        firstRow.locator('[data-testid="beatmap-tournaments-count"]')
+      ).toHaveAccessibleName(/\d[\d,]* verified tournaments/);
+      await expect(firstRow.getByText('games', { exact: true })).toHaveCount(0);
+      await expect(
+        firstRow.getByText('tournaments', { exact: true })
+      ).toHaveCount(0);
 
       const topMods = firstRow.getByRole('list', {
         name: 'Top mods by score usage',
