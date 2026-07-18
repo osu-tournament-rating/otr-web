@@ -118,7 +118,7 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(topMods).toBeVisible();
       const displayedMods = topMods.locator('li');
       expect(await displayedMods.count()).toBeGreaterThan(0);
-      expect(await displayedMods.count()).toBeLessThanOrEqual(3);
+      expect(await displayedMods.count()).toBeLessThanOrEqual(2);
       await expect(displayedMods.first()).toContainText(/%/);
 
       await expect(page.getByText(/verified games/i)).toHaveCount(0);

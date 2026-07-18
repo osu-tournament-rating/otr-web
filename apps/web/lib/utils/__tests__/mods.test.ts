@@ -2,62 +2,69 @@ import { describe, expect, it } from 'bun:test';
 
 import { Mods } from '@otr/core/osu';
 import {
+  calculateBeatmapModDistribution,
   deriveGameIsFreeMod,
-  getBeatmapBaseMod,
-  getTopBeatmapBaseMods,
+  filterBeatmapModDistribution,
+  getBeatmapModLabel,
   mostCommonDisplayMods,
+  normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   resolveGameModsFromScores,
 } from '../mods';
 
-describe('getBeatmapBaseMod', () => {
-  it('uses the requested priority for combination mods', () => {
-    expect(getBeatmapBaseMod(Mods.Hidden | Mods.DoubleTime)).toBe('DT');
-    expect(getBeatmapBaseMod(Mods.Hidden | Mods.HardRock)).toBe('HR');
-    expect(getBeatmapBaseMod(Mods.Hidden | Mods.Easy)).toBe('HD');
-    expect(getBeatmapBaseMod(Mods.Easy | Mods.Flashlight)).toBe('EZ');
+describe('beatmap mod display helpers', () => {
+  it('removes incidental score mods and formats the remaining combination', () => {
+    expect(normalizeBeatmapDisplayMods(Mods.NoFail | Mods.SpunOut)).toBe(
+      Mods.None
+    );
+    expect(getBeatmapModLabel(Mods.NoFail)).toBe('NM');
+    expect(getBeatmapModLabel(Mods.NoFail | Mods.Hidden | Mods.HardRock)).toBe(
+      'HDHR'
+    );
   });
 
-  it('groups Nightcore with DT and unsupported mods into Other', () => {
-    expect(getBeatmapBaseMod(Mods.Nightcore)).toBe('DT');
-    expect(getBeatmapBaseMod(Mods.None)).toBe('NM');
-    expect(getBeatmapBaseMod(Mods.Flashlight)).toBe('Other');
-    expect(getBeatmapBaseMod(Mods.NoFail)).toBe('Other');
-  });
-});
-
-describe('getTopBeatmapBaseMods', () => {
-  it('combines base categories and returns the top three percentages', () => {
-    expect(
-      getTopBeatmapBaseMods([
-        { mods: Mods.Hidden | Mods.DoubleTime, scoreCount: 3 },
-        { mods: Mods.Nightcore, scoreCount: 1 },
-        { mods: Mods.HardRock, scoreCount: 3 },
-        { mods: Mods.Hidden, scoreCount: 2 },
-        { mods: Mods.Easy, scoreCount: 1 },
-      ])
-    ).toEqual([
-      { mod: 'DT', percentage: 40 },
-      { mod: 'HR', percentage: 30 },
-      { mod: 'HD', percentage: 20 },
+  it('aggregates score-derived combinations using the detail chart rules', () => {
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.NoFail, scoreCount: 950 },
+      { mods: Mods.None, scoreCount: 9 },
+      { mods: Mods.NoFail | Mods.HardRock, scoreCount: 20 },
+      { mods: Mods.Hidden, scoreCount: 11 },
+      { mods: Mods.DoubleTime, scoreCount: 10 },
     ]);
+
+    expect(
+      distribution.map(({ mods, label, scoreCount }) => ({
+        mods,
+        label,
+        scoreCount,
+      }))
+    ).toEqual([
+      { mods: Mods.None, label: 'NM', scoreCount: 959 },
+      { mods: Mods.HardRock, label: 'HR', scoreCount: 20 },
+      { mods: Mods.Hidden, label: 'HD', scoreCount: 11 },
+      { mods: Mods.DoubleTime, label: 'DT', scoreCount: 10 },
+    ]);
+    expect(distribution[0].percentage).toBeCloseTo(95.9);
+    expect(distribution[1].percentage).toBeCloseTo(2);
+    expect(distribution[2].percentage).toBeCloseTo(1.1);
+    expect(distribution[3].percentage).toBeCloseTo(1);
   });
 
-  it('uses base-mod priority to break count ties', () => {
+  it('filters chart entries against their share of all scores', () => {
     expect(
-      getTopBeatmapBaseMods([
-        { mods: Mods.None, scoreCount: 1 },
-        { mods: Mods.Easy, scoreCount: 1 },
-        { mods: Mods.Hidden, scoreCount: 1 },
-        { mods: Mods.HardRock, scoreCount: 1 },
-      ]).map(({ mod }) => mod)
-    ).toEqual(['HR', 'HD', 'EZ']);
+      filterBeatmapModDistribution(
+        calculateBeatmapModDistribution([
+          { mods: Mods.None, scoreCount: 991 },
+          { mods: Mods.Hidden, scoreCount: 9 },
+        ])
+      ).map(({ label }) => label)
+    ).toEqual(['NM']);
   });
 
   it('returns no usage for empty or invalid counts', () => {
-    expect(getTopBeatmapBaseMods([])).toEqual([]);
+    expect(calculateBeatmapModDistribution([])).toEqual([]);
     expect(
-      getTopBeatmapBaseMods([
+      calculateBeatmapModDistribution([
         { mods: Mods.Hidden, scoreCount: 0 },
         { mods: Mods.HardRock, scoreCount: Number.NaN },
       ])

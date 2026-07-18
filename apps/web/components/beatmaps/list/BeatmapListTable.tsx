@@ -23,17 +23,9 @@ import {
   getBeatmapRulesetLabel,
   getDifficultyColor,
 } from '@/lib/beatmaps/presentation';
-import type { BeatmapBaseMod } from '@/lib/utils/mods';
+import { getModColor } from '@/lib/utils/mods';
+import { formatPercentage } from '@/lib/utils/chart';
 import { formatDuration } from '@/lib/utils/date';
-
-const baseModColors: Record<BeatmapBaseMod, string> = {
-  DT: 'var(--mod-double-time)',
-  HR: 'var(--mod-hard-rock)',
-  HD: 'var(--mod-hidden)',
-  EZ: 'var(--mod-easy)',
-  NM: 'var(--muted-foreground)',
-  Other: 'var(--mod-freemod)',
-};
 
 interface BeatmapListTableProps {
   beatmaps: BeatmapListItem[];
@@ -263,29 +255,25 @@ function TopModsBreakdown({
         aria-label="Top mods by score usage"
         className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:text-xs"
       >
-        {mods.map(({ mod, percentage }) => (
+        {mods.slice(0, 2).map(({ mod, mods, percentage }) => (
           <li
-            key={mod}
+            key={`${mods}-${mod}`}
             className="inline-flex items-center gap-1 whitespace-nowrap text-muted-foreground"
           >
             <span
               className="size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: baseModColors[mod] }}
+              style={{ backgroundColor: getModColor(mods) }}
               aria-hidden="true"
             />
             <span className="font-medium text-foreground">{mod}</span>
             <span className="tabular-nums">
-              {formatModPercentage(percentage)}
+              {formatPercentage(percentage, 1)}
             </span>
           </li>
         ))}
       </ul>
     </div>
   );
-}
-
-function formatModPercentage(percentage: number): string {
-  return `${percentage < 10 ? percentage.toFixed(1) : Math.round(percentage)}%`;
 }
 
 function Metric({

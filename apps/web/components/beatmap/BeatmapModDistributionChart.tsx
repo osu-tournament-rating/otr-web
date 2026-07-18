@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { ModsEnumHelper } from '@/lib/enum-helpers';
 import {
   ChartConfig,
   ChartContainer,
@@ -10,13 +9,18 @@ import {
 } from '../ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { PieChart, Pie, Label } from 'recharts';
-import { getModColor } from '@/lib/utils/mods';
+import {
+  calculateBeatmapModDistribution,
+  filterBeatmapModDistribution,
+  getModColor,
+} from '@/lib/utils/mods';
 import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import type { BeatmapModDistribution } from '@/lib/orpc/schema/beatmapStats';
 
 interface ProcessedEntry {
   label: string;
   count: number;
+  percentage: number;
   fill: string;
 }
 
@@ -24,8 +28,6 @@ interface BeatmapModDistributionChartProps {
   modStats: BeatmapModDistribution[];
   className?: string;
 }
-
-const MOD_CHART_DISPLAY_THRESHOLD = 1.0;
 
 export default function BeatmapModDistributionChart({
   modStats,
@@ -36,48 +38,19 @@ export default function BeatmapModDistributionChart({
       return [];
     }
 
-    const totalGames = modStats.reduce((sum, stat) => sum + stat.scoreCount, 0);
-    const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
-
-    const modMap = new Map<string, ProcessedEntry>();
-
-    modStats.forEach((stat) => {
-      const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      let label = metadata
-        .map((meta) => meta.text)
-        .join('')
-        .replace(/NF/g, '')
-        .replace(/SO/g, '');
-
-      if (label === '') {
-        label = 'NM';
-      }
-
-      const count = stat.scoreCount || 1;
-
-      if (modMap.has(label)) {
-        const existing = modMap.get(label)!;
-        modMap.set(label, {
-          ...existing,
-          count: existing.count + count,
-        });
-      } else {
-        modMap.set(label, {
-          label,
-          count,
-          fill: getModColor(stat.mods),
-        });
-      }
-    });
-
-    return Array.from(modMap.values())
-      .filter((entry) => entry.count >= threshold)
-      .sort((a, b) => b.count - a.count);
+    return filterBeatmapModDistribution(
+      calculateBeatmapModDistribution(modStats)
+    ).map(({ label, mods, scoreCount, percentage }) => ({
+      label,
+      count: scoreCount,
+      percentage,
+      fill: getModColor(mods),
+    }));
   }, [modStats]);
 
-  const totalGames = React.useMemo(() => {
-    return processedData.reduce((sum, entry) => sum + entry.count, 0);
-  }, [processedData]);
+  const totalScores = React.useMemo(() => {
+    return modStats.reduce((sum, entry) => sum + entry.scoreCount, 0);
+  }, [modStats]);
 
   const chartConfig: ChartConfig = {
     count: {
@@ -103,7 +76,7 @@ export default function BeatmapModDistributionChart({
               y={viewBox.cy}
               className="fill-foreground text-3xl font-bold"
             >
-              {formatChartNumber(totalGames)}
+              {formatChartNumber(totalScores)}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -117,7 +90,7 @@ export default function BeatmapModDistributionChart({
       }
       return null;
     },
-    [totalGames]
+    [totalScores]
   );
 
   if (processedData.length === 0) {
@@ -150,8 +123,8 @@ export default function BeatmapModDistributionChart({
               paddingAngle={3}
               dataKey="count"
               nameKey="label"
-              label={({ name, percent }) =>
-                `${name} (${formatPercentage((percent ?? 0) * 100, 1)})`
+              label={({ name, payload }) =>
+                `${name} (${formatPercentage(payload.percentage, 1)})`
               }
             >
               <Label content={renderCenterLabel} />

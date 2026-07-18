@@ -1,66 +1,82 @@
 import { Mods } from '@otr/core/osu';
 import { ModsEnumHelper } from '../enum-helpers';
 
-export const beatmapBaseMods = ['DT', 'HR', 'HD', 'EZ', 'NM', 'Other'] as const;
+export interface BeatmapModScoreCount {
+  mods: number;
+  scoreCount: number;
+}
 
-export type BeatmapBaseMod = (typeof beatmapBaseMods)[number];
-
-export interface BeatmapBaseModUsage {
-  mod: BeatmapBaseMod;
+export interface BeatmapModDistributionEntry {
+  mods: Mods;
+  label: string;
+  scoreCount: number;
   percentage: number;
 }
 
-const beatmapBaseModPriority = new Map(
-  beatmapBaseMods.map((mod, index) => [mod, index])
-);
+export const BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE = 1;
 
 /**
- * Collapses a score's mod combination into the base mod used by beatmap cards.
- * Conflicting combinations deliberately follow DT > HR > HD > EZ; every
- * remaining non-empty combination is grouped into Other.
+ * Removes score-level modifiers that the beatmap distribution treats as
+ * incidental rather than distinct mod combinations.
  */
-export function getBeatmapBaseMod(mods: number): BeatmapBaseMod {
-  if ((mods & (Mods.DoubleTime | Mods.Nightcore)) !== 0) return 'DT';
-  if ((mods & Mods.HardRock) !== 0) return 'HR';
-  if ((mods & Mods.Hidden) !== 0) return 'HD';
-  if ((mods & Mods.Easy) !== 0) return 'EZ';
-  if (mods === Mods.None) return 'NM';
-  return 'Other';
+export function normalizeBeatmapDisplayMods(mods: number): Mods {
+  return (mods & ~Mods.NoFail & ~Mods.SpunOut) as Mods;
 }
 
-/**
- * Aggregates grouped score-mod counts into the three most-used base mods.
- * Percentages always use all supplied score rows as their denominator, even
- * when more than three categories are present.
- */
-export function getTopBeatmapBaseMods(
-  rows: Array<{ mods: number; scoreCount: number }>
-): BeatmapBaseModUsage[] {
-  const counts = new Map<BeatmapBaseMod, number>();
+export function getBeatmapModLabel(mods: number): string {
+  const label = ModsEnumHelper.getMetadata(normalizeBeatmapDisplayMods(mods))
+    .map(({ text }) => text)
+    .join('');
+
+  return label || 'NM';
+}
+
+/** Aggregates grouped score counts using the beatmap chart's display rules. */
+export function calculateBeatmapModDistribution(
+  rows: BeatmapModScoreCount[]
+): BeatmapModDistributionEntry[] {
+  const distributionByLabel = new Map<
+    string,
+    Omit<BeatmapModDistributionEntry, 'percentage'>
+  >();
   let totalScoreCount = 0;
 
   for (const row of rows) {
     if (!Number.isFinite(row.scoreCount) || row.scoreCount <= 0) continue;
 
-    const mod = getBeatmapBaseMod(row.mods);
-    counts.set(mod, (counts.get(mod) ?? 0) + row.scoreCount);
+    const mods = normalizeBeatmapDisplayMods(row.mods);
+    const label = getBeatmapModLabel(mods);
+    const existing = distributionByLabel.get(label);
+
+    distributionByLabel.set(label, {
+      mods: existing?.mods ?? mods,
+      label,
+      scoreCount: (existing?.scoreCount ?? 0) + row.scoreCount,
+    });
     totalScoreCount += row.scoreCount;
   }
 
   if (totalScoreCount === 0) return [];
 
-  return Array.from(counts.entries())
+  return Array.from(distributionByLabel.values())
+    .map((entry) => ({
+      ...entry,
+      percentage: (entry.scoreCount / totalScoreCount) * 100,
+    }))
     .sort(
-      ([leftMod, leftCount], [rightMod, rightCount]) =>
-        rightCount - leftCount ||
-        (beatmapBaseModPriority.get(leftMod) ?? Number.MAX_SAFE_INTEGER) -
-          (beatmapBaseModPriority.get(rightMod) ?? Number.MAX_SAFE_INTEGER)
-    )
-    .slice(0, 3)
-    .map(([mod, scoreCount]) => ({
-      mod,
-      percentage: (scoreCount / totalScoreCount) * 100,
-    }));
+      (left, right) =>
+        right.scoreCount - left.scoreCount ||
+        left.label.localeCompare(right.label)
+    );
+}
+
+export function filterBeatmapModDistribution(
+  distribution: BeatmapModDistributionEntry[],
+  minimumPercentage = BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE
+): BeatmapModDistributionEntry[] {
+  return distribution.filter(
+    ({ percentage }) => percentage >= minimumPercentage
+  );
 }
 
 /** Mod multipliers (ScoreV2, common tournament mods) */

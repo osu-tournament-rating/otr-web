@@ -22,7 +22,10 @@ import {
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
 import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
-import { getTopBeatmapBaseMods } from '@/lib/utils/mods';
+import {
+  calculateBeatmapModDistribution,
+  filterBeatmapModDistribution,
+} from '@/lib/utils/mods';
 import { publicProcedure } from './base';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -345,9 +348,17 @@ export const listBeatmaps = publicProcedure
           creator: row.creator ?? null,
           verifiedTournamentCount: Number(row.verifiedTournamentCount) || 0,
           verifiedGameCount: Number(row.verifiedGameCount) || 0,
-          topMods: getTopBeatmapBaseMods(
-            groupedModsByBeatmap.get(row.id) ?? []
-          ),
+          topMods: filterBeatmapModDistribution(
+            calculateBeatmapModDistribution(
+              groupedModsByBeatmap.get(row.id) ?? []
+            )
+          )
+            .slice(0, 3)
+            .map(({ label, mods, percentage }) => ({
+              mod: label,
+              mods,
+              percentage,
+            })),
         })
       );
 
