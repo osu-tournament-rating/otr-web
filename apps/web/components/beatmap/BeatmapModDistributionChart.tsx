@@ -17,13 +17,6 @@ import {
 import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import type { BeatmapModDistribution } from '@/lib/orpc/schema/beatmapStats';
 
-interface ProcessedEntry {
-  label: string;
-  count: number;
-  percentage: number;
-  fill: string;
-}
-
 interface BeatmapModDistributionChartProps {
   modStats: BeatmapModDistribution[];
   className?: string;
