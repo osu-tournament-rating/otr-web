@@ -23,7 +23,7 @@ import {
 } from '@/lib/orpc/schema/beatmapList';
 import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
 import {
-  calculateBeatmapModDistribution,
+  calculateBeatmapListModDistribution,
   filterBeatmapModDistribution,
 } from '@/lib/utils/mods';
 import { publicProcedure } from './base';
@@ -349,7 +349,7 @@ export const listBeatmaps = publicProcedure
           verifiedTournamentCount: Number(row.verifiedTournamentCount) || 0,
           verifiedGameCount: Number(row.verifiedGameCount) || 0,
           topMods: filterBeatmapModDistribution(
-            calculateBeatmapModDistribution(
+            calculateBeatmapListModDistribution(
               groupedModsByBeatmap.get(row.id) ?? []
             )
           )

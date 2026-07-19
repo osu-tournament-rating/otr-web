@@ -70,6 +70,99 @@ export function calculateBeatmapModDistribution(
     );
 }
 
+/**
+ * Collapses a score's mods into the broad category used by the beatmap list.
+ * This intentionally does not change the exact-combination rules used by the
+ * beatmap detail view.
+ */
+export function getBeatmapListModCategory(mods: number): {
+  mods: Mods;
+  label: string;
+} {
+  let normalizedMods = normalizeBeatmapDisplayMods(mods);
+
+  if (normalizedMods & Mods.Nightcore) {
+    normalizedMods = (normalizedMods | Mods.DoubleTime) & ~Mods.Nightcore;
+  }
+
+  const hasDoubleTime = Boolean(normalizedMods & Mods.DoubleTime);
+  const hasEasy = Boolean(normalizedMods & Mods.Easy);
+  const hasHalfTime = Boolean(normalizedMods & Mods.HalfTime);
+  const hasHardRock = Boolean(normalizedMods & Mods.HardRock);
+  const hasFlashlight = Boolean(normalizedMods & Mods.Flashlight);
+
+  // DT is the dominant base mod. DTEZ remains distinct because both alter the
+  // map in opposite directions and are conventionally read as one category.
+  if (hasDoubleTime) {
+    return hasEasy
+      ? { mods: Mods.DoubleTime | Mods.Easy, label: 'DTEZ' }
+      : { mods: Mods.DoubleTime, label: 'DT' };
+  }
+
+  // HT remains the base for HTHD and the explicitly supported HTHR pairing.
+  // Pairing it with EZ or FL falls outside the list's useful categories.
+  if (hasHalfTime) {
+    return hasEasy || hasFlashlight
+      ? { mods: Mods.None, label: 'Other' }
+      : { mods: Mods.HalfTime, label: 'HT' };
+  }
+
+  const remainingBaseMods = [hasHardRock, hasEasy, hasFlashlight].filter(
+    Boolean
+  ).length;
+
+  if (remainingBaseMods > 1) {
+    return { mods: Mods.None, label: 'Other' };
+  }
+  if (hasHardRock) return { mods: Mods.HardRock, label: 'HR' };
+  if (hasEasy) return { mods: Mods.Easy, label: 'EZ' };
+  if (hasFlashlight) return { mods: Mods.Flashlight, label: 'FL' };
+
+  if (normalizedMods === Mods.None) return { mods: Mods.None, label: 'NM' };
+  if (normalizedMods === Mods.Hidden) {
+    return { mods: Mods.Hidden, label: 'HD' };
+  }
+
+  return { mods: Mods.None, label: 'Other' };
+}
+
+/** Aggregates score counts using only the beatmap list's broad mod buckets. */
+export function calculateBeatmapListModDistribution(
+  rows: BeatmapModScoreCount[]
+): BeatmapModDistributionEntry[] {
+  const distributionByLabel = new Map<
+    string,
+    Omit<BeatmapModDistributionEntry, 'percentage'>
+  >();
+  let totalScoreCount = 0;
+
+  for (const row of rows) {
+    if (!Number.isFinite(row.scoreCount) || row.scoreCount <= 0) continue;
+
+    const category = getBeatmapListModCategory(row.mods);
+    const existing = distributionByLabel.get(category.label);
+
+    distributionByLabel.set(category.label, {
+      ...category,
+      scoreCount: (existing?.scoreCount ?? 0) + row.scoreCount,
+    });
+    totalScoreCount += row.scoreCount;
+  }
+
+  if (totalScoreCount === 0) return [];
+
+  return Array.from(distributionByLabel.values())
+    .map((entry) => ({
+      ...entry,
+      percentage: (entry.scoreCount / totalScoreCount) * 100,
+    }))
+    .sort(
+      (left, right) =>
+        right.scoreCount - left.scoreCount ||
+        left.label.localeCompare(right.label)
+    );
+}
+
 export function filterBeatmapModDistribution(
   distribution: BeatmapModDistributionEntry[],
   minimumPercentage = BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE

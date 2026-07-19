@@ -5,6 +5,7 @@ import {
   Clock3,
   Gamepad2,
   Layers,
+  Music2,
   SearchX,
   Star,
   Trophy,
@@ -21,10 +22,12 @@ import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
   getDifficultyColor,
+  isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
 import { getModColor } from '@/lib/utils/mods';
 import { formatPercentage } from '@/lib/utils/chart';
 import { formatDuration } from '@/lib/utils/date';
+import { cn } from '@/lib/utils';
 
 interface BeatmapListTableProps {
   beatmaps: BeatmapListItem[];
@@ -79,6 +82,15 @@ export default function BeatmapListTable({
             beatmap.diffName
           );
           const topMods = beatmap.topMods ?? [];
+          const showMods = !isManiaRuleset(ruleset);
+          const difficultyName =
+            beatmap.diffName.length > 20
+              ? `${beatmap.diffName.slice(0, 19)}…`
+              : beatmap.diffName;
+          const difficultyWidth = Math.min(
+            20,
+            Math.max(12, beatmap.diffName.length)
+          );
 
           return (
             <article
@@ -126,18 +138,70 @@ export default function BeatmapListTable({
                 className="min-w-0 sm:flex sm:flex-col sm:justify-center"
               >
                 <div className="min-w-0">
-                  <h2 className="truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg">
-                    {beatmap.artist} – {beatmap.title}
-                  </h2>
-                  <p className="mt-0.5 truncate text-sm font-medium text-foreground/85">
-                    [{beatmap.diffName}]
-                  </p>
+                  <div
+                    data-testid="beatmap-heading"
+                    className="flex min-w-0 items-baseline gap-x-3"
+                  >
+                    <h2
+                      data-testid="beatmap-title"
+                      title={beatmap.title}
+                      className="min-w-0 truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg"
+                    >
+                      {beatmap.title}
+                    </h2>
+                    <p
+                      data-testid="beatmap-difficulty-name"
+                      title={beatmap.diffName}
+                      className="block shrink-0 truncate text-sm font-medium text-foreground/85"
+                      style={{ width: `${difficultyWidth}ch` }}
+                    >
+                      [{difficultyName}]
+                    </p>
+                  </div>
+                  <div
+                    data-testid="beatmap-attribution"
+                    className="mt-0.5 flex min-w-0 items-center gap-x-3 text-xs text-muted-foreground"
+                  >
+                    <p
+                      data-testid="beatmap-artist"
+                      title={beatmap.artist}
+                      className="flex min-w-0 items-center gap-1.5"
+                    >
+                      <Music2
+                        className="size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span
+                        data-testid="beatmap-artist-name"
+                        className="min-w-0 truncate"
+                      >
+                        {beatmap.artist}
+                      </span>
+                    </p>
+                    <p
+                      data-testid="beatmap-mapper"
+                      title={beatmap.creator ?? 'Unknown mapper'}
+                      className="flex shrink-0 items-center gap-1.5"
+                    >
+                      <UserRound
+                        className="size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span
+                        data-testid="beatmap-mapper-name"
+                        className="w-[12ch] truncate"
+                      >
+                        {beatmap.creator ?? 'Unknown mapper'}
+                      </span>
+                    </p>
+                  </div>
 
                   <div
-                    data-testid="beatmap-usage-summary"
-                    className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground sm:text-sm"
+                    data-testid="beatmap-primary-metrics"
+                    className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground sm:text-sm"
                   >
                     <Metric
+                      testId="beatmap-ruleset"
                       icon={
                         <RulesetIcon
                           ruleset={ruleset}
@@ -148,18 +212,21 @@ export default function BeatmapListTable({
                       value={rulesetLabel}
                     />
                     <Metric
+                      className="ml-1 w-15"
+                      testId="beatmap-star-rating"
                       icon={
                         <Star
-                          className="size-4 shrink-0"
+                          className="size-4 shrink-0 fill-current"
                           style={{ color: getDifficultyColor(beatmap.sr) }}
                           aria-hidden="true"
                         />
                       }
                       value={beatmap.sr.toFixed(2)}
-                      unit="SR"
                       ariaLabel={`${beatmap.sr.toFixed(2)} star rating`}
                     />
                     <Metric
+                      className="w-14"
+                      testId="beatmap-bpm"
                       icon={
                         <Activity
                           className="size-4 shrink-0"
@@ -167,10 +234,11 @@ export default function BeatmapListTable({
                         />
                       }
                       value={Math.round(beatmap.bpm)}
-                      unit="BPM"
                       ariaLabel={`${Math.round(beatmap.bpm)} BPM`}
                     />
                     <Metric
+                      className="w-17"
+                      testId="beatmap-duration"
                       icon={
                         <Clock3
                           className="size-4 shrink-0"
@@ -180,6 +248,12 @@ export default function BeatmapListTable({
                       value={formatDuration(Number(beatmap.totalLength))}
                       ariaLabel={`${formatDuration(Number(beatmap.totalLength))} duration`}
                     />
+                  </div>
+
+                  <div
+                    data-testid="beatmap-usage-summary"
+                    className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground sm:text-sm"
+                  >
                     <Metric
                       icon={
                         <Gamepad2
@@ -188,6 +262,7 @@ export default function BeatmapListTable({
                         />
                       }
                       value={beatmap.verifiedGameCount.toLocaleString()}
+                      valueClassName="min-w-[3ch]"
                       ariaLabel={`${beatmap.verifiedGameCount.toLocaleString()} verified games`}
                       testId="beatmap-games-count"
                     />
@@ -199,21 +274,12 @@ export default function BeatmapListTable({
                         />
                       }
                       value={beatmap.verifiedTournamentCount.toLocaleString()}
+                      valueClassName="min-w-[3ch]"
                       ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString()} verified tournaments`}
                       testId="beatmap-tournaments-count"
                     />
-                    <TopModsBreakdown mods={topMods} />
+                    {showMods ? <TopModsBreakdown mods={topMods} /> : null}
                   </div>
-
-                  <p className="mt-1.5 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-                    <UserRound
-                      className="size-3.5 shrink-0"
-                      aria-hidden="true"
-                    />
-                    Mapped by {beatmap.creator ?? 'Unknown mapper'}
-                    <span aria-hidden="true">·</span>
-                    <span className="font-mono">#{beatmap.osuId}</span>
-                  </p>
                 </div>
               </div>
             </article>
@@ -231,7 +297,10 @@ function TopModsBreakdown({
 }) {
   if (mods.length === 0) {
     return (
-      <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <div
+        data-testid="beatmap-mods-summary"
+        className="inline-flex w-52 items-center gap-1.5 whitespace-nowrap"
+      >
         <Layers className="size-4 shrink-0" aria-hidden="true" />
         <span className="text-[11px] sm:text-xs">No mod data</span>
       </div>
@@ -239,7 +308,10 @@ function TopModsBreakdown({
   }
 
   return (
-    <div className="inline-flex min-w-0 items-center gap-1.5">
+    <div
+      data-testid="beatmap-mods-summary"
+      className="inline-flex w-52 min-w-0 items-center gap-1.5"
+    >
       <Layers className="size-4 shrink-0" aria-hidden="true" />
       <ul
         data-testid="beatmap-top-mods"
@@ -270,25 +342,37 @@ function TopModsBreakdown({
 function Metric({
   icon,
   value,
-  unit,
   ariaLabel,
   testId,
+  className,
+  valueClassName,
 }: {
   icon: ReactNode;
   value: ReactNode;
-  unit?: string;
   ariaLabel?: string;
   testId?: string;
+  className?: string;
+  valueClassName?: string;
 }) {
   return (
     <span
       data-testid={testId}
       aria-label={ariaLabel}
-      className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground"
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground',
+        className
+      )}
     >
       {icon}
-      <span className="font-medium text-foreground tabular-nums">{value}</span>
-      {unit ? <span className="text-[11px] sm:text-xs">{unit}</span> : null}
+      <span
+        data-testid={testId ? `${testId}-value` : undefined}
+        className={cn(
+          'font-medium text-foreground tabular-nums',
+          valueClassName
+        )}
+      >
+        {value}
+      </span>
     </span>
   );
 }

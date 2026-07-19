@@ -101,12 +101,24 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await expect(firstRow.getByLabel(/\d+\.\d{2} star rating/)).toBeVisible();
       await expect(firstRow.getByLabel(/\d+ BPM/)).toBeVisible();
+      await expect(firstRow.getByText('SR', { exact: true })).toHaveCount(0);
+      await expect(firstRow.getByText('BPM', { exact: true })).toHaveCount(0);
       await expect(
         firstRow.locator('[data-testid="beatmap-games-count"]')
       ).toHaveAccessibleName(/\d[\d,]* verified games/);
       await expect(
         firstRow.locator('[data-testid="beatmap-tournaments-count"]')
       ).toHaveAccessibleName(/\d[\d,]* verified tournaments/);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-primary-metrics"] [data-testid="beatmap-games-count"]'
+        )
+      ).toHaveCount(0);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-usage-summary"] [data-testid="beatmap-games-count"]'
+        )
+      ).toHaveCount(1);
       await expect(firstRow.getByText('games', { exact: true })).toHaveCount(0);
       await expect(
         firstRow.getByText('tournaments', { exact: true })
@@ -122,8 +134,152 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(displayedMods.first()).toContainText(/%/);
 
       await expect(page.getByText(/verified games/i)).toHaveCount(0);
+      await expect(firstRow.getByText(/Mapped by/)).toHaveCount(0);
+      await expect(firstRow.getByText(/^#\d+$/)).toHaveCount(0);
       await expect(page.locator('header svg.lucide-music')).toBeVisible();
       await expect(firstRow.locator('svg.lucide-chevron-right')).toHaveCount(0);
+
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-heading"] [data-testid="beatmap-title"]'
+        )
+      ).toHaveCount(1);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-heading"] [data-testid="beatmap-difficulty-name"]'
+        )
+      ).toHaveCount(1);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-attribution"] [data-testid="beatmap-artist"]'
+        )
+      ).toHaveCount(1);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-attribution"] [data-testid="beatmap-mapper"]'
+        )
+      ).toHaveCount(1);
+      await expect(
+        firstRow.locator('[data-testid="beatmap-artist"] svg.lucide-music-2')
+      ).toHaveCount(1);
+      await expect(
+        firstRow.locator('[data-testid="beatmap-mapper"] svg.lucide-user-round')
+      ).toHaveCount(1);
+
+      const [
+        titleBox,
+        difficultyBox,
+        artistBox,
+        mapperBox,
+        rulesetBox,
+        starBox,
+      ] = await Promise.all([
+        firstRow.locator('[data-testid="beatmap-title"]').boundingBox(),
+        firstRow
+          .locator('[data-testid="beatmap-difficulty-name"]')
+          .boundingBox(),
+        firstRow.locator('[data-testid="beatmap-artist"]').boundingBox(),
+        firstRow.locator('[data-testid="beatmap-mapper"]').boundingBox(),
+        firstRow.locator('[data-testid="beatmap-ruleset"]').boundingBox(),
+        firstRow.locator('[data-testid="beatmap-star-rating"]').boundingBox(),
+      ]);
+      expect(titleBox).not.toBeNull();
+      expect(difficultyBox).not.toBeNull();
+      expect(artistBox).not.toBeNull();
+      expect(mapperBox).not.toBeNull();
+      expect(rulesetBox).not.toBeNull();
+      expect(starBox).not.toBeNull();
+      expect(difficultyBox!.x).toBeGreaterThanOrEqual(
+        titleBox!.x + titleBox!.width
+      );
+      expect(Math.abs(titleBox!.y - difficultyBox!.y)).toBeLessThanOrEqual(4);
+      expect(mapperBox!.x).toBeGreaterThanOrEqual(
+        artistBox!.x + artistBox!.width
+      );
+      expect(Math.abs(artistBox!.y - mapperBox!.y)).toBeLessThanOrEqual(2);
+      expect(artistBox!.y).toBeGreaterThan(titleBox!.y);
+      expect(Math.round(starBox!.x - rulesetBox!.x - rulesetBox!.width)).toBe(
+        12
+      );
+      expect(Math.abs(rulesetBox!.y - starBox!.y)).toBeLessThanOrEqual(2);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-primary-metrics"] [data-testid="beatmap-ruleset"]'
+        )
+      ).toHaveCount(1);
+
+      const difficultySizing = await page
+        .locator('[data-testid="beatmap-difficulty-name"]')
+        .evaluateAll((elements) =>
+          elements.slice(0, 10).map((element) => {
+            const fullName = element.getAttribute('title') ?? '';
+            const displayedName = (element.textContent ?? '').slice(1, -1);
+
+            return {
+              fullLength: fullName.length,
+              displayedLength: displayedName.length,
+              displayedName,
+              width: (element as HTMLElement).style.width,
+            };
+          })
+        );
+      expect(difficultySizing.some(({ fullLength }) => fullLength <= 12)).toBe(
+        true
+      );
+      expect(difficultySizing.some(({ fullLength }) => fullLength > 20)).toBe(
+        true
+      );
+      for (const difficulty of difficultySizing) {
+        expect(difficulty.width).toBe(
+          `${Math.min(20, Math.max(12, difficulty.fullLength))}ch`
+        );
+        expect(difficulty.displayedLength).toBeLessThanOrEqual(20);
+        if (difficulty.fullLength > 20) {
+          expect(difficulty.displayedName.endsWith('…')).toBe(true);
+        }
+      }
+
+      const mapperWidths = await page
+        .locator('[data-testid="beatmap-mapper-name"]')
+        .evaluateAll((elements) =>
+          Array.from(
+            new Set(
+              elements
+                .slice(0, 10)
+                .map((element) =>
+                  Math.round(element.getBoundingClientRect().width)
+                )
+            )
+          )
+        );
+      expect(mapperWidths).toEqual([96]);
+
+      const starColors = await firstRow
+        .locator('[data-testid="beatmap-star-rating"] svg')
+        .evaluate((icon) => {
+          const iconStyle = getComputedStyle(icon);
+          const pathStyle = getComputedStyle(icon.querySelector('path')!);
+          return { color: iconStyle.color, fill: pathStyle.fill };
+        });
+      expect(starColors.fill).toBe(starColors.color);
+    });
+
+    test('hides mod summaries for mania beatmaps', async ({ page }) => {
+      await page.goto(`${ROUTES.beatmaps}?ruleset=4`);
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await expect(
+        firstRow.locator('[data-testid="beatmap-mods-summary"]')
+      ).toHaveCount(0);
+      await expect(
+        firstRow.locator('[data-testid="beatmap-games-count"]')
+      ).toBeVisible();
+      await expect(
+        firstRow.locator('[data-testid="beatmap-tournaments-count"]')
+      ).toBeVisible();
     });
 
     test('audio transport plays, pauses, scrubs, changes volume, and closes without navigating', async ({
@@ -473,6 +629,48 @@ test.describe('Beatmaps Listing Page', () => {
       contentBox!.y + contentBox!.height + 1
     );
     expect(Math.abs(gamesBox!.y - tournamentsBox!.y)).toBeLessThanOrEqual(2);
+    const metricWidths = await firstRow.evaluate((row) => {
+      const testIds = [
+        'beatmap-star-rating',
+        'beatmap-bpm',
+        'beatmap-duration',
+        'beatmap-mods-summary',
+      ];
+
+      return testIds.map((testId) =>
+        Math.round(
+          row
+            .querySelector(`[data-testid="${testId}"]`)!
+            .getBoundingClientRect().width
+        )
+      );
+    });
+    expect(metricWidths).toEqual([60, 56, 68, 208]);
+
+    const countWidths = await firstRow.evaluate((row) => {
+      const games = row.querySelector('[data-testid="beatmap-games-count"]')!;
+      const tournaments = row.querySelector(
+        '[data-testid="beatmap-tournaments-count"]'
+      )!;
+      const gameValue = row.querySelector(
+        '[data-testid="beatmap-games-count-value"]'
+      )!;
+      const tournamentValue = row.querySelector(
+        '[data-testid="beatmap-tournaments-count-value"]'
+      )!;
+
+      return {
+        games: Math.round(games.getBoundingClientRect().width),
+        tournaments: Math.round(tournaments.getBoundingClientRect().width),
+        gameValue: Math.round(gameValue.getBoundingClientRect().width),
+        tournamentValue: Math.round(
+          tournamentValue.getBoundingClientRect().width
+        ),
+      };
+    });
+    expect(countWidths.games).toBeLessThanOrEqual(52);
+    expect(countWidths.tournaments).toBeLessThanOrEqual(52);
+    expect(countWidths.gameValue).toBe(countWidths.tournamentValue);
     expect(previewBox!.x).toBeGreaterThanOrEqual(coverBox!.x);
     expect(previewBox!.y).toBeGreaterThanOrEqual(coverBox!.y);
     expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(

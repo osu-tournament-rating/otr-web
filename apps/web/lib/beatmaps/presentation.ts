@@ -51,3 +51,11 @@ export function getBeatmapRulesetLabel(
     getBeatmapDisplayRuleset(ruleset, difficultyName)
   ).text;
 }
+
+export function isManiaRuleset(ruleset: Ruleset): boolean {
+  return (
+    ruleset === Ruleset.ManiaOther ||
+    ruleset === Ruleset.Mania4k ||
+    ruleset === Ruleset.Mania7k
+  );
+}

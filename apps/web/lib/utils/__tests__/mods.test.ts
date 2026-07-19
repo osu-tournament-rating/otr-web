@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 
 import { Mods } from '@otr/core/osu';
 import {
+  calculateBeatmapListModDistribution,
   calculateBeatmapModDistribution,
   deriveGameIsFreeMod,
   filterBeatmapModDistribution,
@@ -69,6 +70,56 @@ describe('beatmap mod display helpers', () => {
         { mods: Mods.HardRock, scoreCount: Number.NaN },
       ])
     ).toEqual([]);
+  });
+});
+
+describe('beatmap list mod display helpers', () => {
+  it('groups layered score mods by their dominant gameplay mod', () => {
+    const distribution = calculateBeatmapListModDistribution([
+      { mods: Mods.DoubleTime, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.DoubleTime, scoreCount: 20 },
+      { mods: Mods.Nightcore, scoreCount: 30 },
+      { mods: Mods.Hidden, scoreCount: 5 },
+      { mods: Mods.HardRock, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.HardRock, scoreCount: 15 },
+      { mods: Mods.Easy, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.Easy, scoreCount: 15 },
+      { mods: Mods.DoubleTime | Mods.Easy, scoreCount: 25 },
+      { mods: Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.HardRock | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.Flashlight, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.Flashlight, scoreCount: 15 },
+    ]);
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'DT', scoreCount: 60 },
+      { label: 'HT', scoreCount: 30 },
+      { label: 'DTEZ', scoreCount: 25 },
+      { label: 'EZ', scoreCount: 25 },
+      { label: 'FL', scoreCount: 25 },
+      { label: 'HR', scoreCount: 25 },
+      { label: 'HD', scoreCount: 5 },
+    ]);
+  });
+
+  it('keeps NM distinct and groups unsupported combinations as Other', () => {
+    const distribution = calculateBeatmapListModDistribution([
+      { mods: Mods.None, scoreCount: 20 },
+      { mods: Mods.Hidden | Mods.HardRock | Mods.Flashlight, scoreCount: 10 },
+      { mods: Mods.Easy | Mods.HardRock, scoreCount: 10 },
+      { mods: Mods.Easy | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.SuddenDeath, scoreCount: 10 },
+    ]);
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'Other', scoreCount: 40 },
+      { label: 'NM', scoreCount: 20 },
+    ]);
   });
 });
 

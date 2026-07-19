@@ -5,6 +5,7 @@ import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
   getDifficultyColor,
+  isManiaRuleset,
 } from '../presentation';
 
 describe('beatmap ruleset presentation', () => {
@@ -20,6 +21,15 @@ describe('beatmap ruleset presentation', () => {
   test('keeps the native ruleset when no key-mode marker is present', () => {
     expect(getBeatmapDisplayRuleset(Ruleset.Taiko, 'Oni')).toBe(Ruleset.Taiko);
     expect(getBeatmapRulesetLabel(Ruleset.Catch, 'Rain')).toBe('osu!catch');
+  });
+
+  test('identifies every mania key-mode ruleset', () => {
+    expect(isManiaRuleset(Ruleset.ManiaOther)).toBe(true);
+    expect(isManiaRuleset(Ruleset.Mania4k)).toBe(true);
+    expect(isManiaRuleset(Ruleset.Mania7k)).toBe(true);
+    expect(isManiaRuleset(Ruleset.Osu)).toBe(false);
+    expect(isManiaRuleset(Ruleset.Taiko)).toBe(false);
+    expect(isManiaRuleset(Ruleset.Catch)).toBe(false);
   });
 });
 
