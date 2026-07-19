@@ -254,14 +254,65 @@ test.describe('Beatmaps Listing Page', () => {
         );
       expect(mapperWidths).toEqual([96]);
 
-      const starColors = await firstRow
-        .locator('[data-testid="beatmap-star-rating"] svg')
-        .evaluate((icon) => {
-          const iconStyle = getComputedStyle(icon);
-          const pathStyle = getComputedStyle(icon.querySelector('path')!);
-          return { color: iconStyle.color, fill: pathStyle.fill };
+      const starRating = firstRow.locator(
+        '[data-testid="beatmap-star-rating"]'
+      );
+      const starPresentation = await starRating.evaluate((pill) => {
+        const pillStyle = getComputedStyle(pill);
+        const icon = pill.querySelector('svg')!;
+        const value = pill.querySelector(
+          '[data-testid="beatmap-star-rating-value"]'
+        )!;
+        const iconStyle = getComputedStyle(icon);
+        const valueStyle = getComputedStyle(value);
+        const pathStyle = getComputedStyle(icon.querySelector('path')!);
+
+        return {
+          backgroundColor: pillStyle.backgroundColor,
+          backgroundImage: pillStyle.backgroundImage,
+          borderRadius: Number.parseFloat(pillStyle.borderRadius),
+          boxShadow: pillStyle.boxShadow,
+          color: pillStyle.color,
+          filter: pillStyle.filter,
+          height: pill.getBoundingClientRect().height,
+          iconFilter: iconStyle.filter,
+          inlineBackgroundColor: (pill as HTMLElement).style.backgroundColor,
+          fill: pathStyle.fill,
+          stroke: pathStyle.stroke,
+          valueColor: valueStyle.color,
+          valueFont: {
+            family: valueStyle.fontFamily,
+            size: valueStyle.fontSize,
+            weight: valueStyle.fontWeight,
+          },
+        };
+      });
+      const bpmValueFont = await firstRow
+        .locator('[data-testid="beatmap-bpm-value"]')
+        .evaluate((value) => {
+          const valueStyle = getComputedStyle(value);
+
+          return {
+            family: valueStyle.fontFamily,
+            size: valueStyle.fontSize,
+            weight: valueStyle.fontWeight,
+          };
         });
-      expect(starColors.fill).toBe(starColors.color);
+
+      expect(starPresentation.backgroundColor).toBe(
+        starPresentation.inlineBackgroundColor
+      );
+      expect(starPresentation.backgroundImage).toBe('none');
+      expect(starPresentation.boxShadow).toBe('none');
+      expect(starPresentation.filter).toBe('none');
+      expect(starPresentation.iconFilter).toBe('none');
+      expect(starPresentation.borderRadius).toBeGreaterThanOrEqual(
+        starPresentation.height / 2
+      );
+      expect(starPresentation.fill).toBe(starPresentation.color);
+      expect(starPresentation.stroke).toBe(starPresentation.color);
+      expect(starPresentation.valueColor).toBe(starPresentation.color);
+      expect(starPresentation.valueFont).toEqual(bpmValueFont);
     });
 
     test('hides mod summaries for mania beatmaps', async ({ page }) => {
@@ -448,6 +499,43 @@ test.describe('Beatmaps Listing Page', () => {
       await page.locator('[data-testid="beatmap-sort-select"]').click();
       await page.getByRole('option', { name: 'SR (star rating)' }).click();
       await page.waitForURL(/sort=sr/);
+    });
+
+    test('sorts searched beatmaps by SR descending', async ({ page }) => {
+      await page.goto(ROUTES.beatmaps);
+
+      const search = page.locator('[data-testid="beatmap-search-input"]');
+      await search.fill('Freedom');
+      await page.waitForURL(/q=Freedom/, { timeout: 10000 });
+
+      await page.locator('[data-testid="beatmap-sort-select"]').click();
+      await page.getByRole('option', { name: 'SR (star rating)' }).click();
+      await page.waitForURL(
+        (url) =>
+          url.searchParams.get('q') === 'Freedom' &&
+          url.searchParams.get('sort') === 'sr',
+        { timeout: 10000 }
+      );
+
+      const ratings = page.locator('[data-testid="beatmap-star-rating-value"]');
+      await expect(ratings.first()).toBeVisible({ timeout: 10000 });
+      await expect
+        .poll(
+          async () => {
+            const values = (await ratings.allTextContents()).map(Number);
+            return (
+              values.length > 1 &&
+              values.every(
+                (value, index) => index === 0 || values[index - 1] >= value
+              )
+            );
+          },
+          { timeout: 10000 }
+        )
+        .toBe(true);
+      await expect(
+        page.locator('[data-testid="beatmap-sort-direction"]')
+      ).toHaveAccessibleName('Sort order is descending');
     });
 
     test('moves labeled ruleset filters into the filter sheet on mobile', async ({
@@ -645,7 +733,9 @@ test.describe('Beatmaps Listing Page', () => {
         )
       );
     });
-    expect(metricWidths).toEqual([60, 56, 68, 208]);
+    expect(metricWidths[0]).toBeGreaterThanOrEqual(60);
+    expect(metricWidths[0]).toBeLessThanOrEqual(68);
+    expect(metricWidths.slice(1)).toEqual([56, 68, 208]);
 
     const countWidths = await firstRow.evaluate((row) => {
       const games = row.querySelector('[data-testid="beatmap-games-count"]')!;

@@ -1,69 +1,80 @@
+import { interpolateRgb } from 'd3-interpolate';
+import { scaleLinear } from 'd3-scale';
+
+const difficultyColourSpectrum = scaleLinear<string>()
+  .domain([0.1, 1.25, 2, 2.5, 3.3, 4.2, 4.9, 5.8, 6.7, 7.7, 9])
+  .clamp(true)
+  .range([
+    '#4290FB',
+    '#4FC0FF',
+    '#4FFFD5',
+    '#7CFF4F',
+    '#F6F05C',
+    '#FF8068',
+    '#FF4E6F',
+    '#C645B8',
+    '#6563DE',
+    '#18158E',
+    '#000000',
+  ])
+  .interpolate(interpolateRgb.gamma(2.2));
+
 type RgbColor = readonly [red: number, green: number, blue: number];
 
-interface StarRatingColorStop {
-  rating: number;
-  color: RgbColor;
+const LOWEST_DIFFICULTY_COLOR = '#AAAAAA';
+const HIGHEST_DIFFICULTY_COLOR = '#000000';
+const DARK_FOREGROUND = '#000000';
+const LIGHT_FOREGROUND = '#FFFFFF';
+const FOREGROUND_LUMINANCE_THRESHOLD = 0.179;
+
+function parseCssColor(color: string): RgbColor {
+  if (color.startsWith('#')) {
+    return [
+      Number.parseInt(color.slice(1, 3), 16),
+      Number.parseInt(color.slice(3, 5), 16),
+      Number.parseInt(color.slice(5, 7), 16),
+    ];
+  }
+
+  const channels = color
+    .match(/[\d.]+/g)
+    ?.slice(0, 3)
+    .map(Number);
+  if (channels?.length !== 3) {
+    throw new Error(`Unsupported star rating color: ${color}`);
+  }
+
+  const [red, green, blue] = channels;
+  return [red, green, blue];
 }
 
-/** Color stops extracted from the osu! star-rating spectrum. */
-const STAR_RATING_COLOR_STOPS: readonly StarRatingColorStop[] = [
-  { rating: 0, color: [66, 144, 255] },
-  { rating: 1.25, color: [79, 192, 255] },
-  { rating: 2, color: [79, 255, 213] },
-  { rating: 2.5, color: [124, 255, 79] },
-  { rating: 3.3, color: [246, 240, 92] },
-  { rating: 4.2, color: [255, 128, 104] },
-  { rating: 4.9, color: [255, 78, 111] },
-  { rating: 5.8, color: [198, 69, 184] },
-  { rating: 6.7, color: [101, 99, 222] },
-  { rating: 7.7, color: [24, 21, 142] },
-  { rating: 9, color: [0, 0, 0] },
-];
+function relativeLuminance(color: RgbColor): number {
+  const [red, green, blue] = color.map((channel) => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
 
-function formatRgb(color: RgbColor): string {
-  return `rgb(${color.join(' ')})`;
-}
-
-function interpolateColor(
-  start: RgbColor,
-  end: RgbColor,
-  progress: number
-): RgbColor {
-  const interpolateChannel = (index: number) =>
-    Math.round(start[index] + (end[index] - start[index]) * progress);
-
-  return [interpolateChannel(0), interpolateChannel(1), interpolateChannel(2)];
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 }
 
 /**
- * Returns the color at a star rating's position in the difficulty spectrum.
- * Ratings outside the spectrum are clamped to its nearest endpoint.
+ * Returns the osu! difficulty-spectrum color for a star rating.
+ * Mirrors osu!'s gray below 0.1, gamma-corrected spectrum, and black at 9+.
  */
 export function getStarRatingColor(starRating: number): string {
-  const normalizedRating = Number.isNaN(starRating)
-    ? 0
-    : Math.max(starRating, 0);
-  const upperStopIndex = STAR_RATING_COLOR_STOPS.findIndex(
-    ({ rating }) => normalizedRating <= rating
-  );
+  const normalizedRating = Number.isNaN(starRating) ? 0 : starRating;
 
-  if (upperStopIndex === -1) {
-    return formatRgb(
-      STAR_RATING_COLOR_STOPS[STAR_RATING_COLOR_STOPS.length - 1].color
-    );
-  }
+  if (normalizedRating < 0.1) return LOWEST_DIFFICULTY_COLOR;
+  if (normalizedRating >= 9) return HIGHEST_DIFFICULTY_COLOR;
 
-  if (upperStopIndex === 0) {
-    return formatRgb(STAR_RATING_COLOR_STOPS[0].color);
-  }
+  return difficultyColourSpectrum(normalizedRating);
+}
 
-  const lowerStop = STAR_RATING_COLOR_STOPS[upperStopIndex - 1];
-  const upperStop = STAR_RATING_COLOR_STOPS[upperStopIndex];
-  const progress =
-    (normalizedRating - lowerStop.rating) /
-    (upperStop.rating - lowerStop.rating);
+/** Returns whichever neutral foreground has stronger contrast on the pill. */
+export function getStarRatingForegroundColor(starRating: number): string {
+  const background = parseCssColor(getStarRatingColor(starRating));
 
-  return formatRgb(
-    interpolateColor(lowerStop.color, upperStop.color, progress)
-  );
+  return relativeLuminance(background) > FOREGROUND_LUMINANCE_THRESHOLD
+    ? DARK_FOREGROUND
+    : LIGHT_FOREGROUND;
 }

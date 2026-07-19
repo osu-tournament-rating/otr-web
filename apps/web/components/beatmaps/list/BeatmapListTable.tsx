@@ -12,7 +12,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
@@ -23,7 +23,10 @@ import {
   getBeatmapRulesetLabel,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
-import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
+import {
+  getStarRatingColor,
+  getStarRatingForegroundColor,
+} from '@/lib/beatmaps/star-rating-color';
 import { getModColor } from '@/lib/utils/mods';
 import { formatPercentage } from '@/lib/utils/chart';
 import { formatDuration } from '@/lib/utils/date';
@@ -212,16 +215,20 @@ export default function BeatmapListTable({
                       value={rulesetLabel}
                     />
                     <Metric
-                      className="ml-1 w-15"
+                      className="ml-1 h-6 min-w-15 justify-center gap-1 rounded-full border border-current/20 px-1"
                       testId="beatmap-star-rating"
                       icon={
                         <Star
                           className="size-4 shrink-0 fill-current"
-                          style={{ color: getStarRatingColor(beatmap.sr) }}
                           aria-hidden="true"
                         />
                       }
                       value={beatmap.sr.toFixed(2)}
+                      valueClassName="text-inherit"
+                      style={{
+                        backgroundColor: getStarRatingColor(beatmap.sr),
+                        color: getStarRatingForegroundColor(beatmap.sr),
+                      }}
                       ariaLabel={`${beatmap.sr.toFixed(2)} star rating`}
                     />
                     <Metric
@@ -346,6 +353,7 @@ function Metric({
   testId,
   className,
   valueClassName,
+  style,
 }: {
   icon: ReactNode;
   value: ReactNode;
@@ -353,11 +361,13 @@ function Metric({
   testId?: string;
   className?: string;
   valueClassName?: string;
+  style?: CSSProperties;
 }) {
   return (
     <span
       data-testid={testId}
       aria-label={ariaLabel}
+      style={style}
       className={cn(
         'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground',
         className
