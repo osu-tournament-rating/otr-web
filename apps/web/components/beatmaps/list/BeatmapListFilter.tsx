@@ -176,8 +176,9 @@ export function buildBeatmapSearchParams(filter: FilterData): URLSearchParams {
   return params;
 }
 
-function countAdvancedFilters(filter: FilterData): number {
+function countSheetFilters(filter: FilterData): number {
   return (
+    (filter.ruleset === undefined ? 0 : 1) +
     rangeDefinitions.filter(
       ({ minKey, maxKey }) =>
         filter[minKey] !== undefined || filter[maxKey] !== undefined
@@ -252,8 +253,9 @@ export default function BeatmapListFilter({
     []
   );
 
-  const clearAdvanced = () => {
+  const clearSheetFilters = () => {
     const next = { ...draft };
+    delete next.ruleset;
     for (const key of numericKeys) delete next[key];
     setDraft(next);
   };
@@ -350,13 +352,14 @@ export default function BeatmapListFilter({
                   data-testid="beatmap-filter-button"
                   type="button"
                   variant="outline"
-                  className="h-10 gap-2 bg-background md:w-auto dark:bg-input/50 dark:shadow-none"
+                  aria-label={`Filters${countSheetFilters(filter) > 0 ? `, ${countSheetFilters(filter)} active` : ''}`}
+                  className="size-10 gap-2 bg-background px-0 md:h-10 md:w-auto md:px-3 dark:bg-input/50 dark:shadow-none"
                 >
                   <Filter aria-hidden="true" />
-                  Filters
-                  {countAdvancedFilters(filter) > 0 && (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                      {countAdvancedFilters(filter)}
+                  <span className="hidden md:inline">Filters</span>
+                  {countSheetFilters(filter) > 0 && (
+                    <span className="hidden size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground md:flex">
+                      {countSheetFilters(filter)}
                     </span>
                   )}
                 </Button>
@@ -371,11 +374,49 @@ export default function BeatmapListFilter({
                     Filter beatmaps
                   </SheetTitle>
                   <SheetDescription className="sr-only">
-                    Set beatmap and tournament usage ranges.
+                    Set ruleset, beatmap, and tournament usage filters.
                   </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+                  <fieldset className="md:hidden">
+                    <legend className="mb-3 text-sm font-medium">
+                      Ruleset
+                    </legend>
+                    <div
+                      data-testid="beatmap-ruleset-filters-mobile"
+                      className="grid grid-cols-2 gap-1.5 min-[400px]:grid-cols-3"
+                    >
+                      <RulesetChip
+                        large
+                        label="All"
+                        value="all"
+                        selected={draft.ruleset === undefined}
+                        onClick={() =>
+                          setDraft((current) => ({
+                            ...current,
+                            ruleset: undefined,
+                          }))
+                        }
+                      />
+                      {rulesets.map((ruleset) => (
+                        <RulesetChip
+                          large
+                          key={ruleset.value}
+                          label={ruleset.label}
+                          value={ruleset.value}
+                          selected={draft.ruleset === ruleset.value}
+                          onClick={() =>
+                            setDraft((current) => ({
+                              ...current,
+                              ruleset: ruleset.value,
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </fieldset>
+
                   <div className="space-y-5">
                     {rangeDefinitions.map((definition) => (
                       <RangeInputs
@@ -440,7 +481,7 @@ export default function BeatmapListFilter({
                     data-testid="beatmap-filter-clear"
                     type="button"
                     variant="outline"
-                    onClick={clearAdvanced}
+                    onClick={clearSheetFilters}
                   >
                     <X aria-hidden="true" />
                     Clear
@@ -462,8 +503,12 @@ export default function BeatmapListFilter({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div aria-label="Filter by ruleset" className="flex flex-wrap gap-1.5">
+      <div className="flex items-center justify-end md:justify-between">
+        <div
+          data-testid="beatmap-ruleset-filters-desktop"
+          aria-label="Filter by ruleset"
+          className="hidden flex-wrap gap-1.5 md:flex"
+        >
           <RulesetChip
             label="All"
             value="all"
@@ -506,11 +551,13 @@ function RulesetChip({
   value,
   selected,
   onClick,
+  large = false,
 }: {
   label: string;
   value: Ruleset | 'all';
   selected: boolean;
   onClick: () => void;
+  large?: boolean;
 }) {
   return (
     <Button
@@ -521,13 +568,14 @@ function RulesetChip({
       onClick={onClick}
       className={cn(
         'h-8 flex-none gap-1.5 rounded-full bg-background px-3 dark:bg-input/50 dark:shadow-none',
+        large && 'h-10 w-full gap-2 px-3 text-base has-[>svg]:px-3',
         selected &&
           'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary dark:bg-primary/20 dark:hover:bg-primary/25'
       )}
     >
       <RulesetIcon
         ruleset={value}
-        className="size-4 fill-current"
+        className={cn('fill-current', large ? 'size-5' : 'size-4')}
         aria-hidden="true"
       />
       {label}

@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  ChevronRight,
   Clock3,
   Gamepad2,
   Layers,
@@ -127,20 +126,12 @@ export default function BeatmapListTable({
                 className="min-w-0 sm:flex sm:flex-col sm:justify-center"
               >
                 <div className="min-w-0">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg">
-                        {beatmap.artist} – {beatmap.title}
-                      </h2>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground/85">
-                        [{beatmap.diffName}]
-                      </p>
-                    </div>
-                    <ChevronRight
-                      className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <h2 className="truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg">
+                    {beatmap.artist} – {beatmap.title}
+                  </h2>
+                  <p className="mt-0.5 truncate text-sm font-medium text-foreground/85">
+                    [{beatmap.diffName}]
+                  </p>
 
                   <div
                     data-testid="beatmap-usage-summary"

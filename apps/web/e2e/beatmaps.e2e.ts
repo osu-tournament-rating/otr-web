@@ -123,6 +123,7 @@ test.describe('Beatmaps Listing Page', () => {
 
       await expect(page.getByText(/verified games/i)).toHaveCount(0);
       await expect(page.locator('header svg.lucide-music')).toBeVisible();
+      await expect(firstRow.locator('svg.lucide-chevron-right')).toHaveCount(0);
     });
 
     test('audio transport plays, pauses, scrubs, changes volume, and closes without navigating', async ({
@@ -291,6 +292,78 @@ test.describe('Beatmaps Listing Page', () => {
       await page.locator('[data-testid="beatmap-sort-select"]').click();
       await page.getByRole('option', { name: 'SR (star rating)' }).click();
       await page.waitForURL(/sort=sr/);
+    });
+
+    test('moves labeled ruleset filters into the filter sheet on mobile', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 520, height: 844 });
+      await page.goto(ROUTES.beatmaps);
+
+      const desktopRulesets = page.locator(
+        '[data-testid="beatmap-ruleset-filters-desktop"]'
+      );
+      const filterButton = page.locator(
+        '[data-testid="beatmap-filter-button"]'
+      );
+
+      await expect(desktopRulesets).toBeHidden();
+      await expect(filterButton).toBeVisible({ timeout: 10000 });
+      await expect(filterButton).toHaveAccessibleName(/^Filters/);
+      await expect(
+        filterButton.getByText('Filters', { exact: true })
+      ).toBeHidden();
+      await filterButton.click();
+
+      const mobileRulesets = page.locator(
+        '[data-testid="beatmap-ruleset-filters-mobile"]'
+      );
+      await expect(mobileRulesets).toBeVisible();
+
+      const rulesetButtons = mobileRulesets.getByRole('button');
+      await expect(rulesetButtons).toHaveCount(6);
+      for (const name of [
+        'All',
+        'osu!',
+        'taiko',
+        'catch',
+        'mania 4K',
+        'mania 7K',
+      ]) {
+        const button = mobileRulesets.getByRole('button', {
+          name,
+          exact: true,
+        });
+        await expect(button).toBeVisible();
+        await expect(button).toHaveText(name);
+      }
+
+      const mania4k = mobileRulesets.getByRole('button', {
+        name: 'mania 4K',
+        exact: true,
+      });
+      const mania7k = mobileRulesets.getByRole('button', {
+        name: 'mania 7K',
+        exact: true,
+      });
+      const [mania4kBox, mania7kBox, mania7kIconBox] = await Promise.all([
+        mania4k.boundingBox(),
+        mania7k.boundingBox(),
+        mania7k.locator('svg').boundingBox(),
+      ]);
+
+      expect(mania4kBox).not.toBeNull();
+      expect(mania7kBox).not.toBeNull();
+      expect(mania7kIconBox).not.toBeNull();
+      expect(mania7kBox!.height).toBe(40);
+      expect(mania7kIconBox!.width).toBe(20);
+      expect(Math.abs(mania4kBox!.y - mania7kBox!.y)).toBeLessThanOrEqual(1);
+
+      await mobileRulesets
+        .getByRole('button', { name: 'mania 7K', exact: true })
+        .click();
+      await page.locator('[data-testid="beatmap-filter-apply"]').click();
+      await page.waitForURL(/ruleset=5/);
     });
   });
 
