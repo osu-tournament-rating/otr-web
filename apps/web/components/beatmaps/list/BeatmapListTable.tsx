@@ -27,7 +27,11 @@ import {
   getStarRatingColor,
   getStarRatingForegroundColor,
 } from '@/lib/beatmaps/star-rating-color';
-import { getModColor } from '@/lib/utils/mods';
+import {
+  getModColor,
+  getModForegroundColor,
+  selectBeatmapListModGroups,
+} from '@/lib/utils/mods';
 import { formatPercentage } from '@/lib/utils/chart';
 import { formatDuration } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
@@ -305,6 +309,8 @@ function TopModsBreakdown({
     );
   }
 
+  const displayedMods = selectBeatmapListModGroups(mods);
+
   return (
     <div
       data-testid="beatmap-mods-summary"
@@ -314,20 +320,20 @@ function TopModsBreakdown({
       <ul
         data-testid="beatmap-top-mods"
         aria-label="Top mods by score usage"
-        className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:text-xs"
+        className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs"
       >
-        {mods.map(({ mod, mods, percentage }) => (
+        {displayedMods.map(({ mod, mods, percentage }) => (
           <li
             key={`${mods}-${mod}`}
-            className="inline-flex items-center gap-1 whitespace-nowrap text-muted-foreground"
+            data-testid="beatmap-mod-group"
+            className="inline-flex h-6 items-center gap-1 rounded-full border border-current/20 px-2 whitespace-nowrap"
+            style={{
+              backgroundColor: getModColor(mods),
+              color: getModForegroundColor(mods),
+            }}
           >
-            <span
-              className="size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: getModColor(mods) }}
-              aria-hidden="true"
-            />
-            <span className="font-medium text-foreground">{mod}</span>
-            <span className="tabular-nums">
+            <span className="font-semibold text-inherit">{mod}</span>
+            <span className="font-medium text-inherit tabular-nums">
               {formatPercentage(percentage, 1)}
             </span>
           </li>

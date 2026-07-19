@@ -14,6 +14,7 @@ export interface BeatmapModDistributionEntry {
 }
 
 export const BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE = 1;
+export const BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE = 20;
 
 /**
  * Removes score-level modifiers that the beatmap distribution treats as
@@ -172,6 +173,27 @@ export function filterBeatmapModDistribution(
   );
 }
 
+/**
+ * Selects the mod groups shown in the beatmap list from an already-ranked
+ * distribution. The leading group is always useful context; a secondary group
+ * is only prominent enough to show when it accounts for at least 20% of use.
+ */
+export function selectBeatmapListModGroups<T extends { percentage: number }>(
+  groups: readonly T[]
+): T[] {
+  const [primaryGroup, secondaryGroup] = groups;
+
+  if (!primaryGroup) return [];
+  if (
+    !secondaryGroup ||
+    secondaryGroup.percentage < BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE
+  ) {
+    return [primaryGroup];
+  }
+
+  return [primaryGroup, secondaryGroup];
+}
+
 /** Mod multipliers (ScoreV2, common tournament mods) */
 const modMultipliers: Record<number, number> = {
   [Mods.HardRock]: 1.1,
@@ -266,6 +288,16 @@ export function getModColor(mods: Mods) {
     default:
       return 'var(--chart-1)';
   }
+}
+
+/** Returns a readable neutral foreground for a solid mod-color background. */
+export function getModForegroundColor(mods: Mods): string {
+  const normalizedMods = normalizeBeatmapDisplayMods(mods);
+
+  return normalizedMods === Mods.Flashlight ||
+    normalizedMods === (Mods.Hidden | Mods.Flashlight)
+    ? '#FFFFFF'
+    : '#000000';
 }
 
 /**

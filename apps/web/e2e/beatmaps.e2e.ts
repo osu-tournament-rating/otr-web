@@ -129,8 +129,18 @@ test.describe('Beatmaps Listing Page', () => {
       });
       await expect(topMods).toBeVisible();
       const displayedMods = topMods.locator('li');
-      expect(await displayedMods.count()).toBeGreaterThan(0);
+      const displayedModCount = await displayedMods.count();
+      expect(displayedModCount).toBeGreaterThan(0);
+      expect(displayedModCount).toBeLessThanOrEqual(2);
       await expect(displayedMods.first()).toContainText(/%/);
+      if (displayedModCount === 2) {
+        const secondaryPercentage = Number.parseFloat(
+          (await displayedMods.nth(1).textContent())?.match(
+            /[\d.]+(?=%)/
+          )?.[0] ?? 'NaN'
+        );
+        expect(secondaryPercentage).toBeGreaterThanOrEqual(20);
+      }
 
       await expect(page.getByText(/verified games/i)).toHaveCount(0);
       await expect(firstRow.getByText(/Mapped by/)).toHaveCount(0);
@@ -315,6 +325,39 @@ test.describe('Beatmaps Listing Page', () => {
       expect(starPresentation.stroke).toBe(starPresentation.color);
       expect(starPresentation.valueColor).toBe(starPresentation.color);
       expect(starPresentation.valueFont).toEqual(bpmValueFont);
+
+      const modPresentations = await displayedMods.evaluateAll((pills) =>
+        pills.map((pill) => {
+          const pillStyle = getComputedStyle(pill);
+
+          return {
+            backgroundColor: pillStyle.backgroundColor,
+            backgroundImage: pillStyle.backgroundImage,
+            borderRadius: Number.parseFloat(pillStyle.borderRadius),
+            childColors: Array.from(pill.children).map(
+              (child) => getComputedStyle(child).color
+            ),
+            color: pillStyle.color,
+            height: pill.getBoundingClientRect().height,
+            inlineBackgroundColor: (pill as HTMLElement).style.backgroundColor,
+          };
+        })
+      );
+      for (const modPresentation of modPresentations) {
+        expect(modPresentation.inlineBackgroundColor).toMatch(
+          /^var\(--(?:chart|mod)-/
+        );
+        expect(modPresentation.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+        expect(modPresentation.backgroundImage).toBe('none');
+        expect(modPresentation.height).toBe(24);
+        expect(modPresentation.borderRadius).toBeGreaterThanOrEqual(
+          modPresentation.height / 2
+        );
+        expect(modPresentation.childColors).toEqual([
+          modPresentation.color,
+          modPresentation.color,
+        ]);
+      }
     });
 
     test('hides mod summaries for mania beatmaps', async ({ page }) => {

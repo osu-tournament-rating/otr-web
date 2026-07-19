@@ -7,10 +7,12 @@ import {
   deriveGameIsFreeMod,
   filterBeatmapModDistribution,
   getBeatmapModLabel,
+  getModForegroundColor,
   mostCommonDisplayMods,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   resolveGameModsFromScores,
+  selectBeatmapListModGroups,
 } from '../mods';
 
 describe('beatmap mod display helpers', () => {
@@ -120,6 +122,66 @@ describe('beatmap list mod display helpers', () => {
       { label: 'Other', scoreCount: 40 },
       { label: 'NM', scoreCount: 20 },
     ]);
+  });
+
+  it('shows the second-ranked group at the inclusive 20% boundary', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 80 },
+        { mods: Mods.Hidden, scoreCount: 20 },
+      ])
+    );
+
+    expect(
+      displayedGroups.map(({ label, percentage }) => ({ label, percentage }))
+    ).toEqual([
+      { label: 'NM', percentage: 80 },
+      { label: 'HD', percentage: 20 },
+    ]);
+  });
+
+  it('hides the second-ranked group below 20%', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 801 },
+        { mods: Mods.Hidden, scoreCount: 199 },
+      ])
+    );
+
+    expect(displayedGroups.map(({ label }) => label)).toEqual(['NM']);
+  });
+
+  it('never shows more than two groups', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 40 },
+        { mods: Mods.Hidden, scoreCount: 30 },
+        { mods: Mods.HardRock, scoreCount: 20 },
+        { mods: Mods.DoubleTime, scoreCount: 10 },
+      ])
+    );
+
+    expect(displayedGroups.map(({ label }) => label)).toEqual(['NM', 'HD']);
+  });
+
+  it('keeps the primary group when every group is below 20%', () => {
+    const groups = [
+      { label: 'NM', percentage: 19 },
+      { label: 'HD', percentage: 18 },
+      { label: 'HR', percentage: 17 },
+    ];
+
+    expect(selectBeatmapListModGroups(groups)).toEqual([groups[0]]);
+    expect(selectBeatmapListModGroups([])).toEqual([]);
+  });
+
+  it('uses a light foreground only for dark flashlight backgrounds', () => {
+    expect(getModForegroundColor(Mods.Flashlight)).toBe('#FFFFFF');
+    expect(getModForegroundColor(Mods.Hidden | Mods.Flashlight)).toBe(
+      '#FFFFFF'
+    );
+    expect(getModForegroundColor(Mods.None)).toBe('#000000');
+    expect(getModForegroundColor(Mods.HardRock)).toBe('#000000');
   });
 });
 
