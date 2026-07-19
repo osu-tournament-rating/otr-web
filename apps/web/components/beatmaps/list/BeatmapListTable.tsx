@@ -21,9 +21,9 @@ import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
-  getDifficultyColor,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
+import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
 import { getModColor } from '@/lib/utils/mods';
 import { formatPercentage } from '@/lib/utils/chart';
 import { formatDuration } from '@/lib/utils/date';
@@ -217,7 +217,7 @@ export default function BeatmapListTable({
                       icon={
                         <Star
                           className="size-4 shrink-0 fill-current"
-                          style={{ color: getDifficultyColor(beatmap.sr) }}
+                          style={{ color: getStarRatingColor(beatmap.sr) }}
                           aria-hidden="true"
                         />
                       }

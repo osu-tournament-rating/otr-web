@@ -271,18 +271,6 @@
   --mod-mania-key: hsl(207, 78%, 73%);
 
   --mod-touch-device: hsl(27, 100%, 61%);
-
-  /* Pastel osu!-inspired difficulty spectrum (easiest to hardest). */
-  --difficulty-light-blue: #91d5f2;
-  --difficulty-light-green: #a9dfbf;
-  --difficulty-green: #79c99e;
-  --difficulty-yellow: #eadb7b;
-  --difficulty-orange: #efb273;
-  --difficulty-red: #eb8989;
-  --difficulty-violet: #d19bdf;
-  --difficulty-purple: #ad94d4;
-  --difficulty-deep-blue: #788dbf;
-  --difficulty-black: #596170;
 }
 
 .dark {

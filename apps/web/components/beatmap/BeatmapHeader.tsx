@@ -20,8 +20,8 @@ import { Button } from '@/components/ui/button';
 import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
-  getDifficultyColor,
 } from '@/lib/beatmaps/presentation';
+import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
 import type {
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
@@ -114,7 +114,7 @@ export default function BeatmapHeader({
               <span className="inline-flex items-center gap-1.5 font-semibold text-white">
                 <Star
                   className="size-4"
-                  style={{ color: getDifficultyColor(beatmap.sr) }}
+                  style={{ color: getStarRatingColor(beatmap.sr) }}
                   aria-hidden="true"
                 />
                 {beatmap.sr.toFixed(2)} SR
@@ -220,7 +220,7 @@ function DifficultyNavigator({
             <RulesetIcon
               ruleset={ruleset}
               className="size-5 shrink-0 fill-current [&_path]:fill-current"
-              style={{ color: getDifficultyColor(difficulty.sr) }}
+              style={{ color: getStarRatingColor(difficulty.sr) }}
               aria-hidden="true"
             />
           );
