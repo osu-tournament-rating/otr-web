@@ -86,14 +86,6 @@ export default function BeatmapListTable({
           );
           const topMods = beatmap.topMods ?? [];
           const showMods = !isManiaRuleset(ruleset);
-          const difficultyName =
-            beatmap.diffName.length > 20
-              ? `${beatmap.diffName.slice(0, 19)}…`
-              : beatmap.diffName;
-          const difficultyWidth = Math.min(
-            20,
-            Math.max(12, beatmap.diffName.length)
-          );
 
           return (
             <article
@@ -143,27 +135,26 @@ export default function BeatmapListTable({
                 <div className="min-w-0">
                   <div
                     data-testid="beatmap-heading"
-                    className="flex min-w-0 items-baseline gap-x-3"
+                    className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5"
                   >
                     <h2
                       data-testid="beatmap-title"
                       title={beatmap.title}
-                      className="min-w-0 truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg"
+                      className="min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-primary sm:text-lg"
                     >
                       {beatmap.title}
                     </h2>
                     <p
                       data-testid="beatmap-difficulty-name"
                       title={beatmap.diffName}
-                      className="block shrink-0 truncate text-sm font-medium text-foreground/85"
-                      style={{ width: `${difficultyWidth}ch` }}
+                      className="min-w-0 text-sm font-medium break-words text-foreground/85"
                     >
-                      [{difficultyName}]
+                      [{beatmap.diffName}]
                     </p>
                   </div>
                   <div
                     data-testid="beatmap-attribution"
-                    className="mt-0.5 flex min-w-0 items-center gap-x-3 text-xs text-muted-foreground"
+                    className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
                   >
                     <p
                       data-testid="beatmap-artist"
@@ -176,7 +167,7 @@ export default function BeatmapListTable({
                       />
                       <span
                         data-testid="beatmap-artist-name"
-                        className="min-w-0 truncate"
+                        className="min-w-0 break-words"
                       >
                         {beatmap.artist}
                       </span>
@@ -184,7 +175,7 @@ export default function BeatmapListTable({
                     <p
                       data-testid="beatmap-mapper"
                       title={beatmap.creator ?? 'Unknown mapper'}
-                      className="flex shrink-0 items-center gap-1.5"
+                      className="flex min-w-0 items-center gap-1.5"
                     >
                       <UserRound
                         className="size-3.5 shrink-0"
@@ -192,7 +183,7 @@ export default function BeatmapListTable({
                       />
                       <span
                         data-testid="beatmap-mapper-name"
-                        className="w-[12ch] truncate"
+                        className="min-w-0 break-words"
                       >
                         {beatmap.creator ?? 'Unknown mapper'}
                       </span>
@@ -325,7 +316,7 @@ function TopModsBreakdown({
         aria-label="Top mods by score usage"
         className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:text-xs"
       >
-        {mods.slice(0, 2).map(({ mod, mods, percentage }) => (
+        {mods.map(({ mod, mods, percentage }) => (
           <li
             key={`${mods}-${mod}`}
             className="inline-flex items-center gap-1 whitespace-nowrap text-muted-foreground"

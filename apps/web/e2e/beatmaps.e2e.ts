@@ -130,7 +130,6 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(topMods).toBeVisible();
       const displayedMods = topMods.locator('li');
       expect(await displayedMods.count()).toBeGreaterThan(0);
-      expect(await displayedMods.count()).toBeLessThanOrEqual(2);
       await expect(displayedMods.first()).toContainText(/%/);
 
       await expect(page.getByText(/verified games/i)).toHaveCount(0);
@@ -208,51 +207,54 @@ test.describe('Beatmaps Listing Page', () => {
         )
       ).toHaveCount(1);
 
-      const difficultySizing = await page
+      const difficultyPresentation = await page
         .locator('[data-testid="beatmap-difficulty-name"]')
         .evaluateAll((elements) =>
           elements.slice(0, 10).map((element) => {
             const fullName = element.getAttribute('title') ?? '';
             const displayedName = (element.textContent ?? '').slice(1, -1);
+            const style = getComputedStyle(element);
 
             return {
-              fullLength: fullName.length,
-              displayedLength: displayedName.length,
               displayedName,
+              fullName,
+              inlineWidth: (element as HTMLElement).style.width,
+              overflow: style.overflow,
+              textOverflow: style.textOverflow,
+              whiteSpace: style.whiteSpace,
+            };
+          })
+        );
+      for (const difficulty of difficultyPresentation) {
+        expect(difficulty.displayedName).toBe(difficulty.fullName);
+        expect(difficulty.inlineWidth).toBe('');
+        expect(difficulty.overflow).toBe('visible');
+        expect(difficulty.textOverflow).toBe('clip');
+        expect(difficulty.whiteSpace).toBe('normal');
+      }
+
+      const untruncatedText = await firstRow
+        .locator(
+          '[data-testid="beatmap-title"], [data-testid="beatmap-artist-name"], [data-testid="beatmap-mapper-name"]'
+        )
+        .evaluateAll((elements) =>
+          elements.map((element) => {
+            const style = getComputedStyle(element);
+
+            return {
+              overflow: style.overflow,
+              textOverflow: style.textOverflow,
+              whiteSpace: style.whiteSpace,
               width: (element as HTMLElement).style.width,
             };
           })
         );
-      expect(difficultySizing.some(({ fullLength }) => fullLength <= 12)).toBe(
-        true
-      );
-      expect(difficultySizing.some(({ fullLength }) => fullLength > 20)).toBe(
-        true
-      );
-      for (const difficulty of difficultySizing) {
-        expect(difficulty.width).toBe(
-          `${Math.min(20, Math.max(12, difficulty.fullLength))}ch`
-        );
-        expect(difficulty.displayedLength).toBeLessThanOrEqual(20);
-        if (difficulty.fullLength > 20) {
-          expect(difficulty.displayedName.endsWith('…')).toBe(true);
-        }
+      for (const text of untruncatedText) {
+        expect(text.overflow).toBe('visible');
+        expect(text.textOverflow).toBe('clip');
+        expect(text.whiteSpace).toBe('normal');
+        expect(text.width).toBe('');
       }
-
-      const mapperWidths = await page
-        .locator('[data-testid="beatmap-mapper-name"]')
-        .evaluateAll((elements) =>
-          Array.from(
-            new Set(
-              elements
-                .slice(0, 10)
-                .map((element) =>
-                  Math.round(element.getBoundingClientRect().width)
-                )
-            )
-          )
-        );
-      expect(mapperWidths).toEqual([96]);
 
       const starRating = firstRow.locator(
         '[data-testid="beatmap-star-rating"]'

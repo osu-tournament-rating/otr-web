@@ -682,10 +682,12 @@ function ActiveFilterSummary({
           type="button"
           onClick={() => onRemove(activeFilter.keys)}
           aria-label={`Remove ${activeFilter.label} filter`}
-          className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border bg-background px-2.5 text-xs transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/50"
+          className="inline-flex min-h-7 max-w-full items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/50"
         >
-          <span className="truncate">{activeFilter.label}</span>
-          <X className="size-3" aria-hidden="true" />
+          <span className="min-w-0 text-left break-words">
+            {activeFilter.label}
+          </span>
+          <X className="size-3 shrink-0" aria-hidden="true" />
         </button>
       ))}
       <Button

@@ -66,7 +66,7 @@ export const BeatmapListItemSchema = z.object({
   creator: z.string().nullable(),
   verifiedTournamentCount: z.number().int().nonnegative(),
   verifiedGameCount: z.number().int().nonnegative(),
-  topMods: z.array(BeatmapListTopModSchema).max(3).optional(),
+  topMods: z.array(BeatmapListTopModSchema).optional(),
 });
 
 export const BeatmapListResponseSchema = z.object({

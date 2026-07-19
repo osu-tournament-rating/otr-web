@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Clock3,
   ExternalLink,
-  Star,
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -15,6 +14,7 @@ import { useEffect, useRef } from 'react';
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import StarRatingIcon from '@/components/icons/StarRatingIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -112,9 +112,9 @@ export default function BeatmapHeader({
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/85">
               <span className="inline-flex items-center gap-1.5 font-semibold text-white">
-                <Star
+                <StarRatingIcon
+                  starRating={beatmap.sr}
                   className="size-4"
-                  style={{ color: getStarRatingColor(beatmap.sr) }}
                   aria-hidden="true"
                 />
                 {beatmap.sr.toFixed(2)} SR

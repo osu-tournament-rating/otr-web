@@ -233,9 +233,9 @@ export const listBeatmaps = publicProcedure
 
       const rows = await conditionedQuery
         .orderBy(
-          ...(searchRank
-            ? [desc(searchRank), asc(schema.beatmaps.diffName)]
-            : [direction(getSortColumn()), direction(schema.beatmaps.id)])
+          direction(getSortColumn()),
+          ...(searchRank ? [desc(searchRank)] : []),
+          direction(schema.beatmaps.id)
         )
         .limit(pageSize)
         .offset(offset);
@@ -352,13 +352,11 @@ export const listBeatmaps = publicProcedure
             calculateBeatmapListModDistribution(
               groupedModsByBeatmap.get(row.id) ?? []
             )
-          )
-            .slice(0, 3)
-            .map(({ label, mods, percentage }) => ({
-              mod: label,
-              mods,
-              percentage,
-            })),
+          ).map(({ label, mods, percentage }) => ({
+            mod: label,
+            mods,
+            percentage,
+          })),
         })
       );
 
