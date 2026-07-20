@@ -29,6 +29,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -65,17 +66,23 @@ interface BeatmapListFilterProps {
   totalCount: number;
 }
 
-const sortOptions: readonly { value: BeatmapListSort; label: string }[] = [
+const primarySortOptions: readonly {
+  value: BeatmapListSort;
+  label: string;
+}[] = [
   { value: 'gameCount', label: 'Games' },
   { value: 'tournamentCount', label: 'Tournaments' },
+];
+
+const attributeSortOptions: readonly {
+  value: BeatmapListSort;
+  label: string;
+}[] = [
   { value: 'sr', label: 'SR' },
   { value: 'bpm', label: 'BPM' },
-  { value: 'length', label: 'Duration' },
-  { value: 'creator', label: 'Mapper' },
   { value: 'cs', label: 'CS' },
   { value: 'ar', label: 'AR' },
-  { value: 'od', label: 'OD' },
-  { value: 'hp', label: 'HP' },
+  { value: 'length', label: 'Length' },
 ] as const;
 
 const rangeDefinitions = [
@@ -318,7 +325,13 @@ export default function BeatmapListFilter({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {sortOptions.map((option) => (
+                {primarySortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+                <SelectSeparator />
+                {attributeSortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

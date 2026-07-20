@@ -976,6 +976,29 @@ test.describe('Beatmaps Listing Page', () => {
       await page.waitForURL(/sort=sr/);
     });
 
+    test('shows the available sort options in grouped order', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmaps);
+      await page.locator('[data-testid="beatmap-sort-select"]').click();
+
+      const sortMenu = page.getByRole('listbox');
+      const menuItems = sortMenu.locator(
+        '[data-slot="select-item"], [data-slot="select-separator"]'
+      );
+      await expect(menuItems).toHaveText([
+        'Games',
+        'Tournaments',
+        '',
+        'SR',
+        'BPM',
+        'CS',
+        'AR',
+        'Length',
+      ]);
+      await expect(sortMenu.getByRole('separator')).toHaveCount(1);
+    });
+
     test('sorts searched beatmaps by SR descending', async ({ page }) => {
       await page.goto(ROUTES.beatmaps);
 
