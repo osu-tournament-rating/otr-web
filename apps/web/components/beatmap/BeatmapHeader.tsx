@@ -240,7 +240,10 @@ function DifficultyNavigator({
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {difficulty.diffName}
                 </span>
-                <span className="shrink-0 font-mono text-xs font-semibold text-muted-foreground">
+                <span
+                  data-testid="related-difficulty-star-rating"
+                  className="shrink-0 font-mono text-xs font-semibold text-foreground"
+                >
                   {formattedRating}
                 </span>
               </Link>

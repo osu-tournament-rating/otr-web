@@ -23,7 +23,10 @@ export default function BeatmapCover({
   sizes,
   priority = false,
 }: BeatmapCoverProps) {
-  const [hasError, setHasError] = useState(false);
+  const [failedBeatmapsetOsuId, setFailedBeatmapsetOsuId] = useState<
+    number | null
+  >(null);
+  const hasError = failedBeatmapsetOsuId === beatmapsetOsuId;
   const hasRemoteCover = Boolean(beatmapsetOsuId) && !hasError;
 
   return (
@@ -44,7 +47,7 @@ export default function BeatmapCover({
         sizes={sizes}
         priority={priority}
         unoptimized={hasRemoteCover}
-        onError={() => setHasError(true)}
+        onError={() => setFailedBeatmapsetOsuId(beatmapsetOsuId ?? null)}
         className={cn('object-cover', imageClassName)}
       />
 

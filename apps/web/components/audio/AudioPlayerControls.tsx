@@ -4,6 +4,7 @@ import {
   Loader2,
   Pause,
   Play,
+  RefreshCw,
   Volume1,
   Volume2,
   VolumeX,
@@ -48,11 +49,13 @@ export default function AudioPlayerControls() {
     .filter(Boolean)
     .join(' · ');
   const currentTime = Math.min(state.currentTime, state.duration || 0);
-  const playerState = state.isLoading
-    ? 'loading'
-    : state.isPlaying
-      ? 'playing'
-      : 'paused';
+  const playerState = state.error
+    ? 'error'
+    : state.isLoading
+      ? 'loading'
+      : state.isPlaying
+        ? 'playing'
+        : 'paused';
   const playLabel = state.isLoading
     ? 'Loading beatmap preview'
     : state.isPlaying
@@ -79,7 +82,7 @@ export default function AudioPlayerControls() {
           className="absolute inset-y-0 left-0 w-1 bg-primary"
         />
 
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-2.5 pr-11 pl-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(18rem,1.35fr)_8.5rem] sm:items-center sm:gap-4 sm:py-3 sm:pr-12 sm:pl-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 py-2.5 pr-11 pl-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,1.15fr)_8.5rem] sm:items-center sm:gap-4 sm:py-3 sm:pr-12 sm:pl-4">
           <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
             <BeatmapCover
               beatmapsetOsuId={track.beatmapsetOsuId}
@@ -119,6 +122,8 @@ export default function AudioPlayerControls() {
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
               ) : state.isPlaying ? (
                 <Pause className="size-4" aria-hidden="true" />
+              ) : state.error ? (
+                <RefreshCw className="size-4" aria-hidden="true" />
               ) : (
                 <Play className="size-4" aria-hidden="true" />
               )}

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Music } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
 import BeatmapListTable from '@/components/beatmaps/list/BeatmapListTable';
@@ -103,6 +104,9 @@ export default async function Page(props: {
     descending: filter.descending,
   });
 
+  const lastPage = Math.max(1, data.totalPages);
+  if (data.page > lastPage) redirect(createUri(filter, lastPage));
+
   return (
     <div className="container mx-auto px-4 py-6 sm:px-0 sm:py-0">
       <header className="mb-6 border-b pb-6">
@@ -204,7 +208,10 @@ function BeatmapPagination({
           </PaginationItem>
         ))}
 
-        <PaginationItem className="px-2 text-sm sm:hidden">
+        <PaginationItem
+          data-testid="beatmap-pagination-status"
+          className="px-2 text-sm sm:hidden"
+        >
           {currentPage} / {totalPages}
         </PaginationItem>
 

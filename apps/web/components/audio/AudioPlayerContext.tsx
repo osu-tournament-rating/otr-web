@@ -75,6 +75,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }));
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackAttemptRef = useRef(0);
 
   useEffect(() => {
     const storedVolume = getStoredVolume();
@@ -149,6 +150,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 
     return () => {
+      playbackAttemptRef.current += 1;
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
@@ -168,6 +170,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       const track = normalizeAudioPreviewTrack(source);
       const isCurrentTrack = state.currentlyPlaying === track.beatmapsetOsuId;
+      const shouldReload = isCurrentTrack && Boolean(state.error);
+      const playbackAttempt = ++playbackAttemptRef.current;
 
       setState((previous) => ({
         ...previous,
@@ -175,28 +179,44 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         currentTrack: track,
         isLoading: true,
         error: null,
-        ...(!isCurrentTrack
+        ...(!isCurrentTrack || shouldReload
           ? { currentTime: 0, duration: 0, isPlaying: false }
           : {}),
       }));
 
       if (!isCurrentTrack) {
         audio.src = `https://b.ppy.sh/preview/${track.beatmapsetOsuId}.mp3`;
+      } else if (shouldReload) {
+        audio.load();
       }
 
-      void audio.play().catch(() => {
-        setState((previous) => ({
-          ...previous,
-          isLoading: false,
-          isPlaying: false,
-          error: 'Preview unavailable',
-        }));
+      void audio.play().catch((error: unknown) => {
+        if (playbackAttemptRef.current !== playbackAttempt) {
+          return;
+        }
+
+        setState((previous) => {
+          if (previous.currentlyPlaying !== track.beatmapsetOsuId) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            isLoading: false,
+            isPlaying: false,
+            error:
+              error instanceof DOMException && error.name === 'AbortError'
+                ? null
+                : 'Preview unavailable',
+          };
+        });
       });
     },
-    [state.currentlyPlaying]
+    [state.currentlyPlaying, state.error]
   );
 
   const pause = useCallback(() => {
+    playbackAttemptRef.current += 1;
     audioRef.current?.pause();
     setState((previous) => ({
       ...previous,
@@ -206,6 +226,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const close = useCallback(() => {
+    playbackAttemptRef.current += 1;
     const audio = audioRef.current;
     if (audio) {
       audio.pause();

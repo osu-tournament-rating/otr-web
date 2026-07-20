@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Pause, Loader2 } from 'lucide-react';
+import { Loader2, Pause, Play, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   useAudioPlayer,
@@ -41,6 +41,8 @@ export default function AudioPlayButton({
   const isActive = useIsPreviewActive(beatmapsetOsuId);
   const isLoading =
     state.isLoading && state.currentlyPlaying === beatmapsetOsuId;
+  const hasError =
+    Boolean(state.error) && state.currentlyPlaying === beatmapsetOsuId;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,14 +59,22 @@ export default function AudioPlayButton({
 
   if (!beatmapsetOsuId) return null;
 
-  const Icon = isLoading ? Loader2 : isPlaying ? Pause : Play;
+  const Icon = isLoading
+    ? Loader2
+    : isPlaying
+      ? Pause
+      : hasError
+        ? RefreshCw
+        : Play;
   const actionLabel = isLoading
     ? 'Loading preview'
     : isPlaying
       ? 'Pause preview'
-      : isActive
-        ? 'Resume preview'
-        : 'Play preview';
+      : hasError
+        ? 'Retry preview'
+        : isActive
+          ? 'Resume preview'
+          : 'Play preview';
 
   const button = (
     <Button
@@ -78,15 +88,17 @@ export default function AudioPlayButton({
       )}
       onClick={handleClick}
       aria-label={actionLabel}
-      aria-pressed={isActive}
+      aria-pressed={isActive && !hasError}
       data-preview-state={
         isLoading
           ? 'loading'
           : isPlaying
             ? 'playing'
-            : isActive
-              ? 'paused'
-              : 'idle'
+            : hasError
+              ? 'error'
+              : isActive
+                ? 'paused'
+                : 'idle'
       }
     >
       <Icon

@@ -1,11 +1,43 @@
 import { test, expect, type Page } from '@playwright/test';
 import { TEST_BEATMAP_OSU_ID, ROUTES } from './fixtures/test-config';
 
-async function installMockPreviewAudio(page: Page) {
+type PreviewPlayBehavior = 'resolve' | 'defer' | 'error';
+
+interface PreviewAudioMockSnapshot {
+  loadCalls: number;
+  pendingPlayCount: number;
+  playCalls: number;
+  source: string;
+  sourceAssignments: number;
+}
+
+interface PreviewAudioMockDriver {
+  queuePlayBehaviors: (...behaviors: PreviewPlayBehavior[]) => Promise<void>;
+  rejectPendingPlay: (errorName: string) => Promise<void>;
+  snapshot: () => Promise<PreviewAudioMockSnapshot>;
+}
+
+async function installMockPreviewAudio(
+  page: Page
+): Promise<PreviewAudioMockDriver> {
   await page.addInitScript(() => {
+    type PlayBehavior = 'resolve' | 'defer' | 'error';
+    type PendingPlay = {
+      reject: (errorName: string) => void;
+      resolve: () => void;
+    };
+
+    const playBehaviors: PlayBehavior[] = [];
+    const pendingPlays: PendingPlay[] = [];
+    let latestSource = '';
+    let loadCalls = 0;
+    let playCalls = 0;
+    let sourceAssignments = 0;
+
     class PreviewAudioMock extends EventTarget {
       private source = '';
       private previewTime = 0;
+      private requiresReload = false;
 
       paused = true;
       duration = 30;
@@ -17,10 +49,12 @@ async function installMockPreviewAudio(page: Page) {
 
       set src(value: string) {
         this.source = value;
+        latestSource = value;
         this.previewTime = 0;
+        this.requiresReload = false;
+        sourceAssignments += 1;
         queueMicrotask(() => {
           this.dispatchEvent(new Event('loadedmetadata'));
-          this.dispatchEvent(new Event('canplay'));
         });
       }
 
@@ -39,7 +73,45 @@ async function installMockPreviewAudio(page: Page) {
         });
       }
 
-      play() {
+      play(): Promise<void> {
+        playCalls += 1;
+
+        if (this.requiresReload) {
+          return Promise.reject(
+            new DOMException(
+              'The media source is unavailable',
+              'NotSupportedError'
+            )
+          );
+        }
+
+        const behavior = playBehaviors.shift() ?? 'resolve';
+        if (behavior === 'error') {
+          this.requiresReload = true;
+          queueMicrotask(() => this.dispatchEvent(new Event('error')));
+          return Promise.reject(
+            new DOMException(
+              'The media source is unavailable',
+              'NotSupportedError'
+            )
+          );
+        }
+
+        if (behavior === 'defer') {
+          return new Promise<void>((resolve, reject) => {
+            pendingPlays.push({
+              resolve: () => {
+                this.paused = false;
+                this.dispatchEvent(new Event('playing'));
+                resolve();
+              },
+              reject: (errorName: string) => {
+                reject(new DOMException('Playback was interrupted', errorName));
+              },
+            });
+          });
+        }
+
         this.paused = false;
         queueMicrotask(() => this.dispatchEvent(new Event('playing')));
         return Promise.resolve();
@@ -51,12 +123,48 @@ async function installMockPreviewAudio(page: Page) {
         this.dispatchEvent(new Event('pause'));
       }
 
-      load() {}
+      load() {
+        loadCalls += 1;
+        this.previewTime = 0;
+        this.requiresReload = false;
+        queueMicrotask(() => {
+          this.dispatchEvent(new Event('loadedmetadata'));
+        });
+      }
 
       removeAttribute(name: string) {
-        if (name === 'src') this.source = '';
+        if (name === 'src') {
+          this.source = '';
+          latestSource = '';
+          this.requiresReload = false;
+        }
       }
     }
+
+    const controller = {
+      queuePlayBehaviors(...behaviors: PlayBehavior[]) {
+        playBehaviors.push(...behaviors);
+      },
+      rejectPendingPlay(errorName: string) {
+        const pending = pendingPlays.shift();
+        if (!pending) throw new Error('No pending preview play to reject');
+        pending.reject(errorName);
+      },
+      snapshot() {
+        return {
+          loadCalls,
+          pendingPlayCount: pendingPlays.length,
+          playCalls,
+          source: latestSource,
+          sourceAssignments,
+        };
+      },
+    };
+
+    Object.defineProperty(window, '__otrPreviewAudioMock', {
+      configurable: true,
+      value: controller,
+    });
 
     Object.defineProperty(window, 'Audio', {
       configurable: true,
@@ -64,6 +172,89 @@ async function installMockPreviewAudio(page: Page) {
       value: PreviewAudioMock,
     });
   });
+
+  return {
+    queuePlayBehaviors: (...behaviors) =>
+      page.evaluate((queuedBehaviors) => {
+        const controller = (
+          window as unknown as {
+            __otrPreviewAudioMock: {
+              queuePlayBehaviors: (...values: PreviewPlayBehavior[]) => void;
+            };
+          }
+        ).__otrPreviewAudioMock;
+        controller.queuePlayBehaviors(...queuedBehaviors);
+      }, behaviors),
+    rejectPendingPlay: (errorName) =>
+      page.evaluate((name) => {
+        const controller = (
+          window as unknown as {
+            __otrPreviewAudioMock: {
+              rejectPendingPlay: (value: string) => void;
+            };
+          }
+        ).__otrPreviewAudioMock;
+        controller.rejectPendingPlay(name);
+      }, errorName),
+    snapshot: () =>
+      page.evaluate(() => {
+        const controller = (
+          window as unknown as {
+            __otrPreviewAudioMock: {
+              snapshot: () => PreviewAudioMockSnapshot;
+            };
+          }
+        ).__otrPreviewAudioMock;
+        return controller.snapshot();
+      }),
+  };
+}
+
+const ONE_PIXEL_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64'
+);
+
+async function installMockBeatmapCovers(page: Page) {
+  await page.route('https://assets.ppy.sh/beatmaps/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: ONE_PIXEL_PNG,
+    })
+  );
+}
+
+async function getDistinctBeatmapPreviewRows(page: Page) {
+  const rows = page.locator('[data-testid^="beatmap-list-row-"]');
+  await expect(rows.first()).toBeVisible({ timeout: 10000 });
+
+  const rowSources = await rows.evaluateAll((elements) =>
+    elements.map((row, index) => {
+      const image = row.querySelector(
+        '[data-testid="beatmap-cover-cell"] img'
+      ) as HTMLImageElement | null;
+      const beatmapsetOsuId = image?.src.match(/\/beatmaps\/(\d+)\//)?.[1];
+      return { index, beatmapsetOsuId };
+    })
+  );
+  const first = rowSources.find((row) => row.beatmapsetOsuId !== undefined);
+  const second = rowSources.find(
+    (row) =>
+      row.beatmapsetOsuId !== undefined &&
+      row.beatmapsetOsuId !== first?.beatmapsetOsuId
+  );
+
+  if (!first?.beatmapsetOsuId || !second?.beatmapsetOsuId) {
+    throw new Error('Beatmap E2E data must include two distinct beatmapsets');
+  }
+
+  return {
+    first: rows.nth(first.index),
+    firstBeatmapsetOsuId: first.beatmapsetOsuId,
+    second: rows.nth(second.index),
+    secondBeatmapsetOsuId: second.beatmapsetOsuId,
+  };
 }
 
 test.describe('Beatmaps Listing Page', () => {
@@ -455,6 +646,248 @@ test.describe('Beatmaps Listing Page', () => {
       ).toBe(false);
     });
 
+    test('failed previews reload on retry and expose error semantics', async ({
+      page,
+    }) => {
+      const audio = await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+      const preview = firstRow.locator('button[data-preview-state]').first();
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      await expect(preview).toHaveAccessibleName('Play preview');
+      await audio.queuePlayBehaviors('error');
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'error');
+      await expect(transport.getByRole('status')).toHaveText(
+        'Preview unavailable'
+      );
+      await expect(preview).toHaveAccessibleName('Retry preview');
+      await expect(preview).toHaveAttribute('data-preview-state', 'error');
+      await expect(preview).toHaveAttribute('aria-pressed', 'false');
+
+      expect(await audio.snapshot()).toMatchObject({
+        loadCalls: 0,
+        playCalls: 1,
+        sourceAssignments: 1,
+      });
+
+      await transport
+        .getByRole('button', { name: 'Retry beatmap preview' })
+        .click();
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      await expect(preview).toHaveAccessibleName('Pause preview');
+      await expect(preview).toHaveAttribute('data-preview-state', 'playing');
+      await expect(preview).toHaveAttribute('aria-pressed', 'true');
+      expect(await audio.snapshot()).toMatchObject({
+        loadCalls: 1,
+        playCalls: 2,
+        sourceAssignments: 1,
+      });
+    });
+
+    test('pausing a pending preview ignores its later AbortError', async ({
+      page,
+    }) => {
+      const audio = await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+      const preview = firstRow.locator('button[data-preview-state]').first();
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      await expect(preview).toHaveAccessibleName('Play preview');
+      await audio.queuePlayBehaviors('defer');
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'loading');
+      await expect
+        .poll(async () => (await audio.snapshot()).pendingPlayCount)
+        .toBe(1);
+
+      await transport
+        .getByRole('button', { name: 'Loading beatmap preview' })
+        .click();
+      await expect(transport).toHaveAttribute('data-player-state', 'paused');
+      await audio.rejectPendingPlay('AbortError');
+      await page.evaluate(
+        () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+      );
+
+      await expect(transport).toHaveAttribute('data-player-state', 'paused');
+      await expect(
+        transport.getByText('Preview unavailable', { exact: true })
+      ).toHaveCount(0);
+      await expect(preview).toHaveAccessibleName('Resume preview');
+      await expect(preview).toHaveAttribute('data-preview-state', 'paused');
+    });
+
+    test('a stale play rejection cannot overwrite a newer track', async ({
+      page,
+    }) => {
+      await installMockBeatmapCovers(page);
+      const audio = await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+
+      const { first, second, secondBeatmapsetOsuId } =
+        await getDistinctBeatmapPreviewRows(page);
+      const firstPreview = first.locator('button[data-preview-state]').first();
+      const secondPreview = second
+        .locator('button[data-preview-state]')
+        .first();
+      await expect(firstPreview).toHaveAccessibleName('Play preview');
+      await expect(secondPreview).toHaveAccessibleName('Play preview');
+      const secondTitle = (
+        await second.locator('[data-testid="beatmap-title"]').innerText()
+      ).trim();
+
+      await audio.queuePlayBehaviors('defer');
+      await firstPreview.click();
+      const firstSource = (await audio.snapshot()).source;
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'loading');
+      await secondPreview.click();
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+
+      const secondSource = (await audio.snapshot()).source;
+      expect(secondSource).not.toBe(firstSource);
+      expect(secondSource).toContain(`/preview/${secondBeatmapsetOsuId}.mp3`);
+      await expect(
+        transport.getByText(secondTitle, { exact: true }).first()
+      ).toBeVisible();
+
+      await audio.rejectPendingPlay('NotSupportedError');
+      await page.evaluate(
+        () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+      );
+
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      await expect(
+        transport.getByText('Preview unavailable', { exact: true })
+      ).toHaveCount(0);
+      await expect(secondPreview).toHaveAccessibleName('Pause preview');
+      await expect(secondPreview).toHaveAttribute(
+        'data-preview-state',
+        'playing'
+      );
+    });
+
+    test('audio transport preserves track identity at narrow breakpoints', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 640, height: 844 });
+      await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+
+      const firstRow = page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .first();
+      const title = (
+        await firstRow.locator('[data-testid="beatmap-title"]').innerText()
+      ).trim();
+      const preview = firstRow.getByRole('button', { name: 'Play preview' });
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      const transportTitle = transport
+        .getByText(title, { exact: true })
+        .first();
+      const progress = transport.getByRole('slider', {
+        name: 'Preview progress',
+      });
+
+      for (const width of [640, 700, 767, 768]) {
+        await test.step(`${width}px transport layout`, async () => {
+          await page.setViewportSize({ width, height: 844 });
+          await expect(transportTitle).toBeVisible();
+
+          const [titleBox, progressBox] = await Promise.all([
+            transportTitle.boundingBox(),
+            progress.boundingBox(),
+          ]);
+          expect(titleBox).not.toBeNull();
+          expect(progressBox).not.toBeNull();
+          expect(titleBox!.width).toBeGreaterThanOrEqual(64);
+          expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(
+            progressBox!.x
+          );
+
+          const overflow = await page.evaluate(() => {
+            const transportElement = document.querySelector(
+              '[data-testid="audio-preview-transport"]'
+            );
+            return {
+              document:
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth,
+              transport: transportElement
+                ? transportElement.scrollWidth - transportElement.clientWidth
+                : Number.MAX_VALUE,
+            };
+          });
+          expect(overflow).toEqual({ document: 0, transport: 0 });
+
+          await expect
+            .poll(() =>
+              page.evaluate(() => {
+                const transportElement = document.querySelector(
+                  '[data-testid="audio-preview-transport"]'
+                );
+                return (
+                  Number.parseFloat(
+                    getComputedStyle(document.body).paddingBottom
+                  ) >=
+                  (transportElement?.getBoundingClientRect().height ??
+                    Number.MAX_VALUE)
+                );
+              })
+            )
+            .toBe(true);
+        });
+      }
+    });
+
+    test('transport cover failures reset for a different beatmapset', async ({
+      page,
+    }) => {
+      await installMockBeatmapCovers(page);
+      const audio = await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmaps);
+
+      const { first, firstBeatmapsetOsuId, second, secondBeatmapsetOsuId } =
+        await getDistinctBeatmapPreviewRows(page);
+      await first.getByRole('button', { name: 'Play preview' }).click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      const cover = transport.locator('img');
+      await expect(cover).toHaveAttribute(
+        'src',
+        new RegExp(`/beatmaps/${firstBeatmapsetOsuId}/covers/cover@2x\\.jpg$`)
+      );
+
+      await cover.evaluate((image) => image.dispatchEvent(new Event('error')));
+      await expect(cover).toHaveAttribute('src', /beatmap-background-narrow/);
+
+      await second.getByRole('button', { name: 'Play preview' }).click();
+      await expect(transport).toHaveAttribute('data-player-state', 'playing');
+      expect((await audio.snapshot()).source).toContain(
+        `/preview/${secondBeatmapsetOsuId}.mp3`
+      );
+      await expect(cover).toHaveAttribute(
+        'src',
+        new RegExp(`/beatmaps/${secondBeatmapsetOsuId}/covers/cover@2x\\.jpg$`)
+      );
+    });
+
     test('audio transport hides when preview playback ends', async ({
       page,
     }) => {
@@ -686,6 +1119,41 @@ test.describe('Beatmaps Listing Page', () => {
       const rows = page.locator('[data-testid^="beatmap-list-row-"]');
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
     });
+
+    test('redirects an out-of-range mobile page to the last page', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${ROUTES.beatmaps}?sort=sr&page=999999`);
+      await page.waitForURL(
+        (url) => url.searchParams.get('page') !== '999999',
+        { timeout: 10000 }
+      );
+      expect(new URL(page.url()).searchParams.get('sort')).toBe('sr');
+
+      const status = page.locator('[data-testid="beatmap-pagination-status"]');
+      await expect(status).toBeVisible({ timeout: 10000 });
+
+      const [currentPage, totalPages] = (await status.innerText())
+        .split('/')
+        .map((value) => Number(value.trim()));
+      expect(currentPage).toBe(totalPages);
+
+      const rows = page.locator('[data-testid^="beatmap-list-row-"]');
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+
+      const noMatchQuery = 'otr-e2e-no-matching-beatmap-7fd826c1';
+      await page.goto(`${ROUTES.beatmaps}?q=${noMatchQuery}&page=999999`);
+      await page.waitForURL(
+        (url) =>
+          url.searchParams.get('q') === noMatchQuery &&
+          url.searchParams.get('page') === null,
+        { timeout: 10000 }
+      );
+      await expect(page.getByText('No beatmaps match')).toBeVisible({
+        timeout: 10000,
+      });
+    });
   });
 
   test('does not create page-level horizontal overflow across card breakpoints', async ({
@@ -841,6 +1309,21 @@ test.describe('Beatmap Detail Page', () => {
       await expect(activeDifficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
       await expect(activeDifficulty.getByText(/ SR/)).toBeVisible();
 
+      const ratingColors = await activeDifficulty
+        .locator('[data-testid="related-difficulty-star-rating"]')
+        .evaluate((rating) => {
+          const foregroundProbe = document.createElement('span');
+          foregroundProbe.className = 'text-foreground';
+          document.body.append(foregroundProbe);
+          const colors = {
+            rating: getComputedStyle(rating).color,
+            foreground: getComputedStyle(foregroundProbe).color,
+          };
+          foregroundProbe.remove();
+          return colors;
+        });
+      expect(ratingColors.rating).toBe(ratingColors.foreground);
+
       const collapsedDifficulty = page
         .locator(
           '[data-testid^="related-difficulty-"]:not([aria-current="page"]):visible'
@@ -882,6 +1365,25 @@ test.describe('Beatmap Detail Page', () => {
         transport.getByText('Preview', { exact: true })
       ).toBeVisible();
       await expect(preview).toHaveAttribute('data-preview-state', 'playing');
+    });
+
+    test('hero preview exposes retry semantics after an audio error', async ({
+      page,
+    }) => {
+      const audio = await installMockPreviewAudio(page);
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+      const preview = page.locator('header button[data-preview-state]').first();
+      await expect(preview).toBeVisible({ timeout: 10000 });
+      await audio.queuePlayBehaviors('error');
+      await preview.click();
+
+      const transport = page.locator('[data-testid="audio-preview-transport"]');
+      await expect(transport).toHaveAttribute('data-player-state', 'error');
+      await expect(preview).toHaveAccessibleName('Retry preview');
+      await expect(preview).toHaveText('Retry');
+      await expect(preview).toHaveAttribute('data-preview-state', 'error');
+      await expect(preview).toHaveAttribute('aria-pressed', 'false');
     });
 
     test('page title contains beatmap metadata', async ({ page }) => {

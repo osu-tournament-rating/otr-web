@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Pause, Loader2 } from 'lucide-react';
+import { Loader2, Pause, Play, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   useAudioPlayer,
@@ -29,6 +29,8 @@ export default function AudioPreviewButton({
   const isActive = useIsPreviewActive(beatmapsetOsuId);
   const isLoading =
     state.isLoading && state.currentlyPlaying === beatmapsetOsuId;
+  const hasError =
+    Boolean(state.error) && state.currentlyPlaying === beatmapsetOsuId;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,21 +47,31 @@ export default function AudioPreviewButton({
 
   if (!beatmapsetOsuId) return null;
 
-  const Icon = isLoading ? Loader2 : isPlaying ? Pause : Play;
+  const Icon = isLoading
+    ? Loader2
+    : isPlaying
+      ? Pause
+      : hasError
+        ? RefreshCw
+        : Play;
   const label = isLoading
     ? 'Loading'
     : isPlaying
       ? 'Pause'
-      : isActive
-        ? 'Resume'
-        : 'Preview';
+      : hasError
+        ? 'Retry'
+        : isActive
+          ? 'Resume'
+          : 'Preview';
   const actionLabel = isLoading
     ? 'Loading preview'
     : isPlaying
       ? 'Pause preview'
-      : isActive
-        ? 'Resume preview'
-        : 'Play preview';
+      : hasError
+        ? 'Retry preview'
+        : isActive
+          ? 'Resume preview'
+          : 'Play preview';
 
   return (
     <Button
@@ -68,15 +80,17 @@ export default function AudioPreviewButton({
       className={cn('gap-1.5', isActive && 'ring-2 ring-primary/60', className)}
       onClick={handleClick}
       aria-label={actionLabel}
-      aria-pressed={isActive}
+      aria-pressed={isActive && !hasError}
       data-preview-state={
         isLoading
           ? 'loading'
           : isPlaying
             ? 'playing'
-            : isActive
-              ? 'paused'
-              : 'idle'
+            : hasError
+              ? 'error'
+              : isActive
+                ? 'paused'
+                : 'idle'
       }
     >
       <Icon className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
