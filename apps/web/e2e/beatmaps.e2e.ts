@@ -389,14 +389,8 @@ test.describe('Beatmaps Listing Page', () => {
       expect(mapperBox).not.toBeNull();
       expect(rulesetBox).not.toBeNull();
       expect(starBox).not.toBeNull();
-      expect(difficultyBox!.x).toBeGreaterThanOrEqual(
-        titleBox!.x + titleBox!.width
-      );
-      expect(Math.abs(titleBox!.y - difficultyBox!.y)).toBeLessThanOrEqual(4);
-      expect(mapperBox!.x).toBeGreaterThanOrEqual(
-        artistBox!.x + artistBox!.width
-      );
-      expect(Math.abs(artistBox!.y - mapperBox!.y)).toBeLessThanOrEqual(2);
+      expect(difficultyBox!.y).toBeGreaterThanOrEqual(titleBox!.y);
+      expect(mapperBox!.y).toBeGreaterThanOrEqual(artistBox!.y);
       expect(artistBox!.y).toBeGreaterThan(titleBox!.y);
       expect(Math.round(starBox!.x - rulesetBox!.x - rulesetBox!.width)).toBe(
         12
@@ -956,6 +950,9 @@ test.describe('Beatmaps Listing Page', () => {
         '[data-testid="beatmap-filter-button"]'
       );
       await expect(filterButton).toBeVisible({ timeout: 10000 });
+      await expect(
+        filterButton.getByText('Filters', { exact: true })
+      ).toHaveCount(0);
       await filterButton.click();
 
       const popover = page.locator('[data-testid="beatmap-filter-popover"]');
@@ -975,7 +972,7 @@ test.describe('Beatmaps Listing Page', () => {
       await page.waitForURL(/ruleset=1/);
 
       await page.locator('[data-testid="beatmap-sort-select"]').click();
-      await page.getByRole('option', { name: 'SR (star rating)' }).click();
+      await page.getByRole('option', { name: 'SR' }).click();
       await page.waitForURL(/sort=sr/);
     });
 
@@ -987,7 +984,7 @@ test.describe('Beatmaps Listing Page', () => {
       await page.waitForURL(/q=Freedom/, { timeout: 10000 });
 
       await page.locator('[data-testid="beatmap-sort-select"]').click();
-      await page.getByRole('option', { name: 'SR (star rating)' }).click();
+      await page.getByRole('option', { name: 'SR' }).click();
       await page.waitForURL(
         (url) =>
           url.searchParams.get('q') === 'Freedom' &&
@@ -1034,7 +1031,7 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(filterButton).toHaveAccessibleName(/^Filters/);
       await expect(
         filterButton.getByText('Filters', { exact: true })
-      ).toBeHidden();
+      ).toHaveCount(0);
       await filterButton.click();
 
       const mobileRulesets = page.locator(
@@ -1156,9 +1153,11 @@ test.describe('Beatmaps Listing Page', () => {
     });
   });
 
-  test('does not create page-level horizontal overflow across card breakpoints', async ({
+  test('does not create page-level horizontal overflow in either layout', async ({
     page,
   }) => {
+    test.setTimeout(60_000);
+
     for (const width of [390, 768, 1023, 1024]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(ROUTES.beatmaps);
@@ -1177,59 +1176,126 @@ test.describe('Beatmaps Listing Page', () => {
           { timeout: 10000 }
         )
         .toBe(0);
+
+      await page.getByTestId('beatmap-layout-toggle').click();
+      await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+        'data-layout',
+        'compact'
+      );
+
+      await expect
+        .poll(
+          () =>
+            page.evaluate(
+              () =>
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth
+            ),
+          { timeout: 10000 }
+        )
+        .toBe(0);
+
+      await page.getByTestId('beatmap-layout-toggle').click();
     }
   });
 
-  test('keeps cards compact and aligned at the tablet breakpoint', async ({
+  test('defaults to a card grid and restores the previous full-width layout', async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 768, height: 900 });
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(ROUTES.beatmaps);
 
-    const firstRow = page.locator('[data-testid^="beatmap-list-row-"]').first();
-    await expect(firstRow).toBeVisible({ timeout: 10000 });
+    const list = page.getByTestId('beatmap-list');
+    const rows = page.locator('[data-testid^="beatmap-list-row-"]');
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBeGreaterThanOrEqual(4);
 
-    const cover = firstRow.locator('[data-testid="beatmap-cover-cell"]');
-    const content = firstRow.locator('[data-testid="beatmap-card-content"]');
-    const usage = firstRow.locator('[data-testid="beatmap-usage-summary"]');
-    const games = firstRow.locator('[data-testid="beatmap-games-count"]');
-    const tournaments = firstRow.locator(
-      '[data-testid="beatmap-tournaments-count"]'
-    );
+    await expect(list).toHaveAttribute('data-layout', 'cards');
+    const layoutToggle = page.getByTestId('beatmap-layout-toggle');
+    const filterButton = page.getByTestId('beatmap-filter-button');
+    await expect(layoutToggle).toHaveAccessibleName('Switch to compact view');
+    await expect(layoutToggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(layoutToggle).toHaveAttribute('data-layout', 'cards');
+
+    const [filterButtonBox, layoutToggleBox] = await Promise.all([
+      filterButton.boundingBox(),
+      layoutToggle.boundingBox(),
+    ]);
+    expect(filterButtonBox).not.toBeNull();
+    expect(layoutToggleBox).not.toBeNull();
+    expect(filterButtonBox!.width).toBe(40);
+    expect(layoutToggleBox!.width).toBe(40);
+    expect(
+      Math.abs(filterButtonBox!.y - layoutToggleBox!.y)
+    ).toBeLessThanOrEqual(1);
+    expect(layoutToggleBox!.x).toBeGreaterThan(filterButtonBox!.x);
+
+    const [firstCard, secondCard, thirdCard, fourthCard] = await Promise.all([
+      rows.nth(0).boundingBox(),
+      rows.nth(1).boundingBox(),
+      rows.nth(2).boundingBox(),
+      rows.nth(3).boundingBox(),
+    ]);
+    expect(firstCard).not.toBeNull();
+    expect(secondCard).not.toBeNull();
+    expect(thirdCard).not.toBeNull();
+    expect(fourthCard).not.toBeNull();
+    expect(Math.abs(firstCard!.y - secondCard!.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(firstCard!.y - thirdCard!.y)).toBeLessThanOrEqual(1);
+    expect(secondCard!.x).toBeGreaterThan(firstCard!.x);
+    expect(thirdCard!.x).toBeGreaterThan(secondCard!.x);
+    expect(fourthCard!.y).toBeGreaterThan(firstCard!.y);
+
+    await layoutToggle.focus();
+    await layoutToggle.press('Space');
+    await expect(list).toHaveAttribute('data-layout', 'compact');
+    await expect(layoutToggle).toHaveAccessibleName('Switch to card view');
+    await expect(layoutToggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(layoutToggle).toHaveAttribute('data-layout', 'compact');
+
+    const firstRow = rows.first();
+    const secondRow = rows.nth(1);
+    const cover = firstRow.getByTestId('beatmap-cover-cell');
+    const content = firstRow.getByTestId('beatmap-card-content');
+    const usage = firstRow.getByTestId('beatmap-usage-summary');
     const preview = firstRow.getByRole('button', { name: 'Play preview' });
     const [
-      rowBox,
+      listBox,
+      firstRowBox,
+      secondRowBox,
       coverBox,
       contentBox,
       usageBox,
-      gamesBox,
-      tournamentsBox,
       previewBox,
     ] = await Promise.all([
+      list.boundingBox(),
       firstRow.boundingBox(),
+      secondRow.boundingBox(),
       cover.boundingBox(),
       content.boundingBox(),
       usage.boundingBox(),
-      games.boundingBox(),
-      tournaments.boundingBox(),
       preview.boundingBox(),
     ]);
-
-    expect(rowBox).not.toBeNull();
+    expect(listBox).not.toBeNull();
+    expect(firstRowBox).not.toBeNull();
+    expect(secondRowBox).not.toBeNull();
     expect(coverBox).not.toBeNull();
     expect(contentBox).not.toBeNull();
     expect(usageBox).not.toBeNull();
-    expect(gamesBox).not.toBeNull();
-    expect(tournamentsBox).not.toBeNull();
     expect(previewBox).not.toBeNull();
-    expect(rowBox!.height - coverBox!.height).toBeLessThanOrEqual(34);
+    expect(Math.abs(firstRowBox!.width - listBox!.width)).toBeLessThanOrEqual(
+      1
+    );
+    expect(secondRowBox!.y).toBeGreaterThan(firstRowBox!.y);
+    expect(coverBox!.width).toBe(224);
+    expect(firstRowBox!.height - coverBox!.height).toBeLessThanOrEqual(34);
     expect(Math.abs(coverBox!.height - contentBox!.height)).toBeLessThanOrEqual(
       1
     );
     expect(usageBox!.y + usageBox!.height).toBeLessThanOrEqual(
       contentBox!.y + contentBox!.height + 1
     );
-    expect(Math.abs(gamesBox!.y - tournamentsBox!.y)).toBeLessThanOrEqual(2);
+
     const metricWidths = await firstRow.evaluate((row) => {
       const testIds = [
         'beatmap-star-rating',
@@ -1249,31 +1315,6 @@ test.describe('Beatmaps Listing Page', () => {
     expect(metricWidths[0]).toBeGreaterThanOrEqual(60);
     expect(metricWidths[0]).toBeLessThanOrEqual(68);
     expect(metricWidths.slice(1)).toEqual([56, 68, 208]);
-
-    const countWidths = await firstRow.evaluate((row) => {
-      const games = row.querySelector('[data-testid="beatmap-games-count"]')!;
-      const tournaments = row.querySelector(
-        '[data-testid="beatmap-tournaments-count"]'
-      )!;
-      const gameValue = row.querySelector(
-        '[data-testid="beatmap-games-count-value"]'
-      )!;
-      const tournamentValue = row.querySelector(
-        '[data-testid="beatmap-tournaments-count-value"]'
-      )!;
-
-      return {
-        games: Math.round(games.getBoundingClientRect().width),
-        tournaments: Math.round(tournaments.getBoundingClientRect().width),
-        gameValue: Math.round(gameValue.getBoundingClientRect().width),
-        tournamentValue: Math.round(
-          tournamentValue.getBoundingClientRect().width
-        ),
-      };
-    });
-    expect(countWidths.games).toBeLessThanOrEqual(52);
-    expect(countWidths.tournaments).toBeLessThanOrEqual(52);
-    expect(countWidths.gameValue).toBe(countWidths.tournamentValue);
     expect(previewBox!.x).toBeGreaterThanOrEqual(coverBox!.x);
     expect(previewBox!.y).toBeGreaterThanOrEqual(coverBox!.y);
     expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(
@@ -1281,6 +1322,17 @@ test.describe('Beatmaps Listing Page', () => {
     );
     expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(
       coverBox!.y + coverBox!.height
+    );
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem('otr-beatmap-layout')
+      )
+    ).toBe('compact');
+
+    await page.reload();
+    await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+      'data-layout',
+      'compact'
     );
   });
 });

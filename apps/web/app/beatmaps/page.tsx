@@ -3,8 +3,7 @@ import { Music } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
-import BeatmapListTable from '@/components/beatmaps/list/BeatmapListTable';
+import BeatmapListContent from '@/components/beatmaps/list/BeatmapListContent';
 import {
   Pagination,
   PaginationContent,
@@ -126,13 +125,11 @@ export default async function Page(props: {
         data-testid="beatmap-results"
         className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
       >
-        <div className="border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
-          <BeatmapListFilter filter={filter} totalCount={data.totalCount} />
-        </div>
-
-        <BeatmapListTable
+        <BeatmapListContent
           beatmaps={data.items}
+          filter={filter}
           isFiltered={hasFilters(filter)}
+          totalCount={data.totalCount}
         />
 
         {data.totalPages > 1 && (

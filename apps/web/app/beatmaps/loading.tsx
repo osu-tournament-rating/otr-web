@@ -22,29 +22,30 @@ export default function BeatmapsLoading() {
         <div className="space-y-3 border-b bg-muted/20 p-4">
           <div className="flex gap-2">
             <Skeleton className="h-10 flex-1" />
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-24" />
+            <Skeleton className="hidden h-10 w-48 md:block" />
+            <Skeleton className="size-10" />
+            <Skeleton className="size-10" />
+            <Skeleton className="size-10" />
           </div>
           <Skeleton className="h-8 w-96 max-w-full" />
         </div>
-        <div className="divide-y">
+        <div className="grid grid-cols-1 gap-3 bg-muted/10 p-3 md:grid-cols-2 md:gap-4 md:p-4 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}
-              className="grid gap-3 p-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 sm:p-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)]"
+              className="overflow-hidden rounded-xl border bg-card"
             >
-              <Skeleton className="h-28 w-full sm:h-full sm:min-h-28" />
-              <div className="min-w-0 sm:flex sm:flex-col sm:justify-center xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-6">
+              <Skeleton className="aspect-[16/7] w-full rounded-none" />
+              <div className="min-w-0 p-4">
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-3 w-1/2" />
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 border-t pt-3 xl:mt-0 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-6">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-4 w-24" />
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-14" />
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-24" />
                 </div>
               </div>
             </div>

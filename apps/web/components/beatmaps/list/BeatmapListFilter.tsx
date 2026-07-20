@@ -5,7 +5,9 @@ import {
   ArrowDown,
   ArrowUp,
   Filter,
+  LayoutGrid,
   Loader2,
+  Rows3,
   Search,
   SlidersHorizontal,
   X,
@@ -44,6 +46,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import type { BeatmapLayout } from '@/components/beatmaps/list/BeatmapListTable';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapListSort } from '@/lib/orpc/schema/beatmapList';
 import { cn } from '@/lib/utils';
@@ -57,13 +60,15 @@ type FilterPatch = Partial<FilterData>;
 
 interface BeatmapListFilterProps {
   filter: FilterData;
+  layout: BeatmapLayout;
+  onLayoutChange: (layout: BeatmapLayout) => void;
   totalCount: number;
 }
 
 const sortOptions: readonly { value: BeatmapListSort; label: string }[] = [
   { value: 'gameCount', label: 'Games' },
   { value: 'tournamentCount', label: 'Tournaments' },
-  { value: 'sr', label: 'SR (star rating)' },
+  { value: 'sr', label: 'SR' },
   { value: 'bpm', label: 'BPM' },
   { value: 'length', label: 'Duration' },
   { value: 'creator', label: 'Mapper' },
@@ -76,7 +81,7 @@ const sortOptions: readonly { value: BeatmapListSort; label: string }[] = [
 const rangeDefinitions = [
   {
     key: 'sr',
-    label: 'SR (star rating)',
+    label: 'SR',
     minKey: 'minSr',
     maxKey: 'maxSr',
     min: 0,
@@ -192,6 +197,8 @@ function countSheetFilters(filter: FilterData): number {
 
 export default function BeatmapListFilter({
   filter,
+  layout,
+  onLayoutChange,
   totalCount,
 }: BeatmapListFilterProps) {
   const router = useRouter();
@@ -339,7 +346,7 @@ export default function BeatmapListFilter({
             </Tooltip>
           </div>
 
-          <div className="border-l pl-2 md:pl-4">
+          <div className="flex gap-2 border-l pl-2 md:pl-4">
             <Sheet
               open={isOpen}
               onOpenChange={(open) => {
@@ -347,23 +354,28 @@ export default function BeatmapListFilter({
                 if (open) setDraft(filter);
               }}
             >
-              <SheetTrigger asChild>
-                <Button
-                  data-testid="beatmap-filter-button"
-                  type="button"
-                  variant="outline"
-                  aria-label={`Filters${countSheetFilters(filter) > 0 ? `, ${countSheetFilters(filter)} active` : ''}`}
-                  className="size-10 gap-2 bg-background px-0 md:h-10 md:w-auto md:px-3 dark:bg-input/50 dark:shadow-none"
-                >
-                  <Filter aria-hidden="true" />
-                  <span className="hidden md:inline">Filters</span>
-                  {countSheetFilters(filter) > 0 && (
-                    <span className="hidden size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground md:flex">
-                      {countSheetFilters(filter)}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SheetTrigger asChild>
+                    <Button
+                      data-testid="beatmap-filter-button"
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label={`Filters${countSheetFilters(filter) > 0 ? `, ${countSheetFilters(filter)} active` : ''}`}
+                      className="relative size-10 bg-background dark:bg-input/50 dark:shadow-none"
+                    >
+                      <Filter aria-hidden="true" />
+                      {countSheetFilters(filter) > 0 && (
+                        <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] leading-none text-primary-foreground shadow-xs">
+                          {countSheetFilters(filter)}
+                        </span>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Filters</TooltipContent>
+              </Tooltip>
               <SheetContent
                 data-testid="beatmap-filter-popover"
                 className="w-full gap-0 sm:max-w-md"
@@ -499,6 +511,39 @@ export default function BeatmapListFilter({
                 </SheetFooter>
               </SheetContent>
             </Sheet>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  data-testid="beatmap-layout-toggle"
+                  data-layout={layout}
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={
+                    layout === 'cards'
+                      ? 'Switch to compact view'
+                      : 'Switch to card view'
+                  }
+                  aria-pressed={layout === 'compact'}
+                  onClick={() =>
+                    onLayoutChange(layout === 'cards' ? 'compact' : 'cards')
+                  }
+                  className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
+                >
+                  {layout === 'cards' ? (
+                    <LayoutGrid aria-hidden="true" />
+                  ) : (
+                    <Rows3 aria-hidden="true" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {layout === 'cards'
+                  ? 'Switch to compact view'
+                  : 'Switch to card view'}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
