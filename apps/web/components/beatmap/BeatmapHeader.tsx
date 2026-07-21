@@ -1,32 +1,15 @@
 'use client';
 
-import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
-import {
-  Activity,
-  ArrowLeft,
-  Clock3,
-  ExternalLink,
-  Music2,
-  Star,
-  UserRound,
-} from 'lucide-react';
+import { Music2, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
-import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { Button } from '@/components/ui/button';
-import {
-  getBeatmapDisplayRuleset,
-  getBeatmapRulesetLabel,
-} from '@/lib/beatmaps/presentation';
-import {
-  getStarRatingColor,
-  getStarRatingForegroundColor,
-} from '@/lib/beatmaps/star-rating-color';
+import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
+import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
 import type {
   BeatmapStatsSummary,
   BeatmapWithDetails,
@@ -45,14 +28,6 @@ export default function BeatmapHeader({
   summary,
 }: BeatmapHeaderProps) {
   const creator = beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
-  const displayRuleset = getBeatmapDisplayRuleset(
-    beatmap.ruleset,
-    beatmap.diffName
-  );
-  const rulesetLabel = getBeatmapRulesetLabel(
-    beatmap.ruleset,
-    beatmap.diffName
-  );
   const artist = beatmap.beatmapset?.artist ?? 'Unknown artist';
   const title = beatmap.beatmapset?.title ?? 'Unknown title';
 
@@ -74,36 +49,6 @@ export default function BeatmapHeader({
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-black/20" />
 
         <div className="relative z-10 flex min-h-[34rem] flex-col p-4 text-white sm:min-h-[31rem] sm:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <Button
-              asChild
-              variant="secondary"
-              size="sm"
-              className="border border-white/15 bg-black/45 text-white shadow-none backdrop-blur-md hover:bg-black/65 hover:text-white"
-            >
-              <Link href="/beatmaps">
-                <ArrowLeft aria-hidden="true" />
-                Beatmaps
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="secondary"
-              size="icon"
-              className="border border-white/15 bg-black/45 text-white shadow-none backdrop-blur-md hover:bg-black/65 hover:text-white"
-            >
-              <Link
-                data-testid="beatmap-external-link"
-                href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="View beatmap on osu!"
-              >
-                <ExternalLink aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-
           <div className="mt-auto">
             <div className="max-w-3xl">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -136,43 +81,6 @@ export default function BeatmapHeader({
                     Unknown mapper
                   </span>
                 )}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-white/85">
-                <span className="inline-flex items-center gap-1.5">
-                  <RulesetIcon
-                    ruleset={displayRuleset}
-                    className="size-4 fill-current"
-                    aria-hidden="true"
-                  />
-                  {rulesetLabel}
-                </span>
-                <span
-                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-current/20 px-2 font-semibold"
-                  style={{
-                    backgroundColor: getStarRatingColor(beatmap.sr),
-                    color: getStarRatingForegroundColor(beatmap.sr),
-                  }}
-                  aria-label={`${beatmap.sr.toFixed(2)} star rating`}
-                >
-                  <Star className="size-4 fill-current" aria-hidden="true" />
-                  {beatmap.sr.toFixed(2)}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Activity className="size-4" aria-hidden="true" />
-                  {Math.round(beatmap.bpm)} BPM
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock3 className="size-4" aria-hidden="true" />
-                  {formatSecondsToMinutesSeconds(beatmap.totalLength)}
-                </span>
-                <AudioPreviewButton
-                  beatmapsetOsuId={beatmap.beatmapset?.osuId}
-                  artist={beatmap.beatmapset?.artist}
-                  title={beatmap.beatmapset?.title}
-                  difficulty={beatmap.diffName}
-                  className="border border-white/15 bg-white text-black hover:bg-white/90"
-                />
               </div>
             </div>
 

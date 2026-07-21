@@ -1370,6 +1370,16 @@ test.describe('Beatmap Detail Page', () => {
         '[data-testid="beatmap-external-link"]'
       );
       await expect(externalLink).toBeVisible({ timeout: 10000 });
+      await expect(
+        page
+          .getByTestId('beatmap-data-glass')
+          .getByTestId('beatmap-external-link')
+      ).toBeVisible();
+      await expect(
+        page
+          .getByTestId('beatmap-header')
+          .getByRole('link', { name: 'Beatmaps', exact: true })
+      ).toHaveCount(0);
     });
 
     test('shows the same-set difficulty navigator', async ({ page }) => {
@@ -1541,6 +1551,13 @@ test.describe('Beatmap Detail Page', () => {
       ).toBeVisible({ timeout: 10000 });
       const statsCard = banner.locator('[data-testid="beatmap-stats-card"]');
       await expect(statsCard).toBeVisible({ timeout: 10000 });
+      await expect(
+        statsCard.getByText(/^[\d,]+ games? across [\d,]+ tournaments?$/)
+      ).toBeVisible();
+      await expect(statsCard.getByText(/^Pooled [\d,]+ times?$/)).toBeVisible();
+      await expect(statsCard.getByText('Players', { exact: true })).toHaveCount(
+        0
+      );
     });
 
     test('displays usage chart with rendered content', async ({ page }) => {
