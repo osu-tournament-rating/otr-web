@@ -1,12 +1,10 @@
 import { Metadata } from 'next';
-import { BarChart3, Gamepad2 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { z } from 'zod';
 
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
-import BeatmapMetadataPanel from '@/components/beatmap/BeatmapMetadataPanel';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
 import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
-import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
 import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
 import BeatmapTournamentsList from '@/components/beatmap/BeatmapTournamentsList';
 import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
@@ -78,29 +76,21 @@ export default async function BeatmapPage({ params }: PageProps) {
       <BeatmapHeader
         beatmap={stats.beatmap}
         relatedDifficulties={stats.relatedDifficulties}
+        summary={stats.summary}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
         <main className="min-w-0 space-y-4">
-          <section className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
-            <div className="flex items-center gap-2 border-b px-4 py-3">
-              <Gamepad2 className="size-4 text-primary" aria-hidden="true" />
-              <h2 className="font-semibold">Tournament usage</h2>
-            </div>
-            <div className="p-3 sm:p-4">
-              <BeatmapStatsCard summary={stats.summary} />
-            </div>
-            {stats.usageOverTime.length >= 2 ? (
-              <BeatmapUsageChart
-                data={stats.usageOverTime}
-                className="rounded-none border-x-0 border-b-0 shadow-none"
-              />
-            ) : (
-              <p className="border-t px-4 py-8 text-center text-sm text-muted-foreground">
-                Not enough history for a usage trend.
-              </p>
-            )}
-          </section>
+          {stats.usageOverTime.length >= 2 ? (
+            <BeatmapUsageChart
+              data={stats.usageOverTime}
+              className="shadow-sm dark:shadow-none"
+            />
+          ) : (
+            <section className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground shadow-sm dark:shadow-none">
+              Not enough history for a usage trend.
+            </section>
+          )}
 
           <section className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
             <div className="flex items-center gap-2 border-b px-4 py-3">
@@ -122,7 +112,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         </main>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-20">
-          <BeatmapMetadataPanel beatmap={stats.beatmap} />
           <BeatmapModDistributionChart
             modStats={stats.modDistribution}
             className="shadow-sm dark:shadow-none"

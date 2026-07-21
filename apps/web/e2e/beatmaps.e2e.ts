@@ -1498,14 +1498,15 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      const attributes = page.getByRole('heading', { name: 'Attributes' });
+      const banner = page.locator('[data-testid="beatmap-header"]:visible');
+      const attributes = banner.getByRole('heading', { name: 'Attributes' });
       await expect(attributes).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('abbr[title="Circle size"]')).toBeVisible();
-      await expect(page.locator('abbr[title="Approach rate"]')).toBeVisible();
+      await expect(banner.locator('abbr[title="Circle size"]')).toBeVisible();
+      await expect(banner.locator('abbr[title="Approach rate"]')).toBeVisible();
       await expect(
-        page.locator('abbr[title="Overall difficulty"]')
+        banner.locator('abbr[title="Overall difficulty"]')
       ).toBeVisible();
-      await expect(page.locator('abbr[title="HP drain"]')).toBeVisible();
+      await expect(banner.locator('abbr[title="HP drain"]')).toBeVisible();
     });
   });
 
@@ -1534,7 +1535,11 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      const statsCard = page.locator('[data-testid="beatmap-stats-card"]');
+      const banner = page.locator('[data-testid="beatmap-header"]:visible');
+      await expect(
+        banner.getByRole('heading', { name: 'Tournament usage' })
+      ).toBeVisible({ timeout: 10000 });
+      const statsCard = banner.locator('[data-testid="beatmap-stats-card"]');
       await expect(statsCard).toBeVisible({ timeout: 10000 });
     });
 

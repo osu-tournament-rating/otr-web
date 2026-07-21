@@ -6,23 +6,29 @@ import {
   ArrowLeft,
   Clock3,
   ExternalLink,
+  Music2,
+  Star,
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
+import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
-import StarRatingIcon from '@/components/icons/StarRatingIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
 } from '@/lib/beatmaps/presentation';
-import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
+import {
+  getStarRatingColor,
+  getStarRatingForegroundColor,
+} from '@/lib/beatmaps/star-rating-color';
 import type {
+  BeatmapStatsSummary,
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
 } from '@/lib/orpc/schema/beatmapStats';
@@ -30,11 +36,13 @@ import type {
 interface BeatmapHeaderProps {
   beatmap: BeatmapWithDetails;
   relatedDifficulties: RelatedBeatmapDifficulty[];
+  summary: BeatmapStatsSummary;
 }
 
 export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
+  summary,
 }: BeatmapHeaderProps) {
   const creator = beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
   const displayRuleset = getBeatmapDisplayRuleset(
@@ -45,25 +53,27 @@ export default function BeatmapHeader({
     beatmap.ruleset,
     beatmap.diffName
   );
-  const title = `${beatmap.beatmapset?.artist ?? 'Unknown artist'} – ${
-    beatmap.beatmapset?.title ?? 'Unknown title'
-  }`;
+  const artist = beatmap.beatmapset?.artist ?? 'Unknown artist';
+  const title = beatmap.beatmapset?.title ?? 'Unknown title';
 
   return (
-    <header className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
-      <div className="group relative isolate min-h-[22rem] overflow-hidden bg-muted sm:min-h-[25rem]">
+    <header
+      data-testid="beatmap-header"
+      className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none"
+    >
+      <div className="group relative isolate min-h-[34rem] overflow-hidden bg-muted sm:min-h-[31rem]">
         <BeatmapCover
           beatmapsetOsuId={beatmap.beatmapset?.osuId}
-          alt={`${title} cover`}
+          alt={`${artist} - ${title} cover`}
           sizes="(max-width: 1050px) 100vw, 1050px"
           priority
           className="absolute inset-0"
           imageClassName="scale-[1.02] transition-transform duration-1000 group-hover:scale-[1.055]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/95" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/95" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-black/20" />
 
-        <div className="relative z-10 flex min-h-[22rem] flex-col justify-between p-4 text-white sm:min-h-[25rem] sm:p-6">
+        <div className="relative z-10 flex min-h-[34rem] flex-col p-4 text-white sm:min-h-[31rem] sm:p-6">
           <div className="flex items-start justify-between gap-3">
             <Button
               asChild
@@ -94,67 +104,79 @@ export default function BeatmapHeader({
             </Button>
           </div>
 
-          <div className="max-w-3xl">
-            <p className="mb-2 flex items-center gap-2 text-sm font-medium text-white/80">
-              <RulesetIcon
-                ruleset={displayRuleset}
-                className="size-4 fill-current"
-                aria-hidden="true"
-              />
-              {rulesetLabel}
-            </p>
-            <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance drop-shadow-md sm:text-4xl">
-              {title}
-            </h1>
-            <p className="mt-2 text-base font-semibold text-white/90 sm:text-lg">
-              [{beatmap.diffName}]
-            </p>
+          <div className="mt-auto">
+            <div className="max-w-3xl">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance drop-shadow-md sm:text-4xl">
+                  {title}
+                </h1>
+                <p className="text-base font-semibold text-white/90 sm:text-lg">
+                  [{beatmap.diffName}]
+                </p>
+              </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/85">
-              <span className="inline-flex items-center gap-1.5 font-semibold text-white">
-                <StarRatingIcon
-                  starRating={beatmap.sr}
-                  className="size-4"
-                  aria-hidden="true"
-                />
-                {beatmap.sr.toFixed(2)} SR
-                <span className="sr-only">star rating</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Activity className="size-4" aria-hidden="true" />
-                {Math.round(beatmap.bpm)} BPM
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock3 className="size-4" aria-hidden="true" />
-                {formatSecondsToMinutesSeconds(beatmap.totalLength)}
-              </span>
-              {creator && (
-                <Link
-                  href={`/players/${creator.id}`}
-                  prefetch={false}
-                  className="relative z-20 inline-flex items-center gap-1.5 rounded-sm hover:text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
-                >
-                  <UserRound className="size-4" aria-hidden="true" />
-                  {creator.username}
-                </Link>
-              )}
-              {!creator && (
-                <span className="inline-flex items-center gap-1.5">
-                  <UserRound className="size-4" aria-hidden="true" />
-                  Unknown mapper
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/75">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <Music2 className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{artist}</span>
                 </span>
-              )}
+                {creator && (
+                  <Link
+                    href={`/players/${creator.id}`}
+                    prefetch={false}
+                    className="relative z-20 inline-flex items-center gap-1.5 rounded-sm hover:text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                  >
+                    <UserRound className="size-4" aria-hidden="true" />
+                    {creator.username}
+                  </Link>
+                )}
+                {!creator && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <UserRound className="size-4" aria-hidden="true" />
+                    Unknown mapper
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-white/85">
+                <span className="inline-flex items-center gap-1.5">
+                  <RulesetIcon
+                    ruleset={displayRuleset}
+                    className="size-4 fill-current"
+                    aria-hidden="true"
+                  />
+                  {rulesetLabel}
+                </span>
+                <span
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-current/20 px-2 font-semibold"
+                  style={{
+                    backgroundColor: getStarRatingColor(beatmap.sr),
+                    color: getStarRatingForegroundColor(beatmap.sr),
+                  }}
+                  aria-label={`${beatmap.sr.toFixed(2)} star rating`}
+                >
+                  <Star className="size-4 fill-current" aria-hidden="true" />
+                  {beatmap.sr.toFixed(2)}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Activity className="size-4" aria-hidden="true" />
+                  {Math.round(beatmap.bpm)} BPM
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock3 className="size-4" aria-hidden="true" />
+                  {formatSecondsToMinutesSeconds(beatmap.totalLength)}
+                </span>
+                <AudioPreviewButton
+                  beatmapsetOsuId={beatmap.beatmapset?.osuId}
+                  artist={beatmap.beatmapset?.artist}
+                  title={beatmap.beatmapset?.title}
+                  difficulty={beatmap.diffName}
+                  className="border border-white/15 bg-white text-black hover:bg-white/90"
+                />
+              </div>
             </div>
 
-            <div className="mt-5">
-              <AudioPreviewButton
-                beatmapsetOsuId={beatmap.beatmapset?.osuId}
-                artist={beatmap.beatmapset?.artist}
-                title={beatmap.beatmapset?.title}
-                difficulty={beatmap.diffName}
-                className="border border-white/15 bg-white text-black hover:bg-white/90"
-              />
-            </div>
+            <BeatmapBannerData beatmap={beatmap} summary={summary} />
           </div>
         </div>
       </div>
