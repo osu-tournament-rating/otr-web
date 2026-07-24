@@ -1,4 +1,19 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M20 38C29.9411 38 38 29.9411 38 20C38 10.0589 29.9411 2 20 2C10.0589 2 2 10.0589 2 20C2 29.9411 10.0589 38 20 38ZM20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" fill="#101010"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M20 9C20.5523 9 21 9.44772 21 10V30C21 30.5523 20.5523 31 20 31C19.4477 31 19 30.5523 19 30V10C19 9.44771 19.4477 9 20 9ZM14 13C14.5523 13 15 13.4477 15 14L15 26C15 26.5523 14.5523 27 14 27C13.4477 27 13 26.5523 13 26L13 14C13 13.4477 13.4477 13 14 13ZM26 13C26.5523 13 27 13.4477 27 14V26C27 26.5523 26.5523 27 26 27C25.4477 27 25 26.5523 25 26V14C25 13.4477 25.4477 13 26 13Z" fill="#101010"/>
+<!--
+  Derived from the mode-mania glyph in ppy/osu-web's FontAwesomeExtra font.
+  Source: https://github.com/ppy/osu-web/blob/26e09bbabab8f63bfa45127ceeba199d65746291/resources/fonts/extra/extra.svg
+  Copyright (c) ppy Pty Ltd and osu-web contributors.
+  Licensed under AGPL-3.0-or-later:
+  https://github.com/ppy/osu-web/blob/26e09bbabab8f63bfa45127ceeba199d65746291/LICENCE
+-->
+<svg
+  width="40"
+  height="40"
+  viewBox="0 0 1000 1000"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g transform="translate(0 850) scale(1 -1)">
+    <path
+      d="M500 48q-21 0-35 15t-15 35v504q0 21 15 36t35 14 36-14 14-36v-504q0-21-14-35t-36-15z m-110 192v220q0 21-14 36t-36 14-35-14-15-36v-220q0-21 15-35t35-15 36 15 14 35z m320 0v220q0 21-14 36t-36 14-35-14-15-36v-220q0-21 15-35t35-15 36 15 14 35z m-210 500q-106 0-197-53-88-52-140-140-53-91-53-197t53-197q52-88 140-140 91-53 197-53t197 53q88 52 140 140 53 91 53 197t-53 197q-52 88-140 140-91 53-197 53z m0 80q97 0 182-36t150-102q64-62 101-148t37-184-36-182-102-150q-62-64-148-101t-184-37-182 36-150 102q-64 62-101 149t-37 183 37 182 101 150q62 64 149 101t183 37v0z"
+    />
+  </g>
 </svg>
