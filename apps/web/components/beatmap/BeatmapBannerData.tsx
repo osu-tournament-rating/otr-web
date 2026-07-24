@@ -1,15 +1,17 @@
 import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 import {
   Activity,
+  BadgeCheck,
   Clock3,
+  ChevronRight,
   ExternalLink,
   Gamepad2,
-  Gauge,
   Library,
   Star,
   Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import RulesetIcon from '@/components/icons/RulesetIcon';
@@ -30,9 +32,11 @@ import type {
 export default function BeatmapBannerData({
   beatmap,
   summary,
+  verifiedPoolCount,
 }: {
   beatmap: BeatmapWithDetails;
   summary: BeatmapStatsSummary;
+  verifiedPoolCount: number;
 }) {
   const displayRuleset = getBeatmapDisplayRuleset(
     beatmap.ruleset,
@@ -42,64 +46,59 @@ export default function BeatmapBannerData({
     beatmap.ruleset,
     beatmap.diffName
   );
-  const pooledCount = summary.totalTournamentCount;
-  const pooledLabel = `Pooled ${pooledCount.toLocaleString()} ${pooledCount === 1 ? 'time' : 'times'}`;
-  const gameLabel = summary.totalGameCount === 1 ? 'game' : 'games';
-  const tournamentLabel =
-    summary.verifiedPlayedTournamentCount === 1 ? 'tournament' : 'tournaments';
-
   return (
     <div
-      data-testid="beatmap-data-glass"
-      className="mt-5 overflow-hidden rounded-xl border border-white/15 bg-black/45 text-white shadow-lg backdrop-blur-md"
+      data-testid="beatmap-data-matte"
+      className="bg-card text-card-foreground"
     >
-      <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-        <section
-          aria-label="Beatmap essentials"
-          className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5"
+      <div
+        aria-label="Beatmap essentials"
+        className="flex flex-wrap items-center gap-2 p-3.5 sm:gap-2.5 sm:p-4"
+      >
+        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-medium text-muted-foreground">
+          <RulesetIcon
+            ruleset={displayRuleset}
+            className="size-4 fill-current"
+            aria-hidden="true"
+          />
+          <span className="text-foreground">{rulesetLabel}</span>
+        </span>
+        <span
+          className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-sm font-bold"
+          style={{
+            backgroundColor: getStarRatingColor(beatmap.sr),
+            color: getStarRatingForegroundColor(beatmap.sr),
+          }}
+          aria-label={`${beatmap.sr.toFixed(2)} star rating`}
         >
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-sm font-medium text-white/85">
-            <RulesetIcon
-              ruleset={displayRuleset}
-              className="size-4 fill-current"
-              aria-hidden="true"
-            />
-            {rulesetLabel}
-          </span>
-          <span
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-current/20 px-2.5 text-sm font-bold"
-            style={{
-              backgroundColor: getStarRatingColor(beatmap.sr),
-              color: getStarRatingForegroundColor(beatmap.sr),
-            }}
-            aria-label={`${beatmap.sr.toFixed(2)} star rating`}
-          >
-            <Star className="size-4 fill-current" aria-hidden="true" />
-            {beatmap.sr.toFixed(2)} SR
-          </span>
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-sm font-semibold tabular-nums">
-            <Activity className="size-4 text-white/65" aria-hidden="true" />
-            {Math.round(beatmap.bpm)} BPM
-          </span>
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-sm font-semibold tabular-nums">
-            <Clock3 className="size-4 text-white/65" aria-hidden="true" />
-            {formatSecondsToMinutesSeconds(beatmap.totalLength)}
-          </span>
-        </section>
+          <Star className="size-4 fill-current" aria-hidden="true" />
+          {beatmap.sr.toFixed(2)}
+        </span>
+        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold tabular-nums">
+          <Activity
+            className="size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+          {Math.round(beatmap.bpm)} BPM
+        </span>
+        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold tabular-nums">
+          <Clock3 className="size-4 text-muted-foreground" aria-hidden="true" />
+          {formatSecondsToMinutesSeconds(beatmap.totalLength)}
+        </span>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <AudioPreviewButton
             beatmapsetOsuId={beatmap.beatmapset?.osuId}
             artist={beatmap.beatmapset?.artist}
             title={beatmap.beatmapset?.title}
             difficulty={beatmap.diffName}
-            className="border border-white/15 bg-white text-black hover:bg-white/90"
+            className="bg-muted text-foreground shadow-none hover:bg-muted/70"
           />
           <Button
             asChild
-            variant="secondary"
+            variant="outline"
             size="icon"
-            className="size-9 border border-white/15 bg-white/10 text-white shadow-none hover:bg-white/20 hover:text-white"
+            className="size-9 bg-card shadow-none"
           >
             <Link
               data-testid="beatmap-external-link"
@@ -114,74 +113,70 @@ export default function BeatmapBannerData({
         </div>
       </div>
 
-      <div className="grid border-t border-white/15 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      <div className="grid border-t lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
         <section className="min-w-0 p-3.5 sm:p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/65 uppercase">
-            <Gauge className="size-3.5" aria-hidden="true" />
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <Activity className="size-3.5" aria-hidden="true" />
             <h2>Attributes</h2>
           </div>
 
-          <dl className="mt-2.5 flex flex-wrap items-center gap-2">
-            <PrimaryAttribute
+          <dl className="mt-2.5 grid grid-cols-4 gap-1.5">
+            <Attribute
               abbreviation="CS"
               label="Circle size"
               value={beatmap.cs}
             />
-            <PrimaryAttribute
+            <Attribute
               abbreviation="AR"
               label="Approach rate"
               value={beatmap.ar}
             />
-            <SecondaryAttribute
+            <Attribute
               abbreviation="OD"
               label="Overall difficulty"
               value={beatmap.od}
             />
-            <SecondaryAttribute
-              abbreviation="HP"
-              label="HP drain"
-              value={beatmap.hp}
-            />
+            <Attribute abbreviation="HP" label="HP drain" value={beatmap.hp} />
           </dl>
         </section>
 
-        <section className="min-w-0 border-t border-white/15 p-3.5 sm:p-4 lg:border-t-0 lg:border-l">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/65 uppercase">
+        <section className="min-w-0 border-t bg-muted/20 p-3.5 sm:p-4 lg:border-t-0 lg:border-l">
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             <Trophy className="size-3.5" aria-hidden="true" />
-            <h2>Tournament usage</h2>
+            <h2>Tournament evidence</h2>
           </div>
 
           <dl
             data-testid="beatmap-stats-card"
-            className="mt-2.5 grid gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
+            className="mt-2.5 grid grid-cols-2 gap-2 lg:grid-cols-4"
           >
-            <div className="flex min-h-10 min-w-0 items-center gap-2 rounded-lg bg-white/10 px-3">
-              <Gamepad2
-                className="size-3.5 shrink-0 text-white/60"
-                aria-hidden="true"
-              />
-              <dt className="sr-only">Tournament games</dt>
-              <dd className="min-w-0 text-sm text-white/65">
-                <strong className="text-base font-bold tracking-tight text-white tabular-nums">
-                  {summary.totalGameCount.toLocaleString()}
-                </strong>{' '}
-                {gameLabel} across{' '}
-                <strong className="text-base font-bold tracking-tight text-white tabular-nums">
-                  {summary.verifiedPlayedTournamentCount.toLocaleString()}
-                </strong>{' '}
-                {tournamentLabel}
-              </dd>
-            </div>
-            <div className="flex min-h-10 min-w-0 items-center gap-2 rounded-lg bg-white/10 px-3">
-              <Library
-                className="size-3.5 shrink-0 text-white/60"
-                aria-hidden="true"
-              />
-              <dt className="sr-only">Pool usage</dt>
-              <dd className="truncate text-sm font-semibold tabular-nums">
-                {pooledLabel}
-              </dd>
-            </div>
+            <EvidenceMetric
+              icon={<Library aria-hidden="true" />}
+              label="Pool records"
+              value={summary.totalTournamentCount}
+              testId="beatmap-pool-records"
+              showArrow
+            />
+            <EvidenceMetric
+              icon={<BadgeCheck aria-hidden="true" />}
+              label="Verified pools"
+              value={verifiedPoolCount}
+              testId="beatmap-verified-pools"
+              showArrow
+            />
+            <EvidenceMetric
+              icon={<Trophy aria-hidden="true" />}
+              label="Played"
+              value={summary.verifiedPlayedTournamentCount}
+              testId="beatmap-played-tournaments"
+              showArrow
+            />
+            <EvidenceMetric
+              icon={<Gamepad2 aria-hidden="true" />}
+              label="Verified games"
+              value={summary.totalGameCount}
+              testId="beatmap-verified-games"
+            />
           </dl>
         </section>
       </div>
@@ -189,7 +184,7 @@ export default function BeatmapBannerData({
   );
 }
 
-function PrimaryAttribute({
+function Attribute({
   abbreviation,
   label,
   value,
@@ -199,40 +194,55 @@ function PrimaryAttribute({
   value: number;
 }) {
   return (
-    <div className="flex min-h-10 items-baseline gap-2 rounded-lg border border-primary/50 bg-primary/30 px-3 py-1.5 shadow-inner shadow-white/5">
-      <dt className="text-xs font-semibold text-white/70 uppercase">
+    <div className="flex min-w-0 flex-col rounded-lg bg-muted/60 px-2.5 py-2">
+      <dt className="text-[10px] font-semibold text-muted-foreground uppercase">
         <abbr title={label} className="cursor-help no-underline">
           <span aria-hidden="true">{abbreviation}</span>
           <span className="sr-only">{label}</span>
         </abbr>
       </dt>
-      <dd className="font-mono text-lg font-bold tabular-nums">
+      <dd className="font-mono text-base font-semibold tabular-nums">
         {value.toFixed(1)}
       </dd>
     </div>
   );
 }
 
-function SecondaryAttribute({
-  abbreviation,
+function EvidenceMetric({
+  icon,
   label,
   value,
+  testId,
+  showArrow = false,
 }: {
-  abbreviation: string;
+  icon: ReactNode;
   label: string;
   value: number;
+  testId: string;
+  showArrow?: boolean;
 }) {
   return (
-    <div className="flex items-baseline gap-1.5 rounded-full border border-white/10 bg-white/10 px-2.5 py-1.5">
-      <dt className="text-[10px] font-medium text-white/55 uppercase">
-        <abbr title={label} className="cursor-help no-underline">
-          <span aria-hidden="true">{abbreviation}</span>
-          <span className="sr-only">{label}</span>
-        </abbr>
-      </dt>
-      <dd className="font-mono text-sm font-semibold tabular-nums">
-        {value.toFixed(1)}
-      </dd>
+    <div
+      data-testid={testId}
+      className="relative flex min-w-0 items-center gap-2 rounded-lg bg-muted/70 px-2.5 py-2.5"
+    >
+      <span className="shrink-0 text-muted-foreground [&>svg]:size-4">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <dt className="truncate text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </dt>
+        <dd className="font-mono text-base font-semibold tabular-nums">
+          {value.toLocaleString()}
+        </dd>
+      </div>
+      {showArrow && (
+        <ChevronRight
+          className="absolute -right-2.5 z-10 hidden size-4 rounded-full bg-card text-muted-foreground lg:block"
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }

@@ -2,10 +2,8 @@
 
 import { VerificationStatus } from '@otr/core/osu';
 import {
-  CalendarDays,
+  ArrowUpRight,
   ChevronDown,
-  ExternalLink,
-  Gamepad2,
   Loader2,
   Target,
   Users,
@@ -14,10 +12,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import VerificationBadge from '@/components/badges/VerificationBadge';
-import RulesetIcon from '@/components/icons/RulesetIcon';
 import ModIconset from '@/components/icons/ModIconset';
-import TierIcon from '@/components/icons/TierIcon';
-import { LazerBadge } from '@/components/badges/LazerBadge';
+import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Button } from '@/components/ui/button';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
@@ -28,7 +24,6 @@ import type {
 import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
-import { getTierFromRating } from '@/lib/utils/tierData';
 
 interface BeatmapTournamentCardProps {
   tournament: BeatmapTournamentUsage;
@@ -44,11 +39,6 @@ export default function BeatmapTournamentCard({
   const [error, setError] = useState(false);
   const isVerified =
     tournament.tournament.verificationStatus === VerificationStatus.Verified;
-  const shouldDisplayVerificationBadge =
-    tournament.tournament.verificationStatus !== VerificationStatus.Verified &&
-    tournament.tournament.verificationStatus !== VerificationStatus.PreVerified;
-  const hasTournamentBadges =
-    shouldDisplayVerificationBadge || tournament.tournament.isLazer;
 
   useEffect(() => {
     if (!isOpen || matches || error || !isVerified) return;
@@ -84,102 +74,138 @@ export default function BeatmapTournamentCard({
       'osu!',
       ''
     ) || 'osu!';
-  const dates = formatDates(
-    tournament.tournament.startTime,
-    tournament.tournament.endTime
-  );
+  const rankRange =
+    tournament.rankRangeLowerBound === 1
+      ? 'Open rank'
+      : formatRankRange(tournament.rankRangeLowerBound);
+  const usageDate =
+    tournament.firstPlayedAt ??
+    tournament.tournament.endTime ??
+    tournament.tournament.startTime;
+  const usageDateLabel = usageDate
+    ? formatUTCDate(new Date(usageDate))
+    : 'Unavailable';
 
   return (
-    <article className="px-4 py-4 transition-colors hover:bg-muted/25 dark:hover:bg-secondary/45">
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="min-w-0">
-          {hasTournamentBadges && (
-            <div className="flex flex-wrap items-center gap-2">
-              {shouldDisplayVerificationBadge && (
-                <VerificationBadge
-                  verificationStatus={tournament.tournament.verificationStatus}
-                  entityType="tournament"
-                  displayText
-                />
-              )}
-              {tournament.tournament.isLazer && (
-                <LazerBadge isLazer={tournament.tournament.isLazer} />
-              )}
-            </div>
-          )}
-          <Link
-            href={`/tournaments/${tournament.tournament.id}`}
-            prefetch={false}
-            className={cn(
-              'inline-flex max-w-full items-center gap-1.5 rounded-sm font-semibold hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-              hasTournamentBadges && 'mt-2'
+    <article data-testid={`beatmap-tournament-row-${tournament.tournament.id}`}>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-muted/25 lg:grid-cols-[8.25rem_minmax(12rem,1fr)_11rem_5rem_7rem_7.5rem] lg:items-center lg:gap-3">
+        <div className="col-span-2 min-w-0 lg:col-span-1 lg:col-start-2 lg:row-start-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <Link
+              href={`/tournaments/${tournament.tournament.id}`}
+              prefetch={false}
+              className="inline-flex min-w-0 items-center gap-1 rounded-sm font-semibold hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <span className="truncate">{tournament.tournament.name}</span>
+              <ArrowUpRight
+                className="size-3.5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </Link>
+            {tournament.tournament.abbreviation && (
+              <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums sm:inline">
+                {tournament.tournament.abbreviation}
+              </span>
             )}
-          >
-            <span className="truncate">{tournament.tournament.name}</span>
-            <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
-          </Link>
-          {tournament.tournament.abbreviation && (
-            <span className="ml-2 font-mono text-xs text-muted-foreground">
-              {tournament.tournament.abbreviation}
-            </span>
-          )}
+            {tournament.tournament.isLazer && (
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                lazer
+              </span>
+            )}
+          </div>
         </div>
 
-        {isVerified && tournament.gameCount > 0 && (
-          <Button
-            data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
-            type="button"
-            variant="ghost"
-            size="sm"
-            aria-expanded={isOpen}
-            aria-controls={`tournament-matches-${tournament.tournament.id}`}
-            onClick={() => setIsOpen((value) => !value)}
-            className="shrink-0"
-          >
-            Games
-            <ChevronDown
-              className={cn('transition-transform', isOpen && 'rotate-180')}
-              aria-hidden="true"
-            />
-          </Button>
-        )}
-      </div>
+        <div
+          data-testid={`beatmap-tournament-verification-${tournament.tournament.id}`}
+          data-verification-status={tournament.tournament.verificationStatus}
+          className="col-start-1 row-start-2 min-w-0 lg:col-start-1 lg:row-start-1"
+        >
+          <VerificationBadge
+            verificationStatus={tournament.tournament.verificationStatus}
+            entityType="tournament"
+            displayText
+            minimal
+          />
+        </div>
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
+        <div
+          title={`${rulesetLabel}, ${tournament.tournament.lobbySize}v${tournament.tournament.lobbySize}, ${rankRange}`}
+          className="col-span-2 row-start-3 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground lg:col-span-1 lg:col-start-3 lg:row-start-1"
+        >
           <RulesetIcon
             ruleset={tournament.tournament.ruleset}
-            className="size-3.5 fill-current"
+            className="size-3.5 shrink-0 fill-current"
             aria-hidden="true"
           />
-          {rulesetLabel}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Users className="size-3.5" aria-hidden="true" />
-          {tournament.tournament.lobbySize}v{tournament.tournament.lobbySize}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Target className="size-3.5" aria-hidden="true" />
-          {tournament.rankRangeLowerBound === 1
-            ? 'Open rank'
-            : formatRankRange(tournament.rankRangeLowerBound)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="size-3.5" aria-hidden="true" />
-          {dates}
-        </span>
-        <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-          <Gamepad2 className="size-3.5" aria-hidden="true" />
-          {isVerified
-            ? `${tournament.gameCount} ${tournament.gameCount === 1 ? 'game' : 'games'}`
-            : 'Pool record only'}
-        </span>
+          <span className="truncate">
+            {rulesetLabel} · {tournament.tournament.lobbySize}v
+            {tournament.tournament.lobbySize} · {rankRange}
+          </span>
+        </div>
+
+        <div
+          data-testid="beatmap-tournament-mod"
+          className="col-start-1 row-start-4 flex h-5 w-20 items-center lg:col-start-4 lg:row-start-1 lg:w-16"
+        >
+          <ModIconset
+            mods={tournament.mostCommonMod}
+            freemod={tournament.mostCommonModFreemod}
+            className="flex h-full items-center"
+            iconClassName="h-5"
+          />
+        </div>
+
+        <time
+          dateTime={usageDate ?? undefined}
+          title={
+            tournament.firstPlayedAt
+              ? `First played ${usageDateLabel}`
+              : `Tournament date ${usageDateLabel}`
+          }
+          className="col-start-2 row-start-4 justify-self-end font-mono text-xs text-muted-foreground tabular-nums lg:col-start-5 lg:row-start-1 lg:justify-self-start"
+        >
+          {usageDateLabel}
+        </time>
+
+        <div className="col-start-2 row-start-2 flex items-center justify-end gap-1 lg:col-start-6 lg:row-start-1">
+          <span
+            aria-label={
+              isVerified
+                ? `${tournament.gameCount} verified ${tournament.gameCount === 1 ? 'game' : 'games'}`
+                : 'No verified game count for this pool record'
+            }
+            className="min-w-7 text-right font-mono text-sm font-semibold tabular-nums"
+          >
+            {isVerified ? tournament.gameCount.toLocaleString() : '—'}
+          </span>
+          {isVerified && tournament.gameCount > 0 && (
+            <Button
+              data-testid={`beatmap-tournament-details-toggle-${tournament.tournament.id}`}
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`${isOpen ? 'Hide' : 'Show'} games for ${tournament.tournament.name}`}
+              aria-expanded={isOpen}
+              aria-controls={`tournament-matches-${tournament.tournament.id}`}
+              onClick={() => setIsOpen((value) => !value)}
+              className="size-7"
+            >
+              <ChevronDown
+                className={cn(
+                  'size-4 transition-transform',
+                  isOpen && 'rotate-180'
+                )}
+                aria-hidden="true"
+              />
+            </Button>
+          )}
+        </div>
       </div>
 
       {isOpen && (
         <div
           id={`tournament-matches-${tournament.tournament.id}`}
-          className="mt-4 rounded-lg border bg-background dark:bg-input/25"
+          className="border-t bg-muted/15"
         >
           {!matches && !error && (
             <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
@@ -231,17 +257,14 @@ function TournamentGameRow({
   match: BeatmapTournamentMatch;
   game: BeatmapTournamentMatch['games'][number];
 }) {
-  const tier =
-    game.avgRating !== null ? getTierFromRating(game.avgRating) : null;
-
   return (
     <Link
       href={`/matches/${match.matchId}?gameId=${game.gameId}`}
       prefetch={false}
-      className="group/game grid gap-2 px-3 py-3 transition-colors hover:bg-muted/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+      className="group/game grid grid-cols-[minmax(0,1fr)_auto] gap-2 px-4 py-3 transition-colors hover:bg-muted/35 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset sm:grid-cols-[minmax(0,1fr)_5rem_5rem_7rem_8rem] sm:items-center sm:gap-3"
     >
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium group-hover/game:text-primary">
+      <div className="col-span-2 min-w-0 sm:col-span-1">
+        <p className="truncate text-sm font-medium group-hover/game:underline">
           {match.matchName}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -251,44 +274,31 @@ function TournamentGameRow({
             : ''}
         </p>
       </div>
-      <div className="flex h-5 w-14 items-center">
-        <ModIconset
-          mods={game.mods}
-          freemod={game.freemod}
-          className="flex h-full items-center"
-          iconClassName="h-5"
-        />
-      </div>
-      <div className="flex items-center gap-4 text-xs text-muted-foreground sm:justify-end">
-        <span className="inline-flex items-center gap-1">
-          {tier && (
-            <TierIcon
-              tier={tier.tier}
-              subTier={tier.subTier}
-              width={15}
-              height={15}
-              tooltip
-            />
-          )}
+      <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground sm:contents">
+        <div className="flex h-5 w-14 items-center">
+          <ModIconset
+            mods={game.mods}
+            freemod={game.freemod}
+            className="flex h-full items-center"
+            iconClassName="h-5"
+          />
+        </div>
+        <span className="inline-flex items-center gap-1 font-mono tabular-nums">
+          <Users className="size-3.5" aria-hidden="true" />
+          {game.playerCount}
+        </span>
+        <span className="inline-flex items-center gap-1 font-mono tabular-nums">
+          <Target className="size-3.5" aria-hidden="true" />
           {game.avgRating !== null
-            ? `${game.avgRating.toLocaleString()} avg TR`
+            ? `${game.avgRating.toLocaleString()} TR`
             : 'No TR'}
         </span>
-        <span>
+        <span className="font-mono tabular-nums sm:text-right">
           {game.avgScore !== null
-            ? `${game.avgScore.toLocaleString()} avg score`
+            ? `${game.avgScore.toLocaleString()} avg`
             : 'No score'}
         </span>
       </div>
     </Link>
   );
-}
-
-function formatDates(start: string | null, end: string | null): string {
-  if (!start && !end) return 'Dates unavailable';
-  const formattedStart = start ? formatUTCDate(new Date(start)) : null;
-  const formattedEnd = end ? formatUTCDate(new Date(end)) : null;
-  if (formattedStart && formattedEnd)
-    return `${formattedStart} – ${formattedEnd}`;
-  return formattedStart ?? formattedEnd ?? 'Dates unavailable';
 }

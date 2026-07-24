@@ -4,6 +4,7 @@ import { beatmapSelectSchema, beatmapsetSelectSchema } from './base';
 import {
   CreatedUpdatedOmit,
   RulesetSchema,
+  ScoreGradeSchema,
   VerificationStatusSchema,
 } from './constants';
 import { PlayerCompactSchema } from './playerStats';
@@ -54,6 +55,7 @@ export const BeatmapScoreRatingPointSchema = z.object({
 export const BeatmapTopPerformerSchema = z.object({
   player: PlayerCompactSchema,
   score: z.number().int().nonnegative(),
+  grade: ScoreGradeSchema.optional(),
   accuracy: z.number().min(0).max(100).nullable(),
   mods: z.number().int().nonnegative(),
   playedAt: z.string().nullable(),

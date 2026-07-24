@@ -52,7 +52,7 @@ export default function BeatmapCover({
       />
 
       {!hasRemoteCover && (
-        <span className="absolute inset-0 flex items-center justify-center bg-background/55 backdrop-blur-[2px]">
+        <span className="absolute inset-0 flex items-center justify-center bg-background/80">
           {beatmapsetOsuId ? (
             <ImageOff className="size-5" aria-hidden="true" />
           ) : (

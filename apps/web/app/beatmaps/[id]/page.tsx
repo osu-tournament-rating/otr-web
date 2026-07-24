@@ -1,10 +1,9 @@
 import { Metadata } from 'next';
-import { BarChart3 } from 'lucide-react';
+import { VerificationStatus } from '@otr/core/osu';
 import { z } from 'zod';
 
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
-import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
 import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
 import BeatmapTournamentsList from '@/components/beatmap/BeatmapTournamentsList';
 import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
@@ -70,6 +69,14 @@ export async function generateMetadata({
 export default async function BeatmapPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(beatmapPageParamsSchema, await params);
   const stats = await fetchOrpcOrNotFound(() => getBeatmapStatsCached(id));
+  const verifiedPoolCount = stats.tournaments.filter(
+    ({ tournament }) =>
+      tournament.verificationStatus === VerificationStatus.Verified
+  ).length;
+  const totalVerifiedScoreCount = stats.modDistribution.reduce(
+    (total, distribution) => total + distribution.scoreCount,
+    0
+  );
 
   return (
     <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
@@ -77,47 +84,30 @@ export default async function BeatmapPage({ params }: PageProps) {
         beatmap={stats.beatmap}
         relatedDifficulties={stats.relatedDifficulties}
         summary={stats.summary}
+        verifiedPoolCount={verifiedPoolCount}
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-        <main className="min-w-0 space-y-4">
-          {stats.usageOverTime.length >= 2 ? (
-            <BeatmapUsageChart
-              data={stats.usageOverTime}
-              className="shadow-sm dark:shadow-none"
-            />
-          ) : (
-            <section className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground shadow-sm dark:shadow-none">
-              Not enough history for a usage trend.
-            </section>
-          )}
-
-          <section className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none">
-            <div className="flex items-center gap-2 border-b px-4 py-3">
-              <BarChart3 className="size-4 text-primary" aria-hidden="true" />
-              <h2 className="font-semibold">Score vs TR</h2>
-            </div>
-            <BeatmapScoreRatingChart
-              data={stats.scoreRatingData}
-              className="rounded-none border-0 shadow-none"
-            />
-          </section>
-
-          <BeatmapTournamentsList
-            tournaments={stats.tournaments}
-            beatmapOsuId={stats.beatmap.osuId}
-          />
-
-          <BeatmapTopPerformersTable performers={stats.topPerformers} />
-        </main>
-
-        <aside className="min-w-0 space-y-4 lg:sticky lg:top-20">
-          <BeatmapModDistributionChart
-            modStats={stats.modDistribution}
-            className="shadow-sm dark:shadow-none"
-          />
-        </aside>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+        <BeatmapUsageChart
+          data={stats.usageOverTime}
+          className="shadow-sm dark:shadow-none"
+        />
+        <BeatmapModDistributionChart
+          modStats={stats.modDistribution}
+          className="shadow-sm dark:shadow-none"
+        />
       </div>
+
+      <BeatmapTournamentsList
+        tournaments={stats.tournaments}
+        beatmapOsuId={stats.beatmap.osuId}
+      />
+
+      <BeatmapTopPerformersTable
+        performers={stats.topPerformers}
+        ruleset={stats.beatmap.ruleset}
+        totalScoreCount={totalVerifiedScoreCount}
+      />
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function BeatmapTournamentsList({
   tournaments,
   beatmapOsuId,
 }: BeatmapTournamentsListProps) {
-  const [displayCount, setDisplayCount] = useState(6);
+  const [displayCount, setDisplayCount] = useState(8);
   const sortedTournaments = [...tournaments].sort((a, b) => {
     const dateA = a.tournament.endTime
       ? new Date(a.tournament.endTime).getTime()
@@ -34,11 +34,15 @@ export default function BeatmapTournamentsList({
     >
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Library className="size-4 text-primary" aria-hidden="true" />
+          <Library
+            className="size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <h2 className="font-semibold">Tournament pools</h2>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {tournaments.length} records
+        <span className="font-mono text-xs text-muted-foreground tabular-nums">
+          {tournaments.length}{' '}
+          {tournaments.length === 1 ? 'pool record' : 'pool records'}
         </span>
       </div>
 
@@ -47,15 +51,28 @@ export default function BeatmapTournamentsList({
           No pool records.
         </p>
       ) : (
-        <div className="divide-y">
-          {sortedTournaments.slice(0, displayCount).map((tournament) => (
-            <BeatmapTournamentCard
-              key={tournament.tournament.id}
-              tournament={tournament}
-              beatmapOsuId={beatmapOsuId}
-            />
-          ))}
-        </div>
+        <>
+          <div
+            aria-hidden="true"
+            className="hidden grid-cols-[8.25rem_minmax(12rem,1fr)_11rem_5rem_7rem_7.5rem] gap-3 border-b bg-muted/30 px-4 py-2 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase lg:grid"
+          >
+            <span>Status</span>
+            <span>Tournament</span>
+            <span>Context</span>
+            <span>Mod</span>
+            <span>Date</span>
+            <span className="text-right">Games</span>
+          </div>
+          <div className="divide-y">
+            {sortedTournaments.slice(0, displayCount).map((tournament) => (
+              <BeatmapTournamentCard
+                key={tournament.tournament.id}
+                tournament={tournament}
+                beatmapOsuId={beatmapOsuId}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {tournaments.length > displayCount && (

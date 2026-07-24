@@ -1,6 +1,6 @@
 'use client';
 
-import { Music2, UserRound } from 'lucide-react';
+import { Music2, Star, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
@@ -20,14 +20,23 @@ interface BeatmapHeaderProps {
   beatmap: BeatmapWithDetails;
   relatedDifficulties: RelatedBeatmapDifficulty[];
   summary: BeatmapStatsSummary;
+  verifiedPoolCount: number;
 }
 
 export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
   summary,
+  verifiedPoolCount,
 }: BeatmapHeaderProps) {
-  const creator = beatmap.creators?.[0] ?? beatmap.beatmapset?.creator;
+  const creators = Array.from(
+    new Map(
+      [
+        ...(beatmap.beatmapset?.creator ? [beatmap.beatmapset.creator] : []),
+        ...beatmap.creators,
+      ].map((creator) => [creator.id, creator] as const)
+    ).values()
+  );
   const artist = beatmap.beatmapset?.artist ?? 'Unknown artist';
   const title = beatmap.beatmapset?.title ?? 'Unknown title';
 
@@ -36,58 +45,76 @@ export default function BeatmapHeader({
       data-testid="beatmap-header"
       className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none"
     >
-      <div className="group relative isolate min-h-[34rem] overflow-hidden bg-muted sm:min-h-[31rem]">
+      <div
+        data-testid="beatmap-artwork-strip"
+        className="group relative isolate h-48 overflow-hidden bg-muted sm:h-56"
+      >
         <BeatmapCover
           beatmapsetOsuId={beatmap.beatmapset?.osuId}
           alt={`${artist} - ${title} cover`}
           sizes="(max-width: 1050px) 100vw, 1050px"
           priority
           className="absolute inset-0"
-          imageClassName="scale-[1.02] transition-transform duration-1000 group-hover:scale-[1.055]"
+          imageClassName="scale-[1.01] saturate-75 transition-transform duration-700 group-hover:scale-[1.035]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/95" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-black/20" />
+        <div
+          data-testid="beatmap-matte-overlay"
+          className="absolute inset-0 bg-black/60"
+        />
 
-        <div className="relative z-10 flex min-h-[34rem] flex-col p-4 text-white sm:min-h-[31rem] sm:p-6">
-          <div className="mt-auto">
-            <div className="max-w-3xl">
-              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance drop-shadow-md sm:text-4xl">
-                  {title}
-                </h1>
-                <p className="text-base font-semibold text-white/90 sm:text-lg">
-                  [{beatmap.diffName}]
-                </p>
-              </div>
-
-              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/75">
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <Music2 className="size-4 shrink-0" aria-hidden="true" />
-                  <span className="min-w-0 break-words">{artist}</span>
-                </span>
-                {creator && (
-                  <Link
-                    href={`/players/${creator.id}`}
-                    prefetch={false}
-                    className="relative z-20 inline-flex items-center gap-1.5 rounded-sm hover:text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
-                  >
-                    <UserRound className="size-4" aria-hidden="true" />
-                    {creator.username}
-                  </Link>
-                )}
-                {!creator && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <UserRound className="size-4" aria-hidden="true" />
-                    Unknown mapper
-                  </span>
-                )}
-              </div>
+        <div className="relative z-10 flex h-full items-end p-4 text-white sm:p-6">
+          <div className="max-w-4xl min-w-0">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance sm:text-4xl">
+                {title}
+              </h1>
+              <p className="text-sm font-semibold text-white/85 sm:text-lg">
+                [{beatmap.diffName}]
+              </p>
             </div>
 
-            <BeatmapBannerData beatmap={beatmap} summary={summary} />
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/80">
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <Music2 className="size-4 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 break-words">{artist}</span>
+              </span>
+              <span className="inline-flex min-w-0 items-start gap-1.5">
+                <UserRound
+                  className="mt-0.5 size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                {creators.length > 0 ? (
+                  <span className="flex min-w-0 flex-wrap">
+                    <span className="mr-1">Mapped by</span>
+                    {creators.map((creator, index) => (
+                      <span key={creator.id} className="inline-flex">
+                        {index > 0 && (
+                          <span className="mr-1 text-white/55">,</span>
+                        )}
+                        <Link
+                          href={`/players/${creator.id}`}
+                          prefetch={false}
+                          className="relative z-20 rounded-sm font-medium text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                        >
+                          {creator.username}
+                        </Link>
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span>Unknown mapper</span>
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </div>
+
+      <BeatmapBannerData
+        beatmap={beatmap}
+        summary={summary}
+        verifiedPoolCount={verifiedPoolCount}
+      />
 
       <DifficultyNavigator
         currentOsuId={beatmap.osuId}
@@ -126,17 +153,9 @@ function DifficultyNavigator({
 
   return (
     <nav aria-label="Beatmapset difficulties" className="border-t">
-      <div className="flex items-center gap-3 px-4 pt-3 sm:px-5">
-        <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Difficulties
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {difficulties.length} in set
-        </span>
-      </div>
       <div
         ref={scrollerRef}
-        className="flex snap-x gap-2 overflow-x-auto px-4 pt-2 pb-4 sm:px-5"
+        className="flex snap-x gap-2 overflow-x-auto p-3 sm:px-4"
       >
         {difficulties.map((difficulty) => {
           const isCurrent = difficulty.osuId === currentOsuId;
@@ -144,7 +163,7 @@ function DifficultyNavigator({
             difficulty.ruleset,
             difficulty.diffName
           );
-          const formattedRating = `${difficulty.sr.toFixed(2)} SR`;
+          const formattedRating = difficulty.sr.toFixed(2);
           const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
           const difficultyIcon = (
             <RulesetIcon
@@ -164,7 +183,7 @@ function DifficultyNavigator({
                 prefetch={false}
                 aria-current="page"
                 aria-label={accessibleLabel}
-                className="flex min-h-10 max-w-64 min-w-40 snap-start items-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm transition-colors hover:bg-primary/15 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-primary/15 dark:hover:bg-primary/20"
+                className="flex min-h-10 max-w-72 min-w-52 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
               >
                 {difficultyIcon}
                 <span className="min-w-0 flex-1 truncate font-medium">
@@ -172,8 +191,9 @@ function DifficultyNavigator({
                 </span>
                 <span
                   data-testid="related-difficulty-star-rating"
-                  className="shrink-0 font-mono text-xs font-semibold text-foreground"
+                  className="inline-flex shrink-0 items-center gap-1 font-mono text-xs font-semibold text-foreground tabular-nums"
                 >
+                  <Star className="size-3.5 fill-current" aria-hidden="true" />
                   {formattedRating}
                 </span>
               </Link>
@@ -185,7 +205,7 @@ function DifficultyNavigator({
               key={difficulty.osuId}
               content={
                 <span>
-                  {difficulty.diffName} · {formattedRating}
+                  {difficulty.diffName} · {formattedRating} stars
                 </span>
               }
             >
@@ -194,7 +214,7 @@ function DifficultyNavigator({
                 href={`/beatmaps/${difficulty.osuId}`}
                 prefetch={false}
                 aria-label={accessibleLabel}
-                className="flex size-10 shrink-0 snap-start items-center justify-center rounded-lg border bg-background transition-colors hover:border-primary/50 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40"
+                className="flex size-10 shrink-0 snap-start items-center justify-center rounded-lg border bg-background transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40 dark:hover:bg-secondary/60"
               >
                 {difficultyIcon}
               </Link>
