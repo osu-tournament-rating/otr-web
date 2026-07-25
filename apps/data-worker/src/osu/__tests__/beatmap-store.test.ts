@@ -94,6 +94,16 @@ describe('LocalBeatmapStorage', () => {
       logger: noopLogger,
     });
 
+  describe('constructor', () => {
+    it('creates the storage directory when it does not exist', async () => {
+      const nested = join(directory, 'nested', 'deep');
+      const storage = makeStorage(nested);
+
+      await storage.store(beatmapId, sampleContent);
+      expect(await storage.exists(beatmapId)).toBe(true);
+    });
+  });
+
   describe('exists()', () => {
     it('returns false when the file has not been stored', async () => {
       expect(await makeStorage().exists(beatmapId)).toBe(false);
@@ -116,13 +126,6 @@ describe('LocalBeatmapStorage', () => {
       ).arrayBuffer();
       const decompressed = gunzipSync(new Uint8Array(raw));
       expect(decompressed).toEqual(sampleContent);
-    });
-
-    it('creates the storage directory when it does not exist', async () => {
-      const nested = join(directory, 'nested', 'deep');
-      const storage = makeStorage(nested);
-      await storage.store(beatmapId, sampleContent);
-      expect(await storage.exists(beatmapId)).toBe(true);
     });
   });
 

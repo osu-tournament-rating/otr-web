@@ -280,6 +280,9 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
   constructor({ directory, ...base }: LocalBeatmapStorageOptions) {
     super(base);
     this.directory = directory;
+
+    // Ensure local storage dir
+    mkdirSync(this.directory, { recursive: true });
   }
 
   private filepath(osuBeatmapId: number) {
@@ -305,9 +308,6 @@ export class LocalBeatmapStorage extends BeatmapStorageBase {
     osuBeatmapId: number,
     data: Uint8Array<ArrayBuffer>
   ): Promise<void> {
-    // Ensure local storage dir
-    mkdirSync(this.directory, { recursive: true });
-
     // Compress with gzip and store
     await Bun.write(this.filepath(osuBeatmapId), Bun.gzipSync(data));
   }
