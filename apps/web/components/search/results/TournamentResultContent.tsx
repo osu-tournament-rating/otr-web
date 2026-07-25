@@ -33,7 +33,7 @@ export function TournamentResultContent({
       <div className="flex flex-shrink-0 items-center gap-3">
         <LazerBadge isLazer={data.isLazer} />
         <div className="flex items-center gap-1">
-          <Users className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+          <Users className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
           <span className="text-xs">
             {data.lobbySize}v{data.lobbySize}
           </span>
@@ -45,7 +45,7 @@ export function TournamentResultContent({
             ruleset={data.ruleset}
             width={16}
             height={16}
-            className="fill-primary flex-shrink-0"
+            className="flex-shrink-0 fill-primary"
           />
         </SimpleTooltip>
       </div>

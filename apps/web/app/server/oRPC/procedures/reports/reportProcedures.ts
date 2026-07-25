@@ -1,10 +1,14 @@
 import { ORPCError } from '@orpc/server';
-import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
 
+import type { DatabaseClient } from '@/lib/db';
 import {
+  MarkReportViewedInputSchema,
+  MyReportListResponseSchema,
+  MyUnreadReportCountResponseSchema,
   ReportCreateInputSchema,
   ReportGetInputSchema,
   ReportListInputSchema,
@@ -13,16 +17,25 @@ import {
   ReportReopenInputSchema,
   ReportResolveInputSchema,
   ReportSchema,
+  ReportTemplatesInputSchema,
+  ReportTemplatesResponseSchema,
   UnseenReportCountResponseSchema,
+  type ReportCreateInput,
 } from '@/lib/orpc/schema/report';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
+import {
+  normalizeReportCreateContent,
+  normalizeStoredReportContent,
+} from './reportContent';
+import { hasUnreadAdminUpdate } from './reportReadStatus';
+import { getReportReasons, isReportReasonKeyValid } from './reportTemplates';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
 async function getMatchIdForEntity(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<number | undefined> {
@@ -52,7 +65,7 @@ async function getMatchIdForEntity(
 }
 
 async function getEntityDisplayName(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<string> {
@@ -111,7 +124,7 @@ async function getEntityDisplayName(
 }
 
 async function verifyEntityExists(
-  db: typeof import('@/lib/db').db,
+  db: DatabaseClient,
   entityType: ReportEntityType,
   entityId: number
 ): Promise<boolean> {
@@ -149,6 +162,81 @@ async function verifyEntityExists(
   }
 }
 
+export const getReportTemplates = protectedProcedure
+  .input(ReportTemplatesInputSchema)
+  .output(ReportTemplatesResponseSchema)
+  .route({
+    summary: 'List data report reasons',
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/templates',
+  })
+  .handler(async ({ input }) => ({
+    entityType: input.entityType,
+    templates: [...getReportReasons(input.entityType)],
+  }));
+
+interface CreateReportContext {
+  db: DatabaseClient;
+  session: {
+    dbUser?: {
+      id: number;
+    } | null;
+  } | null;
+}
+
+export interface CreateReportHandlerArgs {
+  input: ReportCreateInput;
+  context: CreateReportContext;
+}
+
+export async function createReportHandler({
+  input,
+  context,
+}: CreateReportHandlerArgs) {
+  const userId = context.session?.dbUser?.id;
+  if (!userId) {
+    throw new ORPCError('UNAUTHORIZED', {
+      message: 'User not authenticated',
+    });
+  }
+
+  const reportContent = normalizeReportCreateContent(input);
+
+  if (!isReportReasonKeyValid(input.entityType, reportContent.reasonKey)) {
+    throw new ORPCError('BAD_REQUEST', {
+      message: 'Invalid reason for this report type',
+    });
+  }
+
+  const entityExists = await verifyEntityExists(
+    context.db,
+    input.entityType,
+    input.entityId
+  );
+
+  if (!entityExists) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Entity not found',
+    });
+  }
+
+  const [created] = await context.db
+    .insert(schema.dataReports)
+    .values({
+      entityType: input.entityType,
+      entityId: input.entityId,
+      reasonKey: reportContent.reasonKey,
+      suggestedChanges: reportContent.suggestedChanges,
+      justification: reportContent.justification,
+      status: ReportStatus.Pending,
+      reporterUserId: userId,
+    })
+    .returning({ id: schema.dataReports.id });
+
+  return { success: true, reportId: created.id };
+}
+
 export const createReport = protectedProcedure
   .input(ReportCreateInputSchema)
   .output(ReportMutationResponseSchema)
@@ -158,40 +246,7 @@ export const createReport = protectedProcedure
     method: 'POST',
     path: '/reports',
   })
-  .handler(async ({ input, context }) => {
-    const userId = context.session?.dbUser?.id;
-    if (!userId) {
-      throw new ORPCError('UNAUTHORIZED', {
-        message: 'User not authenticated',
-      });
-    }
-
-    const entityExists = await verifyEntityExists(
-      context.db,
-      input.entityType,
-      input.entityId
-    );
-
-    if (!entityExists) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Entity not found',
-      });
-    }
-
-    const [created] = await context.db
-      .insert(schema.dataReports)
-      .values({
-        entityType: input.entityType,
-        entityId: input.entityId,
-        suggestedChanges: input.suggestedChanges,
-        justification: input.justification,
-        status: ReportStatus.Pending,
-        reporterUserId: userId,
-      })
-      .returning({ id: schema.dataReports.id });
-
-    return { success: true, reportId: created.id };
-  });
+  .handler(createReportHandler);
 
 export const listReports = protectedProcedure
   .input(ReportListInputSchema)
@@ -265,6 +320,7 @@ export const listReports = protectedProcedure
         entityId: report.entityId,
         suggestedChanges: report.suggestedChanges as Record<string, string>,
         justification: report.justification,
+        ...normalizeStoredReportContent(report),
         status: report.status,
         adminNote: report.adminNote,
         created: report.created,
@@ -358,6 +414,7 @@ export const getReport = protectedProcedure
       entityId: report.entityId,
       suggestedChanges: report.suggestedChanges as Record<string, string>,
       justification: report.justification,
+      ...normalizeStoredReportContent(report),
       status: report.status,
       adminNote: report.adminNote,
       created: report.created,
@@ -514,4 +571,125 @@ export const markReportsViewed = protectedProcedure
       .where(eq(schema.users.id, adminUserId));
 
     return { success: true };
+  });
+
+const unreadUpdateCondition = (userId: number) =>
+  and(
+    eq(schema.dataReports.reporterUserId, userId),
+    isNotNull(schema.dataReports.resolvedAt),
+    or(
+      isNull(schema.dataReports.reporterViewedAt),
+      gt(schema.dataReports.resolvedAt, schema.dataReports.reporterViewedAt)
+    )
+  );
+
+export const listMyReports = protectedProcedure
+  .output(MyReportListResponseSchema)
+  .route({
+    summary: "List the current user's own reports",
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/me',
+  })
+  .handler(async ({ context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const reports = await context.db.query.dataReports.findMany({
+      where: eq(schema.dataReports.reporterUserId, userId),
+      orderBy: desc(schema.dataReports.created),
+    });
+
+    const mappedReports = await Promise.all(
+      reports.map(async (report) => ({
+        id: report.id,
+        entityType: report.entityType,
+        entityId: report.entityId,
+        suggestedChanges: report.suggestedChanges as Record<string, string>,
+        justification: report.justification,
+        ...normalizeStoredReportContent(report),
+        status: report.status,
+        adminNote: report.adminNote,
+        created: report.created,
+        resolvedAt: report.resolvedAt,
+        entityDisplayName: await getEntityDisplayName(
+          context.db,
+          report.entityType,
+          report.entityId
+        ),
+        matchId: await getMatchIdForEntity(
+          context.db,
+          report.entityType,
+          report.entityId
+        ),
+        hasUnreadUpdate: hasUnreadAdminUpdate(report),
+      }))
+    );
+
+    return { reports: mappedReports };
+  });
+
+export const markMyReportViewed = protectedProcedure
+  .input(MarkReportViewedInputSchema)
+  .output(ReportMutationResponseSchema)
+  .route({
+    summary: "Mark one of the current user's reports as viewed",
+    tags: ['reports'],
+    method: 'POST',
+    path: '/reports/{reportId}/mark-viewed',
+  })
+  .handler(async ({ input, context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const updated = await context.db
+      .update(schema.dataReports)
+      .set({ reporterViewedAt: NOW })
+      .where(
+        and(
+          eq(schema.dataReports.id, input.reportId),
+          eq(schema.dataReports.reporterUserId, userId)
+        )
+      )
+      .returning({ id: schema.dataReports.id });
+
+    if (updated.length === 0) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'Report not found',
+      });
+    }
+
+    return { success: true, reportId: input.reportId };
+  });
+
+export const getMyUnreadReportCount = protectedProcedure
+  .output(MyUnreadReportCountResponseSchema)
+  .route({
+    summary: "Count the current user's reports with unread admin updates",
+    tags: ['reports'],
+    method: 'GET',
+    path: '/reports/me/unread-count',
+  })
+  .handler(async ({ context }) => {
+    const userId = context.session?.dbUser?.id;
+    if (!userId) {
+      throw new ORPCError('UNAUTHORIZED', {
+        message: 'User not authenticated',
+      });
+    }
+
+    const [result] = await context.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.dataReports)
+      .where(unreadUpdateCondition(userId));
+
+    return { count: result?.count ?? 0 };
   });

@@ -56,7 +56,7 @@ export default function PlayerTournamentMatchTable({
               sortedAdjustments.map((adjustment, index) => (
                 <TableRow
                   key={`${adjustment.match?.id}-${index}`}
-                  className="hover:bg-muted/30 transition-colors duration-200"
+                  className="transition-colors duration-200 hover:bg-muted/30"
                 >
                   <TableCell>
                     {format(new Date(adjustment.timestamp), 'yyyy-MM-dd')}
@@ -85,7 +85,7 @@ export default function PlayerTournamentMatchTable({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground py-2 text-center text-xs sm:text-sm">
+                  <TableCell className="py-2 text-center text-xs text-muted-foreground sm:text-sm">
                     {adjustment.ratingBefore.toFixed(RATING_PRECISION.DISPLAY)}
                   </TableCell>
                   <TableCell className="py-2 text-center text-xs font-medium sm:text-sm">
@@ -100,7 +100,7 @@ export default function PlayerTournamentMatchTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-muted-foreground h-24 text-center"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   No matches found.
                 </TableCell>

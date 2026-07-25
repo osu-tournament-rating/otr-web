@@ -200,7 +200,7 @@ function FieldSelect({
                     )}
                   />
                   <span className="flex-1">{opt.label}</span>
-                  <span className="text-muted-foreground text-[10px]">
+                  <span className="text-[10px] text-muted-foreground">
                     {opt.entityLabel}
                   </span>
                 </CommandItem>
@@ -325,7 +325,7 @@ export default function AuditFilterBar({
         />
         <label
           htmlFor="show-system"
-          className="text-muted-foreground cursor-pointer text-sm"
+          className="cursor-pointer text-sm text-muted-foreground"
         >
           Show system events
         </label>

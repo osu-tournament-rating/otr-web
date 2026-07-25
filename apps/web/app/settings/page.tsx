@@ -27,7 +27,7 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-10">
       <header className="space-y-3">
         <div className="flex items-center gap-3">
-          <Settings className="text-primary size-6" />
+          <Settings className="size-6 text-primary" />
           <h1 className="text-3xl font-semibold">Settings</h1>
         </div>
       </header>

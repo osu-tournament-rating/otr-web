@@ -20,7 +20,7 @@ import {
 } from '@otr/core/osu';
 import { EditIcon, Loader2, Trash2, UserRoundMinusIcon } from 'lucide-react';
 import { useSession } from '@/lib/hooks/useSession';
-import { ControllerFieldState, useForm } from 'react-hook-form';
+import { ControllerFieldState, useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import {
   Dialog,
@@ -96,7 +96,9 @@ const scoreRejectionReasonOptions = Object.entries(
 
 export default function ScoreAdminView({ score }: { score: GameScore }) {
   const form = useForm<z.infer<typeof scoreEditFormSchema>>({
-    resolver: zodResolver(scoreEditFormSchema),
+    resolver: zodResolver(scoreEditFormSchema) as Resolver<
+      z.infer<typeof scoreEditFormSchema>
+    >,
     defaultValues: score,
     mode: 'all',
   });

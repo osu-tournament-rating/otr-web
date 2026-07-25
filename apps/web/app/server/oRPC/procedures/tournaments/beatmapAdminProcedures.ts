@@ -8,8 +8,12 @@ import {
   type TournamentBeatmapAdminMutationInput,
 } from '@/lib/orpc/schema/tournament';
 
-import { protectedProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import { adminMutationProcedure } from '../base';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+  type AdminDataMutationClockContext,
+} from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import { Ruleset } from '@otr/core/osu';
 import { createPlaceholderBeatmap } from './beatmapPlaceholders';
@@ -20,7 +24,7 @@ import type { DatabaseClient } from '@/lib/db';
 const QUEUE_FAILURE_WARNING =
   'We could not queue beatmap data fetches. Please contact the o!TR developers.';
 
-interface ManageBeatmapsContext {
+interface ManageBeatmapsContext extends AdminDataMutationClockContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -40,6 +44,7 @@ export async function manageTournamentBeatmapsAdminHandler({
   context,
 }: ManageTournamentBeatmapsArgs) {
   ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
 
   const tournament = await context.db.query.tournaments.findFirst({
     columns: { id: true, ruleset: true },
@@ -269,7 +274,7 @@ export async function manageTournamentBeatmapsAdminHandler({
   } as const;
 }
 
-export const manageTournamentBeatmapsAdmin = protectedProcedure
+export const manageTournamentBeatmapsAdmin = adminMutationProcedure
   .input(TournamentBeatmapAdminMutationInputSchema)
   .output(TournamentBeatmapAdminMutationResponseSchema)
   .route({

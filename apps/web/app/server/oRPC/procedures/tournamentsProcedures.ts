@@ -250,6 +250,38 @@ export const listTournaments = publicProcedure
         .limit(pageSize)
         .offset(offset);
 
+      const adminNotesByTournamentId = new Map<
+        number,
+        ReturnType<typeof mapAdminNoteRow>[]
+      >();
+
+      if (rows.length > 0) {
+        const adminNoteRows = await context.db
+          .select(selectAdminNoteFields(schema.tournamentAdminNotes))
+          .from(schema.tournamentAdminNotes)
+          .leftJoin(
+            schema.users,
+            eq(schema.users.id, schema.tournamentAdminNotes.adminUserId)
+          )
+          .leftJoin(
+            schema.players,
+            eq(schema.players.id, schema.users.playerId)
+          )
+          .where(
+            inArray(
+              schema.tournamentAdminNotes.referenceId,
+              rows.map((row) => row.id)
+            )
+          )
+          .orderBy(desc(schema.tournamentAdminNotes.created));
+
+        for (const noteRow of adminNoteRows as AdminNoteRow[]) {
+          const notes = adminNotesByTournamentId.get(noteRow.referenceId) ?? [];
+          notes.push(mapAdminNoteRow(noteRow));
+          adminNotesByTournamentId.set(noteRow.referenceId, notes);
+        }
+      }
+
       return rows.map((row) =>
         TournamentListItemSchema.parse({
           id: row.id,
@@ -267,6 +299,7 @@ export const listTournaments = publicProcedure
           isLazer: row.isLazer,
           submittedByUsername: row.submittedByUsername ?? null,
           verifiedByUsername: row.verifiedByUsername ?? null,
+          adminNotes: adminNotesByTournamentId.get(row.id) ?? [],
         })
       );
     } catch (error) {

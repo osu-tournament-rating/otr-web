@@ -1,9 +1,11 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { Mods } from '@otr/core/osu';
 import { RulesetSchema } from './constants';
 import { TournamentListItemSchema } from './tournament';
 
-export const BeatmapTournamentListItemSchema = TournamentListItemSchema.extend({
+export const BeatmapTournamentListItemSchema = TournamentListItemSchema.omit({
+  adminNotes: true,
+}).extend({
   gamesPlayed: z.number().int().nonnegative().default(0),
   mostCommonMod: z.number().int().nonnegative().default(Mods.None),
 });

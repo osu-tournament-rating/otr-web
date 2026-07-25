@@ -42,7 +42,7 @@ export default function PlayerRulesetSelector({
   };
 
   return (
-    <div className="fill-primary flex items-center gap-1 rounded p-1">
+    <div className="flex items-center gap-1 rounded fill-primary p-1">
       {Object.entries(RulesetEnumHelper.metadata)
         .map(([rulesetKey]) => {
           const ruleset = Number(rulesetKey) as Ruleset;

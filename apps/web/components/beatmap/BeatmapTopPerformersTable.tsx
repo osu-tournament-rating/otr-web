@@ -34,7 +34,7 @@ const columns = [
     id: 'rank',
     header: '#',
     cell: ({ row }) => (
-      <span className="text-muted-foreground font-medium">
+      <span className="font-medium text-muted-foreground">
         #{row.index + 1}
       </span>
     ),
@@ -106,15 +106,15 @@ export default function BeatmapTopPerformersTable({
 
   if (performers.length === 0) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-top-performers" className={className}>
         <CardHeader>
           <div className="flex flex-row items-center gap-2">
-            <Medal className="text-primary h-6 w-6" />
+            <Medal className="h-6 w-6 text-primary" />
             <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             No score data available.
           </p>
         </CardContent>
@@ -123,26 +123,26 @@ export default function BeatmapTopPerformersTable({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-top-performers" className={className}>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Medal className="text-primary h-6 w-6" />
+          <Medal className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Top Scores</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="bg-popover/50 rounded-lg">
+        <div className="rounded-lg bg-popover/50">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-border/50 border-b hover:bg-transparent"
+                  className="border-b border-border/50 hover:bg-transparent"
                 >
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="text-foreground font-semibold"
+                      className="font-semibold text-foreground"
                     >
                       {header.isPlaceholder
                         ? null
@@ -159,7 +159,7 @@ export default function BeatmapTopPerformersTable({
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-border/30 hover:bg-popover/80 border-b transition-colors"
+                  className="border-b border-border/30 transition-colors hover:bg-popover/80"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3">

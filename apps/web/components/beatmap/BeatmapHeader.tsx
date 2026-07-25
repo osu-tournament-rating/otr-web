@@ -33,7 +33,7 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex w-full gap-2 sm:w-auto">
             <div>
-              <h1 className="text-lg font-semibold leading-tight text-white drop-shadow-sm sm:text-xl md:text-2xl">
+              <h1 className="text-lg leading-tight font-semibold text-white drop-shadow-sm sm:text-xl md:text-2xl">
                 {beatmap.beatmapset?.artist ?? 'Unknown'} -{' '}
                 {beatmap.beatmapset?.title ?? 'Unknown'}
               </h1>
@@ -52,6 +52,7 @@ export default function BeatmapHeader({ beatmap }: BeatmapHeaderProps) {
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
                 <Link
+                  data-testid="beatmap-external-link"
                   href={`https://osu.ppy.sh/b/${beatmap.osuId}`}
                   target="_blank"
                   rel="noopener noreferrer"

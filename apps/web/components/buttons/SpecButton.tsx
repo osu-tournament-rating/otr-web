@@ -10,7 +10,7 @@ export default function SpecButton() {
       <SimpleTooltip content="OpenAPI specification">
         <Button
           aria-label="API spec"
-          className="hover:text-primary cursor-pointer"
+          className="cursor-pointer hover:text-primary"
           variant="ghost"
           size="icon"
         >

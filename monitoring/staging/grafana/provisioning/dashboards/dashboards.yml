@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: 'otr-staging'
+    orgId: 1
+    folder: 'otr-staging'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

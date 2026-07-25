@@ -36,19 +36,19 @@ export default function AuditPageHeader({
       {/* Breadcrumb */}
       <nav
         data-testid="audit-breadcrumb"
-        className="text-muted-foreground flex items-center gap-1 text-sm"
+        className="flex items-center gap-1 text-sm text-muted-foreground"
       >
         <Link
           data-testid="audit-breadcrumb-link"
           href="/tools/audit-logs"
-          className="hover:text-foreground transition-colors"
+          className="transition-colors hover:text-foreground"
         >
           Audit Logs
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <span>{entityMeta.text}</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground font-medium">#{entityId}</span>
+        <span className="font-medium text-foreground">#{entityId}</span>
       </nav>
 
       {/* Title row */}
@@ -63,7 +63,7 @@ export default function AuditPageHeader({
           <Link
             data-testid="audit-view-entity-link"
             href={entityHref}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             View {entityMeta.text.toLowerCase()}
@@ -73,7 +73,7 @@ export default function AuditPageHeader({
 
       {/* Entity name subtitle */}
       {entityName && (
-        <p className="text-muted-foreground text-sm">{entityName}</p>
+        <p className="text-sm text-muted-foreground">{entityName}</p>
       )}
     </div>
   );

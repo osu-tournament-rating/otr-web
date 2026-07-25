@@ -41,7 +41,7 @@ export const highlightMatch = (
           const shouldHighlight = lowerTokens.includes(part.toLowerCase());
 
           return shouldHighlight ? (
-            <span key={index} className="text-primary font-semibold">
+            <span key={index} className="font-semibold text-primary">
               {part}
             </span>
           ) : (

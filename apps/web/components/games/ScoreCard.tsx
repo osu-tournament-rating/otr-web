@@ -6,7 +6,6 @@ import { Clock } from 'lucide-react';
 
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import { ScoreReportableFields } from '@/lib/orpc/schema/report';
 import {
   AdminNoteRouteTarget,
   ReportEntityType,
@@ -42,7 +41,7 @@ export default function ScoreCard({
 
   /** Shared descendant-selector overrides for icon button slots */
   const iconSlotStyles =
-    'relative [&_button]:h-4 [&_button]:w-4 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
+    'relative [&_button]:h-6 [&_button]:w-6 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
 
   const hitJudgments = (() => {
     switch (score.ruleset) {
@@ -83,21 +82,14 @@ export default function ScoreCard({
 
   const renderActionIcons = () => (
     <>
-      {/* Hover-only icons — collapse to zero width, reveal on hover */}
-      <div className="flex max-w-0 items-center gap-1 overflow-hidden transition-all duration-200 group-hover:max-w-xs">
+      {/* Keep actions available on touch screens; collapse them until hover or
+          keyboard focus where pointer hover is available. */}
+      <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 sm:max-w-0 sm:group-focus-within:max-w-xs sm:group-hover:max-w-xs">
         <div className={iconSlotStyles}>
           <ReportButton
             entityType={ReportEntityType.Score}
             entityId={score.id}
             entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-            reportableFields={ScoreReportableFields}
-            currentValues={{
-              score: String(score.score),
-              accuracy: String(score.accuracy),
-              maxCombo: String(score.maxCombo),
-              mods: String(score.mods),
-              team: String(score.team),
-            }}
           />
         </div>
         <div className={iconSlotStyles}>
@@ -148,12 +140,12 @@ export default function ScoreCard({
       id={`score-${score.id}`}
       data-team={Team[score.team]}
       className={cn(
-        'team-flex-row **:z-10 group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-800',
+        'team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 **:z-10 dark:border-neutral-700 dark:bg-neutral-800',
         highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
       )}
     >
       {/* Background team color overlay */}
-      <div className="bg-[var(--team-color)]/10 absolute z-[2] size-full" />
+      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
 
       {/* Team color on the side of the card */}
       <ScoreTeamColorBar />
@@ -179,6 +171,7 @@ export default function ScoreCard({
               />
             )}
             <Link
+              data-testid="score-player-link"
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >
@@ -208,7 +201,7 @@ export default function ScoreCard({
         {/* Row 2: Compact stats + Action icons */}
         <div className="flex items-center justify-between">
           <span
-            className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400"
+            className="text-xs text-neutral-500 tabular-nums dark:text-neutral-400"
             title={hitJudgments.map((j) => `${j.label}: ${j.value}`).join(', ')}
           >
             {hitJudgments.map((j) => j.value.slice(0, -1)).join('/')}
@@ -243,6 +236,7 @@ export default function ScoreCard({
               />
             )}
             <Link
+              data-testid="score-player-link"
               href={`/players/${player?.id}?ruleset=${score.ruleset}`}
               className="min-w-0 shrink"
             >
@@ -279,7 +273,7 @@ export default function ScoreCard({
                 <span className="label text-neutral-600 dark:text-neutral-400">
                   {item.label}
                 </span>
-                <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+                <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                   {item.value}
                 </span>
               </div>
@@ -291,7 +285,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Combo
               </span>
-              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+              <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                 {score.maxCombo}x
               </span>
             </div>
@@ -299,7 +293,7 @@ export default function ScoreCard({
               <span className="label text-neutral-600 dark:text-neutral-400">
                 Accuracy
               </span>
-              <span className="value tabular-nums text-neutral-800 dark:text-neutral-200">
+              <span className="value text-neutral-800 tabular-nums dark:text-neutral-200">
                 {formatAccuracy(score.accuracy)}
               </span>
             </div>

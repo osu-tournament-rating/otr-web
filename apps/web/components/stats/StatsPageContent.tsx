@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { PlatformStats } from '@/lib/orpc/schema/stats';
 import { BarChart3 } from 'lucide-react';
 import TournamentVerificationChart from './TournamentVerificationChart';
-import RatingDistributionChart from './RatingDistributionChart';
+import RatingDistributionTabs from './RatingDistributionTabs';
 import { Ruleset } from '@otr/core/osu';
 import TournamentsByYearChart from './TournamentsByYearChart';
 import TournamentsByRulesetChart from './TournamentsByRulesetChart';
@@ -51,10 +51,15 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <BarChart3 className="text-primary h-8 w-8" />
-          <h1 className="text-3xl font-bold">Platform Statistics</h1>
+          <BarChart3 className="h-8 w-8 text-primary" />
+          <h1 data-testid="stats-page-heading" className="text-3xl font-bold">
+            Platform Statistics
+          </h1>
         </div>
-        <p className="text-muted-foreground">
+        <p
+          data-testid="stats-page-description"
+          className="text-muted-foreground"
+        >
           Statistics covering all of osu! tournaments
         </p>
       </div>
@@ -72,21 +77,11 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
         />
       </div>
 
-      {/* Rating Distribution Charts */}
-      <div className="grid grid-cols-1 gap-6">
-        {Object.entries(ratingStats.ratingsByRuleset)
-          .filter(
-            ([rulesetKey]) => parseInt(rulesetKey, 10) !== Ruleset.ManiaOther
-          )
-          .map(([rulesetKey, ratings]) => (
-            <RatingDistributionChart
-              key={rulesetKey}
-              ruleset={parseInt(rulesetKey, 10) as Ruleset}
-              ratings={ratings}
-              userRating={userRatings[parseInt(rulesetKey, 10)]}
-            />
-          ))}
-      </div>
+      {/* Rating Distribution */}
+      <RatingDistributionTabs
+        ratingsByRuleset={ratingStats.ratingsByRuleset}
+        userRatings={userRatings}
+      />
     </div>
   );
 }

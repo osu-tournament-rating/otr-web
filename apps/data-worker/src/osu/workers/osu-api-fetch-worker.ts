@@ -2,6 +2,7 @@ import type { FetchOsuMessage, OsuApiPayload } from '@otr/core';
 
 import type { Logger } from '../../logging/logger';
 import type { QueueConsumer } from '@otr/core/queues';
+import { deferIfMaintenanceWindow } from '../../maintenance/gate';
 import type { BeatmapFetchService } from '../services/beatmap-fetch-service';
 import type { MatchFetchService } from '../services/match-fetch-service';
 import type { PlayerFetchService } from '../services/player-fetch-service';
@@ -16,6 +17,7 @@ interface OsuApiFetchWorkerOptions {
   matchService: MatchFetchServiceContract;
   playerService: PlayerFetchServiceContract;
   logger: Logger;
+  maintenanceWindowEnabled?: boolean;
 }
 
 export class OsuApiFetchWorker {
@@ -24,6 +26,7 @@ export class OsuApiFetchWorker {
   private readonly matchService: MatchFetchServiceContract;
   private readonly playerService: PlayerFetchServiceContract;
   private readonly logger: Logger;
+  private readonly maintenanceWindowEnabled: boolean;
 
   constructor(options: OsuApiFetchWorkerOptions) {
     this.queue = options.queue;
@@ -31,6 +34,7 @@ export class OsuApiFetchWorker {
     this.matchService = options.matchService;
     this.playerService = options.playerService;
     this.logger = options.logger;
+    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled ?? true;
   }
 
   async start() {
@@ -40,6 +44,15 @@ export class OsuApiFetchWorker {
         correlationId: message.metadata.correlationId,
         messageType: payload.type,
       });
+
+      const deferred = await deferIfMaintenanceWindow({
+        enabled: this.maintenanceWindowEnabled,
+        message,
+        logger: msgLogger,
+      });
+      if (deferred) {
+        return;
+      }
 
       msgLogger.info('processing osu! API fetch', { type: payload.type });
 

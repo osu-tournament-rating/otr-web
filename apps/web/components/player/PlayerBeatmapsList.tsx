@@ -82,7 +82,7 @@ export default function PlayerBeatmapsList({
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Music className="text-primary h-6 w-6" />
+          <Music className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
         </div>
       </CardHeader>
@@ -91,7 +91,7 @@ export default function PlayerBeatmapsList({
           <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
         ))}
         {errorMessage && (
-          <p className="text-destructive text-sm" role="alert">
+          <p className="text-sm text-destructive" role="alert">
             {errorMessage}
           </p>
         )}
@@ -122,7 +122,7 @@ function NoResultsCard() {
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Music className="text-primary h-6 w-6" />
+          <Music className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
         </div>
       </CardHeader>

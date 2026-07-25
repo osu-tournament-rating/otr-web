@@ -215,19 +215,11 @@ export const openAPIHandler = new OpenAPIHandler(router, {
 
 const API_SECURITY_SCHEME_NAME = 'ApiKeyAuth';
 const securityRequirement = [{ [API_SECURITY_SCHEME_NAME]: [] as string[] }];
-const tags = [
+const publicTags = [
   {
     name: 'public',
     description:
       'Public endpoints that do not require authentication when used from the website, accessible via public API',
-  },
-  {
-    name: 'authenticated',
-    description: 'Endpoints that require a user to be signed in',
-  },
-  {
-    name: 'admin',
-    description: 'Admin-only endpoints',
   },
 ];
 
@@ -258,10 +250,12 @@ export const generatePublicOpenAPISpec = async () => {
     info: {
       title: 'o!TR API',
       version: '1.0.0',
-      description: 'osu! Tournament Rating API',
+      description: `osu! Tournament Rating API
+
+> **API Stability Notice:** The o!TR public API is still evolving and is not considered fully stable. Breaking changes may be introduced at any time without advance notice.`,
     },
     servers: buildServers(),
-    tags,
+    tags: publicTags,
     security: securityRequirement,
     components: {
       securitySchemes: {

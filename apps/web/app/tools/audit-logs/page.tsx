@@ -27,7 +27,7 @@ export default function AuditLogsPage() {
       <Card className="p-6">
         {/* Section Header */}
         <div className="mb-3 flex items-center gap-3">
-          <ClipboardList className="text-primary h-6 w-6" />
+          <ClipboardList className="h-6 w-6 text-primary" />
           <div>
             <h1
               data-testid="audit-logs-heading"
@@ -35,7 +35,7 @@ export default function AuditLogsPage() {
             >
               Audit Logs
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Browse the history of changes made to tournaments, matches, games,
               and scores.
             </p>

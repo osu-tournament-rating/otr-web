@@ -37,10 +37,10 @@ export default function BeatmapTournamentsList({
   }
 
   return (
-    <Card>
+    <Card data-testid="beatmap-tournaments-list">
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
         </div>
       </CardHeader>
@@ -54,6 +54,7 @@ export default function BeatmapTournamentsList({
         ))}
         {tournaments.length > displayCount && (
           <Button
+            data-testid="beatmap-tournaments-show-more"
             variant="outline"
             className="w-full justify-center"
             onClick={() =>
@@ -75,13 +76,13 @@ function NoResultsCard() {
     <Card>
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
-          <Trophy className="text-primary h-6 w-6" />
+          <Trophy className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl font-bold">Tournament Usage</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
         <p className="text-muted-foreground">
-          This beatmap has not been used in any verified tournaments.
+          This beatmap has not been pooled in any tournaments.
         </p>
       </CardContent>
     </Card>

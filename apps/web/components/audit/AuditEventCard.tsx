@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import type { AuditEvent, AuditEventAction } from '@/lib/orpc/schema/audit';
+import type {
+  AuditEntry,
+  AuditEvent,
+  AuditEventAction,
+} from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { orpc } from '@/lib/orpc/orpc';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
@@ -72,6 +77,12 @@ type AuditEventCardProps = {
   event: AuditEvent;
 };
 
+type EventDetailsResponse = {
+  entries: AuditEntry[];
+  nextCursor: number | null;
+  hasMore: boolean;
+};
+
 function buildDescription(event: AuditEvent): React.ReactNode {
   const {
     action,
@@ -89,8 +100,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   const entityLink = (
     <Link
       href={`/audit/${topEntitySlug}/${topEntity.entityId}`}
-      className="text-primary font-medium hover:underline"
-      onClick={(e) => e.stopPropagation()}
+      className="font-medium text-primary hover:underline"
     >
       {entityName}
     </Link>
@@ -112,8 +122,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       const tournamentLink = (
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -153,8 +162,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         {' in '}
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -188,8 +196,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         {' in '}
         <Link
           href={`/audit/tournaments/${parentTournament.id}`}
-          className="text-primary font-medium hover:underline"
-          onClick={(e) => e.stopPropagation()}
+          className="font-medium text-primary hover:underline"
         >
           {parentTournament.name ?? `Tournament #${parentTournament.id}`}
         </Link>
@@ -212,73 +219,107 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   );
 }
 
-function CascadeChildEntries({
+function EventEntityEntries({
   event,
-  hasTopLevelDiffs,
+  entityType,
 }: {
   event: AuditEvent;
-  hasTopLevelDiffs: boolean;
+  entityType: AuditEntityType;
 }) {
-  const childEntityType = event.childLevel?.entityType ?? null;
+  const getKey = (
+    _pageIndex: number,
+    previousPageData: EventDetailsResponse | null
+  ) => {
+    if (previousPageData && !previousPageData.hasMore) return null;
 
-  const { data, isLoading } = useSWR(
-    childEntityType
-      ? ['cascade-children', event.actionUserId, event.created, childEntityType]
-      : null,
-    () =>
-      orpc.audit.eventDetails({
-        actionUserId: event.actionUserId,
-        created: event.created,
-        entityType: childEntityType!,
-        limit: 50,
-      }),
-    {
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      dedupingInterval: 60_000,
-    }
-  );
+    return [
+      'audit-event-entities',
+      event.eventKey,
+      event.eventId,
+      event.actionUserId,
+      event.created,
+      entityType,
+      previousPageData?.nextCursor ?? null,
+    ] as const;
+  };
 
-  if (!childEntityType) return null;
+  const { data, size, setSize, isLoading, isValidating, error, mutate } =
+    useSWRInfinite(
+      getKey,
+      async ([, , , , , , cursor]) =>
+        orpc.audit.eventDetails({
+          eventKey: event.eventKey,
+          eventId: event.eventId ?? undefined,
+          actionUserId: event.actionUserId,
+          created: event.created,
+          entityType,
+          cursor: cursor ?? undefined,
+          limit: 50,
+        }),
+      {
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+        dedupingInterval: 60_000,
+      }
+    );
+  const pages = data ?? [];
+  const entries = pages.flatMap((page) => page.entries);
+  const hasMore = pages[pages.length - 1]?.hasMore ?? false;
 
-  const childSlug = entityTypeToSlug(childEntityType);
-  const childPlural = ENTITY_TYPE_PLURALS[childEntityType];
-  const childLabel = ENTITY_TYPE_LABELS[childEntityType];
+  const entitySlug = entityTypeToSlug(entityType);
+  const entityPlural = ENTITY_TYPE_PLURALS[entityType];
+  const entityLabel = ENTITY_TYPE_LABELS[entityType];
+  const isRepeatedTopEntity =
+    entityType === event.topEntity.entityType &&
+    event.topEntity.count === 1 &&
+    event.topEntity.entryCount > 1;
 
   return (
-    <div
-      className={cn(
-        'bg-muted/20 border-border px-3 py-2',
-        !hasTopLevelDiffs && 'border-t'
-      )}
-    >
+    <div className="border-t border-border bg-muted/20 px-3 py-2">
       <div className="flex flex-col gap-2 pl-9">
-        <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          Affected {childPlural}
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {isRepeatedTopEntity
+            ? 'Changes in this event'
+            : `Affected ${entityPlural}`}
         </span>
 
         {isLoading && (
-          <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
             Loading…
           </div>
         )}
 
-        {data?.entries.map((entry) => {
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-destructive">
+            <span>Unable to load audit entries.</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void mutate()}
+              disabled={isValidating}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {entries.map((entry) => {
           const changes = entry.changes as Record<
             string,
             { originalValue: unknown; newValue: unknown }
           > | null;
           const entryLabel =
             entry.entityName ??
-            `${childLabel.charAt(0).toUpperCase() + childLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
+            `${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
           const entryId = entry.referenceId ?? entry.referenceIdLock;
 
           return (
             <div key={entry.id} className="flex flex-col gap-1">
               <Link
-                href={`/audit/${childSlug}/${entryId}`}
-                className="text-primary text-xs font-medium hover:underline"
+                href={`/audit/${entitySlug}/${entryId}`}
+                className="text-xs font-medium text-primary hover:underline"
               >
                 {entryLabel}
               </Link>
@@ -289,13 +330,13 @@ function CascadeChildEntries({
                       key={fieldName}
                       fieldName={fieldName}
                       change={change}
-                      entityType={childEntityType}
+                      entityType={entityType}
                       referencedUsers={entry.referencedUsers}
                     />
                   ))}
                 </div>
               ) : (
-                <span className="text-muted-foreground pl-3 text-xs italic">
+                <span className="pl-3 text-xs text-muted-foreground italic">
                   {event.action === 'deletion'
                     ? '(deleted)'
                     : '(no field changes)'}
@@ -305,10 +346,18 @@ function CascadeChildEntries({
           );
         })}
 
-        {data && data.hasMore && (
-          <span className="text-muted-foreground text-xs italic">
-            … and more (showing first {data.entries.length})
-          </span>
+        {hasMore && !error && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            onClick={() => setSize(size + 1)}
+            disabled={isValidating}
+          >
+            {isValidating && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Load more
+          </Button>
         )}
       </div>
     </div>
@@ -323,7 +372,8 @@ export default function AuditEventCard({
     { originalValue: unknown; newValue: unknown }
   > | null;
   const changeCount = changes ? Object.keys(changes).length : 0;
-  const hasExpandableContent = changeCount > 0 || event.isCascade;
+  const hasExpandableContent =
+    changeCount > 0 || event.isCascade || event.topEntity.entryCount > 1;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -334,89 +384,82 @@ export default function AuditEventCard({
     >
       <div
         className={cn(
-          'border-border border-b border-l-2 transition-colors',
+          'border-b border-l-2 border-border transition-colors',
           ACTION_BORDER_COLORS[event.action],
           event.isSystem && 'border-l-amber-400',
           isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
         )}
       >
-        <CollapsibleTrigger asChild disabled={!hasExpandableContent}>
-          <button
-            className={cn(
-              'flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm',
-              !hasExpandableContent && 'cursor-default'
-            )}
-          >
-            {/* User avatar */}
-            {event.actionUser?.osuId ? (
-              <OsuAvatar
-                osuId={event.actionUser.osuId}
-                username={event.actionUser.username}
-                size={28}
-                className="shrink-0"
-              />
-            ) : (
-              <Avatar className="h-7 w-7 shrink-0">
-                <AvatarFallback className="text-[11px]">
-                  {event.isSystem ? 'S' : '?'}
-                </AvatarFallback>
-              </Avatar>
-            )}
-
-            {/* User name + description */}
-            <span
-              data-testid="event-card-description"
-              className="min-w-0 flex-1"
-            >
-              {event.isSystem ? (
-                <span className="text-muted-foreground mr-1 italic">
-                  System
-                </span>
-              ) : event.actionUser ? (
-                event.actionUser.playerId ? (
-                  <Link
-                    href={`/players/${event.actionUser.playerId}`}
-                    className="text-primary mr-1 font-medium hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
-                  </Link>
-                ) : (
-                  <span className="text-foreground mr-1 font-medium">
-                    {event.actionUser.username ?? `User ${event.actionUser.id}`}
-                  </span>
-                )
-              ) : (
-                <span className="text-muted-foreground mr-1 italic">
-                  Unknown
-                </span>
-              )}
-              {buildDescription(event)}
-            </span>
-
-            {/* Expand indicator */}
-            {hasExpandableContent && (
-              <ChevronRight
-                className={cn(
-                  'text-muted-foreground h-3.5 w-3.5 shrink-0 transition-transform',
-                  isOpen && 'rotate-90'
-                )}
-              />
-            )}
-
-            {/* Timestamp */}
-            <RelativeTime
-              data-testid="event-card-timestamp"
-              dateString={event.created}
-              className="text-muted-foreground shrink-0 text-xs"
+        <div className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm">
+          {/* User avatar */}
+          {event.actionUser?.osuId ? (
+            <OsuAvatar
+              osuId={event.actionUser.osuId}
+              username={event.actionUser.username}
+              size={28}
+              className="shrink-0"
             />
-          </button>
-        </CollapsibleTrigger>
+          ) : (
+            <Avatar className="h-7 w-7 shrink-0">
+              <AvatarFallback className="text-[11px]">
+                {event.isSystem ? 'S' : '?'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+
+          {/* User name + description */}
+          <span data-testid="event-card-description" className="min-w-0 flex-1">
+            {event.isSystem ? (
+              <span className="mr-1 text-muted-foreground italic">System</span>
+            ) : event.actionUser ? (
+              event.actionUser.playerId ? (
+                <Link
+                  href={`/players/${event.actionUser.playerId}`}
+                  className="mr-1 font-medium text-primary hover:underline"
+                >
+                  {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                </Link>
+              ) : (
+                <span className="mr-1 font-medium text-foreground">
+                  {event.actionUser.username ?? `User ${event.actionUser.id}`}
+                </span>
+              )
+            ) : (
+              <span className="mr-1 text-muted-foreground italic">Unknown</span>
+            )}
+            {buildDescription(event)}
+          </span>
+
+          {/* Expand toggle */}
+          {hasExpandableContent && (
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                aria-label={isOpen ? 'Collapse details' : 'Expand details'}
+                className="-mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/70"
+              >
+                <ChevronRight
+                  className={cn(
+                    'h-3.5 w-3.5 transition-transform',
+                    isOpen && 'rotate-90'
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+          )}
+
+          {/* Timestamp */}
+          <RelativeTime
+            data-testid="event-card-timestamp"
+            dateString={event.created}
+            className="shrink-0 text-xs text-muted-foreground"
+          />
+        </div>
 
         {/* Expanded diffs */}
         <CollapsibleContent data-testid="event-card-diff">
-          {changes && changeCount > 0 && (
-            <div className="bg-muted/20 border-border border-t px-3 py-2">
+          {changes && changeCount > 0 && event.topEntity.entryCount === 1 && (
+            <div className="border-t border-border bg-muted/20 px-3 py-2">
               <div className="flex flex-col gap-1 pl-9">
                 {Object.entries(changes).map(([fieldName, change]) => (
                   <AuditDiffDisplay
@@ -430,10 +473,16 @@ export default function AuditEventCard({
               </div>
             </div>
           )}
-          {event.isCascade && isOpen && (
-            <CascadeChildEntries
+          {event.topEntity.entryCount > 1 && isOpen && (
+            <EventEntityEntries
               event={event}
-              hasTopLevelDiffs={changeCount > 0}
+              entityType={event.topEntity.entityType}
+            />
+          )}
+          {event.isCascade && event.childLevel && isOpen && (
+            <EventEntityEntries
+              event={event}
+              entityType={event.childLevel.entityType}
             />
           )}
         </CollapsibleContent>

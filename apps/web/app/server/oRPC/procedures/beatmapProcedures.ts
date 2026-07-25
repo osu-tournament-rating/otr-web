@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
@@ -14,6 +14,10 @@ import {
   type BeatmapScoreRatingPoint,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
+import {
+  mostCommonDisplayMods,
+  resolveGameModsFromScores,
+} from '@/lib/utils/mods';
 
 import { publicProcedure } from './base';
 import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
@@ -64,6 +68,7 @@ export const getBeatmapStats = publicProcedure
         modRows,
         scoreRatingRows,
         topPerformerRows,
+        tournamentGameModRows,
       ] = await Promise.all([
         context.db
           .select({
@@ -167,15 +172,7 @@ export const getBeatmapStats = publicProcedure
               schema.joinPooledBeatmaps.tournamentsPooledInId
             )
           )
-          .where(
-            and(
-              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
-          ),
+          .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)),
         context.db
           .select({
             quarter: sql<string>`TO_CHAR(${schema.games.startTime}, 'YYYY-"Q"Q')`,
@@ -220,7 +217,6 @@ export const getBeatmapStats = publicProcedure
             tournamentRankRangeLowerBound:
               schema.tournaments.rankRangeLowerBound,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-            mostCommonMod: sql<number>`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
           })
           .from(schema.joinPooledBeatmaps)
@@ -246,15 +242,7 @@ export const getBeatmapStats = publicProcedure
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           )
-          .where(
-            and(
-              eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
-          )
+          .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId))
           .groupBy(
             schema.tournaments.id,
             schema.tournaments.name,
@@ -447,6 +435,50 @@ export const getBeatmapStats = publicProcedure
           )
           .orderBy(desc(schema.gameScores.score))
           .limit(10),
+        context.db
+          .select({
+            tournamentId: schema.tournaments.id,
+            gameId: schema.games.id,
+            gameMods: schema.games.mods,
+            scoreMods: sql<
+              (number | null)[]
+            >`ARRAY_AGG(DISTINCT ${schema.gameScores.mods}) FILTER (WHERE ${schema.gameScores.mods} IS NOT NULL)`,
+          })
+          .from(schema.games)
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .leftJoin(
+            schema.gameScores,
+            and(
+              eq(schema.gameScores.gameId, schema.games.id),
+              eq(
+                schema.gameScores.verificationStatus,
+                VerificationStatus.Verified
+              )
+            )
+          )
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              eq(
+                schema.tournaments.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(
+                schema.matches.verificationStatus,
+                VerificationStatus.Verified
+              ),
+              eq(schema.games.verificationStatus, VerificationStatus.Verified)
+            )
+          )
+          .groupBy(schema.tournaments.id, schema.games.id, schema.games.mods)
+          .orderBy(asc(schema.games.id)),
       ]);
 
       const beatmap = beatmapRow[0]!;
@@ -552,9 +584,30 @@ export const getBeatmapStats = publicProcedure
         ])
       );
 
+      // Resolve the most common mod per tournament from the mods players
+      // actually used (score-level), so freemod lobbies whose games record no
+      // mods don't report NM. See resolveGameModsFromScores / ModIconset.
+      const modsByTournament = new Map<
+        number,
+        Array<{ mods: Mods; scoreMods: number[] }>
+      >();
+      for (const row of tournamentGameModRows) {
+        const games = modsByTournament.get(row.tournamentId) ?? [];
+        games.push({
+          mods: row.gameMods,
+          scoreMods: (row.scoreMods ?? [])
+            .filter((m): m is number => m != null)
+            .map(Number),
+        });
+        modsByTournament.set(row.tournamentId, games);
+      }
+
       const tournaments: BeatmapTournamentUsage[] = tournamentRows.map(
         (row) => {
           const avgs = avgMap.get(row.tournamentId);
+          const commonMod = mostCommonDisplayMods(
+            modsByTournament.get(row.tournamentId) ?? []
+          );
           return {
             tournament: {
               id: row.tournamentId,
@@ -569,7 +622,8 @@ export const getBeatmapStats = publicProcedure
               isLazer: row.tournamentIsLazer,
             },
             gameCount: Number(row.gameCount),
-            mostCommonMod: row.mostCommonMod ?? Mods.None,
+            mostCommonMod: commonMod.mods,
+            mostCommonModFreemod: commonMod.freemod,
             firstPlayedAt: row.firstPlayedAt,
             rankRangeLowerBound: row.tournamentRankRangeLowerBound,
             avgRating: avgs?.avgRating ?? null,
@@ -643,7 +697,6 @@ export const getBeatmapStats = publicProcedure
             ? {
                 id: beatmap.beatmapsetId!,
                 osuId: beatmap.beatmapsetOsuId,
-                searchVector: '',
                 artist: beatmap.artist ?? 'Unknown',
                 title: beatmap.title ?? 'Unknown',
                 creatorId: beatmap.creatorId,
@@ -790,6 +843,9 @@ export const getBeatmapTournamentMatches = publicProcedure
                 avgScore: sql<number>`AVG(${schema.gameScores.score})`,
                 avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
                 playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
+                scoreMods: sql<
+                  (number | null)[]
+                >`ARRAY_AGG(DISTINCT ${schema.gameScores.mods})`,
               })
               .from(schema.gameScores)
               .innerJoin(
@@ -829,6 +885,9 @@ export const getBeatmapTournamentMatches = publicProcedure
             avgScore: row.avgScore ? Math.round(row.avgScore) : null,
             avgRating: row.avgRating ? Math.round(row.avgRating) : null,
             playerCount: Number(row.playerCount),
+            scoreMods: (row.scoreMods ?? [])
+              .filter((m): m is number => m != null)
+              .map(Number),
           },
         ])
       );
@@ -843,6 +902,7 @@ export const getBeatmapTournamentMatches = publicProcedure
             gameId: number;
             gameNumber: number;
             mods: number;
+            freemod: boolean;
             avgRating: number | null;
             avgScore: number | null;
             playerCount: number;
@@ -864,10 +924,15 @@ export const getBeatmapTournamentMatches = publicProcedure
 
         const gameNumber = gameNumberMap.get(row.gameId) ?? 1;
         const stats = gameStatsMap.get(row.gameId);
+        const displayMods = resolveGameModsFromScores(
+          row.gameMods,
+          stats?.scoreMods ?? []
+        );
         match.games.push({
           gameId: row.gameId,
           gameNumber,
-          mods: row.gameMods,
+          mods: displayMods.mods,
+          freemod: displayMods.freemod,
           avgRating: stats?.avgRating ?? null,
           avgScore: stats?.avgScore ?? null,
           playerCount: stats?.playerCount ?? 0,

@@ -65,27 +65,39 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const isVerified = match.verificationStatus === VerificationStatus.Verified;
   const gameCount = match.games?.length ?? 0;
+  const statsUnavailableReason =
+    match.verificationStatus === VerificationStatus.PreVerified
+      ? 'awaiting verification'
+      : match.verificationStatus === VerificationStatus.Rejected
+        ? 'rejected'
+        : match.verificationStatus === VerificationStatus.PreRejected
+          ? 'flagged for review'
+          : 'pending processing';
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <MatchCard match={match} />
 
       <Tabs value={currentTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList data-testid="match-tabs" className="grid w-full grid-cols-2">
           <TabsTrigger value="games" asChild>
-            <Link href={createTabHref('games')}>Games</Link>
+            <Link href={createTabHref('games')} data-testid="tab-trigger-games">
+              Games
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="stats" asChild>
-            <Link href={createTabHref('stats')}>Stats</Link>
+            <Link href={createTabHref('stats')} data-testid="tab-trigger-stats">
+              Stats
+            </Link>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="games" className="mt-4">
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Gamepad2 className="text-primary h-6 w-6" />
+              <Gamepad2 className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">Games</h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({gameCount})
               </span>
             </div>
@@ -93,7 +105,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="text-muted-foreground size-6 animate-spin" />
+                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
                   </div>
                 }
               >
@@ -103,7 +115,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 />
               </Suspense>
             ) : (
-              <div className="text-muted-foreground flex h-32 items-center justify-center">
+              <div className="flex h-32 items-center justify-center text-muted-foreground">
                 No games recorded for this match
               </div>
             )}
@@ -114,26 +126,18 @@ export default async function Page({ params, searchParams }: PageProps) {
           {isVerified ? (
             <MatchStatsView match={match} />
           ) : (
-            <Card className="p-6 font-sans">
-              <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <BarChart3 className="text-muted-foreground/50 h-12 w-12" />
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <p className="text-muted-foreground text-lg font-semibold">
+            <Card className="!p-6">
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <BarChart3 className="size-6" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold">
                     Statistics Not Available
                   </p>
-                  <p className="text-muted-foreground max-w-md text-sm">
+                  <p className="mt-1 max-w-md text-sm text-muted-foreground">
                     Match statistics are only available for verified matches.
-                    This match is currently
-                    {match.verificationStatus ===
-                      VerificationStatus.PreVerified &&
-                      ' awaiting verification'}
-                    {match.verificationStatus === VerificationStatus.Rejected &&
-                      ' rejected'}
-                    {match.verificationStatus ===
-                      VerificationStatus.PreRejected && ' flagged for review'}
-                    {match.verificationStatus === VerificationStatus.None &&
-                      ' pending processing'}
-                    .
+                    This match is currently {statsUnavailableReason}.
                   </p>
                 </div>
               </div>

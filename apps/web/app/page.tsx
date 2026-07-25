@@ -19,9 +19,10 @@ export default async function Page() {
   const playerId = session?.dbPlayer?.id ?? null;
 
   return (
-    <div className="bg-background text-foreground container m-4 mx-auto flex min-h-screen flex-col gap-2 py-4">
+    <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
       {/* Hero section */}
       <FeatureCard
+        data-testid="hero-section"
         decoration={2}
         imagePosition="right"
         imageSize="h-[240px] w-[475px]"
@@ -43,6 +44,7 @@ export default async function Page() {
       <div className="space-y-6">
         {/* Verified tournaments */}
         <FeatureCard
+          data-testid="verified-tournaments-card"
           decoration={3}
           imagePosition="right"
           imageSize="h-[260px] w-[380px]"
@@ -57,7 +59,10 @@ export default async function Page() {
         </FeatureCard>
 
         {/* Use ratings to filter registrants */}
-        <Card className="bg-card border-none p-6 md:p-8">
+        <Card
+          data-testid="rating-ladder-section"
+          className="border-none bg-card p-6 md:p-8"
+        >
           <div className="flex flex-col gap-2">
             <h2 className="text-3xl font-bold">
               Use ratings to filter registrants
@@ -72,7 +77,11 @@ export default async function Page() {
         </Card>
 
         {/* Detailed beatmap histories */}
-        <FeatureCard decoration={1} contentClassName="md:w-5/9 xl:w-1/2">
+        <FeatureCard
+          data-testid="beatmap-histories-card"
+          decoration={1}
+          contentClassName="md:w-5/9 xl:w-1/2"
+        >
           <FeatureCardTitle>Detailed beatmap histories</FeatureCardTitle>
           <FeatureCardDescription>
             Learn where beatmaps have been pooled and how well players perform
@@ -82,6 +91,7 @@ export default async function Page() {
 
         {/* New updates every Tuesday */}
         <FeatureCard
+          data-testid="updates-tuesday-card"
           decoration={1}
           imagePosition="right"
           imageClassName="rotate-180"
@@ -94,6 +104,7 @@ export default async function Page() {
 
         {/* All modes supported */}
         <FeatureCard
+          data-testid="all-modes-card"
           decoration={4}
           imageSize="h-[300px] w-[618px]"
           contentClassName="sm:max-md:flex-row items-center sm:items-center gap-4"
@@ -104,14 +115,14 @@ export default async function Page() {
               Yes, mania 4K and 7K are entirely separate rulesets
             </FeatureCardDescription>
           </div>
-          <div className="bg-popover flex justify-center gap-4 rounded-2xl border p-4 md:gap-6 md:p-6">
+          <div className="flex justify-center gap-4 rounded-2xl border bg-popover p-4 md:gap-6 md:p-6">
             {Object.keys(RulesetEnumHelper.metadata)
               .filter((r) => Number(r) !== Ruleset.ManiaOther)
               .map((r) => (
                 <RulesetIcon
                   key={r}
                   ruleset={Number(r)}
-                  className="fill-primary size-8 md:size-10 lg:size-12"
+                  className="size-8 fill-primary md:size-10 lg:size-12"
                 />
               ))}
           </div>
@@ -119,6 +130,7 @@ export default async function Page() {
 
         {/* Open source, open data */}
         <FeatureCard
+          data-testid="open-source-card"
           decoration={2}
           imagePosition="right"
           imageClassName="-top-25 -right-15"

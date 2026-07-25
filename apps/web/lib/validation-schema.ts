@@ -14,9 +14,13 @@ import {
   TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
-import { EnumLike, z } from 'zod';
+import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
+import { RANK_RANGE_DEFAULT_MAX } from '@/components/tournaments/list/tournamentRankSlider';
+
+/** Enum-like object shape (replaces zod v3's removed `EnumLike` type) */
+type EnumLike = Record<string, string | number>;
 
 /** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
@@ -32,7 +36,7 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
 /** Schema that ensures a numeric input is assignable to a given enumeration */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce
-    .number({ invalid_type_error: 'Required' })
+    .number({ error: 'Required' })
     .refine((val) => Object.values(enumType).includes(val));
 
 /** Schema that will convert string input of 'true' or 'false' to a boolean */
@@ -74,7 +78,7 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verificationStatus: [],
   lobbySize: [],
   minRankRange: 1,
-  maxRankRange: 1000000,
+  maxRankRange: RANK_RANGE_DEFAULT_MAX,
 };
 
 export const tournamentListFilterSchema = z.object({
@@ -103,7 +107,7 @@ export const tournamentListFilterSchema = z.object({
     z.array(z.coerce.number().min(1).max(8)).optional()
   ),
   minRankRange: z.coerce.number().min(1).optional(),
-  maxRankRange: z.coerce.number().min(1).optional(),
+  maxRankRange: z.coerce.number().min(1).default(RANK_RANGE_DEFAULT_MAX),
   sort: numericEnumValueSchema(TournamentQuerySortType).catch(
     TournamentQuerySortType.EndTime
   ),

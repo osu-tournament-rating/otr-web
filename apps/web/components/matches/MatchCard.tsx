@@ -8,7 +8,6 @@ import {
   ReportEntityType,
 } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
-import { MatchReportableFields } from '@/lib/orpc/schema/report';
 import { formatUTCDate } from '@/lib/utils/date';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
@@ -32,10 +31,10 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
   const uniquePlayersCount = uniquePlayerIds.size;
 
   return (
-    <Card className="bg-secondary border-0 p-2">
+    <Card className="border-0 bg-secondary p-2">
       <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
         {/* Background collage */}
-        <div className="z-1 blur-xs absolute inset-0 flex overflow-hidden">
+        <div className="absolute inset-0 z-1 flex overflow-hidden blur-xs">
           {hasGames ? (
             <>
               {displayGames.map((game, index) => (
@@ -62,12 +61,12 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
               ))}
             </>
           ) : (
-            <div className="bg-card/50 absolute inset-0" />
+            <div className="absolute inset-0 bg-card/50" />
           )}
         </div>
 
         {/* Enhanced overlay for better text contrast */}
-        <div className="z-2 absolute inset-0 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
+        <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
 
         <div className="z-3 flex h-full w-full flex-col p-2 text-white">
           {/* Top row */}
@@ -115,12 +114,6 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                 entityType={ReportEntityType.Match}
                 entityId={match.id}
                 entityDisplayName={match.name || `Match ${match.id}`}
-                reportableFields={MatchReportableFields}
-                currentValues={{
-                  name: match.name,
-                  startTime: match.startTime ?? '',
-                  endTime: match.endTime ?? '',
-                }}
                 darkMode={true}
               />
               <AuditButton
@@ -141,21 +134,25 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
 
           {/* Bottom row */}
           <div className="flex w-full flex-1 flex-row justify-between gap-2">
-            <div className="max-w-3/4 flex flex-1 flex-col justify-end overflow-hidden">
+            <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
               <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
                 <span>Played in</span>
                 <Link
+                  data-testid="match-tournament-link"
                   className="font-semibold text-white transition-colors hover:text-white/80"
                   href={`/tournaments/${match.tournament?.id}`}
                 >
                   {match.tournament?.name}
                 </Link>
               </span>
-              <p className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
+              <p
+                data-testid="match-name"
+                className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
+              >
                 {match.name || `Match ${match.id}`}
               </p>
             </div>
-            <div className="min-w-1/8 flex flex-col items-end justify-end gap-1">
+            <div className="flex min-w-1/8 flex-col items-end justify-end gap-1">
               {uniquePlayersCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-white/80 sm:text-sm">
                   <Users className="h-3 w-3" />

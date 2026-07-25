@@ -91,6 +91,7 @@ export default function SearchCommandDialog() {
   return (
     <>
       <Button
+        data-testid="search-trigger-button"
         variant="ghost"
         size="icon"
         aria-label="Search"
@@ -107,23 +108,27 @@ export default function SearchCommandDialog() {
         description="Search players, tournaments, matches, and beatmaps"
         contentClassName="md:max-w-[612px] [&>button:last-child]:hidden"
       >
-        <Command shouldFilter={false} loop>
+        <Command data-testid="search-dialog" shouldFilter={false} loop>
           <div className="relative">
             <CommandInput
+              data-testid="search-input"
               placeholder="Search players, tournaments, matches..."
               value={query}
               onValueChange={(value) => setQuery(value.trimStart())}
             />
             {isLoading && (
-              <LoaderCircle className="text-muted-foreground absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+              <LoaderCircle className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
           </div>
 
-          <CommandList className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]">
+          <CommandList
+            data-testid="search-results-list"
+            className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]"
+          >
             {!debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-8">
-                <Search className="text-muted-foreground/30 h-10 w-10" />
-                <p className="text-muted-foreground mt-3 text-sm">
+                <Search className="h-10 w-10 text-muted-foreground/30" />
+                <p className="mt-3 text-sm text-muted-foreground">
                   Start typing to search
                 </p>
               </div>
@@ -131,8 +136,8 @@ export default function SearchCommandDialog() {
 
             {debouncedQuery && debouncedQuery.trim().length < 2 && (
               <div className="flex flex-col items-center justify-center py-8">
-                <Search className="text-muted-foreground/30 h-10 w-10" />
-                <p className="text-muted-foreground mt-3 text-sm">
+                <Search className="h-10 w-10 text-muted-foreground/30" />
+                <p className="mt-3 text-sm text-muted-foreground">
                   Type at least 2 characters to search
                 </p>
               </div>
@@ -145,7 +150,7 @@ export default function SearchCommandDialog() {
                 <CommandEmpty>
                   <div className="text-center">
                     <p className="text-muted-foreground">No results found</p>
-                    <p className="text-muted-foreground/70 text-xs">
+                    <p className="text-xs text-muted-foreground/70">
                       Try adjusting your search terms
                     </p>
                   </div>
@@ -156,6 +161,7 @@ export default function SearchCommandDialog() {
               <>
                 {data.players.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-players"
                     heading={<GroupHeading icon={User} label="Players" />}
                   >
                     {data.players.map((player) => (
@@ -186,6 +192,7 @@ export default function SearchCommandDialog() {
 
                 {data.tournaments.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-tournaments"
                     heading={<GroupHeading icon={Trophy} label="Tournaments" />}
                   >
                     {data.tournaments.map((tournament) => (
@@ -208,6 +215,7 @@ export default function SearchCommandDialog() {
 
                 {data.matches.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-matches"
                     heading={<GroupHeading icon={Swords} label="Matches" />}
                   >
                     {data.matches.map((match) => (
@@ -228,6 +236,7 @@ export default function SearchCommandDialog() {
 
                 {data.beatmaps.length > 0 && (
                   <CommandGroup
+                    data-testid="search-group-beatmaps"
                     heading={<GroupHeading icon={Music} label="Beatmaps" />}
                   >
                     {data.beatmaps.map((beatmap) => (

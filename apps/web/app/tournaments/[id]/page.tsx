@@ -41,7 +41,6 @@ import TournamentBeatmapsAdminView from '@/components/tournaments/TournamentBeat
 import TournamentMatchesAdminView from '@/components/tournaments/TournamentMatchesAdminView';
 import TournamentPlayerStatsView from '@/components/tournaments/TournamentPlayerStatsView';
 import ReportButton from '@/components/reports/ReportButton';
-import { TournamentReportableFields } from '@/lib/orpc/schema/report';
 import { Button } from '@/components/ui/button';
 import SimpleTooltip from '@/components/simple-tooltip';
 import Link from 'next/link';
@@ -165,7 +164,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {/* Abbreviation and admin actions */}
           <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="text-muted-foreground font-mono text-sm">
+            <span className="font-mono text-sm text-muted-foreground">
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">
@@ -173,16 +172,6 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
                 entityType={ReportEntityType.Tournament}
                 entityId={tournament.id}
                 entityDisplayName={tournament.name}
-                reportableFields={TournamentReportableFields}
-                currentValues={{
-                  name: tournament.name,
-                  abbreviation: tournament.abbreviation,
-                  forumUrl: tournament.forumUrl,
-                  rankRangeLowerBound: String(tournament.rankRangeLowerBound),
-                  lobbySize: String(tournament.lobbySize),
-                  startTime: tournament.startTime ?? '',
-                  endTime: tournament.endTime ?? '',
-                }}
               />
               <AuditButton
                 entityType={AuditEntityType.Tournament}
@@ -201,7 +190,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
         <div className="flex flex-row items-center gap-2">
           {/* Tournament name */}
-          <h1 className="text-xl font-bold leading-tight sm:text-2xl md:text-3xl">
+          <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
             {tournament.name}
           </h1>
           <SimpleTooltip content="View tournament on osu! website">
@@ -224,7 +213,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
         </div>
 
         {/* Tournament metadata */}
-        <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
               <LazerBadge isLazer={tournament.isLazer} />
@@ -335,7 +324,7 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   return (
     <Card className="p-6 font-sans">
       <div className="flex items-center gap-2">
-        <BarChart3 className="text-primary h-6 w-6" />
+        <BarChart3 className="h-6 w-6 text-primary" />
         <h3 className="font-sans text-lg font-semibold">
           Tournament Statistics
         </h3>
@@ -418,28 +407,40 @@ export default async function Page({ params, searchParams }: PageProps) {
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <TournamentHeader tournament={tournament} />
 
-      <Tabs value={currentTab} className="w-full">
+      <Tabs value={currentTab} data-testid="tournament-tabs" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="matches" asChild>
-            <Link href={createTabHref('matches')}>Matches</Link>
+            <Link href={createTabHref('matches')} data-testid="tab-matches">
+              Matches
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="beatmaps" asChild>
-            <Link href={createTabHref('beatmaps')}>Beatmaps</Link>
+            <Link href={createTabHref('beatmaps')} data-testid="tab-beatmaps">
+              Beatmaps
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="ratings" asChild>
-            <Link href={createTabHref('ratings')}>Ratings</Link>
+            <Link href={createTabHref('ratings')} data-testid="tab-ratings">
+              Ratings
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="stats" asChild>
-            <Link href={createTabHref('stats')}>Stats</Link>
+            <Link href={createTabHref('stats')} data-testid="tab-stats">
+              Stats
+            </Link>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="matches" className="mt-4">
+        <TabsContent
+          value="matches"
+          data-testid="tab-content-matches"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Swords className="text-primary h-6 w-6" />
+              <Swords className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">Matches</h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({tableData.length})
               </span>
             </div>
@@ -452,14 +453,18 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="beatmaps" className="mt-4">
+        <TabsContent
+          value="beatmaps"
+          data-testid="tab-content-beatmaps"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <div className="flex items-center gap-2">
-              <Music className="text-primary h-6 w-6" />
+              <Music className="h-6 w-6 text-primary" />
               <h3 className="font-sans text-lg font-semibold">
                 Pooled Beatmaps
               </h3>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-sm text-muted-foreground">
                 ({visibleBeatmapsCount}
                 {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
               </span>
@@ -473,7 +478,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ratings" className="mt-4">
+        <TabsContent
+          value="ratings"
+          data-testid="tab-content-ratings"
+          className="mt-4"
+        >
           <Card className="p-6 font-sans">
             <TournamentRatingsView
               playerStats={tournament.playerTournamentStats ?? []}
@@ -481,7 +490,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="stats" className="mt-4 space-y-4">
+        <TabsContent
+          value="stats"
+          data-testid="tab-content-stats"
+          className="mt-4 space-y-4"
+        >
           <TournamentStatsCard tournament={tournament} />
           <TournamentPlayerStatsView
             playerStats={tournament.playerTournamentStats ?? []}

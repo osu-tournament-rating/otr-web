@@ -16,6 +16,7 @@ node_modules/
 coverage/
 playwright-report/
 test-results/
+**/e2e/.auth/
 
 # next.js
 .next/
@@ -51,14 +52,11 @@ yarn-error.log*
 .idea/
 
 # Other
-.aider*
-.cursor/
 remove-local-link.sh
 setup-local-link.sh
 **/dist/
 monitoring/loki/data/
 .playwright-mcp/
-.claude/
 .mcp.json
 
 # top-level images (playwright mcp)
@@ -67,3 +65,5 @@ monitoring/loki/data/
 # data-worker local beatmap storage
 *.osu
 *.osu.gz
+
+!/.agents/skills/build-and-verify-otr-ui/assets/references/*.png

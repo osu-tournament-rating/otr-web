@@ -59,10 +59,13 @@ export default function AccountDeletionClient() {
   };
 
   return (
-    <Card className="border-destructive/50">
+    <Card
+      className="border-destructive/50"
+      data-testid="settings-account-deletion-section"
+    >
       <CardHeader>
         <div className="flex items-center gap-3">
-          <UserX className="text-destructive size-6" />
+          <UserX className="size-6 text-destructive" />
           <CardTitle className="text-destructive">Delete Account</CardTitle>
         </div>
         <CardDescription>
@@ -78,6 +81,7 @@ export default function AccountDeletionClient() {
               variant="destructive"
               className="w-full sm:w-auto"
               disabled={isDeleting}
+              data-testid="settings-delete-account-button"
             >
               <Trash2 className="mr-2 size-4" />
               Delete My Account
@@ -96,7 +100,7 @@ export default function AccountDeletionClient() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAccount}
-                className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
+                className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete Account'}

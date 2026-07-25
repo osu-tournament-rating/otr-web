@@ -34,10 +34,10 @@ export default function AudioPlayerControls() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-2 sm:inset-x-auto sm:bottom-4 sm:right-4">
-      <div className="bg-popover border-border flex flex-col gap-2 rounded-lg border p-3 shadow-lg">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-2 sm:inset-x-auto sm:right-4 sm:bottom-4">
+      <div className="flex flex-col gap-2 rounded-lg border border-border bg-popover p-3 shadow-lg">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground w-10 text-xs">
+          <span className="w-10 text-xs text-muted-foreground">
             {formatTime(state.currentTime)}
           </span>
           <Slider
@@ -47,7 +47,7 @@ export default function AudioPlayerControls() {
             max={state.duration || 100}
             step={0.1}
           />
-          <span className="text-muted-foreground w-10 text-xs">
+          <span className="w-10 text-xs text-muted-foreground">
             {formatTime(state.duration)}
           </span>
         </div>

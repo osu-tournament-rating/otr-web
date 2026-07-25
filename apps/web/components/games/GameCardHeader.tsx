@@ -5,12 +5,12 @@ import { ExternalLink } from 'lucide-react';
 
 import { ScoringTypeEnumHelper, TeamTypeEnumHelper } from '@/lib/enum-helpers';
 import { Game } from '@/lib/orpc/schema/match';
-import { GameReportableFields } from '@/lib/orpc/schema/report';
 import {
   AdminNoteRouteTarget,
   AuditEntityType,
   ReportEntityType,
 } from '@otr/core/osu';
+import { resolveGameDisplayMods } from '@/lib/utils/mods';
 import AuditButton from '../audit/AuditButton';
 import BeatmapBackground from './BeatmapBackground';
 import FormattedDate from '../dates/FormattedDate';
@@ -28,6 +28,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
   const endTime = game.endTime ? new Date(game.endTime) : null;
   const isDeletedBeatmap =
     !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
+  const headerMods = resolveGameDisplayMods(game, game.scores);
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
@@ -38,7 +39,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
       />
 
       {/* Enhanced overlay for better text contrast */}
-      <div className="z-2 absolute inset-0 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
+      <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
 
       {/* Game / beatmap info */}
       <div className="z-3 flex h-full w-full flex-col p-2 text-white">
@@ -102,15 +103,6 @@ export default function GameCardHeader({ game }: { game: Game }) {
                   ? `${game.beatmap.beatmapset.title} [${game.beatmap.diffName}]`
                   : `Game ${game.id}`
               }
-              reportableFields={GameReportableFields}
-              currentValues={{
-                ruleset: String(game.ruleset),
-                scoringType: String(game.scoringType),
-                teamType: String(game.teamType),
-                mods: String(game.mods),
-                startTime: game.startTime ?? '',
-                endTime: game.endTime ?? '',
-              }}
               darkMode={true}
             />
             <AuditButton
@@ -129,7 +121,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
         </div>
         {/* Bottom row */}
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
-          <div className="max-w-3/4 flex flex-1 flex-col justify-end overflow-hidden">
+          <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
               {isDeletedBeatmap || !game.beatmap?.beatmapset?.creator ? (
@@ -166,6 +158,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
               </span>
             ) : (
               <Link
+                data-testid="beatmap-link"
                 href={`/beatmaps/${game.beatmap?.osuId}`}
                 className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >
@@ -175,9 +168,9 @@ export default function GameCardHeader({ game }: { game: Game }) {
             )}
           </div>
           <ModIconset
-            mods={game.mods}
-            freemod={game.isFreeMod}
-            className="min-w-1/8 flex flex-row items-end justify-end"
+            mods={headerMods.mods}
+            freemod={headerMods.freemod}
+            className="flex min-w-1/8 flex-row items-end justify-end"
             iconClassName="max-h-8 sm:max-h-12"
           />
         </div>

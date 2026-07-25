@@ -9,16 +9,18 @@ export const metadata: Metadata = {
 };
 
 export default async function StatsPage() {
+  let stats: Awaited<ReturnType<typeof orpc.stats.platform>>;
+
   try {
-    const stats = await orpc.stats.platform();
-
-    if (!stats) {
-      return notFound();
-    }
-
-    return <StatsPageContent stats={stats} />;
+    stats = await orpc.stats.platform();
   } catch (error) {
     console.error('Failed to fetch platform stats:', error);
     return notFound();
   }
+
+  if (!stats) {
+    return notFound();
+  }
+
+  return <StatsPageContent stats={stats} />;
 }

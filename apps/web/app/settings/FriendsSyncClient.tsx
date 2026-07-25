@@ -83,10 +83,10 @@ export default function FriendsSyncClient({
   };
 
   return (
-    <Card>
+    <Card data-testid="settings-friends-sync-section">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <Users className="text-primary size-6" />
+          <Users className="size-6 text-primary" />
           <CardTitle>Friends</CardTitle>
         </div>
         <CardDescription>
@@ -95,14 +95,18 @@ export default function FriendsSyncClient({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           {friendCount > 0
             ? `${friendCount} friend${friendCount !== 1 ? 's' : ''} synced.`
             : 'Your friends list has not been synced yet.'}
         </p>
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleSyncFriends} disabled={isSyncing}>
+          <Button
+            onClick={handleSyncFriends}
+            disabled={isSyncing}
+            data-testid="settings-sync-friends-button"
+          >
             {isSyncing ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -142,7 +146,7 @@ export default function FriendsSyncClient({
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteFriends}
-                    className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
+                    className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
                     disabled={isDeleting}
                   >
                     {isDeleting ? 'Deleting...' : 'Delete Friends'}

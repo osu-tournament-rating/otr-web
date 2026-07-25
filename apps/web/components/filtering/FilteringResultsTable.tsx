@@ -123,7 +123,7 @@ export default function FilteringResultsTable({
   // Early return if no results
   if (!results || !results.filteringResults) {
     const noResultsContent = (
-      <div className="text-muted-foreground p-8 text-center">
+      <div className="p-8 text-center text-muted-foreground">
         No filtering results to display.
       </div>
     );
@@ -139,8 +139,8 @@ export default function FilteringResultsTable({
       {!hideCard && (
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <ListFilter className="text-primary size-4" />
-            <h3 className="text-foreground text-base font-semibold">
+            <ListFilter className="size-4 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">
               Filtering Results
             </h3>
           </div>
@@ -168,7 +168,7 @@ export default function FilteringResultsTable({
       )}
 
       {safeData.length === 0 ? (
-        <div className="text-muted-foreground py-8 text-center">
+        <div className="py-8 text-center text-muted-foreground">
           No players to display.
         </div>
       ) : (
@@ -207,7 +207,7 @@ export default function FilteringResultsTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          'text-foreground px-2 font-semibold',
+                          'px-2 font-semibold text-foreground',
                           getHeaderClass()
                         )}
                       >

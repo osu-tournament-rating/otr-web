@@ -1,5 +1,5 @@
 {
-  "id": "a5d10ee8-ec20-4339-aa6a-69bf5c7a361a",
+  "id": "137cae10-6c23-451c-881a-c525619f6505",
   "prevId": "13129041-18da-4ce1-b409-29a9e31f506c",
   "version": "7",
   "dialect": "postgresql",
@@ -42,7 +42,20 @@
           "name": "user_id",
           "type": "text",
           "primaryKey": false,
+          "notNull": false
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
+        },
+        "config_id": {
+          "name": "config_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
         },
         "refill_interval": {
           "name": "refill_interval",
@@ -140,13 +153,39 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "ix_api_keys_reference_id": {
+          "name": "ix_api_keys_reference_id",
+          "columns": [
+            {
+              "expression": "reference_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "api_keys_user_id_auth_users_id_fk": {
           "name": "api_keys_user_id_auth_users_id_fk",
           "tableFrom": "api_keys",
           "tableTo": "auth_users",
           "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "api_keys_reference_id_auth_users_id_fk": {
+          "name": "api_keys_reference_id_auth_users_id_fk",
+          "tableFrom": "api_keys",
+          "tableTo": "auth_users",
+          "columnsFrom": ["reference_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -546,48 +585,6 @@
         "sr": {
           "name": "sr",
           "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ar": {
-          "name": "ar",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "od": {
-          "name": "od",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hp": {
-          "name": "hp",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cs": {
-          "name": "cs",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "bpm": {
-          "name": "bpm",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "total_length": {
-          "name": "total_length",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drain_length": {
-          "name": "drain_length",
-          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },

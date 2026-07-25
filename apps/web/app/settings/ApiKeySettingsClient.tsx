@@ -184,11 +184,11 @@ export default function ApiKeySettingsClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="settings-api-keys-section">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <KeyRound className="text-primary size-6" />
+            <KeyRound className="size-6 text-primary" />
             <CardTitle>API Keys</CardTitle>
           </div>
           <CardDescription>
@@ -198,7 +198,7 @@ export default function ApiKeySettingsClient({
 
         <CardContent className="space-y-6">
           <form
-            className="border-border/50 bg-muted/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-end sm:gap-6"
+            className="flex flex-col gap-4 rounded-xl border border-border/50 bg-muted/10 p-4 sm:flex-row sm:items-end sm:gap-6"
             onSubmit={handleGenerate}
           >
             <div className="flex-1 space-y-2">
@@ -213,7 +213,12 @@ export default function ApiKeySettingsClient({
                 required
               />
             </div>
-            <Button type="submit" disabled={isGenerating} className="sm:w-auto">
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              className="sm:w-auto"
+              data-testid="settings-create-api-key-button"
+            >
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
@@ -251,7 +256,7 @@ export default function ApiKeySettingsClient({
                         <div className="flex flex-col">
                           <span>{getKeyName(keyMetadata)}</span>
                           {keyPreview !== '—' && (
-                            <span className="text-muted-foreground text-xs">
+                            <span className="text-xs text-muted-foreground">
                               {keyPreview}
                             </span>
                           )}
@@ -288,7 +293,7 @@ export default function ApiKeySettingsClient({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="hover:bg-destructive/10 text-destructive"
+                                className="text-destructive hover:bg-destructive/10"
                                 onClick={() =>
                                   setConfirmingKeyId(keyMetadata.id)
                                 }
@@ -318,7 +323,7 @@ export default function ApiKeySettingsClient({
                                   onClick={() =>
                                     handleDeleteKey(keyMetadata.id)
                                   }
-                                  className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/40 text-white"
+                                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
                                   disabled={pendingDeleteId === keyMetadata.id}
                                 >
                                   {pendingDeleteId === keyMetadata.id
@@ -336,13 +341,13 @@ export default function ApiKeySettingsClient({
               </TableBody>
             </Table>
           ) : (
-            <div className="border-border/60 text-muted-foreground flex flex-col items-start gap-2 rounded-xl border p-6 text-sm">
+            <div className="flex flex-col items-start gap-2 rounded-xl border border-border/60 p-6 text-sm text-muted-foreground">
               <span>No API keys yet.</span>
             </div>
           )}
 
           {sortedKeys.length > 0 && (
-            <div className="border-border/60 bg-muted/10 text-muted-foreground rounded-xl border p-4 text-sm">
+            <div className="rounded-xl border border-border/60 bg-muted/10 p-4 text-sm text-muted-foreground">
               Include your key via{' '}
               <span className="font-medium">
                 `Authorization: Bearer &lt;key&gt;`
@@ -353,7 +358,7 @@ export default function ApiKeySettingsClient({
         </CardContent>
 
         <CardFooter className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-muted-foreground text-sm">
+          <span className="text-sm text-muted-foreground">
             Remember not to leave your keys in sheet templates or other places
             by mistake.
           </span>

@@ -18,6 +18,7 @@ import {
   formatUserDescriptor,
   formatProcedurePath,
 } from './logging/helpers';
+import { assertOutsideMaintenanceWindow } from './shared/maintenanceWindow';
 
 type ApiKeyActor = {
   userId: string;
@@ -384,7 +385,9 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
     const verifiedKey = verification?.key ?? null;
 
     if (!verification?.valid || !verifiedKey) {
-      handleInvalidApiKeyVerification(verification);
+      handleInvalidApiKeyVerification(
+        verification as unknown as ApiKeyVerificationResponse
+      );
     }
 
     const activeKey = verifiedKey as NonNullable<typeof verifiedKey>;
@@ -397,7 +400,9 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       });
     }
 
-    const { id, userId, name, enabled } = activeKey;
+    // Better Auth's API key plugin (v1.6+) renamed `userId` to `referenceId`.
+    const { id, referenceId, name, enabled } = activeKey;
+    const userId = referenceId;
     let apiKeyActor: ApiKeyActor | null = null;
 
     try {
@@ -701,3 +706,17 @@ export const protectedProcedure = base
   .use(withMetrics)
   .use(withRequestLogging)
   .use(withErrorBoundary);
+
+// Blocks data mutations during the weekly maintenance window
+// so the public archives stay consistent with the data the processor runs
+// against. See issue #763.
+const withMaintenanceWindowGuard = base.middleware(
+  async ({ context, next }) => {
+    assertOutsideMaintenanceWindow(context.headers);
+    return next();
+  }
+);
+
+export const adminMutationProcedure = protectedProcedure.use(
+  withMaintenanceWindowGuard
+);

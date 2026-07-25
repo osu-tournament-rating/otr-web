@@ -71,7 +71,7 @@ function LoadingSkeleton(): React.JSX.Element {
   return (
     <div
       data-testid="audit-timeline-loading"
-      className="border-border divide-border divide-y rounded-lg border"
+      className="divide-y divide-border rounded-lg border border-border"
     >
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5">
@@ -92,9 +92,9 @@ function EmptyState(): React.JSX.Element {
       data-testid="audit-timeline-empty"
       className="flex flex-col items-center justify-center py-16"
     >
-      <ClipboardList className="text-muted-foreground/50 mb-4 h-12 w-12" />
+      <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/50" />
       <h3 className="text-lg font-medium">No audit history found</h3>
-      <p className="text-muted-foreground mt-1 text-sm">
+      <p className="mt-1 text-sm text-muted-foreground">
         No changes have been recorded for this entity yet.
       </p>
     </div>
@@ -126,7 +126,7 @@ function TimelineAuditEntry({
       <div
         id={`audit-${entry.id}`}
         className={cn(
-          'border-border group border-b transition-colors',
+          'group border-b border-border transition-colors',
           isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
         )}
       >
@@ -207,7 +207,7 @@ function TimelineAuditEntry({
 
             {/* Change count indicator */}
             {changeCount > 0 && (
-              <span className="text-muted-foreground flex items-center gap-1 text-xs">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <ChevronRight
                   className={cn(
                     'h-3.5 w-3.5 transition-transform',
@@ -221,7 +221,7 @@ function TimelineAuditEntry({
             {/* Timestamp */}
             <RelativeTime
               dateString={entry.created}
-              className="text-muted-foreground shrink-0 text-xs"
+              className="shrink-0 text-xs text-muted-foreground"
             />
           </button>
         </CollapsibleTrigger>
@@ -229,7 +229,7 @@ function TimelineAuditEntry({
         {/* Expanded diffs */}
         <CollapsibleContent data-testid="timeline-entry-diff">
           {changes && changeCount > 0 && (
-            <div className="bg-muted/20 border-border border-t px-3 py-2">
+            <div className="border-t border-border bg-muted/20 px-3 py-2">
               <div className="flex flex-col gap-1 pl-7">
                 {Object.entries(changes).map(([fieldName, change]) => (
                   <AuditDiffDisplay
@@ -345,7 +345,7 @@ export default function AuditEntityTimeline({
       {/* Summary header */}
       <div
         data-testid="timeline-summary"
-        className="text-muted-foreground flex items-center gap-2 text-sm"
+        className="flex items-center gap-2 text-sm text-muted-foreground"
       >
         <span>
           {totalCount} change{totalCount !== 1 ? 's' : ''}
@@ -364,7 +364,7 @@ export default function AuditEntityTimeline({
       {/* Timeline entries */}
       <div
         data-testid="timeline-entry-list"
-        className="border-border divide-border divide-y rounded-lg border"
+        className="divide-y divide-border rounded-lg border border-border"
       >
         {allItems.map((item) => {
           if (item.type === 'audit') {

@@ -124,8 +124,36 @@
     {
       "idx": 17,
       "version": "7",
-      "when": 1773472467607,
-      "tag": "0017_expand_beatmap_attributes",
+      "when": 1781579582951,
+      "tag": "0017_api_keys_reference_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782011749454,
+      "tag": "0018_soft_miek",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1783795697198,
+      "tag": "0019_restore-cleared-tournament-submitters",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783803347413,
+      "tag": "0020_audit-event-tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1783864940447,
+      "tag": "0021_sturdy_lockjaw",
       "breakpoints": true
     }
   ]

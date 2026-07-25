@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import SimpleTooltip from '../simple-tooltip';
-import { Mods } from '@otr/core/osu';
+import { Mods, VerificationStatus } from '@otr/core/osu';
 
 interface PlayerBeatmapTournamentTableProps {
   tournaments: BeatmapTournamentListItem[];
@@ -43,7 +43,7 @@ export default function PlayerBeatmapTournamentTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-muted/50 w-[40px]" />
+                <TableHead className="w-[40px] bg-muted/50" />
                 <TableHead className="bg-muted/50 text-left">
                   <Tooltip>
                     <TooltipTrigger>
@@ -88,7 +88,7 @@ export default function PlayerBeatmapTournamentTable({
                   return (
                     <TableRow
                       key={tournament.id}
-                      className="hover:bg-muted/30 transition-colors duration-200"
+                      className="transition-colors duration-200 hover:bg-muted/30"
                     >
                       <TableCell className="w-[40px] py-2">
                         <VerificationBadge
@@ -98,7 +98,7 @@ export default function PlayerBeatmapTournamentTable({
                           size="small"
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground py-2 text-sm">
+                      <TableCell className="py-2 text-sm text-muted-foreground">
                         {startDate && endDate && (
                           <span className="whitespace-nowrap">
                             {formatUTCDate(startDate)} -{' '}
@@ -114,35 +114,43 @@ export default function PlayerBeatmapTournamentTable({
                           {tournament.name}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-muted-foreground py-2 text-sm">
+                      <TableCell className="py-2 text-sm text-muted-foreground">
                         <div className="text-center">
                           {formatRankRangeDisplay(
                             tournament.rankRangeLowerBound
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground w-[80px] whitespace-nowrap py-2 text-sm">
+                      <TableCell className="w-[80px] py-2 text-sm whitespace-nowrap text-muted-foreground">
                         <div className="text-center">
                           {tournament.lobbySize}v{tournament.lobbySize}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground py-2">
+                      <TableCell className="py-2 text-muted-foreground">
                         <div className="flex h-7 items-center justify-center">
-                          {tournament.mostCommonMod === Mods.None ? (
-                            <span>N/A</span>
+                          {tournament.verificationStatus ===
+                          VerificationStatus.Verified ? (
+                            tournament.mostCommonMod === Mods.None ? (
+                              '—'
+                            ) : (
+                              <ModIconset
+                                mods={tournament.mostCommonMod ?? Mods.None}
+                                className="flex h-full items-center"
+                                iconClassName="h-7"
+                                alwaysExpanded={true}
+                              />
+                            )
                           ) : (
-                            <ModIconset
-                              mods={tournament.mostCommonMod ?? Mods.None}
-                              className="flex h-full items-center"
-                              iconClassName="h-7"
-                              alwaysExpanded={true}
-                            />
+                            '—'
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground py-2 text-sm">
+                      <TableCell className="py-2 text-sm text-muted-foreground">
                         <div className="text-center">
-                          {tournament.gamesPlayed ?? 0}
+                          {tournament.verificationStatus ===
+                          VerificationStatus.Verified
+                            ? (tournament.gamesPlayed ?? 0)
+                            : '—'}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -152,7 +160,7 @@ export default function PlayerBeatmapTournamentTable({
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="text-muted-foreground h-24 text-center"
+                    className="h-24 text-center text-muted-foreground"
                   >
                     No tournament data available
                   </TableCell>

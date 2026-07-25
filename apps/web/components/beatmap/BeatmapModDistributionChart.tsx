@@ -122,12 +122,12 @@ export default function BeatmapModDistributionChart({
 
   if (processedData.length === 0) {
     return (
-      <Card className={className}>
+      <Card data-testid="beatmap-mod-distribution-chart" className={className}>
         <CardHeader className="items-center">
           <CardTitle>Mod Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             No mod data available for this beatmap.
           </p>
         </CardContent>
@@ -136,7 +136,7 @@ export default function BeatmapModDistributionChart({
   }
 
   return (
-    <Card className={className}>
+    <Card data-testid="beatmap-mod-distribution-chart" className={className}>
       <CardHeader className="items-center">
         <CardTitle>Mod Distribution</CardTitle>
       </CardHeader>

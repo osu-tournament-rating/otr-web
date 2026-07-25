@@ -50,7 +50,7 @@ const MatchRowWithCheckbox = memo(
     );
 
     return (
-      <TableRow className="border-border/30 hover:bg-popover/80 border-b transition-colors">
+      <TableRow className="border-b border-border/30 transition-colors hover:bg-popover/80">
         <TableCell className="w-[40px] py-3">
           <Checkbox
             checked={match.isSelected}
@@ -84,20 +84,20 @@ export default function TournamentMatchesDataTableWithCheckboxes({
   });
 
   return (
-    <div className="bg-popover/50 rounded-lg">
+    <div className="rounded-lg bg-popover/50">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-border/50 border-b hover:bg-transparent"
+              className="border-b border-border/50 hover:bg-transparent"
             >
               <TableHead className="w-[40px]" />
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-foreground font-semibold"
+                    className="font-semibold text-foreground"
                   >
                     {header.isPlaceholder
                       ? null
@@ -129,7 +129,7 @@ export default function TournamentMatchesDataTableWithCheckboxes({
             <TableRow className="hover:bg-transparent">
               <TableCell
                 colSpan={columns.length + 1}
-                className="text-muted-foreground h-24 text-center"
+                className="h-24 text-center text-muted-foreground"
               >
                 No matches found.
               </TableCell>

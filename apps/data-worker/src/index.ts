@@ -175,6 +175,7 @@ const bootstrap = async () => {
     matchService,
     playerService,
     logger,
+    maintenanceWindowEnabled: dataWorkerEnv.maintenanceWindowEnabled,
   });
 
   const osuTrackClient = new OsuTrackClient({});
@@ -185,6 +186,7 @@ const bootstrap = async () => {
     rateLimiter: osuTrackRateLimiter,
     db,
     logger,
+    maintenanceWindowEnabled: dataWorkerEnv.maintenanceWindowEnabled,
     onPlayer: async ({ message, results }) => {
       await processOsuTrackPlayerResults({
         db,

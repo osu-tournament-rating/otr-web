@@ -1,4 +1,5 @@
 import StagingBanner from '@/components/banner/StagingBanner';
+import MaintenanceBanner from '@/components/banner/MaintenanceBanner';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
@@ -33,12 +34,26 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-inter flex min-h-screen flex-col">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        />
+      </head>
+      <body className="flex min-h-screen flex-col font-inter">
         <ThemeProvider attribute="class" disableTransitionOnChange>
           <TooltipProvider>
             <SessionProvider user={session}>
               <AudioPlayerProvider>
                 <Header />
+                <MaintenanceBanner headers={new Headers(headersList)} />
                 <StagingBanner />
                 <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
                   {children}

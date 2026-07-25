@@ -65,15 +65,28 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const isAdmin = hasAdminScope(scopes);
   const isLoading = Boolean(isSessionPending);
   const { refreshSession } = useContext(SessionContext);
+  const userId = session?.dbUser?.id ?? null;
+  // Admins track the pending review queue; everyone else tracks unread updates
+  // to the reports they submitted.
   const [unseenReportCount, setUnseenReportCount] = useState(0);
+  const [myUnreadReportCount, setMyUnreadReportCount] = useState(0);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!userId) return;
 
-    orpc.reports.unseenCount({}).then((result) => {
-      setUnseenReportCount(result.count);
-    });
-  }, [isAdmin]);
+    if (isAdmin) {
+      orpc.reports
+        .unseenCount({})
+        .then((result) => setUnseenReportCount(result.count))
+        .catch(() => setUnseenReportCount(0));
+      return;
+    }
+
+    orpc.reports
+      .myUnreadCount({})
+      .then((result) => setMyUnreadReportCount(result.count))
+      .catch(() => setMyUnreadReportCount(0));
+  }, [isAdmin, userId]);
 
   const handleLogout = async () => {
     await signOut({
@@ -90,7 +103,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center">
-        <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
+        <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
       </div>
     );
   }
@@ -101,8 +114,26 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 
   const player = dbPlayer;
 
+  const reportsHref = isAdmin ? '/admin/reports' : '/reports';
   const reportCountDisplay =
     unseenReportCount > 99 ? '99+' : unseenReportCount.toString();
+  // Admins see a queue count; reporters see a single "you have updates" dot.
+  const hasReportNotification = isAdmin
+    ? unseenReportCount > 0
+    : myUnreadReportCount > 0;
+
+  const reportsIndicator = isAdmin
+    ? unseenReportCount > 0 && (
+        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
+          {reportCountDisplay}
+        </span>
+      )
+    : myUnreadReportCount > 0 && (
+        <span
+          className="size-2 rounded-full bg-blue-500"
+          aria-label="Unread report updates"
+        />
+      );
 
   if (isMobile) {
     return (
@@ -123,7 +154,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
               <div className="flex items-center gap-3">
                 <UserAvatar
                   player={player}
-                  showNotificationDot={unseenReportCount > 0}
+                  showNotificationDot={hasReportNotification}
                 />
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{player.username}</span>
@@ -152,7 +183,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <SheetClose asChild>
               <Link
                 href={`/players/${player.id}`}
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
               >
                 <User className="size-4" />
                 <span>My Profile</span>
@@ -161,7 +192,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           ) : (
             <Link
               href={`/players/${player.id}`}
-              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
             >
               <User className="size-4" />
               <span>My Profile</span>
@@ -172,7 +203,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <SheetClose asChild>
               <Link
                 href="/settings"
-                className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
               >
                 <Settings className="size-4" />
                 <span>Settings</span>
@@ -181,75 +212,67 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
           ) : (
             <Link
               href="/settings"
-              className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
             >
               <Settings className="size-4" />
               <span>Settings</span>
             </Link>
           )}
 
-          {isAdmin && (
+          <hr className="my-1 border-border" />
+          {isMobileNav ? (
             <>
-              <hr className="border-border my-1" />
-              {isMobileNav ? (
-                <>
-                  <SheetClose asChild>
-                    <Link
-                      href="/admin"
-                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                    >
-                      <ShieldAlert className="size-4" />
-                      <span>Admin</span>
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link
-                      href="/admin/reports"
-                      className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                    >
-                      <AlertTriangle className="size-4" />
-                      <span className="flex items-center gap-2">
-                        Reports
-                        {unseenReportCount > 0 && (
-                          <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
-                            {reportCountDisplay}
-                          </span>
-                        )}
-                      </span>
-                    </Link>
-                  </SheetClose>
-                </>
-              ) : (
-                <>
+              {isAdmin && (
+                <SheetClose asChild>
                   <Link
                     href="/admin"
-                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                   >
                     <ShieldAlert className="size-4" />
                     <span>Admin</span>
                   </Link>
-                  <Link
-                    href="/admin/reports"
-                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                  >
-                    <AlertTriangle className="size-4" />
-                    <span className="flex items-center gap-2">
-                      Reports
-                      {unseenReportCount > 0 && (
-                        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
-                          {reportCountDisplay}
-                        </span>
-                      )}
-                    </span>
-                  </Link>
-                </>
+                </SheetClose>
               )}
+              <SheetClose asChild>
+                <Link
+                  href={reportsHref}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                >
+                  <AlertTriangle className="size-4" />
+                  <span className="flex items-center gap-2">
+                    Reports
+                    {reportsIndicator}
+                  </span>
+                </Link>
+              </SheetClose>
+            </>
+          ) : (
+            <>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                >
+                  <ShieldAlert className="size-4" />
+                  <span>Admin</span>
+                </Link>
+              )}
+              <Link
+                href={reportsHref}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+              >
+                <AlertTriangle className="size-4" />
+                <span className="flex items-center gap-2">
+                  Reports
+                  {reportsIndicator}
+                </span>
+              </Link>
             </>
           )}
 
-          <hr className="border-border my-1" />
+          <hr className="my-1 border-border" />
           <button
-            className="text-destructive hover:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -270,11 +293,11 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
         >
           <UserAvatar
             player={player}
-            showNotificationDot={unseenReportCount > 0}
+            showNotificationDot={hasReportNotification}
           />
         </motion.div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-card mt-1 w-56 rounded-xl">
+      <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         <DropdownMenuLabel className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-20">
             <div className="absolute inset-0 backdrop-blur-md" />
@@ -318,33 +341,27 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {isAdmin && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/admin">
-                <ShieldAlert className="mr-2 size-4" />
-                <span>Admin</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/admin/reports">
-                <AlertTriangle className="mr-2 size-4" />
-                <span className="flex items-center gap-2">
-                  Reports
-                  {unseenReportCount > 0 && (
-                    <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
-                      {reportCountDisplay}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            </DropdownMenuItem>
-          </>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/admin">
+              <ShieldAlert className="mr-2 size-4" />
+              <span>Admin</span>
+            </Link>
+          </DropdownMenuItem>
         )}
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href={reportsHref}>
+            <AlertTriangle className="mr-2 size-4" />
+            <span className="flex items-center gap-2">
+              Reports
+              {reportsIndicator}
+            </span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-destructive hover:bg-destructive/10 focus:text-destructive cursor-pointer"
+          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />
@@ -362,11 +379,11 @@ function UserAvatar({ player, showNotificationDot }: UserAvatarProps) {
         osuId={player.osuId}
         username={player.username}
         size={36}
-        className="hover:border-primary/80 transition-all"
+        className="transition-all hover:border-primary/80"
         fallback={<User className="size-4" />}
       />
       {showNotificationDot && (
-        <span className="absolute right-0 top-0 size-2.5 rounded-full bg-blue-500" />
+        <span className="absolute top-0 right-0 size-2.5 rounded-full bg-blue-500" />
       )}
     </div>
   );

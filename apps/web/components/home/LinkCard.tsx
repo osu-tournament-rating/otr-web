@@ -9,13 +9,13 @@ type IconVariant = 'medal' | 'trophy' | 'book' | 'user';
 const getIcon = (icon: IconVariant) => {
   switch (icon) {
     case 'medal':
-      return Medal;
+      return <Medal size={24} />;
     case 'trophy':
-      return Trophy;
+      return <Trophy size={24} />;
     case 'book':
-      return BookOpen;
+      return <BookOpen size={24} />;
     case 'user':
-      return User;
+      return <User size={24} />;
   }
 };
 
@@ -37,14 +37,10 @@ export default function LinkCart({
   className,
   ...rest
 }: LinkCardProps & React.ComponentProps<typeof Link>) {
-  const Icon = getIcon(icon);
-
   return (
     <Link className={cn('block', className)} {...rest}>
-      <Card className="hover:bg-accent size-full flex-row gap-4 border border-none p-6 transition-colors hover:border">
-        <div className="text-primary mt-1">
-          <Icon size={24} />
-        </div>
+      <Card className="size-full flex-row gap-4 border border-none p-6 transition-colors hover:border hover:bg-accent">
+        <div className="mt-1 text-primary">{getIcon(icon)}</div>
         <div className="flex flex-col gap-1">
           <h3 className="text-xl font-semibold">{title}</h3>
           <p className="text-muted-foreground">{description}</p>

@@ -8,7 +8,7 @@ const lineClassName =
 export default function MobileNavTrigger({ isOpen }: { isOpen: boolean }) {
   return (
     <SheetTrigger asChild className="md:hidden">
-      <Button variant="ghost" size="icon">
+      <Button data-testid="mobile-nav-trigger" variant="ghost" size="icon">
         <div className="relative flex h-3 w-4 flex-col justify-between">
           <span
             className={cn(

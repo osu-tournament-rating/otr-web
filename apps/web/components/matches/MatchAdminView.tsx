@@ -8,7 +8,7 @@ import {
 import { matchEditFormSchema } from '@/lib/validation-schema';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ControllerFieldState, useForm } from 'react-hook-form';
+import { ControllerFieldState, useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { orpc } from '@/lib/orpc/orpc';
@@ -91,7 +91,9 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
   };
 
   const form = useForm<z.infer<typeof matchEditFormSchema>>({
-    resolver: zodResolver(matchEditFormSchema),
+    resolver: zodResolver(matchEditFormSchema) as Resolver<
+      z.infer<typeof matchEditFormSchema>
+    >,
     defaultValues,
     mode: 'all',
   });

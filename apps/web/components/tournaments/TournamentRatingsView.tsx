@@ -87,7 +87,7 @@ const PlayerCell = ({
       osuId={player.osuId}
       username={player.username}
       size={28}
-      className="ring-border/10 flex-shrink-0 ring-1"
+      className="flex-shrink-0 ring-1 ring-border/10"
     />
     <span className="truncate text-xs font-medium sm:text-sm">
       {player.username}
@@ -124,7 +124,7 @@ export default function TournamentRatingsView({
           return (
             <div className="text-center font-medium">
               <span className="text-green-600">{row.original.matchesWon}</span>
-              <span className="text-muted-foreground px-0.5">-</span>
+              <span className="px-0.5 text-muted-foreground">-</span>
               <span className="text-red-600">{row.original.matchesLost}</span>
             </div>
           );
@@ -141,7 +141,7 @@ export default function TournamentRatingsView({
           return (
             <div className="text-center font-medium">
               <span className="text-green-600">{row.original.gamesWon}</span>
-              <span className="text-muted-foreground px-0.5">-</span>
+              <span className="px-0.5 text-muted-foreground">-</span>
               <span className="text-red-600">{row.original.gamesLost}</span>
             </div>
           );
@@ -155,7 +155,7 @@ export default function TournamentRatingsView({
           <SortableHeader column={column}>Before</SortableHeader>
         ),
         cell: ({ row }) => (
-          <div className="text-foreground text-center font-medium">
+          <div className="text-center font-medium text-foreground">
             {Math.round(row.original.ratingBefore)}
           </div>
         ),
@@ -166,7 +166,7 @@ export default function TournamentRatingsView({
           <SortableHeader column={column}>After</SortableHeader>
         ),
         cell: ({ row }) => (
-          <div className="text-foreground text-center font-medium">
+          <div className="text-center font-medium text-foreground">
             {Math.round(row.original.ratingAfter)}
           </div>
         ),
@@ -259,7 +259,7 @@ export default function TournamentRatingsView({
 
   if (playerStats.length === 0) {
     return (
-      <div className="text-muted-foreground py-8 text-center">
+      <div className="py-8 text-center text-muted-foreground">
         No rating data available for this tournament.
       </div>
     );
@@ -268,9 +268,9 @@ export default function TournamentRatingsView({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <TrendingUp className="text-primary h-6 w-6" />
+        <TrendingUp className="h-6 w-6 text-primary" />
         <h3 className="font-sans text-lg font-semibold">Rating Changes</h3>
-        <span className="text-muted-foreground text-sm">
+        <span className="text-sm text-muted-foreground">
           ({table.getRowModel().rows?.length || 0} players)
         </span>
 
@@ -286,7 +286,7 @@ export default function TournamentRatingsView({
           </Button>
         </div>
       </div>
-      <div className="from-background to-muted/20 overflow-x-auto rounded-lg border bg-gradient-to-br">
+      <div className="overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -297,7 +297,7 @@ export default function TournamentRatingsView({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-foreground font-semibold"
+                    className="font-semibold text-foreground"
                   >
                     {header.isPlaceholder
                       ? null
@@ -316,7 +316,7 @@ export default function TournamentRatingsView({
                 <TableRow
                   key={row.id}
                   className={cn(
-                    'hover:bg-muted/30 transition-colors duration-200',
+                    'transition-colors duration-200 hover:bg-muted/30',
                     index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
                   )}
                 >

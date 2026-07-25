@@ -99,51 +99,72 @@ export const auth_verifications = pgTable('auth_verifications', {
     .notNull(),
 });
 
-export const apiKeys = pgTable('api_keys', {
-  id: text('id').primaryKey(),
-  name: text('name'),
-  start: text('start'),
-  prefix: text('prefix'),
-  key: text('key').notNull(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => auth_users.id, { onDelete: 'cascade' }),
-  refillInterval: integer('refill_interval'),
-  refillAmount: integer('refill_amount'),
-  lastRefillAt: timestamp('last_refill_at', {
-    withTimezone: true,
-    mode: 'string',
-  }),
-  enabled: boolean('enabled').default(true).notNull(),
-  rateLimitEnabled: boolean('rate_limit_enabled').default(true).notNull(),
-  rateLimitTimeWindow: integer('rate_limit_time_window'),
-  rateLimitMax: integer('rate_limit_max'),
-  requestCount: integer('request_count').default(0).notNull(),
-  remaining: integer('remaining'),
-  lastRequest: timestamp('last_request', {
-    withTimezone: true,
-    mode: 'string',
-  }),
-  expiresAt: timestamp('expires_at', {
-    withTimezone: true,
-    mode: 'string',
-  }),
-  createdAt: timestamp('created_at', {
-    withTimezone: true,
-    mode: 'string',
-  })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-  updatedAt: timestamp('updated_at', {
-    withTimezone: true,
-    mode: 'string',
-  })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-  permissions: text('permissions'),
-  metadata: text('metadata'),
-});
+export const apiKeys = pgTable(
+  'api_keys',
+  {
+    id: text('id').primaryKey(),
+    name: text('name'),
+    start: text('start'),
+    prefix: text('prefix'),
+    key: text('key').notNull(),
+    // Legacy owner column. Better Auth's api-key plugin (v1.6+) replaced `userId`
+    // with `referenceId`, so the plugin no longer reads or writes this column.
+    // Kept nullable to preserve historical rows; safe to drop in a follow-up once
+    // the `reference_id` backfill is confirmed in production.
+    userId: text('user_id').references(() => auth_users.id, {
+      onDelete: 'cascade',
+    }),
+    // Owner of the key (the auth_users id). Replaces `userId` as of better-auth
+    // v1.6 — the plugin reads/writes this field and returns it from verifyApiKey.
+    referenceId: text('reference_id')
+      .notNull()
+      .references(() => auth_users.id, { onDelete: 'cascade' }),
+    // Identifies which api-key plugin configuration a key belongs to. Always
+    // 'default' for this app; required by better-auth v1.6 for hashing/verify.
+    configId: text('config_id').default('default').notNull(),
+    refillInterval: integer('refill_interval'),
+    refillAmount: integer('refill_amount'),
+    lastRefillAt: timestamp('last_refill_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    enabled: boolean('enabled').default(true).notNull(),
+    rateLimitEnabled: boolean('rate_limit_enabled').default(true).notNull(),
+    rateLimitTimeWindow: integer('rate_limit_time_window'),
+    rateLimitMax: integer('rate_limit_max'),
+    requestCount: integer('request_count').default(0).notNull(),
+    remaining: integer('remaining'),
+    lastRequest: timestamp('last_request', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    expiresAt: timestamp('expires_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .$onUpdate(() => sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    permissions: text('permissions'),
+    metadata: text('metadata'),
+  },
+  (table) => [
+    index('ix_api_keys_reference_id').using(
+      'btree',
+      table.referenceId.asc().nullsLast().op('text_ops')
+    ),
+  ]
+);
 
 export const beatmapsets = pgTable(
   'beatmapsets',
@@ -246,6 +267,33 @@ export const filterReports = pgTable(
   ]
 );
 
+export const auditEvents = pgTable(
+  'audit_events',
+  {
+    id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({
+      name: 'audit_events_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      cache: 1,
+    }),
+    created: timestamp({ withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    actionUserId: integer('action_user_id'),
+  },
+  (table) => [
+    index('ix_audit_events_action_user_id').using(
+      'btree',
+      table.actionUserId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_audit_events_created').using(
+      'btree',
+      table.created.asc().nullsLast().op('timestamptz_ops')
+    ),
+  ]
+);
+
 export const gameAudits = pgTable(
   'game_audits',
   {
@@ -257,6 +305,7 @@ export const gameAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -288,6 +337,11 @@ export const gameAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_game_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [games.id],
@@ -434,6 +488,7 @@ export const gameScoreAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -465,6 +520,11 @@ export const gameScoreAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_game_score_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [gameScores.id],
@@ -791,6 +851,7 @@ export const matchAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -822,6 +883,11 @@ export const matchAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_match_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [matches.id],
@@ -1520,6 +1586,7 @@ export const tournamentAudits = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
+    eventId: bigint('event_id', { mode: 'number' }),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -1551,6 +1618,11 @@ export const tournamentAudits = pgTable(
       'btree',
       table.referenceIdLock.asc().nullsLast().op('int4_ops')
     ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_tournament_audits_audit_events_event_id',
+    }),
     foreignKey({
       columns: [table.referenceId],
       foreignColumns: [tournaments.id],
@@ -1851,6 +1923,7 @@ export const dataReports = pgTable(
     }),
     entityType: integer('entity_type').notNull(),
     entityId: integer('entity_id').notNull(),
+    reasonKey: text('reason_key').default('something-else').notNull(),
     suggestedChanges: jsonb('suggested_changes').notNull(),
     justification: text('justification').notNull(),
     status: integer('status').default(0).notNull(),
@@ -1861,6 +1934,10 @@ export const dataReports = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     resolvedAt: timestamp('resolved_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    reporterViewedAt: timestamp('reporter_viewed_at', {
       withTimezone: true,
       mode: 'string',
     }),

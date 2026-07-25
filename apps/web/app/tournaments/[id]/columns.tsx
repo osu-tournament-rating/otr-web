@@ -182,17 +182,17 @@ export const columns = [
                 <div className="relative flex-shrink-0">
                   <StickyNote className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
                   {hasMatchNotes && (
-                    <div className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400" />
+                    <div className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-yellow-600 dark:bg-yellow-400" />
                   )}
                   {hasGameNotes && (
-                    <div className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
+                    <div className="absolute -right-0.5 -bottom-0.5 h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
                   )}
                 </div>
               </SimpleTooltip>
             )}
           </div>
           {/* Mobile-only additional info */}
-          <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-xs md:hidden">
+          <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground md:hidden">
             <div className="flex items-center gap-2">
               <span>
                 {new Date(row.original.startDate).toLocaleDateString()}

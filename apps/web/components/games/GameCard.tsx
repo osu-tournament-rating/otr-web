@@ -129,7 +129,7 @@ export default function GameCard({
     <div
       id={`game-${game.id}`}
       className={cn(
-        'bg-secondary flex flex-col space-y-2 rounded-xl p-3 transition-all duration-300',
+        'flex flex-col space-y-2 rounded-xl bg-secondary p-3 transition-all duration-300',
         highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
       )}
     >
@@ -185,7 +185,10 @@ export default function GameCard({
         </div>
       )}
       {outcomeText && (
-        <div className="mt-2 rounded-md border border-neutral-300 p-2 text-center dark:border-neutral-700">
+        <div
+          data-testid="game-outcome"
+          className="mt-2 rounded-md border border-neutral-300 p-2 text-center dark:border-neutral-700"
+        >
           <p
             className={`text-lg font-semibold ${
               outcomeText.includes('wins')

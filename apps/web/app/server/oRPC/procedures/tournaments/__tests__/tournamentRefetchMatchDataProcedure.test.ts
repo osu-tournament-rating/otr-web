@@ -241,6 +241,8 @@ const createAdminSession = (): NonNullable<TestContext['session']> => ({
   },
 });
 
+const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
+
 const noopPublishers: QueuePublisherRegistry = {
   fetchBeatmap: async ({ beatmapId }) => ({
     type: 'beatmap' as const,
@@ -344,6 +346,7 @@ describe('refetchTournamentMatchDataHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: createAdminSession(),
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -388,6 +391,7 @@ describe('refetchTournamentMatchDataHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: createAdminSession(),
+        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 

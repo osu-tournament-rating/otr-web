@@ -19,6 +19,10 @@
         "name": "next"
       }
     ],
+    // `baseUrl` is required for Bun's test runner to resolve the tsconfig
+    // `paths` aliases. TypeScript 6 deprecates `baseUrl`, so we silence that
+    // deprecation here rather than dropping the option.
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["apps/web/*"],

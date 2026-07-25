@@ -17,7 +17,7 @@ import { AdminNoteRouteTargetEnumHelper } from '@/lib/enum-helpers';
 import { adminNoteFormSchema } from '@/lib/validation-schema';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   Form,
@@ -76,7 +76,9 @@ export default function AdminNoteView({
   const canMutate = isAdmin && noteMutations != null;
 
   const form = useForm<z.infer<typeof adminNoteFormSchema>>({
-    resolver: zodResolver(adminNoteFormSchema),
+    resolver: zodResolver(adminNoteFormSchema) as Resolver<
+      z.infer<typeof adminNoteFormSchema>
+    >,
     defaultValues: {
       note: '',
     },
@@ -136,7 +138,7 @@ export default function AdminNoteView({
             )}
           />
           {showNotification && notify && (
-            <div className="absolute -right-1 -top-1 z-50">
+            <div className="absolute -top-1 -right-1 z-50">
               <div className="h-2 w-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
             </div>
           )}

@@ -9,12 +9,15 @@ import {
   GameScoreAdminUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
 
-import { protectedProcedure } from '../base';
-import { ensureAdminSession } from '../shared/adminGuard';
+import { adminMutationProcedure } from '../base';
+import {
+  ensureAdminDataMutationAllowed,
+  ensureAdminSession,
+} from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
-export const updateScoreAdmin = protectedProcedure
+export const updateScoreAdmin = adminMutationProcedure
   .input(GameScoreAdminUpdateInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({
@@ -25,6 +28,7 @@ export const updateScoreAdmin = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
@@ -67,7 +71,7 @@ export const updateScoreAdmin = protectedProcedure
     return { success: true } as const;
   });
 
-export const deleteScoreAdmin = protectedProcedure
+export const deleteScoreAdmin = adminMutationProcedure
   .input(GameScoreAdminDeleteInputSchema)
   .output(GameScoreAdminMutationResponseSchema)
   .route({
@@ -78,6 +82,7 @@ export const deleteScoreAdmin = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
+    ensureAdminDataMutationAllowed(context);
 
     const deleted = await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, () =>

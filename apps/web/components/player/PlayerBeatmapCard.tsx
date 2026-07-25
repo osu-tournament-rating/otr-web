@@ -49,7 +49,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex w-full gap-2 sm:w-auto">
             <Link href={`/beatmaps/${beatmap.osuId}`}>
-              <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm sm:text-xl md:text-2xl">
+              <h2 className="text-lg leading-tight font-semibold text-white drop-shadow-sm sm:text-xl md:text-2xl">
                 {beatmap.artist} - {beatmap.title}
               </h2>
               <div className="mt-1 text-sm text-white/80">
@@ -105,7 +105,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
             className={cn(
               '-my-1 h-8 gap-2 px-3 text-sm',
               'hover:bg-accent hover:text-accent-foreground',
-              'border-input text-foreground border',
+              'border border-input text-foreground',
               showTournaments && 'bg-accent text-accent-foreground'
             )}
           >
