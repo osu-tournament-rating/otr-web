@@ -155,6 +155,13 @@
       "when": 1783864940447,
       "tag": "0021_sturdy_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784954238252,
+      "tag": "0022_expand-beatmap-attributes",
+      "breakpoints": true
     }
   ]
 }
