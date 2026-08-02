@@ -48,13 +48,13 @@ export default function BeatmapUsageChart({
       data-testid="beatmap-usage-chart"
       className={`gap-0 overflow-hidden py-0 ${className ?? ''}`}
     >
-      <CardHeader className="h-[49px] border-b px-4 py-3">
+      <CardHeader className="border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <ChartNoAxesCombined
             className="size-4 text-muted-foreground"
             aria-hidden="true"
           />
-          <CardTitle>Tournament activity</CardTitle>
+          <CardTitle className="leading-6">Tournament activity</CardTitle>
         </div>
       </CardHeader>
 

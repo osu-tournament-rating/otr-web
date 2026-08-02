@@ -49,14 +49,14 @@ export default function BeatmapModDistributionChart({
       data-testid="beatmap-mod-distribution-chart"
       className={`gap-0 overflow-hidden py-0 ${className ?? ''}`}
     >
-      <CardHeader className="h-[49px] border-b px-4 py-3">
-        <div className="flex items-center justify-between gap-2">
+      <CardHeader className="border-b px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ListFilter
               className="size-4 text-muted-foreground"
               aria-hidden="true"
             />
-            <CardTitle>Mod distribution</CardTitle>
+            <CardTitle className="leading-6">Mod distribution</CardTitle>
           </div>
           {segments.length > 0 && (
             <span className="font-mono text-xs text-muted-foreground tabular-nums">
