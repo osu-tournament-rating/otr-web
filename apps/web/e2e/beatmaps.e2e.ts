@@ -1598,9 +1598,124 @@ test.describe('Beatmap Detail Page', () => {
         '[data-testid="beatmap-mod-distribution-chart"]'
       );
       await expect(chart.first()).toBeVisible({ timeout: 15000 });
-      await expect(chart.first().locator('.recharts-wrapper')).toBeVisible({
-        timeout: 10000,
+
+      const legendEntries = chart
+        .first()
+        .getByRole('list', { name: 'Mod distribution' })
+        .getByRole('listitem');
+      await expect(legendEntries.first()).toBeVisible({ timeout: 10000 });
+
+      const segments = chart
+        .first()
+        .getByTestId('beatmap-mod-distribution-bar')
+        .locator('> div');
+      await expect(segments).toHaveCount(await legendEntries.count());
+    });
+
+    test('reports the verified score total used by the top performers table', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      await page.waitForLoadState('networkidle');
+
+      const chartTotal = await page
+        .locator('[data-testid="beatmap-mod-distribution-chart"]')
+        .first()
+        .getByText(/^[\d,]+ scores$/)
+        .textContent();
+      const performersSummary = await page
+        .locator('[data-testid="beatmap-top-performers"]')
+        .first()
+        .getByText(/of [\d,]+ scores/)
+        .textContent();
+
+      const performersTotal = performersSummary
+        ?.replace(/\s+/g, ' ')
+        .match(/of ([\d,]+) scores/)?.[1];
+
+      expect(performersTotal).toBeTruthy();
+      expect(chartTotal?.trim()).toBe(`${performersTotal} scores`);
+    });
+
+    test('only breaks out mods played in at least 1% of scores', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      await page.waitForLoadState('networkidle');
+
+      const legendEntries = page
+        .locator('[data-testid="beatmap-mod-distribution-chart"]')
+        .first()
+        .getByRole('list', { name: 'Mod distribution' })
+        .getByRole('listitem');
+      await expect(legendEntries.first()).toBeVisible({ timeout: 10000 });
+
+      const entries = await legendEntries.allInnerTexts();
+      const parsed = entries.map((entry) => {
+        const [, label, percentage] =
+          entry.replace(/\s+/g, ' ').match(/^(.+?) ([\d.]+)%$/) ?? [];
+        return { label, percentage: Number(percentage) };
       });
+
+      expect(parsed.length).toBeGreaterThan(0);
+      for (const entry of parsed) {
+        expect(entry.label).toBeTruthy();
+        expect(Number.isNaN(entry.percentage)).toBe(false);
+        if (entry.label !== 'Other') {
+          expect(entry.percentage).toBeGreaterThanOrEqual(1);
+        }
+      }
+
+      // Sub-1% combinations are collapsed rather than dropped, so the displayed
+      // shares still account for every verified score.
+      const summed = parsed.reduce((total, { percentage }) => {
+        return total + percentage;
+      }, 0);
+      expect(summed).toBeGreaterThan(99);
+      expect(summed).toBeLessThan(101);
+    });
+
+    test('spans the full content width above the usage chart', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      await page.waitForLoadState('networkidle');
+
+      const modChart = page
+        .locator('[data-testid="beatmap-mod-distribution-chart"]')
+        .first();
+      const usageChart = page
+        .locator('[data-testid="beatmap-usage-chart"]')
+        .first();
+      await expect(modChart).toBeVisible({ timeout: 15000 });
+      await expect(usageChart).toBeVisible({ timeout: 15000 });
+
+      const modBox = await modChart.boundingBox();
+      const usageBox = await usageChart.boundingBox();
+      expect(modBox).not.toBeNull();
+      expect(usageBox).not.toBeNull();
+
+      expect(modBox!.y + modBox!.height).toBeLessThanOrEqual(usageBox!.y);
+      expect(Math.abs(modBox!.width - usageBox!.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(modBox!.x - usageBox!.x)).toBeLessThanOrEqual(1);
+    });
+
+    test('keeps the mod distribution legend inside the card on mobile', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      await page.waitForLoadState('networkidle');
+
+      const modChart = page
+        .locator('[data-testid="beatmap-mod-distribution-chart"]')
+        .first();
+      await expect(modChart).toBeVisible({ timeout: 15000 });
+
+      const overflow = await modChart.evaluate(
+        (card) => card.scrollWidth - card.clientWidth
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
     });
 
     test('displays score rating chart with rendered content', async ({

@@ -49,7 +49,7 @@ The E2E suite needs its configured database, RabbitMQ, and auth fixtures.
 
 ## Verification
 
-Run the narrowest relevant test first, then lint, TypeScript, and Prettier. `bun run build` takes too much time, so avoid running this. Avoid running the full end-to-end test suite as it creates a build. Report the commands actually run and anything skipped. Create end-to-end tests and run them only when instructed.
+Run the narrowest relevant test first, then lint, TypeScript, and Prettier. `bun run build` takes too much time, so avoid running this. Avoid running the full end-to-end test suite as it creates a build. Report the commands actually run and anything skipped. Create end-to-end tests and run them only when instructed. Running the website and taking screenshots with playwright or other tooling is preferred as a way to check your own work before reporting a finished result.
 
 ## Safety
 

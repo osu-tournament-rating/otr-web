@@ -2,20 +2,14 @@
 
 import { ListFilter } from 'lucide-react';
 import * as React from 'react';
-import { Cell, Pie, PieChart } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
 import type { BeatmapModDistribution } from '@/lib/orpc/schema/beatmapStats';
-import { formatPercentage } from '@/lib/utils/chart';
+import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import {
+  BEATMAP_MOD_OTHER_LABEL,
   calculateBeatmapModDistribution,
-  filterBeatmapModDistribution,
+  collapseBeatmapModDistribution,
   getModColor,
 } from '@/lib/utils/mods';
 
@@ -24,32 +18,31 @@ interface BeatmapModDistributionChartProps {
   className?: string;
 }
 
-const chartConfig = {
-  count: {
-    label: 'Scores',
-    color: 'var(--foreground)',
-  },
-} satisfies ChartConfig;
-
 export default function BeatmapModDistributionChart({
   modStats,
   className,
 }: BeatmapModDistributionChartProps) {
-  const processedData = React.useMemo(() => {
-    if (modStats.length === 0) return [];
-
-    return filterBeatmapModDistribution(
-      calculateBeatmapModDistribution(modStats)
-    )
-      .slice(0, 6)
-      .map(({ label, mods, scoreCount, percentage }) => ({
+  const segments = React.useMemo(
+    () =>
+      collapseBeatmapModDistribution(
+        calculateBeatmapModDistribution(modStats)
+      ).map(({ label, mods, scoreCount, percentage }) => ({
         label,
-        count: scoreCount,
+        scoreCount,
         percentage,
-        percentageLabel: formatPercentage(percentage, 0),
-        fill: getModColor(mods),
-      }));
-  }, [modStats]);
+        percentageLabel: formatPercentage(percentage, 1),
+        fill:
+          label === BEATMAP_MOD_OTHER_LABEL
+            ? 'var(--muted-foreground)'
+            : getModColor(mods),
+      })),
+    [modStats]
+  );
+
+  const totalScoreCount = React.useMemo(
+    () => segments.reduce((total, segment) => total + segment.scoreCount, 0),
+    [segments]
+  );
 
   return (
     <Card
@@ -57,69 +50,62 @@ export default function BeatmapModDistributionChart({
       className={`gap-0 overflow-hidden py-0 ${className ?? ''}`}
     >
       <CardHeader className="h-[49px] border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <ListFilter
-            className="size-4 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <CardTitle>Mod distribution</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ListFilter
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <CardTitle>Mod distribution</CardTitle>
+          </div>
+          {segments.length > 0 && (
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {formatChartNumber(totalScoreCount)} scores
+            </span>
+          )}
         </div>
       </CardHeader>
 
-      {processedData.length === 0 ? (
-        <CardContent className="flex h-[282px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
+      {segments.length === 0 ? (
+        <CardContent className="flex h-[88px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
           No mod data available.
         </CardContent>
       ) : (
-        <CardContent className="flex h-[282px] items-center gap-2 px-2 py-4 sm:gap-4 sm:px-4">
-          <ChartContainer
-            config={chartConfig}
-            className="h-[250px] min-h-[250px] min-w-0 flex-1"
+        <CardContent className="space-y-3 px-4 py-4">
+          {/* The legend below carries the same values as text, so the bar is
+              presentational only. */}
+          <div
+            data-testid="beatmap-mod-distribution-bar"
+            className="flex h-7 w-full gap-[2px]"
+            aria-hidden="true"
           >
-            <PieChart accessibilityLayer>
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    nameKey="label"
-                    indicator="dot"
-                    className="font-sans"
-                  />
-                }
+            {segments.map((segment) => (
+              <div
+                key={segment.label}
+                // Flex growth keeps the 2px gaps from pushing the row past 100%.
+                className="h-full min-w-[3px] first:rounded-l-md last:rounded-r-md"
+                style={{
+                  flex: `${segment.percentage} 1 0`,
+                  backgroundColor: segment.fill,
+                }}
               />
-              <Pie
-                data={processedData}
-                dataKey="count"
-                nameKey="label"
-                innerRadius="45%"
-                outerRadius="72%"
-                paddingAngle={2}
-                stroke="var(--card)"
-                strokeWidth={2}
-                isAnimationActive={false}
-              >
-                {processedData.map((entry) => (
-                  <Cell key={entry.label} fill={entry.fill} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ChartContainer>
+            ))}
+          </div>
+
           <ul
-            aria-label="Mod distribution legend"
-            className="grid w-[7.5rem] shrink-0 content-center gap-2 text-xs sm:w-[8.5rem]"
+            aria-label="Mod distribution"
+            className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
           >
-            {processedData.map((entry) => (
-              <li
-                key={entry.label}
-                className="grid grid-cols-[0.5rem_minmax(0,1fr)_auto] items-center gap-2"
-              >
+            {segments.map((segment) => (
+              <li key={segment.label} className="flex items-center gap-1.5">
                 <span
                   className="size-2 rounded-[2px]"
-                  style={{ backgroundColor: entry.fill }}
+                  style={{ backgroundColor: segment.fill }}
                   aria-hidden="true"
                 />
-                <span className="truncate font-medium">{entry.label}</span>
+                <span className="font-medium">{segment.label}</span>
                 <span className="font-mono text-muted-foreground tabular-nums">
-                  {entry.percentageLabel}
+                  {segment.percentageLabel}
                 </span>
               </li>
             ))}

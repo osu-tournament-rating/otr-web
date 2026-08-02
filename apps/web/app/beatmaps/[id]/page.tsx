@@ -81,16 +81,15 @@ export default async function BeatmapPage({ params }: PageProps) {
         summary={stats.summary}
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-        <BeatmapUsageChart
-          data={stats.usageOverTime}
-          className="shadow-sm dark:shadow-none"
-        />
-        <BeatmapModDistributionChart
-          modStats={stats.modDistribution}
-          className="shadow-sm dark:shadow-none"
-        />
-      </div>
+      <BeatmapModDistributionChart
+        modStats={stats.modDistribution}
+        className="shadow-sm dark:shadow-none"
+      />
+
+      <BeatmapUsageChart
+        data={stats.usageOverTime}
+        className="shadow-sm dark:shadow-none"
+      />
 
       <BeatmapTournamentsList
         tournaments={stats.tournaments}

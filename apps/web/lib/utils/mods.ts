@@ -164,6 +164,42 @@ export function calculateBeatmapListModDistribution(
     );
 }
 
+export const BEATMAP_MOD_OTHER_LABEL = 'Other';
+
+/**
+ * Moves every combination below the display threshold into a single trailing
+ * "Other" slice so the chart still accounts for all verified scores.
+ */
+export function collapseBeatmapModDistribution(
+  distribution: BeatmapModDistributionEntry[],
+  minimumPercentage = BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE
+): BeatmapModDistributionEntry[] {
+  const displayed: BeatmapModDistributionEntry[] = [];
+  const collapsed: BeatmapModDistributionEntry[] = [];
+
+  for (const entry of distribution) {
+    (entry.percentage >= minimumPercentage ? displayed : collapsed).push(entry);
+  }
+
+  if (collapsed.length === 0) return displayed;
+
+  return [
+    ...displayed,
+    {
+      mods: Mods.None,
+      label: BEATMAP_MOD_OTHER_LABEL,
+      scoreCount: collapsed.reduce(
+        (total, { scoreCount }) => total + scoreCount,
+        0
+      ),
+      percentage: collapsed.reduce(
+        (total, { percentage }) => total + percentage,
+        0
+      ),
+    },
+  ];
+}
+
 export function filterBeatmapModDistribution(
   distribution: BeatmapModDistributionEntry[],
   minimumPercentage = BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE

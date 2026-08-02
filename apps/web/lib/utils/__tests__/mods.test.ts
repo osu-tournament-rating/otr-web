@@ -2,8 +2,10 @@ import { describe, expect, it } from 'bun:test';
 
 import { Mods } from '@otr/core/osu';
 import {
+  BEATMAP_MOD_OTHER_LABEL,
   calculateBeatmapListModDistribution,
   calculateBeatmapModDistribution,
+  collapseBeatmapModDistribution,
   deriveGameIsFreeMod,
   filterBeatmapModDistribution,
   getBeatmapModLabel,
@@ -62,6 +64,38 @@ describe('beatmap mod display helpers', () => {
         ])
       ).map(({ label }) => label)
     ).toEqual(['NM']);
+  });
+
+  it('collapses combinations below the threshold into a trailing Other slice', () => {
+    const distribution = collapseBeatmapModDistribution(
+      calculateBeatmapModDistribution([
+        { mods: Mods.None, scoreCount: 940 },
+        { mods: Mods.Hidden, scoreCount: 50 },
+        { mods: Mods.Hidden | Mods.DoubleTime | Mods.HardRock, scoreCount: 5 },
+        { mods: Mods.Flashlight, scoreCount: 4 },
+        { mods: Mods.Easy, scoreCount: 1 },
+      ])
+    );
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'NM', scoreCount: 940 },
+      { label: 'HD', scoreCount: 50 },
+      { label: BEATMAP_MOD_OTHER_LABEL, scoreCount: 10 },
+    ]);
+    expect(distribution[2].percentage).toBeCloseTo(1);
+  });
+
+  it('omits the Other slice when every combination meets the threshold', () => {
+    expect(
+      collapseBeatmapModDistribution(
+        calculateBeatmapModDistribution([
+          { mods: Mods.None, scoreCount: 90 },
+          { mods: Mods.Hidden, scoreCount: 10 },
+        ])
+      ).map(({ label }) => label)
+    ).toEqual(['NM', 'HD']);
   });
 
   it('returns no usage for empty or invalid counts', () => {
