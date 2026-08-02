@@ -26,6 +26,8 @@ export const BeatmapTournamentUsageSchema = z.object({
     isLazer: z.boolean(),
   }),
   gameCount: z.number().int().nonnegative(),
+  /** Verified scores set on this beatmap within the tournament. */
+  scoreCount: z.number().int().nonnegative(),
   mostCommonMod: z.number().int().nonnegative(),
   mostCommonModFreemod: z.boolean(),
   firstPlayedAt: z.string().nullable(),
@@ -62,6 +64,25 @@ export const BeatmapTopPerformerSchema = z.object({
   matchId: z.number().int().positive(),
   gameId: z.number().int().positive(),
   scoreId: z.number().int().positive(),
+  /** Tournament the score was set in. */
+  tournament: z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+    abbreviation: z.string().nullable(),
+  }),
+  /**
+   * The player's rating going into the match this score belongs to, so the row
+   * stays a historical record rather than tracking their current rating.
+   * Resolution is per match, not per score: every score a player set in the
+   * same match reports the same rating. Null when the processor has produced
+   * no rating adjustment for the match.
+   */
+  playerRating: z.number().nullable(),
+  /**
+   * Mean of those same pre-match ratings across every verified score in the
+   * game, i.e. the strength of the lobby at the moment the score was set.
+   */
+  lobbyAverageRating: z.number().nullable(),
 });
 
 export const BeatmapStatsSummarySchema = z.object({

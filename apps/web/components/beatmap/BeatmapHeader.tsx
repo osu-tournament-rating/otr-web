@@ -2,6 +2,7 @@
 
 import { Music2, Star, UserRound } from 'lucide-react';
 import Link from 'next/link';
+import type * as React from 'react';
 import { useEffect, useRef } from 'react';
 
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
@@ -11,7 +12,6 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
 import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
 import type {
-  BeatmapStatsSummary,
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
 } from '@/lib/orpc/schema/beatmapStats';
@@ -19,13 +19,11 @@ import type {
 interface BeatmapHeaderProps {
   beatmap: BeatmapWithDetails;
   relatedDifficulties: RelatedBeatmapDifficulty[];
-  summary: BeatmapStatsSummary;
 }
 
 export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
-  summary,
 }: BeatmapHeaderProps) {
   const creators = Array.from(
     new Map(
@@ -53,7 +51,7 @@ export default function BeatmapHeader({
           sizes="(max-width: 1050px) 100vw, 1050px"
           priority
           className="absolute inset-0"
-          imageClassName="scale-[1.01] saturate-75 transition-transform duration-700 group-hover:scale-[1.035]"
+          imageClassName="scale-[1.01] saturate-75 transition-transform duration-700 group-hover:scale-[1.0225]"
         />
         <div
           data-testid="beatmap-matte-overlay"
@@ -108,7 +106,7 @@ export default function BeatmapHeader({
         </div>
       </div>
 
-      <BeatmapBannerData beatmap={beatmap} summary={summary} />
+      <BeatmapBannerData beatmap={beatmap} />
 
       <DifficultyNavigator
         currentOsuId={beatmap.osuId}

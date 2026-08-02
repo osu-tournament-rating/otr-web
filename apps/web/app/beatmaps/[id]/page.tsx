@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { z } from 'zod';
 
+import BeatmapActivityCard from '@/components/beatmap/BeatmapActivityCard';
+import BeatmapAttributesCard from '@/components/beatmap/BeatmapAttributesCard';
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
-import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
-import BeatmapTournamentsList from '@/components/beatmap/BeatmapTournamentsList';
-import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
+import BeatmapRecordsCard from '@/components/beatmap/BeatmapRecordsCard';
 import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
   fetchOrpcOptional,
@@ -78,7 +78,6 @@ export default async function BeatmapPage({ params }: PageProps) {
       <BeatmapHeader
         beatmap={stats.beatmap}
         relatedDifficulties={stats.relatedDifficulties}
-        summary={stats.summary}
       />
 
       <BeatmapModDistributionChart
@@ -86,21 +85,23 @@ export default async function BeatmapPage({ params }: PageProps) {
         className="shadow-sm dark:shadow-none"
       />
 
-      <BeatmapUsageChart
-        data={stats.usageOverTime}
-        className="shadow-sm dark:shadow-none"
-      />
+      <div className="grid items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <div className="space-y-4 lg:sticky lg:top-20">
+          <BeatmapAttributesCard beatmap={stats.beatmap} />
+          <BeatmapActivityCard
+            data={stats.usageOverTime}
+            summary={stats.summary}
+            pools={stats.tournaments}
+          />
+        </div>
 
-      <BeatmapTournamentsList
-        tournaments={stats.tournaments}
-        beatmapOsuId={stats.beatmap.osuId}
-      />
-
-      <BeatmapTopPerformersTable
-        performers={stats.topPerformers}
-        ruleset={stats.beatmap.ruleset}
-        totalScoreCount={totalVerifiedScoreCount}
-      />
+        <BeatmapRecordsCard
+          pools={stats.tournaments}
+          performers={stats.topPerformers}
+          beatmapOsuId={stats.beatmap.osuId}
+          totalScoreCount={totalVerifiedScoreCount}
+        />
+      </div>
     </div>
   );
 }
