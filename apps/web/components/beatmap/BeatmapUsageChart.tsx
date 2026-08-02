@@ -21,7 +21,7 @@ interface BeatmapUsageChartProps {
 
 const chartConfig = {
   pooledCount: {
-    label: 'Pool records',
+    label: 'Pools',
     color: 'var(--chart-2)',
   },
   gameCount: {

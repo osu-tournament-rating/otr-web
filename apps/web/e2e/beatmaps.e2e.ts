@@ -1547,17 +1547,34 @@ test.describe('Beatmap Detail Page', () => {
 
       const banner = page.locator('[data-testid="beatmap-header"]:visible');
       await expect(
-        banner.getByRole('heading', { name: 'Tournament usage' })
-      ).toBeVisible({ timeout: 10000 });
-      const statsCard = banner.locator('[data-testid="beatmap-stats-card"]');
-      await expect(statsCard).toBeVisible({ timeout: 10000 });
+        banner.getByRole('heading', { name: 'Tournament evidence' })
+      ).toHaveCount(0);
       await expect(
-        statsCard.getByText(/^[\d,]+ games? across [\d,]+ tournaments?$/)
-      ).toBeVisible();
-      await expect(statsCard.getByText(/^Pooled [\d,]+ times?$/)).toBeVisible();
-      await expect(statsCard.getByText('Players', { exact: true })).toHaveCount(
-        0
-      );
+        banner.locator('[data-testid="beatmap-stats-card"]')
+      ).toHaveCount(0);
+
+      const essentials = banner.getByLabel('Beatmap essentials');
+      const pools = essentials.getByTestId('beatmap-pool-records');
+      const played = essentials.getByTestId('beatmap-played-tournaments');
+      const games = essentials.getByTestId('beatmap-games');
+      await expect(pools).toHaveAccessibleName(/[\d,]+ pool records/);
+      await expect(played).toHaveAccessibleName(/[\d,]+ tournaments played/);
+      await expect(games).toHaveAccessibleName(/[\d,]+ games played/);
+      await expect(pools.locator('svg.lucide-waves-ladder')).toBeVisible();
+
+      const [durationBox, poolsBox, playedBox, gamesBox] = await Promise.all([
+        essentials.locator('svg.lucide-clock-3').locator('..').boundingBox(),
+        pools.boundingBox(),
+        played.boundingBox(),
+        games.boundingBox(),
+      ]);
+      expect(durationBox).not.toBeNull();
+      expect(poolsBox).not.toBeNull();
+      expect(playedBox).not.toBeNull();
+      expect(gamesBox).not.toBeNull();
+      expect(poolsBox!.x).toBeGreaterThan(durationBox!.x);
+      expect(playedBox!.x).toBeGreaterThan(poolsBox!.x);
+      expect(gamesBox!.x).toBeGreaterThan(playedBox!.x);
     });
 
     test('displays usage chart with rendered content', async ({ page }) => {

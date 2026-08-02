@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { VerificationStatus } from '@otr/core/osu';
 import { z } from 'zod';
 
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
@@ -69,10 +68,6 @@ export async function generateMetadata({
 export default async function BeatmapPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(beatmapPageParamsSchema, await params);
   const stats = await fetchOrpcOrNotFound(() => getBeatmapStatsCached(id));
-  const verifiedPoolCount = stats.tournaments.filter(
-    ({ tournament }) =>
-      tournament.verificationStatus === VerificationStatus.Verified
-  ).length;
   const totalVerifiedScoreCount = stats.modDistribution.reduce(
     (total, distribution) => total + distribution.scoreCount,
     0
@@ -84,7 +79,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         beatmap={stats.beatmap}
         relatedDifficulties={stats.relatedDifficulties}
         summary={stats.summary}
-        verifiedPoolCount={verifiedPoolCount}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">

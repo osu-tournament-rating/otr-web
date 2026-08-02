@@ -20,14 +20,12 @@ interface BeatmapHeaderProps {
   beatmap: BeatmapWithDetails;
   relatedDifficulties: RelatedBeatmapDifficulty[];
   summary: BeatmapStatsSummary;
-  verifiedPoolCount: number;
 }
 
 export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
   summary,
-  verifiedPoolCount,
 }: BeatmapHeaderProps) {
   const creators = Array.from(
     new Map(
@@ -110,11 +108,7 @@ export default function BeatmapHeader({
         </div>
       </div>
 
-      <BeatmapBannerData
-        beatmap={beatmap}
-        summary={summary}
-        verifiedPoolCount={verifiedPoolCount}
-      />
+      <BeatmapBannerData beatmap={beatmap} summary={summary} />
 
       <DifficultyNavigator
         currentOsuId={beatmap.osuId}

@@ -62,6 +62,7 @@ export const getBeatmapStats = publicProcedure
         beatmapRow,
         creatorsRows,
         summaryRow,
+        totalPlayedSummaryRow,
         pooledTournamentCountRow,
         usageRows,
         tournamentRows,
@@ -161,6 +162,21 @@ export const getBeatmapStats = publicProcedure
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           ),
+        context.db
+          .select({
+            totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
+            totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
+          })
+          .from(schema.games)
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(eq(schema.games.beatmapId, beatmapId)),
         context.db
           .select({
             totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
@@ -505,6 +521,12 @@ export const getBeatmapStats = publicProcedure
         ),
         verifiedPlayedTournamentCount: Number(
           summaryRow[0]?.totalTournamentCount ?? 0
+        ),
+        totalPlayedGameCount: Number(
+          totalPlayedSummaryRow[0]?.totalGameCount ?? 0
+        ),
+        totalPlayedTournamentCount: Number(
+          totalPlayedSummaryRow[0]?.totalTournamentCount ?? 0
         ),
         totalPlayerCount: Number(summaryRow[0]?.totalPlayerCount ?? 0),
         firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,

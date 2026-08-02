@@ -68,6 +68,8 @@ export const BeatmapStatsSummarySchema = z.object({
   totalGameCount: z.number().int().nonnegative(),
   totalTournamentCount: z.number().int().nonnegative(),
   verifiedPlayedTournamentCount: z.number().int().nonnegative(),
+  totalPlayedGameCount: z.number().int().nonnegative(),
+  totalPlayedTournamentCount: z.number().int().nonnegative(),
   totalPlayerCount: z.number().int().nonnegative(),
   firstPlayedAt: z.string().nullable(),
   lastPlayedAt: z.string().nullable(),
