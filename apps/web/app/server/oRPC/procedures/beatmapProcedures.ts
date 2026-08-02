@@ -585,9 +585,18 @@ export const getBeatmapStats = publicProcedure
       if (allQuarters.size > 0) {
         const sortedQuarters = Array.from(allQuarters).sort();
         const [startYear, startQ] = parseQuarter(sortedQuarters[0]);
-        const [endYear, endQ] = parseQuarter(
+        const [lastYear, lastQ] = parseQuarter(
           sortedQuarters[sortedQuarters.length - 1]
         );
+
+        // Always run the series through the current quarter so idle periods
+        // after the last recorded usage remain visible as empty bars.
+        const [currentYear, currentQ] = parseQuarter(getQuarterKey(new Date()));
+        const [endYear, endQ] =
+          currentYear > lastYear ||
+          (currentYear === lastYear && currentQ > lastQ)
+            ? [currentYear, currentQ]
+            : [lastYear, lastQ];
 
         let year = startYear;
         let q = startQ;
