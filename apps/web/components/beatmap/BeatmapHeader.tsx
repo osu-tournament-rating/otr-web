@@ -3,7 +3,9 @@
 import { Music2, Star, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
+
+import { Ruleset } from '@otr/core/osu';
 
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
@@ -143,76 +145,98 @@ function DifficultyNavigator({
 
   if (difficulties.length === 0) return null;
 
+  const difficultyGroups = Array.from(
+    difficulties
+      .reduce((groups, difficulty) => {
+        const group = groups.get(difficulty.ruleset) ?? [];
+        group.push(difficulty);
+        return groups.set(difficulty.ruleset, group);
+      }, new Map<Ruleset, RelatedBeatmapDifficulty[]>())
+      .entries()
+  ).sort(([rulesetA], [rulesetB]) => rulesetA - rulesetB);
+
+  const renderDifficulty = (difficulty: RelatedBeatmapDifficulty) => {
+    const isCurrent = difficulty.osuId === currentOsuId;
+    const ruleset = getBeatmapDisplayRuleset(
+      difficulty.ruleset,
+      difficulty.diffName
+    );
+    const formattedRating = difficulty.sr.toFixed(2);
+    const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
+    const difficultyIcon = (
+      <RulesetIcon
+        ruleset={ruleset}
+        className="size-5 shrink-0 fill-current [&_path]:fill-current"
+        style={{ color: getStarRatingIconColor(difficulty.sr) }}
+        aria-hidden="true"
+      />
+    );
+
+    if (isCurrent) {
+      return (
+        <Link
+          key={difficulty.osuId}
+          data-testid={`related-difficulty-${difficulty.osuId}`}
+          href={`/beatmaps/${difficulty.osuId}`}
+          prefetch={false}
+          aria-current="page"
+          aria-label={accessibleLabel}
+          className="flex min-h-10 max-w-72 min-w-52 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
+        >
+          {difficultyIcon}
+          <span className="min-w-0 flex-1 truncate font-medium">
+            {difficulty.diffName}
+          </span>
+          <span
+            data-testid="related-difficulty-star-rating"
+            className="inline-flex shrink-0 items-center gap-1 font-mono text-xs font-semibold text-foreground tabular-nums"
+          >
+            <Star className="size-3.5 fill-current" aria-hidden="true" />
+            {formattedRating}
+          </span>
+        </Link>
+      );
+    }
+
+    return (
+      <SimpleTooltip
+        key={difficulty.osuId}
+        content={
+          <span>
+            {difficulty.diffName} · {formattedRating} stars
+          </span>
+        }
+      >
+        <Link
+          data-testid={`related-difficulty-${difficulty.osuId}`}
+          href={`/beatmaps/${difficulty.osuId}`}
+          prefetch={false}
+          aria-label={accessibleLabel}
+          className="flex size-10 shrink-0 snap-start items-center justify-center rounded-lg border bg-background transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40 dark:hover:bg-secondary/60"
+        >
+          {difficultyIcon}
+        </Link>
+      </SimpleTooltip>
+    );
+  };
+
   return (
     <nav aria-label="Beatmapset difficulties" className="border-t">
       <div
         ref={scrollerRef}
         className="flex snap-x gap-2 overflow-x-auto p-3 sm:px-4"
       >
-        {difficulties.map((difficulty) => {
-          const isCurrent = difficulty.osuId === currentOsuId;
-          const ruleset = getBeatmapDisplayRuleset(
-            difficulty.ruleset,
-            difficulty.diffName
-          );
-          const formattedRating = difficulty.sr.toFixed(2);
-          const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
-          const difficultyIcon = (
-            <RulesetIcon
-              ruleset={ruleset}
-              className="size-5 shrink-0 fill-current [&_path]:fill-current"
-              style={{ color: getStarRatingIconColor(difficulty.sr) }}
-              aria-hidden="true"
-            />
-          );
-
-          if (isCurrent) {
-            return (
-              <Link
-                key={difficulty.osuId}
-                data-testid={`related-difficulty-${difficulty.osuId}`}
-                href={`/beatmaps/${difficulty.osuId}`}
-                prefetch={false}
-                aria-current="page"
-                aria-label={accessibleLabel}
-                className="flex min-h-10 max-w-72 min-w-52 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
-              >
-                {difficultyIcon}
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {difficulty.diffName}
-                </span>
-                <span
-                  data-testid="related-difficulty-star-rating"
-                  className="inline-flex shrink-0 items-center gap-1 font-mono text-xs font-semibold text-foreground tabular-nums"
-                >
-                  <Star className="size-3.5 fill-current" aria-hidden="true" />
-                  {formattedRating}
-                </span>
-              </Link>
-            );
-          }
-
-          return (
-            <SimpleTooltip
-              key={difficulty.osuId}
-              content={
-                <span>
-                  {difficulty.diffName} · {formattedRating} stars
-                </span>
-              }
-            >
-              <Link
-                data-testid={`related-difficulty-${difficulty.osuId}`}
-                href={`/beatmaps/${difficulty.osuId}`}
-                prefetch={false}
-                aria-label={accessibleLabel}
-                className="flex size-10 shrink-0 snap-start items-center justify-center rounded-lg border bg-background transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40 dark:hover:bg-secondary/60"
-              >
-                {difficultyIcon}
-              </Link>
-            </SimpleTooltip>
-          );
-        })}
+        {difficultyGroups.map(([ruleset, groupDifficulties], groupIndex) => (
+          <Fragment key={ruleset}>
+            {groupIndex > 0 && (
+              <div
+                aria-hidden="true"
+                className="w-px shrink-0 self-stretch bg-border"
+              />
+            )}
+            {groupDifficulties.map(renderDifficulty)}
+          </Fragment>
+        ))}
       </div>
     </nav>
   );

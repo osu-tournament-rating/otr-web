@@ -14,7 +14,6 @@ import {
 } from '@/components/beatmap/BeatmapSection';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { sortPoolsByDate, sortPoolsByGames } from '@/lib/beatmaps/records';
 import type {
   BeatmapTopPerformer,
@@ -94,20 +93,15 @@ export default function BeatmapRecordsCard({
           ) : (
             <>
               <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-2">
-                <ToggleGroup
-                  type="single"
-                  size="sm"
+                <Tabs
                   value={sort}
-                  onValueChange={(value) => value && setSort(value as PoolSort)}
-                  aria-label="Sort pool records"
+                  onValueChange={(value) => setSort(value as PoolSort)}
                 >
-                  <ToggleGroupItem value="played" className="text-xs">
-                    Most played
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="recent" className="text-xs">
-                    Most recent
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                  <TabsList aria-label="Sort pool records">
+                    <TabsTrigger value="played">Most played</TabsTrigger>
+                    <TabsTrigger value="recent">Most recent</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <div aria-hidden className="flex items-center gap-3">
                   <Eyebrow className={POOL_COLUMN_CLASSES.mod}>Mod</Eyebrow>
                   <Eyebrow
