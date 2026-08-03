@@ -10,20 +10,21 @@ import {
 } from 'react';
 
 import {
+  DEFAULT_PREVIEW_VOLUME,
+  clampPreviewVolume,
   normalizeAudioPreviewTrack,
   type AudioPreviewSource,
   type AudioPreviewTrack,
 } from '@/lib/audio/preview';
 
 const VOLUME_STORAGE_KEY = 'otr-audio-player-volume';
-const DEFAULT_VOLUME = 0.25;
 
 function getStoredVolume(): number {
-  if (typeof window === 'undefined') return DEFAULT_VOLUME;
+  if (typeof window === 'undefined') return DEFAULT_PREVIEW_VOLUME;
   const stored = localStorage.getItem(VOLUME_STORAGE_KEY);
-  if (stored === null) return DEFAULT_VOLUME;
-  const parsed = parseFloat(stored);
-  return isNaN(parsed) ? DEFAULT_VOLUME : Math.max(0, Math.min(1, parsed));
+  if (stored === null) return DEFAULT_PREVIEW_VOLUME;
+
+  return clampPreviewVolume(parseFloat(stored));
 }
 
 export interface AudioPlayerState {
@@ -50,7 +51,7 @@ interface AudioPlayerContextType {
 const initialState: AudioPlayerState = {
   currentlyPlaying: null,
   currentTrack: null,
-  volume: DEFAULT_VOLUME,
+  volume: DEFAULT_PREVIEW_VOLUME,
   isLoading: false,
   isPlaying: false,
   currentTime: 0,
@@ -256,7 +257,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const setVolume = useCallback((volume: number) => {
-    const safeVolume = Math.max(0, Math.min(1, volume));
+    const safeVolume = clampPreviewVolume(volume);
     if (audioRef.current) {
       audioRef.current.volume = safeVolume;
     }

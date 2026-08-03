@@ -20,7 +20,7 @@ const LOBBY_RATING_HINT = 'Average pre-match rating across the lobby';
  * stacked row on phones.
  */
 const SCORE_GRID =
-  'grid grid-cols-[1.5rem_minmax(0,1.1fr)_2.75rem_6.25rem_3.25rem_2.75rem_2.75rem_minmax(0,1fr)_4.5rem] items-center gap-2';
+  'grid grid-cols-[1.5rem_minmax(0,1.1fr)_2.75rem_6.25rem_3.25rem_2.75rem_2.75rem_minmax(0,1fr)_5.5rem] items-center gap-2';
 
 /** The highest verified scores recorded on a beatmap, as a historical record. */
 export default function BeatmapScoresTable({
@@ -35,7 +35,7 @@ export default function BeatmapScoresTable({
   return (
     <>
       <div className="hidden overflow-x-auto sm:block">
-        <div className="min-w-[44rem]">
+        <div className="min-w-[45rem]">
           <div
             aria-hidden
             className={cn('border-b bg-muted/20 px-4 py-2', SCORE_GRID)}
@@ -143,7 +143,7 @@ export default function BeatmapScoresTable({
                 <time
                   dateTime={performer.playedAt ?? undefined}
                   data-testid="beatmap-top-play-date"
-                  className="text-right font-mono text-[11px] text-muted-foreground tabular-nums"
+                  className="text-right font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
                 >
                   {performer.playedAt
                     ? formatUTCDate(new Date(performer.playedAt))
@@ -223,7 +223,7 @@ export default function BeatmapScoresTable({
               </Link>
               <time
                 dateTime={performer.playedAt ?? undefined}
-                className="ml-auto shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums"
+                className="ml-auto shrink-0 font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
               >
                 {performer.playedAt
                   ? formatUTCDate(new Date(performer.playedAt))

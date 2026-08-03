@@ -15,16 +15,19 @@ import { useEffect, useRef } from 'react';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { formatPreviewTime } from '@/lib/audio/preview';
+import {
+  DEFAULT_PREVIEW_VOLUME,
+  formatPreviewTime,
+  sliderPercentToVolume,
+  volumeToSliderPercent,
+} from '@/lib/audio/preview';
 import { useAudioPlayer } from '@/lib/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
-
-const DEFAULT_UNMUTED_VOLUME = 0.25;
 
 export default function AudioPlayerControls() {
   const { state, play, pause, close, setVolume, seek } = useAudioPlayer();
   const lastAudibleVolume = useRef(
-    state.volume > 0 ? state.volume : DEFAULT_UNMUTED_VOLUME
+    state.volume > 0 ? state.volume : DEFAULT_PREVIEW_VOLUME
   );
 
   useEffect(() => {
@@ -63,7 +66,8 @@ export default function AudioPlayerControls() {
       : state.error
         ? 'Retry beatmap preview'
         : 'Play beatmap preview';
-  const VolumeIcon = isMuted ? VolumeX : state.volume < 0.5 ? Volume1 : Volume2;
+  const volumePercent = volumeToSliderPercent(state.volume);
+  const VolumeIcon = isMuted ? VolumeX : volumePercent < 50 ? Volume1 : Volume2;
 
   const toggleMute = () => {
     setVolume(isMuted ? lastAudibleVolume.current : 0);
@@ -167,13 +171,15 @@ export default function AudioPlayerControls() {
             <Slider
               data-testid="audio-transport-volume"
               className="w-14 flex-none sm:w-20"
-              value={[state.volume * 100]}
+              value={[volumePercent]}
               max={100}
               step={1}
-              onValueChange={(value) => setVolume(value[0] / 100)}
+              onValueChange={(value) =>
+                setVolume(sliderPercentToVolume(value[0]))
+              }
               getThumbProps={() => ({
                 'aria-label': 'Preview volume',
-                'aria-valuetext': `${Math.round(state.volume * 100)} percent`,
+                'aria-valuetext': `${volumePercent} percent`,
               })}
             />
           </div>
