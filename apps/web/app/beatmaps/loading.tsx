@@ -1,6 +1,8 @@
 import { Music } from 'lucide-react';
 
+import { BEATMAP_CARD_GRID_CLASS } from '@/components/beatmaps/list/layout';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function BeatmapsLoading() {
   return (
@@ -17,7 +19,7 @@ export default function BeatmapsLoading() {
       <div
         role="status"
         aria-label="Loading beatmaps"
-        className="overflow-hidden rounded-xl border"
+        className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
       >
         <div className="space-y-3 border-b bg-muted/20 p-4">
           <div className="flex gap-2">
@@ -29,7 +31,12 @@ export default function BeatmapsLoading() {
           </div>
           <Skeleton className="h-8 w-96 max-w-full" />
         </div>
-        <div className="grid grid-cols-1 gap-3 bg-muted/10 p-3 md:grid-cols-2 md:gap-4 md:p-4 xl:grid-cols-3">
+        <div
+          className={cn(
+            BEATMAP_CARD_GRID_CLASS,
+            'bg-muted/10 dark:bg-background/20'
+          )}
+        >
           {Array.from({ length: 6 }, (_, index) => (
             <div
               key={index}

@@ -16,7 +16,9 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
+import { BEATMAP_CARD_GRID_CLASS } from '@/components/beatmaps/list/layout';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import { Button } from '@/components/ui/button';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import {
   getBeatmapDisplayRuleset,
@@ -68,12 +70,9 @@ export default function BeatmapListTable({
           {isFiltered ? 'Try fewer filters.' : 'No tournament maps are listed.'}
         </p>
         {isFiltered && (
-          <Link
-            href="/beatmaps"
-            className="mt-5 inline-flex h-9 items-center rounded-md border bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            Clear filters
-          </Link>
+          <Button asChild variant="outline" className="mt-5">
+            <Link href="/beatmaps">Clear filters</Link>
+          </Button>
         )}
       </div>
     );
@@ -89,7 +88,7 @@ export default function BeatmapListTable({
       data-layout={layout}
       className={cn(
         isCardLayout
-          ? 'grid grid-cols-1 gap-3 bg-muted/10 p-3 md:grid-cols-2 md:gap-4 md:p-4 xl:grid-cols-3 dark:bg-background/20'
+          ? cn(BEATMAP_CARD_GRID_CLASS, 'bg-muted/10 dark:bg-background/20')
           : 'divide-y'
       )}
     >
@@ -274,7 +273,7 @@ export default function BeatmapListTable({
                     ariaLabel={`${beatmap.sr.toFixed(2)} star rating`}
                   />
                   <Metric
-                    className="w-14"
+                    className={cn(!isCardLayout && 'w-14')}
                     testId="beatmap-bpm"
                     icon={
                       <Activity
@@ -286,7 +285,7 @@ export default function BeatmapListTable({
                     ariaLabel={`${Math.round(beatmap.bpm)} BPM`}
                   />
                   <Metric
-                    className="w-17"
+                    className={cn(!isCardLayout && 'w-17')}
                     testId="beatmap-duration"
                     icon={
                       <Clock3 className="size-4 shrink-0" aria-hidden="true" />
@@ -312,7 +311,7 @@ export default function BeatmapListTable({
                       />
                     }
                     value={beatmap.verifiedGameCount.toLocaleString()}
-                    valueClassName="min-w-[3ch]"
+                    valueClassName={cn(!isCardLayout && 'min-w-[3ch]')}
                     ariaLabel={`${beatmap.verifiedGameCount.toLocaleString()} verified games`}
                     testId="beatmap-games-count"
                   />
@@ -321,11 +320,16 @@ export default function BeatmapListTable({
                       <Trophy className="size-4 shrink-0" aria-hidden="true" />
                     }
                     value={beatmap.verifiedTournamentCount.toLocaleString()}
-                    valueClassName="min-w-[3ch]"
+                    valueClassName={cn(!isCardLayout && 'min-w-[3ch]')}
                     ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString()} verified tournaments`}
                     testId="beatmap-tournaments-count"
                   />
-                  {showMods ? <TopModsBreakdown mods={topMods} /> : null}
+                  {showMods ? (
+                    <TopModsBreakdown
+                      mods={topMods}
+                      fixedWidth={!isCardLayout}
+                    />
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -338,14 +342,20 @@ export default function BeatmapListTable({
 
 function TopModsBreakdown({
   mods,
+  fixedWidth = false,
 }: {
   mods: NonNullable<BeatmapListItem['topMods']>;
+  /** Reserve a fixed slot so mods line up across compact-layout rows. */
+  fixedWidth?: boolean;
 }) {
   if (mods.length === 0) {
     return (
       <div
         data-testid="beatmap-mods-summary"
-        className="inline-flex w-52 items-center gap-1.5 whitespace-nowrap"
+        className={cn(
+          'inline-flex items-center gap-1.5 whitespace-nowrap',
+          fixedWidth && 'w-52'
+        )}
       >
         <Layers className="size-4 shrink-0" aria-hidden="true" />
         <span className="text-[11px] sm:text-xs">No mod data</span>
@@ -358,7 +368,10 @@ function TopModsBreakdown({
   return (
     <div
       data-testid="beatmap-mods-summary"
-      className="inline-flex w-52 min-w-0 items-center gap-1.5"
+      className={cn(
+        'inline-flex min-w-0 items-center gap-1.5',
+        fixedWidth && 'w-52'
+      )}
     >
       <Layers className="size-4 shrink-0" aria-hidden="true" />
       <ul

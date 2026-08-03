@@ -48,12 +48,6 @@ export const BeatmapModDistributionSchema = z.object({
   percentage: z.number().min(0).max(100),
 });
 
-export const BeatmapScoreRatingPointSchema = z.object({
-  score: z.number().int().nonnegative(),
-  playerRating: z.number(),
-  mods: z.number().int().nonnegative(),
-});
-
 export const BeatmapTopPerformerSchema = z.object({
   player: PlayerCompactSchema,
   score: z.number().int().nonnegative(),
@@ -70,25 +64,11 @@ export const BeatmapTopPerformerSchema = z.object({
     name: z.string(),
     abbreviation: z.string().nullable(),
   }),
-  /**
-   * The player's rating going into the match this score belongs to, so the row
-   * stays a historical record rather than tracking their current rating.
-   * Resolution is per match, not per score: every score a player set in the
-   * same match reports the same rating. Null when the processor has produced
-   * no rating adjustment for the match.
-   */
-  playerRating: z.number().nullable(),
-  /**
-   * Mean of those same pre-match ratings across every verified score in the
-   * game, i.e. the strength of the lobby at the moment the score was set.
-   */
-  lobbyAverageRating: z.number().nullable(),
 });
 
 export const BeatmapStatsSummarySchema = z.object({
   totalGameCount: z.number().int().nonnegative(),
   totalTournamentCount: z.number().int().nonnegative(),
-  verifiedPlayedTournamentCount: z.number().int().nonnegative(),
   totalPlayedGameCount: z.number().int().nonnegative(),
   totalPlayedTournamentCount: z.number().int().nonnegative(),
   totalPlayerCount: z.number().int().nonnegative(),
@@ -127,7 +107,6 @@ export const BeatmapStatsResponseSchema = z.object({
   usageOverTime: z.array(BeatmapUsagePointSchema),
   tournaments: z.array(BeatmapTournamentUsageSchema),
   modDistribution: z.array(BeatmapModDistributionSchema),
-  scoreRatingData: z.array(BeatmapScoreRatingPointSchema),
   topPerformers: z.array(BeatmapTopPerformerSchema),
 });
 
@@ -164,9 +143,6 @@ export type BeatmapTournamentUsage = z.infer<
 export type BeatmapUsagePoint = z.infer<typeof BeatmapUsagePointSchema>;
 export type BeatmapModDistribution = z.infer<
   typeof BeatmapModDistributionSchema
->;
-export type BeatmapScoreRatingPoint = z.infer<
-  typeof BeatmapScoreRatingPointSchema
 >;
 export type BeatmapTopPerformer = z.infer<typeof BeatmapTopPerformerSchema>;
 export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;

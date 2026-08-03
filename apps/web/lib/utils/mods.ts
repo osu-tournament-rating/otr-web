@@ -18,10 +18,18 @@ export const BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE = 20;
 
 /**
  * Removes score-level modifiers that the beatmap distribution treats as
- * incidental rather than distinct mod combinations.
+ * incidental rather than distinct mod combinations. Nightcore folds into
+ * DoubleTime: NC is DT with a pitch shift, so "DTNC" is never a real
+ * combination of its own.
  */
 export function normalizeBeatmapDisplayMods(mods: number): Mods {
-  return (mods & ~Mods.NoFail & ~Mods.SpunOut) as Mods;
+  let normalized = mods & ~Mods.NoFail & ~Mods.SpunOut;
+
+  if (normalized & Mods.Nightcore) {
+    normalized = (normalized | Mods.DoubleTime) & ~Mods.Nightcore;
+  }
+
+  return normalized as Mods;
 }
 
 export function getBeatmapModLabel(mods: number): string {
@@ -32,9 +40,10 @@ export function getBeatmapModLabel(mods: number): string {
   return label || 'NM';
 }
 
-/** Aggregates grouped score counts using the beatmap chart's display rules. */
-export function calculateBeatmapModDistribution(
-  rows: BeatmapModScoreCount[]
+/** Buckets grouped score counts by label and converts them to percentages. */
+function aggregateModDistribution(
+  rows: BeatmapModScoreCount[],
+  categorize: (mods: number) => { mods: Mods; label: string }
 ): BeatmapModDistributionEntry[] {
   const distributionByLabel = new Map<
     string,
@@ -45,13 +54,12 @@ export function calculateBeatmapModDistribution(
   for (const row of rows) {
     if (!Number.isFinite(row.scoreCount) || row.scoreCount <= 0) continue;
 
-    const mods = normalizeBeatmapDisplayMods(row.mods);
-    const label = getBeatmapModLabel(mods);
-    const existing = distributionByLabel.get(label);
+    const category = categorize(row.mods);
+    const existing = distributionByLabel.get(category.label);
 
-    distributionByLabel.set(label, {
-      mods: existing?.mods ?? mods,
-      label,
+    distributionByLabel.set(category.label, {
+      mods: existing?.mods ?? category.mods,
+      label: category.label,
       scoreCount: (existing?.scoreCount ?? 0) + row.scoreCount,
     });
     totalScoreCount += row.scoreCount;
@@ -71,6 +79,16 @@ export function calculateBeatmapModDistribution(
     );
 }
 
+/** Aggregates grouped score counts using the beatmap chart's display rules. */
+export function calculateBeatmapModDistribution(
+  rows: BeatmapModScoreCount[]
+): BeatmapModDistributionEntry[] {
+  return aggregateModDistribution(rows, (rawMods) => {
+    const mods = normalizeBeatmapDisplayMods(rawMods);
+    return { mods, label: getBeatmapModLabel(mods) };
+  });
+}
+
 /**
  * Collapses a score's mods into the broad category used by the beatmap list.
  * This intentionally does not change the exact-combination rules used by the
@@ -80,11 +98,7 @@ export function getBeatmapListModCategory(mods: number): {
   mods: Mods;
   label: string;
 } {
-  let normalizedMods = normalizeBeatmapDisplayMods(mods);
-
-  if (normalizedMods & Mods.Nightcore) {
-    normalizedMods = (normalizedMods | Mods.DoubleTime) & ~Mods.Nightcore;
-  }
+  const normalizedMods = normalizeBeatmapDisplayMods(mods);
 
   const hasDoubleTime = Boolean(normalizedMods & Mods.DoubleTime);
   const hasEasy = Boolean(normalizedMods & Mods.Easy);
@@ -131,37 +145,7 @@ export function getBeatmapListModCategory(mods: number): {
 export function calculateBeatmapListModDistribution(
   rows: BeatmapModScoreCount[]
 ): BeatmapModDistributionEntry[] {
-  const distributionByLabel = new Map<
-    string,
-    Omit<BeatmapModDistributionEntry, 'percentage'>
-  >();
-  let totalScoreCount = 0;
-
-  for (const row of rows) {
-    if (!Number.isFinite(row.scoreCount) || row.scoreCount <= 0) continue;
-
-    const category = getBeatmapListModCategory(row.mods);
-    const existing = distributionByLabel.get(category.label);
-
-    distributionByLabel.set(category.label, {
-      ...category,
-      scoreCount: (existing?.scoreCount ?? 0) + row.scoreCount,
-    });
-    totalScoreCount += row.scoreCount;
-  }
-
-  if (totalScoreCount === 0) return [];
-
-  return Array.from(distributionByLabel.values())
-    .map((entry) => ({
-      ...entry,
-      percentage: (entry.scoreCount / totalScoreCount) * 100,
-    }))
-    .sort(
-      (left, right) =>
-        right.scoreCount - left.scoreCount ||
-        left.label.localeCompare(right.label)
-    );
+  return aggregateModDistribution(rows, getBeatmapListModCategory);
 }
 
 export const BEATMAP_MOD_OTHER_LABEL = 'Other';
@@ -270,12 +254,11 @@ export function normalizedScore(mods: Mods, score: number): number {
  * @returns CSS color variable string
  */
 export function getModColor(mods: Mods) {
-  // Strip NF and SO
-  mods &= ~Mods.NoFail;
-  mods &= ~Mods.SpunOut;
+  // Strip incidental modifiers and fold NC into DT so raw score bitmasks
+  // (e.g. DT|NC) resolve to the same color as their display combination.
+  mods = normalizeBeatmapDisplayMods(mods);
 
   switch (mods) {
-    // Simply return the mod color for both arguments
     case Mods.None:
       return 'var(--chart-1)';
     case Mods.HardRock:
@@ -286,7 +269,7 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-flashlight)';
     case Mods.Easy:
       return 'var(--mod-easy)';
-    case Mods.DoubleTime || Mods.Nightcore:
+    case Mods.DoubleTime:
       return 'var(--mod-double-time)';
     case Mods.HalfTime:
       return 'var(--mod-half-time)';
@@ -304,22 +287,23 @@ export function getModColor(mods: Mods) {
       return 'var(--mod-sudden-death)';
     case Mods.TouchDevice:
       return 'var(--mod-touch-device)';
-    case Mods.Relax || Mods.Autoplay || Mods.Relax2:
+    case Mods.Relax:
+    case Mods.Autoplay:
+    case Mods.Relax2:
       return 'var(--mod-relax)';
     case Mods.Mirror:
       return 'var(--mod-mirror)';
-    case Mods.SpunOut:
-      return 'var(--mod-spun-out)';
     case Mods.Random:
       return 'var(--mod-random)';
-    case Mods.Key1 ||
-      Mods.Key2 ||
-      Mods.Key3 ||
-      Mods.Key5 ||
-      Mods.Key6 ||
-      Mods.Key7 ||
-      Mods.Key8 ||
-      Mods.Key9:
+    case Mods.Key1:
+    case Mods.Key2:
+    case Mods.Key3:
+    case Mods.Key4:
+    case Mods.Key5:
+    case Mods.Key6:
+    case Mods.Key7:
+    case Mods.Key8:
+    case Mods.Key9:
       return 'var(--mod-mania-key)';
     default:
       return 'var(--chart-1)';

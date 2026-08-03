@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { LazerBadge } from '@/components/badges/LazerBadge';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import BeatmapPoolGamesPanel from '@/components/beatmap/BeatmapPoolGamesPanel';
 import ModIconset from '@/components/icons/ModIconset';
@@ -13,6 +14,16 @@ import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatRankRange } from '@/lib/utils/number';
+
+/**
+ * Column widths shared with the pool-list header in BeatmapRecordsCard so the
+ * header captions stay aligned with every row's cells.
+ */
+export const POOL_COLUMN_CLASSES = {
+  mod: 'w-14',
+  games: 'w-22',
+  toggle: 'size-7',
+} as const;
 
 /** One tournament that pooled this beatmap, expandable into its games. */
 export default function BeatmapPoolRow({
@@ -44,7 +55,7 @@ export default function BeatmapPoolRow({
             <Link
               href={`/tournaments/${pool.tournament.id}`}
               prefetch={false}
-              className="inline-flex min-w-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="inline-flex min-w-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <span className="truncate">{pool.tournament.name}</span>
               <ArrowUpRight
@@ -64,8 +75,8 @@ export default function BeatmapPoolRow({
               />
             </span>
             {pool.tournament.isLazer && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                lazer
+              <span className="shrink-0">
+                <LazerBadge isLazer />
               </span>
             )}
           </div>
@@ -78,7 +89,7 @@ export default function BeatmapPoolRow({
         <div className="flex shrink-0 items-center gap-3">
           <div
             data-testid="beatmap-tournament-mod"
-            className="flex h-5 w-14 items-center"
+            className={cn('flex h-5 items-center', POOL_COLUMN_CLASSES.mod)}
           >
             <ModIconset
               mods={pool.mostCommonMod}
@@ -87,7 +98,12 @@ export default function BeatmapPoolRow({
               iconClassName="h-5"
             />
           </div>
-          <div className="flex w-[5.5rem] items-center justify-end gap-2">
+          <div
+            className={cn(
+              'flex items-center justify-end gap-2',
+              POOL_COLUMN_CLASSES.games
+            )}
+          >
             <span
               aria-hidden
               className="h-1.5 w-12 overflow-hidden rounded-full bg-muted"
@@ -118,7 +134,7 @@ export default function BeatmapPoolRow({
               aria-expanded={isOpen}
               aria-controls={panelId}
               onClick={() => setIsOpen((open) => !open)}
-              className="size-7"
+              className={POOL_COLUMN_CLASSES.toggle}
             >
               <ChevronDown
                 className={cn(
@@ -129,7 +145,7 @@ export default function BeatmapPoolRow({
               />
             </Button>
           ) : (
-            <span className="size-7" aria-hidden />
+            <span className={POOL_COLUMN_CLASSES.toggle} aria-hidden />
           )}
         </div>
       </div>

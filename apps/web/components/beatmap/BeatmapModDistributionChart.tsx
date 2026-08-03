@@ -3,7 +3,11 @@
 import { ListFilter } from 'lucide-react';
 import * as React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  EmptyState,
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
 import type { BeatmapModDistribution } from '@/lib/orpc/schema/beatmapStats';
 import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import {
@@ -45,33 +49,24 @@ export default function BeatmapModDistributionChart({
   );
 
   return (
-    <Card
+    <SectionCard
       data-testid="beatmap-mod-distribution-chart"
-      className={`gap-0 overflow-hidden py-0 ${className ?? ''}`}
+      className={className}
     >
-      <CardHeader className="border-b px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ListFilter
-              className="size-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <CardTitle className="leading-6">Mod distribution</CardTitle>
-          </div>
-          {segments.length > 0 && (
-            <span className="font-mono text-xs text-muted-foreground tabular-nums">
-              {formatChartNumber(totalScoreCount)} scores
-            </span>
-          )}
-        </div>
-      </CardHeader>
+      <SectionHeader
+        icon={ListFilter}
+        title="Mod distribution"
+        meta={
+          segments.length > 0
+            ? `${formatChartNumber(totalScoreCount)} scores`
+            : undefined
+        }
+      />
 
       {segments.length === 0 ? (
-        <CardContent className="flex h-[88px] items-center justify-center px-4 text-center text-sm text-muted-foreground">
-          No mod data available.
-        </CardContent>
+        <EmptyState>No mod data available.</EmptyState>
       ) : (
-        <CardContent className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-4 py-4">
           {/* The legend below carries the same values as text, so the bar is
               presentational only. */}
           <div
@@ -110,8 +105,8 @@ export default function BeatmapModDistributionChart({
               </li>
             ))}
           </ul>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </SectionCard>
   );
 }

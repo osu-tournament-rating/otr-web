@@ -52,9 +52,11 @@ import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapListSort } from '@/lib/orpc/schema/beatmapList';
 import { cn } from '@/lib/utils';
 import {
-  beatmapListFilterSchema,
-  defaultBeatmapListFilter,
-} from '@/lib/validation-schema';
+  buildBeatmapSearchParams,
+  beatmapListNumericKeys as numericKeys,
+  type BeatmapListNumericKey as NumericFilterKey,
+} from '@/lib/beatmaps/list-params';
+import type { beatmapListFilterSchema } from '@/lib/validation-schema';
 
 type FilterData = z.infer<typeof beatmapListFilterSchema>;
 type FilterPatch = Partial<FilterData>;
@@ -140,54 +142,6 @@ const attributeDefinitions = [
   { key: 'hp', label: 'HP', minKey: 'minHp', maxKey: 'maxHp', max: 10 },
 ] as const;
 
-const numericKeys = [
-  'minSr',
-  'maxSr',
-  'minBpm',
-  'maxBpm',
-  'minCs',
-  'maxCs',
-  'minAr',
-  'maxAr',
-  'minOd',
-  'maxOd',
-  'minHp',
-  'maxHp',
-  'minLength',
-  'maxLength',
-  'minGameCount',
-  'maxGameCount',
-  'minTournamentCount',
-  'maxTournamentCount',
-] as const;
-
-type NumericFilterKey = (typeof numericKeys)[number];
-
-export function buildBeatmapSearchParams(filter: FilterData): URLSearchParams {
-  const params = new URLSearchParams();
-
-  if (filter.page && filter.page > 1) params.set('page', String(filter.page));
-  if (filter.q?.trim()) params.set('q', filter.q.trim());
-  if (filter.ruleset !== undefined)
-    params.set('ruleset', String(filter.ruleset));
-
-  for (const key of numericKeys) {
-    const value = filter[key];
-    if (value !== undefined && Number.isFinite(value)) {
-      params.set(key, String(value));
-    }
-  }
-
-  if (filter.sort !== defaultBeatmapListFilter.sort) {
-    params.set('sort', filter.sort);
-  }
-  if (filter.descending !== defaultBeatmapListFilter.descending) {
-    params.set('descending', String(filter.descending));
-  }
-
-  return params;
-}
-
 function countSheetFilters(filter: FilterData): number {
   return (
     (filter.ruleset === undefined ? 0 : 1) +
@@ -226,7 +180,13 @@ export default function BeatmapListFilter({
       const params = buildBeatmapSearchParams({ ...next, page: undefined });
       const nextPath = params.size ? `${pathname}?${params}` : pathname;
       const currentPath = window.location.pathname + window.location.search;
-      if (nextPath !== currentPath) router.push(nextPath, { scroll: false });
+      if (nextPath !== currentPath) {
+        router.push(nextPath, { scroll: false });
+      } else {
+        // The normalized URL is unchanged (e.g. trailing whitespace in the
+        // query), so no prop change will arrive to clear the spinner.
+        setIsSearching(false);
+      }
     },
     [pathname, router]
   );

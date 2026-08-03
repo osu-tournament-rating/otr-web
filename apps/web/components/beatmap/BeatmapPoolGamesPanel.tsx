@@ -18,7 +18,14 @@ const PLAYED_HINT = 'When the match was played';
 const LOBBY_HINT = 'Average pre-match rating across the lobby';
 const AVG_SCORE_HINT = 'Average score set on this map in the game';
 
-/** Match, date, and mod lead the row; lobby strength and score close it. */
+/**
+ * Header and rows render from this one template so the captions can never
+ * drift out of alignment with the cells. Each row is a single link to its
+ * game, which rules out a semantic `ui/table` here (a `<tr>` cannot be an
+ * anchor), so the columns are sized explicitly instead:
+ * phones — match name | lobby rating (5.5rem) | avg score (6.5rem);
+ * sm+ adds played date (6.5rem) and mod icons (3.5rem), lobby tightens to 6rem.
+ */
 const GAME_GRID =
   'grid grid-cols-[minmax(0,1fr)_5.5rem_6.5rem] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_3.5rem_6rem_6.5rem]';
 

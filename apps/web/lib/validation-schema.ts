@@ -207,28 +207,40 @@ export const defaultBeatmapListFilter = {
   descending: true,
 };
 
+// Every field carries .catch so junk or out-of-range URL params degrade to
+// their defaults instead of crashing the page with a ZodError.
 export const beatmapListFilterSchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
   q: z.string().catch(''),
-  ruleset: z.coerce.number().int().min(0).max(5).optional(),
-  minSr: z.coerce.number().min(0).max(15).optional(),
-  maxSr: z.coerce.number().min(0).max(15).optional(),
-  minBpm: z.coerce.number().min(0).optional(),
-  maxBpm: z.coerce.number().min(0).optional(),
-  minCs: z.coerce.number().min(0).max(10).optional(),
-  maxCs: z.coerce.number().min(0).max(10).optional(),
-  minAr: z.coerce.number().min(0).max(11).optional(),
-  maxAr: z.coerce.number().min(0).max(11).optional(),
-  minOd: z.coerce.number().min(0).max(11).optional(),
-  maxOd: z.coerce.number().min(0).max(11).optional(),
-  minHp: z.coerce.number().min(0).max(10).optional(),
-  maxHp: z.coerce.number().min(0).max(10).optional(),
-  minLength: z.coerce.number().int().min(0).optional(),
-  maxLength: z.coerce.number().int().min(0).optional(),
-  minGameCount: z.coerce.number().int().min(0).optional(),
-  maxGameCount: z.coerce.number().int().min(0).optional(),
-  minTournamentCount: z.coerce.number().int().min(0).optional(),
-  maxTournamentCount: z.coerce.number().int().min(0).optional(),
+  ruleset: z.coerce.number().int().min(0).max(5).optional().catch(undefined),
+  minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+  maxSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+  minBpm: z.coerce.number().min(0).optional().catch(undefined),
+  maxBpm: z.coerce.number().min(0).optional().catch(undefined),
+  minCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minAr: z.coerce.number().min(0).max(11).optional().catch(undefined),
+  maxAr: z.coerce.number().min(0).max(11).optional().catch(undefined),
+  minOd: z.coerce.number().min(0).max(11).optional().catch(undefined),
+  maxOd: z.coerce.number().min(0).max(11).optional().catch(undefined),
+  minHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minLength: z.coerce.number().int().min(0).optional().catch(undefined),
+  maxLength: z.coerce.number().int().min(0).optional().catch(undefined),
+  minGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+  maxGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+  minTournamentCount: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .catch(undefined),
+  maxTournamentCount: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .catch(undefined),
   sort: z.enum(beatmapListSortValues).catch('gameCount'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });

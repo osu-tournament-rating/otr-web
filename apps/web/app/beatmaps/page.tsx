@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { Music } from 'lucide-react';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import BeatmapListContent from '@/components/beatmaps/list/BeatmapListContent';
@@ -9,9 +8,11 @@ import {
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
+  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { buildBeatmapListPath } from '@/lib/beatmaps/list-params';
 import { orpc } from '@/lib/orpc/orpc';
 import { beatmapListFilterSchema } from '@/lib/validation-schema';
 
@@ -21,45 +22,6 @@ export const metadata: Metadata = {
 };
 
 type FilterData = ReturnType<typeof beatmapListFilterSchema.parse>;
-
-function createUri(filter: FilterData, page: number): string {
-  const params = new URLSearchParams();
-
-  if (page > 1) params.set('page', String(page));
-  if (filter.q) params.set('q', filter.q);
-  if (filter.ruleset !== undefined)
-    params.set('ruleset', String(filter.ruleset));
-
-  const numericKeys = [
-    'minSr',
-    'maxSr',
-    'minBpm',
-    'maxBpm',
-    'minCs',
-    'maxCs',
-    'minAr',
-    'maxAr',
-    'minOd',
-    'maxOd',
-    'minHp',
-    'maxHp',
-    'minLength',
-    'maxLength',
-    'minGameCount',
-    'maxGameCount',
-    'minTournamentCount',
-    'maxTournamentCount',
-  ] as const;
-
-  for (const key of numericKeys) {
-    if (filter[key] !== undefined) params.set(key, String(filter[key]));
-  }
-
-  if (filter.sort !== 'gameCount') params.set('sort', filter.sort);
-  if (!filter.descending) params.set('descending', 'false');
-
-  return `/beatmaps${params.size ? `?${params}` : ''}`;
-}
 
 function hasFilters(filter: FilterData): boolean {
   return Boolean(
@@ -104,7 +66,7 @@ export default async function Page(props: {
   });
 
   const lastPage = Math.max(1, data.totalPages);
-  if (data.page > lastPage) redirect(createUri(filter, lastPage));
+  if (data.page > lastPage) redirect(buildBeatmapListPath(filter, lastPage));
 
   return (
     <div className="container mx-auto px-4 py-6 sm:px-0 sm:py-0">
@@ -169,7 +131,7 @@ function BeatmapPagination({
         <PaginationItem>
           <PaginationPrevious
             data-testid="beatmap-pagination-prev"
-            href={createUri(filter, Math.max(1, currentPage - 1))}
+            href={buildBeatmapListPath(filter, Math.max(1, currentPage - 1))}
             aria-disabled={currentPage <= 1}
             className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
           />
@@ -177,12 +139,9 @@ function BeatmapPagination({
 
         {startPage > 1 && (
           <PaginationItem className="hidden sm:block">
-            <Link
-              href={createUri(filter, 1)}
-              className="flex size-9 items-center justify-center rounded-md text-sm hover:bg-accent"
-            >
+            <PaginationLink href={buildBeatmapListPath(filter, 1)}>
               1
-            </Link>
+            </PaginationLink>
           </PaginationItem>
         )}
         {startPage > 2 && (
@@ -193,15 +152,12 @@ function BeatmapPagination({
 
         {pages.map((page) => (
           <PaginationItem key={page} className="hidden sm:block">
-            <Link
-              href={createUri(filter, page)}
-              aria-current={page === currentPage ? 'page' : undefined}
-              className={`flex size-9 items-center justify-center rounded-md text-sm hover:bg-accent ${
-                page === currentPage ? 'bg-accent font-semibold' : ''
-              }`}
+            <PaginationLink
+              href={buildBeatmapListPath(filter, page)}
+              isActive={page === currentPage}
             >
               {page}
-            </Link>
+            </PaginationLink>
           </PaginationItem>
         ))}
 
@@ -219,19 +175,19 @@ function BeatmapPagination({
         )}
         {endPage < totalPages && (
           <PaginationItem className="hidden sm:block">
-            <Link
-              href={createUri(filter, totalPages)}
-              className="flex size-9 items-center justify-center rounded-md text-sm hover:bg-accent"
-            >
+            <PaginationLink href={buildBeatmapListPath(filter, totalPages)}>
               {totalPages}
-            </Link>
+            </PaginationLink>
           </PaginationItem>
         )}
 
         <PaginationItem>
           <PaginationNext
             data-testid="beatmap-pagination-next"
-            href={createUri(filter, Math.min(totalPages, currentPage + 1))}
+            href={buildBeatmapListPath(
+              filter,
+              Math.min(totalPages, currentPage + 1)
+            )}
             aria-disabled={currentPage >= totalPages}
             className={
               currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''

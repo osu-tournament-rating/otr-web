@@ -80,10 +80,7 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      <BeatmapModDistributionChart
-        modStats={stats.modDistribution}
-        className="shadow-sm dark:shadow-none"
-      />
+      <BeatmapModDistributionChart modStats={stats.modDistribution} />
 
       <div className="grid items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
         <div className="space-y-4 lg:sticky lg:top-20">

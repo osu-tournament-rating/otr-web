@@ -9,6 +9,7 @@ import {
   deriveGameIsFreeMod,
   filterBeatmapModDistribution,
   getBeatmapModLabel,
+  getModColor,
   getModForegroundColor,
   mostCommonDisplayMods,
   normalizeBeatmapDisplayMods,
@@ -26,6 +27,39 @@ describe('beatmap mod display helpers', () => {
     expect(getBeatmapModLabel(Mods.NoFail | Mods.Hidden | Mods.HardRock)).toBe(
       'HDHR'
     );
+  });
+
+  it('folds Nightcore into DoubleTime everywhere it is displayed', () => {
+    expect(normalizeBeatmapDisplayMods(Mods.DoubleTime | Mods.Nightcore)).toBe(
+      Mods.DoubleTime
+    );
+    expect(normalizeBeatmapDisplayMods(Mods.Nightcore)).toBe(Mods.DoubleTime);
+    expect(getBeatmapModLabel(Mods.DoubleTime | Mods.Nightcore)).toBe('DT');
+    expect(getBeatmapModLabel(Mods.Hidden | Mods.Nightcore)).toBe('HDDT');
+
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.DoubleTime, scoreCount: 10 },
+      { mods: Mods.DoubleTime | Mods.Nightcore, scoreCount: 5 },
+    ]);
+    expect(
+      distribution.map(({ mods, label, scoreCount }) => ({
+        mods,
+        label,
+        scoreCount,
+      }))
+    ).toEqual([{ mods: Mods.DoubleTime, label: 'DT', scoreCount: 15 }]);
+  });
+
+  it('colors Nightcore combinations like their DoubleTime equivalents', () => {
+    expect(getModColor(Mods.DoubleTime | Mods.Nightcore)).toBe(
+      'var(--mod-double-time)'
+    );
+    expect(getModColor(Mods.Nightcore)).toBe('var(--mod-double-time)');
+    expect(getModColor(Mods.Hidden | Mods.Nightcore)).toBe(
+      'var(--mod-hidden-double-time)'
+    );
+    expect(getModColor(Mods.Relax)).toBe('var(--mod-relax)');
+    expect(getModColor(Mods.Key7)).toBe('var(--mod-mania-key)');
   });
 
   it('aggregates score-derived combinations using the detail chart rules', () => {

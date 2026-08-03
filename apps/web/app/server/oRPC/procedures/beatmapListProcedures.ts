@@ -7,7 +7,6 @@ import {
   desc,
   eq,
   gte,
-  ilike,
   inArray,
   lte,
   sql,
@@ -28,8 +27,6 @@ import {
 } from '@/lib/utils/mods';
 import { publicProcedure } from './base';
 
-const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
 const DEFAULT_MAX_SR = 200;
 
 export const listBeatmaps = publicProcedure
@@ -43,11 +40,8 @@ export const listBeatmaps = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
-      const page = Math.max(input.page ?? 1, 1);
-      const pageSize = Math.max(
-        1,
-        Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
-      );
+      // BeatmapListRequestSchema already bounds and defaults these.
+      const { page, pageSize } = input;
       const offset = (page - 1) * pageSize;
 
       const filters: SQL<unknown>[] = [];
@@ -91,10 +85,17 @@ export const listBeatmaps = publicProcedure
         filters.push(gte(schema.beatmaps.totalLength, input.minLength));
       if (input.maxLength !== undefined)
         filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
-      if (input.ruleset === Ruleset.Mania4k) {
-        filters.push(ilike(schema.beatmaps.diffName, '%[4K]%'));
-      } else if (input.ruleset === Ruleset.Mania7k) {
-        filters.push(ilike(schema.beatmaps.diffName, '%[7K]%'));
+      if (
+        input.ruleset === Ruleset.Mania4k ||
+        input.ruleset === Ruleset.Mania7k
+      ) {
+        // Mirror getBeatmapDisplayRuleset: a beatmap counts as 4K/7K when it
+        // is stored as that ruleset, or is ManiaOther with a "4K"/"7K" word
+        // in the difficulty name (\y is Postgres's word boundary).
+        const keyPattern = input.ruleset === Ruleset.Mania4k ? '4k' : '7k';
+        filters.push(
+          sql`(${schema.beatmaps.ruleset} = ${input.ruleset} OR (${schema.beatmaps.ruleset} = ${Ruleset.ManiaOther} AND ${schema.beatmaps.diffName} ~* ${`\\y${keyPattern}\\y`}))`
+        );
       } else if (input.ruleset !== undefined) {
         filters.push(eq(schema.beatmaps.ruleset, input.ruleset));
       }
@@ -140,9 +141,8 @@ export const listBeatmaps = publicProcedure
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-      const sortValue = input.sort ?? 'sr';
-      const isDescending = input.descending ?? true;
-      const direction = isDescending ? desc : asc;
+      const sortValue = input.sort;
+      const direction = input.descending ? desc : asc;
 
       const getSortColumn = () => {
         switch (sortValue) {
@@ -240,6 +240,8 @@ export const listBeatmaps = publicProcedure
         .limit(pageSize)
         .offset(offset);
 
+      // No filter references the creator, so the count query skips the
+      // grouped creator subquery and players join the list query needs.
       const countQuery = context.db
         .select({ count: count() })
         .from(schema.beatmaps)
@@ -250,14 +252,6 @@ export const listBeatmaps = publicProcedure
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
-        )
-        .leftJoin(
-          creatorSubquery,
-          eq(schema.beatmaps.id, creatorSubquery.beatmapId)
-        )
-        .leftJoin(
-          schema.players,
-          sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
         );
 
       const countResult = whereClause
@@ -368,11 +362,14 @@ export const listBeatmaps = publicProcedure
         totalPages,
       };
     } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
       console.error('[orpc] beatmaps.list failed', error);
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
-        message:
-          error instanceof Error ? error.message : 'Failed to load beatmaps',
+        message: 'Failed to load beatmaps',
       });
     }
   });

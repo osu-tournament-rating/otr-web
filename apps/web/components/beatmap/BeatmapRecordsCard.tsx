@@ -1,9 +1,11 @@
 'use client';
 
 import { Library, ListOrdered, Plus } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 
-import BeatmapPoolRow from '@/components/beatmap/BeatmapPoolRow';
+import BeatmapPoolRow, {
+  POOL_COLUMN_CLASSES,
+} from '@/components/beatmap/BeatmapPoolRow';
 import BeatmapScoresTable from '@/components/beatmap/BeatmapScoresTable';
 import {
   EmptyState,
@@ -12,6 +14,7 @@ import {
 } from '@/components/beatmap/BeatmapSection';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { sortPoolsByDate, sortPoolsByGames } from '@/lib/beatmaps/records';
 import type {
   BeatmapTopPerformer,
@@ -91,28 +94,28 @@ export default function BeatmapRecordsCard({
           ) : (
             <>
               <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-2">
-                <div
-                  role="group"
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={sort}
+                  onValueChange={(value) => value && setSort(value as PoolSort)}
                   aria-label="Sort pool records"
-                  className="flex items-center gap-1"
                 >
-                  <SortButton
-                    active={sort === 'played'}
-                    onClick={() => setSort('played')}
-                  >
+                  <ToggleGroupItem value="played" className="text-xs">
                     Most played
-                  </SortButton>
-                  <SortButton
-                    active={sort === 'recent'}
-                    onClick={() => setSort('recent')}
-                  >
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="recent" className="text-xs">
                     Most recent
-                  </SortButton>
-                </div>
+                  </ToggleGroupItem>
+                </ToggleGroup>
                 <div aria-hidden className="flex items-center gap-3">
-                  <Eyebrow className="w-14">Mod</Eyebrow>
-                  <Eyebrow className="w-[5.5rem] text-right">Games</Eyebrow>
-                  <span className="size-7" />
+                  <Eyebrow className={POOL_COLUMN_CLASSES.mod}>Mod</Eyebrow>
+                  <Eyebrow
+                    className={cn('text-right', POOL_COLUMN_CLASSES.games)}
+                  >
+                    Games
+                  </Eyebrow>
+                  <span className={POOL_COLUMN_CLASSES.toggle} />
                 </div>
               </div>
 
@@ -162,31 +165,5 @@ export default function BeatmapRecordsCard({
         </TabsContent>
       </Tabs>
     </SectionCard>
-  );
-}
-
-function SortButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'rounded-md px-2 py-1 text-xs font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-        active
-          ? 'bg-background text-foreground shadow-xs'
-          : 'text-muted-foreground hover:text-foreground'
-      )}
-    >
-      {children}
-    </button>
   );
 }

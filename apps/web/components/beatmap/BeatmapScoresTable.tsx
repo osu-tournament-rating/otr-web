@@ -5,19 +5,18 @@ import { EmptyState, Eyebrow } from '@/components/beatmap/BeatmapSection';
 import ModIconset from '@/components/icons/ModIconset';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
-import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatAccuracy } from '@/lib/utils/format';
-
-/**
- * Seven columns of record data do not fit the rail layout at every width, so the
- * table keeps its own horizontal scroller from `sm` up and falls back to a
- * stacked row on phones.
- */
-const SCORE_GRID =
-  'grid grid-cols-[1.5rem_minmax(0,1.1fr)_2.75rem_6.25rem_3.25rem_minmax(0,1fr)_5.5rem] items-center gap-2';
 
 /** The highest verified scores recorded on a beatmap, as a historical record. */
 export default function BeatmapScoresTable({
@@ -31,103 +30,129 @@ export default function BeatmapScoresTable({
 
   return (
     <>
-      <div className="hidden overflow-x-auto sm:block">
-        <div className="min-w-[38rem]">
-          <div
-            aria-hidden
-            className={cn('border-b bg-muted/20 px-4 py-2', SCORE_GRID)}
-          >
-            <Eyebrow>#</Eyebrow>
-            <Eyebrow>Player</Eyebrow>
-            <Eyebrow>Mods</Eyebrow>
-            <Eyebrow className="text-right">Score</Eyebrow>
-            <Eyebrow className="text-right">Acc</Eyebrow>
-            <Eyebrow className="pl-1.5">Tournament</Eyebrow>
-            <Eyebrow className="text-right">Played</Eyebrow>
-          </div>
-
-          <ol className="divide-y">
+      {/* Seven columns of record data do not fit the rail layout at every
+          width, so the table scrolls horizontally from `sm` up and falls back
+          to a stacked row on phones. `table-fixed` lets the player and
+          tournament columns share leftover space while long names truncate. */}
+      <div className="hidden sm:block">
+        <Table className="min-w-[38rem] table-fixed">
+          <TableHeader>
+            {/* Fixed widths must cover the cell's own padding (p-2, plus the
+                pl-4/pr-4 on the edge columns) on top of the content, or the
+                last column's dates clip against the card edge. */}
+            <TableRow className="bg-muted/20">
+              <TableHead className="h-8 w-10 pl-4">
+                <Eyebrow>#</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8">
+                <Eyebrow>Player</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8 w-15">
+                <Eyebrow>Mods</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8 w-29 text-right">
+                <Eyebrow>Score</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8 w-17 text-right">
+                <Eyebrow>Acc</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8">
+                <Eyebrow>Tournament</Eyebrow>
+              </TableHead>
+              <TableHead className="h-8 w-28 pr-4 text-right">
+                <Eyebrow>Played</Eyebrow>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {performers.map((performer, index) => (
-              <li
+              <TableRow
                 key={performer.scoreId}
-                className={cn(
-                  'group px-4 py-2 transition-colors hover:bg-muted/25',
-                  SCORE_GRID
-                )}
+                className="group hover:bg-muted/25"
               >
-                <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                <TableCell className="pl-4 font-mono text-xs text-muted-foreground tabular-nums">
                   {index + 1}
-                </span>
+                </TableCell>
 
-                <Link
-                  href={`/players/${performer.player.id}`}
-                  prefetch={false}
-                  className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <OsuAvatar
-                    osuId={performer.player.osuId}
-                    username={performer.player.username}
-                    size={24}
-                  />
-                  <span className="truncate text-sm font-medium group-hover:underline">
-                    {performer.player.username}
-                  </span>
-                </Link>
+                <TableCell>
+                  <Link
+                    href={`/players/${performer.player.id}`}
+                    prefetch={false}
+                    className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    <OsuAvatar
+                      osuId={performer.player.osuId}
+                      username={performer.player.username}
+                      size={24}
+                    />
+                    <span className="truncate text-sm font-medium group-hover:underline">
+                      {performer.player.username}
+                    </span>
+                  </Link>
+                </TableCell>
 
-                <div
-                  data-testid="beatmap-top-play-mods"
-                  className="flex h-5 w-11 items-center"
-                >
-                  <ModIconset
-                    mods={performer.mods}
-                    className="flex h-full items-center"
-                    iconClassName="h-5"
-                  />
-                </div>
+                <TableCell>
+                  <div
+                    data-testid="beatmap-top-play-mods"
+                    className="flex h-5 w-11 items-center"
+                  >
+                    <ModIconset
+                      mods={performer.mods}
+                      className="flex h-full items-center"
+                      iconClassName="h-5"
+                    />
+                  </div>
+                </TableCell>
 
-                <Link
-                  href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
-                  prefetch={false}
-                  aria-label={`View ${performer.player.username}'s recorded score`}
-                  data-testid="beatmap-top-play-score"
-                  className="flex items-center justify-end gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  {performer.score.toLocaleString()}
-                  <GradeIcon grade={performer.grade} />
-                </Link>
+                <TableCell>
+                  <Link
+                    href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
+                    prefetch={false}
+                    aria-label={`View ${performer.player.username}'s recorded score`}
+                    data-testid="beatmap-top-play-score"
+                    className="flex items-center justify-end gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {performer.score.toLocaleString()}
+                    <GradeIcon grade={performer.grade} />
+                  </Link>
+                </TableCell>
 
-                <span
+                <TableCell
                   data-testid="beatmap-top-play-accuracy"
                   className="text-right font-mono text-xs text-muted-foreground tabular-nums"
                 >
                   {performer.accuracy !== null
                     ? formatAccuracy(performer.accuracy)
                     : '—'}
-                </span>
+                </TableCell>
 
-                <Link
-                  href={`/tournaments/${performer.tournament.id}`}
-                  prefetch={false}
-                  title={performer.tournament.name}
-                  data-testid="beatmap-top-play-tournament"
-                  className="truncate rounded-sm pl-1.5 text-xs hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  {performer.tournament.name}
-                </Link>
+                <TableCell>
+                  <Link
+                    href={`/tournaments/${performer.tournament.id}`}
+                    prefetch={false}
+                    title={performer.tournament.name}
+                    data-testid="beatmap-top-play-tournament"
+                    className="block truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {performer.tournament.name}
+                  </Link>
+                </TableCell>
 
-                <time
-                  dateTime={performer.playedAt ?? undefined}
-                  data-testid="beatmap-top-play-date"
-                  className="text-right font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
-                >
-                  {performer.playedAt
-                    ? formatUTCDate(new Date(performer.playedAt))
-                    : '—'}
-                </time>
-              </li>
+                <TableCell className="pr-4 text-right">
+                  <time
+                    dateTime={performer.playedAt ?? undefined}
+                    data-testid="beatmap-top-play-date"
+                    className="font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
+                  >
+                    {performer.playedAt
+                      ? formatUTCDate(new Date(performer.playedAt))
+                      : '—'}
+                  </time>
+                </TableCell>
+              </TableRow>
             ))}
-          </ol>
-        </div>
+          </TableBody>
+        </Table>
       </div>
 
       <ol className="divide-y sm:hidden">
@@ -143,7 +168,7 @@ export default function BeatmapScoresTable({
               <Link
                 href={`/players/${performer.player.id}`}
                 prefetch={false}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <OsuAvatar
                   osuId={performer.player.osuId}
@@ -158,7 +183,7 @@ export default function BeatmapScoresTable({
                 href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
                 prefetch={false}
                 aria-label={`View ${performer.player.username}'s recorded score`}
-                className="flex shrink-0 items-center gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex shrink-0 items-center gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {performer.score.toLocaleString()}
                 <GradeIcon grade={performer.grade} />
@@ -184,7 +209,7 @@ export default function BeatmapScoresTable({
               <Link
                 href={`/tournaments/${performer.tournament.id}`}
                 prefetch={false}
-                className="min-w-0 truncate rounded-sm text-xs hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="min-w-0 truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {performer.tournament.name}
               </Link>

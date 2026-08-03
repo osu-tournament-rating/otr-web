@@ -33,10 +33,9 @@ export function summarizeActivity(
     firstActive: active.at(0) ?? null,
     lastActive: active.at(-1) ?? null,
     activeQuarters: active.length,
-    maxGames: points.reduce(
-      (max, point) => Math.max(max, point.gameCount, point.pooledCount),
-      0
-    ),
+    // The chart only draws game bars, so pool-record counts must not
+    // contribute to the scale.
+    maxGames: points.reduce((max, point) => Math.max(max, point.gameCount), 0),
   };
 }
 

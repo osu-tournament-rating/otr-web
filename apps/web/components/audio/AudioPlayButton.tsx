@@ -1,11 +1,9 @@
 'use client';
 
-import { Loader2, Pause, Play, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  useAudioPlayer,
-  useIsPlaying,
-  useIsPreviewActive,
+  PREVIEW_STATUS_ICONS,
+  usePreviewButtonState,
 } from '@/lib/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
 import SimpleTooltip from '@/components/simple-tooltip';
@@ -36,45 +34,12 @@ export default function AudioPlayButton({
   title,
   difficulty,
 }: AudioPlayButtonProps) {
-  const { state, togglePlayPause } = useAudioPlayer();
-  const isPlaying = useIsPlaying(beatmapsetOsuId);
-  const isActive = useIsPreviewActive(beatmapsetOsuId);
-  const isLoading =
-    state.isLoading && state.currentlyPlaying === beatmapsetOsuId;
-  const hasError =
-    Boolean(state.error) && state.currentlyPlaying === beatmapsetOsuId;
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (beatmapsetOsuId) {
-      togglePlayPause({
-        beatmapsetOsuId,
-        artist,
-        title,
-        difficulty,
-      });
-    }
-  };
+  const { status, actionLabel, isActive, isLoading, hasError, handleClick } =
+    usePreviewButtonState({ beatmapsetOsuId, artist, title, difficulty });
 
   if (!beatmapsetOsuId) return null;
 
-  const Icon = isLoading
-    ? Loader2
-    : isPlaying
-      ? Pause
-      : hasError
-        ? RefreshCw
-        : Play;
-  const actionLabel = isLoading
-    ? 'Loading preview'
-    : isPlaying
-      ? 'Pause preview'
-      : hasError
-        ? 'Retry preview'
-        : isActive
-          ? 'Resume preview'
-          : 'Play preview';
+  const Icon = PREVIEW_STATUS_ICONS[status];
 
   const button = (
     <Button
@@ -89,17 +54,7 @@ export default function AudioPlayButton({
       onClick={handleClick}
       aria-label={actionLabel}
       aria-pressed={isActive && !hasError}
-      data-preview-state={
-        isLoading
-          ? 'loading'
-          : isPlaying
-            ? 'playing'
-            : hasError
-              ? 'error'
-              : isActive
-                ? 'paused'
-                : 'idle'
-      }
+      data-preview-state={status}
     >
       <Icon
         className={cn(sizeConfig[size].icon, isLoading && 'animate-spin')}

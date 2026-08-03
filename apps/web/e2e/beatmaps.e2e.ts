@@ -615,16 +615,17 @@ test.describe('Beatmaps Listing Page', () => {
         const transportElement = document.querySelector(
           '[data-testid="audio-preview-transport"]'
         );
+        const spacerElement = document.querySelector(
+          '[data-testid="audio-transport-spacer"]'
+        );
         return {
-          bodyPadding: Number.parseFloat(
-            getComputedStyle(document.body).paddingBottom
-          ),
+          spacerHeight: spacerElement?.getBoundingClientRect().height ?? 0,
           transportHeight:
             transportElement?.getBoundingClientRect().height ??
             Number.MAX_VALUE,
         };
       });
-      expect(safeSpacing.bodyPadding).toBeGreaterThanOrEqual(
+      expect(safeSpacing.spacerHeight).toBeGreaterThanOrEqual(
         safeSpacing.transportHeight
       );
 
@@ -633,11 +634,9 @@ test.describe('Beatmaps Listing Page', () => {
         .click();
       await expect(transport).toBeHidden();
       await expect(page).toHaveURL(before);
-      expect(
-        await page.evaluate(() =>
-          document.documentElement.classList.contains('audio-transport-visible')
-        )
-      ).toBe(false);
+      await expect(
+        page.locator('[data-testid="audio-transport-spacer"]')
+      ).toHaveCount(0);
     });
 
     test('failed previews reload on retry and expose error semantics', async ({
@@ -903,11 +902,9 @@ test.describe('Beatmaps Listing Page', () => {
 
       await expect(transport).toBeHidden();
       await expect(preview).toHaveAttribute('data-preview-state', 'idle');
-      expect(
-        await page.evaluate(() =>
-          document.documentElement.classList.contains('audio-transport-visible')
-        )
-      ).toBe(false);
+      await expect(
+        page.locator('[data-testid="audio-transport-spacer"]')
+      ).toHaveCount(0);
     });
 
     test('page title contains expected text', async ({ page }) => {
@@ -1723,24 +1720,6 @@ test.describe('Beatmap Detail Page', () => {
         (card) => card.scrollWidth - card.clientWidth
       );
       expect(overflow).toBeLessThanOrEqual(0);
-    });
-
-    test('displays score rating chart with rendered content', async ({
-      page,
-    }) => {
-      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
-      await page.waitForLoadState('networkidle');
-
-      const chart = page.locator('[data-testid="beatmap-score-rating-chart"]');
-      await expect(chart.first()).toBeVisible({ timeout: 15000 });
-      await expect(chart.first().locator('.recharts-wrapper')).toBeVisible({
-        timeout: 10000,
-      });
-      await expect(chart.locator('.density-cells rect').first()).toBeVisible();
-      await expect(
-        page.getByRole('heading', { name: 'Score vs TR' })
-      ).toHaveCount(1);
-      await expect(page.getByText(/SR does not affect TR/i)).toHaveCount(0);
     });
 
     test('displays tournament usage list', async ({ page }) => {

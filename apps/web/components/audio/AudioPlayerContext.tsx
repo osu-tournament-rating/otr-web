@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -33,7 +34,6 @@ export interface AudioPlayerState {
   volume: number;
   isLoading: boolean;
   isPlaying: boolean;
-  currentTime: number;
   duration: number;
   error: string | null;
 }
@@ -54,7 +54,6 @@ const initialState: AudioPlayerState = {
   volume: DEFAULT_PREVIEW_VOLUME,
   isLoading: false,
   isPlaying: false,
-  currentTime: 0,
   duration: 0,
   error: null,
 };
@@ -69,28 +68,33 @@ export const AudioPlayerContext = createContext<AudioPlayerContextType>({
   seek: () => {},
 });
 
+/**
+ * Playback position lives in its own context because timeupdate fires several
+ * times per second; only the transport bar subscribes, so a page full of
+ * preview buttons does not re-render for the whole duration of playback.
+ */
+export const AudioPlayerTimeContext = createContext(0);
+
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AudioPlayerState>(() => ({
-    ...initialState,
-    volume: getStoredVolume(),
-  }));
+  const [state, setState] = useState<AudioPlayerState>(initialState);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playbackAttemptRef = useRef(0);
 
   useEffect(() => {
     const storedVolume = getStoredVolume();
-    audioRef.current = new Audio();
-    audioRef.current.volume = storedVolume;
+    const audio = new Audio();
+    audioRef.current = audio;
+    audio.volume = storedVolume;
     setState((previous) => ({ ...previous, volume: storedVolume }));
-
-    const audio = audioRef.current;
 
     const handleEnded = () => {
       setState((previous) => ({
         ...initialState,
         volume: previous.volume,
       }));
+      setCurrentTime(0);
     };
 
     const handleError = () => {
@@ -128,10 +132,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     };
 
     const handleTimeUpdate = () => {
-      setState((previous) => ({
-        ...previous,
-        currentTime: audio.currentTime,
-      }));
+      setCurrentTime(audio.currentTime);
     };
 
     const handleLoadedMetadata = () => {
@@ -161,6 +162,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+      audioRef.current = null;
     };
   }, []);
 
@@ -181,9 +185,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         isLoading: true,
         error: null,
         ...(!isCurrentTrack || shouldReload
-          ? { currentTime: 0, duration: 0, isPlaying: false }
+          ? { duration: 0, isPlaying: false }
           : {}),
       }));
+      if (!isCurrentTrack || shouldReload) {
+        setCurrentTime(0);
+      }
 
       if (!isCurrentTrack) {
         audio.src = `https://b.ppy.sh/preview/${track.beatmapsetOsuId}.mp3`;
@@ -239,6 +246,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       ...initialState,
       volume: previous.volume,
     }));
+    setCurrentTime(0);
   }, []);
 
   const togglePlayPause = useCallback(
@@ -274,22 +282,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       Math.min(Number.isFinite(audio.duration) ? audio.duration : time, time)
     );
     audio.currentTime = safeTime;
-    setState((previous) => ({ ...previous, currentTime: safeTime }));
+    setCurrentTime(safeTime);
   }, []);
 
+  const value = useMemo(
+    () => ({ state, play, pause, close, togglePlayPause, setVolume, seek }),
+    [state, play, pause, close, togglePlayPause, setVolume, seek]
+  );
+
   return (
-    <AudioPlayerContext.Provider
-      value={{
-        state,
-        play,
-        pause,
-        close,
-        togglePlayPause,
-        setVolume,
-        seek,
-      }}
-    >
-      {children}
+    <AudioPlayerContext.Provider value={value}>
+      <AudioPlayerTimeContext.Provider value={currentTime}>
+        {children}
+      </AudioPlayerTimeContext.Provider>
     </AudioPlayerContext.Provider>
   );
 }

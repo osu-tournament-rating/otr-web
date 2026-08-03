@@ -85,7 +85,7 @@ export default function BeatmapActivityCard({
             <Link
               href={`/tournaments/${mostUsedIn.tournament.id}`}
               prefetch={false}
-              className="mt-0.5 flex items-start gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="mt-0.5 flex items-start gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <span>{mostUsedIn.tournament.name}</span>
               <ArrowUpRight

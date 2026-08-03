@@ -10,7 +10,7 @@ export function SectionCard({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none',
+        'overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none',
         className
       )}
       {...props}

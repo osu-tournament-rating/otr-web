@@ -11,7 +11,6 @@ import {
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
   type BeatmapModDistribution,
-  type BeatmapScoreRatingPoint,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
 import {
@@ -71,9 +70,7 @@ export const getBeatmapStats = publicProcedure
         tournamentRows,
         avgRows,
         modRows,
-        scoreRatingRows,
         topPerformerRows,
-        lobbyRatingRows,
         tournamentGameModRows,
       ] = await Promise.all([
         context.db
@@ -128,7 +125,6 @@ export const getBeatmapStats = publicProcedure
         context.db
           .select({
             totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-            totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
             totalPlayerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
             lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
@@ -281,7 +277,9 @@ export const getBeatmapStats = publicProcedure
           .select({
             tournamentId: schema.tournaments.id,
             avgScore: sql<number>`AVG(${schema.gameScores.score})`,
-            avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+            // Pre-match ratings only, so the figure is a true point-in-time
+            // lobby strength; null when the processor has no adjustment.
+            avgRating: sql<number>`AVG(${schema.ratingAdjustments.ratingBefore})`,
             scoreCount: sql<number>`COUNT(*)`,
           })
           .from(schema.gameScores)
@@ -363,50 +361,6 @@ export const getBeatmapStats = publicProcedure
           .orderBy(desc(sql`COUNT(*)`)),
         context.db
           .select({
-            score: schema.gameScores.score,
-            playerRating: sql<number>`COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter})`,
-            mods: schema.gameScores.mods,
-          })
-          .from(schema.gameScores)
-          .innerJoin(
-            schema.games,
-            eq(schema.games.id, schema.gameScores.gameId)
-          )
-          .innerJoin(
-            schema.matches,
-            eq(schema.matches.id, schema.games.matchId)
-          )
-          .innerJoin(
-            schema.tournaments,
-            eq(schema.tournaments.id, schema.matches.tournamentId)
-          )
-          .innerJoin(
-            schema.ratingAdjustments,
-            and(
-              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-              eq(schema.ratingAdjustments.matchId, schema.matches.id)
-            )
-          )
-          .where(
-            and(
-              eq(schema.games.beatmapId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(
-                schema.matches.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(schema.games.verificationStatus, VerificationStatus.Verified),
-              eq(
-                schema.gameScores.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
-          ),
-        context.db
-          .select({
             playerId: schema.players.id,
             playerOsuId: schema.players.osuId,
             playerUsername: schema.players.username,
@@ -423,10 +377,6 @@ export const getBeatmapStats = publicProcedure
             tournamentId: schema.tournaments.id,
             tournamentName: schema.tournaments.name,
             tournamentAbbreviation: schema.tournaments.abbreviation,
-            // Rating going into the match, so the row is a fixed historical
-            // record rather than a view of the player's current rating. Null
-            // when the processor has not produced an adjustment for the match.
-            playerRating: schema.ratingAdjustments.ratingBefore,
           })
           .from(schema.gameScores)
           .innerJoin(
@@ -444,13 +394,6 @@ export const getBeatmapStats = publicProcedure
           .innerJoin(
             schema.players,
             eq(schema.players.id, schema.gameScores.playerId)
-          )
-          .leftJoin(
-            schema.ratingAdjustments,
-            and(
-              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-              eq(schema.ratingAdjustments.matchId, schema.matches.id)
-            )
           )
           .where(
             and(
@@ -472,54 +415,6 @@ export const getBeatmapStats = publicProcedure
           )
           .orderBy(desc(schema.gameScores.score))
           .limit(TOP_PERFORMER_LIMIT),
-        // Lobby strength per game: the mean of the same pre-match ratings
-        // across everyone who set a verified score in that game.
-        context.db
-          .select({
-            gameId: schema.games.id,
-            avgRating: sql<
-              number | null
-            >`AVG(${schema.ratingAdjustments.ratingBefore})`,
-          })
-          .from(schema.gameScores)
-          .innerJoin(
-            schema.games,
-            eq(schema.games.id, schema.gameScores.gameId)
-          )
-          .innerJoin(
-            schema.matches,
-            eq(schema.matches.id, schema.games.matchId)
-          )
-          .innerJoin(
-            schema.tournaments,
-            eq(schema.tournaments.id, schema.matches.tournamentId)
-          )
-          .leftJoin(
-            schema.ratingAdjustments,
-            and(
-              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-              eq(schema.ratingAdjustments.matchId, schema.matches.id)
-            )
-          )
-          .where(
-            and(
-              eq(schema.games.beatmapId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(
-                schema.matches.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(schema.games.verificationStatus, VerificationStatus.Verified),
-              eq(
-                schema.gameScores.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
-          )
-          .groupBy(schema.games.id),
         context.db
           .select({
             tournamentId: schema.tournaments.id,
@@ -585,9 +480,6 @@ export const getBeatmapStats = publicProcedure
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
         totalTournamentCount: Number(
           pooledTournamentCountRow[0]?.totalTournamentCount ?? 0
-        ),
-        verifiedPlayedTournamentCount: Number(
-          summaryRow[0]?.totalTournamentCount ?? 0
         ),
         totalPlayedGameCount: Number(
           totalPlayedSummaryRow[0]?.totalGameCount ?? 0
@@ -693,13 +585,6 @@ export const getBeatmapStats = publicProcedure
         ])
       );
 
-      const lobbyRatingByGame = new Map(
-        lobbyRatingRows.map((row) => [
-          row.gameId,
-          row.avgRating === null ? null : Math.round(Number(row.avgRating)),
-        ])
-      );
-
       // Resolve the most common mod per tournament from the mods players
       // actually used (score-level), so freemod lobbies whose games record no
       // mods don't report NM. See resolveGameModsFromScores / ModIconset.
@@ -762,14 +647,6 @@ export const getBeatmapStats = publicProcedure
             : 0,
       }));
 
-      const scoreRatingData: BeatmapScoreRatingPoint[] = scoreRatingRows.map(
-        (row) => ({
-          score: row.score,
-          playerRating: Number(row.playerRating),
-          mods: row.mods,
-        })
-      );
-
       const topPerformers: BeatmapTopPerformer[] = topPerformerRows.map(
         (row) => ({
           player: {
@@ -792,11 +669,6 @@ export const getBeatmapStats = publicProcedure
             name: row.tournamentName,
             abbreviation: row.tournamentAbbreviation,
           },
-          playerRating:
-            row.playerRating === null
-              ? null
-              : Math.round(Number(row.playerRating)),
-          lobbyAverageRating: lobbyRatingByGame.get(row.gameId) ?? null,
         })
       );
 
@@ -856,7 +728,6 @@ export const getBeatmapStats = publicProcedure
         usageOverTime,
         tournaments,
         modDistribution,
-        scoreRatingData,
         topPerformers,
       };
 
@@ -975,7 +846,9 @@ export const getBeatmapTournamentMatches = publicProcedure
               .select({
                 gameId: schema.games.id,
                 avgScore: sql<number>`AVG(${schema.gameScores.score})`,
-                avgRating: sql<number>`AVG(COALESCE(${schema.ratingAdjustments.ratingBefore}, ${schema.ratingAdjustments.ratingAfter}))`,
+                // Pre-match ratings only, matching the per-tournament average
+                // and the "Avg rating" hint shown in the UI.
+                avgRating: sql<number>`AVG(${schema.ratingAdjustments.ratingBefore})`,
                 playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
                 scoreMods: sql<
                   (number | null)[]

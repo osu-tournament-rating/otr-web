@@ -80,8 +80,11 @@ describe('summarizeActivity', () => {
     expect(summary.activeQuarters).toBe(2);
   });
 
-  test('scales to the largest of either series so both stay visible', () => {
-    expect(summarizeActivity([usage('2020-Q1', 3, 9)]).maxGames).toBe(9);
+  test('scales to the game series only, since only games render as bars', () => {
+    expect(summarizeActivity([usage('2020-Q1', 3, 9)]).maxGames).toBe(3);
+    expect(
+      summarizeActivity([usage('2020-Q1', 3, 9), usage('2020-Q2', 7)]).maxGames
+    ).toBe(7);
   });
 
   test('reports no span when nothing was ever played or pooled', () => {

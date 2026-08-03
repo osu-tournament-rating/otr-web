@@ -10,7 +10,7 @@ import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
-import { getStarRatingColor } from '@/lib/beatmaps/star-rating-color';
+import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
 import type {
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
@@ -39,7 +39,7 @@ export default function BeatmapHeader({
   return (
     <header
       data-testid="beatmap-header"
-      className="overflow-hidden rounded-xl border bg-card shadow-sm dark:shadow-none"
+      className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
     >
       <div
         data-testid="beatmap-artwork-strip"
@@ -161,7 +161,7 @@ function DifficultyNavigator({
             <RulesetIcon
               ruleset={ruleset}
               className="size-5 shrink-0 fill-current [&_path]:fill-current"
-              style={{ color: getStarRatingColor(difficulty.sr) }}
+              style={{ color: getStarRatingIconColor(difficulty.sr) }}
               aria-hidden="true"
             />
           );
