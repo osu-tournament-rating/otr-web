@@ -1564,8 +1564,10 @@ test.describe('Beatmap Detail Page', () => {
       const pools = activity.getByTestId('beatmap-pool-records');
       const played = activity.getByTestId('beatmap-played-tournaments');
       const games = activity.getByTestId('beatmap-games');
-      await expect(pools).toHaveAccessibleName(/[\d,]+ pool records/);
-      await expect(played).toHaveAccessibleName(/[\d,]+ tournaments played/);
+      await expect(pools).toHaveAccessibleName(/Pooled in [\d,]+ tournaments/);
+      await expect(played).toHaveAccessibleName(
+        /Picked in [\d,]+ of [\d,]+ pools, \d+%|Never pooled, so no pick rate/
+      );
       await expect(games).toHaveAccessibleName(/[\d,]+ games played/);
       await expect(pools.locator('svg.lucide-waves-ladder')).toBeVisible();
       await expect(played.locator('svg.lucide-trophy')).toBeVisible();

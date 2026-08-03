@@ -17,6 +17,7 @@ import {
 import {
   formatQuarterLong,
   getMostUsedInPool,
+  getPoolPickRate,
   summarizeActivity,
 } from '@/lib/beatmaps/records';
 import type {
@@ -36,6 +37,10 @@ export default function BeatmapActivityCard({
 }) {
   const activity = summarizeActivity(data);
   const mostUsedIn = getMostUsedInPool(pools);
+  const pickRate = getPoolPickRate(
+    summary.pooledPlayedTournamentCount,
+    summary.totalTournamentCount
+  );
 
   return (
     <SectionCard data-testid="beatmap-usage-chart">
@@ -109,29 +114,37 @@ export default function BeatmapActivityCard({
         <ActivityStat
           testId="beatmap-pool-records"
           icon={WavesLadder}
-          label="Pool records"
-          value={summary.totalTournamentCount}
-          accessibleValue={`${summary.totalTournamentCount.toLocaleString()} pool records`}
+          label="Pooled in"
+          value={summary.totalTournamentCount.toLocaleString()}
+          accessibleValue={`Pooled in ${summary.totalTournamentCount.toLocaleString()} tournaments`}
         />
         <ActivityStat
           testId="beatmap-played-tournaments"
           icon={Trophy}
-          label="Tournaments"
-          value={summary.totalPlayedTournamentCount}
-          accessibleValue={`${summary.totalPlayedTournamentCount.toLocaleString()} tournaments played`}
+          label="Pick rate"
+          value={
+            pickRate === null
+              ? '—'
+              : `${summary.pooledPlayedTournamentCount.toLocaleString()} (${pickRate}%)`
+          }
+          accessibleValue={
+            pickRate === null
+              ? 'Never pooled, so no pick rate'
+              : `Picked in ${summary.pooledPlayedTournamentCount.toLocaleString()} of ${summary.totalTournamentCount.toLocaleString()} pools, ${pickRate}%`
+          }
         />
         <ActivityStat
           testId="beatmap-games"
           icon={Gamepad2}
           label="Games"
-          value={summary.totalPlayedGameCount}
+          value={summary.totalPlayedGameCount.toLocaleString()}
           accessibleValue={`${summary.totalPlayedGameCount.toLocaleString()} games played`}
         />
         <ActivityStat
           testId="beatmap-active-quarters"
           icon={CalendarRange}
           label="Active quarters"
-          value={activity.activeQuarters}
+          value={activity.activeQuarters.toLocaleString()}
           accessibleValue={`${activity.activeQuarters.toLocaleString()} active quarters`}
         />
       </dl>
@@ -149,7 +162,7 @@ function ActivityStat({
   testId: string;
   icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   label: string;
-  value: number;
+  value: string;
   accessibleValue: string;
 }) {
   return (
@@ -163,7 +176,7 @@ function ActivityStat({
         <span className="truncate">{label}</span>
       </dt>
       <dd className="shrink-0 font-mono text-sm font-semibold tabular-nums">
-        {value.toLocaleString()}
+        {value}
       </dd>
     </div>
   );

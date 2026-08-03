@@ -9,6 +9,7 @@ import {
   formatQuarterLong,
   getMostUsedInPool,
   getPoolDate,
+  getPoolPickRate,
   isPoolVerified,
   sortPoolsByDate,
   sortPoolsByGames,
@@ -203,5 +204,29 @@ describe('getMostUsedInPool', () => {
 
   test('returns nothing when the beatmap has never been pooled', () => {
     expect(getMostUsedInPool([])).toBeNull();
+  });
+});
+
+describe('getPoolPickRate', () => {
+  test('reports the share of pool records that saw play', () => {
+    expect(getPoolPickRate(13, 21)).toBe(62);
+    expect(getPoolPickRate(3, 4)).toBe(75);
+  });
+
+  test('has no rate when the beatmap was never pooled', () => {
+    expect(getPoolPickRate(0, 0)).toBeNull();
+  });
+
+  test('reports the extremes exactly', () => {
+    expect(getPoolPickRate(0, 12)).toBe(0);
+    expect(getPoolPickRate(12, 12)).toBe(100);
+  });
+
+  test('never rounds a single pick down to never played', () => {
+    expect(getPoolPickRate(1, 400)).toBe(1);
+  });
+
+  test('never rounds a single skip up to always played', () => {
+    expect(getPoolPickRate(399, 400)).toBe(99);
   });
 });

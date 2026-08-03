@@ -39,6 +39,23 @@ export function summarizeActivity(
   };
 }
 
+/**
+ * Share of pool records where the beatmap was actually picked, as a whole
+ * percent. Returns null when nothing pooled it, since there is no rate to show.
+ */
+export function getPoolPickRate(
+  playedCount: number,
+  pooledCount: number
+): number | null {
+  if (pooledCount <= 0) return null;
+
+  const rate = (playedCount / pooledCount) * 100;
+  if (rate > 0 && rate < 1) return 1;
+  if (rate > 99 && rate < 100) return 99;
+
+  return Math.round(rate);
+}
+
 /** Pool date used for ordering: when it was first played, else tournament dates. */
 export function getPoolDate(pool: BeatmapTournamentUsage): string | null {
   return (

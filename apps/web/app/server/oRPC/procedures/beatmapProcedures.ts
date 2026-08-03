@@ -65,7 +65,7 @@ export const getBeatmapStats = publicProcedure
         creatorsRows,
         summaryRow,
         totalPlayedSummaryRow,
-        pooledTournamentCountRow,
+        poolingRow,
         usageRows,
         tournamentRows,
         avgRows,
@@ -165,7 +165,6 @@ export const getBeatmapStats = publicProcedure
         context.db
           .select({
             totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-            totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.tournaments.id})`,
           })
           .from(schema.games)
           .innerJoin(
@@ -177,9 +176,14 @@ export const getBeatmapStats = publicProcedure
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
           .where(eq(schema.games.beatmapId, beatmapId)),
+        // Pool records and the subset of them the beatmap was actually played
+        // in. Neither side filters on verification: the question is how often a
+        // pick happened at all, so both the numerator and the denominator have
+        // to count every tournament that recorded the map in its pool.
         context.db
           .select({
             totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
+            playedTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId}) FILTER (WHERE ${schema.games.id} IS NOT NULL)`,
           })
           .from(schema.joinPooledBeatmaps)
           .innerJoin(
@@ -187,6 +191,17 @@ export const getBeatmapStats = publicProcedure
             eq(
               schema.tournaments.id,
               schema.joinPooledBeatmaps.tournamentsPooledInId
+            )
+          )
+          .leftJoin(
+            schema.matches,
+            eq(schema.matches.tournamentId, schema.tournaments.id)
+          )
+          .leftJoin(
+            schema.games,
+            and(
+              eq(schema.games.matchId, schema.matches.id),
+              eq(schema.games.beatmapId, beatmapId)
             )
           )
           .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId)),
@@ -478,14 +493,12 @@ export const getBeatmapStats = publicProcedure
 
       const summary = {
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
-        totalTournamentCount: Number(
-          pooledTournamentCountRow[0]?.totalTournamentCount ?? 0
-        ),
+        totalTournamentCount: Number(poolingRow[0]?.totalTournamentCount ?? 0),
         totalPlayedGameCount: Number(
           totalPlayedSummaryRow[0]?.totalGameCount ?? 0
         ),
-        totalPlayedTournamentCount: Number(
-          totalPlayedSummaryRow[0]?.totalTournamentCount ?? 0
+        pooledPlayedTournamentCount: Number(
+          poolingRow[0]?.playedTournamentCount ?? 0
         ),
         totalPlayerCount: Number(summaryRow[0]?.totalPlayerCount ?? 0),
         firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,

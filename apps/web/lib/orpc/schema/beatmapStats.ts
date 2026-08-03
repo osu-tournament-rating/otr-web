@@ -68,9 +68,14 @@ export const BeatmapTopPerformerSchema = z.object({
 
 export const BeatmapStatsSummarySchema = z.object({
   totalGameCount: z.number().int().nonnegative(),
+  /** Tournaments that pooled this beatmap, verified or not. */
   totalTournamentCount: z.number().int().nonnegative(),
   totalPlayedGameCount: z.number().int().nonnegative(),
-  totalPlayedTournamentCount: z.number().int().nonnegative(),
+  /**
+   * Pool records where the beatmap was played at least once. Always <=
+   * `totalTournamentCount`, so the two form a pick rate.
+   */
+  pooledPlayedTournamentCount: z.number().int().nonnegative(),
   totalPlayerCount: z.number().int().nonnegative(),
   firstPlayedAt: z.string().nullable(),
   lastPlayedAt: z.string().nullable(),

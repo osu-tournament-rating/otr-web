@@ -53,12 +53,12 @@ describe('related beatmap difficulty query', () => {
 });
 
 describe('beatmap stats summary contract', () => {
-  test('keeps pool and total play counts distinct', () => {
+  test('keeps pool and played-pool counts distinct', () => {
     const summary = BeatmapStatsSummarySchema.parse({
       totalGameCount: 8,
       totalTournamentCount: 4,
       totalPlayedGameCount: 13,
-      totalPlayedTournamentCount: 3,
+      pooledPlayedTournamentCount: 3,
       totalPlayerCount: 12,
       firstPlayedAt: null,
       lastPlayedAt: null,
@@ -66,6 +66,6 @@ describe('beatmap stats summary contract', () => {
 
     expect(summary.totalTournamentCount).toBe(4);
     expect(summary.totalPlayedGameCount).toBe(13);
-    expect(summary.totalPlayedTournamentCount).toBe(3);
+    expect(summary.pooledPlayedTournamentCount).toBe(3);
   });
 });
