@@ -35,7 +35,7 @@ export default function BeatmapScoresTable({
           to a stacked row on phones. `table-fixed` lets the player and
           tournament columns share leftover space while long names truncate. */}
       <div className="hidden sm:block">
-        <Table className="min-w-[38rem] table-fixed">
+        <Table className="min-w-[39rem] table-fixed">
           <TableHeader>
             {/* Fixed widths must cover the cell's own padding (p-2, plus the
                 pl-4/pr-4 on the edge columns) on top of the content, or the
@@ -47,7 +47,9 @@ export default function BeatmapScoresTable({
               <TableHead className="h-8">
                 <Eyebrow>Player</Eyebrow>
               </TableHead>
-              <TableHead className="h-8 w-15">
+              {/* Wide enough for three mod icons in their hover-expanded
+                  state, so fanning them out never overlaps the score. */}
+              <TableHead className="h-8 w-20">
                 <Eyebrow>Mods</Eyebrow>
               </TableHead>
               <TableHead className="h-8 w-29 text-right">
@@ -94,7 +96,7 @@ export default function BeatmapScoresTable({
                 <TableCell>
                   <div
                     data-testid="beatmap-top-play-mods"
-                    className="flex h-5 w-11 items-center"
+                    className="flex h-5 w-16 items-center"
                   >
                     <ModIconset
                       mods={performer.mods}
@@ -155,14 +157,16 @@ export default function BeatmapScoresTable({
         </Table>
       </div>
 
+      {/* Phones get two dense lines per score: identity and score on top,
+          the remaining record details in one muted row underneath. */}
       <ol className="divide-y sm:hidden">
         {performers.map((performer, index) => (
           <li
             key={performer.scoreId}
-            className="group px-4 py-3 transition-colors hover:bg-muted/25"
+            className="group px-4 py-2 transition-colors hover:bg-muted/25"
           >
             <div className="flex items-center gap-2">
-              <span className="w-5 shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
+              <span className="w-4 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums">
                 {index + 1}
               </span>
               <Link
@@ -173,7 +177,7 @@ export default function BeatmapScoresTable({
                 <OsuAvatar
                   osuId={performer.player.osuId}
                   username={performer.player.username}
-                  size={24}
+                  size={20}
                 />
                 <span className="truncate text-sm font-medium group-hover:underline">
                   {performer.player.username}
@@ -183,39 +187,35 @@ export default function BeatmapScoresTable({
                 href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
                 prefetch={false}
                 aria-label={`View ${performer.player.username}'s recorded score`}
-                className="flex shrink-0 items-center gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="flex shrink-0 items-center gap-1 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {performer.score.toLocaleString()}
                 <GradeIcon grade={performer.grade} />
               </Link>
             </div>
 
-            <div className="mt-1.5 flex items-center gap-x-3 pl-7 font-mono text-xs text-muted-foreground tabular-nums">
-              <div className="flex h-5 w-11 shrink-0 items-center">
-                <ModIconset
-                  mods={performer.mods}
-                  className="flex h-full items-center"
-                  iconClassName="h-5"
-                />
-              </div>
-              <span>
+            <div className="mt-1 flex items-center gap-2 pl-6 font-mono text-xs text-muted-foreground tabular-nums">
+              <ModIconset
+                mods={performer.mods}
+                className="flex h-4 shrink-0 items-center"
+                iconClassName="h-4"
+              />
+              <span className="shrink-0">
                 {performer.accuracy !== null
                   ? formatAccuracy(performer.accuracy)
                   : '—'}
               </span>
-            </div>
-
-            <div className="mt-1 flex items-baseline gap-2 pl-7">
               <Link
                 href={`/tournaments/${performer.tournament.id}`}
                 prefetch={false}
-                className="min-w-0 truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                title={performer.tournament.name}
+                className="min-w-0 flex-1 truncate rounded-sm font-sans hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {performer.tournament.name}
               </Link>
               <time
                 dateTime={performer.playedAt ?? undefined}
-                className="ml-auto shrink-0 font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
+                className="shrink-0 text-[11px] whitespace-nowrap"
               >
                 {performer.playedAt
                   ? formatUTCDate(new Date(performer.playedAt))
