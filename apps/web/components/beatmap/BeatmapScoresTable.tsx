@@ -11,16 +11,13 @@ import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatAccuracy } from '@/lib/utils/format';
 
-const PLAYER_RATING_HINT = "Player's rating going into the match";
-const LOBBY_RATING_HINT = 'Average pre-match rating across the lobby';
-
 /**
- * Nine columns of record data do not fit the rail layout at every width, so the
+ * Seven columns of record data do not fit the rail layout at every width, so the
  * table keeps its own horizontal scroller from `sm` up and falls back to a
  * stacked row on phones.
  */
 const SCORE_GRID =
-  'grid grid-cols-[1.5rem_minmax(0,1.1fr)_2.75rem_6.25rem_3.25rem_2.75rem_2.75rem_minmax(0,1fr)_5.5rem] items-center gap-2';
+  'grid grid-cols-[1.5rem_minmax(0,1.1fr)_2.75rem_6.25rem_3.25rem_minmax(0,1fr)_5.5rem] items-center gap-2';
 
 /** The highest verified scores recorded on a beatmap, as a historical record. */
 export default function BeatmapScoresTable({
@@ -35,7 +32,7 @@ export default function BeatmapScoresTable({
   return (
     <>
       <div className="hidden overflow-x-auto sm:block">
-        <div className="min-w-[45rem]">
+        <div className="min-w-[38rem]">
           <div
             aria-hidden
             className={cn('border-b bg-muted/20 px-4 py-2', SCORE_GRID)}
@@ -45,12 +42,6 @@ export default function BeatmapScoresTable({
             <Eyebrow>Mods</Eyebrow>
             <Eyebrow className="text-right">Score</Eyebrow>
             <Eyebrow className="text-right">Acc</Eyebrow>
-            <Eyebrow title={PLAYER_RATING_HINT} className="text-right">
-              TR
-            </Eyebrow>
-            <Eyebrow title={LOBBY_RATING_HINT} className="text-right">
-              Lobby
-            </Eyebrow>
             <Eyebrow className="pl-1.5">Tournament</Eyebrow>
             <Eyebrow className="text-right">Played</Eyebrow>
           </div>
@@ -112,22 +103,6 @@ export default function BeatmapScoresTable({
                   {performer.accuracy !== null
                     ? formatAccuracy(performer.accuracy)
                     : '—'}
-                </span>
-
-                <span
-                  data-testid="beatmap-top-play-rating"
-                  title={PLAYER_RATING_HINT}
-                  className="text-right font-mono text-xs tabular-nums"
-                >
-                  {performer.playerRating?.toLocaleString() ?? '—'}
-                </span>
-
-                <span
-                  data-testid="beatmap-top-play-lobby-rating"
-                  title={LOBBY_RATING_HINT}
-                  className="text-right font-mono text-xs text-muted-foreground tabular-nums"
-                >
-                  {performer.lobbyAverageRating?.toLocaleString() ?? '—'}
                 </span>
 
                 <Link
@@ -202,14 +177,6 @@ export default function BeatmapScoresTable({
                 {performer.accuracy !== null
                   ? formatAccuracy(performer.accuracy)
                   : '—'}
-              </span>
-              <span title={PLAYER_RATING_HINT}>
-                {performer.playerRating?.toLocaleString() ?? '—'}
-                <span className="ml-0.5 text-[10px]">TR</span>
-              </span>
-              <span title={LOBBY_RATING_HINT}>
-                {performer.lobbyAverageRating?.toLocaleString() ?? '—'}
-                <span className="ml-0.5 text-[10px]">lobby</span>
               </span>
             </div>
 

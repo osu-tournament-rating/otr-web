@@ -1771,8 +1771,6 @@ test.describe('Beatmap Detail Page', () => {
         topPerformers.getByText(/^Showing the top [\d,]+$/)
       ).toBeVisible();
 
-      // Every score is a historical record: the rating columns are the values
-      // at the time it was set, so they must render for each row.
       const scores = topPerformers.locator(
         '[data-testid="beatmap-top-play-score"]'
       );
@@ -1782,8 +1780,6 @@ test.describe('Beatmap Detail Page', () => {
 
       for (const testId of [
         'beatmap-top-play-accuracy',
-        'beatmap-top-play-rating',
-        'beatmap-top-play-lobby-rating',
         'beatmap-top-play-tournament',
         'beatmap-top-play-date',
       ]) {
