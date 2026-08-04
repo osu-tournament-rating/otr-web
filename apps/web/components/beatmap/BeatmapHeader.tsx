@@ -1,6 +1,6 @@
 'use client';
 
-import { Music2, Star, UserRound } from 'lucide-react';
+import { Music2, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
 import { Fragment, useEffect, useRef } from 'react';
@@ -181,18 +181,11 @@ function DifficultyNavigator({
           prefetch={false}
           aria-current="page"
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-72 min-w-52 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
+          className="flex min-h-10 max-w-72 shrink-0 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
         >
           {difficultyIcon}
           <span className="min-w-0 flex-1 truncate font-medium">
             {difficulty.diffName}
-          </span>
-          <span
-            data-testid="related-difficulty-star-rating"
-            className="inline-flex shrink-0 items-center gap-1 font-mono text-xs font-semibold text-foreground tabular-nums"
-          >
-            <Star className="size-3.5 fill-current" aria-hidden="true" />
-            {formattedRating}
           </span>
         </Link>
       );

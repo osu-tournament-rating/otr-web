@@ -7,15 +7,16 @@ import {
   Layers,
   Music2,
   SearchX,
-  Star,
   Trophy,
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
+import RulesetPill from '@/components/beatmaps/RulesetPill';
+import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import { BEATMAP_CARD_GRID_CLASS } from '@/components/beatmaps/list/layout';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Button } from '@/components/ui/button';
@@ -25,10 +26,6 @@ import {
   getBeatmapRulesetLabel,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
-import {
-  getStarRatingColor,
-  getStarRatingForegroundColor,
-} from '@/lib/beatmaps/star-rating-color';
 import {
   getModColor,
   getModForegroundColor,
@@ -144,6 +141,24 @@ export default function BeatmapListTable({
                 )}
                 imageClassName="transition-transform duration-500 group-hover:scale-[1.035]"
               />
+              {isCardLayout ? (
+                <>
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-black/55 to-transparent"
+                  />
+                  <RulesetPill
+                    ruleset={beatmap.ruleset}
+                    diffName={beatmap.diffName}
+                    tone="overlay"
+                    className="pointer-events-none absolute top-2 left-2 z-20"
+                  />
+                  <StarRatingPill
+                    starRating={beatmap.sr}
+                    className="pointer-events-none absolute top-2 right-2 z-20"
+                  />
+                </>
+              ) : null}
               {beatmap.beatmapsetOsuId ? (
                 <span
                   className={cn(
@@ -176,36 +191,58 @@ export default function BeatmapListTable({
               <div className="min-w-0">
                 <div
                   data-testid="beatmap-heading"
-                  className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5"
+                  className={cn(
+                    'min-w-0',
+                    isCardLayout
+                      ? // One line per field so every card's text block is the
+                        // same height and the footer never shifts.
+                        ''
+                      : 'flex flex-wrap items-baseline gap-x-3 gap-y-0.5'
+                  )}
                 >
                   <h2
                     data-testid="beatmap-title"
                     title={beatmap.title}
-                    className="min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-primary sm:text-lg"
+                    className={cn(
+                      'min-w-0 text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg',
+                      isCardLayout ? 'truncate' : 'break-words'
+                    )}
                   >
                     {beatmap.title}
                   </h2>
                   <p
                     data-testid="beatmap-difficulty-name"
                     title={beatmap.diffName}
-                    className="min-w-0 text-sm font-medium break-words text-foreground/85"
+                    className={cn(
+                      'min-w-0 text-sm font-medium text-foreground/85',
+                      isCardLayout ? 'truncate' : 'break-words'
+                    )}
                   >
                     [{beatmap.diffName}]
                   </p>
                 </div>
                 <div
                   data-testid="beatmap-attribution"
-                  className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
+                  className={cn(
+                    'mt-0.5 flex min-w-0 items-center gap-x-3 text-xs text-muted-foreground',
+                    isCardLayout ? 'gap-y-0' : 'flex-wrap gap-y-0.5'
+                  )}
                 >
                   <p
                     data-testid="beatmap-artist"
                     title={beatmap.artist}
-                    className="flex min-w-0 items-center gap-1.5"
+                    className={cn(
+                      'flex min-w-0 items-center gap-1.5',
+                      isCardLayout && 'shrink'
+                    )}
                   >
                     <Music2 className="size-3.5 shrink-0" aria-hidden="true" />
                     <span
                       data-testid="beatmap-artist-name"
-                      className="min-w-0 break-words"
+                      className={cn(
+                        'min-w-0',
+                        isCardLayout ? 'truncate' : 'break-words'
+                      )}
                     >
                       {beatmap.artist}
                     </span>
@@ -213,7 +250,10 @@ export default function BeatmapListTable({
                   <p
                     data-testid="beatmap-mapper"
                     title={beatmap.creator ?? 'Unknown mapper'}
-                    className="flex min-w-0 items-center gap-1.5"
+                    className={cn(
+                      'flex min-w-0 items-center gap-1.5',
+                      isCardLayout && 'shrink'
+                    )}
                   >
                     <UserRound
                       className="size-3.5 shrink-0"
@@ -221,7 +261,10 @@ export default function BeatmapListTable({
                     />
                     <span
                       data-testid="beatmap-mapper-name"
-                      className="min-w-0 break-words"
+                      className={cn(
+                        'min-w-0',
+                        isCardLayout ? 'truncate' : 'break-words'
+                      )}
                     >
                       {beatmap.creator ?? 'Unknown mapper'}
                     </span>
@@ -233,45 +276,40 @@ export default function BeatmapListTable({
                 data-testid="beatmap-data-summary"
                 className={cn(
                   isCardLayout &&
-                    'mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-2 text-xs text-muted-foreground sm:text-sm'
+                    // Two stacked 24px rows on phones, where six items will not
+                    // fit side by side; one 24px row from `sm` up, where they
+                    // will (h-9 minus the 12px of top padding).
+                    'mt-auto flex min-w-0 flex-col gap-1.5 pt-3 text-xs text-muted-foreground sm:h-9 sm:flex-row sm:items-center sm:gap-x-3 sm:text-sm'
                 )}
               >
                 <div
                   data-testid="beatmap-primary-metrics"
                   className={cn(
-                    'flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5',
-                    !isCardLayout &&
-                      'mt-2 text-xs text-muted-foreground sm:text-sm'
+                    'flex min-w-0 items-center gap-x-3',
+                    isCardLayout
+                      ? 'h-6 shrink-0 sm:h-auto'
+                      : 'mt-2 flex-wrap gap-x-2 gap-y-1.5 text-xs text-muted-foreground sm:text-sm'
                   )}
                 >
-                  <Metric
-                    testId="beatmap-ruleset"
-                    icon={
-                      <RulesetIcon
-                        ruleset={ruleset}
-                        className="size-4 shrink-0 fill-current"
-                        aria-hidden="true"
+                  {isCardLayout ? null : (
+                    <>
+                      <Metric
+                        testId="beatmap-ruleset"
+                        icon={
+                          <RulesetIcon
+                            ruleset={ruleset}
+                            className="size-4 shrink-0 fill-current"
+                            aria-hidden="true"
+                          />
+                        }
+                        value={rulesetLabel}
                       />
-                    }
-                    value={rulesetLabel}
-                  />
-                  <Metric
-                    className="ml-1 h-6 min-w-15 justify-center gap-1 rounded-full border border-current/20 px-1"
-                    testId="beatmap-star-rating"
-                    icon={
-                      <Star
-                        className="size-4 shrink-0 fill-current"
-                        aria-hidden="true"
+                      <StarRatingPill
+                        starRating={beatmap.sr}
+                        className="ml-1 min-w-15"
                       />
-                    }
-                    value={beatmap.sr.toFixed(2)}
-                    valueClassName="text-inherit"
-                    style={{
-                      backgroundColor: getStarRatingColor(beatmap.sr),
-                      color: getStarRatingForegroundColor(beatmap.sr),
-                    }}
-                    ariaLabel={`${beatmap.sr.toFixed(2)} star rating`}
-                  />
+                    </>
+                  )}
                   <Metric
                     className={cn(!isCardLayout && 'w-14')}
                     testId="beatmap-bpm"
@@ -298,9 +336,10 @@ export default function BeatmapListTable({
                 <div
                   data-testid="beatmap-usage-summary"
                   className={cn(
-                    'flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5',
-                    !isCardLayout &&
-                      'mt-1.5 text-xs text-muted-foreground sm:text-sm'
+                    'flex min-w-0 items-center gap-x-3',
+                    isCardLayout
+                      ? 'h-6 overflow-hidden sm:h-auto'
+                      : 'mt-1.5 flex-wrap gap-x-2 gap-y-1.5 text-xs text-muted-foreground sm:text-sm'
                   )}
                 >
                   <Metric
@@ -377,7 +416,7 @@ function TopModsBreakdown({
       <ul
         data-testid="beatmap-top-mods"
         aria-label="Top mods by score usage"
-        className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs"
+        className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden text-[11px] sm:text-xs"
       >
         {displayedMods.map(({ mod, mods, percentage }) => (
           <li
@@ -407,7 +446,6 @@ function Metric({
   testId,
   className,
   valueClassName,
-  style,
 }: {
   icon: ReactNode;
   value: ReactNode;
@@ -415,13 +453,11 @@ function Metric({
   testId?: string;
   className?: string;
   valueClassName?: string;
-  style?: CSSProperties;
 }) {
   return (
     <span
       data-testid={testId}
       aria-label={ariaLabel}
-      style={style}
       className={cn(
         'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground',
         className

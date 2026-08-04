@@ -42,17 +42,24 @@ export default function BeatmapsLoading() {
               key={index}
               className="overflow-hidden rounded-xl border bg-card"
             >
-              <Skeleton className="aspect-[16/7] w-full rounded-none" />
-              <div className="min-w-0 p-4">
-                <div className="space-y-2">
+              <div className="relative">
+                <Skeleton className="aspect-[16/7] w-full rounded-none" />
+                <Skeleton className="absolute top-2 left-2 h-6 w-20 rounded-full" />
+                <Skeleton className="absolute top-2 right-2 h-6 w-15 rounded-full" />
+              </div>
+              <div className="min-w-0 p-3.5 sm:p-4">
+                <div className="space-y-1">
                   <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-3.5 w-3/5" />
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-14" />
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-24" />
+                <div className="flex flex-col gap-1.5 pt-3 sm:h-9 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="flex h-6 items-center sm:h-auto">
+                    <Skeleton className="h-4 w-24 sm:w-28" />
+                  </div>
+                  <div className="flex h-6 items-center sm:h-auto">
+                    <Skeleton className="h-4 w-40 sm:w-36" />
+                  </div>
                 </div>
               </div>
             </div>

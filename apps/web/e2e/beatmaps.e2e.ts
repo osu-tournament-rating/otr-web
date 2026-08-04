@@ -367,6 +367,7 @@ test.describe('Beatmaps Listing Page', () => {
       ).toHaveCount(1);
 
       const [
+        coverBox,
         titleBox,
         difficultyBox,
         artistBox,
@@ -374,6 +375,7 @@ test.describe('Beatmaps Listing Page', () => {
         rulesetBox,
         starBox,
       ] = await Promise.all([
+        firstRow.locator('[data-testid="beatmap-cover-cell"]').boundingBox(),
         firstRow.locator('[data-testid="beatmap-title"]').boundingBox(),
         firstRow
           .locator('[data-testid="beatmap-difficulty-name"]')
@@ -383,54 +385,41 @@ test.describe('Beatmaps Listing Page', () => {
         firstRow.locator('[data-testid="beatmap-ruleset"]').boundingBox(),
         firstRow.locator('[data-testid="beatmap-star-rating"]').boundingBox(),
       ]);
+      expect(coverBox).not.toBeNull();
       expect(titleBox).not.toBeNull();
       expect(difficultyBox).not.toBeNull();
       expect(artistBox).not.toBeNull();
       expect(mapperBox).not.toBeNull();
       expect(rulesetBox).not.toBeNull();
       expect(starBox).not.toBeNull();
-      expect(difficultyBox!.y).toBeGreaterThanOrEqual(titleBox!.y);
-      expect(mapperBox!.y).toBeGreaterThanOrEqual(artistBox!.y);
-      expect(artistBox!.y).toBeGreaterThan(titleBox!.y);
-      expect(Math.round(starBox!.x - rulesetBox!.x - rulesetBox!.width)).toBe(
-        12
-      );
-      expect(Math.abs(rulesetBox!.y - starBox!.y)).toBeLessThanOrEqual(2);
+      expect(difficultyBox!.y).toBeGreaterThan(titleBox!.y);
+      expect(artistBox!.y).toBeGreaterThan(difficultyBox!.y);
+      expect(Math.abs(mapperBox!.y - artistBox!.y)).toBeLessThanOrEqual(1);
+
+      // Ruleset and star pills anchor to the cover's top corners so they land
+      // in the same spot on every card.
+      expect(Math.round(rulesetBox!.x - coverBox!.x)).toBe(8);
+      expect(Math.round(rulesetBox!.y - coverBox!.y)).toBe(8);
+      expect(
+        Math.round(coverBox!.x + coverBox!.width - starBox!.x - starBox!.width)
+      ).toBe(8);
+      expect(Math.round(starBox!.y - coverBox!.y)).toBe(8);
       await expect(
         firstRow.locator(
           '[data-testid="beatmap-primary-metrics"] [data-testid="beatmap-ruleset"]'
         )
-      ).toHaveCount(1);
+      ).toHaveCount(0);
+      await expect(
+        firstRow.locator(
+          '[data-testid="beatmap-primary-metrics"] [data-testid="beatmap-star-rating"]'
+        )
+      ).toHaveCount(0);
 
-      const difficultyPresentation = await page
-        .locator('[data-testid="beatmap-difficulty-name"]')
-        .evaluateAll((elements) =>
-          elements.slice(0, 10).map((element) => {
-            const fullName = element.getAttribute('title') ?? '';
-            const displayedName = (element.textContent ?? '').slice(1, -1);
-            const style = getComputedStyle(element);
-
-            return {
-              displayedName,
-              fullName,
-              inlineWidth: (element as HTMLElement).style.width,
-              overflow: style.overflow,
-              textOverflow: style.textOverflow,
-              whiteSpace: style.whiteSpace,
-            };
-          })
-        );
-      for (const difficulty of difficultyPresentation) {
-        expect(difficulty.displayedName).toBe(difficulty.fullName);
-        expect(difficulty.inlineWidth).toBe('');
-        expect(difficulty.overflow).toBe('visible');
-        expect(difficulty.textOverflow).toBe('clip');
-        expect(difficulty.whiteSpace).toBe('normal');
-      }
-
-      const untruncatedText = await firstRow
+      // Every text field is one clamped line, with the full value on hover, so
+      // card height never depends on how long a title or mapper name is.
+      const clampedText = await firstRow
         .locator(
-          '[data-testid="beatmap-title"], [data-testid="beatmap-artist-name"], [data-testid="beatmap-mapper-name"]'
+          '[data-testid="beatmap-title"], [data-testid="beatmap-difficulty-name"], [data-testid="beatmap-artist-name"], [data-testid="beatmap-mapper-name"]'
         )
         .evaluateAll((elements) =>
           elements.map((element) => {
@@ -444,11 +433,56 @@ test.describe('Beatmaps Listing Page', () => {
             };
           })
         );
-      for (const text of untruncatedText) {
-        expect(text.overflow).toBe('visible');
-        expect(text.textOverflow).toBe('clip');
-        expect(text.whiteSpace).toBe('normal');
+      expect(clampedText).toHaveLength(4);
+      for (const text of clampedText) {
+        expect(text.overflow).toBe('hidden');
+        expect(text.textOverflow).toBe('ellipsis');
+        expect(text.whiteSpace).toBe('nowrap');
         expect(text.width).toBe('');
+      }
+      for (const testId of [
+        'beatmap-title',
+        'beatmap-difficulty-name',
+        'beatmap-artist',
+        'beatmap-mapper',
+      ]) {
+        await expect(
+          firstRow.locator(`[data-testid="${testId}"]`)
+        ).toHaveAttribute('title', /.+/);
+      }
+
+      // The point of the fixed layout: identical geometry across all cards.
+      const cardGeometry = await page
+        .locator('[data-testid^="beatmap-list-row-"]')
+        .evaluateAll((cards) =>
+          cards.map((card) => {
+            const cardBounds = card.getBoundingClientRect();
+            const offsetOf = (testId: string) => {
+              const element = card.querySelector(`[data-testid="${testId}"]`);
+              if (!element) return null;
+
+              const bounds = element.getBoundingClientRect();
+              return [
+                Math.round(bounds.y - cardBounds.y),
+                Math.round(bounds.height),
+              ];
+            };
+
+            return {
+              height: Math.round(cardBounds.height),
+              rows: [
+                offsetOf('beatmap-ruleset'),
+                offsetOf('beatmap-star-rating'),
+                offsetOf('beatmap-title'),
+                offsetOf('beatmap-attribution'),
+                offsetOf('beatmap-data-summary'),
+              ],
+            };
+          })
+        );
+      expect(cardGeometry.length).toBeGreaterThan(1);
+      for (const card of cardGeometry) {
+        expect(card).toEqual(cardGeometry[0]);
       }
 
       const starRating = firstRow.locator(
@@ -1260,11 +1294,49 @@ test.describe('Beatmaps Listing Page', () => {
     expect(secondCard).not.toBeNull();
     expect(thirdCard).not.toBeNull();
     expect(fourthCard).not.toBeNull();
+    // Two columns on desktop: a third column would leave too little text width
+    // for bpm, duration, games, tournaments, and two mod pills on one row.
     expect(Math.abs(firstCard!.y - secondCard!.y)).toBeLessThanOrEqual(1);
-    expect(Math.abs(firstCard!.y - thirdCard!.y)).toBeLessThanOrEqual(1);
     expect(secondCard!.x).toBeGreaterThan(firstCard!.x);
-    expect(thirdCard!.x).toBeGreaterThan(secondCard!.x);
-    expect(fourthCard!.y).toBeGreaterThan(firstCard!.y);
+    expect(thirdCard!.y).toBeGreaterThan(firstCard!.y);
+    expect(Math.abs(thirdCard!.x - firstCard!.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(fourthCard!.y - thirdCard!.y)).toBeLessThanOrEqual(1);
+    expect(fourthCard!.x).toBeGreaterThan(thirdCard!.x);
+
+    // On desktop the footer is one 36px row, and nothing in it is clipped —
+    // including the second mod pill, which only some maps have.
+    const footers = await page
+      .locator('[data-testid="beatmap-data-summary"]')
+      .evaluateAll((summaries) =>
+        summaries.map((summary) => {
+          const summaryBounds = summary.getBoundingClientRect();
+          const items = [
+            ...summary.querySelectorAll(
+              '[data-testid="beatmap-bpm"], [data-testid="beatmap-duration"], [data-testid="beatmap-games-count"], [data-testid="beatmap-tournaments-count"], [data-testid="beatmap-mod-group"]'
+            ),
+          ].map((item) => item.getBoundingClientRect());
+
+          return {
+            height: Math.round(summaryBounds.height),
+            itemCount: items.length,
+            centers: new Set(
+              items.map((item) => Math.round(item.top + item.height / 2))
+            ).size,
+            spill: Math.max(
+              ...items.map((item) =>
+                Math.round(item.right - summaryBounds.right)
+              )
+            ),
+          };
+        })
+      );
+    expect(footers.length).toBeGreaterThan(1);
+    expect(footers.some((footer) => footer.itemCount === 6)).toBe(true);
+    for (const footer of footers) {
+      expect(footer.height).toBe(36);
+      expect(footer.centers).toBe(1);
+      expect(footer.spill).toBeLessThanOrEqual(0);
+    }
 
     await layoutToggle.focus();
     await layoutToggle.press('Space');
@@ -1389,22 +1461,11 @@ test.describe('Beatmap Detail Page', () => {
       await expect(activeDifficulty).toBeVisible({ timeout: 10000 });
       await expect(activeDifficulty).toBeInViewport();
       await expect(activeDifficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
-      await expect(activeDifficulty.getByText(/ SR/)).toBeVisible();
-
-      const ratingColors = await activeDifficulty
-        .locator('[data-testid="related-difficulty-star-rating"]')
-        .evaluate((rating) => {
-          const foregroundProbe = document.createElement('span');
-          foregroundProbe.className = 'text-foreground';
-          document.body.append(foregroundProbe);
-          const colors = {
-            rating: getComputedStyle(rating).color,
-            foreground: getComputedStyle(foregroundProbe).color,
-          };
-          foregroundProbe.remove();
-          return colors;
-        });
-      expect(ratingColors.rating).toBe(ratingColors.foreground);
+      await expect(
+        activeDifficulty.locator(
+          '[data-testid="related-difficulty-star-rating"]'
+        )
+      ).toHaveCount(0);
 
       const collapsedDifficulty = page
         .locator(
