@@ -8,7 +8,7 @@ import { ROLE_PLAYER_ID, STORAGE_STATE, signInPlayer } from './fixtures/auth';
  * opt in with `test.use({ storageState: STORAGE_STATE.admin })`.
  */
 setup('authenticate as admin', async ({ request }) => {
-  await signInPlayer(request, ROLE_PLAYER_ID.admin);
+  await signInPlayer(request, ROLE_PLAYER_ID.admin, { admin: true });
   await request.storageState({ path: STORAGE_STATE.admin });
 });
 
