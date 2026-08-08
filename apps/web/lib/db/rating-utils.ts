@@ -9,8 +9,7 @@ import type { RatingTimestamps } from '@/lib/maintenance-window';
 export type DbReader = Pick<DatabaseClient, 'select'>;
 
 /**
- * Reads the database clock and the most recent `player_ratings.created`
- * (the last processor run) in one query.
+ * Reads the database clock and the most recent `player_ratings.created` timestamp.
  */
 export async function readRatingTimestamps(
   db: DbReader

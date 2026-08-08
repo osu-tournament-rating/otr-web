@@ -5,9 +5,8 @@ import { readRatingTimestamps, type DbReader } from '@/lib/db/rating-utils';
 import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
 /**
- * Throws a 503 when the maintenance window is active. With a database handle
- * the window tracks the actual rating recalculation instead of the wall
- * clock.
+ * Throws a 503 when the maintenance window is active. If a DbReader is passed,
+ * the window looks for a rating timestamp that is newer than the window start.
  */
 export const assertOutsideMaintenanceWindow = async (
   headers: Headers,
