@@ -417,6 +417,7 @@ export default function FilteringForm({
         <div data-testid="filter-results">
           <FilterComplianceNotice
             filterReportId={filteringResults.filterReportId}
+            created={filteringResults.created}
           />
           <FilteringResultsTable
             results={filteringResults}

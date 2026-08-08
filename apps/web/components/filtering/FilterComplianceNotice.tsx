@@ -3,31 +3,25 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info, Calendar, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface FilterComplianceNoticeProps {
   filterReportId: number;
+  /** Server-side creation timestamp of the report (`filter_reports.created`). */
+  created: string;
 }
 
 export default function FilterComplianceNotice({
   filterReportId,
+  created,
 }: FilterComplianceNoticeProps) {
   const [copied, setCopied] = useState(false);
-  const [dateTimeString, setDateTimeString] = useState<string>('');
-  const [forumPostString, setForumPostString] = useState<string>('');
 
-  useEffect(() => {
-    // Generate date string on client side to avoid hydration mismatch
-    const now = new Date();
-    const utcDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
-    const utcTime = now.toISOString().slice(11, 19); // HH:MM:SS
-    const dateTime = `${utcDate} ${utcTime} UTC`;
-    setDateTimeString(dateTime);
-    setForumPostString(
-      `o!TR Filtering performed at: ${dateTime} (Report ID: ${filterReportId})`
-    );
-  }, [filterReportId]);
+  // Use the stored report timestamp, never the browser clock.
+  const createdIso = new Date(created).toISOString();
+  const dateTimeString = `${createdIso.slice(0, 10)} ${createdIso.slice(11, 19)} UTC`;
+  const forumPostString = `o!TR Filtering performed at: ${dateTimeString} (Report ID: ${filterReportId})`;
 
   const handleCopy = async () => {
     try {
@@ -56,7 +50,7 @@ export default function FilterComplianceNotice({
                   <span>Performed at</span>
                 </div>
                 <p className="font-mono text-sm font-medium">
-                  {dateTimeString || 'Loading...'}
+                  {dateTimeString}
                 </p>
               </div>
 
@@ -82,7 +76,6 @@ export default function FilterComplianceNotice({
                   size="icon"
                   onClick={handleCopy}
                   className="h-8 w-8 flex-shrink-0"
-                  disabled={!forumPostString}
                   title="Copy to clipboard"
                 >
                   {copied ? (
