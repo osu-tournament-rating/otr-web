@@ -34,6 +34,8 @@ export type PlayerFilteringResult = z.infer<typeof PlayerFilteringResultSchema>;
 
 export const FilteringResultSchema = z.object({
   filterReportId: z.number().int().nonnegative(),
+  /** Server-side creation timestamp of the stored filter report. */
+  created: z.string(),
   playersPassed: z.number().int().nonnegative(),
   playersFailed: z.number().int().nonnegative(),
   filteringResults: z.array(PlayerFilteringResultSchema),

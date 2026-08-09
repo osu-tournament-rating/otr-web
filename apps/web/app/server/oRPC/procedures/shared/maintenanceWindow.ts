@@ -1,14 +1,20 @@
 import { ORPCError } from '@orpc/server';
 import { MAINTENANCE_WINDOW_LABEL } from '@otr/core/maintenance';
 
+import { readRatingTimestamps, type DbReader } from '@/lib/db/rating-utils';
 import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
 /**
- * Throws a 503 when the maintenance window is active. Used to gate admin
- * mutations on tournament data during the weekly processor run.
+ * Throws a 503 when the maintenance window is active. If a DbReader is passed,
+ * the window looks for a rating timestamp that is newer than the window start.
  */
-export const assertOutsideMaintenanceWindow = (headers: Headers): void => {
-  if (!resolveMaintenanceWindowActive(headers)) {
+export const assertOutsideMaintenanceWindow = async (
+  headers: Headers,
+  db?: DbReader
+): Promise<void> => {
+  const ratingTimestamps = db ? await readRatingTimestamps(db) : undefined;
+
+  if (!resolveMaintenanceWindowActive(headers, ratingTimestamps)) {
     return;
   }
 

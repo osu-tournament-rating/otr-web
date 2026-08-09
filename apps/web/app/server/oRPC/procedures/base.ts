@@ -712,7 +712,7 @@ export const protectedProcedure = base
 // against. See issue #763.
 const withMaintenanceWindowGuard = base.middleware(
   async ({ context, next }) => {
-    assertOutsideMaintenanceWindow(context.headers);
+    await assertOutsideMaintenanceWindow(context.headers);
     return next();
   }
 );

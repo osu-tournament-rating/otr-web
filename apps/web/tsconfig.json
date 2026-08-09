@@ -2,6 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    // Serializing declaration signatures for `.next/types` into `.tsbuildinfo` is
+    // slower than a plain full check (~35s vs ~12s), so the incremental cache is
+    // disabled here; the root tsconfig stays incremental for CI's typecheck job.
+    "incremental": false,
     "paths": {
       "@/*": ["./*"],
       "@otr/core": ["../../packages/otr-core/src/index.ts"],

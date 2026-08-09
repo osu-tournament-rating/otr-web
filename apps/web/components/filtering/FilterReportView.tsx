@@ -116,7 +116,7 @@ export function FilterReportView() {
       player.username || 'N/A',
       player.playerId?.toString() || 'N/A',
       player.isSuccess ? 'Passed' : 'Failed',
-      player.currentRating != null ? player.currentRating.toFixed(2) : 'N/A',
+      player.currentRating != null ? player.currentRating.toString() : 'N/A',
       getFailureReasons(player.failureReason ?? undefined).join(', '),
     ]);
 

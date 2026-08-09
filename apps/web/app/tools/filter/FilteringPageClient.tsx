@@ -2,12 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import FilteringForm from '@/components/filtering/FilteringForm';
 import { FilteringResult } from '@/lib/orpc/schema/filtering';
 
-export default function FilteringPageClient() {
+type FilteringPageClientProps = {
+  /** True while ratings are recalculating and filtering is blocked. */
+  filterBlocked: boolean;
+};
+
+export default function FilteringPageClient({
+  filterBlocked,
+}: FilteringPageClientProps) {
   const [filteringResults, setFilteringResults] =
     useState<FilteringResult | null>(null);
 
@@ -63,10 +70,27 @@ export default function FilteringPageClient() {
           </div>
         </AlertDescription>
       </Alert>
-      <FilteringForm
-        onFilteringComplete={setFilteringResults}
-        filteringResults={filteringResults}
-      />
+      {filterBlocked ? (
+        <Alert
+          data-testid="filtering-unavailable"
+          className="border-orange-500/50 bg-orange-500/15"
+        >
+          <Clock className="h-4 w-4 text-orange-800 dark:text-orange-200" />
+          <AlertTitle className="font-bold text-orange-800 dark:text-orange-200">
+            Filtering is temporarily unavailable
+          </AlertTitle>
+          <AlertDescription className="text-orange-800/90 dark:text-orange-200/90">
+            <p className="mt-2">
+              Ratings are currently recalculating, please check back later.
+            </p>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <FilteringForm
+          onFilteringComplete={setFilteringResults}
+          filteringResults={filteringResults}
+        />
+      )}
     </div>
   );
 }

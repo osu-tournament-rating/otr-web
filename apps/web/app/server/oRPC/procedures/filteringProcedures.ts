@@ -8,6 +8,7 @@ import {
   VerificationStatus,
 } from '@otr/core/osu';
 import { protectedProcedure, publicProcedure } from './base';
+import { assertOutsideMaintenanceWindow } from './shared/maintenanceWindow';
 import {
   FilterReportSchema,
   FilteringRequestSchema,
@@ -44,6 +45,8 @@ export const filterRegistrants = protectedProcedure
         message: 'User account is not linked to an internal profile',
       });
     }
+
+    await assertOutsideMaintenanceWindow(context.headers, context.db);
 
     const uniqueOsuIds = Array.from(new Set(input.osuPlayerIds));
 
@@ -276,6 +279,10 @@ export const filterRegistrants = protectedProcedure
     const playersFailed = playerResults.length - playersPassed;
 
     const insertedReport = await context.db.transaction(async (tx) => {
+      // Re-assert with the transaction clock so the check matches the
+      // report's `created` timestamp exactly.
+      await assertOutsideMaintenanceWindow(context.headers, tx);
+
       const [report] = await tx
         .insert(schema.filterReports)
         .values({
@@ -293,6 +300,7 @@ export const filterRegistrants = protectedProcedure
         })
         .returning({
           id: schema.filterReports.id,
+          created: schema.filterReports.created,
         });
 
       if (!report) {
@@ -326,6 +334,7 @@ export const filterRegistrants = protectedProcedure
 
     return {
       filterReportId: insertedReport.id,
+      created: insertedReport.created,
       playersPassed,
       playersFailed,
       filteringResults: playerResults,
@@ -364,6 +373,7 @@ export const getFilterReport = publicProcedure
 
     const response = {
       filterReportId: report.id,
+      created: report.created,
       playersPassed: report.playersPassed,
       playersFailed: report.playersFailed,
       filteringResults: playerEntries.map((player) => ({

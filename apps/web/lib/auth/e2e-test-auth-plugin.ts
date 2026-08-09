@@ -17,9 +17,10 @@ import { db } from '@/lib/db';
  * left unset (or false) in staging/prod configs — Playwright tests the production
  * build (`next start`, NODE_ENV=production), so the gate cannot key off NODE_ENV.
  *
- * Endpoint: `POST /api/auth/e2e/sign-in` with body `{ playerId }`. The player must
- * already have an `auth_users` row (created on first real login); admin vs. non-admin
- * is derived from that user's `users.scopes`, exactly like a genuine session.
+ * Endpoint: `POST /api/auth/e2e/sign-in` with body `{ playerId, admin? }`. The player
+ * must exist; if it has no `users`/`auth_users` rows yet (e.g. the local database was
+ * restored from a dump that excludes auth tables), they are provisioned on the fly,
+ * with `admin: true` granting the `admin` scope the same way a real login would read it.
  */
 export const isE2eAuthEnabled = () => process.env.E2E_TEST_AUTH === 'true';
 
@@ -33,6 +34,7 @@ export const e2eTestAuthPlugin = () =>
           method: 'POST',
           body: z.object({
             playerId: z.number().int().positive(),
+            admin: z.boolean().optional(),
           }),
           metadata: {
             openapi: {
@@ -47,16 +49,42 @@ export const e2eTestAuthPlugin = () =>
             throw new APIError('NOT_FOUND', { message: 'Not found' });
           }
 
-          const { playerId } = ctx.body;
+          const { playerId, admin = false } = ctx.body;
 
-          const authUser = await db.query.auth_users.findFirst({
+          let authUser = await db.query.auth_users.findFirst({
             where: eq(schema.auth_users.playerId, playerId),
           });
 
           if (!authUser) {
-            throw new APIError('NOT_FOUND', {
-              message: `No auth_users record for player ${playerId}. Log in once via osu! OAuth to create it.`,
+            const player = await db.query.players.findFirst({
+              where: eq(schema.players.id, playerId),
             });
+
+            if (!player) {
+              throw new APIError('NOT_FOUND', {
+                message: `No player with id ${playerId}.`,
+              });
+            }
+
+            await db
+              .insert(schema.users)
+              .values({
+                playerId,
+                scopes: admin ? ['admin'] : ['whitelist'],
+              })
+              .onConflictDoNothing({ target: schema.users.playerId });
+
+            [authUser] = await db
+              .insert(schema.auth_users)
+              .values({
+                id: crypto.randomUUID(),
+                name: player.username,
+                email: `e2e-player-${playerId}@otr.local`,
+                emailVerified: true,
+                playerId,
+                role: admin ? 'admin' : null,
+              })
+              .returning();
           }
 
           const session = await ctx.context.internalAdapter.createSession(

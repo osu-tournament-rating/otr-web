@@ -1,4 +1,9 @@
+import { readFileSync } from 'node:fs';
+
 import { test, expect } from '@playwright/test';
+import { createORPCClient } from '@orpc/client';
+import { RPCLink } from '@orpc/client/fetch';
+
 import { STORAGE_STATE } from './fixtures/auth';
 import { ROUTES } from './fixtures/test-config';
 
@@ -91,6 +96,85 @@ test.describe('Tournament Registrant Filtering', () => {
       await textarea.fill('1234567, 2345678');
       await expect(textarea).toHaveValue('1234567, 2345678');
     });
+  });
+});
+
+test.describe('Filtering during the maintenance window', () => {
+  test.describe('Signed-in user', () => {
+    test.use({ storageState: STORAGE_STATE.user });
+
+    test('shows the unavailable state instead of the form during the window', async ({
+      page,
+    }) => {
+      await page.setExtraHTTPHeaders({
+        'x-e2e-maintenance-window': 'active',
+      });
+
+      await page.goto(ROUTES.filter);
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.locator('[data-testid="filtering-unavailable"]')
+      ).toContainText('Filtering is temporarily unavailable', {
+        timeout: 10000,
+      });
+      await expect(page.locator('[data-testid="filter-form"]')).toHaveCount(0);
+    });
+
+    test('shows the form outside the window', async ({ page }) => {
+      await page.setExtraHTTPHeaders({
+        'x-e2e-maintenance-window': 'inactive',
+      });
+
+      await page.goto(ROUTES.filter);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.locator('[data-testid="filter-form"]')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(
+        page.locator('[data-testid="filtering-unavailable"]')
+      ).toHaveCount(0);
+    });
+  });
+
+  test('rejects filter submissions during the window with a 503', async ({
+    baseURL,
+  }) => {
+    // The gate runs before any lookup or write, so nothing is ever persisted.
+    const state = JSON.parse(readFileSync(STORAGE_STATE.user, 'utf-8')) as {
+      cookies: Array<{ name: string; value: string }>;
+    };
+    const cookie = state.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+
+    const link = new RPCLink({
+      url: `${baseURL}/rpc`,
+      headers: () => ({
+        cookie,
+        'x-e2e-maintenance-window': 'active',
+      }),
+    });
+    const client = createORPCClient(link) as unknown as {
+      filtering: {
+        filter(input: {
+          ruleset: number;
+          osuPlayerIds: number[];
+        }): Promise<unknown>;
+      };
+    };
+
+    type CapturedError = { code?: string; data?: { code?: string } };
+    let captured: CapturedError | null = null;
+
+    try {
+      await client.filtering.filter({ ruleset: 0, osuPlayerIds: [1] });
+    } catch (error) {
+      captured = error as CapturedError;
+    }
+
+    expect(captured).not.toBeNull();
+    expect(captured?.code).toBe('SERVICE_UNAVAILABLE');
+    expect(captured?.data?.code).toBe('MAINTENANCE_WINDOW');
   });
 });
 
