@@ -1,4 +1,7 @@
-import { isWithinMaintenanceWindow } from '@otr/core/maintenance';
+import {
+  isRatingRecalculationPending,
+  isWithinMaintenanceWindow,
+} from '@otr/core/maintenance';
 
 /**
  * Test-only request header used by the e2e suite to force the maintenance
@@ -15,17 +18,21 @@ const isE2eMaintenanceOverrideEnabled = () =>
 const isMaintenanceWindowEnabled = () =>
   process.env.MAINTENANCE_WINDOW_ENABLED !== 'false';
 
+export type RatingTimestamps = {
+  /** Database clock (inside a transaction: the transaction start time). */
+  now: Date;
+  /** Most recent `player_ratings.created`, or null when no ratings exist. */
+  latestRatingCreated: Date | null;
+};
+
 /**
- * Resolves whether the site should treat the maintenance window as active.
- *
- * Precedence:
- *   1. E2E override header (test environments only).
- *   2. The `MAINTENANCE_WINDOW_ENABLED` feature flag (developers disable it
- *      locally so they aren't blocked while working).
- *   3. The weekly Tuesday 11:45-12:15 UTC window.
+ * Resolves whether the maintenance window is active, after the e2e override
+ * header and the `MAINTENANCE_WINDOW_ENABLED` flag. With rating timestamps
+ * the window tracks the actual recalculation; otherwise the wall clock.
  */
 export const resolveMaintenanceWindowActive = (
-  headers: HeadersLike
+  headers: HeadersLike,
+  ratingTimestamps?: RatingTimestamps
 ): boolean => {
   if (isE2eMaintenanceOverrideEnabled()) {
     const override = headers.get(E2E_OVERRIDE_HEADER);
@@ -39,6 +46,13 @@ export const resolveMaintenanceWindowActive = (
 
   if (!isMaintenanceWindowEnabled()) {
     return false;
+  }
+
+  if (ratingTimestamps) {
+    return isRatingRecalculationPending(
+      ratingTimestamps.now,
+      ratingTimestamps.latestRatingCreated
+    );
   }
 
   return isWithinMaintenanceWindow(new Date());

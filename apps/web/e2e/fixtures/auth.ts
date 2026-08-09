@@ -2,12 +2,12 @@ import path from 'node:path';
 import { type APIRequestContext, type Page } from '@playwright/test';
 
 /**
- * Players that already have `auth_users` rows in the dev database. Admin status is
- * derived from each player's `users.scopes`:
- *   - 440 ("Stage")  -> scopes include `admin`  => admin session
- *   - 1068 ("D I O") -> scopes are `{whitelist}` => regular signed-in session
+ * Players used for e2e sessions. The sign-in endpoint provisions their
+ * `users`/`auth_users` rows on first use, so only the `players` rows need to exist:
+ *   - 3616 ("Cytusine") -> admin session
+ *   - 1068 ("D I O")    -> regular signed-in session
  */
-export const TEST_ADMIN_PLAYER_ID = 440;
+export const TEST_ADMIN_PLAYER_ID = 3616;
 export const TEST_NONADMIN_PLAYER_ID = 1068;
 
 /** Where the Playwright setup project writes each role's storage state. */
@@ -33,10 +33,11 @@ export const E2E_SIGN_IN_PATH = '/api/auth/e2e/sign-in';
  */
 export async function signInPlayer(
   request: APIRequestContext,
-  playerId: number
+  playerId: number,
+  options: { admin?: boolean } = {}
 ): Promise<void> {
   const response = await request.post(E2E_SIGN_IN_PATH, {
-    data: { playerId },
+    data: { playerId, admin: options.admin ?? false },
   });
 
   // Only read the body / build the message on failure — passing them to
@@ -56,7 +57,9 @@ export async function signInPlayer(
  * is scoped to the right origin, then reloads to pick up the session.
  */
 export async function loginAs(page: Page, role: TestRole): Promise<void> {
-  await signInPlayer(page.request, ROLE_PLAYER_ID[role]);
+  await signInPlayer(page.request, ROLE_PLAYER_ID[role], {
+    admin: role === 'admin',
+  });
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 }

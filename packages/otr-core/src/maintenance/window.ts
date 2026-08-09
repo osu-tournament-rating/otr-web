@@ -39,3 +39,44 @@ export function isWithinMaintenanceWindow(now: Date): boolean {
     minutesUtc < MAINTENANCE_WINDOW_END_UTC_MINUTES
   );
 }
+
+/**
+ * Returns the start of the most recent maintenance window at or before the
+ * supplied instant (the moment the public replica is snapshotted).
+ */
+export function latestMaintenanceWindowStart(now: Date): Date {
+  const start = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() -
+        ((now.getUTCDay() - MAINTENANCE_WINDOW_UTC_DAY + 7) % 7),
+      Math.floor(MAINTENANCE_WINDOW_START_UTC_MINUTES / 60),
+      MAINTENANCE_WINDOW_START_UTC_MINUTES % 60
+    )
+  );
+
+  if (start.getTime() > now.getTime()) {
+    start.setUTCDate(start.getUTCDate() - 7);
+  }
+
+  return start;
+}
+
+/**
+ * Returns whether live ratings are stale relative to the most recent replica
+ * snapshot, i.e. the processor has not rebuilt `player_ratings` since the
+ * window start. `null` means no ratings exist, so nothing can be stale.
+ */
+export function isRatingRecalculationPending(
+  now: Date,
+  latestRatingCreated: Date | null
+): boolean {
+  if (!latestRatingCreated) {
+    return false;
+  }
+
+  return (
+    latestRatingCreated.getTime() < latestMaintenanceWindowStart(now).getTime()
+  );
+}
