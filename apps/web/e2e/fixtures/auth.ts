@@ -4,10 +4,10 @@ import { type APIRequestContext, type Page } from '@playwright/test';
 /**
  * Players used for e2e sessions. The sign-in endpoint provisions their
  * `users`/`auth_users` rows on first use, so only the `players` rows need to exist:
- *   - 440 ("Stage")  -> admin session
- *   - 1068 ("D I O") -> regular signed-in session
+ *   - 3616 ("Cytusine") -> admin session
+ *   - 1068 ("D I O")    -> regular signed-in session
  */
-export const TEST_ADMIN_PLAYER_ID = 440;
+export const TEST_ADMIN_PLAYER_ID = 3616;
 export const TEST_NONADMIN_PLAYER_ID = 1068;
 
 /** Where the Playwright setup project writes each role's storage state. */

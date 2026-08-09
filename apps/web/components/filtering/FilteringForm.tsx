@@ -279,7 +279,7 @@ export default function FilteringForm({
           result.playerId?.toString() || 'N/A',
           result.isSuccess ? 'Passed' : 'Failed',
           result.currentRating != null
-            ? result.currentRating.toFixed(0)
+            ? result.currentRating.toString()
             : 'N/A',
           failureReasons.join(', '),
         ];
