@@ -1,4 +1,4 @@
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 import type {
   BeatmapTournamentUsage,
@@ -90,6 +90,24 @@ export function sortPoolsByGames(
  */
 export function isPoolVerified(pool: BeatmapTournamentUsage): boolean {
   return pool.tournament.verificationStatus === VerificationStatus.Verified;
+}
+
+function rulesetFamily(ruleset: Ruleset): Ruleset {
+  return ruleset === Ruleset.Mania4k || ruleset === Ruleset.Mania7k
+    ? Ruleset.ManiaOther
+    : ruleset;
+}
+
+/**
+ * True when a pool record comes from a tournament in a different ruleset
+ * family than the beatmap — i.e. the tournament pooled a convert. 4K/7K/other
+ * mania are one family, so key-mode variants never read as converts.
+ */
+export function isCrossRulesetPool(
+  tournamentRuleset: Ruleset,
+  beatmapRuleset: Ruleset
+): boolean {
+  return rulesetFamily(tournamentRuleset) !== rulesetFamily(beatmapRuleset);
 }
 
 /**

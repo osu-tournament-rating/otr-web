@@ -1,16 +1,16 @@
+import { Inbox } from 'lucide-react';
 import { Metadata } from 'next';
 import { z } from 'zod';
 
-import BeatmapActivityCard from '@/components/beatmap/BeatmapActivityCard';
-import BeatmapAttributesCard from '@/components/beatmap/BeatmapAttributesCard';
+import BeatmapDistributionsCard from '@/components/beatmap/BeatmapDistributionsCard';
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
 import BeatmapMarginCard from '@/components/beatmap/BeatmapMarginCard';
-import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
+import BeatmapOverviewCard from '@/components/beatmap/BeatmapOverviewCard';
 import BeatmapPerformanceCard from '@/components/beatmap/BeatmapPerformanceCard';
-import BeatmapRankRangeCard from '@/components/beatmap/BeatmapRankRangeCard';
 import BeatmapRecordsCard from '@/components/beatmap/BeatmapRecordsCard';
 import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistributionCard';
 import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
+import { SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapTierBreakdownCard from '@/components/beatmap/BeatmapTierBreakdownCard';
 import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
@@ -78,6 +78,47 @@ export default async function BeatmapPage({ params }: PageProps) {
     (total, distribution) => total + distribution.scoreCount,
     0
   );
+  const hasNoVerifiedData =
+    stats.tournaments.length === 0 && totalVerifiedScoreCount === 0;
+
+  // Two returns on purpose: the empty-state branch below drops every
+  // analytics card but keeps BeatmapHeader and BeatmapOverviewCard. Those two
+  // are duplicated in the normal branch — change props on one and change them
+  // on the other.
+  if (hasNoVerifiedData) {
+    return (
+      <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
+        <BeatmapHeader
+          beatmap={stats.beatmap}
+          relatedDifficulties={stats.relatedDifficulties}
+        />
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Band first in DOM so it stacks directly under the header on
+              mobile, and so the overview rail lands on the right at lg — the
+              same side it sits on in the populated layout. */}
+          <SectionCard
+            data-testid="beatmap-empty-band"
+            className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center lg:col-span-2"
+          >
+            <Inbox className="size-8 text-muted-foreground" aria-hidden />
+            <p className="font-medium">
+              No verified tournament data recorded yet
+            </p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Pool records and score analytics will appear once a verified
+              tournament uses this beatmap.
+            </p>
+          </SectionCard>
+          <BeatmapOverviewCard
+            beatmap={stats.beatmap}
+            usage={stats.usageOverTime}
+            summary={stats.summary}
+            pools={stats.tournaments}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
@@ -86,23 +127,24 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      <BeatmapModDistributionChart modStats={stats.modDistribution} />
-
-      <div className="grid items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        <div className="space-y-4 lg:sticky lg:top-20">
-          <BeatmapAttributesCard beatmap={stats.beatmap} />
-          <BeatmapActivityCard
-            data={stats.usageOverTime}
-            summary={stats.summary}
-            pools={stats.tournaments}
-          />
-        </div>
-
-        <BeatmapRecordsCard
+      {/* Distributions takes two of the three columns; the overview rail rides
+          beside it instead of alongside the record tables below. Both stretch
+          to the taller column so the row ends on one line. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <BeatmapDistributionsCard
+          className="lg:col-span-2"
+          modStats={stats.modDistribution}
           pools={stats.tournaments}
-          performers={stats.topPerformers}
-          beatmapOsuId={stats.beatmap.osuId}
-          totalScoreCount={totalVerifiedScoreCount}
+          freemodPicks={stats.freemodPicks}
+          rankRangeMods={stats.rankRangeModDistribution}
+          gradeDistribution={stats.performance.gradeDistribution}
+        />
+
+        <BeatmapOverviewCard
+          beatmap={stats.beatmap}
+          usage={stats.usageOverTime}
+          summary={stats.summary}
+          pools={stats.tournaments}
         />
       </div>
 
@@ -111,20 +153,27 @@ export default async function BeatmapPage({ params }: PageProps) {
           className="lg:col-span-2"
           distribution={stats.scoreDistribution}
           percentiles={stats.scorePercentiles}
+          totalScoreCount={totalVerifiedScoreCount}
         />
-        <BeatmapScoreScatterCard sample={stats.scoreSample} />
+        <BeatmapScoreScatterCard
+          className="lg:col-span-2"
+          sample={stats.scoreSample}
+        />
         <BeatmapPerformanceCard performance={stats.performance} />
-        <BeatmapRankRangeCard
-          pools={stats.tournaments}
-          freemodPicks={stats.freemodPicks}
-          rankRangeMods={stats.rankRangeModDistribution}
-        />
         <BeatmapMarginCard margins={stats.teamVsMargins} />
         <BeatmapTierBreakdownCard
           className="lg:col-span-2"
           tierBreakdown={stats.tierBreakdown}
         />
       </div>
+
+      <BeatmapRecordsCard
+        pools={stats.tournaments}
+        performers={stats.topPerformers}
+        beatmapOsuId={stats.beatmap.osuId}
+        beatmapRuleset={stats.beatmap.ruleset}
+        totalScoreCount={totalVerifiedScoreCount}
+      />
     </div>
   );
 }

@@ -6,15 +6,18 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   EmptyState,
   Eyebrow,
+  ScaleFooter,
   SectionCard,
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
-import SimpleTooltip from '@/components/simple-tooltip';
+import TapTooltip from '@/components/tap-tooltip';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { getScoreFloor, toScorePercent } from '@/lib/beatmaps/score-scale';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import type {
   BeatmapModScoreDistribution,
   BeatmapScorePercentilePoint,
@@ -31,6 +34,11 @@ import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
 interface BeatmapScoreDistributionCardProps {
   distribution: BeatmapModScoreDistribution[];
   percentiles: BeatmapScorePercentilePoint[];
+  /**
+   * Every verified score on the map, not just the ones that survive the
+   * per-mod-combination clamp the rows below are drawn from.
+   */
+  totalScoreCount: number;
   className?: string;
 }
 
@@ -38,30 +46,27 @@ const PERCENTILE_CHART_CONFIG = {
   percentile: { label: 'Percentile' },
 };
 
-/** Positions a value on the shared 0..max score scale as a CSS percentage. */
-function toScalePercent(value: number, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  return Math.min(100, Math.max(0, (value / maxScore) * 100));
-}
-
 function BoxPlotRow({
   group,
+  floorScore,
   maxScore,
 }: {
   group: BeatmapModScoreDistribution;
+  floorScore: number;
   maxScore: number;
 }) {
   const label = getBeatmapModLabel(group.mods);
   const color = getModColor(group.mods);
 
-  const minPct = toScalePercent(group.minScore, maxScore);
-  const maxPct = toScalePercent(group.maxScore, maxScore);
-  const p25Pct = toScalePercent(group.p25Score, maxScore);
-  const p75Pct = toScalePercent(group.p75Score, maxScore);
-  const medianPct = toScalePercent(group.medianScore, maxScore);
+  const minPct = toScorePercent(group.minScore, floorScore, maxScore);
+  const maxPct = toScorePercent(group.maxScore, floorScore, maxScore);
+  const p25Pct = toScorePercent(group.p25Score, floorScore, maxScore);
+  const p75Pct = toScorePercent(group.p75Score, floorScore, maxScore);
+  const medianPct = toScorePercent(group.medianScore, floorScore, maxScore);
 
   return (
-    <SimpleTooltip
+    <TapTooltip
+      triggerAriaLabel={`${label}: ${formatChartNumber(group.scoreCount)} scores`}
       content={
         <div className="min-w-44 space-y-1">
           <div className="flex items-center justify-between gap-4 border-b pb-1.5">
@@ -73,28 +78,28 @@ function BoxPlotRow({
               />
               <span className="text-xs font-medium">{label}</span>
             </span>
-            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {`${formatChartNumber(group.scoreCount)} scores`}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Median</span>
-            <span className="font-mono text-sm font-semibold tabular-nums">
+            <span className="text-sm font-semibold tabular-nums">
               {formatChartNumber(group.medianScore)}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Middle 50%</span>
-            <span className="font-mono text-xs tabular-nums">
+            <span className="text-xs tabular-nums">
               {`${formatChartNumber(group.p25Score)} – ${formatChartNumber(group.p75Score)}`}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Range</span>
-            <span className="flex items-center gap-1.5 font-mono text-xs tabular-nums">
+            <span className="flex items-center gap-1.5 text-xs tabular-nums">
               <span
                 className="size-1.5 shrink-0 rounded-full border bg-transparent"
                 style={{ borderColor: color }}
@@ -119,10 +124,6 @@ function BoxPlotRow({
             aria-hidden="true"
           />
           <span className="truncate text-xs font-medium">{label}</span>
-        </span>
-
-        <span className="sr-only">
-          {`${label}: ${formatChartNumber(group.scoreCount)} scores, minimum ${formatChartNumber(group.minScore)}, 25th percentile ${formatChartNumber(group.p25Score)}, median ${formatChartNumber(group.medianScore)}, 75th percentile ${formatChartNumber(group.p75Score)}, maximum ${formatChartNumber(group.maxScore)}`}
         </span>
 
         <div
@@ -165,13 +166,13 @@ function BoxPlotRow({
         </div>
 
         <span
-          className="w-12 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums"
+          className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
           aria-hidden="true"
         >
           {formatKilo(group.medianScore)}
         </span>
       </div>
-    </SimpleTooltip>
+    </TapTooltip>
   );
 }
 
@@ -180,6 +181,9 @@ function PercentileCurve({
 }: {
   percentiles: BeatmapScorePercentilePoint[];
 }) {
+  // Five score ticks collide into an unreadable smear on a phone.
+  const isNarrow = useMediaQuery('(max-width: 639px)');
+
   return (
     <ChartContainer
       config={PERCENTILE_CHART_CONFIG}
@@ -198,6 +202,7 @@ function PercentileCurve({
           tickLine={false}
           axisLine={false}
           stroke={CHART_COLORS.mutedForeground}
+          tickCount={isNarrow ? 3 : 5}
         />
         <YAxis
           domain={[0, 100]}
@@ -221,11 +226,11 @@ function PercentileCurve({
                 return (
                   <span className="text-xs">
                     A score of{' '}
-                    <span className="font-mono font-medium tabular-nums">
+                    <span className="font-medium tabular-nums">
                       {formatChartNumber(point.score)}
                     </span>{' '}
                     beats{' '}
-                    <span className="font-mono font-medium tabular-nums">
+                    <span className="font-medium tabular-nums">
                       {formatPercentage(value, 0)}
                     </span>{' '}
                     of tournament plays
@@ -243,6 +248,7 @@ function PercentileCurve({
           fillOpacity={0.15}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </AreaChart>
     </ChartContainer>
@@ -252,12 +258,9 @@ function PercentileCurve({
 export default function BeatmapScoreDistributionCard({
   distribution,
   percentiles,
+  totalScoreCount,
   className,
 }: BeatmapScoreDistributionCardProps) {
-  const totalScoreCount = distribution.reduce(
-    (total, group) => total + group.scoreCount,
-    0
-  );
   const hasBoxData = distribution.length > 0;
   const hasCurveData = percentiles.length > 0;
   const hasData = hasBoxData || hasCurveData;
@@ -266,6 +269,7 @@ export default function BeatmapScoreDistributionCard({
     (max, group) => Math.max(max, group.maxScore),
     0
   );
+  const floorScore = getScoreFloor(distribution.map((group) => group.minScore));
 
   return (
     <SectionCard
@@ -287,7 +291,10 @@ export default function BeatmapScoreDistributionCard({
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="px-4 py-4">
-            <Eyebrow>By mod</Eyebrow>
+            <div className="flex items-baseline justify-between">
+              <Eyebrow>Mod</Eyebrow>
+              {hasBoxData ? <Eyebrow>Median</Eyebrow> : null}
+            </div>
             {hasBoxData ? (
               <div
                 className={cn(
@@ -304,6 +311,7 @@ export default function BeatmapScoreDistributionCard({
                   <BoxPlotRow
                     key={group.mods}
                     group={group}
+                    floorScore={floorScore}
                     maxScore={maxScore}
                   />
                 ))}
@@ -312,18 +320,32 @@ export default function BeatmapScoreDistributionCard({
               <EmptyState>No verified scores yet.</EmptyState>
             )}
             {hasBoxData ? (
-              <p className="mt-2 font-mono text-xs text-muted-foreground">
-                Mod combinations with fewer than 5 scores hidden
-              </p>
+              <>
+                <ScaleFooter
+                  leftSpacerClassName="w-16"
+                  rightSpacerClassName="w-12"
+                  minLabel={formatKilo(floorScore)}
+                  maxLabel={formatKilo(maxScore)}
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Mod combinations with fewer than 5 scores hidden
+                </p>
+              </>
             ) : null}
           </div>
 
           <div className="border-t px-4 py-4 xl:border-t-0">
             <Eyebrow>Percentiles</Eyebrow>
             {hasCurveData ? (
-              <div className="mt-3">
-                <PercentileCurve percentiles={percentiles} />
-              </div>
+              <>
+                <div className="mt-3">
+                  <PercentileCurve percentiles={percentiles} />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Each point shows the share of tournament plays a score beats.
+                  Steep = scores bunched together, flat = wide gaps.
+                </p>
+              </>
             ) : (
               <EmptyState>No verified scores yet.</EmptyState>
             )}

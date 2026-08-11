@@ -1607,6 +1607,19 @@ test.describe('Beatmap Detail Page', () => {
       .toBe(0);
   });
 
+  test('box plot rows pin their stats in a popover on click', async ({
+    page,
+  }) => {
+    await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+    const card = page.locator('[data-testid="beatmap-score-distribution"]');
+    await card.getByRole('button').first().click();
+    const popover = page.getByRole('dialog');
+    await expect(popover).toBeVisible();
+    await expect(popover).toContainText('Median');
+    await page.keyboard.press('Escape');
+    await expect(popover).not.toBeVisible();
+  });
+
   test.describe('Usage Statistics', () => {
     test('reports usage counts in the activity card, not the banner', async ({
       page,
@@ -1709,7 +1722,7 @@ test.describe('Beatmap Detail Page', () => {
       const entries = await legendEntries.allInnerTexts();
       const parsed = entries.map((entry) => {
         const [, label, percentage] =
-          entry.replace(/\s+/g, ' ').match(/^(.+?) ([\d.]+)%$/) ?? [];
+          entry.replace(/\s+/g, ' ').match(/^(.+?) ([\d.]+)% · [\d,]+$/) ?? [];
         return { label, percentage: Number(percentage) };
       });
 
@@ -1731,7 +1744,7 @@ test.describe('Beatmap Detail Page', () => {
       expect(summed).toBeLessThan(101);
     });
 
-    test('spans the full content width above the record tables', async ({
+    test('takes two thirds of the top row beside the overview rail', async ({
       page,
     }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
@@ -1740,30 +1753,34 @@ test.describe('Beatmap Detail Page', () => {
       const modChart = page
         .locator('[data-testid="beatmap-mod-distribution-chart"]')
         .first();
-      const attributes = page
-        .locator('[data-testid="beatmap-attributes"]')
-        .first();
+      const overview = page.locator('[data-testid="beatmap-overview"]').first();
       const pools = page
         .locator('[data-testid="beatmap-tournaments-list"]')
         .first();
       await expect(modChart).toBeVisible({ timeout: 15000 });
-      await expect(attributes).toBeVisible({ timeout: 15000 });
+      await expect(overview).toBeVisible({ timeout: 15000 });
       await expect(pools).toBeVisible({ timeout: 15000 });
 
       const modBox = await modChart.boundingBox();
-      const railBox = await attributes.boundingBox();
+      const railBox = await overview.boundingBox();
       const poolsBox = await pools.boundingBox();
       expect(modBox).not.toBeNull();
       expect(railBox).not.toBeNull();
       expect(poolsBox).not.toBeNull();
 
-      // The chart clears both columns; the rail and the tables split its width.
-      expect(modBox!.y + modBox!.height).toBeLessThanOrEqual(railBox!.y);
-      expect(modBox!.y + modBox!.height).toBeLessThanOrEqual(poolsBox!.y);
-      expect(Math.abs(modBox!.x - railBox!.x)).toBeLessThanOrEqual(1);
-      expect(poolsBox!.x).toBeGreaterThan(railBox!.x + railBox!.width);
-      expect(railBox!.width + poolsBox!.width).toBeLessThanOrEqual(
-        modBox!.width
+      // Chart and rail share the top row, splitting it two-to-one.
+      expect(Math.abs(modBox!.y - railBox!.y)).toBeLessThanOrEqual(1);
+      expect(railBox!.x).toBeGreaterThan(modBox!.x + modBox!.width);
+      expect(modBox!.width).toBeGreaterThan(railBox!.width * 1.8);
+      expect(modBox!.width).toBeLessThan(railBox!.width * 2.2);
+
+      // The record tables clear both and run the full content width.
+      expect(poolsBox!.y).toBeGreaterThanOrEqual(modBox!.y + modBox!.height);
+      expect(poolsBox!.y).toBeGreaterThanOrEqual(railBox!.y + railBox!.height);
+      // The panel sits inside the card border, so allow a couple of pixels.
+      expect(Math.abs(poolsBox!.x - modBox!.x)).toBeLessThanOrEqual(2);
+      expect(poolsBox!.width).toBeGreaterThanOrEqual(
+        railBox!.x + railBox!.width - modBox!.x - 4
       );
     });
 
@@ -1862,9 +1879,9 @@ test.describe('Beatmap Detail Page', () => {
             .allInnerTexts()
         ).map((text) => Number(text.replace(/[^\d]/g, '')));
 
-      const mostPlayed = pools.getByRole('button', { name: 'Most played' });
-      const mostRecent = pools.getByRole('button', { name: 'Most recent' });
-      await expect(mostPlayed).toHaveAttribute('aria-pressed', 'true');
+      const mostPlayed = pools.getByRole('tab', { name: 'Most played' });
+      const mostRecent = pools.getByRole('tab', { name: 'Most recent' });
+      await expect(mostPlayed).toHaveAttribute('aria-selected', 'true');
 
       const byGames = await readGameCounts();
       expect(byGames.length).toBeGreaterThan(1);
@@ -1873,9 +1890,36 @@ test.describe('Beatmap Detail Page', () => {
       }
 
       await mostRecent.click();
-      await expect(mostRecent).toHaveAttribute('aria-pressed', 'true');
-      await expect(mostPlayed).toHaveAttribute('aria-pressed', 'false');
+      await expect(mostRecent).toHaveAttribute('aria-selected', 'true');
+      await expect(mostPlayed).toHaveAttribute('aria-selected', 'false');
       expect((await readGameCounts()).length).toBeGreaterThan(1);
+    });
+
+    test('keeps an expanded pool open across a tab round-trip', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      await page.waitForLoadState('networkidle');
+
+      const toggle = page
+        .locator('[data-testid^="beatmap-tournament-details-toggle-"]')
+        .first();
+      await toggle.click();
+      await expect(page.locator('a[href*="/matches/"]').first()).toBeVisible({
+        timeout: 15000,
+      });
+
+      let refetched = false;
+      page.on('request', (request) => {
+        if (request.url().includes('tournamentMatches')) refetched = true;
+      });
+
+      await page.getByRole('tab', { name: 'Scores' }).click();
+      await page.getByRole('tab', { name: 'Pools' }).click();
+
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator('a[href*="/matches/"]').first()).toBeVisible();
+      expect(refetched).toBe(false);
     });
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { Library, ListOrdered, Plus } from 'lucide-react';
+import type { Ruleset } from '@otr/core/osu';
+import { Library, ListOrdered, Plus, ScrollText } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import BeatmapPoolRow, {
@@ -11,6 +12,7 @@ import {
   EmptyState,
   Eyebrow,
   SectionCard,
+  SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,11 +34,13 @@ export default function BeatmapRecordsCard({
   pools,
   performers,
   beatmapOsuId,
+  beatmapRuleset,
   totalScoreCount,
 }: {
   pools: BeatmapTournamentUsage[];
   performers: BeatmapTopPerformer[];
   beatmapOsuId: number;
+  beatmapRuleset: Ruleset;
   totalScoreCount: number;
 }) {
   const [tab, setTab] = useState<RecordTab>('pools');
@@ -62,12 +66,13 @@ export default function BeatmapRecordsCard({
 
   return (
     <SectionCard>
+      <SectionHeader icon={ScrollText} title="Records" meta={tabCount} />
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as RecordTab)}
         className="gap-0"
       >
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
           <TabsList>
             <TabsTrigger value="pools">
               <Library aria-hidden />
@@ -78,15 +83,16 @@ export default function BeatmapRecordsCard({
               Scores
             </TabsTrigger>
           </TabsList>
-          <span className="font-mono text-xs text-muted-foreground tabular-nums">
-            {tabCount}
-          </span>
         </div>
 
+        {/* Both panels stay mounted so expanded pool games survive a tab
+            round-trip; Radix skips its own `hidden` attribute under
+            `forceMount`, so visibility rides on `data-state` instead. */}
         <TabsContent
           value="pools"
+          forceMount
           data-testid="beatmap-tournaments-list"
-          className="mt-0"
+          className="mt-0 data-[state=inactive]:hidden"
         >
           {pools.length === 0 ? (
             <EmptyState>No pool records.</EmptyState>
@@ -102,7 +108,7 @@ export default function BeatmapRecordsCard({
                     <TabsTrigger value="recent">Most recent</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <div aria-hidden className="flex items-center gap-3">
+                <div aria-hidden className="hidden items-center gap-3 sm:flex">
                   <Eyebrow className={POOL_COLUMN_CLASSES.mod}>Mod</Eyebrow>
                   <Eyebrow
                     className={cn('text-right', POOL_COLUMN_CLASSES.games)}
@@ -120,6 +126,7 @@ export default function BeatmapRecordsCard({
                     pool={pool}
                     beatmapOsuId={beatmapOsuId}
                     maxGames={maxGames}
+                    beatmapRuleset={beatmapRuleset}
                   />
                 ))}
               </div>
@@ -152,8 +159,9 @@ export default function BeatmapRecordsCard({
 
         <TabsContent
           value="scores"
+          forceMount
           data-testid="beatmap-top-performers"
-          className="mt-0"
+          className="mt-0 data-[state=inactive]:hidden"
         >
           <BeatmapScoresTable performers={performers} />
         </TabsContent>

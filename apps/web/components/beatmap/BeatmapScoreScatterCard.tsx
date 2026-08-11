@@ -1,7 +1,6 @@
 'use client';
 
 import { ChartScatter } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import * as React from 'react';
 import {
   CartesianGrid,
@@ -9,81 +8,58 @@ import {
   ReferenceLine,
   Scatter,
   ScatterChart,
+  Symbols,
   XAxis,
   YAxis,
-  ZAxis,
 } from 'recharts';
 
 import {
   EmptyState,
-  Eyebrow,
   SectionCard,
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
-import type { Scatter3DPoint } from '@/components/beatmap/BeatmapScoreScatter3D';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   RANK_RANGE_BUCKETS,
   type RankRangeBucketKey,
 } from '@/lib/beatmaps/rankRange';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import type { BeatmapScoreSample } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
-import {
-  formatChartNumber,
-  formatKilo,
-  formatPercentage,
-} from '@/lib/utils/chart';
-import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
-import type { Mods } from '@otr/core/osu';
-
-const BeatmapScoreScatter3D = dynamic(
-  () => import('@/components/beatmap/BeatmapScoreScatter3D'),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-[340px] w-full" />,
-  }
-);
+import { formatChartNumber, formatKilo } from '@/lib/utils/chart';
+import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 interface BeatmapScoreScatterCardProps {
   sample: BeatmapScoreSample;
   className?: string;
 }
 
-type ScatterView = 'rating' | 'accuracy';
-type ScatterMode = '2d' | '3d';
-type ScatterColorBy = 'ranks' | 'mods';
-type AccuracyXMode = 'score' | 'rating';
-type AccuracyZoom = 'all' | '95-98' | '98-100';
-
-type AxisKey = 'rating' | 'score' | 'accuracy';
-
 interface ScatterPoint {
   score: number;
-  /** Display accuracy in percent (0–100). */
-  accuracy: number;
-  rating: number | null;
-  mods: number;
+  rating: number;
   modLabel: string;
   rankRange: RankRangeBucketKey;
   rankRangeLabel: string;
-  /** Fill when coloring by mod combination. */
-  modFill: string;
-  /** Fill when coloring by tournament rank range. */
-  rankFill: string;
+  fill: string;
 }
 
 /** Minimum rated points before a trendline is meaningful. */
 const TRENDLINE_MIN_POINTS = 10;
 
-/** Share of the sample kept in the accuracy view (top scores only). */
-const ACCURACY_TOP_SHARE = 0.2;
+/**
+ * Scatter symbol AREA in px². Sizing goes through an explicit `Symbols` shape
+ * because Recharts 3 ignores `ZAxis range` unless the axis also has a
+ * `dataKey`, and giving it one would push an extra row into the tooltip. The
+ * wide value is Recharts' own default (so wide viewports render unchanged);
+ * the narrow one is ~0.68x that diameter so dense samples stay separable on
+ * phones.
+ */
+const DOT_AREA_WIDE = 64;
+const DOT_AREA_NARROW = 30;
 
 const RANK_RANGE_COLOR = Object.fromEntries(
   RANK_RANGE_BUCKETS.map((bucket) => [bucket.key, bucket.color])
@@ -92,63 +68,6 @@ const RANK_RANGE_COLOR = Object.fromEntries(
 const RANK_RANGE_LABEL = Object.fromEntries(
   RANK_RANGE_BUCKETS.map((bucket) => [bucket.key, bucket.label])
 ) as Record<RankRangeBucketKey, string>;
-
-const AXIS_NAME: Record<AxisKey, string> = {
-  rating: 'Pre-match rating',
-  score: 'Score',
-  accuracy: 'Accuracy',
-};
-
-const ACCURACY_ZOOM_DOMAIN: Record<
-  Exclude<AccuracyZoom, 'all'>,
-  [number, number]
-> = {
-  '95-98': [95, 98],
-  '98-100': [98, 100],
-};
-
-function formatAxisValue(key: AxisKey, value: number): string {
-  switch (key) {
-    case 'rating':
-      return formatChartNumber(Math.round(value));
-    case 'accuracy':
-      return formatPercentage(value, 2);
-    case 'score':
-    default:
-      return formatChartNumber(value);
-  }
-}
-
-function tickFormatterFor(key: AxisKey): (value: number) => string {
-  switch (key) {
-    case 'rating':
-      return (value) => formatChartNumber(Math.round(value));
-    case 'accuracy':
-      return (value) => `${Math.round(value)}%`;
-    case 'score':
-    default:
-      return (value) => formatKilo(value);
-  }
-}
-
-/**
- * Inclusive score threshold that keeps roughly the top `1 - percentile` share
- * of the sample. Returns null when there is nothing to threshold.
- */
-function scoreAtPercentile(
-  points: ScatterPoint[],
-  percentile: number
-): number | null {
-  if (points.length === 0) return null;
-
-  const sorted = points.map((point) => point.score).sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.max(0, Math.ceil(percentile * sorted.length) - 1)
-  );
-
-  return sorted[index];
-}
 
 /**
  * Least-squares fit over (x, y) pairs. Returns null when the input cannot
@@ -221,139 +140,111 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex w-full items-baseline justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono font-medium text-foreground tabular-nums">
-        {value}
-      </span>
+      <span className="font-medium text-foreground tabular-nums">{value}</span>
     </div>
   );
 }
 
-function ScatterPane({
-  points,
-  xKey,
-  xDomain,
-  yKey,
-  yDomain,
-  colorBy,
-  trendSegment,
-  yTickFormatter,
+function RankRangeLegend({
+  entries,
+  hidden,
+  onToggle,
 }: {
-  points: ScatterPoint[];
-  xKey: AxisKey;
-  xDomain: React.ComponentProps<typeof XAxis>['domain'];
-  yKey: AxisKey;
-  yDomain: React.ComponentProps<typeof YAxis>['domain'];
-  colorBy: ScatterColorBy;
-  trendSegment: [{ x: number; y: number }, { x: number; y: number }] | null;
-  /** Overrides the axis default, e.g. on a zoomed accuracy window. */
-  yTickFormatter?: (value: number) => string;
+  entries: Array<{ key: RankRangeBucketKey; label: string; count: number }>;
+  hidden: ReadonlySet<RankRangeBucketKey>;
+  onToggle: (key: RankRangeBucketKey) => void;
 }) {
-  const fillOf = (point: ScatterPoint) =>
-    colorBy === 'ranks' ? point.rankFill : point.modFill;
+  if (entries.length === 0) return null;
 
   return (
-    <ChartContainer config={{}} className="aspect-auto h-[300px] w-full">
-      <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          dataKey={xKey}
-          name={AXIS_NAME[xKey]}
-          type="number"
-          domain={xDomain}
-          tickFormatter={tickFormatterFor(xKey)}
-          tickLine={false}
-          axisLine={false}
-        />
-        <YAxis
-          dataKey={yKey}
-          name={AXIS_NAME[yKey]}
-          type="number"
-          domain={yDomain}
-          tickFormatter={yTickFormatter ?? tickFormatterFor(yKey)}
-          tickLine={false}
-          axisLine={false}
-          width={yTickFormatter ? 52 : 44}
-        />
-        <ZAxis range={[30, 30]} />
-        <ChartTooltip
-          cursor={{ strokeDasharray: '3 3' }}
-          content={
-            <ChartTooltipContent
-              labelFormatter={(_, payload) => {
-                const point = payload?.[0]?.payload as ScatterPoint | undefined;
-                if (!point) return null;
-                return (
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="size-2 rounded-[2px]"
-                      style={{ backgroundColor: fillOf(point) }}
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {colorBy === 'ranks'
-                        ? point.rankRangeLabel
-                        : point.modLabel}
-                    </span>
-                  </span>
-                );
-              }}
-              formatter={(value, name, item, index, entries) => {
-                const numeric =
-                  typeof value === 'number' ? value : Number(value);
-                const axisKey: AxisKey =
-                  name === AXIS_NAME.accuracy
-                    ? 'accuracy'
-                    : name === AXIS_NAME.rating
-                      ? 'rating'
-                      : 'score';
-                const point = (item as { payload?: ScatterPoint } | undefined)
-                  ?.payload;
-                const isLastRow =
-                  index === (Array.isArray(entries) ? entries.length : 1) - 1;
-
-                return (
-                  <>
-                    <TooltipRow
-                      label={String(name)}
-                      value={formatAxisValue(axisKey, numeric)}
-                    />
-                    {isLastRow && point ? (
-                      colorBy === 'ranks' ? (
-                        <TooltipRow label="Mods" value={point.modLabel} />
-                      ) : (
-                        <TooltipRow
-                          label="Rank range"
-                          value={point.rankRangeLabel}
-                        />
-                      )
-                    ) : null}
-                  </>
-                );
-              }}
-            />
-          }
-        />
-        {trendSegment ? (
-          <ReferenceLine
-            segment={trendSegment}
-            stroke="var(--muted-foreground)"
-            strokeDasharray="4 4"
-          />
-        ) : null}
-        <Scatter data={points} fillOpacity={0.65} isAnimationActive={false}>
-          {points.map((point, index) => (
-            <Cell key={index} fill={fillOf(point)} />
-          ))}
-        </Scatter>
-      </ScatterChart>
-    </ChartContainer>
+    <ul
+      aria-label="Rank ranges"
+      className="flex flex-wrap gap-x-2 gap-y-1 text-xs"
+    >
+      {entries.map((entry) => {
+        const isHidden = hidden.has(entry.key);
+        return (
+          <li key={entry.key}>
+            <button
+              type="button"
+              aria-pressed={!isHidden}
+              onClick={() => onToggle(entry.key)}
+              title={
+                isHidden
+                  ? `Show ${entry.label} scores`
+                  : `Hide ${entry.label} scores`
+              }
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors',
+                'hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
+                isHidden && 'opacity-50'
+              )}
+            >
+              <span
+                className="size-2 rounded-[2px]"
+                style={{
+                  backgroundColor: isHidden
+                    ? 'transparent'
+                    : RANK_RANGE_COLOR[entry.key],
+                  boxShadow: isHidden
+                    ? `inset 0 0 0 1.5px ${RANK_RANGE_COLOR[entry.key]}`
+                    : undefined,
+                }}
+                aria-hidden="true"
+              />
+              <span className="font-medium">{entry.label}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {formatChartNumber(entry.count)}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
-function RankRangeLegend({ points }: { points: ScatterPoint[] }) {
-  const entries = React.useMemo(() => {
+export default function BeatmapScoreScatterCard({
+  sample,
+  className,
+}: BeatmapScoreScatterCardProps) {
+  const isNarrow = useMediaQuery('(max-width: 639px)');
+  const dotArea = isNarrow ? DOT_AREA_NARROW : DOT_AREA_WIDE;
+  const [hiddenRanges, setHiddenRanges] = React.useState<
+    ReadonlySet<RankRangeBucketKey>
+  >(new Set());
+
+  const toggleRange = React.useCallback((key: RankRangeBucketKey) => {
+    setHiddenRanges((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  const ratedPoints = React.useMemo<ScatterPoint[]>(
+    () =>
+      sample.points
+        .filter((point) => point.rating != null)
+        .map((point) => ({
+          score: point.score,
+          rating: point.rating as number,
+          modLabel: getBeatmapModLabel(point.mods),
+          rankRange: point.rankRange,
+          rankRangeLabel: RANK_RANGE_LABEL[point.rankRange],
+          fill: RANK_RANGE_COLOR[point.rankRange],
+        })),
+    [sample.points]
+  );
+  const unratedCount = sample.points.length - ratedPoints.length;
+
+  const legendEntries = React.useMemo(() => {
     const counts = new Map<RankRangeBucketKey, number>();
-    for (const point of points) {
+    for (const point of ratedPoints) {
       counts.set(point.rankRange, (counts.get(point.rankRange) ?? 0) + 1);
     }
     return RANK_RANGE_BUCKETS.filter((bucket) => counts.has(bucket.key)).map(
@@ -363,96 +254,48 @@ function RankRangeLegend({ points }: { points: ScatterPoint[] }) {
         count: counts.get(bucket.key) ?? 0,
       })
     );
-  }, [points]);
+  }, [ratedPoints]);
 
-  if (entries.length === 0) return null;
-
-  return (
-    <ul
-      aria-label="Rank ranges"
-      className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
-    >
-      {entries.map((entry) => (
-        <li key={entry.key} className="flex items-center gap-1.5">
-          <span
-            className="size-2 rounded-[2px]"
-            style={{ backgroundColor: RANK_RANGE_COLOR[entry.key] }}
-            aria-hidden="true"
-          />
-          <span className="font-medium">{entry.label}</span>
-          <span className="font-mono text-muted-foreground tabular-nums">
-            {formatChartNumber(entry.count)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function toScatter3DPoints(
-  points: ScatterPoint[],
-  xKey: AxisKey,
-  yKey: AxisKey
-): Scatter3DPoint[] {
-  const valueOf = (point: ScatterPoint, key: AxisKey) =>
-    key === 'rating' ? (point.rating ?? 0) : point[key];
-
-  return points.map((point) => ({
-    x: valueOf(point, xKey),
-    y: valueOf(point, yKey),
-    rankRange: point.rankRange,
-    mods: point.mods,
-  }));
-}
-
-export default function BeatmapScoreScatterCard({
-  sample,
-  className,
-}: BeatmapScoreScatterCardProps) {
-  const [view, setView] = React.useState<ScatterView>('rating');
-  const [mode, setMode] = React.useState<ScatterMode>('2d');
-  const [colorBy, setColorBy] = React.useState<ScatterColorBy>('ranks');
-  const [accuracyXMode, setAccuracyXMode] =
-    React.useState<AccuracyXMode>('score');
-  const [accuracyZoom, setAccuracyZoom] = React.useState<AccuracyZoom>('all');
-
-  const points = React.useMemo<ScatterPoint[]>(
-    () =>
-      sample.points.map((point) => ({
-        score: point.score,
-        // gameScores.accuracy is stored as a 0–1 fraction (see
-        // BeatmapScoreSamplePointSchema); convert to percent for display.
-        accuracy: Math.min(100, Math.max(0, point.accuracy * 100)),
-        rating: point.rating,
-        mods: point.mods,
-        modLabel: getBeatmapModLabel(point.mods),
-        rankRange: point.rankRange,
-        rankRangeLabel: RANK_RANGE_LABEL[point.rankRange],
-        modFill: getModColor(point.mods as Mods),
-        rankFill: RANK_RANGE_COLOR[point.rankRange],
-      })),
-    [sample.points]
+  const visiblePoints = React.useMemo(
+    () => ratedPoints.filter((point) => !hiddenRanges.has(point.rankRange)),
+    [ratedPoints, hiddenRanges]
   );
 
-  const ratedPoints = React.useMemo(
-    () => points.filter((point) => point.rating != null),
-    [points]
-  );
-  const unratedCount = points.length - ratedPoints.length;
+  /**
+   * Axis bounds come from the full rated sample so toggling a rank range
+   * filters points without rescaling the chart under the cursor. Bounds are
+   * rounded outward to a magnitude-based step so tick labels stay round.
+   */
+  const axisDomain = React.useMemo(() => {
+    if (ratedPoints.length === 0) return null;
+
+    const niceExtent = (values: number[]): [number, number] => {
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min;
+      if (range === 0) return [min, max];
+      const step = Math.pow(10, Math.floor(Math.log10(range / 4)));
+      return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
+    };
+
+    return {
+      x: niceExtent(ratedPoints.map((point) => point.rating)),
+      y: niceExtent(ratedPoints.map((point) => point.score)),
+    };
+  }, [ratedPoints]);
 
   const trendSegment = React.useMemo(() => {
-    if (ratedPoints.length < TRENDLINE_MIN_POINTS) return null;
+    if (visiblePoints.length < TRENDLINE_MIN_POINTS || axisDomain === null) {
+      return null;
+    }
 
     const fit = linearRegression(
-      ratedPoints.map((point) => ({
-        x: point.rating as number,
-        y: point.score,
-      }))
+      visiblePoints.map((point) => ({ x: point.rating, y: point.score }))
     );
     if (fit === null) return null;
 
-    const ratings = ratedPoints.map((point) => point.rating as number);
-    const scores = ratedPoints.map((point) => point.score);
+    const ratings = visiblePoints.map((point) => point.rating);
+    const scores = visiblePoints.map((point) => point.score);
 
     return clipTrendSegment(
       fit,
@@ -461,60 +304,7 @@ export default function BeatmapScoreScatterCard({
       Math.min(...scores),
       Math.max(...scores)
     );
-  }, [ratedPoints]);
-
-  /** Top 20% of the sample by score — the band where accuracy actually varies. */
-  const topAccuracyPoints = React.useMemo(() => {
-    const threshold = scoreAtPercentile(points, 1 - ACCURACY_TOP_SHARE);
-    if (threshold === null) return [];
-    return points.filter((point) => point.score >= threshold);
-  }, [points]);
-
-  const accuracyPoints = React.useMemo(() => {
-    const base =
-      accuracyXMode === 'rating'
-        ? topAccuracyPoints.filter((point) => point.rating != null)
-        : topAccuracyPoints;
-
-    if (accuracyZoom === 'all') return base;
-
-    const [lower, upper] = ACCURACY_ZOOM_DOMAIN[accuracyZoom];
-    return base.filter(
-      (point) => point.accuracy >= lower && point.accuracy <= upper
-    );
-  }, [topAccuracyPoints, accuracyXMode, accuracyZoom]);
-
-  const accuracyDomain = React.useMemo<
-    React.ComponentProps<typeof YAxis>['domain']
-  >(() => {
-    if (accuracyZoom === 'all') {
-      return [
-        (dataMin: number) =>
-          Math.max(0, Math.floor(Number.isFinite(dataMin) ? dataMin : 0)),
-        100,
-      ];
-    }
-    return ACCURACY_ZOOM_DOMAIN[accuracyZoom];
-  }, [accuracyZoom]);
-
-  /**
-   * A zoomed window spans two or three points, so whole-percent ticks collapse
-   * into repeated labels ("99%, 99%, 100%, 100%").
-   */
-  const accuracyTickFormatter = React.useMemo(
-    () =>
-      accuracyZoom === 'all'
-        ? undefined
-        : (value: number) => formatPercentage(value, 1),
-    [accuracyZoom]
-  );
-
-  const accuracyXKey: AxisKey = accuracyXMode === 'rating' ? 'rating' : 'score';
-  const accuracyUnratedHidden =
-    accuracyXMode === 'rating'
-      ? topAccuracyPoints.length -
-        topAccuracyPoints.filter((point) => point.rating != null).length
-      : 0;
+  }, [visiblePoints, axisDomain]);
 
   const meta =
     sample.points.length < sample.totalScoreCount
@@ -524,177 +314,147 @@ export default function BeatmapScoreScatterCard({
   return (
     <SectionCard data-testid="beatmap-score-scatter" className={cn(className)}>
       <SectionHeader icon={ChartScatter} title="Score scatter" meta={meta} />
-      {points.length === 0 ? (
+      {sample.points.length === 0 ? (
         <EmptyState>No verified scores yet.</EmptyState>
+      ) : ratedPoints.length === 0 || axisDomain === null ? (
+        <div className="flex h-[300px] items-center justify-center px-4">
+          <EmptyState>
+            No pre-match ratings available for these scores yet.
+          </EmptyState>
+        </div>
       ) : (
-        <Tabs
-          value={view}
-          onValueChange={(next) => setView(next as ScatterView)}
-          className="gap-3 px-4 py-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <TabsList aria-label="Scatter view">
-              <TabsTrigger value="rating">Rating</TabsTrigger>
-              <TabsTrigger value="accuracy">Accuracy</TabsTrigger>
-            </TabsList>
-            <div className="flex flex-wrap items-center gap-2">
-              <ToggleGroup
-                type="single"
-                size="sm"
-                variant="outline"
-                aria-label="Chart dimensions"
-                value={mode}
-                onValueChange={(next) => {
-                  if (next) setMode(next as ScatterMode);
-                }}
-              >
-                <ToggleGroupItem value="2d">2D</ToggleGroupItem>
-                <ToggleGroupItem value="3d">3D</ToggleGroupItem>
-              </ToggleGroup>
-              {mode === '2d' ? (
-                <ToggleGroup
-                  type="single"
-                  size="sm"
-                  variant="outline"
-                  aria-label="Color points by"
-                  value={colorBy}
-                  onValueChange={(next) => {
-                    if (next) setColorBy(next as ScatterColorBy);
-                  }}
-                >
-                  <ToggleGroupItem value="ranks">Ranks</ToggleGroupItem>
-                  <ToggleGroupItem value="mods">Mods</ToggleGroupItem>
-                </ToggleGroup>
-              ) : null}
+        <div className="space-y-2 px-4 py-4">
+          <RankRangeLegend
+            entries={legendEntries}
+            hidden={hiddenRanges}
+            onToggle={toggleRange}
+          />
+          {visiblePoints.length === 0 ? (
+            <div className="flex h-[300px] items-center justify-center">
+              <EmptyState>
+                All rank ranges are hidden. Select one above to show scores.
+              </EmptyState>
             </div>
-          </div>
-
-          <TabsContent value="rating" className="space-y-2">
-            {ratedPoints.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center">
-                <EmptyState>
-                  No pre-match ratings available for these scores yet.
-                </EmptyState>
-              </div>
-            ) : mode === '3d' ? (
-              <BeatmapScoreScatter3D
-                className="h-[340px]"
-                points={toScatter3DPoints(ratedPoints, 'rating', 'score')}
-                xLabel={AXIS_NAME.rating}
-                xFormat="rating"
-                yLabel={AXIS_NAME.score}
-                yFormat="kilo"
-              />
-            ) : (
-              <>
-                <ScatterPane
-                  points={ratedPoints}
-                  xKey="rating"
-                  xDomain={['auto', 'auto']}
-                  yKey="score"
-                  yDomain={['auto', 'auto']}
-                  colorBy={colorBy}
-                  trendSegment={trendSegment}
-                />
-                {colorBy === 'ranks' ? (
-                  <RankRangeLegend points={ratedPoints} />
-                ) : null}
-              </>
-            )}
-            <p className="font-mono text-xs text-muted-foreground tabular-nums">
-              Pre-match ratings · recent scores may not have ratings yet
-              {unratedCount > 0
-                ? ` · ${formatChartNumber(unratedCount)} scores without ratings hidden`
-                : ''}
-            </p>
-          </TabsContent>
-
-          <TabsContent value="accuracy" className="space-y-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <div className="flex items-center gap-2">
-                <Eyebrow>X axis</Eyebrow>
-                <ToggleGroup
-                  type="single"
-                  size="sm"
-                  variant="outline"
-                  aria-label="Accuracy x axis"
-                  value={accuracyXMode}
-                  onValueChange={(next) => {
-                    if (next) setAccuracyXMode(next as AccuracyXMode);
+          ) : (
+            <ChartContainer
+              config={{}}
+              className="aspect-auto h-[300px] w-full"
+            >
+              <ScatterChart margin={{ top: 8, right: 12, bottom: 22, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="rating"
+                  name="Pre-match rating"
+                  type="number"
+                  domain={axisDomain.x}
+                  tickFormatter={(value: number) =>
+                    formatChartNumber(Math.round(value))
+                  }
+                  tickLine={false}
+                  axisLine={false}
+                  label={{
+                    value: 'Pre-match rating',
+                    position: 'insideBottom',
+                    offset: -12,
+                    fill: 'var(--muted-foreground)',
+                    fontSize: 11,
                   }}
-                >
-                  <ToggleGroupItem value="score">vs Score</ToggleGroupItem>
-                  <ToggleGroupItem value="rating">vs Rating</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-              <div className="flex items-center gap-2">
-                <Eyebrow>Zoom</Eyebrow>
-                <ToggleGroup
-                  type="single"
-                  size="sm"
-                  variant="outline"
-                  aria-label="Accuracy zoom"
-                  value={accuracyZoom}
-                  onValueChange={(next) => {
-                    if (next) setAccuracyZoom(next as AccuracyZoom);
-                  }}
-                >
-                  <ToggleGroupItem value="all">Full</ToggleGroupItem>
-                  <ToggleGroupItem value="95-98">95–98</ToggleGroupItem>
-                  <ToggleGroupItem value="98-100">98–100</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-            </div>
-
-            {accuracyPoints.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center">
-                <EmptyState>No scores in this accuracy window.</EmptyState>
-              </div>
-            ) : mode === '3d' ? (
-              <BeatmapScoreScatter3D
-                className="h-[340px]"
-                points={toScatter3DPoints(
-                  accuracyPoints,
-                  accuracyXKey,
-                  'accuracy'
-                )}
-                xLabel={AXIS_NAME[accuracyXKey]}
-                xFormat={accuracyXKey === 'rating' ? 'rating' : 'kilo'}
-                yLabel={AXIS_NAME.accuracy}
-                yFormat="percent"
-              />
-            ) : (
-              <>
-                <ScatterPane
-                  points={accuracyPoints}
-                  xKey={accuracyXKey}
-                  xDomain={['auto', 'auto']}
-                  yKey="accuracy"
-                  yDomain={accuracyDomain}
-                  colorBy={colorBy}
-                  trendSegment={null}
-                  yTickFormatter={accuracyTickFormatter}
                 />
-                {colorBy === 'ranks' ? (
-                  <RankRangeLegend points={accuracyPoints} />
+                <YAxis
+                  dataKey="score"
+                  name="Score"
+                  type="number"
+                  domain={axisDomain.y}
+                  tickFormatter={(value: number) => formatKilo(value)}
+                  tickLine={false}
+                  axisLine={false}
+                  width={64}
+                  label={{
+                    value: 'Score',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 10,
+                    fill: 'var(--muted-foreground)',
+                    fontSize: 11,
+                  }}
+                />
+                <ChartTooltip
+                  cursor={{ strokeDasharray: '3 3' }}
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(_, payload) => {
+                        const point = payload?.[0]?.payload as
+                          | ScatterPoint
+                          | undefined;
+                        if (!point) return null;
+                        return (
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              className="size-2 rounded-[2px]"
+                              style={{ backgroundColor: point.fill }}
+                              aria-hidden="true"
+                            />
+                            <span>{point.rankRangeLabel}</span>
+                          </span>
+                        );
+                      }}
+                      formatter={(value, name, item, index, entries) => {
+                        const numeric =
+                          typeof value === 'number' ? value : Number(value);
+                        const isRating = name === 'Pre-match rating';
+                        const point = (
+                          item as { payload?: ScatterPoint } | undefined
+                        )?.payload;
+                        const isLastRow =
+                          index ===
+                          (Array.isArray(entries) ? entries.length : 1) - 1;
+
+                        return (
+                          <>
+                            <TooltipRow
+                              label={String(name)}
+                              value={formatChartNumber(
+                                isRating ? Math.round(numeric) : numeric
+                              )}
+                            />
+                            {isLastRow && point ? (
+                              <TooltipRow label="Mods" value={point.modLabel} />
+                            ) : null}
+                          </>
+                        );
+                      }}
+                    />
+                  }
+                />
+                {trendSegment ? (
+                  <ReferenceLine
+                    segment={trendSegment}
+                    stroke="var(--muted-foreground)"
+                    strokeDasharray="4 4"
+                  />
                 ) : null}
-              </>
-            )}
-            <p className="font-mono text-xs text-muted-foreground tabular-nums">
-              Top 20% of sampled scores by score ·{' '}
-              {formatChartNumber(accuracyPoints.length)} of{' '}
-              {formatChartNumber(points.length)} shown
-            </p>
-            {accuracyXMode === 'rating' ? (
-              <p className="font-mono text-xs text-muted-foreground tabular-nums">
-                Pre-match ratings · recent scores may not have ratings yet
-                {accuracyUnratedHidden > 0
-                  ? ` · ${formatChartNumber(accuracyUnratedHidden)} scores without ratings hidden`
-                  : ''}
-              </p>
-            ) : null}
-          </TabsContent>
-        </Tabs>
+                <Scatter
+                  data={visiblePoints}
+                  fillOpacity={isNarrow ? 0.45 : 0.65}
+                  isAnimationActive={false}
+                  shape={
+                    <Symbols type="circle" size={dotArea} sizeType="area" />
+                  }
+                >
+                  {visiblePoints.map((point, index) => (
+                    <Cell key={index} fill={point.fill} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ChartContainer>
+          )}
+          <p className="text-xs text-muted-foreground tabular-nums">
+            Pre-match ratings · recent scores may not have ratings yet
+            {unratedCount > 0
+              ? ` · ${formatChartNumber(unratedCount)} scores without ratings hidden`
+              : ''}
+          </p>
+        </div>
       )}
     </SectionCard>
   );

@@ -73,6 +73,9 @@ export default function BeatmapMarginCard({
         <EmptyState>No team-vs games recorded for this beatmap.</EmptyState>
       ) : (
         <div className="space-y-3 px-4 py-4">
+          <p className="text-xs text-muted-foreground">
+            How one-sided were games on this map?
+          </p>
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-[220px] w-full"
@@ -84,7 +87,7 @@ export default function BeatmapMarginCard({
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
                 interval={0}
@@ -101,7 +104,7 @@ export default function BeatmapMarginCard({
                   <ChartTooltipContent
                     hideIndicator
                     formatter={(value) => (
-                      <span className="font-mono font-medium text-foreground tabular-nums">
+                      <span className="font-medium text-foreground tabular-nums">
                         {formatChartNumber(Number(value))} games
                       </span>
                     )}
@@ -112,15 +115,12 @@ export default function BeatmapMarginCard({
                 dataKey="gameCount"
                 fill="var(--chart-1)"
                 radius={CHART_CONSTANTS.BORDER_RADIUS}
+                isAnimationActive={false}
               />
             </BarChart>
           </ChartContainer>
-          <p className="font-mono text-xs text-muted-foreground">
-            Winning margin as a share of the winning team&apos;s score, across{' '}
-            <span className="tabular-nums">
-              {formatChartNumber(margins.gameCount)}
-            </span>{' '}
-            team-vs games. Left-heavy = coinflip map, right-heavy = stomps.
+          <p className="text-xs text-muted-foreground">
+            Left-heavy = coinflip map, right-heavy = stomps.
           </p>
         </div>
       )}

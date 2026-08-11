@@ -39,6 +39,18 @@ cd apps/web && bun run test:e2e [-- player-profile.e2e.ts]   # Playwright owns :
 
 The E2E suite needs its configured database, RabbitMQ, and auth fixtures.
 
+## Typography
+
+- Use the UI sans font (`--font-sans`, Inter) for all user-facing text, including
+  labels, captions, chart axes, chart tooltips, table headers, and numbers.
+- Do not use `font-mono` for anything read as prose, a label, or a statistic. Keep
+  monospace for genuine code, IDs, hashes, and raw payloads.
+- Align numeric columns with `tabular-nums`, not with a monospace font.
+- Write labels and captions in sentence case. Do not use `uppercase`, and do not
+  pair it with `tracking-wide` to compensate.
+- Keep text at `text-xs` (12px) or larger; `text-[11px]` is the floor and only for
+  dense chart axis ticks and footnotes.
+
 ## Database and migrations
 
 - `packages/otr-core/src/db/schema.ts` is the model source of truth. Generate with `bunx drizzle-kit generate` from the root and read the emitted SQL.

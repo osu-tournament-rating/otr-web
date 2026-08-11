@@ -6,11 +6,13 @@ import * as React from 'react';
 import {
   EmptyState,
   Eyebrow,
+  ScaleFooter,
   SectionCard,
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
 import TierIcon from '@/components/icons/TierIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
+import TapTooltip from '@/components/tap-tooltip';
+import { getScoreFloor, toScorePercent } from '@/lib/beatmaps/score-scale';
 import type {
   BeatmapTierBreakdown,
   BeatmapTierScoreSummary,
@@ -51,12 +53,6 @@ const TIER_DISPLAY_NAME: Record<TierName, string> = tierData.reduce(
   },
   {} as Record<TierName, string>
 );
-
-/** Positions a value on the shared 0..max score scale as a CSS percentage. */
-function toScalePercent(value: number, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  return Math.min(100, Math.max(0, (value / maxScore) * 100));
-}
 
 /** Positions a percentage on the zoomed accuracy domain as a CSS percentage. */
 function toAccuracyPercent(
@@ -120,28 +116,28 @@ function TierTooltipContent({ summary }: { summary: BeatmapTierScoreSummary }) {
           />
           {TIER_DISPLAY_NAME[summary.tier]}
         </span>
-        <span className="font-mono text-xs text-muted-foreground tabular-nums">
+        <span className="text-xs text-muted-foreground tabular-nums">
           {`${formatChartNumber(summary.scoreCount)} scores`}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Median</span>
-        <span className="font-mono text-sm font-semibold text-foreground tabular-nums">
+        <span className="text-sm font-semibold text-foreground tabular-nums">
           {formatChartNumber(summary.medianScore)}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Middle 50%</span>
-        <span className="font-mono text-xs text-foreground tabular-nums">
+        <span className="text-xs text-foreground tabular-nums">
           {`${formatChartNumber(summary.p25Score)} – ${formatChartNumber(summary.p75Score)}`}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Range</span>
-        <span className="flex items-center gap-1 font-mono text-xs text-foreground tabular-nums">
+        <span className="flex items-center gap-1 text-xs text-foreground tabular-nums">
           <RingGlyph color={color} />
           {`${formatChartNumber(summary.minScore)} – ${formatChartNumber(summary.maxScore)}`}
           <RingGlyph color={color} />
@@ -151,7 +147,7 @@ function TierTooltipContent({ summary }: { summary: BeatmapTierScoreSummary }) {
       {summary.medianAccuracy !== null ? (
         <div className="flex items-baseline justify-between gap-4">
           <span className="text-xs text-muted-foreground">Median accuracy</span>
-          <span className="font-mono text-xs text-foreground tabular-nums">
+          <span className="text-xs text-foreground tabular-nums">
             {formatPercentage(summary.medianAccuracy * 100, 2)}
           </span>
         </div>
@@ -162,27 +158,28 @@ function TierTooltipContent({ summary }: { summary: BeatmapTierScoreSummary }) {
 
 function TierBoxPlotRow({
   summary,
+  floorScore,
   maxScore,
 }: {
   summary: BeatmapTierScoreSummary;
+  floorScore: number;
   maxScore: number;
 }) {
   const color = TIER_CHART_COLOR[summary.tier];
 
-  const minPct = toScalePercent(summary.minScore, maxScore);
-  const maxPct = toScalePercent(summary.maxScore, maxScore);
-  const p25Pct = toScalePercent(summary.p25Score, maxScore);
-  const p75Pct = toScalePercent(summary.p75Score, maxScore);
-  const medianPct = toScalePercent(summary.medianScore, maxScore);
+  const minPct = toScorePercent(summary.minScore, floorScore, maxScore);
+  const maxPct = toScorePercent(summary.maxScore, floorScore, maxScore);
+  const p25Pct = toScorePercent(summary.p25Score, floorScore, maxScore);
+  const p75Pct = toScorePercent(summary.p75Score, floorScore, maxScore);
+  const medianPct = toScorePercent(summary.medianScore, floorScore, maxScore);
 
   return (
-    <SimpleTooltip content={<TierTooltipContent summary={summary} />}>
+    <TapTooltip
+      triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]}: ${formatChartNumber(summary.scoreCount)} scores`}
+      content={<TierTooltipContent summary={summary} />}
+    >
       <div className="flex min-h-7 items-center gap-2">
         <TierLabel tier={summary.tier} />
-
-        <span className="sr-only">
-          {`${TIER_DISPLAY_NAME[summary.tier]}: ${formatChartNumber(summary.scoreCount)} scores, minimum ${formatChartNumber(summary.minScore)}, 25th percentile ${formatChartNumber(summary.p25Score)}, median ${formatChartNumber(summary.medianScore)}, 75th percentile ${formatChartNumber(summary.p75Score)}, maximum ${formatChartNumber(summary.maxScore)}`}
-        </span>
 
         <div
           className="relative h-7 min-w-0 flex-1 rounded bg-muted/40"
@@ -224,13 +221,13 @@ function TierBoxPlotRow({
         </div>
 
         <span
-          className="w-12 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums"
+          className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
           aria-hidden="true"
         >
           {formatKilo(summary.medianScore)}
         </span>
       </div>
-    </SimpleTooltip>
+    </TapTooltip>
   );
 }
 
@@ -271,7 +268,7 @@ function TierAccuracyRow({
       </div>
 
       <span
-        className="w-14 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums"
+        className="w-14 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
         aria-hidden="true"
       >
         {accuracyPercent === null ? '—' : formatPercentage(accuracyPercent, 2)}
@@ -288,6 +285,12 @@ export default function BeatmapTierBreakdownCard({
 
   const maxScore = React.useMemo(
     () => tiers.reduce((max, summary) => Math.max(max, summary.maxScore), 0),
+    [tiers]
+  );
+
+  // Zoomed score domain, for the same reason the accuracy domain below zooms.
+  const floorScore = React.useMemo(
+    () => getScoreFloor(tiers.map((summary) => summary.minScore)),
     [tiers]
   );
 
@@ -320,16 +323,26 @@ export default function BeatmapTierBreakdownCard({
         <>
           <div className="xl:grid xl:grid-cols-2 xl:divide-x">
             <div className="px-4 py-4">
-              <Eyebrow>Score by tier</Eyebrow>
+              <div className="flex items-baseline justify-between">
+                <Eyebrow>Score by tier</Eyebrow>
+                <Eyebrow>Median</Eyebrow>
+              </div>
               <div className="mt-3 space-y-2">
                 {tiers.map((summary) => (
                   <TierBoxPlotRow
                     key={summary.tier}
                     summary={summary}
+                    floorScore={floorScore}
                     maxScore={maxScore}
                   />
                 ))}
               </div>
+              <ScaleFooter
+                leftSpacerClassName="w-28"
+                rightSpacerClassName="w-12"
+                minLabel={formatKilo(floorScore)}
+                maxLabel={formatKilo(maxScore)}
+              />
             </div>
 
             <div className="border-t px-4 py-4 xl:border-t-0">
@@ -343,18 +356,16 @@ export default function BeatmapTierBreakdownCard({
                   />
                 ))}
               </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="w-28 shrink-0" aria-hidden="true" />
-                <span className="flex min-w-0 flex-1 justify-between font-mono text-[10px] text-muted-foreground tabular-nums">
-                  <span>{`${accuracyLowerBound}%`}</span>
-                  <span>100%</span>
-                </span>
-                <span className="w-14 shrink-0" aria-hidden="true" />
-              </div>
+              <ScaleFooter
+                leftSpacerClassName="w-28"
+                rightSpacerClassName="w-14"
+                minLabel={`${accuracyLowerBound}%`}
+                maxLabel="100%"
+              />
             </div>
           </div>
 
-          <p className="border-t px-4 py-2.5 font-mono text-xs text-muted-foreground">
+          <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">
             {`Pre-match rating at time of play · ${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores have ratings · tiers with fewer than 5 scores hidden`}
           </p>
         </>

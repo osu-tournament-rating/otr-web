@@ -1,7 +1,7 @@
 import { Mods } from '@otr/core/osu';
 import { describe, expect, it } from 'bun:test';
 
-import { summarizeRankRangeMods } from '@/components/beatmap/BeatmapRankRangeCard';
+import { summarizeRankRangeMods } from '@/components/beatmap/BeatmapDistributionsCard';
 import type { BeatmapRankRangeModDistribution } from '@/lib/orpc/schema/beatmapStats';
 
 /** Percentages are recomputed by the display pipeline, so any value works. */

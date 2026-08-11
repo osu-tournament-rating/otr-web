@@ -41,7 +41,7 @@ export function SectionHeader({
         <h2 className="truncate font-semibold">{title}</h2>
       </div>
       {meta ? (
-        <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {meta}
         </span>
       ) : null}
@@ -57,14 +57,44 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Small uppercase caption used for column and group labels. */
+/**
+ * The 0..max axis under a row chart. The spacers match the label and value
+ * columns of the rows above so the two end labels sit exactly under the track.
+ */
+export function ScaleFooter({
+  leftSpacerClassName,
+  rightSpacerClassName,
+  minLabel,
+  maxLabel,
+}: {
+  leftSpacerClassName: string;
+  rightSpacerClassName: string;
+  minLabel: React.ReactNode;
+  maxLabel: React.ReactNode;
+}) {
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <span
+        className={cn(leftSpacerClassName, 'shrink-0')}
+        aria-hidden="true"
+      />
+      <span className="flex min-w-0 flex-1 justify-between text-[11px] text-muted-foreground tabular-nums">
+        <span>{minLabel}</span>
+        <span>{maxLabel}</span>
+      </span>
+      <span
+        className={cn(rightSpacerClassName, 'shrink-0')}
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
+/** Small muted caption used for column and group labels. */
 export function Eyebrow({ className, ...props }: React.ComponentProps<'span'>) {
   return (
     <span
-      className={cn(
-        'text-[10px] font-semibold tracking-wide text-muted-foreground uppercase',
-        className
-      )}
+      className={cn('text-xs font-medium text-muted-foreground', className)}
       {...props}
     />
   );

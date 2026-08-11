@@ -1,5 +1,6 @@
 'use client';
 
+import type { Ruleset } from '@otr/core/osu';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -8,8 +9,15 @@ import { LazerBadge } from '@/components/badges/LazerBadge';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import BeatmapPoolGamesPanel from '@/components/beatmap/BeatmapPoolGamesPanel';
 import ModIconset from '@/components/icons/ModIconset';
+import RulesetIcon from '@/components/icons/RulesetIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
-import { getPoolDate, isPoolVerified } from '@/lib/beatmaps/records';
+import {
+  getPoolDate,
+  isCrossRulesetPool,
+  isPoolVerified,
+} from '@/lib/beatmaps/records';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
@@ -21,7 +29,7 @@ import { formatRankRange } from '@/lib/utils/number';
  */
 export const POOL_COLUMN_CLASSES = {
   mod: 'w-14',
-  games: 'w-22',
+  games: 'sm:w-22',
   toggle: 'size-7',
 } as const;
 
@@ -30,11 +38,14 @@ export default function BeatmapPoolRow({
   pool,
   beatmapOsuId,
   maxGames,
+  beatmapRuleset,
 }: {
   pool: BeatmapTournamentUsage;
   beatmapOsuId: number;
   /** Busiest pool on the beatmap, so every row's bar shares one scale. */
   maxGames: number;
+  /** Ruleset of the beatmap, so pools from other rulesets can be flagged. */
+  beatmapRuleset: Ruleset;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const verified = isPoolVerified(pool);
@@ -46,6 +57,25 @@ export default function BeatmapPoolRow({
       : formatRankRange(pool.rankRangeLowerBound);
   const fill = maxGames > 0 ? (pool.gameCount / maxGames) * 100 : 0;
   const panelId = `beatmap-pool-games-${pool.tournament.id}`;
+  // Without verified games `mostCommonMod` defaults to 0 (NM), which would
+  // fabricate a mod nobody recorded — show nothing instead.
+  const hasVerifiedGames = verified && pool.gameCount > 0;
+  const rulesetLabel = `${RulesetEnumHelper.getMetadata(pool.tournament.ruleset).text} tournament`;
+
+  const renderMod = (iconClassName: string, alwaysExpanded = false) =>
+    hasVerifiedGames ? (
+      <ModIconset
+        mods={pool.mostCommonMod}
+        freemod={pool.mostCommonModFreemod}
+        className="flex h-full items-center"
+        iconClassName={iconClassName}
+        alwaysExpanded={alwaysExpanded}
+      />
+    ) : (
+      <span aria-hidden className="text-xs text-muted-foreground">
+        —
+      </span>
+    );
 
   return (
     <article data-testid={`beatmap-tournament-row-${pool.tournament.id}`}>
@@ -57,7 +87,9 @@ export default function BeatmapPoolRow({
               prefetch={false}
               className="inline-flex min-w-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
             >
-              <span className="truncate">{pool.tournament.name}</span>
+              <span className="line-clamp-2 sm:line-clamp-1">
+                {pool.tournament.name}
+              </span>
               <ArrowUpRight
                 className="size-3.5 shrink-0 text-muted-foreground"
                 aria-hidden
@@ -79,24 +111,46 @@ export default function BeatmapPoolRow({
                 <LazerBadge isLazer />
               </span>
             )}
+            {isCrossRulesetPool(pool.tournament.ruleset, beatmapRuleset) && (
+              <SimpleTooltip content={rulesetLabel}>
+                <span
+                  className="shrink-0 text-muted-foreground"
+                  role="img"
+                  aria-label={rulesetLabel}
+                >
+                  <RulesetIcon
+                    ruleset={pool.tournament.ruleset}
+                    className="size-3.5 fill-current [&_path]:fill-current"
+                  />
+                </span>
+              </SimpleTooltip>
+            )}
           </div>
-          <p className="truncate font-mono text-xs text-muted-foreground tabular-nums">
-            {dateLabel} · {pool.tournament.lobbySize}v
-            {pool.tournament.lobbySize} · {rankRange}
-          </p>
+          {/* A div, not a p: ModIconset renders divs, which cannot nest in a p. */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
+            <span className="truncate">
+              {dateLabel} · {pool.tournament.lobbySize}v
+              {pool.tournament.lobbySize} · {rankRange}
+            </span>
+            {/* At 16px tall the default -ml-4 overlap swallows all but a ~5px
+                sliver of every icon but the last, and there is no hover to
+                fan them out on touch — so the meta line always shows them
+                expanded. */}
+            <span className="flex h-4 shrink-0 items-center sm:hidden">
+              {renderMod('h-4', true)}
+            </span>
+          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
           <div
             data-testid="beatmap-tournament-mod"
-            className={cn('flex h-5 items-center', POOL_COLUMN_CLASSES.mod)}
+            className={cn(
+              'hidden h-5 items-center sm:flex',
+              POOL_COLUMN_CLASSES.mod
+            )}
           >
-            <ModIconset
-              mods={pool.mostCommonMod}
-              freemod={pool.mostCommonModFreemod}
-              className="flex h-full items-center"
-              iconClassName="h-5"
-            />
+            {renderMod('h-5')}
           </div>
           <div
             className={cn(
@@ -106,7 +160,7 @@ export default function BeatmapPoolRow({
           >
             <span
               aria-hidden
-              className="h-1.5 w-12 overflow-hidden rounded-full bg-muted"
+              className="hidden h-1.5 w-12 overflow-hidden rounded-full bg-muted sm:block"
             >
               <span
                 className="block h-full rounded-full bg-primary"
@@ -119,7 +173,7 @@ export default function BeatmapPoolRow({
                   ? `${pool.gameCount} verified ${pool.gameCount === 1 ? 'game' : 'games'}`
                   : 'No verified game count for this pool record'
               }
-              className="min-w-6 text-right font-mono text-sm font-semibold tabular-nums"
+              className="min-w-6 text-right text-sm font-semibold tabular-nums"
             >
               {verified ? pool.gameCount.toLocaleString() : '—'}
             </span>

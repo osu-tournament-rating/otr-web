@@ -263,6 +263,17 @@
   --mod-mania-key: hsl(207, 78%, 73%);
 
   --mod-touch-device: hsl(27, 100%, 61%);
+
+  /* Grade bar colors. SS/S/A match the canonical osu! grade badges
+     (public/icons/grades/*.svg) so the bar agrees with the Scores tab;
+     B-D are a monotonic muted ramp, flipped per theme so worse grades
+     always recede toward the card background. */
+  --grade-ss: #de31ae;
+  --grade-s: #02b5c3;
+  --grade-a: #88da20;
+  --grade-b: oklch(0.45 0 0);
+  --grade-c: oklch(0.6 0 0);
+  --grade-d: oklch(0.75 0 0);
 }
 
 .dark {
@@ -278,6 +289,12 @@
 
   /* Dark mode tier text colors */
   --text-silver: hsl(0, 0%, 70%);
+
+  /* B-D flip on the dark card so the ramp stays monotonic away from the
+     surface: B stays brightest, D recedes toward the card background. */
+  --grade-b: oklch(0.85 0 0);
+  --grade-c: oklch(0.7 0 0);
+  --grade-d: oklch(0.55 0 0);
 
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);

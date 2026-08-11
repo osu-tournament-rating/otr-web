@@ -1,4 +1,4 @@
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { describe, expect, test } from 'bun:test';
 
 import type {
@@ -10,6 +10,7 @@ import {
   getMostUsedInPool,
   getPoolDate,
   getPoolPickRate,
+  isCrossRulesetPool,
   isPoolVerified,
   sortPoolsByDate,
   sortPoolsByGames,
@@ -177,6 +178,22 @@ describe('isPoolVerified', () => {
         })
       )
     ).toBe(false);
+  });
+});
+
+describe('isCrossRulesetPool', () => {
+  test('flags a pool record from another ruleset as a convert', () => {
+    expect(isCrossRulesetPool(Ruleset.Catch, Ruleset.Osu)).toBe(true);
+    expect(isCrossRulesetPool(Ruleset.ManiaOther, Ruleset.Osu)).toBe(true);
+  });
+
+  test('leaves same-ruleset pool records unflagged', () => {
+    expect(isCrossRulesetPool(Ruleset.Osu, Ruleset.Osu)).toBe(false);
+  });
+
+  test('treats every mania key mode as one family', () => {
+    expect(isCrossRulesetPool(Ruleset.Mania4k, Ruleset.ManiaOther)).toBe(false);
+    expect(isCrossRulesetPool(Ruleset.Mania7k, Ruleset.Mania4k)).toBe(false);
   });
 });
 

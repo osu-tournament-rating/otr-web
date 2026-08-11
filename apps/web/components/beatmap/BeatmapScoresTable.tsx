@@ -15,8 +15,30 @@ import {
 } from '@/components/ui/table';
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
+import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatAccuracy } from '@/lib/utils/format';
+
+/**
+ * Competition ranks with tie flags: equal scores share the first position of
+ * their run, and the next distinct score resumes at its real position
+ * (…, 6, =7, =7, =7, 14, …). The server already returns the list in score
+ * order, so a linear walk is enough.
+ */
+function computeDisplayRanks(
+  performers: BeatmapTopPerformer[]
+): { label: string }[] {
+  return performers.map((performer, index) => {
+    let start = index;
+    while (start > 0 && performers[start - 1].score === performer.score)
+      start -= 1;
+    const tied =
+      (index > 0 && performers[index - 1].score === performer.score) ||
+      (index + 1 < performers.length &&
+        performers[index + 1].score === performer.score);
+    return { label: `${tied ? '=' : ''}${start + 1}` };
+  });
+}
 
 /** The highest verified scores recorded on a beatmap, as a historical record. */
 export default function BeatmapScoresTable({
@@ -27,6 +49,8 @@ export default function BeatmapScoresTable({
   if (performers.length === 0) {
     return <EmptyState>No score records.</EmptyState>;
   }
+
+  const ranks = computeDisplayRanks(performers);
 
   return (
     <>
@@ -41,7 +65,8 @@ export default function BeatmapScoresTable({
                 pl-4/pr-4 on the edge columns) on top of the content, or the
                 last column's dates clip against the card edge. */}
             <TableRow className="bg-muted/20">
-              <TableHead className="h-8 w-10 pl-4">
+              {/* Wide enough for the `=` a tie prefix adds to the rank. */}
+              <TableHead className="h-8 w-12 pl-4">
                 <Eyebrow>#</Eyebrow>
               </TableHead>
               <TableHead className="h-8">
@@ -67,92 +92,103 @@ export default function BeatmapScoresTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {performers.map((performer, index) => (
-              <TableRow
-                key={performer.scoreId}
-                className="group hover:bg-muted/25"
-              >
-                <TableCell className="pl-4 font-mono text-xs text-muted-foreground tabular-nums">
-                  {index + 1}
-                </TableCell>
+            {performers.map((performer, index) => {
+              const displayName = (performer.player.username ?? '').trim();
 
-                <TableCell>
-                  <Link
-                    href={`/players/${performer.player.id}`}
-                    prefetch={false}
-                    className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    <OsuAvatar
-                      osuId={performer.player.osuId}
-                      username={performer.player.username}
-                      size={24}
-                    />
-                    <span className="truncate text-sm font-medium group-hover:underline">
-                      {performer.player.username}
-                    </span>
-                  </Link>
-                </TableCell>
-
-                <TableCell>
-                  <div
-                    data-testid="beatmap-top-play-mods"
-                    className="flex h-5 w-16 items-center"
-                  >
-                    <ModIconset
-                      mods={performer.mods}
-                      className="flex h-full items-center"
-                      iconClassName="h-5"
-                    />
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <Link
-                    href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
-                    prefetch={false}
-                    aria-label={`View ${performer.player.username}'s recorded score`}
-                    data-testid="beatmap-top-play-score"
-                    className="flex items-center justify-end gap-1.5 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    {performer.score.toLocaleString()}
-                    <GradeIcon grade={performer.grade} />
-                  </Link>
-                </TableCell>
-
-                <TableCell
-                  data-testid="beatmap-top-play-accuracy"
-                  className="text-right font-mono text-xs text-muted-foreground tabular-nums"
+              return (
+                <TableRow
+                  key={performer.scoreId}
+                  className="group hover:bg-muted/25"
                 >
-                  {performer.accuracy !== null
-                    ? formatAccuracy(performer.accuracy)
-                    : '—'}
-                </TableCell>
+                  <TableCell className="pl-4 text-xs text-muted-foreground tabular-nums">
+                    {ranks[index].label}
+                  </TableCell>
 
-                <TableCell>
-                  <Link
-                    href={`/tournaments/${performer.tournament.id}`}
-                    prefetch={false}
-                    title={performer.tournament.name}
-                    data-testid="beatmap-top-play-tournament"
-                    className="block truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    {performer.tournament.name}
-                  </Link>
-                </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/players/${performer.player.id}`}
+                      prefetch={false}
+                      className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    >
+                      <OsuAvatar
+                        osuId={performer.player.osuId}
+                        username={performer.player.username}
+                        size={24}
+                      />
+                      <span
+                        className={cn(
+                          'truncate text-sm group-hover:underline',
+                          displayName
+                            ? 'font-medium'
+                            : 'text-muted-foreground italic'
+                        )}
+                      >
+                        {displayName || 'Unknown player'}
+                      </span>
+                    </Link>
+                  </TableCell>
 
-                <TableCell className="pr-4 text-right">
-                  <time
-                    dateTime={performer.playedAt ?? undefined}
-                    data-testid="beatmap-top-play-date"
-                    className="font-mono text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
+                  <TableCell>
+                    <div
+                      data-testid="beatmap-top-play-mods"
+                      className="flex h-5 w-16 items-center"
+                    >
+                      <ModIconset
+                        mods={performer.mods}
+                        className="flex h-full items-center"
+                        iconClassName="h-5"
+                      />
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    <Link
+                      href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
+                      prefetch={false}
+                      aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
+                      data-testid="beatmap-top-play-score"
+                      className="flex items-center justify-end gap-1.5 rounded-sm text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    >
+                      {performer.score.toLocaleString()}
+                      <GradeIcon grade={performer.grade} />
+                    </Link>
+                  </TableCell>
+
+                  <TableCell
+                    data-testid="beatmap-top-play-accuracy"
+                    className="text-right text-xs text-muted-foreground tabular-nums"
                   >
-                    {performer.playedAt
-                      ? formatUTCDate(new Date(performer.playedAt))
+                    {performer.accuracy !== null
+                      ? formatAccuracy(performer.accuracy)
                       : '—'}
-                  </time>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+
+                  <TableCell>
+                    <Link
+                      href={`/tournaments/${performer.tournament.id}`}
+                      prefetch={false}
+                      title={performer.tournament.name}
+                      data-testid="beatmap-top-play-tournament"
+                      className="block truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    >
+                      {performer.tournament.name}
+                    </Link>
+                  </TableCell>
+
+                  <TableCell className="pr-4 text-right">
+                    <time
+                      dateTime={performer.playedAt ?? undefined}
+                      data-testid="beatmap-top-play-date"
+                      className="text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
+                    >
+                      {performer.playedAt
+                        ? formatUTCDate(new Date(performer.playedAt))
+                        : '—'}
+                    </time>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -160,74 +196,85 @@ export default function BeatmapScoresTable({
       {/* Phones get two dense lines per score: identity and score on top,
           the remaining record details in one muted row underneath. */}
       <ol className="divide-y sm:hidden">
-        {performers.map((performer, index) => (
-          <li
-            key={performer.scoreId}
-            className="group px-4 py-2 transition-colors hover:bg-muted/25"
-          >
-            <div className="flex items-center gap-2">
-              <span className="w-4 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums">
-                {index + 1}
-              </span>
-              <Link
-                href={`/players/${performer.player.id}`}
-                prefetch={false}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                <OsuAvatar
-                  osuId={performer.player.osuId}
-                  username={performer.player.username}
-                  size={20}
-                />
-                <span className="truncate text-sm font-medium group-hover:underline">
-                  {performer.player.username}
-                </span>
-              </Link>
-              <Link
-                href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
-                prefetch={false}
-                aria-label={`View ${performer.player.username}'s recorded score`}
-                className="flex shrink-0 items-center gap-1 rounded-sm font-mono text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                {performer.score.toLocaleString()}
-                <GradeIcon grade={performer.grade} />
-              </Link>
-            </div>
+        {performers.map((performer, index) => {
+          const displayName = (performer.player.username ?? '').trim();
 
-            <div className="mt-1 flex items-center gap-2 pl-6 font-mono text-xs text-muted-foreground tabular-nums">
-              <ModIconset
-                mods={performer.mods}
-                className="flex h-4 shrink-0 items-center"
-                iconClassName="h-4"
-              />
-              <span className="shrink-0">
-                {performer.accuracy !== null
-                  ? formatAccuracy(performer.accuracy)
-                  : '—'}
-              </span>
-              <Link
-                href={`/tournaments/${performer.tournament.id}`}
-                prefetch={false}
-                title={performer.tournament.name}
-                className="min-w-0 flex-1 truncate rounded-sm font-sans hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                {performer.tournament.name}
-              </Link>
-              <time
-                dateTime={performer.playedAt ?? undefined}
-                className="shrink-0 text-[11px] whitespace-nowrap"
-              >
-                {performer.playedAt
-                  ? formatUTCDate(new Date(performer.playedAt))
-                  : '—'}
-              </time>
-            </div>
-          </li>
-        ))}
+          return (
+            <li
+              key={performer.scoreId}
+              className="group px-4 py-2 transition-colors hover:bg-muted/25"
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-7 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                  {ranks[index].label}
+                </span>
+                <Link
+                  href={`/players/${performer.player.id}`}
+                  prefetch={false}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <OsuAvatar
+                    osuId={performer.player.osuId}
+                    username={performer.player.username}
+                    size={20}
+                  />
+                  <span
+                    className={cn(
+                      'truncate text-sm group-hover:underline',
+                      displayName
+                        ? 'font-medium'
+                        : 'text-muted-foreground italic'
+                    )}
+                  >
+                    {displayName || 'Unknown player'}
+                  </span>
+                </Link>
+                <Link
+                  href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
+                  prefetch={false}
+                  aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
+                  className="flex shrink-0 items-center gap-1 rounded-sm text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  {performer.score.toLocaleString()}
+                  <GradeIcon grade={performer.grade} />
+                </Link>
+              </div>
+
+              <div className="mt-1 flex items-center gap-2 pl-6 text-xs text-muted-foreground tabular-nums">
+                <ModIconset
+                  mods={performer.mods}
+                  className="flex h-4 shrink-0 items-center"
+                  iconClassName="h-4"
+                />
+                <span className="shrink-0">
+                  {performer.accuracy !== null
+                    ? formatAccuracy(performer.accuracy)
+                    : '—'}
+                </span>
+                <Link
+                  href={`/tournaments/${performer.tournament.id}`}
+                  prefetch={false}
+                  title={performer.tournament.name}
+                  className="min-w-0 flex-1 truncate rounded-sm font-sans hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  {performer.tournament.name}
+                </Link>
+                <time
+                  dateTime={performer.playedAt ?? undefined}
+                  className="shrink-0 text-[11px] whitespace-nowrap"
+                >
+                  {performer.playedAt
+                    ? formatUTCDate(new Date(performer.playedAt))
+                    : '—'}
+                </time>
+              </div>
+            </li>
+          );
+        })}
       </ol>
 
       {/* The tab header already carries the full score count. */}
-      <p className="border-t px-4 py-2 text-center font-mono text-xs text-muted-foreground tabular-nums">
+      <p className="border-t px-4 py-2 text-center text-xs text-muted-foreground tabular-nums">
         Showing the top {performers.length.toLocaleString()}
       </p>
     </>
@@ -238,7 +285,7 @@ function GradeIcon({ grade }: { grade: BeatmapTopPerformer['grade'] }) {
   if (grade === undefined) {
     return (
       <SimpleTooltip content="Grade unavailable">
-        <span className="font-mono text-xs text-muted-foreground">—</span>
+        <span className="text-xs text-muted-foreground">—</span>
       </SimpleTooltip>
     );
   }
