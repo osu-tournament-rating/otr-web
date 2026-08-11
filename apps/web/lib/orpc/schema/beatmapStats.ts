@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { RANK_RANGE_BUCKET_KEYS } from '@/lib/beatmaps/rankRange';
+import { tierNames } from '@/lib/utils/tierData';
+
 import { beatmapSelectSchema, beatmapsetSelectSchema } from './base';
 import {
   CreatedUpdatedOmit,
@@ -8,6 +11,12 @@ import {
   VerificationStatusSchema,
 } from './constants';
 import { PlayerCompactSchema } from './playerStats';
+
+/** Tournament rank-range bracket, keyed by `lib/beatmaps/rankRange`. */
+export const RankRangeBucketKeySchema = z.enum(RANK_RANGE_BUCKET_KEYS);
+
+/** Rating tier name, keyed by `lib/utils/tierData`. */
+export const TierNameSchema = z.enum(tierNames);
 
 export const BeatmapStatsRequestSchema = z.object({
   id: z.number().int().positive(),
@@ -105,6 +114,135 @@ export const RelatedBeatmapDifficultySchema = z.object({
   sr: z.number().nonnegative(),
 });
 
+/** Five-number summary of verified scores for one normalized mod combination. */
+export const BeatmapModScoreDistributionSchema = z.object({
+  /** Normalized display mods bitmask (NF/SO stripped, NC folded into DT). */
+  mods: z.number().int().nonnegative(),
+  scoreCount: z.number().int().positive(),
+  minScore: z.number().int().nonnegative(),
+  p25Score: z.number().int().nonnegative(),
+  medianScore: z.number().int().nonnegative(),
+  p75Score: z.number().int().nonnegative(),
+  maxScore: z.number().int().nonnegative(),
+});
+
+/** One point of the verified-score CDF: `score` beats `percentile`% of plays. */
+export const BeatmapScorePercentilePointSchema = z.object({
+  percentile: z.number().min(0).max(100),
+  score: z.number().int().nonnegative(),
+});
+
+export const BeatmapScoreSamplePointSchema = z.object({
+  score: z.number().int().nonnegative(),
+  /**
+   * Raw stored fraction (0–1) from gameScores.accuracy, matching
+   * `topPerformers[].accuracy` on this response; multiply by 100 for display.
+   */
+  accuracy: z.number().min(0).max(100),
+  /**
+   * Pre-match rating (rating_adjustments.rating_before); null is expected and
+   * clusters on recent data.
+   */
+  rating: z.number().nullable(),
+  /** Raw score mods bitmask (client normalizes for color/label). */
+  mods: z.number().int().nonnegative(),
+  /** Rank-range bucket of the tournament the score's match belongs to. */
+  rankRange: RankRangeBucketKeySchema,
+});
+
+export const BeatmapScoreSampleSchema = z.object({
+  /** Total verified scores the sample was drawn from. */
+  totalScoreCount: z.number().int().nonnegative(),
+  /** Deterministic sample, capped at 1000, ordered by score id ascending. */
+  points: z.array(BeatmapScoreSamplePointSchema),
+});
+
+export const BeatmapMissBucketSchema = z.object({
+  /** 0..5; 5 means "5 or more". */
+  misses: z.number().int().min(0).max(5),
+  scoreCount: z.number().int().nonnegative(),
+});
+
+export const BeatmapGradeCountSchema = z.object({
+  grade: ScoreGradeSchema,
+  scoreCount: z.number().int().nonnegative(),
+});
+
+export const BeatmapPerformanceSummarySchema = z.object({
+  scoreCount: z.number().int().nonnegative(),
+  /** Scores with a non-null stat_miss (denominator for missDistribution). */
+  missDataScoreCount: z.number().int().nonnegative(),
+  missDistribution: z.array(BeatmapMissBucketSchema),
+  gradeDistribution: z.array(BeatmapGradeCountSchema),
+});
+
+export const BeatmapFreemodPickSummarySchema = z.object({
+  /** Verified games on this map detected as freemod. */
+  freemodGameCount: z.number().int().nonnegative(),
+  /** Verified scores inside those games. */
+  freemodScoreCount: z.number().int().nonnegative(),
+  /** Reuses the existing mod-distribution row shape (raw score mods). */
+  distribution: z.array(BeatmapModDistributionSchema),
+});
+
+/** Verified-score mod split within one tournament rank-range bucket. */
+export const BeatmapRankRangeModDistributionSchema = z.object({
+  rankRange: RankRangeBucketKeySchema,
+  /** Verified scores in this bucket (denominator for the rows' percentages). */
+  scoreCount: z.number().int().positive(),
+  /** Normalized display-mod rows (NF/SO stripped, NC→DT), desc by scoreCount. */
+  distribution: z.array(BeatmapModDistributionSchema),
+});
+
+/**
+ * Score/accuracy summary for verified scores whose player sat in this tier at
+ * time of play (pre-match rating, `rating_adjustments.rating_before`).
+ */
+export const BeatmapTierScoreSummarySchema = z.object({
+  tier: TierNameSchema,
+  scoreCount: z.number().int().positive(),
+  minScore: z.number().int().nonnegative(),
+  p25Score: z.number().int().nonnegative(),
+  medianScore: z.number().int().nonnegative(),
+  p75Score: z.number().int().nonnegative(),
+  maxScore: z.number().int().nonnegative(),
+  /**
+   * Median raw stored accuracy fraction (0–1), matching
+   * `scoreSample.points[].accuracy`; null when no row in the tier has accuracy
+   * recorded.
+   */
+  medianAccuracy: z.number().min(0).max(1).nullable(),
+});
+
+export const BeatmapTierBreakdownSchema = z.object({
+  /** Verified scores with a pre-match rating (rating_adjustments.rating_before). */
+  ratedScoreCount: z.number().int().nonnegative(),
+  /** All verified scores, for the "X of Y rated" caption. */
+  totalScoreCount: z.number().int().nonnegative(),
+  /**
+   * Ascending by tier (Bronze → Elite Grandmaster); only tiers with at least
+   * five scores.
+   */
+  tiers: z.array(BeatmapTierScoreSummarySchema),
+});
+
+export const BeatmapMarginBucketSchema = z.object({
+  /** Inclusive lower bound of the relative margin bucket, percent. */
+  lowerBound: z.number().min(0),
+  /** Exclusive upper bound, percent; null on the open-ended last bucket. */
+  upperBound: z.number().nullable(),
+  gameCount: z.number().int().nonnegative(),
+});
+
+export const BeatmapTeamVsMarginSummarySchema = z.object({
+  /** Verified TeamVs games on this map with exactly two rosters. */
+  gameCount: z.number().int().nonnegative(),
+  /** Median relative margin percent; null when gameCount is 0. */
+  medianMarginPercentage: z.number().nullable(),
+  /** Fixed ascending buckets; always all buckets, possibly 0. */
+  buckets: z.array(BeatmapMarginBucketSchema),
+});
+
 export const BeatmapStatsResponseSchema = z.object({
   beatmap: BeatmapWithDetailsSchema,
   relatedDifficulties: z.array(RelatedBeatmapDifficultySchema),
@@ -113,6 +251,15 @@ export const BeatmapStatsResponseSchema = z.object({
   tournaments: z.array(BeatmapTournamentUsageSchema),
   modDistribution: z.array(BeatmapModDistributionSchema),
   topPerformers: z.array(BeatmapTopPerformerSchema),
+  scoreDistribution: z.array(BeatmapModScoreDistributionSchema),
+  scorePercentiles: z.array(BeatmapScorePercentilePointSchema),
+  scoreSample: BeatmapScoreSampleSchema,
+  performance: BeatmapPerformanceSummarySchema,
+  freemodPicks: BeatmapFreemodPickSummarySchema,
+  /** Bucket display order; buckets with no verified scores are omitted. */
+  rankRangeModDistribution: z.array(BeatmapRankRangeModDistributionSchema),
+  tierBreakdown: BeatmapTierBreakdownSchema,
+  teamVsMargins: BeatmapTeamVsMarginSummarySchema,
 });
 
 export const BeatmapTournamentMatchRequestSchema = z.object({
@@ -154,6 +301,35 @@ export type BeatmapStatsSummary = z.infer<typeof BeatmapStatsSummarySchema>;
 export type BeatmapWithDetails = z.infer<typeof BeatmapWithDetailsSchema>;
 export type RelatedBeatmapDifficulty = z.infer<
   typeof RelatedBeatmapDifficultySchema
+>;
+export type BeatmapModScoreDistribution = z.infer<
+  typeof BeatmapModScoreDistributionSchema
+>;
+export type BeatmapScorePercentilePoint = z.infer<
+  typeof BeatmapScorePercentilePointSchema
+>;
+export type BeatmapScoreSamplePoint = z.infer<
+  typeof BeatmapScoreSamplePointSchema
+>;
+export type BeatmapScoreSample = z.infer<typeof BeatmapScoreSampleSchema>;
+export type BeatmapMissBucket = z.infer<typeof BeatmapMissBucketSchema>;
+export type BeatmapGradeCount = z.infer<typeof BeatmapGradeCountSchema>;
+export type BeatmapPerformanceSummary = z.infer<
+  typeof BeatmapPerformanceSummarySchema
+>;
+export type BeatmapFreemodPickSummary = z.infer<
+  typeof BeatmapFreemodPickSummarySchema
+>;
+export type BeatmapRankRangeModDistribution = z.infer<
+  typeof BeatmapRankRangeModDistributionSchema
+>;
+export type BeatmapTierScoreSummary = z.infer<
+  typeof BeatmapTierScoreSummarySchema
+>;
+export type BeatmapTierBreakdown = z.infer<typeof BeatmapTierBreakdownSchema>;
+export type BeatmapMarginBucket = z.infer<typeof BeatmapMarginBucketSchema>;
+export type BeatmapTeamVsMarginSummary = z.infer<
+  typeof BeatmapTeamVsMarginSummarySchema
 >;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;
 export type BeatmapTournamentMatchRequest = z.infer<

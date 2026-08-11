@@ -141,6 +141,15 @@
   --team-red: var(--destructive);
   --team-blue: var(--primary);
 
+  /* Tournament rank-range ramp (ordinal: Open -> 100k+). Mid-lightness like
+     the mod colors so one definition reads on both light and dark cards.
+     --chart-3/4/5 are achromatic, so they cannot carry five categories. */
+  --rank-range-open: hsl(217, 80%, 60%);
+  --rank-range-lt1k: hsl(190, 70%, 47%);
+  --rank-range-1k: hsl(151, 55%, 45%);
+  --rank-range-10k: hsl(40, 85%, 52%);
+  --rank-range-100k: hsl(5, 80%, 63%);
+
   /* Tier text colors */
   --text-elite-grandmaster: var(--primary);
   --text-grandmaster: hsl(0, 80%, 55%);

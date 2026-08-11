@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
-import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
+import { Mods, Ruleset, TeamType, VerificationStatus } from '@otr/core/osu';
 import {
   BeatmapStatsResponseSchema,
   BeatmapTournamentMatchResponseSchema,
@@ -11,19 +11,68 @@ import {
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
   type BeatmapModDistribution,
+  type BeatmapModScoreDistribution,
+  type BeatmapPerformanceSummary,
+  type BeatmapScorePercentilePoint,
+  type BeatmapScoreSample,
+  type BeatmapTeamVsMarginSummary,
+  type BeatmapTierBreakdown,
+  type BeatmapTierScoreSummary,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
+import { getRankRangeBucketKey } from '@/lib/beatmaps/rankRange';
 import {
   mostCommonDisplayMods,
   resolveGameModsFromScores,
 } from '@/lib/utils/mods';
+import { tierNames } from '@/lib/utils/tierData';
 import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmapDifficulties';
 
 import { publicProcedure } from './base';
+import {
+  STRIPPED_SCORE_MODS_MASK,
+  TEAM_VS_MARGIN_BUCKET_BOUNDS,
+  TIER_RATING_BOUNDARIES,
+  summarizeFreemodPicks,
+  summarizeRankRangeMods,
+} from './beatmapStatsHelpers';
 import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
 
 /** Verified scores surfaced by the beatmap page's score table. */
 const TOP_PERFORMER_LIMIT = 25;
+
+/** Deterministic cap on the score scatter sample. */
+const SCORE_SAMPLE_LIMIT = 1000;
+
+/** Mod groups below this many verified scores are noise for a box plot. */
+const SCORE_DISTRIBUTION_MIN_GROUP_SIZE = 5;
+
+const NIGHTCORE_SQL = sql.raw(String(Mods.Nightcore));
+const DOUBLE_TIME_SQL = sql.raw(String(Mods.DoubleTime));
+const STRIPPED_MODS_SQL = sql.raw(String(STRIPPED_SCORE_MODS_MASK));
+
+/**
+ * SQL mirror of normalizeScoreModsArithmetic / normalizeBeatmapDisplayMods —
+ * keep in sync (see the beatmapModNormalization parity test).
+ */
+const NORMALIZED_SCORE_MODS_SQL = sql<number>`
+  CASE
+    WHEN (${schema.gameScores.mods} & ${NIGHTCORE_SQL}) <> 0
+      THEN ((${schema.gameScores.mods} & ~(${NIGHTCORE_SQL} | ${STRIPPED_MODS_SQL})) | ${DOUBLE_TIME_SQL})
+    ELSE (${schema.gameScores.mods} & ~${STRIPPED_MODS_SQL})
+  END`;
+
+/**
+ * Ascending tier boundaries as a Postgres array literal, so `width_bucket`
+ * returns an index into `tierNames`. Derived from tierData via
+ * TIER_RATING_BOUNDARIES; the TS mirror is `tierNameFromRatingArithmetic`.
+ */
+const TIER_BOUNDARIES_SQL = sql.raw(
+  `ARRAY[${TIER_RATING_BOUNDARIES.join(',')}]::float8[]`
+);
+
+const roundToOneDecimal = (value: number): number =>
+  Math.round(value * 10) / 10;
 
 const playerCompactColumns = {
   id: schema.players.id,
@@ -60,6 +109,53 @@ export const getBeatmapStats = publicProcedure
         input.keyType
       );
 
+      // Verified at every level: tournament, match, game (and, where scores
+      // are involved, score). Matches the filter chain used by the original
+      // queries below.
+      const verifiedGameFilter = and(
+        eq(schema.games.beatmapId, beatmapId),
+        eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
+        eq(schema.matches.verificationStatus, VerificationStatus.Verified),
+        eq(schema.games.verificationStatus, VerificationStatus.Verified)
+      );
+      const verifiedScoreFilter = and(
+        verifiedGameFilter,
+        eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+      );
+
+      // Per-game relative winning margin for verified TeamVs games with
+      // exactly two rosters: (winning - losing) / winning * 100. A winning
+      // score of 0 yields NULL (filtered out of the aggregate).
+      const teamVsMargins = context.db
+        .select({
+          marginPct: sql<
+            number | null
+          >`(MAX(${schema.gameRosters.score}) - MIN(${schema.gameRosters.score}))::float / NULLIF(MAX(${schema.gameRosters.score}), 0) * 100`.as(
+            'margin_pct'
+          ),
+        })
+        .from(schema.gameRosters)
+        .innerJoin(schema.games, eq(schema.games.id, schema.gameRosters.gameId))
+        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+        .innerJoin(
+          schema.tournaments,
+          eq(schema.tournaments.id, schema.matches.tournamentId)
+        )
+        .where(
+          and(verifiedGameFilter, eq(schema.games.teamType, TeamType.TeamVs))
+        )
+        .groupBy(schema.games.id)
+        .having(sql`COUNT(*) = 2`)
+        .as('margins');
+
+      const teamVsMarginBucketCount = (bucketIndex: number) => {
+        const { lowerBound, upperBound } =
+          TEAM_VS_MARGIN_BUCKET_BOUNDS[bucketIndex];
+        return upperBound == null
+          ? sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} >= ${lowerBound})`
+          : sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} >= ${lowerBound} AND ${teamVsMargins.marginPct} < ${upperBound})`;
+      };
+
       const [
         beatmapRow,
         creatorsRows,
@@ -72,6 +168,16 @@ export const getBeatmapStats = publicProcedure
         modRows,
         topPerformerRows,
         tournamentGameModRows,
+        scoreDistributionRows,
+        scoreCdfRows,
+        scoreSampleRows,
+        performanceCountRows,
+        missBucketRows,
+        gradeCountRows,
+        freemodPickRows,
+        rankRangeModRows,
+        tierBreakdownRows,
+        teamVsMarginRows,
       ] = await Promise.all([
         context.db
           .select({
@@ -474,6 +580,273 @@ export const getBeatmapStats = publicProcedure
           )
           .groupBy(schema.tournaments.id, schema.games.id, schema.games.mods)
           .orderBy(asc(schema.games.id)),
+        // Quartile summary of verified scores per normalized mod combination.
+        context.db
+          .select({
+            mods: NORMALIZED_SCORE_MODS_SQL.as('normalized_mods'),
+            scoreCount: sql<number>`COUNT(*)`,
+            minScore: sql<number>`MIN(${schema.gameScores.score})`,
+            p25Score: sql<number>`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            p75Score: sql<number>`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            maxScore: sql<number>`MAX(${schema.gameScores.score})`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter)
+          .groupBy(sql`normalized_mods`)
+          .having(
+            sql`COUNT(*) >= ${sql.raw(String(SCORE_DISTRIBUTION_MIN_GROUP_SIZE))}`
+          )
+          .orderBy(desc(sql`COUNT(*)`), asc(sql`normalized_mods`)),
+        // Score CDF: one interpolated quantile per whole percentile, 0..100.
+        context.db
+          .select({
+            scores: sql<
+              number[] | null
+            >`PERCENTILE_CONT((SELECT ARRAY_AGG(g / 100.0 ORDER BY g) FROM generate_series(0, 100) AS g)) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter),
+        // Deterministic pseudo-random scatter sample. Ratings are pre-match
+        // (rating_before) only; null when the processor has no adjustment.
+        context.db
+          .select({
+            scoreId: schema.gameScores.id,
+            score: schema.gameScores.score,
+            accuracy: schema.gameScores.accuracy,
+            mods: schema.gameScores.mods,
+            rating: schema.ratingAdjustments.ratingBefore,
+            rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .leftJoin(
+            schema.ratingAdjustments,
+            and(
+              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+              eq(schema.ratingAdjustments.matchId, schema.matches.id)
+            )
+          )
+          .where(verifiedScoreFilter)
+          .orderBy(sql`md5(${schema.gameScores.id}::text)`)
+          .limit(SCORE_SAMPLE_LIMIT),
+        // Miss-data scalar counts.
+        context.db
+          .select({
+            scoreCount: sql<number>`COUNT(*)`,
+            missDataScoreCount: sql<number>`COUNT(*) FILTER (WHERE ${schema.gameScores.statMiss} IS NOT NULL)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter),
+        // Miss buckets (5 = "5 or more"), only where miss data exists.
+        context.db
+          .select({
+            misses: sql<number>`LEAST(${schema.gameScores.statMiss}, 5)`.as(
+              'misses'
+            ),
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(
+            and(
+              verifiedScoreFilter,
+              sql`${schema.gameScores.statMiss} IS NOT NULL`
+            )
+          )
+          .groupBy(sql`misses`)
+          .orderBy(asc(sql`misses`)),
+        // Grade counts by persisted ScoreGrade ordinal.
+        context.db
+          .select({
+            grade: schema.gameScores.grade,
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter)
+          .groupBy(schema.gameScores.grade)
+          .orderBy(asc(schema.gameScores.grade)),
+        // Distinct (game, game mods, score mods) rows; freemod detection stays
+        // in TS via deriveGameIsFreeMod so the convention matches everywhere.
+        context.db
+          .select({
+            gameId: schema.games.id,
+            gameMods: schema.games.mods,
+            scoreMods: schema.gameScores.mods,
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter)
+          .groupBy(schema.games.id, schema.games.mods, schema.gameScores.mods)
+          .orderBy(asc(schema.games.id), asc(schema.gameScores.mods)),
+        // Verified scores per (raw rank-range lower bound, normalized mods).
+        // Bucketing stays in TS (summarizeRankRangeMods) so the bracket
+        // definitions live in exactly one place.
+        context.db
+          .select({
+            rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+            mods: NORMALIZED_SCORE_MODS_SQL.as('normalized_mods'),
+            scoreCount: sql<number>`COUNT(*)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(verifiedScoreFilter)
+          .groupBy(
+            schema.tournaments.rankRangeLowerBound,
+            sql`normalized_mods`
+          ),
+        // Score/accuracy quartiles per rating tier, tiered by the player's
+        // pre-match rating. INNER JOIN on rating_adjustments: unrated scores
+        // are excluded outright rather than falling back to player_ratings.
+        context.db
+          .select({
+            tierIndex:
+              sql<number>`width_bucket(${schema.ratingAdjustments.ratingBefore}, ${TIER_BOUNDARIES_SQL})`.as(
+                'tier_index'
+              ),
+            scoreCount: sql<number>`COUNT(*)`,
+            minScore: sql<number>`MIN(${schema.gameScores.score})`,
+            p25Score: sql<number>`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            p75Score: sql<number>`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
+            maxScore: sql<number>`MAX(${schema.gameScores.score})`,
+            medianAccuracy: sql<
+              number | null
+            >`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
+          })
+          .from(schema.gameScores)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameScores.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .innerJoin(
+            schema.ratingAdjustments,
+            and(
+              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
+              eq(schema.ratingAdjustments.matchId, schema.matches.id)
+            )
+          )
+          .where(verifiedScoreFilter)
+          .groupBy(sql`tier_index`)
+          .orderBy(asc(sql`tier_index`)),
+        // Team-vs closeness: median margin plus fixed bucket counts.
+        context.db
+          .select({
+            gameCount: sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} IS NOT NULL)`,
+            medianMargin: sql<
+              number | null
+            >`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${teamVsMargins.marginPct})`,
+            bucket0: teamVsMarginBucketCount(0),
+            bucket1: teamVsMarginBucketCount(1),
+            bucket2: teamVsMarginBucketCount(2),
+            bucket3: teamVsMarginBucketCount(3),
+            bucket4: teamVsMarginBucketCount(4),
+            bucket5: teamVsMarginBucketCount(5),
+            bucket6: teamVsMarginBucketCount(6),
+          })
+          .from(teamVsMargins),
       ]);
 
       const beatmap = beatmapRow[0]!;
@@ -685,6 +1058,137 @@ export const getBeatmapStats = publicProcedure
         })
       );
 
+      const scoreDistribution: BeatmapModScoreDistribution[] =
+        scoreDistributionRows.map((row) => ({
+          mods: Number(row.mods),
+          scoreCount: Number(row.scoreCount),
+          minScore: Number(row.minScore),
+          p25Score: Math.round(Number(row.p25Score)),
+          medianScore: Math.round(Number(row.medianScore)),
+          p75Score: Math.round(Number(row.p75Score)),
+          maxScore: Number(row.maxScore),
+        }));
+
+      const cdfRow = scoreCdfRows[0];
+      const totalScoreCount = Number(cdfRow?.scoreCount ?? 0);
+      const scorePercentiles: BeatmapScorePercentilePoint[] =
+        totalScoreCount > 0 && cdfRow?.scores != null
+          ? cdfRow.scores.map((score, percentile) => ({
+              percentile,
+              score: Math.round(Number(score)),
+            }))
+          : [];
+
+      const scoreSample: BeatmapScoreSample = {
+        totalScoreCount,
+        points: [...scoreSampleRows]
+          .sort((left, right) => left.scoreId - right.scoreId)
+          .map((row) => ({
+            score: row.score,
+            accuracy: Math.min(100, Math.max(0, row.accuracy)),
+            // Pre-match rating only; null is expected on recent data. Never
+            // fall back to the player's current rating here.
+            rating: row.rating != null ? Number(row.rating) : null,
+            mods: row.mods,
+            // The schema guarantees a positive bound, so the fallback is
+            // unreachable; it only keeps the mapping total.
+            rankRange: getRankRangeBucketKey(row.rankRangeLowerBound) ?? 'open',
+          })),
+      };
+
+      const performanceCounts = performanceCountRows[0];
+      const performance: BeatmapPerformanceSummary = {
+        scoreCount: Number(performanceCounts?.scoreCount ?? 0),
+        missDataScoreCount: Number(performanceCounts?.missDataScoreCount ?? 0),
+        missDistribution: missBucketRows.map((row) => ({
+          misses: Number(row.misses),
+          scoreCount: Number(row.scoreCount),
+        })),
+        gradeDistribution: gradeCountRows.map((row) => ({
+          grade: row.grade,
+          scoreCount: Number(row.scoreCount),
+        })),
+      };
+
+      const freemodPicks = summarizeFreemodPicks(
+        freemodPickRows.map((row) => ({
+          gameId: row.gameId,
+          gameMods: row.gameMods,
+          scoreMods: row.scoreMods,
+          scoreCount: Number(row.scoreCount),
+        }))
+      );
+
+      const rankRangeModDistribution = summarizeRankRangeMods(
+        rankRangeModRows.map((row) => ({
+          rankRangeLowerBound: row.rankRangeLowerBound,
+          mods: Number(row.mods),
+          scoreCount: Number(row.scoreCount),
+        }))
+      );
+
+      // width_bucket returns 0..8, indexing tierNames directly (0 = Bronze,
+      // covering everything below the first boundary). Sparse tiers are hidden
+      // from the rows but still counted in ratedScoreCount.
+      let ratedScoreCount = 0;
+      const tiers: BeatmapTierScoreSummary[] = [];
+      for (const row of tierBreakdownRows) {
+        const scoreCount = Number(row.scoreCount);
+        ratedScoreCount += scoreCount;
+
+        if (scoreCount < SCORE_DISTRIBUTION_MIN_GROUP_SIZE) continue;
+
+        const tier = tierNames[Number(row.tierIndex)];
+        if (tier == null) continue;
+
+        tiers.push({
+          tier,
+          scoreCount,
+          minScore: Number(row.minScore),
+          p25Score: Math.round(Number(row.p25Score)),
+          medianScore: Math.round(Number(row.medianScore)),
+          p75Score: Math.round(Number(row.p75Score)),
+          maxScore: Number(row.maxScore),
+          // Stored as a 0–1 fraction, passed through unrounded; clamped so a
+          // malformed row cannot fail the response schema.
+          medianAccuracy:
+            row.medianAccuracy != null
+              ? Math.min(1, Math.max(0, Number(row.medianAccuracy)))
+              : null,
+        });
+      }
+
+      const tierBreakdown: BeatmapTierBreakdown = {
+        ratedScoreCount,
+        totalScoreCount,
+        tiers,
+      };
+
+      const marginRow = teamVsMarginRows[0];
+      const teamVsGameCount = Number(marginRow?.gameCount ?? 0);
+      const marginBucketCounts = [
+        Number(marginRow?.bucket0 ?? 0),
+        Number(marginRow?.bucket1 ?? 0),
+        Number(marginRow?.bucket2 ?? 0),
+        Number(marginRow?.bucket3 ?? 0),
+        Number(marginRow?.bucket4 ?? 0),
+        Number(marginRow?.bucket5 ?? 0),
+        Number(marginRow?.bucket6 ?? 0),
+      ];
+      const teamVsMarginSummary: BeatmapTeamVsMarginSummary = {
+        gameCount: teamVsGameCount,
+        // Null check, not truthiness: a true median margin of 0 is valid.
+        medianMarginPercentage:
+          marginRow?.medianMargin != null
+            ? roundToOneDecimal(Number(marginRow.medianMargin))
+            : null,
+        buckets: TEAM_VS_MARGIN_BUCKET_BOUNDS.map((bounds, index) => ({
+          lowerBound: bounds.lowerBound,
+          upperBound: bounds.upperBound,
+          gameCount: marginBucketCounts[index],
+        })),
+      };
+
       const response: BeatmapStatsResponse = {
         beatmap: {
           id: beatmap.id,
@@ -742,6 +1246,14 @@ export const getBeatmapStats = publicProcedure
         tournaments,
         modDistribution,
         topPerformers,
+        scoreDistribution,
+        scorePercentiles,
+        scoreSample,
+        performance,
+        freemodPicks,
+        rankRangeModDistribution,
+        tierBreakdown,
+        teamVsMargins: teamVsMarginSummary,
       };
 
       return BeatmapStatsResponseSchema.parse(response);

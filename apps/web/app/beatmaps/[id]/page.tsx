@@ -4,8 +4,14 @@ import { z } from 'zod';
 import BeatmapActivityCard from '@/components/beatmap/BeatmapActivityCard';
 import BeatmapAttributesCard from '@/components/beatmap/BeatmapAttributesCard';
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
+import BeatmapMarginCard from '@/components/beatmap/BeatmapMarginCard';
 import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
+import BeatmapPerformanceCard from '@/components/beatmap/BeatmapPerformanceCard';
+import BeatmapRankRangeCard from '@/components/beatmap/BeatmapRankRangeCard';
 import BeatmapRecordsCard from '@/components/beatmap/BeatmapRecordsCard';
+import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistributionCard';
+import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
+import BeatmapTierBreakdownCard from '@/components/beatmap/BeatmapTierBreakdownCard';
 import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
   fetchOrpcOptional,
@@ -97,6 +103,26 @@ export default async function BeatmapPage({ params }: PageProps) {
           performers={stats.topPerformers}
           beatmapOsuId={stats.beatmap.osuId}
           totalScoreCount={totalVerifiedScoreCount}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BeatmapScoreDistributionCard
+          className="lg:col-span-2"
+          distribution={stats.scoreDistribution}
+          percentiles={stats.scorePercentiles}
+        />
+        <BeatmapScoreScatterCard sample={stats.scoreSample} />
+        <BeatmapPerformanceCard performance={stats.performance} />
+        <BeatmapRankRangeCard
+          pools={stats.tournaments}
+          freemodPicks={stats.freemodPicks}
+          rankRangeMods={stats.rankRangeModDistribution}
+        />
+        <BeatmapMarginCard margins={stats.teamVsMargins} />
+        <BeatmapTierBreakdownCard
+          className="lg:col-span-2"
+          tierBreakdown={stats.tierBreakdown}
         />
       </div>
     </div>

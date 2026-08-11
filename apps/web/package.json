@@ -58,6 +58,8 @@
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
+    "echarts": "^5.6.0",
+    "echarts-gl": "^2.0.9",
     "framer-motion": "^12.6.2",
     "lucide-react": "^1.17.0",
     "next": "^16.2.6",
