@@ -233,20 +233,22 @@ function SegmentBar({
 function SegmentLegend({
   segments,
   ariaLabel,
+  className,
 }: {
   segments: DisplaySegment[];
   ariaLabel: string;
+  className?: string;
 }) {
   return (
     <ul
       aria-label={ariaLabel}
-      className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
+      className={cn('flex flex-wrap gap-x-4 gap-y-1.5 text-xs', className)}
     >
       {segments.map((segment) => (
         <li key={segment.label} className="flex items-center gap-1.5">
           <Swatch color={segment.fill} />
-          <span className="font-medium">{segment.label}</span>
-          <span className="text-muted-foreground tabular-nums">
+          <span className="text-muted-foreground">{segment.label}</span>
+          <span className="font-medium whitespace-nowrap text-foreground">
             {formatSegmentValue(segment)}
           </span>
         </li>
@@ -270,7 +272,7 @@ function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
         <li key={segment.label} className="flex min-h-5 items-center gap-2">
           <span className="flex w-16 shrink-0 items-center gap-1.5">
             <Swatch color={segment.fill} />
-            <span className="truncate text-xs font-medium">
+            <span className="truncate text-xs text-muted-foreground">
               {segment.label}
             </span>
           </span>
@@ -287,7 +289,7 @@ function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
               }}
             />
           </span>
-          <span className="w-24 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+          <span className="w-24 shrink-0 text-right text-xs font-medium text-foreground">
             {formatSegmentValue(segment)}
           </span>
         </li>
@@ -305,7 +307,7 @@ function FreemodPickChips({ segments }: { segments: ModSegment[] }) {
     <ul aria-label="Freemod mod picks" className="flex flex-wrap gap-1.5">
       {segments.map((segment) => (
         <li key={segment.label}>
-          <Badge variant="outline" className="gap-1.5 tabular-nums">
+          <Badge variant="outline" className="gap-1.5">
             <Swatch color={segment.fill} />
             {`${segment.label} ${formatChartNumber(segment.scoreCount)}`}
           </Badge>
@@ -373,14 +375,14 @@ function RankBucketTooltipBody({
             <Swatch color={segment.fill} />
             <span className="font-medium">{segment.label}</span>
           </span>
-          <span className="tabular-nums">{formatSegmentValue(segment)}</span>
+          <span>{formatSegmentValue(segment)}</span>
         </div>
       ))}
 
       {rest.length > 0 ? (
         <div className="flex items-baseline justify-between gap-4 text-muted-foreground">
           <span>{`+${rest.length} more`}</span>
-          <span className="tabular-nums">
+          <span>
             {formatPercentage(
               rest.reduce((total, segment) => total + segment.percentage, 0),
               1
@@ -583,7 +585,7 @@ export default function BeatmapDistributionsCard({
           <div className="space-y-3 px-4 py-4">
             <div className="flex items-baseline justify-between gap-2">
               <Eyebrow>Mod distribution</Eyebrow>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-xs text-muted-foreground">
                 {`${formatChartNumber(totalScoreCount)} scores`}
               </span>
             </div>
@@ -614,6 +616,10 @@ export default function BeatmapDistributionsCard({
                     <SegmentLegend
                       segments={gradeSegments}
                       ariaLabel="Grade distribution"
+                      /* auto-fit, not a fixed 3, because a fixed track is
+                         ~98px at 1024px and the widest cell needs ~110px,
+                         which split "33.3% · 455" across two lines. */
+                      className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
                     />
                   </>
                 )}
@@ -623,7 +629,7 @@ export default function BeatmapDistributionsCard({
                 <div className="space-y-0.5">
                   <Eyebrow>Freemod picks</Eyebrow>
                   {freemodPicks.freemodGameCount > 0 ? (
-                    <p className="text-xs text-muted-foreground tabular-nums">
+                    <p className="text-xs text-muted-foreground">
                       {formatChartNumber(freemodPicks.freemodScoreCount)} scores
                       in {formatChartNumber(freemodPicks.freemodGameCount)}{' '}
                       freemod games
@@ -711,8 +717,10 @@ export default function BeatmapDistributionsCard({
                           triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
                         >
                           <Swatch color={slice.fill} />
-                          <span className="font-medium">{slice.label}</span>
-                          <span className="text-muted-foreground tabular-nums">
+                          <span className="text-muted-foreground">
+                            {slice.label}
+                          </span>
+                          <span className="font-medium text-foreground">
                             {formatChartNumber(slice.count)}
                           </span>
                         </TapTooltip>

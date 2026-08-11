@@ -80,7 +80,7 @@ function GroupHeader({
         <span className="truncate">{title}</span>
       </h3>
       {meta ? (
-        <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+        <span className="shrink-0 text-[11px] text-muted-foreground">
           {meta}
         </span>
       ) : null}
@@ -125,7 +125,7 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
                     <span className="sr-only">{row.label}</span>
                   </abbr>
                 </dt>
-                <dd className="text-lg leading-none font-semibold tabular-nums">
+                <dd className="text-lg leading-none font-semibold">
                   {row.integer
                     ? Math.round(value).toString()
                     : value.toFixed(1)}
@@ -181,7 +181,7 @@ function ActivityGroup({
           <div>
             <div className="flex items-baseline justify-between gap-2">
               <Eyebrow>Games per quarter</Eyebrow>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
+              <span className="text-[11px] text-muted-foreground">
                 {`peak ${activity.maxGames.toLocaleString()}`}
               </span>
             </div>
@@ -203,7 +203,7 @@ function ActivityGroup({
                 </div>
               ))}
             </div>
-            <div className="mt-1 flex justify-between border-t pt-1 text-[11px] text-muted-foreground tabular-nums">
+            <div className="mt-1 flex justify-between border-t pt-1 text-[11px] text-muted-foreground">
               <span>
                 {activity.firstActive
                   ? formatQuarterLong(activity.firstActive.quarter)
@@ -233,7 +233,7 @@ function ActivityGroup({
                   aria-hidden
                 />
               </Link>
-              <p className="text-xs text-muted-foreground tabular-nums">
+              <p className="text-xs text-muted-foreground">
                 {mostUsedIn.scoreCount.toLocaleString()} scores ·{' '}
                 {mostUsedIn.gameCount.toLocaleString()} games
               </p>
@@ -257,10 +257,14 @@ function ActivityGroup({
             testId="beatmap-played-tournaments"
             icon={Trophy}
             label="Pick rate"
-            value={
+            /* Ratio on the value line, percentage in the sublabel: the combined
+               string needs ~150px and the tile is 138-142px, so it wrapped to two
+               lines on desktop and made this tile taller than its row-mate. */
+            value={pickRate === null ? '—' : `${pickRate}%`}
+            sublabel={
               pickRate === null
-                ? '—'
-                : `${summary.pooledPlayedTournamentCount.toLocaleString()}/${summary.totalTournamentCount.toLocaleString()} (${pickRate}%)`
+                ? undefined
+                : `${summary.pooledPlayedTournamentCount.toLocaleString()} of ${summary.totalTournamentCount.toLocaleString()} pools`
             }
             accessibleValue={
               pickRate === null
@@ -311,10 +315,10 @@ function ActivityStat({
         <Icon className="size-3.5 shrink-0" aria-hidden />
         <span className="truncate">{label}</span>
       </dt>
-      <dd className="mt-1 text-base leading-none font-semibold tabular-nums">
+      <dd className="mt-1 text-xl leading-none font-bold">
         {value}
         {sublabel ? (
-          <span className="mt-0.5 block text-[11px] leading-tight font-normal text-muted-foreground">
+          <span className="mt-0.5 block text-xs leading-tight font-normal text-muted-foreground">
             {sublabel}
           </span>
         ) : null}

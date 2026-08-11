@@ -115,7 +115,7 @@ export default function PlayerModCountChart({
             <tspan
               x={viewBox.cx}
               y={viewBox.cy}
-              className="fill-foreground text-3xl font-bold"
+              className="fill-foreground text-2xl font-bold"
             >
               {formatChartNumber(totalGames)}
             </tspan>

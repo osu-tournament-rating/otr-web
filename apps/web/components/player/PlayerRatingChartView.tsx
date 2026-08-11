@@ -276,7 +276,6 @@ export default function PlayerRatingChartView({
           stroke={chartColors.text}
           tick={{ fill: chartColors.text, fontSize: 12 }}
           tickLine={{ stroke: chartColors.grid }}
-          fontFamily="sans-serif"
           ticks={xAxisTickMarks}
           tickFormatter={formatXAxisTick}
           interval="preserveStartEnd"

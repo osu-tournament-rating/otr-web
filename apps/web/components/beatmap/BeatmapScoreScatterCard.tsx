@@ -140,7 +140,7 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex w-full items-baseline justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground tabular-nums">{value}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }
@@ -193,7 +193,7 @@ function RankRangeLegend({
                 aria-hidden="true"
               />
               <span className="font-medium">{entry.label}</span>
-              <span className="text-muted-foreground tabular-nums">
+              <span className="text-muted-foreground">
                 {formatChartNumber(entry.count)}
               </span>
             </button>
@@ -350,6 +350,7 @@ export default function BeatmapScoreScatterCard({
                   tickFormatter={(value: number) =>
                     formatChartNumber(Math.round(value))
                   }
+                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                   tickLine={false}
                   axisLine={false}
                   label={{
@@ -357,7 +358,8 @@ export default function BeatmapScoreScatterCard({
                     position: 'insideBottom',
                     offset: -12,
                     fill: 'var(--muted-foreground)',
-                    fontSize: 11,
+                    fontSize: 12,
+                    fontWeight: 500,
                   }}
                 />
                 <YAxis
@@ -366,6 +368,7 @@ export default function BeatmapScoreScatterCard({
                   type="number"
                   domain={axisDomain.y}
                   tickFormatter={(value: number) => formatKilo(value)}
+                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                   tickLine={false}
                   axisLine={false}
                   width={64}
@@ -375,7 +378,8 @@ export default function BeatmapScoreScatterCard({
                     position: 'insideLeft',
                     offset: 10,
                     fill: 'var(--muted-foreground)',
-                    fontSize: 11,
+                    fontSize: 12,
+                    fontWeight: 500,
                   }}
                 />
                 <ChartTooltip
@@ -448,7 +452,7 @@ export default function BeatmapScoreScatterCard({
               </ScatterChart>
             </ChartContainer>
           )}
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-xs text-muted-foreground">
             Pre-match ratings · recent scores may not have ratings yet
             {unratedCount > 0
               ? ` · ${formatChartNumber(unratedCount)} scores without ratings hidden`

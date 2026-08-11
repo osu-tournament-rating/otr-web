@@ -212,7 +212,7 @@ export default function Header() {
       <ClientOnly>
         {!currentUser && !isSessionPending && (
           <div className="w-full bg-accent/50 py-1 text-center">
-            <p className="font-mono text-xs text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground">
               Some features are not available while signed out.
             </p>
           </div>

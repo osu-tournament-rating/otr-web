@@ -164,7 +164,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {/* Abbreviation and admin actions */}
           <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground">
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">

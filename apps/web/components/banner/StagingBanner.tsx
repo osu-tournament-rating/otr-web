@@ -7,7 +7,7 @@ export default function StagingBanner() {
 
   return (
     <div className="w-full border-b border-amber-500/50 bg-amber-500/20 py-1 text-center">
-      <p className="font-mono text-xs text-amber-700 dark:text-amber-300">
+      <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
         This is a pre-production instance. Data may be erased or modified
         without warning.
       </p>

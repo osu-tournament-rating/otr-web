@@ -100,7 +100,7 @@ export default function BeatmapScoresTable({
                   key={performer.scoreId}
                   className="group hover:bg-muted/25"
                 >
-                  <TableCell className="pl-4 text-xs text-muted-foreground tabular-nums">
+                  <TableCell className="pl-4 text-xs text-muted-foreground">
                     {ranks[index].label}
                   </TableCell>
 
@@ -147,7 +147,7 @@ export default function BeatmapScoresTable({
                       prefetch={false}
                       aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
                       data-testid="beatmap-top-play-score"
-                      className="flex items-center justify-end gap-1.5 rounded-sm text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="flex items-center justify-end gap-1.5 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
                       {performer.score.toLocaleString()}
                       <GradeIcon grade={performer.grade} />
@@ -156,7 +156,7 @@ export default function BeatmapScoresTable({
 
                   <TableCell
                     data-testid="beatmap-top-play-accuracy"
-                    className="text-right text-xs text-muted-foreground tabular-nums"
+                    className="text-right text-xs text-muted-foreground"
                   >
                     {performer.accuracy !== null
                       ? formatAccuracy(performer.accuracy)
@@ -179,7 +179,7 @@ export default function BeatmapScoresTable({
                     <time
                       dateTime={performer.playedAt ?? undefined}
                       data-testid="beatmap-top-play-date"
-                      className="text-[11px] whitespace-nowrap text-muted-foreground tabular-nums"
+                      className="text-xs whitespace-nowrap text-muted-foreground"
                     >
                       {performer.playedAt
                         ? formatUTCDate(new Date(performer.playedAt))
@@ -205,7 +205,7 @@ export default function BeatmapScoresTable({
               className="group px-4 py-2 transition-colors hover:bg-muted/25"
             >
               <div className="flex items-center gap-2">
-                <span className="w-7 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                <span className="w-7 shrink-0 text-right text-xs text-muted-foreground">
                   {ranks[index].label}
                 </span>
                 <Link
@@ -233,14 +233,14 @@ export default function BeatmapScoresTable({
                   href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
                   prefetch={false}
                   aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
-                  className="flex shrink-0 items-center gap-1 rounded-sm text-sm font-semibold tabular-nums hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                  className="flex shrink-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   {performer.score.toLocaleString()}
                   <GradeIcon grade={performer.grade} />
                 </Link>
               </div>
 
-              <div className="mt-1 flex items-center gap-2 pl-6 text-xs text-muted-foreground tabular-nums">
+              <div className="mt-1 flex items-center gap-2 pl-6 text-xs text-muted-foreground">
                 <ModIconset
                   mods={performer.mods}
                   className="flex h-4 shrink-0 items-center"
@@ -274,7 +274,7 @@ export default function BeatmapScoresTable({
       </ol>
 
       {/* The tab header already carries the full score count. */}
-      <p className="border-t px-4 py-2 text-center text-xs text-muted-foreground tabular-nums">
+      <p className="border-t px-4 py-2 text-center text-xs text-muted-foreground">
         Showing the top {performers.length.toLocaleString()}
       </p>
     </>

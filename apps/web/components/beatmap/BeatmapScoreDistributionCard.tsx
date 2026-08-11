@@ -78,28 +78,28 @@ function BoxPlotRow({
               />
               <span className="text-xs font-medium">{label}</span>
             </span>
-            <span className="text-xs text-muted-foreground tabular-nums">
+            <span className="text-xs text-muted-foreground">
               {`${formatChartNumber(group.scoreCount)} scores`}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Median</span>
-            <span className="text-sm font-semibold tabular-nums">
+            <span className="text-sm font-semibold">
               {formatChartNumber(group.medianScore)}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Middle 50%</span>
-            <span className="text-xs tabular-nums">
+            <span className="text-xs">
               {`${formatChartNumber(group.p25Score)} – ${formatChartNumber(group.p75Score)}`}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-xs text-muted-foreground">Range</span>
-            <span className="flex items-center gap-1.5 text-xs tabular-nums">
+            <span className="flex items-center gap-1.5 text-xs">
               <span
                 className="size-1.5 shrink-0 rounded-full border bg-transparent"
                 style={{ borderColor: color }}
@@ -123,7 +123,7 @@ function BoxPlotRow({
             style={{ backgroundColor: color }}
             aria-hidden="true"
           />
-          <span className="truncate text-xs font-medium">{label}</span>
+          <span className="truncate text-xs">{label}</span>
         </span>
 
         <div
@@ -166,7 +166,7 @@ function BoxPlotRow({
         </div>
 
         <span
-          className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
+          className="w-12 shrink-0 text-right text-xs font-medium text-foreground"
           aria-hidden="true"
         >
           {formatKilo(group.medianScore)}
@@ -226,11 +226,11 @@ function PercentileCurve({
                 return (
                   <span className="text-xs">
                     A score of{' '}
-                    <span className="font-medium tabular-nums">
+                    <span className="font-medium">
                       {formatChartNumber(point.score)}
                     </span>{' '}
                     beats{' '}
-                    <span className="font-medium tabular-nums">
+                    <span className="font-medium">
                       {formatPercentage(value, 0)}
                     </span>{' '}
                     of tournament plays

@@ -450,7 +450,6 @@ export default function TournamentBeatmapsAdminView({
                   value={beatmapIdsToAdd}
                   onChange={(e) => setBeatmapIdsToAdd(e.target.value)}
                   rows={5}
-                  className="font-mono"
                 />
                 <div className="flex justify-end gap-2">
                   <Button

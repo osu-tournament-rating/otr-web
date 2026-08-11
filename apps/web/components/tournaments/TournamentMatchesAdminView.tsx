@@ -395,7 +395,6 @@ export default function TournamentMatchesAdminView({
                   value={matchIdsToAdd}
                   onChange={(e) => setMatchIdsToAdd(e.target.value)}
                   rows={5}
-                  className="font-mono"
                 />
                 <div className="flex items-center space-x-2">
                   <Checkbox

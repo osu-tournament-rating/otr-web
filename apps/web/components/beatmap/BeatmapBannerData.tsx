@@ -32,14 +32,14 @@ export default function BeatmapBannerData({
           size="md"
           valueClassName="font-bold"
         />
-        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold tabular-nums">
+        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
           <Activity
             className="size-4 text-muted-foreground"
             aria-hidden="true"
           />
           {Math.round(beatmap.bpm)} BPM
         </span>
-        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold tabular-nums">
+        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
           <Clock3 className="size-4 text-muted-foreground" aria-hidden="true" />
           {formatSecondsToMinutesSeconds(beatmap.totalLength)}
         </span>

@@ -132,8 +132,8 @@ function CustomTooltip({
           />
         )}
         <div>
-          <p className="font-semibold">{data.username}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-semibold">{data.username}</p>
+          <p className="text-xs text-muted-foreground">
             Matches played: {data.frequency}
           </p>
         </div>
@@ -378,6 +378,7 @@ export default function PlayerFrequencyChart({
               <YAxis
                 allowDecimals={false}
                 domain={[0, 'dataMax']}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickFormatter={(value: number) => value.toString()}
               />
               <ChartTooltip
@@ -419,6 +420,7 @@ export default function PlayerFrequencyChart({
               <YAxis
                 allowDecimals={false}
                 domain={[0, 'dataMax']}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickFormatter={(value: number) => value.toString()}
               />
               <ChartTooltip

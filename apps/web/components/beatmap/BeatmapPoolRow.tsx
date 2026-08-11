@@ -127,7 +127,7 @@ export default function BeatmapPoolRow({
             )}
           </div>
           {/* A div, not a p: ModIconset renders divs, which cannot nest in a p. */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="truncate">
               {dateLabel} · {pool.tournament.lobbySize}v
               {pool.tournament.lobbySize} · {rankRange}
@@ -173,7 +173,7 @@ export default function BeatmapPoolRow({
                   ? `${pool.gameCount} verified ${pool.gameCount === 1 ? 'game' : 'games'}`
                   : 'No verified game count for this pool record'
               }
-              className="min-w-6 text-right text-sm font-semibold tabular-nums"
+              className="min-w-6 text-right text-sm font-semibold"
             >
               {verified ? pool.gameCount.toLocaleString() : '—'}
             </span>

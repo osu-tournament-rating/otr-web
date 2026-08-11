@@ -6,11 +6,11 @@ export default async function Page() {
     >
       <p
         data-testid="unauthorized-heading"
-        className="font-mono text-4xl text-primary"
+        className="text-4xl font-bold tracking-tight text-primary"
       >
         Unauthorized
       </p>
-      <p className="font-mono text-accent-foreground">
+      <p className="text-accent-foreground">
         You are not authorized to access this page.
       </p>
     </div>

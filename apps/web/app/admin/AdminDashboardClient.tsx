@@ -630,7 +630,7 @@ export default function AdminDashboardClient() {
                     placeholder="1234567, 2345678, 3456789..."
                     disabled={massEnqueueing}
                     rows={8}
-                    className="font-mono text-sm"
+                    className="text-sm"
                   />
                   {beatmapIdsInput.trim() && (
                     <p className="text-xs text-muted-foreground">
@@ -651,7 +651,7 @@ export default function AdminDashboardClient() {
                     placeholder="12345678, 23456789, 34567890..."
                     disabled={massEnqueueing}
                     rows={8}
-                    className="font-mono text-sm"
+                    className="text-sm"
                   />
                   {matchIdsInput.trim() && (
                     <p className="text-xs text-muted-foreground">

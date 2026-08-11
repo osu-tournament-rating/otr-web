@@ -55,7 +55,7 @@ export default function PlayerTournamentCard({
         </Link>
 
         <div className="flex w-full items-center gap-2 sm:w-auto">
-          <span className="font-mono text-sm text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             {tournament.abbreviation}
           </span>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">

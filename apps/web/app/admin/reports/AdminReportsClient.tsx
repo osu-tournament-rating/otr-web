@@ -323,9 +323,7 @@ export default function AdminReportsClient() {
                       data-testid="admin-reports-row"
                       data-report-id={report.id}
                     >
-                      <TableCell className="font-mono text-xs">
-                        {report.id}
-                      </TableCell>
+                      <TableCell className="text-xs">{report.id}</TableCell>
                       <TableCell>
                         {
                           ReportEntityTypeEnumHelper.getMetadata(

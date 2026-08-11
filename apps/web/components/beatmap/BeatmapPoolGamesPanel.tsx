@@ -135,7 +135,7 @@ export default function BeatmapPoolGamesPanel({
                 >
                   {match.matchName}
                 </span>
-                <span className="hidden text-right text-xs text-muted-foreground tabular-nums sm:block">
+                <span className="hidden text-right text-xs text-muted-foreground sm:block">
                   {match.startTime
                     ? formatUTCDate(new Date(match.startTime))
                     : '—'}
@@ -149,7 +149,7 @@ export default function BeatmapPoolGamesPanel({
                   />
                 </span>
                 <LobbyRating rating={game.avgRating} />
-                <span className="text-right text-sm tabular-nums">
+                <span className="text-right text-sm">
                   {game.avgScore !== null
                     ? game.avgScore.toLocaleString()
                     : '—'}
@@ -199,9 +199,7 @@ function LobbyRating({ rating }: { rating: number | null }) {
         height={18}
         className="shrink-0"
       />
-      <span className="text-sm tabular-nums">
-        {Math.round(rating).toLocaleString()}
-      </span>
+      <span className="text-sm">{Math.round(rating).toLocaleString()}</span>
     </span>
   );
 }

@@ -77,12 +77,7 @@ function TierLabel({ tier }: { tier: TierName }) {
         width={18}
         height={18}
       />
-      <span
-        className={cn(
-          'truncate text-xs font-medium',
-          getTierColor(tier)?.textClass
-        )}
-      >
+      <span className={cn('truncate text-xs', getTierColor(tier)?.textClass)}>
         {TIER_DISPLAY_NAME[tier]}
       </span>
     </span>
@@ -116,28 +111,28 @@ function TierTooltipContent({ summary }: { summary: BeatmapTierScoreSummary }) {
           />
           {TIER_DISPLAY_NAME[summary.tier]}
         </span>
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-xs text-muted-foreground">
           {`${formatChartNumber(summary.scoreCount)} scores`}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Median</span>
-        <span className="text-sm font-semibold text-foreground tabular-nums">
+        <span className="text-sm font-semibold text-foreground">
           {formatChartNumber(summary.medianScore)}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Middle 50%</span>
-        <span className="text-xs text-foreground tabular-nums">
+        <span className="text-xs text-foreground">
           {`${formatChartNumber(summary.p25Score)} – ${formatChartNumber(summary.p75Score)}`}
         </span>
       </div>
 
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-xs text-muted-foreground">Range</span>
-        <span className="flex items-center gap-1 text-xs text-foreground tabular-nums">
+        <span className="flex items-center gap-1 text-xs text-foreground">
           <RingGlyph color={color} />
           {`${formatChartNumber(summary.minScore)} – ${formatChartNumber(summary.maxScore)}`}
           <RingGlyph color={color} />
@@ -147,7 +142,7 @@ function TierTooltipContent({ summary }: { summary: BeatmapTierScoreSummary }) {
       {summary.medianAccuracy !== null ? (
         <div className="flex items-baseline justify-between gap-4">
           <span className="text-xs text-muted-foreground">Median accuracy</span>
-          <span className="text-xs text-foreground tabular-nums">
+          <span className="text-xs text-foreground">
             {formatPercentage(summary.medianAccuracy * 100, 2)}
           </span>
         </div>
@@ -221,7 +216,7 @@ function TierBoxPlotRow({
         </div>
 
         <span
-          className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
+          className="w-12 shrink-0 text-right text-xs font-medium text-foreground"
           aria-hidden="true"
         >
           {formatKilo(summary.medianScore)}
@@ -268,7 +263,7 @@ function TierAccuracyRow({
       </div>
 
       <span
-        className="w-14 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
+        className="w-14 shrink-0 text-right text-xs font-medium text-foreground"
         aria-hidden="true"
       >
         {accuracyPercent === null ? '—' : formatPercentage(accuracyPercent, 2)}

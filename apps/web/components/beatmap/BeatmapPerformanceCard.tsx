@@ -112,7 +112,7 @@ export default function BeatmapPerformanceCard({
                             `${label} ${label === '1' ? 'miss' : 'misses'}`
                           }
                           formatter={(value) => (
-                            <span className="font-medium text-foreground tabular-nums">
+                            <span className="font-medium text-foreground">
                               {formatChartNumber(Number(value))} scores
                             </span>
                           )}
@@ -128,7 +128,7 @@ export default function BeatmapPerformanceCard({
                   </BarChart>
                 </ChartContainer>
                 {excludedMissCount > 0 ? (
-                  <p className="text-xs text-muted-foreground tabular-nums">
+                  <p className="text-xs text-muted-foreground">
                     {formatChartNumber(excludedMissCount)} scores without miss
                     data excluded
                   </p>

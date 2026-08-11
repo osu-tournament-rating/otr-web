@@ -199,7 +199,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
       <div className="space-y-1 text-xs">
         <p>
           <span className="text-muted-foreground">Beatmap ID:</span>{' '}
-          <span className="font-mono">{childGame.beatmapOsuId ?? 'N/A'}</span>
+          <span>{childGame.beatmapOsuId ?? 'N/A'}</span>
         </p>
         <p>
           <span className="text-muted-foreground">Players:</span>{' '}

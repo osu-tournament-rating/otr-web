@@ -429,7 +429,7 @@ function TopModsBreakdown({
             }}
           >
             <span className="font-semibold text-inherit">{mod}</span>
-            <span className="font-medium text-inherit tabular-nums">
+            <span className="font-medium text-inherit">
               {formatPercentage(percentage, 1)}
             </span>
           </li>
@@ -466,10 +466,7 @@ function Metric({
       {icon}
       <span
         data-testid={testId ? `${testId}-value` : undefined}
-        className={cn(
-          'font-medium text-foreground tabular-nums',
-          valueClassName
-        )}
+        className={cn('font-medium text-foreground', valueClassName)}
       >
         {value}
       </span>

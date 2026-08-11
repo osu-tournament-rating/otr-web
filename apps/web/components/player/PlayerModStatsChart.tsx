@@ -165,7 +165,7 @@ export default function PlayerModStatsChart({
             <YAxis
               dataKey="label"
               type="category"
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               interval={0}
             />
             <ChartTooltip content={<ChartTooltipContent indicator="line" />} />

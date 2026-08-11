@@ -145,7 +145,7 @@ export default function AudioPlayerControls() {
                     'aria-valuetext': `${formatPreviewTime(currentTime)} of ${formatPreviewTime(state.duration)}`,
                   })}
                 />
-                <div className="mt-1 flex items-center justify-between font-mono text-[10px] text-muted-foreground tabular-nums">
+                <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                   <span data-testid="audio-transport-current-time">
                     {formatPreviewTime(currentTime)}
                   </span>

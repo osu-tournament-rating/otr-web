@@ -87,7 +87,7 @@ export default function BeatmapMarginCard({
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
                 interval={0}
@@ -104,7 +104,7 @@ export default function BeatmapMarginCard({
                   <ChartTooltipContent
                     hideIndicator
                     formatter={(value) => (
-                      <span className="font-medium text-foreground tabular-nums">
+                      <span className="font-medium text-foreground">
                         {formatChartNumber(Number(value))} games
                       </span>
                     )}

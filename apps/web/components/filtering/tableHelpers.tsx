@@ -41,5 +41,5 @@ export function NumericCell({
   }
 
   const formatted = format ? format(value) : value.toString();
-  return <div className="text-center font-mono">{formatted}</div>;
+  return <div className="text-center">{formatted}</div>;
 }
