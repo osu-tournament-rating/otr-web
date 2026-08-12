@@ -9,7 +9,7 @@ Use the current source as the authority. The bundled player-page screenshots are
 
 ## Work from the real feature boundary
 
-1. Read `AGENTS.md`, the affected route, neighboring domain components, relevant `components/ui` primitives, `app/globals.css`, and the closest E2E spec.
+1. Read the affected route and the specific components you are changing. Pull in anything else only when the change actually depends on it, and prefer a targeted grep over reading a whole file. E2E specs and `app/globals.css` are large; grep them for the symbol or token you need instead of reading them end to end, and read a spec in full only when you are editing it.
 2. Trace the data from its server procedure or query helper into the rendered component before choosing a client boundary.
 3. Reuse existing domain components, semantic theme tokens, icons, formatting helpers, and interaction patterns.
 4. Implement all states the boundary can produce: loading, empty, error, disabled, success, and permission-restricted states as applicable.
@@ -51,12 +51,13 @@ The data worker is not needed for ordinary UI verification. If a page is empty o
 
 Use any available Playwright-compatible browser automation. If no browser integration is available, use the repository's installed Playwright package from a temporary untracked script or the CLI. Do not commit auth state, traces, reports, logs, or intermediate screenshots.
 
-At minimum, inspect the affected workflow at:
+Screenshots are the default way to verify. Page snapshots and accessibility-tree dumps are expensive and stay in context for the rest of the session, so treat them as opt-in: reach for one only when you need accessible names, keyboard order, or DOM structure that a screenshot cannot show. When you do need one, scope it to the affected element. Never dump a whole-page tree when a scoped query answers the question.
 
-- Desktop: `1440x1000`
-- Mobile: `390x844`
-- Light and dark themes when the change affects color, elevation, charts, or tokens
-- `767px` and `768px` when the shared navigation or breakpoint behavior changes
+Inspect the affected workflow at:
+
+- Desktop `1440x1000` and mobile `390x844` — always.
+- Light and dark themes — only when the change affects color, elevation, charts, or tokens.
+- `767px` and `768px` — only when the change affects shared navigation or breakpoint behavior.
 
 Confirm:
 
@@ -75,14 +76,14 @@ The reusable references live at:
 - `assets/references/player-page-desktop.png`
 - `assets/references/player-page-mobile.png`
 
-Open them only when player-page hierarchy or the broader design language is relevant. They capture `/players/440` in the light theme using the existing local database.
+Open them only when the broader design language is relevant, and open one rather than both when one answers the question. They capture the top of `/players/440` in the light theme using the existing local database. They are deliberately cropped rather than full-page: a full-page capture gets downscaled so far that it costs more tokens and renders illegibly.
 
 When intentionally refreshing them:
 
 1. Run the normal development server and verify `/players/440` behaves correctly before capture.
-2. Use an isolated browser context, device scale factor 1, reduced motion, and the desktop/mobile viewports above.
-3. Wait for fonts, images, data, and chart animation; progressively scroll so lazy content renders.
-4. Inspect the top, middle, and bottom of both full-page images.
+2. Use an isolated browser context, device scale factor 1, and reduced motion.
+3. Wait for fonts, images, data, and chart animation to settle.
+4. Capture the top `1440x1000` on desktop and the top `390x1568` on mobile. Keep these dimensions: they are the largest crops that survive image downscaling at readable resolution.
 5. Exclude the Next.js development toolbar from the image only after confirming it is not reporting an application error.
 6. Do not update the references merely to make a regression look expected.
 
@@ -95,9 +96,10 @@ bunx prettier <changed-files> --check
 bun run --filter web lint
 bunx tsc --noEmit
 bun test path/to/file.test.ts
-bun run --filter web build
 cd apps/web && bun run test:e2e -- <relevant-spec>.e2e.ts
 ```
+
+`bun run --filter web build` is slow and is not part of ordinary UI verification. Run it only when asked.
 
 Playwright E2E builds and serves its own app on port 3001 and requires its configured database, RabbitMQ, and auth fixtures. Do not occupy that port with the interactive development server.
 

@@ -16,8 +16,6 @@ Import web-local code with `@/`, shared code with `@otr/core` or `@otr/core/*`. 
 
 ## Skills
 
-Load these `SKILL.md` files directly — do not reference them with vendor-specific slash-command or subagent syntax.
-
 - `.agents/skills/change-otr-contracts/SKILL.md` — before changing physical database identifiers, Drizzle schema or migrations, persisted enums, queue names or messages, verification or rating semantics, public oRPC/OpenAPI contracts, or API-key behavior.
 - `.agents/skills/build-and-verify-otr-ui/SKILL.md` — before changing browser-visible routes, pages, components, styles, frontend data flow, responsive behavior, themes, or visual tests.
 
