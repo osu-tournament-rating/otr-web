@@ -5,9 +5,11 @@ import { Mods } from '@otr/core/osu';
 import { getTierFromRating, tierData } from '@/lib/utils/tierData';
 import {
   TEAM_VS_MARGIN_BUCKET_BOUNDS,
+  TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
   summarizeRankRangeMods,
+  tierBreakdownTierFromRating,
   tierNameFromRatingArithmetic,
   type FreemodPickRow,
   type RankRangeModRow,
@@ -225,6 +227,26 @@ describe('tierNameFromRatingArithmetic', () => {
       );
       expect(tierNameFromRatingArithmetic(bound - 1)).toBe(
         getTierFromRating(bound - 1).tier
+      );
+    }
+  });
+});
+
+/**
+ * The breakdown folds Elite Grandmaster into Grandmaster; the SQL does the same
+ * with LEAST(width_bucket(...), TIER_BREAKDOWN_MAX_TIER_INDEX).
+ */
+describe('tierBreakdownTierFromRating', () => {
+  test('clamps at Grandmaster', () => {
+    expect(TIER_BREAKDOWN_MAX_TIER_INDEX).toBe(tierData.length - 2);
+    expect(tierBreakdownTierFromRating(2500)).toBe('Grandmaster');
+    expect(tierBreakdownTierFromRating(9000)).toBe('Grandmaster');
+  });
+
+  test('matches the unclamped tier below Elite Grandmaster', () => {
+    for (const rating of [0, 99, 100, 399, 400, 1899, 1900, 2200, 2499]) {
+      expect(tierBreakdownTierFromRating(rating)).toBe(
+        tierNameFromRatingArithmetic(rating)
       );
     }
   });

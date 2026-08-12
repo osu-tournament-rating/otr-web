@@ -179,6 +179,28 @@ export function tierNameFromRatingArithmetic(rating: number): TierName {
 }
 
 /**
+ * Highest tier index the beatmap tier breakdown reports. Elite Grandmaster is
+ * folded into Grandmaster: a single beatmap rarely carries enough scores at the
+ * very top of the ladder for its own quartiles to mean anything, so both share
+ * one bucket rendered as "Grandmaster+".
+ */
+export const TIER_BREAKDOWN_MAX_TIER_INDEX = tierNames.indexOf('Grandmaster');
+
+/**
+ * Tier a rating lands in for the breakdown, with the Elite Grandmaster fold
+ * applied. Mirrors the clamped `width_bucket` expression in the SQL; a parity
+ * test keeps both in sync.
+ */
+export function tierBreakdownTierFromRating(rating: number): TierName {
+  let index = 0;
+  for (const bound of TIER_RATING_BOUNDARIES) {
+    if (rating >= bound) index += 1;
+  }
+
+  return tierNames[Math.min(index, TIER_BREAKDOWN_MAX_TIER_INDEX)];
+}
+
+/**
  * Fixed relative-margin buckets (percent of the winning team's score) for the
  * team-vs closeness summary. The last bucket is open-ended.
  */

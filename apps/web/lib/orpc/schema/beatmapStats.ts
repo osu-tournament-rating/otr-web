@@ -199,6 +199,10 @@ export const BeatmapRankRangeModDistributionSchema = z.object({
  * time of play (pre-match rating, `rating_adjustments.rating_before`).
  */
 export const BeatmapTierScoreSummarySchema = z.object({
+  /**
+   * Elite Grandmaster is folded into Grandmaster, so this never reports
+   * `'Elite Grandmaster'`; the merged bucket renders as "Grandmaster+".
+   */
   tier: TierNameSchema,
   scoreCount: z.number().int().positive(),
   minScore: z.number().int().nonnegative(),
@@ -220,8 +224,8 @@ export const BeatmapTierBreakdownSchema = z.object({
   /** All verified scores, for the "X of Y rated" caption. */
   totalScoreCount: z.number().int().nonnegative(),
   /**
-   * Ascending by tier (Bronze → Elite Grandmaster); only tiers with at least
-   * five scores.
+   * Ascending by tier (Bronze → Grandmaster+); only tiers with at least five
+   * scores.
    */
   tiers: z.array(BeatmapTierScoreSummarySchema),
 });

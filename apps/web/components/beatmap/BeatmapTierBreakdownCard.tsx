@@ -46,13 +46,21 @@ const TIER_CHART_COLOR: Record<TierName, string> = {
   'Elite Grandmaster': 'var(--text-elite-grandmaster)',
 };
 
-const TIER_DISPLAY_NAME: Record<TierName, string> = tierData.reduce(
-  (names, entry) => {
-    names[entry.tier] = entry.displayName;
-    return names;
-  },
-  {} as Record<TierName, string>
-);
+/**
+ * Ladder display names, except that Grandmaster reads "Grandmaster+": the
+ * server folds Elite Grandmaster into that bucket, so the row covers everyone
+ * at Grandmaster and above.
+ */
+const TIER_DISPLAY_NAME: Record<TierName, string> = {
+  ...tierData.reduce(
+    (names, entry) => {
+      names[entry.tier] = entry.displayName;
+      return names;
+    },
+    {} as Record<TierName, string>
+  ),
+  Grandmaster: 'Grandmaster+',
+};
 
 /** Positions a percentage on the zoomed accuracy domain as a CSS percentage. */
 function toAccuracyPercent(

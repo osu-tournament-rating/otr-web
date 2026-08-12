@@ -32,6 +32,7 @@ import { publicProcedure } from './base';
 import {
   STRIPPED_SCORE_MODS_MASK,
   TEAM_VS_MARGIN_BUCKET_BOUNDS,
+  TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
   summarizeRankRangeMods,
@@ -69,6 +70,14 @@ const NORMALIZED_SCORE_MODS_SQL = sql<number>`
  */
 const TIER_BOUNDARIES_SQL = sql.raw(
   `ARRAY[${TIER_RATING_BOUNDARIES.join(',')}]::float8[]`
+);
+
+/**
+ * Clamps the bucket index so Elite Grandmaster groups with Grandmaster before
+ * the percentiles are taken; the TS mirror is `tierBreakdownTierFromRating`.
+ */
+const TIER_BREAKDOWN_MAX_TIER_INDEX_SQL = sql.raw(
+  String(TIER_BREAKDOWN_MAX_TIER_INDEX)
 );
 
 const roundToOneDecimal = (value: number): number =>
@@ -792,10 +801,12 @@ export const getBeatmapStats = publicProcedure
         // Score/accuracy quartiles per rating tier, tiered by the player's
         // pre-match rating. INNER JOIN on rating_adjustments: unrated scores
         // are excluded outright rather than falling back to player_ratings.
+        // Elite Grandmaster is clamped into Grandmaster so the merged bucket's
+        // percentiles come from the combined population, not a blend of two.
         context.db
           .select({
             tierIndex:
-              sql<number>`width_bucket(${schema.ratingAdjustments.ratingBefore}, ${TIER_BOUNDARIES_SQL})`.as(
+              sql<number>`LEAST(width_bucket(${schema.ratingAdjustments.ratingBefore}, ${TIER_BOUNDARIES_SQL}), ${TIER_BREAKDOWN_MAX_TIER_INDEX_SQL})`.as(
                 'tier_index'
               ),
             scoreCount: sql<number>`COUNT(*)`,
@@ -1127,9 +1138,10 @@ export const getBeatmapStats = publicProcedure
         }))
       );
 
-      // width_bucket returns 0..8, indexing tierNames directly (0 = Bronze,
-      // covering everything below the first boundary). Sparse tiers are hidden
-      // from the rows but still counted in ratedScoreCount.
+      // The clamped width_bucket returns 0..7, indexing tierNames directly
+      // (0 = Bronze, covering everything below the first boundary; 7 =
+      // Grandmaster and above). Sparse tiers are hidden from the rows but
+      // still counted in ratedScoreCount.
       let ratedScoreCount = 0;
       const tiers: BeatmapTierScoreSummary[] = [];
       for (const row of tierBreakdownRows) {
