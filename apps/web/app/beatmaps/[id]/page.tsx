@@ -93,9 +93,15 @@ export default async function BeatmapPage({ params }: PageProps) {
           relatedDifficulties={stats.relatedDifficulties}
         />
         <div className="grid gap-4 lg:grid-cols-3">
-          {/* Band first in DOM so it stacks directly under the header on
-              mobile, and so the overview rail lands on the right at lg — the
+          {/* Overview first in DOM so it stacks directly under the header on
+              mobile, and so the overview rail lands on the left at lg — the
               same side it sits on in the populated layout. */}
+          <BeatmapOverviewCard
+            beatmap={stats.beatmap}
+            usage={stats.usageOverTime}
+            summary={stats.summary}
+            pools={stats.tournaments}
+          />
           <SectionCard
             data-testid="beatmap-empty-band"
             className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center lg:col-span-2"
@@ -109,12 +115,6 @@ export default async function BeatmapPage({ params }: PageProps) {
               tournament uses this beatmap.
             </p>
           </SectionCard>
-          <BeatmapOverviewCard
-            beatmap={stats.beatmap}
-            usage={stats.usageOverTime}
-            summary={stats.summary}
-            pools={stats.tournaments}
-          />
         </div>
       </div>
     );
@@ -127,10 +127,18 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      {/* Distributions takes two of the three columns; the overview rail rides
-          beside it instead of alongside the record tables below. Both stretch
-          to the taller column so the row ends on one line. */}
+      {/* The overview rail leads the row; distributions takes the remaining two
+          of the three columns instead of sitting alongside the record tables
+          below. Both stretch to the taller column so the row ends on one
+          line. */}
       <div className="grid gap-4 lg:grid-cols-3">
+        <BeatmapOverviewCard
+          beatmap={stats.beatmap}
+          usage={stats.usageOverTime}
+          summary={stats.summary}
+          pools={stats.tournaments}
+        />
+
         <BeatmapDistributionsCard
           className="lg:col-span-2"
           modStats={stats.modDistribution}
@@ -138,13 +146,6 @@ export default async function BeatmapPage({ params }: PageProps) {
           freemodPicks={stats.freemodPicks}
           rankRangeMods={stats.rankRangeModDistribution}
           gradeDistribution={stats.performance.gradeDistribution}
-        />
-
-        <BeatmapOverviewCard
-          beatmap={stats.beatmap}
-          usage={stats.usageOverTime}
-          summary={stats.summary}
-          pools={stats.tournaments}
         />
       </div>
 

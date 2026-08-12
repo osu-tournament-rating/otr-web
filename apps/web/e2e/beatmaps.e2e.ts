@@ -1768,9 +1768,9 @@ test.describe('Beatmap Detail Page', () => {
       expect(railBox).not.toBeNull();
       expect(poolsBox).not.toBeNull();
 
-      // Chart and rail share the top row, splitting it two-to-one.
+      // Rail leads the top row and the chart takes the other two thirds.
       expect(Math.abs(modBox!.y - railBox!.y)).toBeLessThanOrEqual(1);
-      expect(railBox!.x).toBeGreaterThan(modBox!.x + modBox!.width);
+      expect(modBox!.x).toBeGreaterThan(railBox!.x + railBox!.width);
       expect(modBox!.width).toBeGreaterThan(railBox!.width * 1.8);
       expect(modBox!.width).toBeLessThan(railBox!.width * 2.2);
 
@@ -1778,9 +1778,9 @@ test.describe('Beatmap Detail Page', () => {
       expect(poolsBox!.y).toBeGreaterThanOrEqual(modBox!.y + modBox!.height);
       expect(poolsBox!.y).toBeGreaterThanOrEqual(railBox!.y + railBox!.height);
       // The panel sits inside the card border, so allow a couple of pixels.
-      expect(Math.abs(poolsBox!.x - modBox!.x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(poolsBox!.x - railBox!.x)).toBeLessThanOrEqual(2);
       expect(poolsBox!.width).toBeGreaterThanOrEqual(
-        railBox!.x + railBox!.width - modBox!.x - 4
+        modBox!.x + modBox!.width - railBox!.x - 4
       );
     });
 

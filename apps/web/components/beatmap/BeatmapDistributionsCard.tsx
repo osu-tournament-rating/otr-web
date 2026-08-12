@@ -602,7 +602,12 @@ export default function BeatmapDistributionsCard({
           <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:divide-x">
             <div className="flex flex-col divide-y">
               <div className="space-y-3 px-4 py-4">
-                <Eyebrow>Grades</Eyebrow>
+                {/* Wrapped so the label's box hugs the text like the mod
+                    distribution header does; a bare inline Eyebrow inherits the
+                    parent's taller strut and eats into the gap below it. */}
+                <div className="flex items-baseline">
+                  <Eyebrow>Grades</Eyebrow>
+                </div>
                 {gradeSegments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No grade data recorded for these scores.
@@ -665,10 +670,7 @@ export default function BeatmapDistributionsCard({
               data-testid="beatmap-rank-range"
             >
               <div className="space-y-0.5">
-                <Eyebrow>Rank range</Eyebrow>
-                <p className="text-xs text-muted-foreground">
-                  Tournament registration floor
-                </p>
+                <Eyebrow>Tournament rank ranges</Eyebrow>
               </div>
 
               {rankSlices.length === 0 ? (
