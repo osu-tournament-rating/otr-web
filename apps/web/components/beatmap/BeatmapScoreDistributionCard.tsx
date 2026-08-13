@@ -223,7 +223,7 @@ export default function BeatmapScoreDistributionCard({
       <SectionHeader
         icon={ChartCandlestick}
         title="Score distribution"
-        infoText="Mod rows with fewer than 5 scores are hidden."
+        infoText="Charts NM, HD, HR and DT scores only; NF is ignored and NC counts as DT. Mod rows with fewer than 5 scores are hidden."
         meta={
           hasBoxData
             ? `${formatChartNumber(totalScoreCount)} scores`

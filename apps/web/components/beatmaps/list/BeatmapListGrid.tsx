@@ -12,6 +12,7 @@ import type {
   BeatmapListSortChange,
   BeatmapListSortKey,
 } from '@/lib/beatmaps/list-params';
+import { toBeatmapTableRows } from '@/lib/beatmaps/table-row';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 
 interface BeatmapListGridProps {
@@ -74,7 +75,7 @@ export default function BeatmapListGrid({
       return (
         <div data-testid="beatmap-list" data-layout={layout}>
           <BeatmapListTable
-            beatmaps={beatmaps}
+            beatmaps={toBeatmapTableRows(beatmaps)}
             sort={sort}
             descending={descending}
             onSortChange={onSortChange}

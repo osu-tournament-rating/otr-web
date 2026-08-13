@@ -11,11 +11,12 @@ import SimpleTooltip from '@/components/simple-tooltip';
 const sizeConfig = {
   sm: { button: 'h-6 w-6', icon: 'h-3 w-3' },
   md: { button: 'h-8 w-8', icon: 'h-4 w-4' },
+  lg: { button: 'h-11 w-11', icon: 'h-5 w-5' },
 };
 
 interface AudioPlayButtonProps {
   beatmapsetOsuId: number | undefined;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   variant?: 'ghost' | 'default';
   className?: string;
   showTooltip?: boolean;

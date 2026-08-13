@@ -77,6 +77,7 @@ export const BeatmapListResponseSchema = z.object({
   totalPages: z.number().int().min(0),
 });
 
+export type BeatmapListTopMod = z.infer<typeof BeatmapListTopModSchema>;
 export type BeatmapListSort = z.infer<typeof BeatmapListSortSchema>;
 export type BeatmapListRequest = z.infer<typeof BeatmapListRequestSchema>;
 export type BeatmapListItem = z.infer<typeof BeatmapListItemSchema>;

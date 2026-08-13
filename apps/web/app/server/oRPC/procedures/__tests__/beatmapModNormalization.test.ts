@@ -3,7 +3,10 @@ import { describe, expect, test } from 'bun:test';
 import { Mods } from '@otr/core/osu';
 
 import { normalizeBeatmapDisplayMods } from '@/lib/utils/mods';
-import { normalizeScoreModsArithmetic } from '../beatmapStatsHelpers';
+import {
+  isChartedScoreMods,
+  normalizeScoreModsArithmetic,
+} from '../beatmapStatsHelpers';
 
 /**
  * Parity between the pure-arithmetic mirror used to build the SQL CASE
@@ -68,5 +71,57 @@ describe('normalizeScoreModsArithmetic', () => {
 
   test('leaves a legitimate zero (NM) at zero', () => {
     expect(normalizeScoreModsArithmetic(0)).toBe(0);
+  });
+});
+
+/**
+ * The charted-mod gate the score distribution, tier breakdown and accuracy
+ * charts run behind. Mirrored in SQL as `CHARTED_SCORE_MODS_FILTER`
+ * (beatmapProcedures) — both must accept the same set.
+ */
+describe('isChartedScoreMods', () => {
+  const accepted: Array<[string, number]> = [
+    ['NM', Mods.None],
+    ['NF', Mods.NoFail],
+    ['HD', Mods.Hidden],
+    ['HR', Mods.HardRock],
+    ['DT', Mods.DoubleTime],
+    ['NC', Mods.Nightcore],
+    ['HDHR', Mods.Hidden | Mods.HardRock],
+    ['HDDT', Mods.Hidden | Mods.DoubleTime],
+    ['HDHRNCNF', Mods.Hidden | Mods.HardRock | Mods.Nightcore | Mods.NoFail],
+  ];
+
+  const rejected: Array<[string, number]> = [
+    ['EZ', Mods.Easy],
+    ['HT', Mods.HalfTime],
+    ['FL', Mods.Flashlight],
+    ['SO', Mods.SpunOut],
+    ['SD', Mods.SuddenDeath],
+    ['PF', Mods.Perfect],
+    ['TD', Mods.TouchDevice],
+    ['RX', Mods.Relax],
+    ['4K', Mods.Key4],
+    ['HDEZ', Mods.Hidden | Mods.Easy],
+    ['HDHRSO', Mods.Hidden | Mods.HardRock | Mods.SpunOut],
+    ['NFSO', Mods.NoFail | Mods.SpunOut],
+  ];
+
+  test.each(accepted)('charts %s', (_label, mods) => {
+    expect(isChartedScoreMods(mods)).toBe(true);
+  });
+
+  test.each(rejected)('drops %s', (_label, mods) => {
+    expect(isChartedScoreMods(mods)).toBe(false);
+  });
+
+  test('accepts exactly 32 of the 14-bit bitmasks', () => {
+    let accepted = 0;
+    for (let mods = 0; mods < 1 << 14; mods++) {
+      if (isChartedScoreMods(mods)) accepted += 1;
+    }
+
+    // NF, HD, HR, DT and NC freely combine: 2^5.
+    expect(accepted).toBe(32);
   });
 });

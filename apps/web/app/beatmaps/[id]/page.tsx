@@ -105,8 +105,8 @@ export default async function BeatmapPage({ params }: PageProps) {
               No verified tournament data recorded yet
             </p>
             <p className="max-w-md text-sm text-muted-foreground">
-              Pool records and score analytics will appear once a verified
-              tournament uses this beatmap.
+              Statistics will appear once a verified tournament uses this
+              beatmap.
             </p>
           </SectionCard>
         </div>
@@ -145,7 +145,7 @@ export default async function BeatmapPage({ params }: PageProps) {
       <BeatmapScoreDistributionCard
         distribution={stats.scoreDistribution}
         percentiles={stats.scorePercentiles}
-        totalScoreCount={totalVerifiedScoreCount}
+        totalScoreCount={stats.chartedScoreCount}
       />
 
       <BeatmapTierBreakdownCard tierBreakdown={stats.tierBreakdown} />

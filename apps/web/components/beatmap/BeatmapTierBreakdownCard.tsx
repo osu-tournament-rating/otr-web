@@ -286,7 +286,7 @@ export default function BeatmapTierBreakdownCard({
       <SectionHeader
         icon={Medal}
         title="Tier breakdown"
-        infoText="Grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
+        infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
         meta={`${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores rated`}
       />
 

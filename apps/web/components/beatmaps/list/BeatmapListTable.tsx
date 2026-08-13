@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import BeatmapCoverPreview from '@/components/beatmaps/BeatmapCoverPreview';
 import BeatmapIdentity from '@/components/beatmaps/BeatmapIdentity';
 import BeatmapTopMods from '@/components/beatmaps/BeatmapTopMods';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
@@ -9,6 +10,7 @@ import BeatmapSortableHead from '@/components/beatmaps/list/BeatmapSortableHead'
 import { Eyebrow } from '@/components/beatmap/BeatmapSection';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -26,15 +28,34 @@ import {
   getBeatmapRulesetLabel,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
-import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
+import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/utils/date';
 
+/** Row selection, for the surfaces that let an admin act on a set of rows. */
+export interface BeatmapTableSelection {
+  isSelected: (row: BeatmapTableRow) => boolean;
+  onSelect: (row: BeatmapTableRow, checked: boolean) => void;
+  allSelected: boolean;
+  onSelectAll: (checked: boolean) => void;
+  /** Names a row inside its checkbox's accessible label. */
+  getRowLabel: (row: BeatmapTableRow) => string;
+}
+
 interface BeatmapListTableProps {
-  beatmaps: BeatmapListItem[];
+  beatmaps: BeatmapTableRow[];
   sort: BeatmapListSortKey;
   descending: boolean;
   onSortChange: BeatmapListSortChange;
+  /** A single tournament's pool has nothing to count here. */
+  showTournamentCount?: boolean;
+  selection?: BeatmapTableSelection;
+  /**
+   * A floor for the table's own width, for callers that render it below `sm`.
+   * The layout is fixed-width, so without one the leading column is squeezed to
+   * nothing rather than the table scrolling inside its container.
+   */
+  minWidthClassName?: string;
   className?: string;
 }
 
@@ -45,6 +66,7 @@ interface BeatmapListTableProps {
  * exceeds 1008px and the beatmap column lives on what the others leave behind.
  */
 const COLUMN = {
+  select: 'w-11 pl-4',
   beatmap: 'pl-4',
   mode: 'w-13',
   sr: 'w-22 text-right',
@@ -58,26 +80,43 @@ const COLUMN = {
 } as const;
 
 /**
- * The dense layout. Sorting is server-side over every row, not client-side over
- * the current page, so a header click reloads the page from the URL rather than
- * reordering the thirty rows already on screen.
+ * The dense layout, shared by the beatmap list and a tournament's pool. Sorting
+ * is the caller's: the list writes it to the URL and reloads server-sorted rows,
+ * while a pool the caller already holds in full sorts in place.
  */
 export default function BeatmapListTable({
   beatmaps,
   sort,
   descending,
   onSortChange,
+  showTournamentCount = true,
+  selection,
+  minWidthClassName,
   className,
 }: BeatmapListTableProps) {
   const sortProps = { activeSort: sort, descending, onSortChange };
 
   return (
     <div className={className}>
-      <Table className="table-fixed">
+      <Table className={cn('table-fixed', minWidthClassName)}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
+            {selection ? (
+              <TableHead className={cn('h-8', COLUMN.select)}>
+                <Checkbox
+                  data-testid="beatmap-table-select-all"
+                  checked={selection.allSelected}
+                  onCheckedChange={(checked) =>
+                    selection.onSelectAll(checked === true)
+                  }
+                  aria-label="Select all beatmaps"
+                />
+              </TableHead>
+            ) : null}
             {/* Not sortable: the server has no title sort. */}
-            <TableHead className={cn('h-8', COLUMN.beatmap)}>
+            <TableHead
+              className={cn('h-8', selection ? 'pl-1' : COLUMN.beatmap)}
+            >
               <Eyebrow>Beatmap</Eyebrow>
             </TableHead>
             <TableHead className={cn('h-8', COLUMN.mode)}>
@@ -119,12 +158,14 @@ export default function BeatmapListTable({
               label="Games"
               className={COLUMN.games}
             />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="tournamentCount"
-              label="Tournaments"
-              className={COLUMN.tournaments}
-            />
+            {showTournamentCount ? (
+              <BeatmapSortableHead
+                {...sortProps}
+                sort="tournamentCount"
+                label="Tournaments"
+                className={COLUMN.tournaments}
+              />
+            ) : null}
             <TableHead className={cn('h-8', COLUMN.mods)}>
               <Eyebrow>Mods</Eyebrow>
             </TableHead>
@@ -146,17 +187,43 @@ export default function BeatmapListTable({
               <TableRow
                 key={beatmap.id}
                 data-testid={`beatmap-list-row-${beatmap.osuId}`}
+                data-state={
+                  selection?.isSelected(beatmap) ? 'selected' : undefined
+                }
                 className="group hover:bg-muted/25"
               >
-                <TableCell className={COLUMN.beatmap}>
+                {selection ? (
+                  <TableCell className={COLUMN.select}>
+                    <Checkbox
+                      checked={selection.isSelected(beatmap)}
+                      onCheckedChange={(checked) =>
+                        selection.onSelect(beatmap, checked === true)
+                      }
+                      aria-label={`Select ${selection.getRowLabel(beatmap)}`}
+                    />
+                  </TableCell>
+                ) : null}
+
+                {/* The link is an overlay rather than a wrapper so the cover's
+                    preview button is a sibling of it and not a button nested
+                    inside an anchor. */}
+                <TableCell
+                  className={cn(
+                    selection ? 'pl-1' : COLUMN.beatmap,
+                    // The link covers the cover and four lines of text, so only
+                    // the title takes the hover underline.
+                    'relative group-hover:[&_[data-testid=beatmap-title]]:underline',
+                    beatmap.isDeleted &&
+                      '[&_[data-testid=beatmap-title]]:text-muted-foreground [&_[data-testid=beatmap-title]]:line-through'
+                  )}
+                >
                   <Link
                     href={`/beatmaps/${beatmap.osuId}`}
                     prefetch={false}
                     aria-label={`View ${beatmap.artist} - ${beatmap.title} [${beatmap.diffName}]`}
-                    // The link wraps the cover and four lines of text, so only
-                    // the title takes the hover underline.
-                    className="block rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none group-hover:[&_[data-testid=beatmap-title]]:underline"
-                  >
+                    className="absolute inset-0 z-10 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset"
+                  />
+                  <div className="flex min-w-0 items-center gap-2">
                     <BeatmapIdentity
                       osuId={beatmap.osuId}
                       beatmapsetOsuId={beatmap.beatmapsetOsuId}
@@ -164,10 +231,25 @@ export default function BeatmapListTable({
                       title={beatmap.title}
                       diffName={beatmap.diffName}
                       creator={beatmap.creator}
-                      size="table"
-                      coverSizes="40px"
-                    />
-                  </Link>
+                      size="table-lead"
+                      coverSizes="72px"
+                      className="min-w-0 flex-1"
+                    >
+                      <BeatmapCoverPreview
+                        beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                        artist={beatmap.artist}
+                        title={beatmap.title}
+                        difficulty={beatmap.diffName}
+                        size="sm"
+                        className="rounded-md"
+                      />
+                    </BeatmapIdentity>
+                    {beatmap.isDeleted ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Deleted
+                      </span>
+                    ) : null}
+                  </div>
                 </TableCell>
 
                 <TableCell className={COLUMN.mode}>
@@ -200,18 +282,18 @@ export default function BeatmapListTable({
                   {beatmap.ar.toFixed(1)}
                 </TableCell>
                 <TableCell className={COLUMN.games}>
-                  {beatmap.verifiedGameCount.toLocaleString()}
+                  {beatmap.gameCount.toLocaleString()}
                 </TableCell>
-                <TableCell className={COLUMN.tournaments}>
-                  {beatmap.verifiedTournamentCount.toLocaleString()}
-                </TableCell>
+                {showTournamentCount ? (
+                  <TableCell className={COLUMN.tournaments}>
+                    {beatmap.tournamentCount.toLocaleString()}
+                  </TableCell>
+                ) : null}
                 <TableCell className={COLUMN.mods}>
                   {isManiaRuleset(ruleset) ? null : (
                     // Only the dominant group: a second pill costs 72px, and
                     // the beatmap column is what pays for it.
-                    <BeatmapTopMods
-                      mods={(beatmap.topMods ?? []).slice(0, 1)}
-                    />
+                    <BeatmapTopMods mods={beatmap.topMods.slice(0, 1)} />
                   )}
                 </TableCell>
               </TableRow>

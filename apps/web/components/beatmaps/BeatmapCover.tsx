@@ -19,6 +19,12 @@ interface BeatmapCoverProps {
    * way to keep an 1800px `cover` out of a 40px thumbnail.
    */
   variant?: 'cover' | 'card' | 'list';
+  /**
+   * osu! ships every derivative at 1x and 2x. `list` is square, so a wide
+   * thumbnail has to reach for `card`, and at that point 1x is both the right
+   * aspect and fewer bytes than the square 2x it replaces.
+   */
+  density?: 1 | 2;
 }
 
 export default function BeatmapCover({
@@ -29,6 +35,7 @@ export default function BeatmapCover({
   sizes,
   priority = false,
   variant = 'cover',
+  density = 2,
 }: BeatmapCoverProps) {
   const [failedBeatmapsetOsuId, setFailedBeatmapsetOsuId] = useState<
     number | null
@@ -46,7 +53,7 @@ export default function BeatmapCover({
       <Image
         src={
           hasRemoteCover
-            ? `https://assets.ppy.sh/beatmaps/${beatmapsetOsuId}/covers/${variant}@2x.jpg`
+            ? `https://assets.ppy.sh/beatmaps/${beatmapsetOsuId}/covers/${variant}${density === 2 ? '@2x' : ''}.jpg`
             : '/images/beatmap-background-narrow.png'
         }
         alt={alt}

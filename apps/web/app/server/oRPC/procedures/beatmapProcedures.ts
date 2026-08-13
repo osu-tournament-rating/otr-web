@@ -26,6 +26,7 @@ import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmap
 
 import { publicProcedure } from './base';
 import {
+  CHARTED_SCORE_MODS_MASK,
   STRIPPED_SCORE_MODS_MASK,
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
@@ -46,6 +47,13 @@ const SCORE_DISTRIBUTION_MIN_GROUP_SIZE = 5;
 const NIGHTCORE_SQL = sql.raw(String(Mods.Nightcore));
 const DOUBLE_TIME_SQL = sql.raw(String(Mods.DoubleTime));
 const STRIPPED_MODS_SQL = sql.raw(String(STRIPPED_SCORE_MODS_MASK));
+const CHARTED_MODS_SQL = sql.raw(String(CHARTED_SCORE_MODS_MASK));
+
+/**
+ * SQL mirror of `isChartedScoreMods` — keep in sync (see the
+ * beatmapModNormalization parity test).
+ */
+const CHARTED_SCORE_MODS_FILTER = sql`(${schema.gameScores.mods} & ~${CHARTED_MODS_SQL}) = 0`;
 
 /**
  * SQL mirror of normalizeScoreModsArithmetic / normalizeBeatmapDisplayMods —
@@ -131,6 +139,14 @@ export const getBeatmapStats = publicProcedure
       const verifiedScoreFilter = and(
         verifiedGameFilter,
         eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
+      );
+
+      // The score-quartile aggregates (score distribution, tier breakdown and
+      // its accuracy rows) chart only the standard mod set; everything else
+      // keeps counting every verified score.
+      const chartedScoreFilter = and(
+        verifiedScoreFilter,
+        CHARTED_SCORE_MODS_FILTER
       );
 
       // Team Vs games the closeness summary would otherwise have used, held out
@@ -528,7 +544,7 @@ export const getBeatmapStats = publicProcedure
           )
           .orderBy(desc(schema.gameScores.score))
           .limit(TOP_PERFORMER_LIMIT),
-        // Quartile summary of verified scores per normalized mod combination.
+        // Quartile summary of charted-mod scores per normalized combination.
         context.db
           .select({
             mods: NORMALIZED_SCORE_MODS_SQL.as('normalized_mods'),
@@ -553,13 +569,15 @@ export const getBeatmapStats = publicProcedure
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
-          .where(verifiedScoreFilter)
+          .where(chartedScoreFilter)
           .groupBy(sql`normalized_mods`)
           .having(
             sql`COUNT(*) >= ${sql.raw(String(SCORE_DISTRIBUTION_MIN_GROUP_SIZE))}`
           )
           .orderBy(desc(sql`COUNT(*)`), asc(sql`normalized_mods`)),
         // Score CDF: one interpolated quantile per whole percentile, 0..100.
+        // Charted mods only, so the curve and the box rows beside it describe
+        // the same population.
         context.db
           .select({
             scores: sql<
@@ -580,7 +598,7 @@ export const getBeatmapStats = publicProcedure
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
-          .where(verifiedScoreFilter),
+          .where(chartedScoreFilter),
         // Deterministic pseudo-random scatter sample. Ratings are pre-match
         // (rating_before) only; null when the processor has no adjustment.
         context.db
@@ -737,7 +755,8 @@ export const getBeatmapStats = publicProcedure
             schema.tournaments.rankRangeLowerBound,
             sql`normalized_mods`
           ),
-        // Score/accuracy quartiles per rating tier, tiered by the player's
+        // Score/accuracy quartiles per rating tier over charted-mod scores,
+        // tiered by the player's
         // pre-match rating. INNER JOIN on rating_adjustments: unrated scores
         // are excluded outright rather than falling back to player_ratings.
         // Elite Grandmaster is clamped into Grandmaster so the merged bucket's
@@ -790,7 +809,7 @@ export const getBeatmapStats = publicProcedure
               eq(schema.ratingAdjustments.matchId, schema.matches.id)
             )
           )
-          .where(verifiedScoreFilter)
+          .where(chartedScoreFilter)
           .groupBy(sql`tier_index`)
           .orderBy(asc(sql`tier_index`)),
         // One row per verified TeamVs game with two equal-sized rosters and a
@@ -1015,17 +1034,19 @@ export const getBeatmapStats = publicProcedure
         }));
 
       const cdfRow = scoreCdfRows[0];
-      const totalScoreCount = Number(cdfRow?.scoreCount ?? 0);
+      const chartedScoreCount = Number(cdfRow?.scoreCount ?? 0);
       const scorePercentiles: BeatmapScorePercentilePoint[] =
-        totalScoreCount > 0 && cdfRow?.scores != null
+        chartedScoreCount > 0 && cdfRow?.scores != null
           ? cdfRow.scores.map((score, percentile) => ({
               percentile,
               score: Math.round(Number(score)),
             }))
           : [];
 
+      // The scatter charts every verified score, so its denominator is the
+      // unfiltered count rather than the charted-mod one.
       const scoreSample: BeatmapScoreSample = {
-        totalScoreCount,
+        totalScoreCount: Number(performanceCountRows[0]?.scoreCount ?? 0),
         points: [...scoreSampleRows]
           .sort((left, right) => left.scoreId - right.scoreId)
           .map((row) => ({
@@ -1105,7 +1126,7 @@ export const getBeatmapStats = publicProcedure
 
       const tierBreakdown: BeatmapTierBreakdown = {
         ratedScoreCount,
-        totalScoreCount,
+        totalScoreCount: chartedScoreCount,
         tiers,
       };
 
@@ -1200,6 +1221,7 @@ export const getBeatmapStats = publicProcedure
         topPerformers,
         scoreDistribution,
         scorePercentiles,
+        chartedScoreCount,
         scoreSample,
         performance,
         freemodPicks,

@@ -11,8 +11,8 @@ import {
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
 
-import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
+import BeatmapCoverPreview from '@/components/beatmaps/BeatmapCoverPreview';
 import BeatmapMetric from '@/components/beatmaps/BeatmapMetric';
 import BeatmapTopMods from '@/components/beatmaps/BeatmapTopMods';
 import RulesetPill from '@/components/beatmaps/RulesetPill';
@@ -93,19 +93,13 @@ export default function BeatmapListCards({
                 starRating={beatmap.sr}
                 className="pointer-events-none absolute top-2 right-2 z-20"
               />
-              {beatmap.beatmapsetOsuId ? (
-                <span className="pointer-events-none absolute right-2 bottom-2 z-20 inline-flex rounded-full bg-black/65 p-1 text-white shadow-lg backdrop-blur-sm">
-                  <AudioPlayButton
-                    beatmapsetOsuId={beatmap.beatmapsetOsuId}
-                    artist={beatmap.artist}
-                    title={beatmap.title}
-                    difficulty={beatmap.diffName}
-                    size="md"
-                    variant="ghost"
-                    className="pointer-events-auto rounded-full text-white hover:bg-white/20 hover:text-white"
-                  />
-                </span>
-              ) : null}
+              <BeatmapCoverPreview
+                beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                artist={beatmap.artist}
+                title={beatmap.title}
+                difficulty={beatmap.diffName}
+                size="lg"
+              />
             </div>
 
             <div

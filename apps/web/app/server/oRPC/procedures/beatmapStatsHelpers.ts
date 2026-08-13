@@ -35,6 +35,25 @@ export function normalizeScoreModsArithmetic(mods: number): number {
   return mods & ~STRIPPED_SCORE_MODS_MASK;
 }
 
+/**
+ * The only mods the page's score aggregates chart: NM, HD, HR and DT, plus
+ * NoFail (never changes a score, always hidden) and Nightcore (normalizes to
+ * DoubleTime). Anything else — EZ, HT, FL, SO, the key mods — is rare enough
+ * in pools that its scores add mod rows nobody reads while skewing the
+ * pooled quartiles they sit in.
+ */
+export const CHARTED_SCORE_MODS_MASK =
+  Mods.NoFail | Mods.Hidden | Mods.HardRock | Mods.DoubleTime | Mods.Nightcore;
+
+/**
+ * Whether a raw score bitmask belongs in the charted aggregates. The SQL
+ * mirror is `CHARTED_SCORE_MODS_FILTER` in beatmapProcedures; a parity test
+ * asserts both keep the same set.
+ */
+export function isChartedScoreMods(mods: number): boolean {
+  return (mods & ~CHARTED_SCORE_MODS_MASK) === 0;
+}
+
 export interface FreemodPickRow {
   gameId: number;
   /** Forced mods recorded on the game itself. */

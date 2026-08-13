@@ -115,8 +115,9 @@ export const RelatedBeatmapDifficultySchema = z.object({
 });
 
 /**
- * Five-number summary of verified scores for one normalized mod combination,
- * plus `p20Score`: the only point the box plots' shared axis may truncate at.
+ * Five-number summary of charted-mod scores for one normalized mod
+ * combination, plus `p20Score`: the only point the box plots' shared axis may
+ * truncate at.
  */
 export const BeatmapModScoreDistributionSchema = z.object({
   /** Normalized display mods bitmask (NF/SO stripped, NC folded into DT). */
@@ -130,7 +131,7 @@ export const BeatmapModScoreDistributionSchema = z.object({
   maxScore: z.number().int().nonnegative(),
 });
 
-/** One point of the verified-score CDF: `score` beats `percentile`% of plays. */
+/** One point of the charted-mod CDF: `score` beats `percentile`% of plays. */
 export const BeatmapScorePercentilePointSchema = z.object({
   percentile: z.number().min(0).max(100),
   score: z.number().int().nonnegative(),
@@ -194,8 +195,8 @@ export const BeatmapRankRangeModDistributionSchema = z.object({
 });
 
 /**
- * Score/accuracy summary for verified scores whose player sat in this tier at
- * time of play (pre-match rating, `rating_adjustments.rating_before`).
+ * Score/accuracy summary for charted-mod scores whose player sat in this tier
+ * at time of play (pre-match rating, `rating_adjustments.rating_before`).
  */
 export const BeatmapTierScoreSummarySchema = z.object({
   /**
@@ -224,9 +225,9 @@ export const BeatmapTierScoreSummarySchema = z.object({
 });
 
 export const BeatmapTierBreakdownSchema = z.object({
-  /** Verified scores with a pre-match rating (rating_adjustments.rating_before). */
+  /** Charted-mod scores with a pre-match rating (rating_adjustments.rating_before). */
   ratedScoreCount: z.number().int().nonnegative(),
-  /** All verified scores, for the "X of Y rated" caption. */
+  /** All charted-mod scores, for the "X of Y rated" caption. */
   totalScoreCount: z.number().int().nonnegative(),
   /**
    * Ascending by tier (Bronze → Grandmaster+); only tiers with at least five
@@ -362,6 +363,12 @@ export const BeatmapStatsResponseSchema = z.object({
   topPerformers: z.array(BeatmapTopPerformerSchema),
   scoreDistribution: z.array(BeatmapModScoreDistributionSchema),
   scorePercentiles: z.array(BeatmapScorePercentilePointSchema),
+  /**
+   * Verified scores behind `scoreDistribution`, `scorePercentiles` and
+   * `tierBreakdown`: NM, HD, HR and DT only (NF ignored, NC folded into DT).
+   * Every other aggregate on this response counts all verified scores.
+   */
+  chartedScoreCount: z.number().int().nonnegative(),
   scoreSample: BeatmapScoreSampleSchema,
   performance: BeatmapPerformanceSummarySchema,
   freemodPicks: BeatmapFreemodPickSummarySchema,
