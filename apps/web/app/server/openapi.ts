@@ -252,7 +252,7 @@ export const generatePublicOpenAPISpec = async () => {
       version: '1.0.0',
       description: `osu! Tournament Rating API
 
-> **API Stability Notice:** The o!TR public API is still evolving and is not considered fully stable. Breaking changes may be introduced at any time without advance notice.`,
+> **API Stability Notice:** The o!TR public API is still evolving and is not considered fully stable. Breaking changes may be introduced at any time without advance notice. Past breaking changes are recorded in the [API changelog](https://docs.otr.stagec.net/API/Changelog).`,
     },
     servers: buildServers(),
     tags: publicTags,

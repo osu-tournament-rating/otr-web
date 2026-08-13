@@ -76,9 +76,21 @@ export const BeatmapTopPerformerSchema = z.object({
 });
 
 export const BeatmapStatsSummarySchema = z.object({
+  /** Fully verified games. The population every statistic on the page uses. */
   totalGameCount: z.number().int().nonnegative(),
   /** Tournaments that pooled this beatmap, verified or not. */
   totalTournamentCount: z.number().int().nonnegative(),
+  /** Subset of `totalTournamentCount` whose tournament is verified. */
+  verifiedTournamentCount: z.number().int().nonnegative(),
+  /**
+   * Games credited as real-world usage: fully verified games, plus every game
+   * in a tournament that is not verified. Tournaments get rejected for format
+   * reasons while still being genuine play, so the map keeps credit for those.
+   *
+   * A game rejected on its own merits inside a verified tournament is NOT
+   * credited — there the reviewer judged that specific game, and the carve-out
+   * does not apply. Never use this as a statistical population.
+   */
   totalPlayedGameCount: z.number().int().nonnegative(),
   /**
    * Pool records where the beatmap was played at least once. Always <=
@@ -266,32 +278,6 @@ export const BeatmapStatsResponseSchema = z.object({
   teamVsMargins: BeatmapTeamVsMarginSummarySchema,
 });
 
-export const BeatmapTournamentMatchRequestSchema = z.object({
-  beatmapOsuId: z.number().int().positive(),
-  tournamentId: z.number().int().positive(),
-});
-
-export const BeatmapTournamentMatchGameSchema = z.object({
-  gameId: z.number().int().positive(),
-  gameNumber: z.number().int().positive(),
-  mods: z.number().int().nonnegative(),
-  freemod: z.boolean(),
-  avgRating: z.number().nullable(),
-  avgScore: z.number().int().nonnegative().nullable(),
-  playerCount: z.number().int().nonnegative(),
-});
-
-export const BeatmapTournamentMatchSchema = z.object({
-  matchId: z.number().int().positive(),
-  matchName: z.string(),
-  startTime: z.string().nullable(),
-  games: z.array(BeatmapTournamentMatchGameSchema),
-});
-
-export const BeatmapTournamentMatchResponseSchema = z.object({
-  matches: z.array(BeatmapTournamentMatchSchema),
-});
-
 export type BeatmapStatsRequest = z.infer<typeof BeatmapStatsRequestSchema>;
 export type BeatmapTournamentUsage = z.infer<
   typeof BeatmapTournamentUsageSchema
@@ -336,15 +322,3 @@ export type BeatmapTeamVsMarginSummary = z.infer<
   typeof BeatmapTeamVsMarginSummarySchema
 >;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;
-export type BeatmapTournamentMatchRequest = z.infer<
-  typeof BeatmapTournamentMatchRequestSchema
->;
-export type BeatmapTournamentMatchGame = z.infer<
-  typeof BeatmapTournamentMatchGameSchema
->;
-export type BeatmapTournamentMatch = z.infer<
-  typeof BeatmapTournamentMatchSchema
->;
-export type BeatmapTournamentMatchResponse = z.infer<
-  typeof BeatmapTournamentMatchResponseSchema
->;

@@ -1696,14 +1696,13 @@ test.describe('Beatmap Detail Page', () => {
         .getByText(/^[\d,]+ scores$/)
         .textContent();
 
-      await page.getByRole('tab', { name: 'Scores' }).click();
-      const tabTotal = await page
+      const leaderboardTotal = await page
+        .locator('[data-testid="beatmap-leaderboard"]')
         .getByText(/^[\d,]+ scores$/)
-        .last()
         .textContent();
 
       expect(chartTotal?.trim()).toBeTruthy();
-      expect(tabTotal?.trim()).toBe(chartTotal?.trim());
+      expect(leaderboardTotal?.trim()).toBe(chartTotal?.trim());
     });
 
     test('only breaks out mods played in at least 1% of scores', async ({
@@ -1754,19 +1753,19 @@ test.describe('Beatmap Detail Page', () => {
         .locator('[data-testid="beatmap-mod-distribution-chart"]')
         .first();
       const overview = page.locator('[data-testid="beatmap-overview"]').first();
-      const pools = page
-        .locator('[data-testid="beatmap-tournaments-list"]')
+      const leaderboard = page
+        .locator('[data-testid="beatmap-leaderboard"]')
         .first();
       await expect(modChart).toBeVisible({ timeout: 15000 });
       await expect(overview).toBeVisible({ timeout: 15000 });
-      await expect(pools).toBeVisible({ timeout: 15000 });
+      await expect(leaderboard).toBeVisible({ timeout: 15000 });
 
       const modBox = await modChart.boundingBox();
       const railBox = await overview.boundingBox();
-      const poolsBox = await pools.boundingBox();
+      const leaderboardBox = await leaderboard.boundingBox();
       expect(modBox).not.toBeNull();
       expect(railBox).not.toBeNull();
-      expect(poolsBox).not.toBeNull();
+      expect(leaderboardBox).not.toBeNull();
 
       // Rail leads the top row and the chart takes the other two thirds.
       expect(Math.abs(modBox!.y - railBox!.y)).toBeLessThanOrEqual(1);
@@ -1774,12 +1773,16 @@ test.describe('Beatmap Detail Page', () => {
       expect(modBox!.width).toBeGreaterThan(railBox!.width * 1.8);
       expect(modBox!.width).toBeLessThan(railBox!.width * 2.2);
 
-      // The record tables clear both and run the full content width.
-      expect(poolsBox!.y).toBeGreaterThanOrEqual(modBox!.y + modBox!.height);
-      expect(poolsBox!.y).toBeGreaterThanOrEqual(railBox!.y + railBox!.height);
+      // The leaderboard clears both and runs the full content width.
+      expect(leaderboardBox!.y).toBeGreaterThanOrEqual(
+        modBox!.y + modBox!.height
+      );
+      expect(leaderboardBox!.y).toBeGreaterThanOrEqual(
+        railBox!.y + railBox!.height
+      );
       // The panel sits inside the card border, so allow a couple of pixels.
-      expect(Math.abs(poolsBox!.x - railBox!.x)).toBeLessThanOrEqual(2);
-      expect(poolsBox!.width).toBeGreaterThanOrEqual(
+      expect(Math.abs(leaderboardBox!.x - railBox!.x)).toBeLessThanOrEqual(2);
+      expect(leaderboardBox!.width).toBeGreaterThanOrEqual(
         modBox!.x + modBox!.width - railBox!.x - 4
       );
     });
@@ -1802,35 +1805,20 @@ test.describe('Beatmap Detail Page', () => {
       expect(overflow).toBeLessThanOrEqual(0);
     });
 
-    test('displays tournament usage list', async ({ page }) => {
+    test('displays the leaderboard', async ({ page }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      const tournamentsList = page.locator(
-        '[data-testid="beatmap-tournaments-list"]'
-      );
-      await expect(tournamentsList).toBeVisible({ timeout: 10000 });
-    });
-
-    test('displays the score record table behind the scores tab', async ({
-      page,
-    }) => {
-      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
-      await page.waitForLoadState('networkidle');
-
-      const scoresTab = page.getByRole('tab', { name: 'Scores' });
-      await expect(scoresTab).toBeVisible({ timeout: 10000 });
-      await scoresTab.click();
-
-      const topPerformers = page.locator(
-        '[data-testid="beatmap-top-performers"]'
-      );
-      await expect(topPerformers).toBeVisible({ timeout: 10000 });
+      const leaderboard = page.locator('[data-testid="beatmap-leaderboard"]');
+      await expect(leaderboard).toBeVisible({ timeout: 10000 });
       await expect(
-        topPerformers.getByText(/^Showing the top [\d,]+$/)
+        leaderboard.getByRole('heading', { name: 'Leaderboard' })
+      ).toBeVisible();
+      await expect(
+        leaderboard.getByText(/^Showing the top [\d,]+$/)
       ).toBeVisible();
 
-      const scores = topPerformers.locator(
+      const scores = leaderboard.locator(
         '[data-testid="beatmap-top-play-score"]'
       );
       await expect(scores.first()).toBeVisible();
@@ -1843,7 +1831,7 @@ test.describe('Beatmap Detail Page', () => {
         'beatmap-top-play-date',
       ]) {
         await expect(
-          topPerformers.locator(`[data-testid="${testId}"]`)
+          leaderboard.locator(`[data-testid="${testId}"]`)
         ).toHaveCount(scoreCount);
       }
 
@@ -1862,65 +1850,6 @@ test.describe('Beatmap Detail Page', () => {
           Math.min(...scoreBoxes.map(({ width }) => width))
       ).toBeLessThan(1);
     });
-
-    test('sorts pool records by games played or by recency', async ({
-      page,
-    }) => {
-      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
-      await page.waitForLoadState('networkidle');
-
-      const pools = page.locator('[data-testid="beatmap-tournaments-list"]');
-      await expect(pools).toBeVisible({ timeout: 10000 });
-
-      const readGameCounts = async () =>
-        (
-          await pools
-            .locator('[aria-label$="games"], [aria-label$="game"]')
-            .allInnerTexts()
-        ).map((text) => Number(text.replace(/[^\d]/g, '')));
-
-      const mostPlayed = pools.getByRole('tab', { name: 'Most played' });
-      const mostRecent = pools.getByRole('tab', { name: 'Most recent' });
-      await expect(mostPlayed).toHaveAttribute('aria-selected', 'true');
-
-      const byGames = await readGameCounts();
-      expect(byGames.length).toBeGreaterThan(1);
-      for (let index = 1; index < byGames.length; index += 1) {
-        expect(byGames[index]).toBeLessThanOrEqual(byGames[index - 1]);
-      }
-
-      await mostRecent.click();
-      await expect(mostRecent).toHaveAttribute('aria-selected', 'true');
-      await expect(mostPlayed).toHaveAttribute('aria-selected', 'false');
-      expect((await readGameCounts()).length).toBeGreaterThan(1);
-    });
-
-    test('keeps an expanded pool open across a tab round-trip', async ({
-      page,
-    }) => {
-      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
-      await page.waitForLoadState('networkidle');
-
-      const toggle = page
-        .locator('[data-testid^="beatmap-tournament-details-toggle-"]')
-        .first();
-      await toggle.click();
-      await expect(page.locator('a[href*="/matches/"]').first()).toBeVisible({
-        timeout: 15000,
-      });
-
-      let refetched = false;
-      page.on('request', (request) => {
-        if (request.url().includes('tournamentMatches')) refetched = true;
-      });
-
-      await page.getByRole('tab', { name: 'Scores' }).click();
-      await page.getByRole('tab', { name: 'Pools' }).click();
-
-      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-      await expect(page.locator('a[href*="/matches/"]').first()).toBeVisible();
-      expect(refetched).toBe(false);
-    });
   });
 
   test.describe('Navigation and Links', () => {
@@ -1935,46 +1864,37 @@ test.describe('Beatmap Detail Page', () => {
       expect(href).toContain('osu.ppy.sh');
     });
 
-    test('tournament usage list links to a tournament page', async ({
-      page,
-    }) => {
+    test('leaderboard rows link to a tournament page', async ({ page }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      const tournamentsList = page.locator(
-        '[data-testid="beatmap-tournaments-list"]'
-      );
-      await expect(tournamentsList).toBeVisible({ timeout: 10000 });
+      const leaderboard = page.locator('[data-testid="beatmap-leaderboard"]');
+      await expect(leaderboard).toBeVisible({ timeout: 10000 });
 
-      const tournamentLink = tournamentsList.locator(
-        'a[href*="/tournaments/"]'
-      );
-      await expect(tournamentLink.first()).toBeVisible({ timeout: 10000 });
+      const tournamentLink = leaderboard
+        .locator('[data-testid="beatmap-top-play-tournament"]')
+        .first();
+      await expect(tournamentLink).toBeVisible({ timeout: 10000 });
 
-      const href = await tournamentLink.first().getAttribute('href');
+      const href = await tournamentLink.getAttribute('href');
       expect(href).toContain('/tournaments/');
     });
 
-    test('expanding tournament details reveals related matches', async ({
+    test('leaderboard rows link to the match a score was set in', async ({
       page,
     }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      // The details toggle is only rendered for verified tournaments, so this
-      // selector targets verified tournaments only. Non-verified (e.g. rejected)
-      // tournaments have no toggle and no expandable details.
-      const toggle = page.locator(
-        '[data-testid^="beatmap-tournament-details-toggle-"]'
-      );
-      await expect(toggle.first()).toBeVisible({ timeout: 10000 });
-      await toggle.first().click();
+      const scoreLink = page
+        .locator('[data-testid="beatmap-leaderboard"]')
+        .locator('[data-testid="beatmap-top-play-score"]')
+        .first();
+      await expect(scoreLink).toBeVisible({ timeout: 10000 });
 
-      const matchLink = page.locator('a[href*="/matches/"]');
-      await expect(matchLink.first()).toBeVisible({ timeout: 15000 });
-
-      const href = await matchLink.first().getAttribute('href');
+      const href = await scoreLink.getAttribute('href');
       expect(href).toContain('/matches/');
+      expect(href).toContain('scoreId=');
     });
   });
 });

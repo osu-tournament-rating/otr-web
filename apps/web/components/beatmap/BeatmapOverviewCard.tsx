@@ -189,7 +189,10 @@ function ActivityGroup({
               {usage.map((point) => (
                 <div
                   key={point.quarter}
-                  title={`${formatQuarterLong(point.quarter)} · ${point.gameCount} games, ${point.pooledCount} pool records`}
+                  /* Two populations in one tooltip: bar height is verified
+                     games, pool records count every tournament. Say which is
+                     which rather than letting them read as one series. */
+                  title={`${formatQuarterLong(point.quarter)} · ${point.gameCount} verified games, ${point.pooledCount} pool records`}
                   className="group flex min-w-0 flex-1 flex-col justify-end gap-px rounded-t-[3px] hover:bg-primary/10"
                 >
                   <div
@@ -246,12 +249,16 @@ function ActivityGroup({
         </Tile>
 
         <dl className="grid grid-cols-2 gap-2">
+          {/* This tile and "Games" both lead with an all-inclusive count and
+              name the verified subset underneath. Same grammar in both, so the
+              reader learns the pattern once. */}
           <ActivityStat
             testId="beatmap-pool-records"
             icon={WavesLadder}
             label="Pooled in"
+            sublabel={`${summary.verifiedTournamentCount.toLocaleString()} verified`}
             value={summary.totalTournamentCount.toLocaleString()}
-            accessibleValue={`Pooled in ${summary.totalTournamentCount.toLocaleString()} tournaments`}
+            accessibleValue={`Pooled in ${summary.totalTournamentCount.toLocaleString()} ${summary.totalTournamentCount === 1 ? 'tournament' : 'tournaments'}, ${summary.verifiedTournamentCount.toLocaleString()} of them verified`}
           />
           <ActivityStat
             testId="beatmap-played-tournaments"
@@ -276,9 +283,9 @@ function ActivityGroup({
             testId="beatmap-games"
             icon={Gamepad2}
             label="Games"
-            sublabel="incl. unverified"
+            sublabel={`${summary.totalGameCount.toLocaleString()} verified`}
             value={summary.totalPlayedGameCount.toLocaleString()}
-            accessibleValue={`${summary.totalPlayedGameCount.toLocaleString()} games played (incl. unverified)`}
+            accessibleValue={`${summary.totalPlayedGameCount.toLocaleString()} ${summary.totalPlayedGameCount === 1 ? 'game' : 'games'} played, ${summary.totalGameCount.toLocaleString()} of them verified`}
           />
           <ActivityStat
             testId="beatmap-active-quarters"

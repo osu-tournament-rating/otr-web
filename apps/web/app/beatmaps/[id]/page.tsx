@@ -4,10 +4,10 @@ import { z } from 'zod';
 
 import BeatmapDistributionsCard from '@/components/beatmap/BeatmapDistributionsCard';
 import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
+import BeatmapLeaderboardCard from '@/components/beatmap/BeatmapLeaderboardCard';
 import BeatmapMarginCard from '@/components/beatmap/BeatmapMarginCard';
 import BeatmapOverviewCard from '@/components/beatmap/BeatmapOverviewCard';
 import BeatmapPerformanceCard from '@/components/beatmap/BeatmapPerformanceCard';
-import BeatmapRecordsCard from '@/components/beatmap/BeatmapRecordsCard';
 import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistributionCard';
 import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
 import { SectionCard } from '@/components/beatmap/BeatmapSection';
@@ -168,11 +168,8 @@ export default async function BeatmapPage({ params }: PageProps) {
         />
       </div>
 
-      <BeatmapRecordsCard
-        pools={stats.tournaments}
+      <BeatmapLeaderboardCard
         performers={stats.topPerformers}
-        beatmapOsuId={stats.beatmap.osuId}
-        beatmapRuleset={stats.beatmap.ruleset}
         totalScoreCount={totalVerifiedScoreCount}
       />
     </div>

@@ -1,4 +1,4 @@
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import { VerificationStatus } from '@otr/core/osu';
 import { describe, expect, test } from 'bun:test';
 
 import type {
@@ -8,12 +8,7 @@ import type {
 import {
   formatQuarterLong,
   getMostUsedInPool,
-  getPoolDate,
   getPoolPickRate,
-  isCrossRulesetPool,
-  isPoolVerified,
-  sortPoolsByDate,
-  sortPoolsByGames,
   summarizeActivity,
 } from '../records';
 
@@ -99,101 +94,6 @@ describe('summarizeActivity', () => {
     expect(summary.lastActive).toBeNull();
     expect(summary.activeQuarters).toBe(0);
     expect(summary.maxGames).toBe(0);
-  });
-});
-
-describe('getPoolDate', () => {
-  test('prefers when the beatmap was first played', () => {
-    expect(
-      getPoolDate(
-        pool({
-          firstPlayedAt: '2023-05-01T00:00:00Z',
-          tournament: { endTime: '2023-06-01T00:00:00Z' },
-        })
-      )
-    ).toBe('2023-05-01T00:00:00Z');
-  });
-
-  test('falls back to the tournament end, then its start', () => {
-    expect(
-      getPoolDate(pool({ tournament: { endTime: '2023-06-01T00:00:00Z' } }))
-    ).toBe('2023-06-01T00:00:00Z');
-    expect(
-      getPoolDate(pool({ tournament: { startTime: '2023-01-01T00:00:00Z' } }))
-    ).toBe('2023-01-01T00:00:00Z');
-    expect(getPoolDate(pool())).toBeNull();
-  });
-});
-
-describe('pool ordering', () => {
-  const older = pool({
-    tournament: { id: 1 },
-    gameCount: 5,
-    firstPlayedAt: '2021-01-01T00:00:00Z',
-  });
-  const newer = pool({
-    tournament: { id: 2 },
-    gameCount: 5,
-    firstPlayedAt: '2024-01-01T00:00:00Z',
-  });
-  const busiest = pool({
-    tournament: { id: 3 },
-    gameCount: 12,
-    firstPlayedAt: '2019-01-01T00:00:00Z',
-  });
-
-  test('sorts most recent first by pool date', () => {
-    expect(
-      sortPoolsByDate([older, busiest, newer]).map((p) => p.tournament.id)
-    ).toEqual([2, 1, 3]);
-  });
-
-  test('sorts most played first, breaking ties on recency', () => {
-    expect(
-      sortPoolsByGames([older, newer, busiest]).map((p) => p.tournament.id)
-    ).toEqual([3, 2, 1]);
-  });
-
-  test('leaves the caller’s array untouched', () => {
-    const input = [older, newer];
-    sortPoolsByGames(input);
-    expect(input.map((p) => p.tournament.id)).toEqual([1, 2]);
-  });
-});
-
-describe('isPoolVerified', () => {
-  test('accepts only fully verified tournaments', () => {
-    expect(isPoolVerified(pool())).toBe(true);
-    expect(
-      isPoolVerified(
-        pool({
-          tournament: { verificationStatus: VerificationStatus.Rejected },
-        })
-      )
-    ).toBe(false);
-    expect(
-      isPoolVerified(
-        pool({
-          tournament: { verificationStatus: VerificationStatus.PreVerified },
-        })
-      )
-    ).toBe(false);
-  });
-});
-
-describe('isCrossRulesetPool', () => {
-  test('flags a pool record from another ruleset as a convert', () => {
-    expect(isCrossRulesetPool(Ruleset.Catch, Ruleset.Osu)).toBe(true);
-    expect(isCrossRulesetPool(Ruleset.ManiaOther, Ruleset.Osu)).toBe(true);
-  });
-
-  test('leaves same-ruleset pool records unflagged', () => {
-    expect(isCrossRulesetPool(Ruleset.Osu, Ruleset.Osu)).toBe(false);
-  });
-
-  test('treats every mania key mode as one family', () => {
-    expect(isCrossRulesetPool(Ruleset.Mania4k, Ruleset.ManiaOther)).toBe(false);
-    expect(isCrossRulesetPool(Ruleset.Mania7k, Ruleset.Mania4k)).toBe(false);
   });
 });
 

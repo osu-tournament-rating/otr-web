@@ -1,5 +1,3 @@
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
-
 import type {
   BeatmapTournamentUsage,
   BeatmapUsagePoint,
@@ -54,60 +52,6 @@ export function getPoolPickRate(
   if (rate > 99 && rate < 100) return 99;
 
   return Math.round(rate);
-}
-
-/** Pool date used for ordering: when it was first played, else tournament dates. */
-export function getPoolDate(pool: BeatmapTournamentUsage): string | null {
-  return (
-    pool.firstPlayedAt ?? pool.tournament.endTime ?? pool.tournament.startTime
-  );
-}
-
-function getPoolTimestamp(pool: BeatmapTournamentUsage): number {
-  const date = getPoolDate(pool);
-  return date ? new Date(date).getTime() : 0;
-}
-
-export function sortPoolsByDate(
-  pools: BeatmapTournamentUsage[]
-): BeatmapTournamentUsage[] {
-  return [...pools].sort((a, b) => getPoolTimestamp(b) - getPoolTimestamp(a));
-}
-
-/** Most-played ordering, falling back to recency so equal counts stay stable. */
-export function sortPoolsByGames(
-  pools: BeatmapTournamentUsage[]
-): BeatmapTournamentUsage[] {
-  return [...pools].sort(
-    (a, b) =>
-      b.gameCount - a.gameCount || getPoolTimestamp(b) - getPoolTimestamp(a)
-  );
-}
-
-/**
- * Only verified tournaments carry a trustworthy game count; the rest are pool
- * records with no verified play behind them.
- */
-export function isPoolVerified(pool: BeatmapTournamentUsage): boolean {
-  return pool.tournament.verificationStatus === VerificationStatus.Verified;
-}
-
-function rulesetFamily(ruleset: Ruleset): Ruleset {
-  return ruleset === Ruleset.Mania4k || ruleset === Ruleset.Mania7k
-    ? Ruleset.ManiaOther
-    : ruleset;
-}
-
-/**
- * True when a pool record comes from a tournament in a different ruleset
- * family than the beatmap — i.e. the tournament pooled a convert. 4K/7K/other
- * mania are one family, so key-mode variants never read as converts.
- */
-export function isCrossRulesetPool(
-  tournamentRuleset: Ruleset,
-  beatmapRuleset: Ruleset
-): boolean {
-  return rulesetFamily(tournamentRuleset) !== rulesetFamily(beatmapRuleset);
 }
 
 /**

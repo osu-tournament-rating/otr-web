@@ -57,6 +57,7 @@ describe('beatmap stats summary contract', () => {
     const summary = BeatmapStatsSummarySchema.parse({
       totalGameCount: 8,
       totalTournamentCount: 4,
+      verifiedTournamentCount: 3,
       totalPlayedGameCount: 13,
       pooledPlayedTournamentCount: 3,
       totalPlayerCount: 12,
@@ -67,5 +68,28 @@ describe('beatmap stats summary contract', () => {
     expect(summary.totalTournamentCount).toBe(4);
     expect(summary.totalPlayedGameCount).toBe(13);
     expect(summary.pooledPlayedTournamentCount).toBe(3);
+  });
+
+  test('separates usage credit from the verified population', () => {
+    // Usage credit is the wider number: it keeps games from tournaments that
+    // were rejected for format reasons. Statistics only ever use the verified
+    // counts, so the wider figure must never be mistaken for a population.
+    const summary = BeatmapStatsSummarySchema.parse({
+      totalGameCount: 76,
+      totalTournamentCount: 9,
+      verifiedTournamentCount: 6,
+      totalPlayedGameCount: 92,
+      pooledPlayedTournamentCount: 7,
+      totalPlayerCount: 40,
+      firstPlayedAt: null,
+      lastPlayedAt: null,
+    });
+
+    expect(summary.totalPlayedGameCount).toBeGreaterThan(
+      summary.totalGameCount
+    );
+    expect(summary.verifiedTournamentCount).toBeLessThanOrEqual(
+      summary.totalTournamentCount
+    );
   });
 });

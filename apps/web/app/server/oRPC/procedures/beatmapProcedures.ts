@@ -1,12 +1,11 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
 import { Mods, Ruleset, TeamType, VerificationStatus } from '@otr/core/osu';
 import {
   BeatmapStatsResponseSchema,
-  BeatmapTournamentMatchResponseSchema,
   type BeatmapStatsResponse,
   type BeatmapTournamentUsage,
   type BeatmapUsagePoint,
@@ -21,10 +20,7 @@ import {
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
 import { getRankRangeBucketKey } from '@/lib/beatmaps/rankRange';
-import {
-  mostCommonDisplayMods,
-  resolveGameModsFromScores,
-} from '@/lib/utils/mods';
+import { mostCommonDisplayMods } from '@/lib/utils/mods';
 import { tierNames } from '@/lib/utils/tierData';
 import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmapDifficulties';
 
@@ -277,6 +273,12 @@ export const getBeatmapStats = publicProcedure
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           ),
+        // Usage credit, not a statistic. A tournament rejected for its format
+        // was still real-world play, so the map keeps credit for every game in
+        // it. A game rejected inside a *verified* tournament is different: a
+        // reviewer judged that game specifically, so it earns no credit.
+        // Rejection cascades downward, so the two cases are only separable by
+        // the tournament's status.
         context.db
           .select({
             totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
@@ -290,14 +292,37 @@ export const getBeatmapStats = publicProcedure
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
-          .where(eq(schema.games.beatmapId, beatmapId)),
+          .where(
+            and(
+              eq(schema.games.beatmapId, beatmapId),
+              or(
+                ne(
+                  schema.tournaments.verificationStatus,
+                  VerificationStatus.Verified
+                ),
+                and(
+                  eq(
+                    schema.matches.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.games.verificationStatus,
+                    VerificationStatus.Verified
+                  )
+                )
+              )
+            )
+          ),
         // Pool records and the subset of them the beatmap was actually played
-        // in. Neither side filters on verification: the question is how often a
-        // pick happened at all, so both the numerator and the denominator have
-        // to count every tournament that recorded the map in its pool.
+        // in. The headline pair does not filter on verification: the question
+        // is how often a pick happened at all, so both the numerator and the
+        // denominator have to count every tournament that recorded the map in
+        // its pool. `verifiedTournamentCount` reports the guaranteed subset
+        // beside it so no single displayed number mixes the two populations.
         context.db
           .select({
             totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
+            verifiedTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId}) FILTER (WHERE ${schema.tournaments.verificationStatus} = ${VerificationStatus.Verified})`,
             playedTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId}) FILTER (WHERE ${schema.games.id} IS NOT NULL)`,
           })
           .from(schema.joinPooledBeatmaps)
@@ -878,6 +903,9 @@ export const getBeatmapStats = publicProcedure
       const summary = {
         totalGameCount: Number(summaryRow[0]?.totalGameCount ?? 0),
         totalTournamentCount: Number(poolingRow[0]?.totalTournamentCount ?? 0),
+        verifiedTournamentCount: Number(
+          poolingRow[0]?.verifiedTournamentCount ?? 0
+        ),
         totalPlayedGameCount: Number(
           totalPlayedSummaryRow[0]?.totalGameCount ?? 0
         ),
@@ -1282,223 +1310,6 @@ export const getBeatmapStats = publicProcedure
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
         message: 'Failed to load beatmap statistics',
-      });
-    }
-  });
-
-export const getBeatmapTournamentMatches = publicProcedure
-  .input(
-    z.object({
-      beatmapId: z.number().int().positive(),
-      keyType: KeyTypeSchema,
-      tournamentId: z.number().int().positive(),
-    })
-  )
-  .output(BeatmapTournamentMatchResponseSchema)
-  .route({
-    summary: 'Get matches where a beatmap was used in a tournament',
-    description:
-      'Fetch matches where a beatmap was played in a specific tournament.\n\n' +
-      '**Examples:**\n' +
-      '- By o!TR ID: `GET /beatmaps/123/tournaments/456/matches`\n' +
-      '- By osu! ID: `GET /beatmaps/4504101/tournaments/456/matches?keyType=osu`',
-    tags: ['public'],
-    method: 'GET',
-    path: '/beatmaps/{beatmapId}/tournaments/{tournamentId}/matches',
-  })
-  .handler(async ({ input, context }) => {
-    try {
-      const beatmapId = await resolveBeatmapId(
-        context.db,
-        input.beatmapId,
-        input.keyType
-      );
-
-      const rows = await context.db
-        .select({
-          matchId: schema.matches.id,
-          matchName: schema.matches.name,
-          matchStartTime: schema.matches.startTime,
-          gameId: schema.games.id,
-          gameMods: schema.games.mods,
-        })
-        .from(schema.games)
-        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
-        .where(
-          and(
-            eq(schema.games.beatmapId, beatmapId),
-            eq(schema.matches.tournamentId, input.tournamentId),
-            eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-            eq(schema.games.verificationStatus, VerificationStatus.Verified)
-          )
-        )
-        .orderBy(
-          asc(schema.matches.startTime),
-          asc(schema.matches.id),
-          asc(schema.games.startTime),
-          asc(schema.games.id)
-        );
-
-      const matchIds = [...new Set(rows.map((r) => r.matchId))];
-
-      const allMatchGames =
-        matchIds.length > 0
-          ? await context.db
-              .select({
-                matchId: schema.games.matchId,
-                gameId: schema.games.id,
-              })
-              .from(schema.games)
-              .where(
-                and(
-                  inArray(schema.games.matchId, matchIds),
-                  eq(
-                    schema.games.verificationStatus,
-                    VerificationStatus.Verified
-                  )
-                )
-              )
-              .orderBy(asc(schema.games.startTime), asc(schema.games.id))
-          : [];
-
-      const gameNumberMap = new Map<number, number>();
-      const gamesByMatch = new Map<number, number[]>();
-
-      for (const game of allMatchGames) {
-        const games = gamesByMatch.get(game.matchId) ?? [];
-        games.push(game.gameId);
-        gamesByMatch.set(game.matchId, games);
-      }
-
-      for (const [, gameIds] of gamesByMatch) {
-        gameIds.forEach((gameId, index) => {
-          gameNumberMap.set(gameId, index + 1);
-        });
-      }
-
-      const relevantGameIds = rows.map((r) => r.gameId);
-      const gameStatsRows =
-        relevantGameIds.length > 0
-          ? await context.db
-              .select({
-                gameId: schema.games.id,
-                avgScore: sql<number>`AVG(${schema.gameScores.score})`,
-                // Pre-match ratings only, matching the per-tournament average
-                // and the "Avg rating" hint shown in the UI.
-                avgRating: sql<number>`AVG(${schema.ratingAdjustments.ratingBefore})`,
-                playerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
-                scoreMods: sql<
-                  (number | null)[]
-                >`ARRAY_AGG(DISTINCT ${schema.gameScores.mods})`,
-              })
-              .from(schema.gameScores)
-              .innerJoin(
-                schema.games,
-                eq(schema.games.id, schema.gameScores.gameId)
-              )
-              .innerJoin(
-                schema.matches,
-                eq(schema.matches.id, schema.games.matchId)
-              )
-              .leftJoin(
-                schema.ratingAdjustments,
-                and(
-                  eq(
-                    schema.ratingAdjustments.playerId,
-                    schema.gameScores.playerId
-                  ),
-                  eq(schema.ratingAdjustments.matchId, schema.matches.id)
-                )
-              )
-              .where(
-                and(
-                  inArray(schema.games.id, relevantGameIds),
-                  eq(
-                    schema.gameScores.verificationStatus,
-                    VerificationStatus.Verified
-                  )
-                )
-              )
-              .groupBy(schema.games.id)
-          : [];
-
-      const gameStatsMap = new Map(
-        gameStatsRows.map((row) => [
-          row.gameId,
-          {
-            avgScore: row.avgScore ? Math.round(row.avgScore) : null,
-            avgRating: row.avgRating ? Math.round(row.avgRating) : null,
-            playerCount: Number(row.playerCount),
-            scoreMods: (row.scoreMods ?? [])
-              .filter((m): m is number => m != null)
-              .map(Number),
-          },
-        ])
-      );
-
-      const matchesMap = new Map<
-        number,
-        {
-          matchId: number;
-          matchName: string;
-          startTime: string | null;
-          games: Array<{
-            gameId: number;
-            gameNumber: number;
-            mods: number;
-            freemod: boolean;
-            avgRating: number | null;
-            avgScore: number | null;
-            playerCount: number;
-          }>;
-        }
-      >();
-
-      for (const row of rows) {
-        let match = matchesMap.get(row.matchId);
-        if (!match) {
-          match = {
-            matchId: row.matchId,
-            matchName: row.matchName,
-            startTime: row.matchStartTime,
-            games: [],
-          };
-          matchesMap.set(row.matchId, match);
-        }
-
-        const gameNumber = gameNumberMap.get(row.gameId) ?? 1;
-        const stats = gameStatsMap.get(row.gameId);
-        const displayMods = resolveGameModsFromScores(
-          row.gameMods,
-          stats?.scoreMods ?? []
-        );
-        match.games.push({
-          gameId: row.gameId,
-          gameNumber,
-          mods: displayMods.mods,
-          freemod: displayMods.freemod,
-          avgRating: stats?.avgRating ?? null,
-          avgScore: stats?.avgScore ?? null,
-          playerCount: stats?.playerCount ?? 0,
-        });
-      }
-
-      return {
-        matches: Array.from(matchesMap.values()),
-      };
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-
-      console.error(
-        '[orpc] beatmaps.tournamentMatches failed',
-        { beatmapId: input.beatmapId, tournamentId: input.tournamentId },
-        error
-      );
-
-      throw new ORPCError('INTERNAL_SERVER_ERROR', {
-        message: 'Failed to load tournament matches',
       });
     }
   });
