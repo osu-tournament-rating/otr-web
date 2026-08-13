@@ -223,11 +223,15 @@ export const BeatmapTierScoreSummarySchema = z.object({
   p75Score: z.number().int().nonnegative(),
   maxScore: z.number().int().nonnegative(),
   /**
-   * Median raw stored accuracy fraction (0–1), matching
-   * `scoreSample.points[].accuracy`; null when no row in the tier has accuracy
-   * recorded.
+   * Accuracy quartiles as raw stored fractions (0–1), matching
+   * `scoreSample.points[].accuracy`. All five are null together, when no row in
+   * the tier has accuracy recorded.
    */
+  minAccuracy: z.number().min(0).max(1).nullable(),
+  p25Accuracy: z.number().min(0).max(1).nullable(),
   medianAccuracy: z.number().min(0).max(1).nullable(),
+  p75Accuracy: z.number().min(0).max(1).nullable(),
+  maxAccuracy: z.number().min(0).max(1).nullable(),
 });
 
 export const BeatmapTierBreakdownSchema = z.object({

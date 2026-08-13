@@ -1,12 +1,14 @@
 'use client';
 
 import { ChartCandlestick } from 'lucide-react';
+import * as React from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import {
+  BoxPlotTrack,
   EmptyState,
   Eyebrow,
-  ScaleFooter,
+  ScaleAxis,
   SectionCard,
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
@@ -16,7 +18,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { getScoreFloor, toScorePercent } from '@/lib/beatmaps/score-scale';
+import {
+  formatScoreTick,
+  getBoxPlotAxis,
+  toAxisPercent,
+  toBoxPlotMarks,
+  type BoxPlotQuartiles,
+  type NiceAxis,
+} from '@/lib/beatmaps/chart-axis';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import type {
   BeatmapModScoreDistribution,
@@ -26,7 +35,6 @@ import { cn } from '@/lib/utils';
 import {
   CHART_COLORS,
   formatChartNumber,
-  formatKilo,
   formatPercentage,
 } from '@/lib/utils/chart';
 import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
@@ -46,23 +54,32 @@ const PERCENTILE_CHART_CONFIG = {
   percentile: { label: 'Percentile' },
 };
 
+function toScoreQuartiles(
+  group: BeatmapModScoreDistribution
+): BoxPlotQuartiles {
+  return {
+    min: group.minScore,
+    p25: group.p25Score,
+    median: group.medianScore,
+    p75: group.p75Score,
+    max: group.maxScore,
+  };
+}
+
 function BoxPlotRow({
   group,
-  floorScore,
-  maxScore,
+  axis,
+  gridPercents,
 }: {
   group: BeatmapModScoreDistribution;
-  floorScore: number;
-  maxScore: number;
+  axis: NiceAxis;
+  /** Interior axis tick positions, drawn through the track. */
+  gridPercents: number[];
 }) {
   const label = getBeatmapModLabel(group.mods);
   const color = getModColor(group.mods);
 
-  const minPct = toScorePercent(group.minScore, floorScore, maxScore);
-  const maxPct = toScorePercent(group.maxScore, floorScore, maxScore);
-  const p25Pct = toScorePercent(group.p25Score, floorScore, maxScore);
-  const p75Pct = toScorePercent(group.p75Score, floorScore, maxScore);
-  const medianPct = toScorePercent(group.medianScore, floorScore, maxScore);
+  const marks = toBoxPlotMarks(toScoreQuartiles(group), axis);
 
   return (
     <TapTooltip
@@ -126,51 +143,7 @@ function BoxPlotRow({
           <span className="truncate text-xs">{label}</span>
         </span>
 
-        <div
-          className="relative h-7 min-w-0 flex-1 rounded bg-muted/40"
-          aria-hidden="true"
-        >
-          {/* Whisker: min → max, inset so it stops short of the hollow rings */}
-          <div
-            className="absolute top-1/2 h-px -translate-y-1/2 bg-muted-foreground/50"
-            style={{
-              left: `calc(${minPct}% + 5px)`,
-              width: `max(0px, calc(${Math.max(maxPct - minPct, 0)}% - 10px))`,
-            }}
-          />
-          {/* IQR box: p25 → p75 */}
-          <div
-            className="absolute inset-y-1 rounded"
-            style={{
-              left: `${p25Pct}%`,
-              width: `${Math.max(p75Pct - p25Pct, 0)}%`,
-              minWidth: 2,
-              backgroundColor: color,
-              opacity: 0.7,
-            }}
-          />
-          {/* Median tick */}
-          <div
-            className="absolute inset-y-0.5 w-[2px] -translate-x-1/2 rounded-full bg-foreground"
-            style={{ left: `${medianPct}%` }}
-          />
-          {/* Hollow min / max rings */}
-          <div
-            className="absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-transparent"
-            style={{ left: `${minPct}%`, borderColor: color }}
-          />
-          <div
-            className="absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-transparent"
-            style={{ left: `${maxPct}%`, borderColor: color }}
-          />
-        </div>
-
-        <span
-          className="w-12 shrink-0 text-right text-xs font-medium text-foreground"
-          aria-hidden="true"
-        >
-          {formatKilo(group.medianScore)}
-        </span>
+        <BoxPlotTrack color={color} marks={marks} gridPercents={gridPercents} />
       </div>
     </TapTooltip>
   );
@@ -198,7 +171,7 @@ function PercentileCurve({
           dataKey="score"
           type="number"
           domain={['dataMin', 'dataMax']}
-          tickFormatter={(value: number) => formatKilo(value)}
+          tickFormatter={(value: number) => formatScoreTick(value)}
           tickLine={false}
           axisLine={false}
           stroke={CHART_COLORS.mutedForeground}
@@ -265,11 +238,22 @@ export default function BeatmapScoreDistributionCard({
   const hasCurveData = percentiles.length > 0;
   const hasData = hasBoxData || hasCurveData;
 
-  const maxScore = distribution.reduce(
-    (max, group) => Math.max(max, group.maxScore),
-    0
+  // Six labels smear together on a phone-width track.
+  const isNarrow = useMediaQuery('(max-width: 639px)');
+
+  const axis = React.useMemo(
+    () => getBoxPlotAxis(distribution.map(toScoreQuartiles), isNarrow ? 4 : 6),
+    [distribution, isNarrow]
   );
-  const floorScore = getScoreFloor(distribution.map((group) => group.minScore));
+
+  const axisTicks = axis.ticks.map((value) => ({
+    value,
+    label: formatScoreTick(value),
+    percent: toAxisPercent(value, axis.min, axis.max),
+  }));
+
+  // Endpoint ticks would just trace the edges of the track.
+  const gridPercents = axisTicks.slice(1, -1).map((tick) => tick.percent);
 
   return (
     <SectionCard
@@ -291,10 +275,7 @@ export default function BeatmapScoreDistributionCard({
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="px-4 py-4">
-            <div className="flex items-baseline justify-between">
-              <Eyebrow>Mod</Eyebrow>
-              {hasBoxData ? <Eyebrow>Median</Eyebrow> : null}
-            </div>
+            <Eyebrow>Mod</Eyebrow>
             {hasBoxData ? (
               <div
                 className={cn(
@@ -311,8 +292,8 @@ export default function BeatmapScoreDistributionCard({
                   <BoxPlotRow
                     key={group.mods}
                     group={group}
-                    floorScore={floorScore}
-                    maxScore={maxScore}
+                    axis={axis}
+                    gridPercents={gridPercents}
                   />
                 ))}
               </div>
@@ -321,14 +302,9 @@ export default function BeatmapScoreDistributionCard({
             )}
             {hasBoxData ? (
               <>
-                <ScaleFooter
-                  leftSpacerClassName="w-16"
-                  rightSpacerClassName="w-12"
-                  minLabel={formatKilo(floorScore)}
-                  maxLabel={formatKilo(maxScore)}
-                />
+                <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Mod combinations with fewer than 5 scores hidden
+                  Mod combinations with fewer than 5 scores hidden.
                 </p>
               </>
             ) : null}

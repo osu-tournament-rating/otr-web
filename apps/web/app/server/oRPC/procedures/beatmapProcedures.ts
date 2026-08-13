@@ -87,6 +87,16 @@ const playerCompactColumns = {
   defaultRuleset: schema.players.defaultRuleset,
 } as const;
 
+/** Clamps a stored accuracy aggregate into the 0–1 the response schema allows. */
+function toAccuracyFraction(value: number | string | null): number | null {
+  if (value == null) return null;
+
+  const fraction = Number(value);
+  if (!Number.isFinite(fraction)) return null;
+
+  return Math.min(1, Math.max(0, fraction));
+}
+
 export const getBeatmapStats = publicProcedure
   .input(
     z.object({
@@ -840,9 +850,17 @@ export const getBeatmapStats = publicProcedure
             medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             p75Score: sql<number>`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             maxScore: sql<number>`MAX(${schema.gameScores.score})`,
+            minAccuracy: sql<number | null>`MIN(${schema.gameScores.accuracy})`,
+            p25Accuracy: sql<
+              number | null
+            >`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
             medianAccuracy: sql<
               number | null
             >`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
+            p75Accuracy: sql<
+              number | null
+            >`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
+            maxAccuracy: sql<number | null>`MAX(${schema.gameScores.accuracy})`,
           })
           .from(schema.gameScores)
           .innerJoin(
@@ -1191,10 +1209,11 @@ export const getBeatmapStats = publicProcedure
           maxScore: Number(row.maxScore),
           // Stored as a 0–1 fraction, passed through unrounded; clamped so a
           // malformed row cannot fail the response schema.
-          medianAccuracy:
-            row.medianAccuracy != null
-              ? Math.min(1, Math.max(0, Number(row.medianAccuracy)))
-              : null,
+          minAccuracy: toAccuracyFraction(row.minAccuracy),
+          p25Accuracy: toAccuracyFraction(row.p25Accuracy),
+          medianAccuracy: toAccuracyFraction(row.medianAccuracy),
+          p75Accuracy: toAccuracyFraction(row.p75Accuracy),
+          maxAccuracy: toAccuracyFraction(row.maxAccuracy),
         });
       }
 
