@@ -133,7 +133,7 @@ export const getBeatmapStats = publicProcedure
         eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
       );
 
-      // Team-vs games the closeness summary would otherwise have used, held out
+      // Team Vs games the closeness summary would otherwise have used, held out
       // only by verification. Counted so the card can say why a map has few
       // games; never an input to the statistics themselves.
       const excludedClosenessGames = context.db

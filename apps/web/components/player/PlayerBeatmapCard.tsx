@@ -20,7 +20,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
   return (
     <Card
       data-testid={`player-beatmap-card-${beatmap.osuId}`}
-      className="group relative gap-0 overflow-hidden p-3 font-sans transition-colors hover:border-primary/35 sm:p-4 dark:hover:bg-secondary/40"
+      className="group relative gap-0 overflow-hidden p-2 font-sans transition-colors hover:border-primary/35 sm:p-2.5 dark:hover:bg-secondary/40"
     >
       <Link
         href={`/beatmaps/${beatmap.osuId}`}
@@ -29,7 +29,7 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
         className="absolute inset-0 z-10 rounded-xl focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset"
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-5">
         <BeatmapIdentity
           osuId={beatmap.osuId}
           beatmapsetOsuId={beatmap.beatmapsetId}
@@ -37,24 +37,24 @@ export default function PlayerBeatmapCard({ beatmap }: PlayerBeatmapCardProps) {
           title={beatmap.title}
           diffName={beatmap.diffName}
           size="row"
-          coverSizes="(max-width: 639px) calc(100vw - 4rem), (max-width: 1023px) 192px, (max-width: 1279px) 208px, 224px"
+          coverSizes="(max-width: 639px) calc(100vw - 4rem), (max-width: 1023px) 160px, (max-width: 1279px) 176px, 192px"
           showMapper={false}
           className="min-w-0 flex-1"
         >
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 rounded-t-lg bg-gradient-to-b from-black/55 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 z-20 h-12 rounded-t-lg bg-gradient-to-b from-black/55 to-transparent"
           />
           <RulesetPill
             ruleset={beatmap.ruleset}
             diffName={beatmap.diffName}
             tone="overlay"
-            className="pointer-events-none absolute top-2 left-2 z-20"
+            className="pointer-events-none absolute top-1.5 left-1.5 z-20"
           />
           <StarRatingPill
             starRating={beatmap.sr}
             testId="player-beatmap-star-rating"
-            className="pointer-events-none absolute top-2 right-2 z-20"
+            className="pointer-events-none absolute top-1.5 right-1.5 z-20"
           />
         </BeatmapIdentity>
 

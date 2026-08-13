@@ -7,8 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const LABEL = 'Includes unverified';
-const TOOLTIP =
-  'Includes tournaments that have not been verified, so some entries may later change or be removed.';
+const TOOLTIP = 'Includes data that has not been verified';
 
 /**
  * Marks a chart whose data is not filtered to verified entities. Only for

@@ -381,9 +381,9 @@ export const MatchRejectionReasonEnumHelper: IBitwiseEnumHelper<MatchRejectionRe
           "The match's name does not start with the tournament's abbreviation",
       },
       [MatchRejectionReason.FailedTeamVsConversion]: {
-        text: 'Failed TeamVs Conversion',
+        text: 'Failed Team Vs Conversion',
         description:
-          'The match was eligible for TeamVs Conversion, but the attempted conversion was not successful',
+          'The match was eligible for Team Vs conversion, but the attempted conversion was not successful',
       },
       [MatchRejectionReason.NoValidGames]: {
         text: 'No valid games',
@@ -461,12 +461,12 @@ export const GameRejectionReasonEnumHelper: IBitwiseEnumHelper<GameRejectionReas
       [GameRejectionReason.InvalidTeamType]: {
         text: 'Invalid Team Type',
         description:
-          "The game was played with a team type that is not 'TeamVs'",
+          "The game was played with a team type that is not 'Team Vs'",
       },
       [GameRejectionReason.FailedTeamVsConversion]: {
-        text: 'Failed TeamVs Conversion',
+        text: 'Failed Team Vs Conversion',
         description:
-          'The game was eligible for TeamVs Conversion, but the attempted conversion was not successful',
+          'The game was eligible for Team Vs conversion, but the attempted conversion was not successful',
       },
       [GameRejectionReason.NoValidScores]: {
         text: 'No Valid Scores',

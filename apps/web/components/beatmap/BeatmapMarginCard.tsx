@@ -133,6 +133,11 @@ function cohortLabel(cohort: ClosenessCohort) {
   return cohortName(cohort.ruleset, cohort.teamSize);
 }
 
+/** The per-map figures in the caption, lifted out of the muted running text. */
+function Field({ children }: { children: React.ReactNode }) {
+  return <strong className="font-semibold text-foreground">{children}</strong>;
+}
+
 /**
  * The map's games against the fifths of its cohort's distribution. A map that
  * plays like its cohort reads as five bars at the typical share; the shape of
@@ -411,7 +416,7 @@ export default function BeatmapMarginCard({
     [cohort, deciles, games, quintiles]
   );
 
-  const caption: string[] = [];
+  const caption: React.ReactNode[] = [];
   if (strip) {
     caption.push(
       "Each dot is one game's winning score gap. Not yet enough games to give this map a percentile."
@@ -419,18 +424,28 @@ export default function BeatmapMarginCard({
     if (strip.clampedCount > 0) {
       const clamped = strip.clampedCount;
       caption.push(
-        `${formatChartNumber(clamped)} ${clamped === 1 ? 'game sits' : 'games sit'} beyond the axis, pinned to its edge.`
+        <>
+          <Field>{formatChartNumber(clamped)}</Field>{' '}
+          {clamped === 1 ? 'game sits' : 'games sit'} beyond the axis, pinned to
+          its edge.
+        </>
       );
     }
   } else if (cohort) {
-    if (percentile != null && closeness.percentileInterval) {
-      const [low, high] = closeness.percentileInterval;
+    if (percentile != null) {
       caption.push(
-        `Typical score gaps here are larger than on ${Math.round(percentile)}% of comparable ${cohortLabel(cohort)} maps (80% range ${Math.round(low)}–${Math.round(high)}%).`
+        <>
+          Winning scores here finish further ahead than on{' '}
+          <Field>{Math.round(percentile)}%</Field> of all other{' '}
+          <Field>{cohortLabel(cohort)}</Field> maps.
+        </>
       );
     } else {
       caption.push(
-        `Not yet enough games to compare this map with other ${cohortLabel(cohort)} maps.`
+        <>
+          Not yet enough games to rank this map against other{' '}
+          <Field>{cohortLabel(cohort)}</Field> maps.
+        </>
       );
     }
   }
@@ -440,7 +455,7 @@ export default function BeatmapMarginCard({
       <SectionHeader
         icon={Swords}
         title="Game closeness"
-        infoText="A low percentile means the winning and losing scores on this map usually finish closer together than on comparable maps, and a high percentile means they usually finish further apart. Verified team-vs games only."
+        infoText="How far the winning score finishes ahead of the losing one, ranked against every other map played in the same ruleset and team size."
         meta={
           gameCount === 0
             ? undefined
@@ -458,7 +473,14 @@ export default function BeatmapMarginCard({
           ) : strip ? (
             <ClosenessDots strip={strip} bandLabel={cohortLabel(cohort)} />
           ) : null}
-          <p className="text-xs text-muted-foreground">{caption.join(' ')}</p>
+          <p className="text-xs text-muted-foreground">
+            {caption.map((sentence, index) => (
+              <React.Fragment key={index}>
+                {index > 0 ? ' ' : null}
+                {sentence}
+              </React.Fragment>
+            ))}
+          </p>
         </div>
       )}
     </SectionCard>

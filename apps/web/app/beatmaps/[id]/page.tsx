@@ -121,9 +121,10 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      {/* items-start: the overview rail is much taller than the distributions
-          card, and stretching left ~230px of void inside it. */}
-      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
+      {/* Both cards stretch to the taller of the two: the distributions card
+          centres its charts in the surplus rather than leaving it as a gap
+          under the row. */}
+      <div className="grid gap-4 lg:grid-cols-3">
         <BeatmapOverviewCard
           beatmap={stats.beatmap}
           usage={stats.usageOverTime}

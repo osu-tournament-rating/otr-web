@@ -236,7 +236,7 @@ export const BeatmapTierBreakdownSchema = z.object({
 });
 
 /**
- * Cohort-standardized closeness of the team-vs games played on this beatmap.
+ * Cohort-standardized closeness of the Team Vs games played on this beatmap.
  *
  * Each qualifying game contributes `logRatio = ln(winning score / losing
  * score)`, standardized against a checked-in baseline for that game's own

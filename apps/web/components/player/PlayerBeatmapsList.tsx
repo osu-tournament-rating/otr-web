@@ -84,7 +84,7 @@ export default function PlayerBeatmapsList({
           <CardTitle className="text-xl font-bold">Pooled beatmaps</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
+      <CardContent className="flex flex-col space-y-2">
         {isEmpty && (
           <BeatmapEmptyState
             testId="player-beatmaps-empty"

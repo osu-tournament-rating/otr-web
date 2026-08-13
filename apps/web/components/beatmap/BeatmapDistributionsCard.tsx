@@ -612,9 +612,10 @@ export default function BeatmapDistributionsCard({
                 )}
               </div>
 
-              {/* Takes the column's surplus height so it collects once, below
-                  the content, instead of padding out every section. */}
-              <div className="flex-1 space-y-3 px-4 py-4">
+              {/* Takes the column's surplus height so it collects once, in this
+                  section, instead of padding out every section. The label stays
+                  pinned; only the content below it rides the surplus. */}
+              <div className="flex flex-1 flex-col space-y-3 px-4 py-4">
                 <div className="flex items-baseline justify-between gap-2">
                   <Eyebrow>Freemod picks</Eyebrow>
                   {freemodPicks.freemodGameCount > 0 ? (
@@ -624,15 +625,25 @@ export default function BeatmapDistributionsCard({
                   ) : null}
                 </div>
 
-                {freemodSegments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Not enough data
-                  </p>
-                ) : freemodPicks.freemodScoreCount < 5 ? (
-                  <FreemodPickChips segments={freemodSegments} />
-                ) : (
-                  <FreemodPickRows segments={freemodSegments} />
-                )}
+                {/* Centred only when there is a chart to centre: an empty state
+                    stranded mid-section reads as a layout fault, not as
+                    breathing room. */}
+                <div
+                  className={cn(
+                    'flex flex-1 flex-col',
+                    freemodSegments.length > 0 && 'justify-center'
+                  )}
+                >
+                  {freemodSegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Not enough data
+                    </p>
+                  ) : freemodPicks.freemodScoreCount < 5 ? (
+                    <FreemodPickChips segments={freemodSegments} />
+                  ) : (
+                    <FreemodPickRows segments={freemodSegments} />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -640,7 +651,7 @@ export default function BeatmapDistributionsCard({
               className="flex flex-col border-t px-4 py-4 lg:border-t-0"
               data-testid="beatmap-rank-range"
             >
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-1 flex-col space-y-3">
                 {/* The badge sits under the label rather than beside it: this
                     panel is 288px at lg, and the pair wraps the label. */}
                 <div className="flex flex-col items-start gap-2">
@@ -650,64 +661,74 @@ export default function BeatmapDistributionsCard({
                   ) : null}
                 </div>
 
-                {rankSlices.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Not enough data
-                  </p>
-                ) : rankSlices.length === 1 ? (
-                  /* One bracket is not a distribution — a donut of a single
-                     slice would encode nothing the sentence does not. */
-                  <Tile
-                    data-testid="beatmap-rank-range-summary"
-                    className="py-6"
-                  >
-                    <p className="flex items-center justify-center gap-1.5 text-center text-sm font-medium">
-                      <Swatch color={rankSlices[0].fill} />
-                      {rankSlices[0].count === 1
-                        ? `1 pool · ${rankSlices[0].label} rank`
-                        : `All ${formatChartNumber(rankSlices[0].count)} pools · ${
-                            rankSlices[0].label
-                          } rank`}
+                {/* The donut and its legend ride the column's surplus height
+                    together, so a taller neighbour column centres them rather
+                    than leaving a void under the legend. */}
+                <div
+                  className={cn(
+                    'flex flex-1 flex-col space-y-3',
+                    rankSlices.length > 0 && 'justify-center'
+                  )}
+                >
+                  {rankSlices.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Not enough data
                     </p>
-                  </Tile>
-                ) : (
-                  <>
-                    <RankRangePie
-                      slices={rankSlices}
-                      totalPools={pools.length}
-                      modsByBucket={modsByBucket}
-                    />
-                    {/* Sliver brackets are unhittable on the ring, so every
-                        bracket is also inspectable from its legend row. */}
-                    <ul
-                      aria-label="Tournaments by rank range"
-                      className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"
+                  ) : rankSlices.length === 1 ? (
+                    /* One bracket is not a distribution — a donut of a single
+                       slice would encode nothing the sentence does not. */
+                    <Tile
+                      data-testid="beatmap-rank-range-summary"
+                      className="py-6"
                     >
-                      {rankSlices.map((slice) => (
-                        <li key={slice.key}>
-                          <TapTooltip
-                            side="top"
-                            content={
-                              <RankBucketTooltipBody
-                                slice={slice}
-                                bucketMods={modsByBucket.get(slice.key)}
-                              />
-                            }
-                            triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
-                          >
-                            <Swatch color={slice.fill} />
-                            <span className="text-muted-foreground">
-                              {slice.label}
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {formatChartNumber(slice.count)}
-                            </span>
-                          </TapTooltip>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+                      <p className="flex items-center justify-center gap-1.5 text-center text-sm font-medium">
+                        <Swatch color={rankSlices[0].fill} />
+                        {rankSlices[0].count === 1
+                          ? `1 pool · ${rankSlices[0].label} rank`
+                          : `All ${formatChartNumber(rankSlices[0].count)} pools · ${
+                              rankSlices[0].label
+                            } rank`}
+                      </p>
+                    </Tile>
+                  ) : (
+                    <>
+                      <RankRangePie
+                        slices={rankSlices}
+                        totalPools={pools.length}
+                        modsByBucket={modsByBucket}
+                      />
+                      {/* Sliver brackets are unhittable on the ring, so every
+                          bracket is also inspectable from its legend row. */}
+                      <ul
+                        aria-label="Tournaments by rank range"
+                        className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"
+                      >
+                        {rankSlices.map((slice) => (
+                          <li key={slice.key}>
+                            <TapTooltip
+                              side="top"
+                              content={
+                                <RankBucketTooltipBody
+                                  slice={slice}
+                                  bucketMods={modsByBucket.get(slice.key)}
+                                />
+                              }
+                              triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
+                            >
+                              <Swatch color={slice.fill} />
+                              <span className="text-muted-foreground">
+                                {slice.label}
+                              </span>
+                              <span className="font-medium text-foreground">
+                                {formatChartNumber(slice.count)}
+                              </span>
+                            </TapTooltip>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

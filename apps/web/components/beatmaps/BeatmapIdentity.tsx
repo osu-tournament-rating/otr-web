@@ -25,19 +25,19 @@ const COVER_VARIANT = {
 } as const;
 
 const ROOT_CLASS: Record<BeatmapIdentitySize, string> = {
-  row: 'grid min-w-0 gap-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)]',
+  row: 'grid min-w-0 gap-2.5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 lg:grid-cols-[11rem_minmax(0,1fr)] xl:grid-cols-[12rem_minmax(0,1fr)]',
   card: 'flex min-w-0 flex-col',
   table: 'flex min-w-0 items-center gap-3',
 };
 
 const COVER_CELL_CLASS: Record<BeatmapIdentitySize, string> = {
-  row: 'relative min-w-0 sm:min-h-28',
+  row: 'relative min-w-0 sm:min-h-20',
   card: 'relative min-w-0',
   table: 'relative shrink-0',
 };
 
 const COVER_CLASS: Record<BeatmapIdentitySize, string> = {
-  row: 'h-28 w-full rounded-lg shadow-sm sm:absolute sm:inset-0 sm:h-full',
+  row: 'h-24 w-full rounded-lg shadow-sm sm:absolute sm:inset-0 sm:h-full',
   card: 'aspect-[16/7] w-full rounded-none shadow-sm',
   table: 'h-[22px] w-10 rounded-sm',
 };
@@ -52,7 +52,7 @@ const HEADING_CLASS: Record<BeatmapIdentitySize, string> = {
   // One line per field so every card's text block is the same height and the
   // footer never shifts.
   card: 'min-w-0',
-  row: 'flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5',
+  row: 'flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0',
   table: 'flex min-w-0 items-baseline gap-x-2',
 };
 

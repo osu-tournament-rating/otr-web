@@ -11,9 +11,11 @@ import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import { Eyebrow, SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
+import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Separator } from '@/components/ui/separator';
 import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
+import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type {
   BeatmapWithDetails,
@@ -150,7 +152,7 @@ function DifficultyNavigator({
           : activeStart - (scroller.clientWidth - activeBounds.width) / 2;
     };
 
-    // Chip widths follow the rating pill's text, so fallback-font metrics
+    // Chip widths follow their difficulty names, so fallback-font metrics
     // would centre on the wrong chip.
     void document.fonts.ready.then(centerActiveDifficulty);
 
@@ -180,13 +182,18 @@ function DifficultyNavigator({
 
   const renderDifficulty = (difficulty: RelatedBeatmapDifficulty) => {
     const isCurrent = difficulty.osuId === currentOsuId;
-    const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
-    const ratingPill = (
-      <StarRatingPill
-        starRating={difficulty.sr}
-        size="sm"
-        className="shrink-0 sm:text-xs"
-        testId={`difficulty-chip-star-rating-${difficulty.osuId}`}
+    const ruleset = getBeatmapDisplayRuleset(
+      difficulty.ruleset,
+      difficulty.diffName
+    );
+    const formattedRating = difficulty.sr.toFixed(2);
+    const accessibleLabel = `${difficulty.diffName}, ${formattedRating} star rating`;
+    const difficultyIcon = (
+      <RulesetIcon
+        ruleset={ruleset}
+        className="size-5 shrink-0 fill-current [&_path]:fill-current"
+        style={{ color: getStarRatingIconColor(difficulty.sr) }}
+        aria-hidden="true"
       />
     );
 
@@ -199,10 +206,10 @@ function DifficultyNavigator({
           prefetch={false}
           aria-current="page"
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-72 shrink-0 snap-start items-center gap-2 rounded-lg border bg-muted px-2 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
+          className="flex min-h-10 max-w-72 shrink-0 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
         >
-          {ratingPill}
-          <span className="min-w-0 flex-1 truncate pr-1 font-medium">
+          {difficultyIcon}
+          <span className="min-w-0 flex-1 truncate font-medium">
             {difficulty.diffName}
           </span>
         </Link>
@@ -215,6 +222,7 @@ function DifficultyNavigator({
         content={
           <div className="max-w-64 space-y-1.5 py-0.5">
             <div className="flex items-start gap-2">
+              {difficultyIcon}
               <StarRatingPill
                 starRating={difficulty.sr}
                 size="sm"
@@ -236,11 +244,15 @@ function DifficultyNavigator({
           href={`/beatmaps/${difficulty.osuId}`}
           prefetch={false}
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-2 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:max-w-none sm:px-1 dark:bg-input/40 dark:hover:bg-secondary/60"
+          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:size-10 sm:max-w-none sm:justify-center sm:gap-0 sm:px-0 sm:py-0 dark:bg-input/40 dark:hover:bg-secondary/60"
         >
-          {ratingPill}
-          <span className="min-w-0 truncate pr-1 font-medium sm:hidden">
+          {difficultyIcon}
+          <span className="min-w-0 truncate font-medium sm:hidden">
             {difficulty.diffName}
+          </span>
+          {/* Touch has no hover tooltip, so the rating stays on the chip. */}
+          <span className="shrink-0 text-xs text-muted-foreground sm:hidden">
+            {formattedRating} SR
           </span>
         </Link>
       </SimpleTooltip>

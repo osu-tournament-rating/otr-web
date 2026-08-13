@@ -464,9 +464,11 @@ export default function BeatmapScoreScatterCard({
               config={{}}
               className="aspect-auto h-[300px] w-full"
             >
+              {/* No `title`: Recharts renders it as an SVG <title>, which the
+                  browser shows as a native tooltip on hover, covering the
+                  chart's own tooltip. The sr-only paragraph names the chart. */}
               <ScatterChart
                 margin={{ top: 8, right: 12, bottom: 22, left: 0 }}
-                title="Score against pre-match rating, by rank range"
                 desc={chartDescription}
               >
                 <CartesianGrid strokeDasharray="3 3" />
