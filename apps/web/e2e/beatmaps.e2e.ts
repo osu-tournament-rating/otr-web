@@ -1441,7 +1441,7 @@ test.describe('Beatmap Detail Page', () => {
       await expect(externalLink).toBeVisible({ timeout: 10000 });
       await expect(
         page
-          .getByTestId('beatmap-data-glass')
+          .getByTestId('beatmap-data-matte')
           .getByTestId('beatmap-external-link')
       ).toBeVisible();
       await expect(
@@ -1461,11 +1461,6 @@ test.describe('Beatmap Detail Page', () => {
       await expect(activeDifficulty).toBeVisible({ timeout: 10000 });
       await expect(activeDifficulty).toBeInViewport();
       await expect(activeDifficulty).toHaveAttribute('href', /\/beatmaps\/\d+/);
-      await expect(
-        activeDifficulty.locator(
-          '[data-testid="related-difficulty-star-rating"]'
-        )
-      ).toHaveCount(0);
 
       const collapsedDifficulty = page
         .locator(

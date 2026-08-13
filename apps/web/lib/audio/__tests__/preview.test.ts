@@ -5,7 +5,6 @@ import {
   MAX_PREVIEW_VOLUME,
   clampPreviewVolume,
   formatPreviewTime,
-  getAudioPreviewTitle,
   normalizeAudioPreviewTrack,
   sliderPercentToVolume,
   volumeToSliderPercent,
@@ -20,19 +19,6 @@ describe('audio preview presentation', () => {
 
   test('normalizes legacy beatmapset ids', () => {
     expect(normalizeAudioPreviewTrack(123)).toEqual({ beatmapsetOsuId: 123 });
-  });
-
-  test('builds useful track identity with a safe fallback', () => {
-    expect(
-      getAudioPreviewTitle({
-        beatmapsetOsuId: 123,
-        artist: 'Camellia',
-        title: 'Exit This Earth’s Atomosphere',
-      })
-    ).toBe('Camellia – Exit This Earth’s Atomosphere');
-    expect(getAudioPreviewTitle({ beatmapsetOsuId: 123 })).toBe(
-      'Beatmapset 123'
-    );
   });
 });
 

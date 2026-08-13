@@ -105,11 +105,8 @@ export interface RankRangeModRow {
 }
 
 /**
- * Folds per-(rank range, normalized mods) score counts into one distribution
- * per rank-range bucket. Percentages are relative to the bucket, rows are
- * ordered desc by scoreCount then asc by mods (same tie-break as the global
- * mod distribution), and buckets are emitted in `RANK_RANGE_BUCKETS` order
- * with empty buckets skipped.
+ * Folds per-(rank range, normalized mods) counts into one distribution per
+ * bucket. Rows use the same tie-break as the global mod distribution.
  */
 export function summarizeRankRangeMods(
   rows: ReadonlyArray<RankRangeModRow>
@@ -199,20 +196,3 @@ export function tierBreakdownTierFromRating(rating: number): TierName {
 
   return tierNames[Math.min(index, TIER_BREAKDOWN_MAX_TIER_INDEX)];
 }
-
-/**
- * Fixed relative-margin buckets (percent of the winning team's score) for the
- * team-vs closeness summary. The last bucket is open-ended.
- */
-export const TEAM_VS_MARGIN_BUCKET_BOUNDS: ReadonlyArray<{
-  lowerBound: number;
-  upperBound: number | null;
-}> = [
-  { lowerBound: 0, upperBound: 1 },
-  { lowerBound: 1, upperBound: 2.5 },
-  { lowerBound: 2.5, upperBound: 5 },
-  { lowerBound: 5, upperBound: 10 },
-  { lowerBound: 10, upperBound: 20 },
-  { lowerBound: 20, upperBound: 40 },
-  { lowerBound: 40, upperBound: null },
-];

@@ -52,10 +52,8 @@ function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
 }
 
 /**
- * Three steps of emphasis are what make a ranked list read as a leaderboard:
- * the best score carries a tinted chip, the rest of the podium is a solid
- * numeral, and the field stays muted. The numeral and its tie prefix carry the
- * ranking on their own, so the tint is never the only cue.
+ * Rank numeral with three steps of emphasis. The numeral and tie prefix carry
+ * the ranking on their own, so color is never the only cue.
  */
 function RankBadge({
   rank,
@@ -97,20 +95,20 @@ export default function BeatmapLeaderboardCard({
       <SectionHeader
         icon={Medal}
         title="Leaderboard"
-        meta={`${totalScoreCount.toLocaleString()} ${
-          totalScoreCount === 1 ? 'score' : 'scores'
-        }`}
+        meta={
+          performers.length < totalScoreCount
+            ? `top ${performers.length.toLocaleString()} of ${totalScoreCount.toLocaleString()} scores`
+            : `${totalScoreCount.toLocaleString()} ${
+                totalScoreCount === 1 ? 'score' : 'scores'
+              }`
+        }
       />
 
       {performers.length === 0 ? (
         <EmptyState>No scores recorded yet.</EmptyState>
       ) : (
         <>
-          {/* Seven columns of record data do not fit the rail layout at every
-              width, so the table scrolls horizontally from `sm` up and falls
-              back to a stacked row on phones. `table-fixed` lets the player and
-              tournament columns share leftover space while long names
-              truncate. */}
+          {/* Seven columns need a scroll container from sm up; phones get the stacked list below. */}
           <div className="hidden sm:block">
             <Table className="min-w-[39rem] table-fixed">
               <TableHeader>
@@ -323,11 +321,6 @@ export default function BeatmapLeaderboardCard({
               );
             })}
           </ol>
-
-          {/* The section header already carries the full score count. */}
-          <p className="border-t px-4 py-2 text-center text-xs text-muted-foreground">
-            Showing the top {performers.length.toLocaleString()}
-          </p>
         </>
       )}
     </SectionCard>

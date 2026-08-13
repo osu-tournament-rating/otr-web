@@ -18,24 +18,6 @@ export function useAudioPlayerTime(): number {
   return useContext(AudioPlayerTimeContext);
 }
 
-export function useIsPlaying(beatmapsetOsuId: number | undefined): boolean {
-  const { state } = useAudioPlayer();
-  if (!beatmapsetOsuId) return false;
-  return (
-    state.currentlyPlaying === beatmapsetOsuId &&
-    state.isPlaying &&
-    !state.isLoading
-  );
-}
-
-export function useIsPreviewActive(
-  beatmapsetOsuId: number | undefined
-): boolean {
-  const { state } = useAudioPlayer();
-  if (!beatmapsetOsuId) return false;
-  return state.currentlyPlaying === beatmapsetOsuId;
-}
-
 export type PreviewButtonStatus =
   | 'loading'
   | 'playing'

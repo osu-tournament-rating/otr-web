@@ -186,9 +186,6 @@
       },
     },
   },
-  "overrides": {
-    "zrender": "5.6.1",
-  },
   "packages": {
     "@alduino/humanizer": ["@alduino/humanizer@1.1.0", "", {}, ""],
 

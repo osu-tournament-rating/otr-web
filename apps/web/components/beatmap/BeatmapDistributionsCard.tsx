@@ -257,12 +257,7 @@ function SegmentLegend({
   );
 }
 
-/**
- * Freemod picks are a ranking, not a composition: these rows read top-down by
- * popularity instead of as another stacked share bar. Track widths scale to the
- * top pick (same max-scaled pattern as the pool rows); the absolute share rides
- * in the printed percentage.
- */
+/** Freemod picks as a ranking, not a composition: track widths scale to the top pick. */
 function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
   const maxPercentage = Math.max(...segments.map((s) => s.percentage));
 
@@ -331,9 +326,6 @@ interface RankRangeSlice {
 const TOOLTIP_MOD_ROW_CAP = 5;
 
 /**
- * The single disclosure body for a rank bracket, shared by the chart tooltip
- * and by each legend row's tap tooltip so both channels read identically.
- *
  * Slices count pools; the mod rows count verified scores. The sub-caption names
  * that second population explicitly so the two are never read as one.
  */
@@ -394,11 +386,7 @@ function RankBucketTooltipBody({
   );
 }
 
-/**
- * Donut of tournament pools by rank range. The hovered slice only grows — the
- * tooltip is the single mod-disclosure channel, so the ring never repaints into
- * a second color scale that would collide with the rank-range legend.
- */
+/** Donut of tournament pools by rank range. Hover only grows the slice — the tooltip is the sole mod-disclosure channel. */
 function RankRangePie({
   slices,
   totalPools,
@@ -485,14 +473,10 @@ function RankRangePie({
           <Label content={renderCenterLabel} />
         </Pie>
         <ChartTooltip
-          /* Parked instead of tracking the cursor: a ~200px panel chasing the
-             pointer around a 240px donut lands on the center pool count from
-             every angle. `x: 4` is the chart viewBox's left edge — pinning it
-             there keeps the tooltip inside the chart's own column at 390px, so
-             it can never widen the document; `y: 136` sits just below the
-             center label. Vertical overflow escapes the card (see the
-             `overflow-visible` on SectionCard), which the tallest tooltip needs
-             on sparse pages. */
+          /* Parked, not cursor-tracking: a ~200px panel chasing the pointer
+             around a 240px donut covers the center label from every angle. x is
+             the viewBox left edge so the tooltip cannot widen the document at
+             390px. */
           position={{ x: 4, y: 136 }}
           wrapperStyle={{ zIndex: 30 }}
           content={({ active, payload }) => {
@@ -631,14 +615,12 @@ export default function BeatmapDistributionsCard({
               </div>
 
               <div className="space-y-3 px-4 py-4">
-                <div className="space-y-0.5">
+                <div className="flex items-baseline justify-between gap-2">
                   <Eyebrow>Freemod picks</Eyebrow>
                   {freemodPicks.freemodGameCount > 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      {formatChartNumber(freemodPicks.freemodScoreCount)} scores
-                      in {formatChartNumber(freemodPicks.freemodGameCount)}{' '}
-                      freemod games
-                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
+                    </span>
                   ) : null}
                 </div>
 
@@ -650,17 +632,10 @@ export default function BeatmapDistributionsCard({
                   <p className="text-sm text-muted-foreground">
                     No verified scores in freemod games yet.
                   </p>
+                ) : freemodPicks.freemodScoreCount < 5 ? (
+                  <FreemodPickChips segments={freemodSegments} />
                 ) : (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      When players could choose their mod, they picked:
-                    </p>
-                    {freemodPicks.freemodScoreCount < 5 ? (
-                      <FreemodPickChips segments={freemodSegments} />
-                    ) : (
-                      <FreemodPickRows segments={freemodSegments} />
-                    )}
-                  </>
+                  <FreemodPickRows segments={freemodSegments} />
                 )}
               </div>
             </div>
@@ -729,9 +704,6 @@ export default function BeatmapDistributionsCard({
                       </li>
                     ))}
                   </ul>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Hover or tap a slice to see mods within that bracket
-                  </p>
                 </>
               )}
             </div>

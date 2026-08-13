@@ -26,7 +26,8 @@
   --color-foreground: var(--foreground);
   --font-sans: Inter, sans-serif;
   --font-mono: monospace;
-  --default-font-family: Inter --color-sidebar-ring: var(--sidebar-ring);
+  --default-font-family: Inter, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);

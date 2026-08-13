@@ -58,39 +58,6 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * The 0..max axis under a row chart. The spacers match the label and value
- * columns of the rows above so the two end labels sit exactly under the track.
- */
-export function ScaleFooter({
-  leftSpacerClassName,
-  rightSpacerClassName,
-  minLabel,
-  maxLabel,
-}: {
-  leftSpacerClassName: string;
-  rightSpacerClassName: string;
-  minLabel: React.ReactNode;
-  maxLabel: React.ReactNode;
-}) {
-  return (
-    <div className="mt-1 flex items-center gap-2">
-      <span
-        className={cn(leftSpacerClassName, 'shrink-0')}
-        aria-hidden="true"
-      />
-      <span className="flex min-w-0 flex-1 justify-between text-xs text-muted-foreground">
-        <span>{minLabel}</span>
-        <span>{maxLabel}</span>
-      </span>
-      <span
-        className={cn(rightSpacerClassName, 'shrink-0')}
-        aria-hidden="true"
-      />
-    </div>
-  );
-}
-
-/**
  * One box-and-whisker row: whisker from min to max, a filled box over the
  * middle 50%, a median tick, and hollow rings on the extremes. A whisker the
  * axis cuts off ends in a chevron instead of a ring. Pass `marks` as null for a

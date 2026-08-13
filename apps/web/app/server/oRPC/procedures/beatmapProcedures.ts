@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, not, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
@@ -14,20 +14,19 @@ import {
   type BeatmapPerformanceSummary,
   type BeatmapScorePercentilePoint,
   type BeatmapScoreSample,
-  type BeatmapTeamVsMarginSummary,
+  type BeatmapClosenessSummary,
   type BeatmapTierBreakdown,
   type BeatmapTierScoreSummary,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
+import { summarizeCloseness } from '@/lib/beatmaps/closeness';
 import { getRankRangeBucketKey } from '@/lib/beatmaps/rankRange';
-import { mostCommonDisplayMods } from '@/lib/utils/mods';
 import { tierNames } from '@/lib/utils/tierData';
 import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmapDifficulties';
 
 import { publicProcedure } from './base';
 import {
   STRIPPED_SCORE_MODS_MASK,
-  TEAM_VS_MARGIN_BUCKET_BOUNDS,
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
@@ -75,9 +74,6 @@ const TIER_BOUNDARIES_SQL = sql.raw(
 const TIER_BREAKDOWN_MAX_TIER_INDEX_SQL = sql.raw(
   String(TIER_BREAKDOWN_MAX_TIER_INDEX)
 );
-
-const roundToOneDecimal = (value: number): number =>
-  Math.round(value * 10) / 10;
 
 const playerCompactColumns = {
   id: schema.players.id,
@@ -127,28 +123,21 @@ export const getBeatmapStats = publicProcedure
       // Verified at every level: tournament, match, game (and, where scores
       // are involved, score). Matches the filter chain used by the original
       // queries below.
+      const fullyVerifiedGame = sql`(${eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)} AND ${eq(schema.matches.verificationStatus, VerificationStatus.Verified)} AND ${eq(schema.games.verificationStatus, VerificationStatus.Verified)})`;
       const verifiedGameFilter = and(
         eq(schema.games.beatmapId, beatmapId),
-        eq(schema.tournaments.verificationStatus, VerificationStatus.Verified),
-        eq(schema.matches.verificationStatus, VerificationStatus.Verified),
-        eq(schema.games.verificationStatus, VerificationStatus.Verified)
+        fullyVerifiedGame
       );
       const verifiedScoreFilter = and(
         verifiedGameFilter,
         eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
       );
 
-      // Per-game relative winning margin for verified TeamVs games with
-      // exactly two rosters: (winning - losing) / winning * 100. A winning
-      // score of 0 yields NULL (filtered out of the aggregate).
-      const teamVsMargins = context.db
-        .select({
-          marginPct: sql<
-            number | null
-          >`(MAX(${schema.gameRosters.score}) - MIN(${schema.gameRosters.score}))::float / NULLIF(MAX(${schema.gameRosters.score}), 0) * 100`.as(
-            'margin_pct'
-          ),
-        })
+      // Team-vs games the closeness summary would otherwise have used, held out
+      // only by verification. Counted so the card can say why a map has few
+      // games; never an input to the statistics themselves.
+      const excludedClosenessGames = context.db
+        .select({ gameId: schema.games.id })
         .from(schema.gameRosters)
         .innerJoin(schema.games, eq(schema.games.id, schema.gameRosters.gameId))
         .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
@@ -157,19 +146,15 @@ export const getBeatmapStats = publicProcedure
           eq(schema.tournaments.id, schema.matches.tournamentId)
         )
         .where(
-          and(verifiedGameFilter, eq(schema.games.teamType, TeamType.TeamVs))
+          and(
+            eq(schema.games.beatmapId, beatmapId),
+            eq(schema.games.teamType, TeamType.TeamVs),
+            not(fullyVerifiedGame)
+          )
         )
         .groupBy(schema.games.id)
         .having(sql`COUNT(*) = 2`)
-        .as('margins');
-
-      const teamVsMarginBucketCount = (bucketIndex: number) => {
-        const { lowerBound, upperBound } =
-          TEAM_VS_MARGIN_BUCKET_BOUNDS[bucketIndex];
-        return upperBound == null
-          ? sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} >= ${lowerBound})`
-          : sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} >= ${lowerBound} AND ${teamVsMargins.marginPct} < ${upperBound})`;
-      };
+        .as('excluded_closeness_games');
 
       const [
         beatmapRow,
@@ -182,7 +167,6 @@ export const getBeatmapStats = publicProcedure
         avgRows,
         modRows,
         topPerformerRows,
-        tournamentGameModRows,
         scoreDistributionRows,
         scoreCdfRows,
         scoreSampleRows,
@@ -192,7 +176,8 @@ export const getBeatmapStats = publicProcedure
         freemodPickRows,
         rankRangeModRows,
         tierBreakdownRows,
-        teamVsMarginRows,
+        closenessGameRows,
+        excludedClosenessGameRows,
       ] = await Promise.all([
         context.db
           .select({
@@ -246,9 +231,6 @@ export const getBeatmapStats = publicProcedure
         context.db
           .select({
             totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-            totalPlayerCount: sql<number>`COUNT(DISTINCT ${schema.gameScores.playerId})`,
-            firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
-            lastPlayedAt: sql<string>`MAX(${schema.games.startTime})`,
           })
           .from(schema.games)
           .innerJoin(
@@ -258,16 +240,6 @@ export const getBeatmapStats = publicProcedure
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
-          )
-          .leftJoin(
-            schema.gameScores,
-            and(
-              eq(schema.gameScores.gameId, schema.games.id),
-              eq(
-                schema.gameScores.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
           )
           .where(
             and(
@@ -283,12 +255,7 @@ export const getBeatmapStats = publicProcedure
               eq(schema.games.verificationStatus, VerificationStatus.Verified)
             )
           ),
-        // Usage credit, not a statistic. A tournament rejected for its format
-        // was still real-world play, so the map keeps credit for every game in
-        // it. A game rejected inside a *verified* tournament is different: a
-        // reviewer judged that game specifically, so it earns no credit.
-        // Rejection cascades downward, so the two cases are only separable by
-        // the tournament's status.
+        // Usage credit, not a statistic — see totalPlayedGameCount in lib/orpc/schema/beatmapStats.
         context.db
           .select({
             totalGameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
@@ -323,12 +290,8 @@ export const getBeatmapStats = publicProcedure
               )
             )
           ),
-        // Pool records and the subset of them the beatmap was actually played
-        // in. The headline pair does not filter on verification: the question
-        // is how often a pick happened at all, so both the numerator and the
-        // denominator have to count every tournament that recorded the map in
-        // its pool. `verifiedTournamentCount` reports the guaranteed subset
-        // beside it so no single displayed number mixes the two populations.
+        // Deliberately unfiltered by verification: the question is how often the map was picked at all.
+        // verifiedTournamentCount reports the verified subset separately.
         context.db
           .select({
             totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
@@ -389,13 +352,9 @@ export const getBeatmapStats = publicProcedure
           .select({
             tournamentId: schema.tournaments.id,
             tournamentName: schema.tournaments.name,
-            tournamentAbbreviation: schema.tournaments.abbreviation,
-            tournamentRuleset: schema.tournaments.ruleset,
-            tournamentLobbySize: schema.tournaments.lobbySize,
+            // Not in the response: firstPlayedAt and tournamentStartTime only
+            // bucket the tournament into a usageOverTime quarter.
             tournamentStartTime: schema.tournaments.startTime,
-            tournamentEndTime: schema.tournaments.endTime,
-            tournamentVerificationStatus: schema.tournaments.verificationStatus,
-            tournamentIsLazer: schema.tournaments.isLazer,
             tournamentRankRangeLowerBound:
               schema.tournaments.rankRangeLowerBound,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
@@ -428,23 +387,13 @@ export const getBeatmapStats = publicProcedure
           .groupBy(
             schema.tournaments.id,
             schema.tournaments.name,
-            schema.tournaments.abbreviation,
-            schema.tournaments.ruleset,
-            schema.tournaments.lobbySize,
             schema.tournaments.startTime,
-            schema.tournaments.endTime,
-            schema.tournaments.verificationStatus,
-            schema.tournaments.isLazer,
             schema.tournaments.rankRangeLowerBound
           )
           .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`)),
         context.db
           .select({
             tournamentId: schema.tournaments.id,
-            avgScore: sql<number>`AVG(${schema.gameScores.score})`,
-            // Pre-match ratings only, so the figure is a true point-in-time
-            // lobby strength; null when the processor has no adjustment.
-            avgRating: sql<number>`AVG(${schema.ratingAdjustments.ratingBefore})`,
             scoreCount: sql<number>`COUNT(*)`,
           })
           .from(schema.gameScores)
@@ -459,13 +408,6 @@ export const getBeatmapStats = publicProcedure
           .innerJoin(
             schema.tournaments,
             eq(schema.tournaments.id, schema.matches.tournamentId)
-          )
-          .leftJoin(
-            schema.ratingAdjustments,
-            and(
-              eq(schema.ratingAdjustments.playerId, schema.gameScores.playerId),
-              eq(schema.ratingAdjustments.matchId, schema.matches.id)
-            )
           )
           .where(
             and(
@@ -541,7 +483,6 @@ export const getBeatmapStats = publicProcedure
             scoreId: schema.gameScores.id,
             tournamentId: schema.tournaments.id,
             tournamentName: schema.tournaments.name,
-            tournamentAbbreviation: schema.tournaments.abbreviation,
           })
           .from(schema.gameScores)
           .innerJoin(
@@ -580,50 +521,6 @@ export const getBeatmapStats = publicProcedure
           )
           .orderBy(desc(schema.gameScores.score))
           .limit(TOP_PERFORMER_LIMIT),
-        context.db
-          .select({
-            tournamentId: schema.tournaments.id,
-            gameId: schema.games.id,
-            gameMods: schema.games.mods,
-            scoreMods: sql<
-              (number | null)[]
-            >`ARRAY_AGG(DISTINCT ${schema.gameScores.mods}) FILTER (WHERE ${schema.gameScores.mods} IS NOT NULL)`,
-          })
-          .from(schema.games)
-          .innerJoin(
-            schema.matches,
-            eq(schema.matches.id, schema.games.matchId)
-          )
-          .innerJoin(
-            schema.tournaments,
-            eq(schema.tournaments.id, schema.matches.tournamentId)
-          )
-          .leftJoin(
-            schema.gameScores,
-            and(
-              eq(schema.gameScores.gameId, schema.games.id),
-              eq(
-                schema.gameScores.verificationStatus,
-                VerificationStatus.Verified
-              )
-            )
-          )
-          .where(
-            and(
-              eq(schema.games.beatmapId, beatmapId),
-              eq(
-                schema.tournaments.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(
-                schema.matches.verificationStatus,
-                VerificationStatus.Verified
-              ),
-              eq(schema.games.verificationStatus, VerificationStatus.Verified)
-            )
-          )
-          .groupBy(schema.tournaments.id, schema.games.id, schema.games.mods)
-          .orderBy(asc(schema.games.id)),
         // Quartile summary of verified scores per normalized mod combination.
         context.db
           .select({
@@ -682,7 +579,6 @@ export const getBeatmapStats = publicProcedure
           .select({
             scoreId: schema.gameScores.id,
             score: schema.gameScores.score,
-            accuracy: schema.gameScores.accuracy,
             mods: schema.gameScores.mods,
             rating: schema.ratingAdjustments.ratingBefore,
             rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
@@ -885,22 +781,41 @@ export const getBeatmapStats = publicProcedure
           .where(verifiedScoreFilter)
           .groupBy(sql`tier_index`)
           .orderBy(asc(sql`tier_index`)),
-        // Team-vs closeness: median margin plus fixed bucket counts.
+        // One row per verified TeamVs game with two equal-sized rosters and a
+        // non-zero losing score — the three conditions that make
+        // ln(winning / losing) defined and comparable. The cohort key reads
+        // games.ruleset, which routinely disagrees with beatmaps.ruleset.
         context.db
           .select({
-            gameCount: sql<number>`COUNT(*) FILTER (WHERE ${teamVsMargins.marginPct} IS NOT NULL)`,
-            medianMargin: sql<
-              number | null
-            >`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${teamVsMargins.marginPct})`,
-            bucket0: teamVsMarginBucketCount(0),
-            bucket1: teamVsMarginBucketCount(1),
-            bucket2: teamVsMarginBucketCount(2),
-            bucket3: teamVsMarginBucketCount(3),
-            bucket4: teamVsMarginBucketCount(4),
-            bucket5: teamVsMarginBucketCount(5),
-            bucket6: teamVsMarginBucketCount(6),
+            logRatio: sql<number>`LN(MAX(${schema.gameRosters.score})::float8 / MIN(${schema.gameRosters.score}))`,
+            ruleset: schema.games.ruleset,
+            teamSize: sql<number>`LEAST(MAX(cardinality(${schema.gameRosters.roster})), 5)`,
           })
-          .from(teamVsMargins),
+          .from(schema.gameRosters)
+          .innerJoin(
+            schema.games,
+            eq(schema.games.id, schema.gameRosters.gameId)
+          )
+          .innerJoin(
+            schema.matches,
+            eq(schema.matches.id, schema.games.matchId)
+          )
+          .innerJoin(
+            schema.tournaments,
+            eq(schema.tournaments.id, schema.matches.tournamentId)
+          )
+          .where(
+            and(verifiedGameFilter, eq(schema.games.teamType, TeamType.TeamVs))
+          )
+          .groupBy(schema.games.id, schema.games.ruleset)
+          .having(
+            sql`COUNT(*) = 2
+              AND MAX(cardinality(${schema.gameRosters.roster})) = MIN(cardinality(${schema.gameRosters.roster}))
+              AND MIN(${schema.gameRosters.score}) > 0`
+          ),
+        context.db
+          .select({ gameCount: sql<number>`COUNT(*)` })
+          .from(excludedClosenessGames),
       ]);
 
       const beatmap = beatmapRow[0]!;
@@ -930,9 +845,6 @@ export const getBeatmapStats = publicProcedure
         pooledPlayedTournamentCount: Number(
           poolingRow[0]?.playedTournamentCount ?? 0
         ),
-        totalPlayerCount: Number(summaryRow[0]?.totalPlayerCount ?? 0),
-        firstPlayedAt: summaryRow[0]?.firstPlayedAt ?? null,
-        lastPlayedAt: summaryRow[0]?.lastPlayedAt ?? null,
       };
 
       // Helper to get quarter string from date
@@ -1017,64 +929,20 @@ export const getBeatmapStats = publicProcedure
         }
       }
 
-      const avgMap = new Map(
-        avgRows.map((row) => [
-          row.tournamentId,
-          {
-            avgScore: row.avgScore ? Math.round(row.avgScore) : null,
-            avgRating: row.avgRating ? Math.round(row.avgRating) : null,
-            scoreCount: Number(row.scoreCount),
-          },
-        ])
+      const scoreCountByTournament = new Map(
+        avgRows.map((row) => [row.tournamentId, Number(row.scoreCount)])
       );
 
-      // Resolve the most common mod per tournament from the mods players
-      // actually used (score-level), so freemod lobbies whose games record no
-      // mods don't report NM. See resolveGameModsFromScores / ModIconset.
-      const modsByTournament = new Map<
-        number,
-        Array<{ mods: Mods; scoreMods: number[] }>
-      >();
-      for (const row of tournamentGameModRows) {
-        const games = modsByTournament.get(row.tournamentId) ?? [];
-        games.push({
-          mods: row.gameMods,
-          scoreMods: (row.scoreMods ?? [])
-            .filter((m): m is number => m != null)
-            .map(Number),
-        });
-        modsByTournament.set(row.tournamentId, games);
-      }
-
       const tournaments: BeatmapTournamentUsage[] = tournamentRows.map(
-        (row) => {
-          const avgs = avgMap.get(row.tournamentId);
-          const commonMod = mostCommonDisplayMods(
-            modsByTournament.get(row.tournamentId) ?? []
-          );
-          return {
-            tournament: {
-              id: row.tournamentId,
-              name: row.tournamentName,
-              abbreviation: row.tournamentAbbreviation,
-              ruleset: row.tournamentRuleset as Ruleset,
-              lobbySize: row.tournamentLobbySize,
-              startTime: row.tournamentStartTime,
-              endTime: row.tournamentEndTime,
-              verificationStatus:
-                row.tournamentVerificationStatus as VerificationStatus,
-              isLazer: row.tournamentIsLazer,
-            },
-            gameCount: Number(row.gameCount),
-            scoreCount: avgs?.scoreCount ?? 0,
-            mostCommonMod: commonMod.mods,
-            mostCommonModFreemod: commonMod.freemod,
-            firstPlayedAt: row.firstPlayedAt,
-            rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-            avgRating: avgs?.avgRating ?? null,
-            avgScore: avgs?.avgScore ?? null,
-          };
-        }
+        (row) => ({
+          tournament: {
+            id: row.tournamentId,
+            name: row.tournamentName,
+          },
+          gameCount: Number(row.gameCount),
+          scoreCount: scoreCountByTournament.get(row.tournamentId) ?? 0,
+          rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+        })
       );
 
       const totalModScores = modRows.reduce(
@@ -1110,7 +978,6 @@ export const getBeatmapStats = publicProcedure
           tournament: {
             id: row.tournamentId,
             name: row.tournamentName,
-            abbreviation: row.tournamentAbbreviation,
           },
         })
       );
@@ -1142,7 +1009,6 @@ export const getBeatmapStats = publicProcedure
           .sort((left, right) => left.scoreId - right.scoreId)
           .map((row) => ({
             score: row.score,
-            accuracy: Math.min(100, Math.max(0, row.accuracy)),
             // Pre-match rating only; null is expected on recent data. Never
             // fall back to the player's current rating here.
             rating: row.rating != null ? Number(row.rating) : null,
@@ -1184,10 +1050,7 @@ export const getBeatmapStats = publicProcedure
         }))
       );
 
-      // The clamped width_bucket returns 0..7, indexing tierNames directly
-      // (0 = Bronze, covering everything below the first boundary; 7 =
-      // Grandmaster and above). Sparse tiers are hidden from the rows but
-      // still counted in ratedScoreCount.
+      // Sparse tiers are dropped from the rows but still counted in ratedScoreCount.
       let ratedScoreCount = 0;
       const tiers: BeatmapTierScoreSummary[] = [];
       for (const row of tierBreakdownRows) {
@@ -1223,28 +1086,33 @@ export const getBeatmapStats = publicProcedure
         tiers,
       };
 
-      const marginRow = teamVsMarginRows[0];
-      const teamVsGameCount = Number(marginRow?.gameCount ?? 0);
-      const marginBucketCounts = [
-        Number(marginRow?.bucket0 ?? 0),
-        Number(marginRow?.bucket1 ?? 0),
-        Number(marginRow?.bucket2 ?? 0),
-        Number(marginRow?.bucket3 ?? 0),
-        Number(marginRow?.bucket4 ?? 0),
-        Number(marginRow?.bucket5 ?? 0),
-        Number(marginRow?.bucket6 ?? 0),
-      ];
-      const teamVsMarginSummary: BeatmapTeamVsMarginSummary = {
-        gameCount: teamVsGameCount,
-        // Null check, not truthiness: a true median margin of 0 is valid.
-        medianMarginPercentage:
-          marginRow?.medianMargin != null
-            ? roundToOneDecimal(Number(marginRow.medianMargin))
-            : null,
-        buckets: TEAM_VS_MARGIN_BUCKET_BOUNDS.map((bounds, index) => ({
-          lowerBound: bounds.lowerBound,
-          upperBound: bounds.upperBound,
-          gameCount: marginBucketCounts[index],
+      const closenessSummary = summarizeCloseness(
+        closenessGameRows.map((row) => ({
+          logRatio: Number(row.logRatio),
+          ruleset: row.ruleset as Ruleset,
+          teamSize: Number(row.teamSize),
+        })),
+        Number(excludedClosenessGameRows[0]?.gameCount ?? 0)
+      );
+      // meanZ and shrunkZ stay internal: the interval already carries the
+      // uncertainty and neither reads as anything on its own.
+      const closeness: BeatmapClosenessSummary = {
+        gameCount: closenessSummary.gameCount,
+        excludedUnverifiedGameCount:
+          closenessSummary.excludedUnverifiedGameCount,
+        cohort: closenessSummary.cohort,
+        reliability: closenessSummary.reliability,
+        percentile: closenessSummary.percentile,
+        percentileInterval: closenessSummary.percentileInterval,
+        bins: closenessSummary.bins,
+        baselineZDeciles: closenessSummary.baselineZDeciles
+          ? [...closenessSummary.baselineZDeciles]
+          : null,
+        games: closenessSummary.games.map((game) => ({
+          logRatio: game.logRatio,
+          z: game.z,
+          ruleset: game.ruleset,
+          teamSize: game.teamSize,
         })),
       };
 
@@ -1312,7 +1180,7 @@ export const getBeatmapStats = publicProcedure
         freemodPicks,
         rankRangeModDistribution,
         tierBreakdown,
-        teamVsMargins: teamVsMarginSummary,
+        closeness,
       };
 
       return BeatmapStatsResponseSchema.parse(response);

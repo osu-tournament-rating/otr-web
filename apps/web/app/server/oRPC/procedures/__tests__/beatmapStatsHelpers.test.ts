@@ -4,7 +4,6 @@ import { Mods } from '@otr/core/osu';
 
 import { getTierFromRating, tierData } from '@/lib/utils/tierData';
 import {
-  TEAM_VS_MARGIN_BUCKET_BOUNDS,
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
@@ -248,19 +247,6 @@ describe('tierBreakdownTierFromRating', () => {
       expect(tierBreakdownTierFromRating(rating)).toBe(
         tierNameFromRatingArithmetic(rating)
       );
-    }
-  });
-});
-
-describe('TEAM_VS_MARGIN_BUCKET_BOUNDS', () => {
-  test('is contiguous, ascending, and open-ended on the last bucket', () => {
-    expect(TEAM_VS_MARGIN_BUCKET_BOUNDS[0].lowerBound).toBe(0);
-    expect(TEAM_VS_MARGIN_BUCKET_BOUNDS.at(-1)?.upperBound).toBeNull();
-
-    for (let i = 0; i < TEAM_VS_MARGIN_BUCKET_BOUNDS.length - 1; i++) {
-      const current = TEAM_VS_MARGIN_BUCKET_BOUNDS[i];
-      const next = TEAM_VS_MARGIN_BUCKET_BOUNDS[i + 1];
-      expect(current.upperBound).toBe(next.lowerBound);
     }
   });
 });

@@ -81,10 +81,7 @@ export default async function BeatmapPage({ params }: PageProps) {
   const hasNoVerifiedData =
     stats.tournaments.length === 0 && totalVerifiedScoreCount === 0;
 
-  // Two returns on purpose: the empty-state branch below drops every
-  // analytics card but keeps BeatmapHeader and BeatmapOverviewCard. Those two
-  // are duplicated in the normal branch — change props on one and change them
-  // on the other.
+  // BeatmapHeader and BeatmapOverviewCard are duplicated in both branches — keep their props in sync.
   if (hasNoVerifiedData) {
     return (
       <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
@@ -93,9 +90,6 @@ export default async function BeatmapPage({ params }: PageProps) {
           relatedDifficulties={stats.relatedDifficulties}
         />
         <div className="grid gap-4 lg:grid-cols-3">
-          {/* Overview first in DOM so it stacks directly under the header on
-              mobile, and so the overview rail lands on the left at lg — the
-              same side it sits on in the populated layout. */}
           <BeatmapOverviewCard
             beatmap={stats.beatmap}
             usage={stats.usageOverTime}
@@ -127,10 +121,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      {/* The overview rail leads the row; distributions takes the remaining two
-          of the three columns instead of sitting alongside the record tables
-          below. Both stretch to the taller column so the row ends on one
-          line. */}
       <div className="grid gap-4 lg:grid-cols-3">
         <BeatmapOverviewCard
           beatmap={stats.beatmap}
@@ -161,7 +151,7 @@ export default async function BeatmapPage({ params }: PageProps) {
           sample={stats.scoreSample}
         />
         <BeatmapPerformanceCard performance={stats.performance} />
-        <BeatmapMarginCard margins={stats.teamVsMargins} />
+        <BeatmapMarginCard closeness={stats.closeness} />
         <BeatmapTierBreakdownCard
           className="lg:col-span-2"
           tierBreakdown={stats.tierBreakdown}

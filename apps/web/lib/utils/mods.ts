@@ -436,39 +436,3 @@ export function resolveGameModsFromScores(
     scores
   );
 }
-
-/**
- * Picks the most common display mods across a set of games, each resolved via
- * {@link resolveGameModsFromScores}. Ties resolve to the first-seen combination,
- * mirroring SQL MODE() determinism over ordered input. Returns NoMod (NM) for an
- * empty set.
- */
-export function mostCommonDisplayMods(
-  games: Array<{ mods: Mods; scoreMods: number[] }>
-): { mods: Mods; freemod: boolean } {
-  const counts = new Map<
-    string,
-    { value: { mods: Mods; freemod: boolean }; count: number }
-  >();
-
-  for (const game of games) {
-    const resolved = resolveGameModsFromScores(game.mods, game.scoreMods);
-    const key = resolved.freemod ? 'fm' : String(resolved.mods);
-    const entry = counts.get(key);
-    if (entry) {
-      entry.count += 1;
-    } else {
-      counts.set(key, { value: resolved, count: 1 });
-    }
-  }
-
-  let best: { value: { mods: Mods; freemod: boolean }; count: number } | null =
-    null;
-  for (const entry of counts.values()) {
-    if (!best || entry.count > best.count) {
-      best = entry;
-    }
-  }
-
-  return best?.value ?? { mods: Mods.None, freemod: false };
-}

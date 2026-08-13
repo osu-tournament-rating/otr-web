@@ -8,7 +8,6 @@ import {
   CreatedUpdatedOmit,
   RulesetSchema,
   ScoreGradeSchema,
-  VerificationStatusSchema,
 } from './constants';
 import { PlayerCompactSchema } from './playerStats';
 
@@ -26,23 +25,11 @@ export const BeatmapTournamentUsageSchema = z.object({
   tournament: z.object({
     id: z.number().int().positive(),
     name: z.string(),
-    abbreviation: z.string().nullable(),
-    ruleset: RulesetSchema,
-    lobbySize: z.number().int().positive(),
-    startTime: z.string().nullable(),
-    endTime: z.string().nullable(),
-    verificationStatus: VerificationStatusSchema,
-    isLazer: z.boolean(),
   }),
   gameCount: z.number().int().nonnegative(),
   /** Verified scores set on this beatmap within the tournament. */
   scoreCount: z.number().int().nonnegative(),
-  mostCommonMod: z.number().int().nonnegative(),
-  mostCommonModFreemod: z.boolean(),
-  firstPlayedAt: z.string().nullable(),
   rankRangeLowerBound: z.number().int().positive(),
-  avgRating: z.number().nullable(),
-  avgScore: z.number().int().nonnegative().nullable(),
 });
 
 export const BeatmapUsagePointSchema = z.object({
@@ -71,7 +58,6 @@ export const BeatmapTopPerformerSchema = z.object({
   tournament: z.object({
     id: z.number().int().positive(),
     name: z.string(),
-    abbreviation: z.string().nullable(),
   }),
 });
 
@@ -86,10 +72,7 @@ export const BeatmapStatsSummarySchema = z.object({
    * Games credited as real-world usage: fully verified games, plus every game
    * in a tournament that is not verified. Tournaments get rejected for format
    * reasons while still being genuine play, so the map keeps credit for those.
-   *
-   * A game rejected on its own merits inside a verified tournament is NOT
-   * credited — there the reviewer judged that specific game, and the carve-out
-   * does not apply. Never use this as a statistical population.
+   * Never use this as a statistical population.
    */
   totalPlayedGameCount: z.number().int().nonnegative(),
   /**
@@ -97,9 +80,6 @@ export const BeatmapStatsSummarySchema = z.object({
    * `totalTournamentCount`, so the two form a pick rate.
    */
   pooledPlayedTournamentCount: z.number().int().nonnegative(),
-  totalPlayerCount: z.number().int().nonnegative(),
-  firstPlayedAt: z.string().nullable(),
-  lastPlayedAt: z.string().nullable(),
 });
 
 const BeatmapsetForStatsSchema = beatmapsetSelectSchema
@@ -146,11 +126,6 @@ export const BeatmapScorePercentilePointSchema = z.object({
 
 export const BeatmapScoreSamplePointSchema = z.object({
   score: z.number().int().nonnegative(),
-  /**
-   * Raw stored fraction (0–1) from gameScores.accuracy, matching
-   * `topPerformers[].accuracy` on this response; multiply by 100 for display.
-   */
-  accuracy: z.number().min(0).max(100),
   /**
    * Pre-match rating (rating_adjustments.rating_before); null is expected and
    * clusters on recent data.
@@ -223,9 +198,9 @@ export const BeatmapTierScoreSummarySchema = z.object({
   p75Score: z.number().int().nonnegative(),
   maxScore: z.number().int().nonnegative(),
   /**
-   * Accuracy quartiles as raw stored fractions (0–1), matching
-   * `scoreSample.points[].accuracy`. All five are null together, when no row in
-   * the tier has accuracy recorded.
+   * Accuracy quartiles as raw stored fractions (0–1), straight from
+   * `gameScores.accuracy`. All five are null together, when no row in the tier
+   * has accuracy recorded.
    */
   minAccuracy: z.number().min(0).max(1).nullable(),
   p25Accuracy: z.number().min(0).max(1).nullable(),
@@ -246,21 +221,120 @@ export const BeatmapTierBreakdownSchema = z.object({
   tiers: z.array(BeatmapTierScoreSummarySchema),
 });
 
-export const BeatmapMarginBucketSchema = z.object({
-  /** Inclusive lower bound of the relative margin bucket, percent. */
-  lowerBound: z.number().min(0),
-  /** Exclusive upper bound, percent; null on the open-ended last bucket. */
-  upperBound: z.number().nullable(),
-  gameCount: z.number().int().nonnegative(),
-});
-
-export const BeatmapTeamVsMarginSummarySchema = z.object({
-  /** Verified TeamVs games on this map with exactly two rosters. */
-  gameCount: z.number().int().nonnegative(),
-  /** Median relative margin percent; null when gameCount is 0. */
-  medianMarginPercentage: z.number().nullable(),
-  /** Fixed ascending buckets; always all buckets, possibly 0. */
-  buckets: z.array(BeatmapMarginBucketSchema),
+/**
+ * Cohort-standardized closeness of the team-vs games played on this beatmap.
+ *
+ * Each qualifying game contributes `logRatio = ln(winning score / losing
+ * score)`, standardized against a checked-in baseline for that game's own
+ * `(games.ruleset, team size)` cohort. Raw score margins are not comparable
+ * across rulesets — the median winning margin is 24.8% in osu! and 1.1% in
+ * mania 4K — so the standardized scale is the only one on which a map's games
+ * pool into a single figure. Baselines live in `lib/beatmaps/closeness-baselines`
+ * with their fit date and refit SQL.
+ */
+export const BeatmapClosenessSummarySchema = z.object({
+  gameCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe(
+      'Fully verified TeamVs games on this beatmap with exactly two equal-sized rosters and a non-zero losing score. The population behind every other field here.'
+    ),
+  excludedUnverifiedGameCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe(
+      'Two-roster TeamVs games on this beatmap that are not verified at every level (tournament, match and game). A history figure only: it explains why gameCount can be small, and is never an input to any statistic in this object.'
+    ),
+  cohort: z
+    .object({
+      ruleset: RulesetSchema.describe(
+        "The dominant cohort's games.ruleset, which can disagree with beatmap.ruleset — mania maps stored as ManiaOther are routinely played as 4K."
+      ),
+      teamSize: z
+        .number()
+        .int()
+        .min(1)
+        .max(5)
+        .describe('Players per team, capped at 5; a 6v6 game reports 5.'),
+      baselineScope: z
+        .enum(['cohort', 'ruleset', 'global'])
+        .describe(
+          'Which population the baseline was fitted over. Cohorts with too few corpus games have no row of their own and fall back to their ruleset, then to the whole corpus.'
+        ),
+      meanLogRatio: z
+        .number()
+        .describe('Baseline mean of ln(winning score / losing score).'),
+      sdLogRatio: z
+        .number()
+        .positive()
+        .describe(
+          'Baseline sample SD of ln(winning score / losing score). Read a standardized value back as a native winning-margin percent with `(1 - exp(-(z * sdLogRatio + meanLogRatio))) * 100`.'
+        ),
+    })
+    .nullable()
+    .describe(
+      "The map's dominant (most-played) cohort and the baseline row that resolved for it. Ties break to the lowest ruleset, then the lowest team size. Null only when gameCount is 0."
+    ),
+  reliability: z
+    .number()
+    .min(0)
+    .max(1)
+    .nullable()
+    .describe(
+      "`gameCount / (gameCount + k)`, the weight the map's own games carry against the cohort mean; `k` is the fitted shrinkage constant of the cohorts played. Null only when gameCount is 0."
+    ),
+  percentile: z
+    .number()
+    .min(0)
+    .max(100)
+    .nullable()
+    .describe(
+      'Share of comparable maps whose typical score gap is smaller, 0-100: higher means more one-sided. Null unless gameCount is at least 10 and reliability is at least 0.5, below which the estimate is noise.'
+    ),
+  percentileInterval: z
+    .tuple([z.number().min(0).max(100), z.number().min(0).max(100)])
+    .nullable()
+    .describe(
+      'Ascending 80% interval around percentile, on the same 0-100 scale. Null under the same gate as percentile.'
+    ),
+  bins: z
+    .array(z.number().int().nonnegative())
+    .describe(
+      "Counts of this map's games between baselineZDeciles, ten entries: a map that plays exactly like its cohort reads as ten equal bars. Empty below 10 games."
+    ),
+  baselineZDeciles: z
+    .array(z.number())
+    .length(9)
+    .nullable()
+    .describe(
+      "The dominant cohort's q10..q90 standardized cut points, ascending. Non-null whenever gameCount is at least 1."
+    ),
+  games: z
+    .array(
+      z.object({
+        logRatio: z
+          .number()
+          .nonnegative()
+          .describe('ln(winning score / losing score) for this game.'),
+        z: z
+          .number()
+          .describe(
+            "logRatio standardized against this game's own cohort baseline, not the dominant one."
+          ),
+        ruleset: RulesetSchema.describe('games.ruleset for this game.'),
+        teamSize: z
+          .number()
+          .int()
+          .min(1)
+          .max(5)
+          .describe('Players per team, capped at 5.'),
+      })
+    )
+    .describe(
+      'One row per qualifying game, so sparse maps can plot their games individually. Unordered.'
+    ),
 });
 
 export const BeatmapStatsResponseSchema = z.object({
@@ -279,7 +353,7 @@ export const BeatmapStatsResponseSchema = z.object({
   /** Bucket display order; buckets with no verified scores are omitted. */
   rankRangeModDistribution: z.array(BeatmapRankRangeModDistributionSchema),
   tierBreakdown: BeatmapTierBreakdownSchema,
-  teamVsMargins: BeatmapTeamVsMarginSummarySchema,
+  closeness: BeatmapClosenessSummarySchema,
 });
 
 export type BeatmapStatsRequest = z.infer<typeof BeatmapStatsRequestSchema>;
@@ -321,8 +395,7 @@ export type BeatmapTierScoreSummary = z.infer<
   typeof BeatmapTierScoreSummarySchema
 >;
 export type BeatmapTierBreakdown = z.infer<typeof BeatmapTierBreakdownSchema>;
-export type BeatmapMarginBucket = z.infer<typeof BeatmapMarginBucketSchema>;
-export type BeatmapTeamVsMarginSummary = z.infer<
-  typeof BeatmapTeamVsMarginSummarySchema
+export type BeatmapClosenessSummary = z.infer<
+  typeof BeatmapClosenessSummarySchema
 >;
 export type BeatmapStatsResponse = z.infer<typeof BeatmapStatsResponseSchema>;

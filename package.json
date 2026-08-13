@@ -5,9 +5,6 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "zrender": "5.6.1"
-  },
   "scripts": {
     "lint": "bun run --filter '*' --parallel lint",
     "build": "bun run --filter '*' --parallel build",

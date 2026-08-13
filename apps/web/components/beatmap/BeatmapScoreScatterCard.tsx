@@ -311,6 +311,13 @@ export default function BeatmapScoreScatterCard({
       ? `${sample.points.length} of ${formatChartNumber(sample.totalScoreCount)} scores`
       : `${formatChartNumber(sample.points.length)} scores`;
 
+  const footnote: string[] = [];
+  if (unratedCount > 0) {
+    footnote.push(
+      `${formatChartNumber(unratedCount)} scores without pre-match ratings hidden`
+    );
+  }
+
   return (
     <SectionCard data-testid="beatmap-score-scatter" className={cn(className)}>
       <SectionHeader icon={ChartScatter} title="Score scatter" meta={meta} />
@@ -452,12 +459,11 @@ export default function BeatmapScoreScatterCard({
               </ScatterChart>
             </ChartContainer>
           )}
-          <p className="text-xs text-muted-foreground">
-            Pre-match ratings · recent scores may not have ratings yet
-            {unratedCount > 0
-              ? ` · ${formatChartNumber(unratedCount)} scores without ratings hidden`
-              : ''}
-          </p>
+          {footnote.length > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {footnote.join(' · ')}
+            </p>
+          ) : null}
         </div>
       )}
     </SectionCard>

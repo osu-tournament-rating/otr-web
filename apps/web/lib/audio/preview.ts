@@ -52,11 +52,3 @@ export function sliderPercentToVolume(percent: number): number {
 
   return (Math.max(0, Math.min(100, percent)) / 100) * MAX_PREVIEW_VOLUME;
 }
-
-export function getAudioPreviewTitle(track: AudioPreviewTrack): string {
-  if (track.artist && track.title) return `${track.artist} – ${track.title}`;
-  if (track.title) return track.title;
-  if (track.artist) return track.artist;
-
-  return `Beatmapset ${track.beatmapsetOsuId}`;
-}

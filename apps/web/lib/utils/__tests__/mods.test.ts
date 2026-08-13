@@ -11,7 +11,6 @@ import {
   getBeatmapModLabel,
   getModColor,
   getModForegroundColor,
-  mostCommonDisplayMods,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   resolveGameModsFromScores,
@@ -328,37 +327,5 @@ describe('resolveGameModsFromScores', () => {
       mods: Mods.HardRock,
       freemod: false,
     });
-  });
-});
-
-describe('mostCommonDisplayMods', () => {
-  it('returns NoMod for no games', () => {
-    expect(mostCommonDisplayMods([])).toEqual({
-      mods: Mods.None,
-      freemod: false,
-    });
-  });
-
-  it('reports HD across freemod games that all played HD', () => {
-    expect(
-      mostCommonDisplayMods([
-        { mods: Mods.None, scoreMods: [Mods.Hidden, Mods.Hidden] },
-        { mods: Mods.None, scoreMods: [Mods.Hidden] },
-        {
-          mods: Mods.None,
-          scoreMods: [Mods.Hidden, Mods.Hidden | Mods.NoFail],
-        },
-      ])
-    ).toEqual({ mods: Mods.Hidden, freemod: false });
-  });
-
-  it('picks the most frequent effective mod across games', () => {
-    expect(
-      mostCommonDisplayMods([
-        { mods: Mods.HardRock, scoreMods: [] },
-        { mods: Mods.HardRock, scoreMods: [] },
-        { mods: Mods.None, scoreMods: [Mods.Hidden] },
-      ])
-    ).toEqual({ mods: Mods.HardRock, freemod: false });
   });
 });

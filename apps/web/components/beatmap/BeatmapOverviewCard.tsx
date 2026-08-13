@@ -33,11 +33,6 @@ import { cn } from '@/lib/utils';
 
 const ATTRIBUTE_SCALE_MAX = 10;
 
-/**
- * The map's difficulty attributes and its tournament usage in one rail card.
- * They are separate subjects, so each keeps its own labelled group inside the
- * card rather than melting into a single list.
- */
 export default function BeatmapOverviewCard({
   beatmap,
   usage,
@@ -249,9 +244,6 @@ function ActivityGroup({
         </Tile>
 
         <dl className="grid grid-cols-2 gap-2">
-          {/* This tile and "Games" both lead with an all-inclusive count and
-              name the verified subset underneath. Same grammar in both, so the
-              reader learns the pattern once. */}
           <ActivityStat
             testId="beatmap-pool-records"
             icon={WavesLadder}
@@ -264,9 +256,8 @@ function ActivityGroup({
             testId="beatmap-played-tournaments"
             icon={Trophy}
             label="Pick rate"
-            /* Ratio on the value line, percentage in the sublabel: the combined
-               string needs ~150px and the tile is 138-142px, so it wrapped to two
-               lines on desktop and made this tile taller than its row-mate. */
+            /* Split across value and sublabel — the combined string wraps and
+               unbalances the tile row. */
             value={pickRate === null ? '—' : `${pickRate}%`}
             sublabel={
               pickRate === null

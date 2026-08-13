@@ -275,7 +275,12 @@ export default function BeatmapScoreDistributionCard({
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="px-4 py-4">
-            <Eyebrow>Mod</Eyebrow>
+            <div className="flex items-baseline justify-between gap-2">
+              <Eyebrow>Mod</Eyebrow>
+              <span className="text-xs text-muted-foreground">
+                fewer than 5 scores hidden
+              </span>
+            </div>
             {hasBoxData ? (
               <div
                 className={cn(
@@ -301,27 +306,16 @@ export default function BeatmapScoreDistributionCard({
               <EmptyState>No verified scores yet.</EmptyState>
             )}
             {hasBoxData ? (
-              <>
-                <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Mod combinations with fewer than 5 scores hidden.
-                </p>
-              </>
+              <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
             ) : null}
           </div>
 
           <div className="border-t px-4 py-4 xl:border-t-0">
             <Eyebrow>Percentiles</Eyebrow>
             {hasCurveData ? (
-              <>
-                <div className="mt-3">
-                  <PercentileCurve percentiles={percentiles} />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Each point shows the share of tournament plays a score beats.
-                  Steep = scores bunched together, flat = wide gaps.
-                </p>
-              </>
+              <div className="mt-3">
+                <PercentileCurve percentiles={percentiles} />
+              </div>
             ) : (
               <EmptyState>No verified scores yet.</EmptyState>
             )}

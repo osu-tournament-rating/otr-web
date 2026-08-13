@@ -1,4 +1,3 @@
-import { VerificationStatus } from '@otr/core/osu';
 import { describe, expect, test } from 'bun:test';
 
 import type {
@@ -23,23 +22,11 @@ function pool(
     tournament: {
       id: 1,
       name: 'Test Cup',
-      abbreviation: 'TC',
-      ruleset: 0,
-      lobbySize: 1,
-      startTime: null,
-      endTime: null,
-      verificationStatus: VerificationStatus.Verified,
-      isLazer: false,
       ...tournament,
     },
     gameCount: 0,
     scoreCount: 0,
-    mostCommonMod: 0,
-    mostCommonModFreemod: false,
-    firstPlayedAt: null,
     rankRangeLowerBound: 1,
-    avgRating: null,
-    avgScore: null,
     ...rest,
   };
 }

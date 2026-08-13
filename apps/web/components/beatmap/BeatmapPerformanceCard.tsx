@@ -69,7 +69,11 @@ export default function BeatmapPerformanceCard({
       <SectionHeader
         icon={Target}
         title="Misses"
-        meta={`${formatChartNumber(scoreCount)} scores`}
+        meta={
+          excludedMissCount > 0
+            ? `${formatChartNumber(missDataScoreCount)} of ${formatChartNumber(scoreCount)} scores`
+            : `${formatChartNumber(scoreCount)} scores`
+        }
       />
 
       {scoreCount === 0 ? (
@@ -82,58 +86,50 @@ export default function BeatmapPerformanceCard({
                 No miss data recorded for these scores.
               </p>
             ) : (
-              <>
-                <ChartContainer
-                  config={missChartConfig}
-                  className="h-[140px] w-full"
+              <ChartContainer
+                config={missChartConfig}
+                className="h-[140px] w-full"
+              >
+                <BarChart
+                  data={missChartData}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
                 >
-                  <BarChart
-                    data={missChartData}
-                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      interval={0}
-                    />
-                    <YAxis
-                      width={32}
-                      allowDecimals={false}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={formatChartNumber}
-                    />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          labelFormatter={(label) =>
-                            `${label} ${label === '1' ? 'miss' : 'misses'}`
-                          }
-                          formatter={(value) => (
-                            <span className="font-medium text-foreground">
-                              {formatChartNumber(Number(value))} scores
-                            </span>
-                          )}
-                        />
-                      }
-                    />
-                    <Bar
-                      dataKey="scoreCount"
-                      fill="var(--chart-1)"
-                      radius={CHART_CONSTANTS.BORDER_RADIUS}
-                      isAnimationActive={false}
-                    />
-                  </BarChart>
-                </ChartContainer>
-                {excludedMissCount > 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {formatChartNumber(excludedMissCount)} scores without miss
-                    data excluded
-                  </p>
-                ) : null}
-              </>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                  />
+                  <YAxis
+                    width={32}
+                    allowDecimals={false}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={formatChartNumber}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(label) =>
+                          `${label} ${label === '1' ? 'miss' : 'misses'}`
+                        }
+                        formatter={(value) => (
+                          <span className="font-medium text-foreground">
+                            {formatChartNumber(Number(value))} scores
+                          </span>
+                        )}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey="scoreCount"
+                    fill="var(--chart-1)"
+                    radius={CHART_CONSTANTS.BORDER_RADIUS}
+                    isAnimationActive={false}
+                  />
+                </BarChart>
+              </ChartContainer>
             )}
           </div>
         </div>

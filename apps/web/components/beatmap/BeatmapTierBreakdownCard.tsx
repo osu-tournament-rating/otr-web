@@ -323,9 +323,7 @@ export default function BeatmapTierBreakdownCard({
   const isNarrow = useMediaQuery('(max-width: 639px)');
   const maxTicks = isNarrow ? 4 : 6;
 
-  // Both columns zoom onto their boxes rather than their whiskers: one quit run
-  // sets a tier's minimum, and anchoring there flattens every box against the
-  // far edge. Whiskers falling outside end in a chevron instead.
+  // Zoomed to the boxes — see getBoxPlotAxis.
   const scoreAxis = React.useMemo(
     () => getBoxPlotAxis(tiers.map(toScoreQuartiles), maxTicks),
     [tiers, maxTicks]
@@ -352,7 +350,7 @@ export default function BeatmapTierBreakdownCard({
       <SectionHeader
         icon={Medal}
         title="Tier breakdown"
-        meta={`${formatChartNumber(ratedScoreCount)} rated scores`}
+        meta={`${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores rated`}
       />
 
       {tiers.length === 0 ? (
@@ -395,7 +393,8 @@ export default function BeatmapTierBreakdownCard({
           </div>
 
           <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">
-            {`Pre-match rating at time of play · ${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores have ratings · tiers with fewer than 5 scores hidden`}
+            Pre-match rating at time of play · tiers with fewer than 5 scores
+            hidden
           </p>
         </>
       )}

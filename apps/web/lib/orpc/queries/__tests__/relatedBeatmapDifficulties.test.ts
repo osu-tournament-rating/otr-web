@@ -60,9 +60,6 @@ describe('beatmap stats summary contract', () => {
       verifiedTournamentCount: 3,
       totalPlayedGameCount: 13,
       pooledPlayedTournamentCount: 3,
-      totalPlayerCount: 12,
-      firstPlayedAt: null,
-      lastPlayedAt: null,
     });
 
     expect(summary.totalTournamentCount).toBe(4);
@@ -80,9 +77,6 @@ describe('beatmap stats summary contract', () => {
       verifiedTournamentCount: 6,
       totalPlayedGameCount: 92,
       pooledPlayedTournamentCount: 7,
-      totalPlayerCount: 40,
-      firstPlayedAt: null,
-      lastPlayedAt: null,
     });
 
     expect(summary.totalPlayedGameCount).toBeGreaterThan(
