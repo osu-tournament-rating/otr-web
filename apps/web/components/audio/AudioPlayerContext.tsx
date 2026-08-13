@@ -46,6 +46,12 @@ interface AudioPlayerContextType {
   togglePlayPause: (source: AudioPreviewSource) => void;
   setVolume: (volume: number) => void;
   seek: (time: number) => void;
+  /**
+   * The live element, for readers that need a position sampled per animation
+   * frame. `timeupdate` only fires a few times a second, which is enough to
+   * label the position but visibly steps a progress bar drawn from it.
+   */
+  getAudioElement: () => HTMLAudioElement | null;
 }
 
 const initialState: AudioPlayerState = {
@@ -66,6 +72,7 @@ export const AudioPlayerContext = createContext<AudioPlayerContextType>({
   togglePlayPause: () => {},
   setVolume: () => {},
   seek: () => {},
+  getAudioElement: () => null,
 });
 
 /**
@@ -285,9 +292,29 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTime(safeTime);
   }, []);
 
+  const getAudioElement = useCallback(() => audioRef.current, []);
+
   const value = useMemo(
-    () => ({ state, play, pause, close, togglePlayPause, setVolume, seek }),
-    [state, play, pause, close, togglePlayPause, setVolume, seek]
+    () => ({
+      state,
+      play,
+      pause,
+      close,
+      togglePlayPause,
+      setVolume,
+      seek,
+      getAudioElement,
+    }),
+    [
+      state,
+      play,
+      pause,
+      close,
+      togglePlayPause,
+      setVolume,
+      seek,
+      getAudioElement,
+    ]
   );
 
   return (

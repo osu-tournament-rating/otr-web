@@ -5,7 +5,8 @@ import {
   Ruleset,
 } from './fixtures/test-config';
 
-const SEARCH_DEBOUNCE_SETTLE_MS = 600;
+/** FILTER_APPLY_DELAY plus room for the navigation it schedules. */
+const SEARCH_DEBOUNCE_SETTLE_MS = 800;
 
 test.describe('Tournaments', () => {
   test.describe('Listing and Search', () => {

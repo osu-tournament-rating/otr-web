@@ -13,10 +13,13 @@ import {
 export default function BeatmapTopMods({
   mods,
   fixedWidth = false,
+  showIcon = true,
 }: {
   mods: NonNullable<BeatmapListItem['topMods']>;
   /** Reserve a fixed slot so mods line up across compact-layout rows. */
   fixedWidth?: boolean;
+  /** Drop the leading glyph where a neighboring column already carries numbers. */
+  showIcon?: boolean;
 }) {
   if (mods.length === 0) {
     return (
@@ -27,7 +30,9 @@ export default function BeatmapTopMods({
           fixedWidth && 'w-52'
         )}
       >
-        <Layers className="size-4 shrink-0" aria-hidden="true" />
+        {showIcon ? (
+          <Layers className="size-4 shrink-0" aria-hidden="true" />
+        ) : null}
         <span className="text-xs">No mod data</span>
       </div>
     );
@@ -43,7 +48,9 @@ export default function BeatmapTopMods({
         fixedWidth && 'w-52'
       )}
     >
-      <Layers className="size-4 shrink-0" aria-hidden="true" />
+      {showIcon ? (
+        <Layers className="size-4 shrink-0" aria-hidden="true" />
+      ) : null}
       <ul
         data-testid="beatmap-top-mods"
         aria-label="Top mods by score usage"

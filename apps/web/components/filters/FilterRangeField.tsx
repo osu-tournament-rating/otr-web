@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 
+import { setFilterSliderDragging } from '@/components/filters/useDeferredFilterApply';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -116,6 +117,10 @@ export default function FilterRangeField({
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
+
+  // A drag interrupted by an unmount (the popover closing) would otherwise leave
+  // the apply blocked for good.
+  useEffect(() => () => setFilterSliderDragging(false), []);
 
   const escape = useContext(FilterEscapeContext);
 
@@ -274,6 +279,10 @@ export default function FilterRangeField({
           minStepsBetweenThumbs={0}
           value={positions}
           onValueChange={(next) => {
+            // Only a pointer drag reaches here: the thumb's own key handler
+            // preventDefaults, which stops Radix from emitting for the keyboard.
+            setFilterSliderDragging(true);
+
             const minDifference = Math.abs(next[0] - positions[0]);
             const maxDifference = Math.abs(next[1] - positions[1]);
             const moved =
@@ -297,6 +306,8 @@ export default function FilterRangeField({
             }));
           }}
           onValueCommit={(next) => {
+            setFilterSliderDragging(false);
+
             const moved = activeThumb.current;
             const bound: Bound = moved === 0 ? 'min' : 'max';
             commit(bound, scale.fromPosition(next[moved]));

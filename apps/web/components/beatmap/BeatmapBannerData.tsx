@@ -2,7 +2,6 @@ import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 import { Activity, Clock3, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
-import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import RulesetPill from '@/components/beatmaps/RulesetPill';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import { Button } from '@/components/ui/button';
@@ -45,13 +44,6 @@ export default function BeatmapBannerData({
         </span>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <AudioPreviewButton
-            beatmapsetOsuId={beatmap.beatmapset?.osuId}
-            artist={beatmap.beatmapset?.artist}
-            title={beatmap.beatmapset?.title}
-            difficulty={beatmap.diffName}
-            className="bg-muted text-foreground shadow-none hover:bg-muted/70"
-          />
           <Button
             asChild
             variant="outline"

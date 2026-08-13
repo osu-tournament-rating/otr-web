@@ -60,7 +60,8 @@ export default function BeatmapListContent({
     }
   };
 
-  // Shared by the sort select and the table headers so the two cannot diverge.
+  // The table headers' sort path. The filter bar's own select cannot share it:
+  // that one has to carry any filter edit still waiting out its countdown.
   const changeSort = useCallback<BeatmapListSortChange>(
     (sort, descending) => {
       router.push(
@@ -79,7 +80,6 @@ export default function BeatmapListContent({
           totalCount={totalCount}
           layout={layout}
           onLayoutChange={changeLayout}
-          onSortChange={changeSort}
         />
       </div>
 

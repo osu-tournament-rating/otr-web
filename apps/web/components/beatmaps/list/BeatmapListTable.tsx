@@ -293,7 +293,10 @@ export default function BeatmapListTable({
                   {isManiaRuleset(ruleset) ? null : (
                     // Only the dominant group: a second pill costs 72px, and
                     // the beatmap column is what pays for it.
-                    <BeatmapTopMods mods={beatmap.topMods.slice(0, 1)} />
+                    <BeatmapTopMods
+                      mods={beatmap.topMods.slice(0, 1)}
+                      showIcon={false}
+                    />
                   )}
                 </TableCell>
               </TableRow>

@@ -7,6 +7,7 @@ import { Fragment, useEffect, useRef } from 'react';
 
 import { Ruleset } from '@otr/core/osu';
 
+import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import { Eyebrow, SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
@@ -61,7 +62,20 @@ export default function BeatmapHeader({
           className="absolute inset-0 bg-black/60"
         />
 
-        <div className="relative z-10 flex h-full items-end p-4 text-white sm:p-6">
+        {/* Bottom-right of the artwork, the same place the listings put their
+            cover play control. Positioned over the matte, so the title block
+            below reserves room for it rather than running underneath. */}
+        <div className="absolute right-4 bottom-4 z-20 sm:right-6 sm:bottom-6">
+          <AudioPreviewButton
+            beatmapsetOsuId={beatmap.beatmapset?.osuId}
+            artist={artist}
+            title={title}
+            difficulty={beatmap.diffName}
+            className="rounded-full border border-white/25 bg-black/55 text-white shadow-lg backdrop-blur-sm hover:bg-black/70 hover:text-white"
+          />
+        </div>
+
+        <div className="relative z-10 flex h-full items-end p-4 pr-28 text-white sm:p-6 sm:pr-32">
           <div className="max-w-4xl min-w-0">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance sm:text-4xl">

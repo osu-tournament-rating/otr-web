@@ -26,6 +26,7 @@ import FilterChip from '@/components/filters/FilterChip';
 import FilterPopover, {
   type FilterField,
 } from '@/components/filters/FilterPopover';
+import { useDeferredFilterApply } from '@/components/filters/useDeferredFilterApply';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,6 @@ import {
   buildBeatmapSearchParams,
   beatmapListNumericKeys as numericKeys,
   type BeatmapListNumericKey as NumericFilterKey,
-  type BeatmapListSortChange,
   type BeatmapListSortKey,
 } from '@/lib/beatmaps/list-params';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
@@ -63,7 +63,6 @@ interface BeatmapListFilterProps {
   filter: FilterData;
   layout: BeatmapLayout;
   onLayoutChange: (layout: BeatmapLayout) => void;
-  onSortChange: BeatmapListSortChange;
   totalCount: number;
 }
 
@@ -237,19 +236,35 @@ export default function BeatmapListFilter({
   filter,
   layout,
   onLayoutChange,
-  onSortChange,
   totalCount,
 }: BeatmapListFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState(filter.q ?? '');
   const [isSearching, setIsSearching] = useState(false);
+  // Edits are held back for a moment, so the controls read from an optimistic
+  // copy until the navigation they scheduled lands.
+  const [pending, setPending] = useState<FilterData | null>(null);
+  const currentFilter = pending ?? filter;
 
-  // The URL is the only filter state, so an external navigation (back button,
-  // a cleared search) resyncs the box.
+  // The URL is the only filter state, so an external navigation (back button, a
+  // landed search) resyncs the box and retires the spinner.
   useEffect(() => {
     setQuery(filter.q ?? '');
+    setIsSearching(false);
   }, [filter.q]);
+
+  // The scheduled navigation arrived; the URL is authoritative again. Keyed on
+  // the serialized filter rather than the prop, which a parent render could
+  // hand back as a fresh object mid-edit.
+  const filterKey = useMemo(
+    () => buildBeatmapSearchParams({ ...filter, page: undefined }).toString(),
+    [filter]
+  );
+
+  useEffect(() => {
+    setPending(null);
+  }, [filterKey]);
 
   const navigate = useCallback(
     (next: FilterData) => {
@@ -260,36 +275,39 @@ export default function BeatmapListFilter({
         router.push(nextPath, { scroll: false });
       } else {
         // The normalized URL is unchanged (e.g. trailing whitespace in the
-        // query), so no prop change will arrive to clear the spinner.
+        // query), so no prop change will arrive to clear the spinner or to
+        // retire the optimistic copy.
         setIsSearching(false);
+        setPending(null);
       }
     },
     [pathname, router]
   );
 
+  const { schedule, applyNow } = useDeferredFilterApply(navigate);
+
   const applyPatch = useCallback(
-    (patch: FilterPatch) => navigate({ ...filter, q: query, ...patch }),
-    [filter, navigate, query]
+    (patch: FilterPatch, immediate = false) => {
+      const next = { ...currentFilter, q: query, ...patch };
+      setPending(next);
+      (immediate ? applyNow : schedule)(next);
+    },
+    [applyNow, currentFilter, query, schedule]
   );
 
-  useEffect(() => {
-    if (query === (filter.q ?? '')) {
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    const timeout = window.setTimeout(
-      () => applyPatch({ q: query || undefined }),
-      500
-    );
-    return () => window.clearTimeout(timeout);
-  }, [applyPatch, filter.q, query]);
+  // Typing only re-arms the countdown: the search box is not a filter box, so
+  // it is never held back for having focus.
+  const changeQuery = (value: string) => {
+    const next = value.trimStart();
+    setQuery(next);
+    setIsSearching(next !== (filter.q ?? ''));
+    schedule({ ...currentFilter, q: next });
+  };
 
   const submitSearch = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
-    applyPatch({ q: query || undefined });
+    applyPatch({ q: query || undefined }, true);
   };
 
   const rulesets = useMemo(
@@ -312,7 +330,7 @@ export default function BeatmapListFilter({
         id: 'ruleset-filters-mobile',
         label: 'Ruleset',
         className: 'md:hidden',
-        value: filter.ruleset,
+        value: currentFilter.ruleset,
         onChange: (value) => applyPatch({ ruleset: value }),
         options: [
           {
@@ -352,7 +370,10 @@ export default function BeatmapListFilter({
           scale: field.scale,
           valueLabel: field.valueLabel,
           format: field.format,
-          value: { min: filter[field.minKey], max: filter[field.maxKey] },
+          value: {
+            min: currentFilter[field.minKey],
+            max: currentFilter[field.maxKey],
+          },
           onChange: (next) => {
             const patch: FilterPatch = {};
             patch[field.minKey] = next.min;
@@ -362,25 +383,27 @@ export default function BeatmapListFilter({
         })
       ),
     ],
-    [applyPatch, filter, rulesets]
+    [applyPatch, currentFilter, rulesets]
   );
 
   const clearFilters = () => {
     const patch: FilterPatch = { ruleset: undefined };
     for (const key of numericKeys) patch[key] = undefined;
-    applyPatch(patch);
+    applyPatch(patch, true);
   };
 
   const clearAll = () => {
     setQuery('');
-    navigate({
-      sort: filter.sort,
-      descending: filter.descending,
+    const cleared: FilterData = {
+      sort: currentFilter.sort,
+      descending: currentFilter.descending,
       q: '',
-    });
+    };
+    setPending(cleared);
+    applyNow(cleared);
   };
 
-  const activeCount = countActiveFilters(filter);
+  const activeCount = countActiveFilters(currentFilter);
 
   return (
     <div className="space-y-3">
@@ -395,7 +418,7 @@ export default function BeatmapListFilter({
             data-testid="beatmap-search-input"
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value.trimStart())}
+            onChange={(event) => changeQuery(event.target.value)}
             onKeyDown={submitSearch}
             placeholder="Search title, artist, difficulty, mapper, or ID"
             aria-label="Search beatmaps"
@@ -411,9 +434,11 @@ export default function BeatmapListFilter({
             className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex"
           >
             <Select
-              value={filter.sort}
+              value={currentFilter.sort}
+              // Sorting is not a filter: it applies at once, carrying any edit
+              // still waiting out its countdown along with it.
               onValueChange={(value) =>
-                onSortChange(value as BeatmapListSortKey, filter.descending)
+                applyPatch({ sort: value as BeatmapListSortKey }, true)
               }
             >
               <SelectTrigger
@@ -440,7 +465,9 @@ export default function BeatmapListFilter({
 
             <SimpleTooltip
               content={
-                filter.descending ? 'Descending order' : 'Ascending order'
+                currentFilter.descending
+                  ? 'Descending order'
+                  : 'Ascending order'
               }
             >
               <Button
@@ -448,11 +475,13 @@ export default function BeatmapListFilter({
                 variant="outline"
                 size="icon"
                 data-testid="beatmap-sort-direction"
-                aria-label={`Sort order is ${filter.descending ? 'descending' : 'ascending'}`}
-                onClick={() => onSortChange(filter.sort, !filter.descending)}
+                aria-label={`Sort order is ${currentFilter.descending ? 'descending' : 'ascending'}`}
+                onClick={() =>
+                  applyPatch({ descending: !currentFilter.descending }, true)
+                }
                 className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
               >
-                {filter.descending ? <ArrowDown /> : <ArrowUp />}
+                {currentFilter.descending ? <ArrowDown /> : <ArrowUp />}
               </Button>
             </SimpleTooltip>
           </div>
@@ -500,7 +529,7 @@ export default function BeatmapListFilter({
                 aria-hidden="true"
               />
             }
-            selected={filter.ruleset === undefined}
+            selected={currentFilter.ruleset === undefined}
             onClick={() => applyPatch({ ruleset: undefined })}
           />
           {rulesets.map((ruleset) => (
@@ -514,7 +543,7 @@ export default function BeatmapListFilter({
                   aria-hidden="true"
                 />
               }
-              selected={filter.ruleset === ruleset.value}
+              selected={currentFilter.ruleset === ruleset.value}
               onClick={() => applyPatch({ ruleset: ruleset.value })}
             />
           ))}
@@ -574,7 +603,7 @@ export default function BeatmapListFilter({
       </div>
 
       <ActiveFilterSummary
-        filter={filter}
+        filter={currentFilter}
         onRemove={(keys) => {
           const patch: FilterPatch = {};
           for (const key of keys) patch[key] = undefined;

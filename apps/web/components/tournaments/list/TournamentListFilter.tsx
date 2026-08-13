@@ -11,7 +11,6 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { type Control, type Resolver, useForm } from 'react-hook-form';
-import { useDebounce } from '@uidotdev/usehooks';
 import {
   Ruleset,
   TournamentQuerySortType,
@@ -24,6 +23,7 @@ import FilterChip from '@/components/filters/FilterChip';
 import FilterPopover, {
   type FilterField,
 } from '@/components/filters/FilterPopover';
+import { useDeferredFilterApply } from '@/components/filters/useDeferredFilterApply';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Button } from '@/components/ui/button';
 import {
@@ -63,8 +63,6 @@ import {
   RANK_RANGE_MIN,
   tournamentRankScale,
 } from '@/lib/filters/tournament-rank';
-
-const DEBOUNCE_DELAY = 500;
 
 const sortOptions: readonly {
   value: TournamentQuerySortType;
@@ -108,7 +106,14 @@ const rejectionReasonOptions = Object.entries(
   }));
 
 type FilterFormData = z.infer<typeof tournamentListFilterSchema>;
-type ApplyFilterPatch = (patch: Partial<FilterFormData>) => void;
+/**
+ * Filter edits wait out a countdown before they navigate; `immediate` is for the
+ * controls that are not filters, or that end the interaction outright.
+ */
+type ApplyFilterPatch = (
+  patch: Partial<FilterFormData>,
+  immediate?: boolean
+) => void;
 
 interface TournamentListFilterProps {
   filter: FilterFormData;
@@ -119,25 +124,14 @@ const fromDateInputValue = (value?: string) =>
 
 function useSearchInput(initialQuery: string) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [synchronizedQuery, setSynchronizedQuery] = useState(initialQuery);
-  const debouncedQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
 
-  const handleSetQuery = useCallback((input: string) => {
-    setSearchQuery(input.trimStart());
-  }, []);
-
+  // The URL is the only filter state, so an external navigation (back button, a
+  // landed search) resyncs the box.
   useEffect(() => {
     setSearchQuery(initialQuery);
-    setSynchronizedQuery(initialQuery);
   }, [initialQuery]);
 
-  return {
-    searchQuery,
-    debouncedQuery,
-    handleSetQuery,
-    isSynchronizing:
-      synchronizedQuery !== initialQuery && searchQuery !== initialQuery,
-  };
+  return { searchQuery, setSearchQuery };
 }
 
 function SearchInput({
@@ -200,10 +194,12 @@ function SortControls({
             <FormLabel className="sr-only">Sort tournaments by</FormLabel>
             <Select
               value={String(field.value)}
+              // Sorting is not a filter: it applies at once, carrying any edit
+              // still waiting out its countdown along with it.
               onValueChange={(value) => {
                 const sort = Number(value) as TournamentQuerySortType;
                 field.onChange(sort);
-                applyPatch({ sort });
+                applyPatch({ sort }, true);
               }}
             >
               <FormControl>
@@ -248,7 +244,7 @@ function SortControls({
                       onClick={() => {
                         const descending = !field.value;
                         field.onChange(descending);
-                        applyPatch({ descending });
+                        applyPatch({ descending }, true);
                       }}
                     >
                       {field.value ? (
@@ -557,8 +553,9 @@ function ActiveFilterSummary({
 export default function TournamentListFilter({
   filter,
 }: TournamentListFilterProps) {
-  const { searchQuery, debouncedQuery, handleSetQuery, isSynchronizing } =
-    useSearchInput(filter.searchQuery ?? '');
+  const { searchQuery, setSearchQuery } = useSearchInput(
+    filter.searchQuery ?? ''
+  );
   const router = useRouter();
   const pathname = usePathname();
 
@@ -635,53 +632,53 @@ export default function TournamentListFilter({
     [pathname, router]
   );
 
+  const { schedule, applyNow, cancel } = useDeferredFilterApply(submitValues);
+
   const applyPatch = useCallback<ApplyFilterPatch>(
-    (patch) => {
+    (patch, immediate = false) => {
       const values = {
         ...form.getValues(),
         searchQuery,
         ...patch,
       } as FilterFormData;
+      // The form is the optimistic copy: every control shows the edit at once,
+      // even while the navigation it scheduled is still waiting.
       form.reset(values);
-      submitValues(values);
+      (immediate ? applyNow : schedule)(values);
     },
-    [form, searchQuery, submitValues]
+    [applyNow, form, schedule, searchQuery]
   );
 
-  useEffect(() => {
-    if (
-      !isSynchronizing &&
-      debouncedQuery === searchQuery &&
-      debouncedQuery !== (filter.searchQuery ?? '')
-    ) {
-      applyPatch({ searchQuery: debouncedQuery });
-    }
-  }, [
-    applyPatch,
-    debouncedQuery,
-    filter.searchQuery,
-    isSynchronizing,
-    searchQuery,
-  ]);
+  // Typing only re-arms the countdown: the search box is not a filter box, so
+  // it is never held back for having focus.
+  const handleSetQuery = useCallback(
+    (input: string) => {
+      const next = input.trimStart();
+      setSearchQuery(next);
+      schedule({ ...form.getValues(), searchQuery: next } as FilterFormData);
+    },
+    [form, schedule, setSearchQuery]
+  );
 
   const handleSearchKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        applyPatch({ searchQuery });
+        applyPatch({ searchQuery }, true);
       }
     },
     [applyPatch, searchQuery]
   );
 
   const handleClearFilters = useCallback(() => {
-    handleSetQuery('');
+    cancel();
+    setSearchQuery('');
     form.reset({
       ...defaultTournamentListFilter,
       searchQuery: '',
     } as FilterFormData);
     router.push(pathname, { scroll: false });
-  }, [form, handleSetQuery, pathname, router]);
+  }, [cancel, form, pathname, router, setSearchQuery]);
 
   const currentFilter = form.watch();
   const activeFilterCount = countAdvancedFilters(currentFilter);

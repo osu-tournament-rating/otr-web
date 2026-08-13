@@ -165,7 +165,12 @@ export default function FilterPopover({
         </div>
 
         <FilterEscapeContext.Provider value={escapeContext}>
-          <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-4 overflow-y-auto overscroll-contain px-4 py-4">
+          {/* `data-filter-fields` is FILTER_FIELD_SCOPE_ATTRIBUTE: it tells the
+              deferred apply which inputs are filter boxes to wait on. */}
+          <div
+            data-filter-fields=""
+            className="grid flex-1 grid-cols-2 gap-x-3 gap-y-4 overflow-y-auto overscroll-contain px-4 py-4"
+          >
             {fields.map((field) => (
               <FilterFieldGroup
                 key={field.id}
