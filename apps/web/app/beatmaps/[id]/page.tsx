@@ -139,24 +139,20 @@ export default async function BeatmapPage({ params }: PageProps) {
         />
       </div>
 
+      <BeatmapScoreDistributionCard
+        distribution={stats.scoreDistribution}
+        percentiles={stats.scorePercentiles}
+        totalScoreCount={totalVerifiedScoreCount}
+      />
+
+      <BeatmapTierBreakdownCard tierBreakdown={stats.tierBreakdown} />
+
       <div className="grid gap-4 lg:grid-cols-2">
-        <BeatmapScoreDistributionCard
-          className="lg:col-span-2"
-          distribution={stats.scoreDistribution}
-          percentiles={stats.scorePercentiles}
-          totalScoreCount={totalVerifiedScoreCount}
-        />
-        <BeatmapScoreScatterCard
-          className="lg:col-span-2"
-          sample={stats.scoreSample}
-        />
-        <BeatmapPerformanceCard performance={stats.performance} />
         <BeatmapMarginCard closeness={stats.closeness} />
-        <BeatmapTierBreakdownCard
-          className="lg:col-span-2"
-          tierBreakdown={stats.tierBreakdown}
-        />
+        <BeatmapPerformanceCard performance={stats.performance} />
       </div>
+
+      <BeatmapScoreScatterCard sample={stats.scoreSample} />
 
       <BeatmapLeaderboardCard
         performers={stats.topPerformers}

@@ -5,12 +5,14 @@ import * as React from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import {
+  BoxPlotTooltipContent,
   BoxPlotTrack,
   EmptyState,
   Eyebrow,
   ScaleAxis,
   SectionCard,
   SectionHeader,
+  Swatch,
 } from '@/components/beatmap/BeatmapSection';
 import TapTooltip from '@/components/tap-tooltip';
 import {
@@ -21,12 +23,12 @@ import {
 import {
   formatScoreTick,
   getBoxPlotAxis,
-  toAxisPercent,
+  getScaleTicks,
   toBoxPlotMarks,
   type BoxPlotQuartiles,
   type NiceAxis,
 } from '@/lib/beatmaps/chart-axis';
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type {
   BeatmapModScoreDistribution,
   BeatmapScorePercentilePoint,
@@ -78,72 +80,34 @@ function BoxPlotRow({
 }) {
   const label = getBeatmapModLabel(group.mods);
   const color = getModColor(group.mods);
-
-  const marks = toBoxPlotMarks(toScoreQuartiles(group), axis);
+  const quartiles = toScoreQuartiles(group);
 
   return (
     <TapTooltip
       triggerAriaLabel={`${label}: ${formatChartNumber(group.scoreCount)} scores`}
       content={
-        <div className="min-w-44 space-y-1">
-          <div className="flex items-center justify-between gap-4 border-b pb-1.5">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: color }}
-                aria-hidden="true"
-              />
-              <span className="text-xs font-medium">{label}</span>
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {`${formatChartNumber(group.scoreCount)} scores`}
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Median</span>
-            <span className="text-sm font-semibold">
-              {formatChartNumber(group.medianScore)}
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Middle 50%</span>
-            <span className="text-xs">
-              {`${formatChartNumber(group.p25Score)} – ${formatChartNumber(group.p75Score)}`}
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-xs text-muted-foreground">Range</span>
-            <span className="flex items-center gap-1.5 text-xs">
-              <span
-                className="size-1.5 shrink-0 rounded-full border bg-transparent"
-                style={{ borderColor: color }}
-                aria-hidden="true"
-              />
-              {`${formatChartNumber(group.minScore)} – ${formatChartNumber(group.maxScore)}`}
-              <span
-                className="size-1.5 shrink-0 rounded-full border bg-transparent"
-                style={{ borderColor: color }}
-                aria-hidden="true"
-              />
-            </span>
-          </div>
-        </div>
+        <BoxPlotTooltipContent
+          labelIcon={<Swatch color={color} />}
+          label={label}
+          scoreCount={group.scoreCount}
+          measureLabel="Median"
+          quartiles={quartiles}
+          color={color}
+          format={formatChartNumber}
+        />
       }
     >
       <div className="flex min-h-7 items-center gap-2">
         <span className="flex w-16 shrink-0 items-center gap-1.5">
-          <span
-            className="size-2 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: color }}
-            aria-hidden="true"
-          />
+          <Swatch color={color} />
           <span className="truncate text-xs">{label}</span>
         </span>
 
-        <BoxPlotTrack color={color} marks={marks} gridPercents={gridPercents} />
+        <BoxPlotTrack
+          color={color}
+          marks={toBoxPlotMarks(quartiles, axis)}
+          gridPercents={gridPercents}
+        />
       </div>
     </TapTooltip>
   );
@@ -155,7 +119,7 @@ function PercentileCurve({
   percentiles: BeatmapScorePercentilePoint[];
 }) {
   // Five score ticks collide into an unreadable smear on a phone.
-  const isNarrow = useMediaQuery('(max-width: 639px)');
+  const isNarrow = useIsNarrowChart();
 
   return (
     <ChartContainer
@@ -239,21 +203,17 @@ export default function BeatmapScoreDistributionCard({
   const hasData = hasBoxData || hasCurveData;
 
   // Six labels smear together on a phone-width track.
-  const isNarrow = useMediaQuery('(max-width: 639px)');
+  const isNarrow = useIsNarrowChart();
 
   const axis = React.useMemo(
     () => getBoxPlotAxis(distribution.map(toScoreQuartiles), isNarrow ? 4 : 6),
     [distribution, isNarrow]
   );
 
-  const axisTicks = axis.ticks.map((value) => ({
-    value,
-    label: formatScoreTick(value),
-    percent: toAxisPercent(value, axis.min, axis.max),
-  }));
-
-  // Endpoint ticks would just trace the edges of the track.
-  const gridPercents = axisTicks.slice(1, -1).map((tick) => tick.percent);
+  const { ticks: axisTicks, gridPercents } = React.useMemo(
+    () => getScaleTicks(axis, formatScoreTick),
+    [axis]
+  );
 
   return (
     <SectionCard
@@ -274,44 +234,49 @@ export default function BeatmapScoreDistributionCard({
         <EmptyState>No verified scores yet.</EmptyState>
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
-          <div className="px-4 py-4">
+          <div className="flex h-full flex-col px-4 py-4">
             <div className="flex items-baseline justify-between gap-2">
               <Eyebrow>Mod</Eyebrow>
               <span className="text-xs text-muted-foreground">
                 fewer than 5 scores hidden
               </span>
             </div>
-            {hasBoxData ? (
-              <div
-                className={cn(
-                  'mt-3 flex flex-col max-xl:h-auto max-xl:justify-start max-xl:gap-2',
-                  // Matching the percentile chart's height only pays off once
-                  // there are enough rows to fill it; one or two rows stranded
-                  // in 240px of nothing just reads as a broken panel.
-                  distribution.length >= 3
-                    ? 'h-[240px] justify-evenly'
-                    : 'gap-2'
-                )}
-              >
-                {distribution.map((group) => (
-                  <BoxPlotRow
-                    key={group.mods}
-                    group={group}
-                    axis={axis}
-                    gridPercents={gridPercents}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState>No verified scores yet.</EmptyState>
-            )}
-            {hasBoxData ? (
-              <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
-            ) : null}
+            {/* Too few rows to fill the percentile chart's height, so they ride
+                the middle of the panel instead of stranding it below them. */}
+            <div className={cn(distribution.length < 3 && 'xl:my-auto')}>
+              {hasBoxData ? (
+                <div
+                  className={cn(
+                    'mt-3 flex flex-col max-xl:h-auto max-xl:justify-start max-xl:gap-2',
+                    distribution.length >= 3
+                      ? 'h-[240px] justify-evenly'
+                      : 'gap-2'
+                  )}
+                >
+                  {distribution.map((group) => (
+                    <BoxPlotRow
+                      key={group.mods}
+                      group={group}
+                      axis={axis}
+                      gridPercents={gridPercents}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState>No verified scores yet.</EmptyState>
+              )}
+              {hasBoxData ? (
+                <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
+              ) : null}
+            </div>
           </div>
 
           <div className="border-t px-4 py-4 xl:border-t-0">
-            <Eyebrow>Percentiles</Eyebrow>
+            {/* Blockified so it sits on the same line box as Mod across the
+                divider, instead of baselining against the inherited strut. */}
+            <div className="flex items-baseline">
+              <Eyebrow>Percentiles</Eyebrow>
+            </div>
             {hasCurveData ? (
               <div className="mt-3">
                 <PercentileCurve percentiles={percentiles} />

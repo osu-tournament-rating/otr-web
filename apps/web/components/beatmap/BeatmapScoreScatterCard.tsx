@@ -17,20 +17,22 @@ import {
   EmptyState,
   SectionCard,
   SectionHeader,
+  Swatch,
 } from '@/components/beatmap/BeatmapSection';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { formatScoreTick, getScatterAxis } from '@/lib/beatmaps/chart-axis';
 import {
   RANK_RANGE_BUCKETS,
   type RankRangeBucketKey,
 } from '@/lib/beatmaps/rankRange';
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type { BeatmapScoreSample } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
-import { formatChartNumber, formatKilo } from '@/lib/utils/chart';
+import { formatChartNumber } from '@/lib/utils/chart';
 import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 interface BeatmapScoreScatterCardProps {
@@ -39,7 +41,12 @@ interface BeatmapScoreScatterCardProps {
 }
 
 interface ScatterPoint {
+  /** The score that was actually set. Everything the reader is told uses this. */
   score: number;
+  /** `score` lifted onto the axis floor, which is what the chart plots. */
+  plotScore: number;
+  /** `score` fell below the axis floor and is drawn pinned to it. */
+  clamped: boolean;
   rating: number;
   modLabel: string;
   rankRange: RankRangeBucketKey;
@@ -130,17 +137,36 @@ function clipTrendSegment(
 
   if (!(lo < hi)) return null;
 
+  // Snapping the endpoints back onto the bounds matters: ReferenceLine defaults
+  // to `ifOverflow: 'discard'` and drops the whole segment if a rounding-dust
+  // pixel lands outside the axis.
+  const clampY = (value: number) => Math.min(yMax, Math.max(yMin, value));
+
   return [
-    { x: lo, y: slope * lo + intercept },
-    { x: hi, y: slope * hi + intercept },
+    { x: lo, y: clampY(slope * lo + intercept) },
+    { x: hi, y: clampY(slope * hi + intercept) },
   ];
 }
 
-function TooltipRow({ label, value }: { label: string; value: string }) {
+function TooltipRow({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
   return (
     <div className="flex w-full items-baseline justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+      <span
+        className={
+          muted ? 'text-muted-foreground' : 'font-medium text-foreground'
+        }
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -208,7 +234,7 @@ export default function BeatmapScoreScatterCard({
   sample,
   className,
 }: BeatmapScoreScatterCardProps) {
-  const isNarrow = useMediaQuery('(max-width: 639px)');
+  const isNarrow = useIsNarrowChart();
   const dotArea = isNarrow ? DOT_AREA_NARROW : DOT_AREA_WIDE;
   const [hiddenRanges, setHiddenRanges] = React.useState<
     ReadonlySet<RankRangeBucketKey>
@@ -226,20 +252,43 @@ export default function BeatmapScoreScatterCard({
     });
   }, []);
 
-  const ratedPoints = React.useMemo<ScatterPoint[]>(
-    () =>
-      sample.points
-        .filter((point) => point.rating != null)
-        .map((point) => ({
-          score: point.score,
-          rating: point.rating as number,
-          modLabel: getBeatmapModLabel(point.mods),
-          rankRange: point.rankRange,
-          rankRangeLabel: RANK_RANGE_LABEL[point.rankRange],
-          fill: RANK_RANGE_COLOR[point.rankRange],
-        })),
-    [sample.points]
-  );
+  /**
+   * The score axis and the points are built together because each needs the
+   * other: the axis floors on a low quantile (see `getScatterAxis`) and every
+   * score below that floor is plotted on it, so one quit run cannot flatten the
+   * whole field against the ceiling. Both read the full rated sample rather
+   * than the visible one, so toggling a rank range filters points without
+   * rescaling the axis under the reader.
+   */
+  const { ratedPoints, scoreAxis, clampedCount } = React.useMemo(() => {
+    const rated = sample.points.filter((point) => point.rating != null);
+    const axis = getScatterAxis(rated.map((point) => point.score));
+
+    if (axis === null) {
+      return {
+        ratedPoints: [] as ScatterPoint[],
+        scoreAxis: null,
+        clampedCount: 0,
+      };
+    }
+
+    const points = rated.map<ScatterPoint>((point) => ({
+      score: point.score,
+      plotScore: Math.max(point.score, axis.floor),
+      clamped: point.score < axis.floor,
+      rating: point.rating as number,
+      modLabel: getBeatmapModLabel(point.mods),
+      rankRange: point.rankRange,
+      rankRangeLabel: RANK_RANGE_LABEL[point.rankRange],
+      fill: RANK_RANGE_COLOR[point.rankRange],
+    }));
+
+    return {
+      ratedPoints: points,
+      scoreAxis: axis,
+      clampedCount: points.filter((point) => point.clamped).length,
+    };
+  }, [sample.points]);
   const unratedCount = sample.points.length - ratedPoints.length;
 
   const legendEntries = React.useMemo(() => {
@@ -261,50 +310,42 @@ export default function BeatmapScoreScatterCard({
     [ratedPoints, hiddenRanges]
   );
 
-  /**
-   * Axis bounds come from the full rated sample so toggling a rank range
-   * filters points without rescaling the chart under the cursor. Bounds are
-   * rounded outward to a magnitude-based step so tick labels stay round.
-   */
-  const axisDomain = React.useMemo(() => {
+  /** Ratings are charted as they fall, rounded outward onto a round step. */
+  const ratingDomain = React.useMemo<[number, number] | null>(() => {
     if (ratedPoints.length === 0) return null;
 
-    const niceExtent = (values: number[]): [number, number] => {
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const range = max - min;
-      if (range === 0) return [min, max];
-      const step = Math.pow(10, Math.floor(Math.log10(range / 4)));
-      return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
-    };
+    const ratings = ratedPoints.map((point) => point.rating);
+    const min = Math.min(...ratings);
+    const max = Math.max(...ratings);
+    const range = max - min;
+    if (range === 0) return [min, max];
 
-    return {
-      x: niceExtent(ratedPoints.map((point) => point.rating)),
-      y: niceExtent(ratedPoints.map((point) => point.score)),
-    };
+    const step = Math.pow(10, Math.floor(Math.log10(range / 4)));
+    return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
   }, [ratedPoints]);
 
   const trendSegment = React.useMemo(() => {
-    if (visiblePoints.length < TRENDLINE_MIN_POINTS || axisDomain === null) {
+    if (visiblePoints.length < TRENDLINE_MIN_POINTS || scoreAxis === null) {
       return null;
     }
 
+    // Fitted on the scores that were actually set, clipped to the drawn axis:
+    // a segment running off the floor would be discarded whole.
     const fit = linearRegression(
       visiblePoints.map((point) => ({ x: point.rating, y: point.score }))
     );
     if (fit === null) return null;
 
     const ratings = visiblePoints.map((point) => point.rating);
-    const scores = visiblePoints.map((point) => point.score);
 
     return clipTrendSegment(
       fit,
       Math.min(...ratings),
       Math.max(...ratings),
-      Math.min(...scores),
-      Math.max(...scores)
+      scoreAxis.min,
+      scoreAxis.max
     );
-  }, [visiblePoints, axisDomain]);
+  }, [visiblePoints, scoreAxis]);
 
   const meta =
     sample.points.length < sample.totalScoreCount
@@ -317,20 +358,27 @@ export default function BeatmapScoreScatterCard({
       `${formatChartNumber(unratedCount)} scores without pre-match ratings hidden`
     );
   }
+  if (clampedCount > 0) {
+    footnote.push(
+      `${formatChartNumber(clampedCount)} low outlier${clampedCount === 1 ? '' : 's'} pinned to the axis floor`
+    );
+  }
 
   return (
     <SectionCard data-testid="beatmap-score-scatter" className={cn(className)}>
       <SectionHeader icon={ChartScatter} title="Score scatter" meta={meta} />
       {sample.points.length === 0 ? (
         <EmptyState>No verified scores yet.</EmptyState>
-      ) : ratedPoints.length === 0 || axisDomain === null ? (
+      ) : ratedPoints.length === 0 ||
+        ratingDomain === null ||
+        scoreAxis === null ? (
         <div className="flex h-[300px] items-center justify-center px-4">
           <EmptyState>
             No pre-match ratings available for these scores yet.
           </EmptyState>
         </div>
       ) : (
-        <div className="space-y-2 px-4 py-4">
+        <div className="space-y-3 px-4 py-4">
           <RankRangeLegend
             entries={legendEntries}
             hidden={hiddenRanges}
@@ -353,7 +401,7 @@ export default function BeatmapScoreScatterCard({
                   dataKey="rating"
                   name="Pre-match rating"
                   type="number"
-                  domain={axisDomain.x}
+                  domain={ratingDomain}
                   tickFormatter={(value: number) =>
                     formatChartNumber(Math.round(value))
                   }
@@ -370,11 +418,12 @@ export default function BeatmapScoreScatterCard({
                   }}
                 />
                 <YAxis
-                  dataKey="score"
+                  dataKey="plotScore"
                   name="Score"
                   type="number"
-                  domain={axisDomain.y}
-                  tickFormatter={(value: number) => formatKilo(value)}
+                  domain={[scoreAxis.min, scoreAxis.max]}
+                  ticks={scoreAxis.ticks}
+                  tickFormatter={(value: number) => formatScoreTick(value)}
                   tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                   tickLine={false}
                   axisLine={false}
@@ -400,11 +449,7 @@ export default function BeatmapScoreScatterCard({
                         if (!point) return null;
                         return (
                           <span className="flex items-center gap-1.5">
-                            <span
-                              className="size-2 rounded-[2px]"
-                              style={{ backgroundColor: point.fill }}
-                              aria-hidden="true"
-                            />
+                            <Swatch color={point.fill} />
                             <span>{point.rankRangeLabel}</span>
                           </span>
                         );
@@ -419,17 +464,32 @@ export default function BeatmapScoreScatterCard({
                         const isLastRow =
                           index ===
                           (Array.isArray(entries) ? entries.length : 1) - 1;
+                        // The score row reads the raw payload: a pinned point
+                        // is plotted at the floor but never reports it.
+                        const shown = isRating
+                          ? Math.round(numeric)
+                          : (point?.score ?? numeric);
 
                         return (
                           <>
                             <TooltipRow
                               label={String(name)}
-                              value={formatChartNumber(
-                                isRating ? Math.round(numeric) : numeric
-                              )}
+                              value={formatChartNumber(shown)}
                             />
                             {isLastRow && point ? (
-                              <TooltipRow label="Mods" value={point.modLabel} />
+                              <>
+                                <TooltipRow
+                                  label="Mods"
+                                  value={point.modLabel}
+                                />
+                                {point.clamped ? (
+                                  <TooltipRow
+                                    label="Note"
+                                    value="below chart floor"
+                                    muted
+                                  />
+                                ) : null}
+                              </>
                             ) : null}
                           </>
                         );
@@ -446,11 +506,34 @@ export default function BeatmapScoreScatterCard({
                 ) : null}
                 <Scatter
                   data={visiblePoints}
+                  dataKey="plotScore"
                   fillOpacity={isNarrow ? 0.45 : 0.65}
                   isAnimationActive={false}
-                  shape={
-                    <Symbols type="circle" size={dotArea} sizeType="area" />
-                  }
+                  // A point pinned to the floor gets a down-pointing triangle,
+                  // the same "continues past the edge" mark the box plots use
+                  // for a whisker the axis cut off. Per-Cell fills arrive in
+                  // `props`, so both branches keep their rank-range color.
+                  shape={(props) => {
+                    const point = props.payload as ScatterPoint | undefined;
+
+                    return point?.clamped ? (
+                      <g transform={`rotate(180 ${props.cx} ${props.cy})`}>
+                        <Symbols
+                          {...props}
+                          type="triangle"
+                          size={dotArea}
+                          sizeType="area"
+                        />
+                      </g>
+                    ) : (
+                      <Symbols
+                        {...props}
+                        type="circle"
+                        size={dotArea}
+                        sizeType="area"
+                      />
+                    );
+                  }}
                 >
                   {visiblePoints.map((point, index) => (
                     <Cell key={index} fill={point.fill} />

@@ -8,6 +8,7 @@ import { Fragment, useEffect, useRef } from 'react';
 import { Ruleset } from '@otr/core/osu';
 
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
+import { SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
@@ -39,10 +40,7 @@ export default function BeatmapHeader({
   const title = beatmap.beatmapset?.title ?? 'Unknown title';
 
   return (
-    <header
-      data-testid="beatmap-header"
-      className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
-    >
+    <SectionCard as="header" data-testid="beatmap-header">
       <div
         data-testid="beatmap-artwork-strip"
         className="group relative isolate h-48 overflow-hidden bg-muted sm:h-56"
@@ -114,7 +112,7 @@ export default function BeatmapHeader({
         currentOsuId={beatmap.osuId}
         difficulties={relatedDifficulties}
       />
-    </header>
+    </SectionCard>
   );
 }
 
@@ -223,7 +221,7 @@ function DifficultyNavigator({
     <nav aria-label="Beatmapset difficulties" className="border-t">
       <div
         ref={scrollerRef}
-        className="flex snap-x gap-2 overflow-x-auto p-3 sm:px-4"
+        className="flex snap-x gap-2 overflow-x-auto p-4 pt-3"
       >
         {difficultyGroups.map(([ruleset, groupDifficulties], groupIndex) => (
           <Fragment key={ruleset}>

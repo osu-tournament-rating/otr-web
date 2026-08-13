@@ -20,7 +20,7 @@ export default function BeatmapBannerData({
     >
       <div
         aria-label="Beatmap essentials"
-        className="flex flex-wrap items-center gap-2 p-3.5 sm:gap-2.5 sm:p-4"
+        className="flex flex-wrap items-center gap-2 p-4 sm:gap-2.5"
       >
         <RulesetPill
           ruleset={beatmap.ruleset}

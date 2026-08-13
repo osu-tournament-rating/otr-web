@@ -5,6 +5,8 @@ import {
   formatScoreTick,
   getBoxPlotAxis,
   getNiceAxis,
+  getScaleTicks,
+  getScatterAxis,
   toAxisPercent,
   toBoxPlotMarks,
 } from '@/lib/beatmaps/chart-axis';
@@ -75,6 +77,70 @@ describe('getNiceAxis', () => {
   });
 });
 
+describe('getScatterAxis', () => {
+  it('has nothing to chart without values', () => {
+    expect(getScatterAxis([])).toBeNull();
+  });
+
+  it('parks a lone value on its own domain', () => {
+    expect(getScatterAxis([500_000])).toEqual({
+      min: 500_000,
+      max: 500_000,
+      ticks: [500_000],
+      floor: 500_000,
+    });
+  });
+
+  it('leaves a small sample undistorted', () => {
+    // The 1st percentile of two points sits 1% above the lower one (21,780),
+    // which rounds down to the same zero floor the raw minimum would give.
+    const axis = getScatterAxis([12_000, 990_000]);
+
+    expect(axis?.min).toBe(0);
+    expect(axis?.max).toBe(1_000_000);
+    expect(axis?.floor).toBe(0);
+  });
+
+  it('collapses when every score is identical', () => {
+    const axis = getScatterAxis(Array.from({ length: 5 }, () => 950_000));
+
+    expect(axis?.min).toBe(950_000);
+    expect(axis?.max).toBe(950_000);
+    expect(axis?.floor).toBe(950_000);
+  });
+
+  it('charts the raw range when the quantile reaches the ceiling', () => {
+    // A lone low score under a wall of maxima: the 1st percentile *is* the
+    // maximum, so clamping there would hide all 1000 points.
+    const axis = getScatterAxis([
+      200_000,
+      ...Array.from({ length: 999 }, () => 1_000_000),
+    ]);
+
+    expect(axis?.min).toBe(200_000);
+    expect(axis?.max).toBe(1_000_000);
+    expect(axis?.floor).toBe(200_000);
+  });
+
+  it('zooms past a quit run on a mania field', () => {
+    // The real shape of /beatmaps/2251585: one 287,618 score under 327 that
+    // live between 860k and 999k. Anchoring on the minimum spans 200k..1M and
+    // leaves four fifths of the plot empty.
+    const spread = Array.from(
+      { length: 327 },
+      (_, index) => 860_000 + (index * (998_537 - 860_000)) / 326
+    );
+    const axis = getScatterAxis([287_618, ...spread]);
+
+    expect(axis?.min).toBe(850_000);
+    expect(axis?.max).toBe(1_000_000);
+    expect(axis?.ticks).toEqual([850_000, 900_000, 950_000, 1_000_000]);
+    expect(axis?.floor).toBe(850_000);
+    expect(287_618 < (axis?.floor ?? 0)).toBe(true);
+    expect(spread.every((score) => score >= (axis?.floor ?? 0))).toBe(true);
+  });
+});
+
 describe('getBoxPlotAxis', () => {
   const mania = [
     // A quit run at 12k next to a mania field that lives above 950k.
@@ -100,6 +166,38 @@ describe('getBoxPlotAxis', () => {
 
   it('falls back to zero with nothing to chart', () => {
     expect(getBoxPlotAxis([])).toEqual({ min: 0, max: 0, ticks: [0] });
+  });
+});
+
+describe('getScaleTicks', () => {
+  it('labels every tick but draws gridlines only through the interior', () => {
+    const { ticks, gridPercents } = getScaleTicks(
+      getNiceAxis(950_000, 1_000_000),
+      formatScoreTick
+    );
+
+    expect(ticks.map((tick) => tick.label)).toEqual([
+      '950k',
+      '960k',
+      '970k',
+      '980k',
+      '990k',
+      '1M',
+    ]);
+    expect(ticks.map((tick) => tick.percent)).toEqual([0, 20, 40, 60, 80, 100]);
+    // The endpoints are dropped: a gridline there would trace the edges of the
+    // track the rows are drawn on.
+    expect(gridPercents).toEqual([20, 40, 60, 80]);
+  });
+
+  it('has no interior left to draw when the axis collapses to one tick', () => {
+    const { ticks, gridPercents } = getScaleTicks(
+      getNiceAxis(950_000, 950_000),
+      formatScoreTick
+    );
+
+    expect(ticks).toEqual([{ value: 950_000, label: '950k', percent: 50 }]);
+    expect(gridPercents).toEqual([]);
   });
 });
 

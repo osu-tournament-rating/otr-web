@@ -26,7 +26,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type { BeatmapClosenessSummary } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
 import { CHART_CONSTANTS, formatChartNumber } from '@/lib/utils/chart';
@@ -297,7 +297,7 @@ export default function BeatmapMarginCard({
   closeness,
   className,
 }: BeatmapMarginCardProps) {
-  const narrow = useMediaQuery('(max-width: 639px)');
+  const narrow = useIsNarrowChart();
   const { bins, cohort, gameCount, games, percentile } = closeness;
   const deciles = closeness.baselineZDeciles;
 

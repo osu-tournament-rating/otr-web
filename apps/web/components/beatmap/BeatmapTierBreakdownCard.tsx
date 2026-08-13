@@ -4,6 +4,7 @@ import { Medal } from 'lucide-react';
 import * as React from 'react';
 
 import {
+  BoxPlotTooltipContent,
   BoxPlotTrack,
   EmptyState,
   Eyebrow,
@@ -17,12 +18,12 @@ import {
   formatAccuracyTick,
   formatScoreTick,
   getBoxPlotAxis,
-  toAxisPercent,
+  getScaleTicks,
   toBoxPlotMarks,
   type BoxPlotQuartiles,
   type NiceAxis,
 } from '@/lib/beatmaps/chart-axis';
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type {
   BeatmapTierBreakdown,
   BeatmapTierScoreSummary,
@@ -85,83 +86,10 @@ function TierLabel({ tier }: { tier: TierName }) {
   );
 }
 
-/** Hollow ring glyph echoing the box plot's min/max marks. */
-function RingGlyph({ color }: { color: string }) {
+/** The ladder icon fronting a tooltip header, sized to sit on a text line. */
+function TierTooltipIcon({ tier }: { tier: TierName }) {
   return (
-    <span
-      className="inline-block size-1.5 shrink-0 rounded-full border bg-transparent"
-      style={{ borderColor: color }}
-      aria-hidden="true"
-    />
-  );
-}
-
-/**
- * Shared readout for both box plot columns: the same five numbers, formatted
- * for whichever measure the row is drawn from.
- */
-function TierTooltipContent({
-  summary,
-  measure,
-  min,
-  p25,
-  median,
-  p75,
-  max,
-  format,
-}: {
-  summary: BeatmapTierScoreSummary;
-  measure: string;
-  min: number;
-  p25: number;
-  median: number;
-  p75: number;
-  max: number;
-  format: (value: number) => string;
-}) {
-  const color = TIER_CHART_COLOR[summary.tier];
-
-  return (
-    <div className="min-w-44 space-y-1">
-      <div className="flex items-center justify-between gap-4 border-b pb-1.5">
-        <span className="flex items-center gap-1.5 text-xs font-medium">
-          <TierIcon
-            tier={summary.tier}
-            subTier={1}
-            tooltip={false}
-            width={14}
-            height={14}
-          />
-          {TIER_DISPLAY_NAME[summary.tier]}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {`${formatChartNumber(summary.scoreCount)} scores`}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">{`Median ${measure}`}</span>
-        <span className="text-sm font-semibold text-foreground">
-          {format(median)}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">Middle 50%</span>
-        <span className="text-xs text-foreground">
-          {`${format(p25)} – ${format(p75)}`}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">Range</span>
-        <span className="flex items-center gap-1 text-xs text-foreground">
-          <RingGlyph color={color} />
-          {`${format(min)} – ${format(max)}`}
-          <RingGlyph color={color} />
-        </span>
-      </div>
-    </div>
+    <TierIcon tier={tier} subTier={1} tooltip={false} width={14} height={14} />
   );
 }
 
@@ -188,14 +116,13 @@ function TierScoreRow({
     <TapTooltip
       triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} score: ${formatChartNumber(summary.scoreCount)} scores`}
       content={
-        <TierTooltipContent
-          summary={summary}
-          measure="score"
-          min={summary.minScore}
-          p25={summary.p25Score}
-          median={summary.medianScore}
-          p75={summary.p75Score}
-          max={summary.maxScore}
+        <BoxPlotTooltipContent
+          labelIcon={<TierTooltipIcon tier={summary.tier} />}
+          label={TIER_DISPLAY_NAME[summary.tier]}
+          scoreCount={summary.scoreCount}
+          measureLabel="Median score"
+          quartiles={toScoreQuartiles(summary)}
+          color={TIER_CHART_COLOR[summary.tier]}
           format={formatChartNumber}
         />
       }
@@ -271,14 +198,13 @@ function TierAccuracyRow({
     <TapTooltip
       triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} accuracy: median ${format(quartiles.median)}`}
       content={
-        <TierTooltipContent
-          summary={summary}
-          measure="accuracy"
-          min={quartiles.min}
-          p25={quartiles.p25}
-          median={quartiles.median}
-          p75={quartiles.p75}
-          max={quartiles.max}
+        <BoxPlotTooltipContent
+          labelIcon={<TierTooltipIcon tier={summary.tier} />}
+          label={TIER_DISPLAY_NAME[summary.tier]}
+          scoreCount={summary.scoreCount}
+          measureLabel="Median accuracy"
+          quartiles={quartiles}
+          color={color}
           format={format}
         />
       }
@@ -296,23 +222,6 @@ function TierAccuracyRow({
   );
 }
 
-/** Axis ticks plus the interior positions the rows draw gridlines at. */
-function useAxisTicks(axis: NiceAxis, format: (value: number) => string) {
-  return React.useMemo(() => {
-    const ticks = axis.ticks.map((value) => ({
-      value,
-      label: format(value),
-      percent: toAxisPercent(value, axis.min, axis.max),
-    }));
-
-    return {
-      ticks,
-      // Endpoint ticks would just trace the edges of the track.
-      gridPercents: ticks.slice(1, -1).map((tick) => tick.percent),
-    };
-  }, [axis, format]);
-}
-
 export default function BeatmapTierBreakdownCard({
   tierBreakdown,
   className,
@@ -320,7 +229,7 @@ export default function BeatmapTierBreakdownCard({
   const { tiers, ratedScoreCount, totalScoreCount } = tierBreakdown;
 
   // Six labels smear together on a phone-width track.
-  const isNarrow = useMediaQuery('(max-width: 639px)');
+  const isNarrow = useIsNarrowChart();
   const maxTicks = isNarrow ? 4 : 6;
 
   // Zoomed to the boxes — see getBoxPlotAxis.
@@ -342,8 +251,15 @@ export default function BeatmapTierBreakdownCard({
     [tiers, maxTicks]
   );
 
-  const score = useAxisTicks(scoreAxis, formatScoreTick);
-  const accuracy = useAxisTicks(accuracyAxis, formatAccuracyTick);
+  const score = React.useMemo(
+    () => getScaleTicks(scoreAxis, formatScoreTick),
+    [scoreAxis]
+  );
+
+  const accuracy = React.useMemo(
+    () => getScaleTicks(accuracyAxis, formatAccuracyTick),
+    [accuracyAxis]
+  );
 
   return (
     <SectionCard data-testid="beatmap-tier-breakdown" className={cn(className)}>

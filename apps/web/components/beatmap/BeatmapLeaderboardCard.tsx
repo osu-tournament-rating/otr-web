@@ -22,6 +22,7 @@ import {
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
+import { formatChartNumber } from '@/lib/utils/chart';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatAccuracy } from '@/lib/utils/format';
 
@@ -97,8 +98,8 @@ export default function BeatmapLeaderboardCard({
         title="Leaderboard"
         meta={
           performers.length < totalScoreCount
-            ? `top ${performers.length.toLocaleString()} of ${totalScoreCount.toLocaleString()} scores`
-            : `${totalScoreCount.toLocaleString()} ${
+            ? `top ${formatChartNumber(performers.length)} of ${formatChartNumber(totalScoreCount)} scores`
+            : `${formatChartNumber(totalScoreCount)} ${
                 totalScoreCount === 1 ? 'score' : 'scores'
               }`
         }
@@ -200,7 +201,7 @@ export default function BeatmapLeaderboardCard({
                           data-testid="beatmap-top-play-score"
                           className="flex items-center justify-end gap-1.5 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                         >
-                          {performer.score.toLocaleString()}
+                          {formatChartNumber(performer.score)}
                           <GradeIcon grade={performer.grade} />
                         </Link>
                       </TableCell>
@@ -284,7 +285,7 @@ export default function BeatmapLeaderboardCard({
                       aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
                       className="flex shrink-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
-                      {performer.score.toLocaleString()}
+                      {formatChartNumber(performer.score)}
                       <GradeIcon grade={performer.grade} />
                     </Link>
                   </div>

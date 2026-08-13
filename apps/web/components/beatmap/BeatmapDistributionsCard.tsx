@@ -10,6 +10,8 @@ import {
   Eyebrow,
   SectionCard,
   SectionHeader,
+  Swatch,
+  Tile,
 } from '@/components/beatmap/BeatmapSection';
 import TapTooltip from '@/components/tap-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -174,17 +176,6 @@ interface DisplaySegment {
   percentage: number;
   percentageLabel: string;
   fill: string;
-}
-
-/** The color chip that fronts every mod, grade, and rank-bracket label. */
-function Swatch({ color }: { color: string }) {
-  return (
-    <span
-      className="size-2 shrink-0 rounded-[2px]"
-      style={{ backgroundColor: color }}
-      aria-hidden="true"
-    />
-  );
 }
 
 /**
@@ -584,128 +575,142 @@ export default function BeatmapDistributionsCard({
           </div>
 
           <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:divide-x">
+            {/* Each section takes an equal share of the column so the rule
+                between them lands mid-column and neither section's content is
+                stranded above a tall empty region. */}
             <div className="flex flex-col divide-y">
-              <div className="space-y-3 px-4 py-4">
-                {/* Wrapped so the label's box hugs the text like the mod
-                    distribution header does; a bare inline Eyebrow inherits the
-                    parent's taller strut and eats into the gap below it. */}
-                <div className="flex items-baseline">
-                  <Eyebrow>Grades</Eyebrow>
+              <div className="flex-1 px-4 py-4">
+                <div className="flex h-full flex-col justify-center space-y-3">
+                  {/* Wrapped so the label's box hugs the text like the mod
+                      distribution header does; a bare inline Eyebrow inherits
+                      the parent's taller strut and eats into the gap below
+                      it. */}
+                  <div className="flex items-baseline">
+                    <Eyebrow>Grades</Eyebrow>
+                  </div>
+                  {gradeSegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No grade data recorded for these scores.
+                    </p>
+                  ) : (
+                    <>
+                      <SegmentBar
+                        segments={gradeSegments}
+                        testId="beatmap-grade-distribution-bar"
+                      />
+                      <SegmentLegend
+                        segments={gradeSegments}
+                        ariaLabel="Grade distribution"
+                        /* auto-fit, not a fixed 3, because a fixed track is
+                           ~98px at 1024px and the widest cell needs ~110px,
+                           which split "33.3% · 455" across two lines. */
+                        className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
+                      />
+                    </>
+                  )}
                 </div>
-                {gradeSegments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No grade data recorded for these scores.
-                  </p>
-                ) : (
-                  <>
-                    <SegmentBar
-                      segments={gradeSegments}
-                      testId="beatmap-grade-distribution-bar"
-                    />
-                    <SegmentLegend
-                      segments={gradeSegments}
-                      ariaLabel="Grade distribution"
-                      /* auto-fit, not a fixed 3, because a fixed track is
-                         ~98px at 1024px and the widest cell needs ~110px,
-                         which split "33.3% · 455" across two lines. */
-                      className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
-                    />
-                  </>
-                )}
               </div>
 
-              <div className="space-y-3 px-4 py-4">
-                <div className="flex items-baseline justify-between gap-2">
-                  <Eyebrow>Freemod picks</Eyebrow>
-                  {freemodPicks.freemodGameCount > 0 ? (
-                    <span className="text-xs text-muted-foreground">
-                      {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
-                    </span>
-                  ) : null}
-                </div>
+              <div className="flex-1 px-4 py-4">
+                <div className="flex h-full flex-col justify-center space-y-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <Eyebrow>Freemod picks</Eyebrow>
+                    {freemodPicks.freemodGameCount > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
+                      </span>
+                    ) : null}
+                  </div>
 
-                {freemodPicks.freemodGameCount === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No freemod games recorded.
-                  </p>
-                ) : freemodSegments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No verified scores in freemod games yet.
-                  </p>
-                ) : freemodPicks.freemodScoreCount < 5 ? (
-                  <FreemodPickChips segments={freemodSegments} />
-                ) : (
-                  <FreemodPickRows segments={freemodSegments} />
-                )}
+                  {freemodPicks.freemodGameCount === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No freemod games recorded.
+                    </p>
+                  ) : freemodSegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No verified scores in freemod games yet.
+                    </p>
+                  ) : freemodPicks.freemodScoreCount < 5 ? (
+                    <FreemodPickChips segments={freemodSegments} />
+                  ) : (
+                    <FreemodPickRows segments={freemodSegments} />
+                  )}
+                </div>
               </div>
             </div>
 
             <div
-              className="space-y-2 border-t px-4 py-4 lg:border-t-0"
+              className="flex flex-col border-t px-4 py-4 lg:border-t-0"
               data-testid="beatmap-rank-range"
             >
-              <div className="space-y-0.5">
-                <Eyebrow>Tournament rank ranges</Eyebrow>
-              </div>
-
-              {rankSlices.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Never pooled by a tournament.
-                </p>
-              ) : rankSlices.length === 1 ? (
-                /* One bracket is not a distribution — a donut of a single
-                   slice would encode nothing the sentence does not. */
-                <div
-                  data-testid="beatmap-rank-range-summary"
-                  className="rounded-lg border bg-muted/25 px-3 py-6"
-                >
-                  <p className="flex items-center justify-center gap-1.5 text-center text-sm font-medium">
-                    <Swatch color={rankSlices[0].fill} />
-                    {rankSlices[0].count === 1
-                      ? `1 pool · ${rankSlices[0].label} rank`
-                      : `All ${formatChartNumber(rankSlices[0].count)} pools · ${
-                          rankSlices[0].label
-                        } rank`}
-                  </p>
+              {/* The row ends on one line, so this column stretches to whatever
+                  height the Overview rail sets. Its label and donut center
+                  together rather than the label pinning to the top and leaving
+                  the donut adrift a couple of hundred pixels below it. */}
+              <div className="flex h-full flex-col justify-center space-y-3">
+                <div className="space-y-0.5">
+                  <Eyebrow>Tournament rank ranges</Eyebrow>
                 </div>
-              ) : (
-                <>
-                  <RankRangePie
-                    slices={rankSlices}
-                    totalPools={pools.length}
-                    modsByBucket={modsByBucket}
-                  />
-                  {/* Sliver brackets are unhittable on the ring, so every
-                      bracket is also inspectable from its legend row. */}
-                  <ul
-                    aria-label="Tournaments by rank range"
-                    className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"
+
+                {rankSlices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Never pooled by a tournament.
+                  </p>
+                ) : rankSlices.length === 1 ? (
+                  /* One bracket is not a distribution — a donut of a single
+                     slice would encode nothing the sentence does not. */
+                  <Tile
+                    data-testid="beatmap-rank-range-summary"
+                    className="py-6"
                   >
-                    {rankSlices.map((slice) => (
-                      <li key={slice.key}>
-                        <TapTooltip
-                          side="top"
-                          content={
-                            <RankBucketTooltipBody
-                              slice={slice}
-                              bucketMods={modsByBucket.get(slice.key)}
-                            />
-                          }
-                          triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
-                        >
-                          <Swatch color={slice.fill} />
-                          <span className="text-muted-foreground">
-                            {slice.label}
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {formatChartNumber(slice.count)}
-                          </span>
-                        </TapTooltip>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
+                    <p className="flex items-center justify-center gap-1.5 text-center text-sm font-medium">
+                      <Swatch color={rankSlices[0].fill} />
+                      {rankSlices[0].count === 1
+                        ? `1 pool · ${rankSlices[0].label} rank`
+                        : `All ${formatChartNumber(rankSlices[0].count)} pools · ${
+                            rankSlices[0].label
+                          } rank`}
+                    </p>
+                  </Tile>
+                ) : (
+                  <>
+                    <RankRangePie
+                      slices={rankSlices}
+                      totalPools={pools.length}
+                      modsByBucket={modsByBucket}
+                    />
+                    {/* Sliver brackets are unhittable on the ring, so every
+                        bracket is also inspectable from its legend row. */}
+                    <ul
+                      aria-label="Tournaments by rank range"
+                      className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"
+                    >
+                      {rankSlices.map((slice) => (
+                        <li key={slice.key}>
+                          <TapTooltip
+                            side="top"
+                            content={
+                              <RankBucketTooltipBody
+                                slice={slice}
+                                bucketMods={modsByBucket.get(slice.key)}
+                              />
+                            }
+                            triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
+                          >
+                            <Swatch color={slice.fill} />
+                            <span className="text-muted-foreground">
+                              {slice.label}
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {formatChartNumber(slice.count)}
+                            </span>
+                          </TapTooltip>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

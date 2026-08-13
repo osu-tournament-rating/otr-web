@@ -11,3 +11,11 @@ export function useMediaQuery(query: string): boolean {
     () => false
   );
 }
+
+/**
+ * Below Tailwind's `sm` breakpoint (640px), where a chart has to thin its ticks
+ * and shrink its marks to stay readable.
+ */
+export function useIsNarrowChart(): boolean {
+  return useMediaQuery('(max-width: 639px)');
+}

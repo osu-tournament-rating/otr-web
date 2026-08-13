@@ -15,10 +15,12 @@ import {
   Eyebrow,
   SectionCard,
   SectionHeader,
+  Tile,
 } from '@/components/beatmap/BeatmapSection';
+import BeatmapUsageSparkline from '@/components/beatmap/BeatmapUsageSparkline';
+import { Progress } from '@/components/ui/progress';
 import { getBeatmapAttributeRows } from '@/lib/beatmaps/presentation';
 import {
-  formatQuarterLong,
   getMostUsedInPool,
   getPoolPickRate,
   summarizeActivity,
@@ -30,6 +32,7 @@ import type {
   BeatmapWithDetails,
 } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
+import { formatChartNumber } from '@/lib/utils/chart';
 
 const ATTRIBUTE_SCALE_MAX = 10;
 
@@ -83,16 +86,6 @@ function GroupHeader({
   );
 }
 
-/** The shared tile chrome behind both stat grids. */
-function Tile({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn('rounded-lg border bg-muted/25 px-3 py-2.5', className)}
-      {...props}
-    />
-  );
-}
-
 /**
  * Two columns of spec-sheet tiles. Attributes that do not apply to the ruleset
  * are dimmed and drop their gauge, but keep a spacer so the grid rows stay
@@ -127,17 +120,13 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
                 </dd>
               </div>
               {row.gauge !== false ? (
-                <span
+                /* aria-hidden: the sibling `dd` already announces the value,
+                   so a progressbar role would only say it twice. */
+                <Progress
                   aria-hidden
-                  className="mt-2.5 block h-1.5 overflow-hidden rounded-full bg-muted"
-                >
-                  <span
-                    className="block h-full rounded-full bg-foreground/60"
-                    style={{
-                      width: `${Math.min(100, (value / ATTRIBUTE_SCALE_MAX) * 100)}%`,
-                    }}
-                  />
-                </span>
+                  value={Math.min(100, (value / ATTRIBUTE_SCALE_MAX) * 100)}
+                  className="mt-2.5 h-1.5 bg-muted [&>[data-slot=progress-indicator]]:bg-foreground/60"
+                />
               ) : (
                 <span aria-hidden className="mt-2.5 block h-1.5" />
               )}
@@ -170,51 +159,7 @@ function ActivityGroup({
       <GroupHeader icon={TrendingUp} title="Tournament activity" />
 
       <div className="space-y-3 px-4 py-3">
-        {/* A run of empty quarters is not a chart — pooled-but-never-played
-            maps skip the sparkline rather than draw a blank frame. */}
-        {usage.length >= 2 && activity.maxGames > 0 && (
-          <div>
-            <div className="flex items-baseline justify-between gap-2">
-              <Eyebrow>Games per quarter</Eyebrow>
-              <span className="text-[11px] text-muted-foreground">
-                {`peak ${activity.maxGames.toLocaleString()}`}
-              </span>
-            </div>
-            <div className="mt-2 flex h-20 gap-px" aria-hidden>
-              {usage.map((point) => (
-                <div
-                  key={point.quarter}
-                  /* Two populations in one tooltip: bar height is verified
-                     games, pool records count every tournament. Say which is
-                     which rather than letting them read as one series. */
-                  title={`${formatQuarterLong(point.quarter)} · ${point.gameCount} verified games, ${point.pooledCount} pool records`}
-                  className="group flex min-w-0 flex-1 flex-col justify-end gap-px rounded-t-[3px] hover:bg-primary/10"
-                >
-                  <div
-                    className="w-full rounded-t-[2px] bg-primary/85 transition-colors group-hover:bg-primary"
-                    style={{
-                      // Guarded above: this only renders when maxGames > 0.
-                      height: `${(point.gameCount / activity.maxGames) * 100}%`,
-                      minHeight: point.gameCount > 0 ? 2 : 0,
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="mt-1 flex justify-between border-t pt-1 text-[11px] text-muted-foreground">
-              <span>
-                {activity.firstActive
-                  ? formatQuarterLong(activity.firstActive.quarter)
-                  : '—'}
-              </span>
-              <span>
-                {activity.lastActive
-                  ? formatQuarterLong(activity.lastActive.quarter)
-                  : '—'}
-              </span>
-            </div>
-          </div>
-        )}
+        <BeatmapUsageSparkline usage={usage} />
 
         <Tile>
           <Eyebrow>Most used in</Eyebrow>
@@ -232,8 +177,8 @@ function ActivityGroup({
                 />
               </Link>
               <p className="text-xs text-muted-foreground">
-                {mostUsedIn.scoreCount.toLocaleString()} scores ·{' '}
-                {mostUsedIn.gameCount.toLocaleString()} games
+                {formatChartNumber(mostUsedIn.scoreCount)} scores ·{' '}
+                {formatChartNumber(mostUsedIn.gameCount)} games
               </p>
             </>
           ) : (
@@ -248,9 +193,9 @@ function ActivityGroup({
             testId="beatmap-pool-records"
             icon={WavesLadder}
             label="Pooled in"
-            sublabel={`${summary.verifiedTournamentCount.toLocaleString()} verified`}
-            value={summary.totalTournamentCount.toLocaleString()}
-            accessibleValue={`Pooled in ${summary.totalTournamentCount.toLocaleString()} ${summary.totalTournamentCount === 1 ? 'tournament' : 'tournaments'}, ${summary.verifiedTournamentCount.toLocaleString()} of them verified`}
+            sublabel={`${formatChartNumber(summary.verifiedTournamentCount)} verified`}
+            value={formatChartNumber(summary.totalTournamentCount)}
+            accessibleValue={`Pooled in ${formatChartNumber(summary.totalTournamentCount)} ${summary.totalTournamentCount === 1 ? 'tournament' : 'tournaments'}, ${formatChartNumber(summary.verifiedTournamentCount)} of them verified`}
           />
           <ActivityStat
             testId="beatmap-played-tournaments"
@@ -262,29 +207,29 @@ function ActivityGroup({
             sublabel={
               pickRate === null
                 ? undefined
-                : `${summary.pooledPlayedTournamentCount.toLocaleString()} of ${summary.totalTournamentCount.toLocaleString()} pools`
+                : `${formatChartNumber(summary.pooledPlayedTournamentCount)} of ${formatChartNumber(summary.totalTournamentCount)} pools`
             }
             accessibleValue={
               pickRate === null
                 ? 'Never pooled, so no pick rate'
-                : `Picked in ${summary.pooledPlayedTournamentCount.toLocaleString()} of ${summary.totalTournamentCount.toLocaleString()} pools, ${pickRate}%`
+                : `Picked in ${formatChartNumber(summary.pooledPlayedTournamentCount)} of ${formatChartNumber(summary.totalTournamentCount)} pools, ${pickRate}%`
             }
           />
           <ActivityStat
             testId="beatmap-games"
             icon={Gamepad2}
             label="Games"
-            sublabel={`${summary.totalGameCount.toLocaleString()} verified`}
-            value={summary.totalPlayedGameCount.toLocaleString()}
-            accessibleValue={`${summary.totalPlayedGameCount.toLocaleString()} ${summary.totalPlayedGameCount === 1 ? 'game' : 'games'} played, ${summary.totalGameCount.toLocaleString()} of them verified`}
+            sublabel={`${formatChartNumber(summary.totalGameCount)} verified`}
+            value={formatChartNumber(summary.totalPlayedGameCount)}
+            accessibleValue={`${formatChartNumber(summary.totalPlayedGameCount)} ${summary.totalPlayedGameCount === 1 ? 'game' : 'games'} played, ${formatChartNumber(summary.totalGameCount)} of them verified`}
           />
           <ActivityStat
             testId="beatmap-active-quarters"
             icon={CalendarRange}
             label="Quarters"
             sublabel="with activity"
-            value={activity.activeQuarters.toLocaleString()}
-            accessibleValue={`${activity.activeQuarters.toLocaleString()} active quarters`}
+            value={formatChartNumber(activity.activeQuarters)}
+            accessibleValue={`${formatChartNumber(activity.activeQuarters)} active quarters`}
           />
         </dl>
       </div>

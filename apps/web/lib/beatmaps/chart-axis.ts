@@ -78,6 +78,57 @@ function trimFloatDrift(value: number): number {
   return Number(value.toPrecision(12));
 }
 
+export interface ScatterAxis extends NiceAxis {
+  /**
+   * Values below this were not plotted where they fall. Always equal to `min`;
+   * named separately so callers read the clamp as a decision rather than as an
+   * incidental property of the domain.
+   */
+  floor: number;
+}
+
+/**
+ * A scatter axis floored on a low quantile instead of on the minimum.
+ *
+ * One quit run is enough to ruin a whole plot: on a mania map where 327 of 328
+ * scores sit between 860k and 999k, a single 288k score stretches the domain to
+ * 200k..1M and crushes everything real into the top fifth of the chart. The
+ * floor comes from the 1st percentile instead, and the caller pins anything
+ * below it onto that floor — visible, marked, and no longer setting the scale.
+ *
+ * Small and tight samples are left alone: the quantile of a two-point sample
+ * lands next to its minimum, and a sample with no spread degenerates, so both
+ * fall through to the same domain `getNiceAxis` would have produced anyway.
+ */
+export function getScatterAxis(
+  values: readonly number[],
+  quantile = 0.01,
+  maxTicks = 6
+): ScatterAxis | null {
+  if (values.length === 0) return null;
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const max = sorted[sorted.length - 1];
+
+  // d3's interpolated quantile: the rank is a fraction of the way between two
+  // sorted values, so the floor moves smoothly as the sample grows.
+  const rank = quantile * (sorted.length - 1);
+  const lower = Math.floor(rank);
+  const upper = Math.ceil(rank);
+  const floor =
+    sorted[lower] + (sorted[upper] - sorted[lower]) * (rank - lower);
+
+  const axis = getNiceAxis(
+    // Degenerate: the quantile reaches the top of the sample, so clamping to it
+    // would hide the entire distribution. Chart the raw range instead.
+    floor >= max ? sorted[0] : floor,
+    max,
+    maxTicks
+  );
+
+  return { ...axis, floor: axis.min };
+}
+
 /**
  * Axis label for a score: `0`, `250k`, `1.25M`. Thousands round to whole `k`
  * — a tick reading `45.16k` is noise, not precision — while millions keep two
@@ -104,6 +155,35 @@ export function toAxisPercent(value: number, min: number, max: number): number {
   if (max <= min) return 50;
 
   return Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+}
+
+export interface ScaleTick {
+  /** Stable key and sort position. */
+  value: number;
+  label: string;
+  /** Position along the track, 0..100. */
+  percent: number;
+}
+
+/**
+ * The labelled ticks under a row chart, plus the interior positions the rows
+ * draw gridlines at. Endpoint ticks are left out of the gridlines: they would
+ * just trace the edges of the track.
+ */
+export function getScaleTicks(
+  axis: NiceAxis,
+  format: (value: number) => string
+): { ticks: ScaleTick[]; gridPercents: number[] } {
+  const ticks = axis.ticks.map((value) => ({
+    value,
+    label: format(value),
+    percent: toAxisPercent(value, axis.min, axis.max),
+  }));
+
+  return {
+    ticks,
+    gridPercents: ticks.slice(1, -1).map((tick) => tick.percent),
+  };
 }
 
 export interface BoxPlotQuartiles {

@@ -1,21 +1,53 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type * as React from 'react';
 
-import type { BoxPlotMarks } from '@/lib/beatmaps/chart-axis';
+import type {
+  BoxPlotMarks,
+  BoxPlotQuartiles,
+  ScaleTick,
+} from '@/lib/beatmaps/chart-axis';
 import { cn } from '@/lib/utils';
+import { formatChartNumber } from '@/lib/utils/chart';
 
-/** Card chrome shared by the beatmap detail page's sections. */
+export type { ScaleTick };
+
+/**
+ * Card chrome shared by the beatmap detail page's sections. `as` exists for the
+ * page header, which needs the same surface on a `<header>` element.
+ */
 export function SectionCard({
+  as: Tag = 'section',
   className,
   ...props
-}: React.ComponentProps<'section'>) {
+}: React.ComponentProps<'section'> & { as?: 'section' | 'header' }) {
   return (
-    <section
+    <Tag
       className={cn(
         'overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none',
         className
       )}
       {...props}
+    />
+  );
+}
+
+/** The shared tile chrome behind the page's stat grids. */
+export function Tile({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn('rounded-lg border bg-muted/25 px-3 py-2.5', className)}
+      {...props}
+    />
+  );
+}
+
+/** The color chip that fronts every mod, grade, and rank-bracket label. */
+export function Swatch({ color }: { color: string }) {
+  return (
+    <span
+      className="size-2 shrink-0 rounded-[2px]"
+      style={{ backgroundColor: color }}
+      aria-hidden="true"
     />
   );
 }
@@ -170,12 +202,75 @@ function WhiskerCap({
   );
 }
 
-export interface ScaleTick {
-  /** Stable key and sort position. */
-  value: number;
+/** Hollow ring glyph echoing the box plot's min/max marks. */
+function RingGlyph({ color }: { color: string }) {
+  return (
+    <span
+      className="size-1.5 shrink-0 rounded-full border bg-transparent"
+      style={{ borderColor: color }}
+      aria-hidden="true"
+    />
+  );
+}
+
+/**
+ * The readout behind every box plot row: the same five numbers, formatted for
+ * whichever measure the row is drawn from.
+ */
+export function BoxPlotTooltipContent({
+  labelIcon,
+  label,
+  scoreCount,
+  measureLabel,
+  quartiles,
+  color,
+  format,
+}: {
+  labelIcon: React.ReactNode;
   label: string;
-  /** Position along the track, 0..100. */
-  percent: number;
+  scoreCount: number;
+  /** Names the measure on the median line: `Median`, `Median accuracy`. */
+  measureLabel: string;
+  quartiles: BoxPlotQuartiles;
+  color: string;
+  format: (value: number) => string;
+}) {
+  return (
+    <div className="min-w-44 space-y-1">
+      <div className="flex items-center justify-between gap-4 border-b pb-1.5">
+        <span className="flex items-center gap-1.5 text-xs font-medium">
+          {labelIcon}
+          {label}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {`${formatChartNumber(scoreCount)} scores`}
+        </span>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-xs text-muted-foreground">{measureLabel}</span>
+        <span className="text-sm font-semibold">
+          {format(quartiles.median)}
+        </span>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-xs text-muted-foreground">Middle 50%</span>
+        <span className="text-xs">
+          {`${format(quartiles.p25)} – ${format(quartiles.p75)}`}
+        </span>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-xs text-muted-foreground">Range</span>
+        <span className="flex items-center gap-1.5 text-xs">
+          <RingGlyph color={color} />
+          {`${format(quartiles.min)} – ${format(quartiles.max)}`}
+          <RingGlyph color={color} />
+        </span>
+      </div>
+    </div>
+  );
 }
 
 /**
