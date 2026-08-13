@@ -106,7 +106,7 @@ export default function BeatmapLeaderboardCard({
       />
 
       {performers.length === 0 ? (
-        <EmptyState>No scores recorded yet.</EmptyState>
+        <EmptyState />
       ) : (
         <>
           {/* Seven columns need a scroll container from sm up; phones get the stacked list below. */}
@@ -311,7 +311,7 @@ export default function BeatmapLeaderboardCard({
                     </Link>
                     <time
                       dateTime={performer.playedAt ?? undefined}
-                      className="shrink-0 text-[11px] whitespace-nowrap"
+                      className="shrink-0 text-xs whitespace-nowrap"
                     >
                       {performer.playedAt
                         ? formatUTCDate(new Date(performer.playedAt))

@@ -141,13 +141,14 @@
   --team-red: var(--destructive);
   --team-blue: var(--primary);
 
-  /* Tournament rank-range ramp (ordinal: Open -> 100k+). Mid-lightness like
-     the mod colors so one definition reads on both light and dark cards.
-     --chart-3/4/5 are achromatic, so they cannot carry five categories. */
+  /* Tournament rank-range ramp (ordinal: Open -> 100k+). Each color has to
+     clear 3:1 against its own card (WCAG 1.4.11), which the light and dark
+     cards need different lightnesses for. Pairwise separation is not a
+     requirement: symbol and dash carry the category redundantly. */
   --rank-range-open: hsl(217, 80%, 60%);
-  --rank-range-lt1k: hsl(190, 70%, 47%);
-  --rank-range-1k: hsl(151, 55%, 45%);
-  --rank-range-10k: hsl(40, 85%, 52%);
+  --rank-range-lt1k: hsl(190, 70%, 40%);
+  --rank-range-1k: hsl(151, 55%, 40%);
+  --rank-range-10k: hsl(40, 90%, 38%);
   --rank-range-100k: hsl(5, 80%, 63%);
 
   /* Tier text colors */
@@ -287,6 +288,11 @@
 
   /* Dark mode tier text colors */
   --text-silver: hsl(0, 0%, 70%);
+
+  /* Brighter rank ranges: the light card's darker values drop under 3:1 here. */
+  --rank-range-lt1k: hsl(190, 70%, 47%);
+  --rank-range-1k: hsl(151, 55%, 45%);
+  --rank-range-10k: hsl(40, 85%, 52%);
 
   /* B-D flip on the dark card so the ramp stays monotonic away from the
      surface: B stays brightest, D recedes toward the card background. */

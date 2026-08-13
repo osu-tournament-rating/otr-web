@@ -1,21 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronDown,
-  Filter,
-  Search,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Filter, Search, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type KeyboardEvent,
 } from 'react';
@@ -29,14 +20,12 @@ import {
 } from '@otr/core/osu';
 import { z } from 'zod';
 
+import FilterChip from '@/components/filters/FilterChip';
+import FilterPopover, {
+  type FilterField,
+} from '@/components/filters/FilterPopover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -53,16 +42,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -73,23 +52,17 @@ import {
   TournamentRejectionReasonEnumHelper,
 } from '@/lib/enum-helpers';
 import { type TournamentListFilter as TournamentListFilterType } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { formatUTCDate } from '@/lib/utils/date';
 import {
   defaultTournamentListFilter,
   tournamentListFilterSchema,
 } from '@/lib/validation-schema';
 import {
-  RANK_RANGE_MAX,
   RANK_RANGE_DEFAULT_MAX,
+  RANK_RANGE_MAX,
   RANK_RANGE_MIN,
-  RANK_SLIDER_MAX,
-  RANK_SLIDER_MIN,
-  RANK_SLIDER_STEP,
-  moveRankBySliderStops,
-  rankToSliderPosition,
-  sliderPositionToRank,
-} from './tournamentRankSlider';
+  tournamentRankScale,
+} from '@/lib/filters/tournament-rank';
 
 const DEBOUNCE_DELAY = 500;
 
@@ -141,12 +114,7 @@ interface TournamentListFilterProps {
   filter: FilterFormData;
 }
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const toDateInputValue = (value?: Date) => (value ? formatUTCDate(value) : '');
-
-const fromDateInputValue = (value: string) =>
+const fromDateInputValue = (value?: string) =>
   value ? new Date(`${value}T00:00:00.000Z`) : undefined;
 
 function useSearchInput(initialQuery: string) {
@@ -334,448 +302,122 @@ function RulesetFilter({
   return (
     <div aria-label="Filter by ruleset" className="min-w-0">
       <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => {
-          const isSelected = value === option.value;
-
-          return (
-            <Button
-              key={option.value ?? 'all'}
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-pressed={isSelected}
-              onClick={() => applyPatch({ ruleset: option.value })}
-              className={cn(
-                'h-8 flex-none gap-1.5 rounded-full bg-background px-3 dark:bg-input/50 dark:shadow-none',
-                isSelected &&
-                  'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary dark:bg-primary/20 dark:hover:bg-primary/25'
-              )}
-            >
+        {options.map((option) => (
+          <FilterChip
+            key={option.value ?? 'all'}
+            label={option.label.trim()}
+            icon={
               <RulesetIcon
                 ruleset={option.icon}
                 className="size-4 fill-current"
                 aria-hidden="true"
               />
-              {option.label.trim()}
-            </Button>
-          );
-        })}
+            }
+            selected={value === option.value}
+            onClick={() => applyPatch({ ruleset: option.value })}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-function MultiSelectDropdown({
-  label,
-  placeholder,
-  options,
-  selectedValues,
-  onCheckedChange,
-  testId,
-}: {
-  label: string;
-  placeholder: string;
-  options: readonly { value: number; label: string }[];
-  selectedValues: readonly number[];
-  onCheckedChange: (value: number, checked: boolean) => void;
-  testId?: string;
-}) {
-  const selectedLabels = options
-    .filter((option) => selectedValues.includes(option.value))
-    .map((option) => option.label);
-  const summary =
-    selectedLabels.length === 0
-      ? placeholder
-      : selectedLabels.length === 1
-        ? selectedLabels[0]
-        : `${selectedLabels.length} selected`;
+/**
+ * Descriptors for the shared filter popover. Every field applies immediately by
+ * pushing straight through `applyPatch`, so there is no local form state here.
+ */
+function buildFilterFields(
+  filter: FilterFormData,
+  applyPatch: ApplyFilterPatch
+): FilterField[] {
+  const verificationStatus = filter.verificationStatus ?? [];
+  const lobbySize = filter.lobbySize ?? [];
+  const rejectionReason =
+    filter.rejectionReason ?? TournamentRejectionReason.None;
 
-  return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          data-testid={testId}
-          aria-label={`${label}: ${summary}`}
-          className="w-full justify-between bg-background font-normal dark:bg-input/50 dark:shadow-none"
-        >
-          <span className="truncate">{summary}</span>
-          <ChevronDown className="size-4 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        className="w-[var(--radix-dropdown-menu-trigger-width)]"
-      >
-        {options.map((option) => (
-          <DropdownMenuCheckboxItem
-            key={option.value}
-            checked={selectedValues.includes(option.value)}
-            onCheckedChange={(checked) =>
-              onCheckedChange(option.value, checked === true)
-            }
-            onSelect={(event) => event.preventDefault()}
-          >
-            {option.label}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function FilterPanel({
-  control,
-  applyPatch,
-}: {
-  control: Control<FilterFormData>;
-  applyPatch: ApplyFilterPatch;
-}) {
-  const activeRankThumb = useRef<0 | 1>(0);
-
-  return (
-    <div className="space-y-8 py-2">
-      <FormField
-        control={control}
-        name="verificationStatus"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Status</FormLabel>
-            <MultiSelectDropdown
-              label="Status"
-              placeholder="Any status"
-              options={verificationStatusOptions}
-              selectedValues={field.value ?? []}
-              testId="tournament-status-filter"
-              onCheckedChange={(value, checked) => {
-                const current = field.value ?? [];
-                const verificationStatus = checked
-                  ? [...current, value as VerificationStatus]
-                  : current.filter((status) => status !== value);
-                field.onChange(verificationStatus);
-                applyPatch({ verificationStatus });
-              }}
-            />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="lobbySize"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Team size</FormLabel>
-            <MultiSelectDropdown
-              label="Team size"
-              placeholder="Any team size"
-              options={lobbySizeOptions.map((size) => ({
-                value: size,
-                label: LobbySizeEnumHelper.toString(size),
-              }))}
-              selectedValues={field.value ?? []}
-              testId="tournament-team-size-filter"
-              onCheckedChange={(value, checked) => {
-                const current = field.value ?? [];
-                const lobbySize = checked
-                  ? [...current, value]
-                  : current.filter((currentSize) => currentSize !== value);
-                field.onChange(lobbySize);
-                applyPatch({ lobbySize });
-              }}
-            />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="rejectionReason"
-        render={({ field }) => {
-          const selectedReasons = rejectionReasonOptions
-            .filter(({ value }) => ((field.value ?? 0) & value) === value)
-            .map(({ value }) => value);
-
-          return (
-            <FormItem>
-              <FormLabel>Rejection reason</FormLabel>
-              <MultiSelectDropdown
-                label="Rejection reason"
-                placeholder="Any rejection reason"
-                options={rejectionReasonOptions}
-                selectedValues={selectedReasons}
-                testId="tournament-rejection-reason-filter"
-                onCheckedChange={(value, checked) => {
-                  const current = field.value ?? 0;
-                  const rejectionReason = checked
-                    ? current | value
-                    : current & ~value;
-                  const nextValue = rejectionReason || undefined;
-                  field.onChange(nextValue);
-                  applyPatch({ rejectionReason: nextValue });
-                }}
-              />
-            </FormItem>
-          );
-        }}
-      />
-
-      <FormField
-        control={control}
-        name="minRankRange"
-        render={({ field: minField }) => (
-          <FormField
-            control={control}
-            name="maxRankRange"
-            render={({ field: maxField }) => {
-              const minRank = minField.value ?? RANK_RANGE_MIN;
-              const maxRank = maxField.value ?? RANK_RANGE_DEFAULT_MAX;
-
-              return (
-                <FormItem>
-                  <FormLabel>Rank restriction</FormLabel>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Use 1 for open-rank tournaments.
-                  </p>
-                  <Slider
-                    className="mt-3"
-                    min={RANK_SLIDER_MIN}
-                    max={RANK_SLIDER_MAX}
-                    step={RANK_SLIDER_STEP}
-                    value={[
-                      rankToSliderPosition(minRank),
-                      rankToSliderPosition(maxRank),
-                    ]}
-                    onValueChange={(values) => {
-                      const positions = [
-                        rankToSliderPosition(minRank),
-                        rankToSliderPosition(maxRank),
-                      ];
-                      const minDifference = Math.abs(values[0] - positions[0]);
-                      const maxDifference = Math.abs(values[1] - positions[1]);
-                      const changedThumb =
-                        minDifference === maxDifference
-                          ? activeRankThumb.current
-                          : minDifference > maxDifference
-                            ? 0
-                            : 1;
-                      activeRankThumb.current = changedThumb;
-
-                      if (changedThumb === 0) {
-                        minField.onChange(
-                          Math.min(sliderPositionToRank(values[0]), maxRank)
-                        );
-                      } else {
-                        maxField.onChange(
-                          Math.max(sliderPositionToRank(values[1]), minRank)
-                        );
-                      }
-                    }}
-                    onValueCommit={(values) => {
-                      if (activeRankThumb.current === 0) {
-                        applyPatch({
-                          minRankRange: Math.min(
-                            sliderPositionToRank(values[0]),
-                            maxRank
-                          ),
-                        });
-                      } else {
-                        applyPatch({
-                          maxRankRange: Math.max(
-                            sliderPositionToRank(values[1]),
-                            minRank
-                          ),
-                        });
-                      }
-                    }}
-                    minStepsBetweenThumbs={0}
-                    data-testid="tournament-rank-slider"
-                    getThumbProps={(index) => {
-                      const thumbIndex: 0 | 1 = index === 0 ? 0 : 1;
-                      const isMinimum = thumbIndex === 0;
-                      const currentRank = isMinimum ? minRank : maxRank;
-
-                      return {
-                        'aria-label': isMinimum
-                          ? 'Minimum rank'
-                          : 'Maximum rank',
-                        'aria-valuemin': isMinimum ? RANK_RANGE_MIN : minRank,
-                        'aria-valuemax': isMinimum ? maxRank : RANK_RANGE_MAX,
-                        'aria-valuenow': currentRank,
-                        'aria-valuetext': currentRank.toLocaleString(),
-                        onFocus: () => {
-                          activeRankThumb.current = thumbIndex;
-                        },
-                        onPointerDown: () => {
-                          activeRankThumb.current = thumbIndex;
-                        },
-                        onKeyDown: (event) => {
-                          let nextRank: number | undefined;
-                          const pageStep = event.shiftKey ? 10 : 1;
-
-                          if (
-                            event.key === 'ArrowRight' ||
-                            event.key === 'ArrowUp'
-                          ) {
-                            nextRank = moveRankBySliderStops(
-                              currentRank,
-                              pageStep
-                            );
-                          } else if (
-                            event.key === 'ArrowLeft' ||
-                            event.key === 'ArrowDown'
-                          ) {
-                            nextRank = moveRankBySliderStops(
-                              currentRank,
-                              -pageStep
-                            );
-                          } else if (event.key === 'PageUp') {
-                            nextRank = moveRankBySliderStops(currentRank, 10);
-                          } else if (event.key === 'PageDown') {
-                            nextRank = moveRankBySliderStops(currentRank, -10);
-                          } else if (event.key === 'Home') {
-                            nextRank = isMinimum ? RANK_RANGE_MIN : minRank;
-                          } else if (event.key === 'End') {
-                            nextRank = isMinimum ? maxRank : RANK_RANGE_MAX;
-                          }
-
-                          if (nextRank === undefined) return;
-                          event.preventDefault();
-
-                          if (isMinimum) {
-                            const minRankRange = Math.min(nextRank, maxRank);
-                            minField.onChange(minRankRange);
-                            applyPatch({ minRankRange });
-                          } else {
-                            const maxRankRange = Math.max(nextRank, minRank);
-                            maxField.onChange(maxRankRange);
-                            applyPatch({ maxRankRange });
-                          }
-                        },
-                      };
-                    }}
-                  />
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        htmlFor="tournament-min-rank"
-                        className="mb-1 block text-xs text-muted-foreground"
-                      >
-                        Minimum
-                      </label>
-                      <Input
-                        id="tournament-min-rank"
-                        type="number"
-                        value={minRank}
-                        min={RANK_RANGE_MIN}
-                        max={maxRank}
-                        onChange={(event) =>
-                          minField.onChange(Number(event.target.value))
-                        }
-                        onBlur={(event) => {
-                          const minRankRange = clamp(
-                            Number(event.currentTarget.value) || RANK_RANGE_MIN,
-                            RANK_RANGE_MIN,
-                            maxRank
-                          );
-                          minField.onChange(minRankRange);
-                          applyPatch({ minRankRange });
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="tournament-max-rank"
-                        className="mb-1 block text-xs text-muted-foreground"
-                      >
-                        Maximum
-                      </label>
-                      <Input
-                        id="tournament-max-rank"
-                        type="number"
-                        value={maxRank}
-                        min={minRank}
-                        max={RANK_RANGE_MAX}
-                        onChange={(event) =>
-                          maxField.onChange(Number(event.target.value))
-                        }
-                        onBlur={(event) => {
-                          const maxRankRange = clamp(
-                            Number(event.currentTarget.value) || RANK_RANGE_MAX,
-                            minRank,
-                            RANK_RANGE_MAX
-                          );
-                          maxField.onChange(maxRankRange);
-                          applyPatch({ maxRankRange });
-                        }}
-                      />
-                    </div>
-                  </div>
-                </FormItem>
-              );
-            }}
-          />
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="dateMin"
-        render={({ field: dateMinField }) => (
-          <FormField
-            control={control}
-            name="dateMax"
-            render={({ field: dateMaxField }) => (
-              <FormItem>
-                <FormLabel>Tournament dates</FormLabel>
-                <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="tournament-date-min"
-                      className="mb-1 block text-xs text-muted-foreground"
-                    >
-                      From
-                    </label>
-                    <Input
-                      id="tournament-date-min"
-                      type="date"
-                      value={toDateInputValue(dateMinField.value)}
-                      max={toDateInputValue(dateMaxField.value)}
-                      onChange={(event) => {
-                        const dateMin = fromDateInputValue(event.target.value);
-                        dateMinField.onChange(dateMin);
-                        applyPatch({ dateMin });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="tournament-date-max"
-                      className="mb-1 block text-xs text-muted-foreground"
-                    >
-                      Through
-                    </label>
-                    <Input
-                      id="tournament-date-max"
-                      type="date"
-                      value={toDateInputValue(dateMaxField.value)}
-                      min={toDateInputValue(dateMinField.value)}
-                      onChange={(event) => {
-                        const dateMax = fromDateInputValue(event.target.value);
-                        dateMaxField.onChange(dateMax);
-                        applyPatch({ dateMax });
-                      }}
-                    />
-                  </div>
-                </div>
-              </FormItem>
-            )}
-          />
-        )}
-      />
-    </div>
-  );
+  return [
+    {
+      id: 'status',
+      kind: 'multi-select',
+      label: 'Status',
+      placeholder: 'Any status',
+      options: verificationStatusOptions,
+      value: verificationStatus,
+      onChange: (value, checked) =>
+        applyPatch({
+          verificationStatus: checked
+            ? [...verificationStatus, value as VerificationStatus]
+            : verificationStatus.filter((status) => status !== value),
+        }),
+    },
+    {
+      id: 'team-size',
+      kind: 'multi-select',
+      label: 'Team size',
+      placeholder: 'Any team size',
+      options: lobbySizeOptions.map((size) => ({
+        value: size,
+        label: LobbySizeEnumHelper.toString(size),
+      })),
+      value: lobbySize,
+      onChange: (value, checked) =>
+        applyPatch({
+          lobbySize: checked
+            ? [...lobbySize, value]
+            : lobbySize.filter((size) => size !== value),
+        }),
+    },
+    {
+      id: 'rejection-reason',
+      kind: 'multi-select',
+      label: 'Rejection reason',
+      placeholder: 'Any rejection reason',
+      options: rejectionReasonOptions,
+      // Persisted as a bitfield; the popover speaks in selected flags.
+      value: rejectionReasonOptions
+        .filter(({ value }) => (rejectionReason & value) === value)
+        .map(({ value }) => value),
+      onChange: (value, checked) => {
+        const next = checked
+          ? rejectionReason | value
+          : rejectionReason & ~value;
+        applyPatch({ rejectionReason: next || undefined });
+      },
+    },
+    {
+      id: 'rank',
+      kind: 'range',
+      label: 'Rank restriction',
+      description: 'Use 1 for open-rank tournaments.',
+      // Keeps the thumbs named "Minimum rank" / "Maximum rank".
+      valueLabel: 'rank',
+      min: RANK_RANGE_MIN,
+      max: RANK_RANGE_MAX,
+      scale: tournamentRankScale,
+      format: (value) => value.toLocaleString(),
+      // Both bounds stay defined so a thumb never pins to the wrong end.
+      value: {
+        min: filter.minRankRange ?? RANK_RANGE_MIN,
+        max: filter.maxRankRange ?? RANK_RANGE_DEFAULT_MAX,
+      },
+      onChange: ({ min, max }) =>
+        applyPatch({ minRankRange: min, maxRankRange: max }),
+    },
+    {
+      id: 'dates',
+      kind: 'date-range',
+      label: 'Tournament dates',
+      value: {
+        from: filter.dateMin ? formatUTCDate(filter.dateMin) : undefined,
+        to: filter.dateMax ? formatUTCDate(filter.dateMax) : undefined,
+      },
+      onChange: ({ from, to }) =>
+        applyPatch({
+          dateMin: fromDateInputValue(from),
+          dateMax: fromDateInputValue(to),
+        }),
+    },
+  ];
 }
 
 function countAdvancedFilters(filter: FilterFormData): number {
@@ -917,7 +559,6 @@ export default function TournamentListFilter({
 }: TournamentListFilterProps) {
   const { searchQuery, debouncedQuery, handleSetQuery, isSynchronizing } =
     useSearchInput(filter.searchQuery ?? '');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -1040,11 +681,11 @@ export default function TournamentListFilter({
       searchQuery: '',
     } as FilterFormData);
     router.push(pathname, { scroll: false });
-    setIsFilterOpen(false);
   }, [form, handleSetQuery, pathname, router]);
 
   const currentFilter = form.watch();
   const activeFilterCount = countAdvancedFilters(currentFilter);
+  const filterFields = buildFilterFields(currentFilter, applyPatch);
 
   return (
     <Form {...form}>
@@ -1067,58 +708,29 @@ export default function TournamentListFilter({
             </div>
 
             <div className="border-l pl-2 md:pl-4">
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    data-testid="tournament-filters-button"
-                    type="button"
-                    variant="outline"
-                    className="h-10 gap-2 bg-background dark:bg-input/50 dark:shadow-none"
-                    aria-label={`Advanced filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
-                  >
-                    <Filter aria-hidden="true" />
-                    <span>Filters</span>
-                    {activeFilterCount > 0 && (
-                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  aria-describedby={undefined}
-                  className="w-full gap-0 sm:max-w-md dark:bg-popover"
+              <FilterPopover
+                title="Filter tournaments"
+                testIdPrefix="tournament"
+                activeCount={activeFilterCount}
+                onClearAll={handleClearFilters}
+                fields={filterFields}
+              >
+                <Button
+                  data-testid="tournament-filters-button"
+                  type="button"
+                  variant="outline"
+                  className="h-10 gap-2 bg-background dark:bg-input/50 dark:shadow-none"
+                  aria-label={`Advanced filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
                 >
-                  <SheetHeader className="border-b pr-12">
-                    <div className="flex items-center gap-2">
-                      <SlidersHorizontal
-                        className="size-5 text-primary"
-                        aria-hidden="true"
-                      />
-                      <SheetTitle>Filter tournaments</SheetTitle>
-                    </div>
-                  </SheetHeader>
-                  <div className="flex-1 overflow-y-auto px-4 pb-6">
-                    <FilterPanel
-                      control={form.control}
-                      applyPatch={applyPatch}
-                    />
-                  </div>
-                  <SheetFooter className="grid grid-cols-2 border-t bg-background dark:bg-muted">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleClearFilters}
-                    >
-                      <X aria-hidden="true" />
-                      Clear all
-                    </Button>
-                    <SheetClose asChild>
-                      <Button type="button">Done</Button>
-                    </SheetClose>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
+                  <Filter aria-hidden="true" />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </FilterPopover>
             </div>
           </div>
         </div>

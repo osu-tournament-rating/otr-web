@@ -24,11 +24,20 @@ export interface RankRangeBucketDef {
   /** Inclusive upper bound; null = open-ended. */
   maxBound: number | null;
   /**
-   * Theme token for every rank-range surface (2D scatter, its legend, and the
-   * WebGL scatter, which resolves the variable against the document root).
+   * Theme token for every rank-range surface (the scatter and its legend).
    * The buckets are ordinal, so the ramp walks hue and lightness together.
    */
   color: string;
+  /**
+   * Symbol and dash carry the bucket redundantly with colour: an ordinal
+   * five-step hue ramp cannot be made CVD-safe, so the two colours that confuse
+   * worst get the two most different silhouettes and dash patterns.
+   */
+  symbol: 'circle' | 'square' | 'triangle' | 'diamond' | 'cross';
+  /** SVG stroke-dasharray for this range's trendline at stroke-width 2. */
+  dash: string;
+  /** Only the dotted pattern needs round caps to read as dots. */
+  dashLinecap: 'butt' | 'round';
 }
 
 /** Display order for every rank-range surface. */
@@ -39,6 +48,9 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     minBound: 1,
     maxBound: 1,
     color: 'var(--rank-range-open)',
+    symbol: 'circle',
+    dash: 'none',
+    dashLinecap: 'butt',
   },
   {
     key: 'lt1k',
@@ -46,6 +58,9 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     minBound: 2,
     maxBound: 999,
     color: 'var(--rank-range-lt1k)',
+    symbol: 'diamond',
+    dash: '4 4',
+    dashLinecap: 'butt',
   },
   {
     key: '1kPlus',
@@ -53,6 +68,9 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     minBound: 1_000,
     maxBound: 9_999,
     color: 'var(--rank-range-1k)',
+    symbol: 'triangle',
+    dash: '0.1 6',
+    dashLinecap: 'round',
   },
   {
     key: '10kPlus',
@@ -60,6 +78,9 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     minBound: 10_000,
     maxBound: 99_999,
     color: 'var(--rank-range-10k)',
+    symbol: 'square',
+    dash: '7 3 2 3',
+    dashLinecap: 'butt',
   },
   {
     key: '100kPlus',
@@ -67,6 +88,9 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     minBound: 100_000,
     maxBound: null,
     color: 'var(--rank-range-100k)',
+    symbol: 'cross',
+    dash: '11 5',
+    dashLinecap: 'butt',
   },
 ];
 
@@ -119,4 +143,11 @@ export function bucketRankRanges(
   }
 
   return buckets;
+}
+
+/** Renders a raw `tournaments.rankRangeLowerBound`: `Open`, or `10,000+`. */
+export function formatRankRangeBound(rankRangeLowerBound: number): string {
+  if (rankRangeLowerBound === 1) return 'Open';
+
+  return `${rankRangeLowerBound.toLocaleString()}+`;
 }

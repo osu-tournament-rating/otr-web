@@ -8,12 +8,13 @@ import { Fragment, useEffect, useRef } from 'react';
 import { Ruleset } from '@otr/core/osu';
 
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
-import { SectionCard } from '@/components/beatmap/BeatmapSection';
+import { Eyebrow, SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
-import RulesetIcon from '@/components/icons/RulesetIcon';
+import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import SimpleTooltip from '@/components/simple-tooltip';
+import { Separator } from '@/components/ui/separator';
 import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
-import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type {
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
@@ -127,46 +128,65 @@ function DifficultyNavigator({
 
   useEffect(() => {
     const scroller = scrollerRef.current;
-    const activeDifficulty = scroller?.querySelector<HTMLElement>(
-      '[aria-current="page"]'
-    );
+    if (!scroller) return;
 
-    if (!scroller || !activeDifficulty) return;
+    let cancelled = false;
+    const centerActiveDifficulty = () => {
+      const activeDifficulty = scroller.querySelector<HTMLElement>(
+        '[aria-current="page"]'
+      );
+      if (cancelled || !activeDifficulty) return;
 
-    const scrollerBounds = scroller.getBoundingClientRect();
-    const activeBounds = activeDifficulty.getBoundingClientRect();
-    scroller.scrollLeft +=
-      activeBounds.left -
-      scrollerBounds.left -
-      (scrollerBounds.width - activeBounds.width) / 2;
+      const scrollerBounds = scroller.getBoundingClientRect();
+      const activeBounds = activeDifficulty.getBoundingClientRect();
+      const activeStart =
+        scroller.scrollLeft + activeBounds.left - scrollerBounds.left;
+
+      // Assigning rather than nudging also undoes the offset scroll snapping
+      // applies on hydration, which otherwise clips the first group.
+      scroller.scrollLeft =
+        activeStart + activeBounds.width <= scroller.clientWidth
+          ? 0
+          : activeStart - (scroller.clientWidth - activeBounds.width) / 2;
+    };
+
+    // Chip widths follow the rating pill's text, so fallback-font metrics
+    // would centre on the wrong chip.
+    void document.fonts.ready.then(centerActiveDifficulty);
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentOsuId, difficulties.length]);
 
-  if (difficulties.length === 0) return null;
+  // A single-difficulty set has nothing to navigate to.
+  if (difficulties.length < 2) return null;
 
   const difficultyGroups = Array.from(
     difficulties
       .reduce((groups, difficulty) => {
-        const group = groups.get(difficulty.ruleset) ?? [];
+        const ruleset = getBeatmapDisplayRuleset(
+          difficulty.ruleset,
+          difficulty.diffName
+        );
+        const group = groups.get(ruleset) ?? [];
         group.push(difficulty);
-        return groups.set(difficulty.ruleset, group);
+        return groups.set(ruleset, group);
       }, new Map<Ruleset, RelatedBeatmapDifficulty[]>())
       .entries()
   ).sort(([rulesetA], [rulesetB]) => rulesetA - rulesetB);
 
+  const showGroupLabels = difficultyGroups.length > 1;
+
   const renderDifficulty = (difficulty: RelatedBeatmapDifficulty) => {
     const isCurrent = difficulty.osuId === currentOsuId;
-    const ruleset = getBeatmapDisplayRuleset(
-      difficulty.ruleset,
-      difficulty.diffName
-    );
-    const formattedRating = difficulty.sr.toFixed(2);
     const accessibleLabel = `${difficulty.diffName}, ${difficulty.sr.toFixed(2)} star rating`;
-    const difficultyIcon = (
-      <RulesetIcon
-        ruleset={ruleset}
-        className="size-5 shrink-0 fill-current [&_path]:fill-current"
-        style={{ color: getStarRatingIconColor(difficulty.sr) }}
-        aria-hidden="true"
+    const ratingPill = (
+      <StarRatingPill
+        starRating={difficulty.sr}
+        size="sm"
+        className="shrink-0 sm:text-xs"
+        testId={`difficulty-chip-star-rating-${difficulty.osuId}`}
       />
     );
 
@@ -179,10 +199,10 @@ function DifficultyNavigator({
           prefetch={false}
           aria-current="page"
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-72 shrink-0 snap-start items-center gap-2 rounded-lg border bg-muted px-3 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
+          className="flex min-h-10 max-w-72 shrink-0 snap-start items-center gap-2 rounded-lg border bg-muted px-2 py-2 text-sm shadow-xs transition-colors hover:bg-muted/80 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-secondary/60 dark:hover:bg-secondary/80"
         >
-          {difficultyIcon}
-          <span className="min-w-0 flex-1 truncate font-medium">
+          {ratingPill}
+          <span className="min-w-0 flex-1 truncate pr-1 font-medium">
             {difficulty.diffName}
           </span>
         </Link>
@@ -193,9 +213,22 @@ function DifficultyNavigator({
       <SimpleTooltip
         key={difficulty.osuId}
         content={
-          <span>
-            {difficulty.diffName} · {formattedRating} SR
-          </span>
+          <div className="max-w-64 space-y-1.5 py-0.5">
+            <div className="flex items-start gap-2">
+              <StarRatingPill
+                starRating={difficulty.sr}
+                size="sm"
+                className="shrink-0 sm:text-xs"
+                testId={`difficulty-tooltip-star-rating-${difficulty.osuId}`}
+              />
+              <span className="text-sm leading-tight font-medium">
+                {difficulty.diffName}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatDifficultyUsage(difficulty)}
+            </p>
+          </div>
         }
       >
         <Link
@@ -203,14 +236,11 @@ function DifficultyNavigator({
           href={`/beatmaps/${difficulty.osuId}`}
           prefetch={false}
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:size-10 sm:max-w-none sm:justify-center sm:gap-0 sm:px-0 sm:py-0 dark:bg-input/40 dark:hover:bg-secondary/60"
+          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-2 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:max-w-none sm:px-1 dark:bg-input/40 dark:hover:bg-secondary/60"
         >
-          {difficultyIcon}
-          <span className="min-w-0 truncate font-medium sm:hidden">
+          {ratingPill}
+          <span className="min-w-0 truncate pr-1 font-medium sm:hidden">
             {difficulty.diffName}
-          </span>
-          <span className="shrink-0 text-xs text-muted-foreground sm:hidden">
-            {formattedRating} SR
           </span>
         </Link>
       </SimpleTooltip>
@@ -221,15 +251,23 @@ function DifficultyNavigator({
     <nav aria-label="Beatmapset difficulties" className="border-t">
       <div
         ref={scrollerRef}
-        className="flex snap-x gap-2 overflow-x-auto p-4 pt-3"
+        // `scroll-pl-4` matches the padding so snapping rests at the start.
+        className="flex snap-x scroll-pl-4 gap-2 overflow-x-auto p-4 pt-3"
       >
         {difficultyGroups.map(([ruleset, groupDifficulties], groupIndex) => (
           <Fragment key={ruleset}>
             {groupIndex > 0 && (
-              <div
-                aria-hidden="true"
-                className="w-px shrink-0 self-stretch bg-border"
+              <Separator
+                orientation="vertical"
+                // Matches the variant Separator ships, otherwise its
+                // `h-full` resolves to 0 inside this self-centred flex row.
+                className="mx-1 self-center data-[orientation=vertical]:h-6"
               />
+            )}
+            {showGroupLabels && (
+              <Eyebrow className="snap-start self-center whitespace-nowrap">
+                {getRulesetGroupLabel(ruleset)}
+              </Eyebrow>
             )}
             {groupDifficulties.map(renderDifficulty)}
           </Fragment>
@@ -237,4 +275,31 @@ function DifficultyNavigator({
       </div>
     </nav>
   );
+}
+
+/**
+ * "(other)" disambiguates a filter list; as a group header the unkeyed mania
+ * bucket reads as plain osu!mania beside any explicit 4K/7K header.
+ */
+function getRulesetGroupLabel(ruleset: Ruleset): string {
+  return ruleset === Ruleset.ManiaOther
+    ? 'osu!mania'
+    : RulesetEnumHelper.getMetadata(ruleset).text;
+}
+
+/**
+ * Most sibling difficulties have no o!TR data at all, so the strip says which
+ * chips lead somewhere before the reader spends a navigation on them.
+ */
+function formatDifficultyUsage({
+  verifiedTournamentCount,
+  verifiedGameCount,
+}: RelatedBeatmapDifficulty): string {
+  if (verifiedGameCount === 0) return 'Not used in a verified tournament';
+
+  const tournaments =
+    verifiedTournamentCount === 1 ? 'tournament' : 'tournaments';
+  const games = verifiedGameCount === 1 ? 'game' : 'games';
+
+  return `${verifiedTournamentCount} ${tournaments} · ${verifiedGameCount} ${games}`;
 }

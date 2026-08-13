@@ -22,8 +22,23 @@ describe('related beatmap difficulty query', () => {
   test('returns the selected set difficulties in query order', async () => {
     const calls: string[] = [];
     const rows = [
-      { osuId: 10, diffName: 'Normal', ruleset: Ruleset.Osu, sr: 2.1 },
-      { osuId: 11, diffName: '[4K] Insane', ruleset: Ruleset.Mania4k, sr: 5.4 },
+      {
+        osuId: 10,
+        diffName: 'Normal',
+        ruleset: Ruleset.Osu,
+        sr: 2.1,
+        // No stats row: the left join coalesces both counts to zero.
+        verifiedTournamentCount: 0,
+        verifiedGameCount: 0,
+      },
+      {
+        osuId: 11,
+        diffName: '[4K] Insane',
+        ruleset: Ruleset.Mania4k,
+        sr: 5.4,
+        verifiedTournamentCount: 3,
+        verifiedGameCount: 17,
+      },
     ];
     const db = {
       select: () => {
@@ -32,12 +47,17 @@ describe('related beatmap difficulty query', () => {
           from: () => {
             calls.push('from');
             return {
-              where: () => {
-                calls.push('where');
+              leftJoin: () => {
+                calls.push('leftJoin');
                 return {
-                  orderBy: async (...order: unknown[]) => {
-                    calls.push(`order:${order.length}`);
-                    return rows;
+                  where: () => {
+                    calls.push('where');
+                    return {
+                      orderBy: async (...order: unknown[]) => {
+                        calls.push(`order:${order.length}`);
+                        return rows;
+                      },
+                    };
                   },
                 };
               },
@@ -48,7 +68,7 @@ describe('related beatmap difficulty query', () => {
     } as unknown as DatabaseClient;
 
     expect(await getRelatedBeatmapDifficulties(db, 42)).toEqual(rows);
-    expect(calls).toEqual(['select', 'from', 'where', 'order:2']);
+    expect(calls).toEqual(['select', 'from', 'leftJoin', 'where', 'order:2']);
   });
 });
 

@@ -6,7 +6,6 @@ import type { DatabaseClient } from '@/lib/db';
 import * as schema from '@otr/core/db/schema';
 import {
   PlayerBeatmapsRequestSchema,
-  PlayerBeatmapStatsSchema,
   PlayerBeatmapsResponseSchema,
 } from '@/lib/orpc/schema/playerBeatmaps';
 import {
@@ -19,7 +18,6 @@ import {
 import { PlayerTournamentListItemSchema } from '@/lib/orpc/schema/tournament';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
 import {
-  Mods,
   RatingAdjustmentType,
   Ruleset,
   ScoringType,
@@ -648,252 +646,39 @@ export const getPlayerBeatmaps = publicProcedure
         ruleset: schema.beatmaps.ruleset,
         artist: schema.beatmapsets.artist,
         title: schema.beatmapsets.title,
-        tournamentId: schema.tournaments.id,
-        tournamentCreated: schema.tournaments.created,
-        tournamentName: schema.tournaments.name,
-        tournamentAbbreviation: schema.tournaments.abbreviation,
-        tournamentForumUrl: schema.tournaments.forumUrl,
-        tournamentRankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
-        tournamentRuleset: schema.tournaments.ruleset,
-        tournamentLobbySize: schema.tournaments.lobbySize,
-        tournamentStartTime: schema.tournaments.startTime,
-        tournamentEndTime: schema.tournaments.endTime,
-        tournamentVerificationStatus: schema.tournaments.verificationStatus,
-        tournamentRejectionReason: schema.tournaments.rejectionReason,
-        tournamentIsLazer: schema.tournaments.isLazer,
-        gamesPlayed: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
-        modsUsed: sql<Mods[]>`array_agg(${schema.games.mods})`,
       })
       .from(schema.beatmaps)
       .innerJoin(
         schema.beatmapsets,
         eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
       )
-      .innerJoin(
-        schema.joinBeatmapCreators,
-        eq(schema.beatmaps.id, schema.joinBeatmapCreators.createdBeatmapsId)
-      )
-      .innerJoin(
-        schema.joinPooledBeatmaps,
-        eq(schema.beatmaps.id, schema.joinPooledBeatmaps.pooledBeatmapsId)
-      )
-      .innerJoin(
-        schema.tournaments,
-        eq(
-          schema.tournaments.id,
-          schema.joinPooledBeatmaps.tournamentsPooledInId
-        )
-      )
-      .leftJoin(
-        schema.matches,
-        and(
-          eq(schema.matches.tournamentId, schema.tournaments.id),
-          eq(schema.matches.verificationStatus, VerificationStatus.Verified)
-        )
-      )
-      .leftJoin(
-        schema.games,
-        and(
-          eq(schema.games.beatmapId, schema.beatmaps.id),
-          eq(schema.games.matchId, schema.matches.id),
-          eq(schema.games.verificationStatus, VerificationStatus.Verified)
-        )
-      )
-      .where(
-        and(
-          inArray(schema.beatmaps.id, beatmapIds),
-          // Ensure hydrated tournaments also belong to the requested ruleset.
-          input.ruleset != null
-            ? eq(schema.tournaments.ruleset, input.ruleset)
-            : undefined
-        )
-      )
-      .groupBy(
-        schema.beatmaps.id,
-        schema.beatmaps.osuId,
-        schema.beatmaps.rankedStatus,
-        schema.beatmaps.diffName,
-        schema.beatmaps.totalLength,
-        schema.beatmaps.drainLength,
-        schema.beatmaps.bpm,
-        schema.beatmaps.countCircle,
-        schema.beatmaps.countSlider,
-        schema.beatmaps.countSpinner,
-        schema.beatmaps.cs,
-        schema.beatmaps.hp,
-        schema.beatmaps.od,
-        schema.beatmaps.ar,
-        schema.beatmaps.sr,
-        schema.beatmaps.maxCombo,
-        schema.beatmaps.ruleset,
-        schema.beatmapsets.osuId,
-        schema.beatmapsets.artist,
-        schema.beatmapsets.title,
-        schema.tournaments.id,
-        schema.tournaments.created,
-        schema.tournaments.name,
-        schema.tournaments.abbreviation,
-        schema.tournaments.forumUrl,
-        schema.tournaments.rankRangeLowerBound,
-        schema.tournaments.ruleset,
-        schema.tournaments.lobbySize,
-        schema.tournaments.startTime,
-        schema.tournaments.endTime,
-        schema.tournaments.verificationStatus,
-        schema.tournaments.rejectionReason
-      )
-      .orderBy(desc(schema.tournaments.endTime));
+      .where(inArray(schema.beatmaps.id, beatmapIds));
 
-    interface BeatmapData {
-      id: number;
-      osuId: number;
-      rankedStatus: number;
-      diffName: string;
-      totalLength: number;
-      drainLength: number;
-      bpm: number;
-      countCircle: number;
-      countSlider: number;
-      countSpinner: number;
-      cs: number;
-      hp: number;
-      od: number;
-      ar: number;
-      sr: number;
-      maxCombo: number | null;
-      beatmapsetId: number;
-      ruleset: number;
-      artist: string;
-      title: string;
-      tournamentCount: number;
-      gameCount: number;
-      tournaments: Array<{
-        id: number;
-        created: string;
-        name: string;
-        abbreviation: string;
-        forumUrl: string;
-        rankRangeLowerBound: number;
-        ruleset: number;
-        lobbySize: number;
-        startTime: string | null;
-        endTime: string | null;
-        verificationStatus: number;
-        rejectionReason: number;
-        isLazer: boolean;
-        gamesPlayed: number;
-        mostCommonMod: number;
-        submittedByUsername: string | null;
-        verifiedByUsername: string | null;
-      }>;
-    }
+    const beatmapRowsById = new Map(beatmapRows.map((row) => [row.id, row]));
 
-    const beatmapsMap = new Map<number, BeatmapData>();
-    const beatmapIdSet = new Set(beatmapIds);
+    // Walking the ordering rows keeps the ranked order and carries their counts.
+    const beatmaps = beatmapOrderingRows.flatMap((orderingRow) => {
+      const beatmap = beatmapRowsById.get(orderingRow.beatmapId);
 
-    for (const row of beatmapRows) {
-      if (!beatmapIdSet.has(row.id)) {
-        continue;
-      }
-
-      if (!beatmapsMap.has(row.id)) {
-        beatmapsMap.set(row.id, {
-          id: row.id,
-          osuId: row.osuId,
-          rankedStatus: row.rankedStatus,
-          diffName: row.diffName,
-          totalLength: row.totalLength,
-          drainLength: row.drainLength,
-          bpm: row.bpm,
-          countCircle: row.countCircle,
-          countSlider: row.countSlider,
-          countSpinner: row.countSpinner,
-          cs: row.cs,
-          hp: row.hp,
-          od: row.od,
-          ar: row.ar,
-          sr: row.sr,
-          maxCombo: row.maxCombo,
-          beatmapsetId: row.beatmapsetId,
-          ruleset: row.ruleset,
-          artist: row.artist ?? '',
-          title: row.title ?? '',
-          tournamentCount: 0,
-          gameCount: 0,
-          tournaments: [],
-        });
-      }
-
-      const beatmap = beatmapsMap.get(row.id);
+      // Beatmaps without a beatmapset are dropped by the inner join above.
       if (!beatmap) {
-        continue;
+        return [];
       }
 
-      beatmap.tournamentCount++;
-      beatmap.gameCount += Number(row.gamesPlayed);
-
-      let mostCommonMod = Mods.None;
-      if (row.modsUsed && row.modsUsed.length > 0) {
-        const modCounts = new Map<number, number>();
-        for (const mod of row.modsUsed) {
-          if (mod == null) {
-            continue;
-          }
-
-          const convertedMod = mod === Mods.None ? Mods.NoFail : mod;
-
-          modCounts.set(convertedMod, (modCounts.get(convertedMod) ?? 0) + 1);
-        }
-
-        let maxCount = 0;
-        for (const [mod, count] of modCounts.entries()) {
-          if (count > maxCount) {
-            maxCount = count;
-            mostCommonMod = mod;
-          }
-        }
-      }
-
-      beatmap.tournaments.push({
-        id: row.tournamentId,
-        created: row.tournamentCreated,
-        name: row.tournamentName,
-        abbreviation: row.tournamentAbbreviation,
-        forumUrl: row.tournamentForumUrl,
-        rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-        ruleset: row.tournamentRuleset,
-        lobbySize: row.tournamentLobbySize,
-        startTime: row.tournamentStartTime,
-        endTime: row.tournamentEndTime,
-        verificationStatus: row.tournamentVerificationStatus,
-        rejectionReason: row.tournamentRejectionReason,
-        isLazer: row.tournamentIsLazer,
-        gamesPlayed: Number(row.gamesPlayed),
-        mostCommonMod: Number(mostCommonMod),
-        submittedByUsername: null,
-        verifiedByUsername: null,
-      });
-    }
-
-    const orderIndex = new Map<number, number>();
-    beatmapOrderingRows.forEach((row, index) => {
-      orderIndex.set(row.beatmapId, index);
+      return [
+        {
+          ...beatmap,
+          // max_combo is nullable in the database.
+          maxCombo: beatmap.maxCombo ?? 0,
+          tournamentCount: Number(orderingRow.tournamentCount),
+          gameCount: Number(orderingRow.gameCount),
+        },
+      ];
     });
-
-    const beatmaps = Array.from(beatmapsMap.values())
-      .sort((a, b) => {
-        const aIndex = orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bIndex = orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return aIndex - bIndex;
-      })
-      .map((beatmap) => ({
-        ...beatmap,
-        tournaments: beatmap.tournaments,
-      }));
 
     return PlayerBeatmapsResponseSchema.parse({
       totalCount,
-      beatmaps: PlayerBeatmapStatsSchema.array().parse(beatmaps),
+      beatmaps,
     });
   });
 

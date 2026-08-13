@@ -17,7 +17,7 @@ import {
 import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
-import { RANK_RANGE_DEFAULT_MAX } from '@/components/tournaments/list/tournamentRankSlider';
+import { RANK_RANGE_DEFAULT_MAX } from '@/lib/filters/tournament-rank';
 
 /** Enum-like object shape (replaces zod v3's removed `EnumLike` type) */
 type EnumLike = Record<string, string | number>;
@@ -219,10 +219,10 @@ export const beatmapListFilterSchema = z.object({
   maxBpm: z.coerce.number().min(0).optional().catch(undefined),
   minCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
   maxCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  minAr: z.coerce.number().min(0).max(11).optional().catch(undefined),
-  maxAr: z.coerce.number().min(0).max(11).optional().catch(undefined),
-  minOd: z.coerce.number().min(0).max(11).optional().catch(undefined),
-  maxOd: z.coerce.number().min(0).max(11).optional().catch(undefined),
+  minAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
   minHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
   maxHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
   minLength: z.coerce.number().int().min(0).optional().catch(undefined),

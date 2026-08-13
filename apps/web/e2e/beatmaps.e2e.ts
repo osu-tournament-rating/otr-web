@@ -257,6 +257,39 @@ async function getDistinctBeatmapPreviewRows(page: Page) {
   };
 }
 
+/**
+ * The accuracy column of the tier breakdown, or null when the axis already
+ * shows every whisker and the card therefore renders no toggle. The toggle
+ * lives in the column header, so its grandparent is the column that holds the
+ * rows and the axis it rescales.
+ */
+async function openTierAccuracyChart(page: Page) {
+  const card = page.locator('[data-testid="beatmap-tier-breakdown"]');
+  await expect(card).toBeVisible({ timeout: 15000 });
+
+  const label = 'Full range: accuracy by tier';
+  const toggle = card.getByRole('button', { name: label });
+  if ((await toggle.count()) === 0) return null;
+
+  const chart = card.locator(`div:has(> div > button[aria-label="${label}"])`);
+
+  return {
+    toggle,
+    chevrons: chart.locator('svg.lucide-chevron-left'),
+    // The axis is the column's last child; its tick labels are the only text
+    // in it that is not hidden from the accessibility tree.
+    ticks: chart.locator(
+      ':scope > div:last-child span:not([aria-hidden="true"])'
+    ),
+  };
+}
+
+/**
+ * A beatmap whose set has a single difficulty, so the header renders no
+ * difficulty navigator at all.
+ */
+const SINGLE_DIFFICULTY_BEATMAP_OSU_ID = 2624225;
+
 test.describe('Beatmaps Listing Page', () => {
   test.describe('Page Load', () => {
     test('displays beatmap listing with entries', async ({ page }) => {
@@ -862,16 +895,19 @@ test.describe('Beatmaps Listing Page', () => {
           });
           expect(overflow).toEqual({ document: 0, transport: 0 });
 
+          // A real spacer element reserves the transport's height now, rather
+          // than padding on the body.
           await expect
             .poll(() =>
               page.evaluate(() => {
                 const transportElement = document.querySelector(
                   '[data-testid="audio-preview-transport"]'
                 );
+                const spacerElement = document.querySelector(
+                  '[data-testid="audio-transport-spacer"]'
+                );
                 return (
-                  Number.parseFloat(
-                    getComputedStyle(document.body).paddingBottom
-                  ) >=
+                  (spacerElement?.getBoundingClientRect().height ?? 0) >=
                   (transportElement?.getBoundingClientRect().height ??
                     Number.MAX_VALUE)
                 );
@@ -988,13 +1024,15 @@ test.describe('Beatmaps Listing Page', () => {
 
       const popover = page.locator('[data-testid="beatmap-filter-popover"]');
       await expect(popover).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('dialog', { name: 'Filter beatmaps' })
+      ).toBeVisible({ timeout: 10000 });
 
-      await expect(
-        page.locator('[data-testid="beatmap-filter-apply"]')
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.locator('[data-testid="beatmap-filter-clear"]')
-      ).toBeVisible({ timeout: 10000 });
+      // Filters apply as they are set, so the header offers only "Clear all",
+      // which stays disabled until something is actually filtered.
+      const clear = page.locator('[data-testid="beatmap-filter-clear"]');
+      await expect(clear).toBeVisible({ timeout: 10000 });
+      await expect(clear).toBeDisabled();
     });
 
     test('ruleset and sort controls persist in the URL', async ({ page }) => {
@@ -1027,7 +1065,11 @@ test.describe('Beatmaps Listing Page', () => {
         'AR',
         'Length',
       ]);
-      await expect(sortMenu.getByRole('separator')).toHaveCount(1);
+      // The divider is decorative: the grouping it draws is already carried by
+      // the option order above, so it is hidden from assistive tech.
+      const separator = sortMenu.locator('[data-slot="select-separator"]');
+      await expect(separator).toHaveCount(1);
+      await expect(separator).toHaveAttribute('aria-hidden', 'true');
     });
 
     test('sorts searched beatmaps by SR descending', async ({ page }) => {
@@ -1067,7 +1109,7 @@ test.describe('Beatmaps Listing Page', () => {
       ).toHaveAccessibleName('Sort order is descending');
     });
 
-    test('moves labeled ruleset filters into the filter sheet on mobile', async ({
+    test('moves labeled ruleset filters into the filter popover on mobile', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 520, height: 844 });
@@ -1128,14 +1170,14 @@ test.describe('Beatmaps Listing Page', () => {
       expect(mania4kBox).not.toBeNull();
       expect(mania7kBox).not.toBeNull();
       expect(mania7kIconBox).not.toBeNull();
-      expect(mania7kBox!.height).toBe(40);
-      expect(mania7kIconBox!.width).toBe(20);
+      expect(mania7kBox!.height).toBe(32);
+      expect(mania7kIconBox!.width).toBe(16);
       expect(Math.abs(mania4kBox!.y - mania7kBox!.y)).toBeLessThanOrEqual(1);
 
+      // The chip navigates on its own: there is no apply step to confirm it.
       await mobileRulesets
         .getByRole('button', { name: 'mania 7K', exact: true })
         .click();
-      await page.locator('[data-testid="beatmap-filter-apply"]').click();
       await page.waitForURL(/ruleset=5/);
     });
   });
@@ -1207,10 +1249,10 @@ test.describe('Beatmaps Listing Page', () => {
     });
   });
 
-  test('does not create page-level horizontal overflow in either layout', async ({
+  test('does not create page-level horizontal overflow in any layout', async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
 
     for (const width of [390, 768, 1023, 1024]) {
       await page.setViewportSize({ width, height: 900 });
@@ -1219,37 +1261,27 @@ test.describe('Beatmaps Listing Page', () => {
         page.locator('[data-testid^="beatmap-list-row-"]').first()
       ).toBeVisible({ timeout: 10000 });
 
-      await expect
-        .poll(
-          () =>
-            page.evaluate(
-              () =>
-                document.documentElement.scrollWidth -
-                document.documentElement.clientWidth
-            ),
-          { timeout: 10000 }
-        )
-        .toBe(0);
+      // Each layout is selected by its own radio: the group root is a plain
+      // div and swallows a click without changing anything.
+      for (const layout of ['cards', 'compact', 'table'] as const) {
+        await page.getByTestId(`beatmap-layout-${layout}`).click();
+        await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+          'data-layout',
+          layout
+        );
 
-      await page.getByTestId('beatmap-layout-toggle').click();
-      await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
-        'data-layout',
-        'compact'
-      );
-
-      await expect
-        .poll(
-          () =>
-            page.evaluate(
-              () =>
-                document.documentElement.scrollWidth -
-                document.documentElement.clientWidth
-            ),
-          { timeout: 10000 }
-        )
-        .toBe(0);
-
-      await page.getByTestId('beatmap-layout-toggle').click();
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                () =>
+                  document.documentElement.scrollWidth -
+                  document.documentElement.clientWidth
+              ),
+            { timeout: 10000 }
+          )
+          .toBe(0);
+      }
     }
   });
 
@@ -1262,27 +1294,23 @@ test.describe('Beatmaps Listing Page', () => {
     const list = page.getByTestId('beatmap-list');
     const rows = page.locator('[data-testid^="beatmap-list-row-"]');
     await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    expect(await rows.count()).toBeGreaterThanOrEqual(4);
+    const pageSize = await rows.count();
+    expect(pageSize).toBeGreaterThanOrEqual(4);
 
     await expect(list).toHaveAttribute('data-layout', 'cards');
-    const layoutToggle = page.getByTestId('beatmap-layout-toggle');
-    const filterButton = page.getByTestId('beatmap-filter-button');
-    await expect(layoutToggle).toHaveAccessibleName('Switch to compact view');
-    await expect(layoutToggle).toHaveAttribute('aria-pressed', 'false');
-    await expect(layoutToggle).toHaveAttribute('data-layout', 'cards');
 
-    const [filterButtonBox, layoutToggleBox] = await Promise.all([
-      filterButton.boundingBox(),
-      layoutToggle.boundingBox(),
-    ]);
-    expect(filterButtonBox).not.toBeNull();
-    expect(layoutToggleBox).not.toBeNull();
-    expect(filterButtonBox!.width).toBe(40);
-    expect(layoutToggleBox!.width).toBe(40);
-    expect(
-      Math.abs(filterButtonBox!.y - layoutToggleBox!.y)
-    ).toBeLessThanOrEqual(1);
-    expect(layoutToggleBox!.x).toBeGreaterThan(filterButtonBox!.x);
+    // Three layouts make this a radio group, not a two-state button: every
+    // option is on screen and exactly one of them is checked.
+    const layoutGroup = page.getByTestId('beatmap-layout-toggle');
+    const cardsOption = page.getByTestId('beatmap-layout-cards');
+    const compactOption = page.getByTestId('beatmap-layout-compact');
+    const tableOption = page.getByTestId('beatmap-layout-table');
+    await expect(layoutGroup).toHaveAttribute('aria-label', 'Beatmap layout');
+    await expect(layoutGroup).toHaveAttribute('data-layout', 'cards');
+    await expect(layoutGroup.getByRole('radio')).toHaveCount(3);
+    await expect(cardsOption).toHaveAttribute('aria-checked', 'true');
+    await expect(compactOption).toHaveAttribute('aria-checked', 'false');
+    await expect(tableOption).toHaveAttribute('aria-checked', 'false');
 
     const [firstCard, secondCard, thirdCard, fourthCard] = await Promise.all([
       rows.nth(0).boundingBox(),
@@ -1338,12 +1366,21 @@ test.describe('Beatmaps Listing Page', () => {
       expect(footer.spill).toBeLessThanOrEqual(0);
     }
 
-    await layoutToggle.focus();
-    await layoutToggle.press('Space');
+    // The group is a single tab stop, and once inside it an arrow key moves
+    // the selection rather than only the focus.
+    await cardsOption.focus();
+    expect(
+      await layoutGroup
+        .getByRole('radio')
+        .evaluateAll(
+          (options) => options.filter((option) => option.tabIndex === 0).length
+        )
+    ).toBe(1);
+    await page.keyboard.press('ArrowRight');
     await expect(list).toHaveAttribute('data-layout', 'compact');
-    await expect(layoutToggle).toHaveAccessibleName('Switch to card view');
-    await expect(layoutToggle).toHaveAttribute('aria-pressed', 'true');
-    await expect(layoutToggle).toHaveAttribute('data-layout', 'compact');
+    await expect(compactOption).toHaveAttribute('aria-checked', 'true');
+    await expect(cardsOption).toHaveAttribute('aria-checked', 'false');
+    await expect(tableOption).toHaveAttribute('aria-checked', 'false');
 
     const firstRow = rows.first();
     const secondRow = rows.nth(1);
@@ -1404,8 +1441,10 @@ test.describe('Beatmaps Listing Page', () => {
         )
       );
     });
-    expect(metricWidths[0]).toBeGreaterThanOrEqual(60);
-    expect(metricWidths[0]).toBeLessThanOrEqual(68);
+    // The rating pill is the one metric sized by its own text, so it is
+    // bounded rather than pinned; the rest are fixed columns.
+    expect(metricWidths[0]).toBeGreaterThanOrEqual(64);
+    expect(metricWidths[0]).toBeLessThanOrEqual(96);
     expect(metricWidths.slice(1)).toEqual([56, 68, 208]);
     expect(previewBox!.x).toBeGreaterThanOrEqual(coverBox!.x);
     expect(previewBox!.y).toBeGreaterThanOrEqual(coverBox!.y);
@@ -1426,6 +1465,77 @@ test.describe('Beatmaps Listing Page', () => {
       'data-layout',
       'compact'
     );
+
+    // The third layout persists the same way. Its rows are counted through
+    // `table tbody`: the sub-`sm` compact fallback carries the same test ids.
+    await tableOption.click();
+    await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+      'data-layout',
+      'table'
+    );
+    await expect(tableOption).toHaveAttribute('aria-checked', 'true');
+    await expect(compactOption).toHaveAttribute('aria-checked', 'false');
+    await expect(
+      page.locator('table tbody [data-testid^="beatmap-list-row-"]')
+    ).toHaveCount(pageSize);
+    // The unscoped selector sees the fallback rows too, hence the scoping.
+    await expect(rows).toHaveCount(pageSize * 2);
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem('otr-beatmap-layout')
+      )
+    ).toBe('table');
+
+    await page.reload();
+    await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+      'data-layout',
+      'table'
+    );
+  });
+
+  test('table headers keep the sort in the URL and in step with the select', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(ROUTES.beatmaps);
+    await page.getByTestId('beatmap-layout-table').click();
+    await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
+      'data-layout',
+      'table'
+    );
+
+    const table = page.getByTestId('beatmap-list').locator('table');
+    const sortSelect = page.getByTestId('beatmap-sort-select');
+    const srHeader = table.getByRole('columnheader', { name: 'SR' });
+    await expect(srHeader).toHaveAttribute('aria-sort', 'none');
+
+    // Sorting is server-side, so a header click has to reach the URL.
+    await srHeader.getByRole('button').click();
+    await page.waitForURL(/sort=sr/, { timeout: 10000 });
+    await expect(srHeader).toHaveAttribute('aria-sort', 'descending');
+    await expect(sortSelect).toHaveText('SR');
+
+    // A second click on the active column flips the direction.
+    await srHeader.getByRole('button').click();
+    await page.waitForURL(/descending=false/, { timeout: 10000 });
+    await expect(srHeader).toHaveAttribute('aria-sort', 'ascending');
+    await expect(
+      page.getByTestId('beatmap-sort-direction')
+    ).toHaveAccessibleName('Sort order is ascending');
+
+    // And the select drives the headers just as the headers drive the select.
+    await sortSelect.click();
+    await page.getByRole('option', { name: 'BPM' }).click();
+    await page.waitForURL(/sort=bpm/, { timeout: 10000 });
+    await expect(srHeader).toHaveAttribute('aria-sort', 'none');
+    await expect(
+      table.getByRole('columnheader', { name: 'BPM' })
+    ).toHaveAttribute('aria-sort', 'ascending');
+
+    // Only one column is ever sorted; the rest say so explicitly.
+    await expect(
+      table.locator('thead th[aria-sort]:not([aria-sort="none"])')
+    ).toHaveCount(1);
   });
 });
 
@@ -1469,21 +1579,48 @@ test.describe('Beatmap Detail Page', () => {
         .first();
       if ((await collapsedDifficulty.count()) > 0) {
         await expect(collapsedDifficulty).toHaveAccessibleName(/star rating/);
-        const box = await collapsedDifficulty.boundingBox();
-        expect(box?.width).toBeLessThanOrEqual(42);
-        expect(box?.height).toBeGreaterThanOrEqual(40);
-        const iconColors = await collapsedDifficulty
-          .locator('svg')
-          .evaluate((icon) => {
-            const iconStyle = getComputedStyle(icon);
-            const pathStyle = getComputedStyle(icon.querySelector('path')!);
-            return { color: iconStyle.color, fill: pathStyle.fill };
-          });
-        expect(iconColors.fill).toBe(iconColors.color);
 
+        // A collapsed chip carries only its rating pill; the current one also
+        // spells out the difficulty name, so it is always the wider of the two.
+        const [collapsedBox, activeBox] = await Promise.all([
+          collapsedDifficulty.boundingBox(),
+          activeDifficulty.boundingBox(),
+        ]);
+        expect(collapsedBox).not.toBeNull();
+        expect(activeBox).not.toBeNull();
+        expect(collapsedBox!.height).toBeGreaterThanOrEqual(40);
+        expect(collapsedBox!.width).toBeLessThan(activeBox!.width);
+
+        // The name the chip drops, plus the usage line that says whether the
+        // difficulty leads anywhere, are what the tooltip has to restore.
+        const difficultyName = (await collapsedDifficulty.getAttribute(
+          'aria-label'
+        ))!.split(',')[0];
         await collapsedDifficulty.hover();
-        await expect(page.getByRole('tooltip')).toContainText(/ SR/);
+        const tooltip = page.getByRole('tooltip');
+        await expect(tooltip).toContainText(difficultyName);
+        await expect(tooltip).toContainText(
+          /Not used in a verified tournament|\d+ tournaments? · \d+ games?/
+        );
       }
+    });
+
+    test('omits the difficulty navigator for a single-difficulty set', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(SINGLE_DIFFICULTY_BEATMAP_OSU_ID));
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // One difficulty is nothing to navigate between, so the strip is absent
+      // rather than rendered with a lone current chip.
+      await expect(
+        page.locator('nav[aria-label="Beatmapset difficulties"]')
+      ).toHaveCount(0);
+      await expect(
+        page.locator('[data-testid^="related-difficulty-"]')
+      ).toHaveCount(0);
     });
 
     test('hero preview opens the identified cinematic transport', async ({
@@ -1547,9 +1684,11 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText(/ SR/).first()).toBeVisible({
-        timeout: 10000,
-      });
+      // The rating is a pill now: the number is the visible label and "SR"
+      // survives only in its accessible name.
+      await expect(
+        page.getByTestId('beatmap-star-rating')
+      ).toHaveAccessibleName(/^\d+\.\d{2} star rating$/, { timeout: 10000 });
       await expect(page.getByText(/BPM/).first()).toBeVisible({
         timeout: 10000,
       });
@@ -1607,12 +1746,71 @@ test.describe('Beatmap Detail Page', () => {
   }) => {
     await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
     const card = page.locator('[data-testid="beatmap-score-distribution"]');
-    await card.getByRole('button').first().click();
-    const popover = page.getByRole('dialog');
+    // The card header owns an info button and the chart header a "Full range"
+    // toggle, so a row is named by its score count rather than taken by order.
+    const row = card.getByRole('button', { name: /\d+ scores$/ }).first();
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.click();
+
+    // Radix portals the popover out of the card, so the row's own
+    // aria-controls is the only thing that ties the dialog back to it.
+    const popoverId = await row.getAttribute('aria-controls');
+    expect(popoverId).toBeTruthy();
+    const popover = page.locator(`[id="${popoverId}"]`);
+    await expect(popover).toHaveRole('dialog');
     await expect(popover).toBeVisible();
     await expect(popover).toContainText('Median');
     await page.keyboard.press('Escape');
-    await expect(popover).not.toBeVisible();
+    await expect(popover).toHaveCount(0);
+  });
+
+  test('the tier breakdown expands a clamped accuracy axis to its full range', async ({
+    page,
+  }) => {
+    await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+    const chart = await openTierAccuracyChart(page);
+    // Nothing is cut off at this viewport, so there is no toggle to exercise.
+    test.skip(chart === null, 'Accuracy axis clamps no row for this beatmap');
+
+    const { toggle, ticks, chevrons } = chart!;
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    const truncatedTick = await ticks.first().innerText();
+    const truncatedChevrons = await chevrons.count();
+    expect(truncatedChevrons).toBeGreaterThan(0);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    // A wider domain moves the ticks, and every whisker now ends in a ring.
+    await expect(ticks.first()).not.toHaveText(truncatedTick);
+    await expect(chevrons).toHaveCount(0);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(ticks.first()).toHaveText(truncatedTick);
+    await expect(chevrons).toHaveCount(truncatedChevrons);
+  });
+
+  test('the full range toggle answers the keyboard', async ({ page }) => {
+    await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+    const chart = await openTierAccuracyChart(page);
+    test.skip(chart === null, 'Accuracy axis clamps no row for this beatmap');
+
+    const { toggle, ticks, chevrons } = chart!;
+    const truncatedTick = await ticks.first().innerText();
+    const truncatedChevrons = await chevrons.count();
+
+    await toggle.focus();
+    await page.keyboard.press('Space');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(ticks.first()).not.toHaveText(truncatedTick);
+    await expect(chevrons).toHaveCount(0);
+
+    await page.keyboard.press('Space');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(ticks.first()).toHaveText(truncatedTick);
+    await expect(chevrons).toHaveCount(truncatedChevrons);
   });
 
   test.describe('Usage Statistics', () => {
@@ -1641,6 +1839,32 @@ test.describe('Beatmap Detail Page', () => {
       await expect(pools.locator('svg.lucide-waves-ladder')).toBeVisible();
       await expect(played.locator('svg.lucide-trophy')).toBeVisible();
       await expect(games.locator('svg.lucide-gamepad-2')).toBeVisible();
+    });
+
+    test('the pooled tile opens every tournament that pooled the beatmap', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+      const trigger = page.locator(
+        '[data-testid="beatmap-usage-chart"] [data-testid="beatmap-pool-records"]'
+      );
+      await expect(trigger).toBeVisible({ timeout: 15000 });
+      await trigger.click();
+
+      const dialog = page.getByRole('dialog', {
+        name: /Pooled in [\d,]+ tournaments?/,
+      });
+      await expect(dialog).toBeVisible();
+      // Each row is a way into the tournament, not a dead listing.
+      await expect(dialog.getByRole('link').first()).toHaveAttribute(
+        'href',
+        /^\/tournaments\/\d+$/
+      );
+
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+      await expect(trigger).toBeFocused();
     });
 
     test('displays usage chart with rendered content', async ({ page }) => {
@@ -1691,13 +1915,15 @@ test.describe('Beatmap Detail Page', () => {
         .getByText(/^[\d,]+ scores$/)
         .textContent();
 
+      // The leaderboard shows only a top slice, so its meta names both the
+      // slice and the total it was drawn from: "top 25 of 272 scores".
       const leaderboardTotal = await page
         .locator('[data-testid="beatmap-leaderboard"]')
-        .getByText(/^[\d,]+ scores$/)
+        .getByText(/^(?:top [\d,]+ of )?[\d,]+ scores?$/)
         .textContent();
 
       expect(chartTotal?.trim()).toBeTruthy();
-      expect(leaderboardTotal?.trim()).toBe(chartTotal?.trim());
+      expect(leaderboardTotal?.trim().endsWith(chartTotal!.trim())).toBe(true);
     });
 
     test('only breaks out mods played in at least 1% of scores', async ({
@@ -1810,7 +2036,7 @@ test.describe('Beatmap Detail Page', () => {
         leaderboard.getByRole('heading', { name: 'Leaderboard' })
       ).toBeVisible();
       await expect(
-        leaderboard.getByText(/^Showing the top [\d,]+$/)
+        leaderboard.getByText(/^(?:top [\d,]+ of )?[\d,]+ scores?$/)
       ).toBeVisible();
 
       const scores = leaderboard.locator(

@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Label, Pie, PieChart, Sector } from 'recharts';
 import type { PieSectorDataItem } from 'recharts/types/polar/Pie';
 
+import UnverifiedDataBadge from '@/components/badges/UnverifiedDataBadge';
 import {
   EmptyState,
   Eyebrow,
@@ -33,7 +34,7 @@ import {
   collapseBeatmapModDistribution,
   getModColor,
 } from '@/lib/utils/mods';
-import { ScoreGrade } from '@otr/core/osu';
+import { ScoreGrade, VerificationStatus } from '@otr/core/osu';
 
 export interface ModSegment {
   label: string;
@@ -528,6 +529,12 @@ export default function BeatmapDistributionsCard({
     [rankRangeMods]
   );
 
+  /* Pools are the one population on this card that is not filtered to verified
+     entities, and the donut cannot show which slices carry them. */
+  const hasUnverifiedPools = pools.some(
+    (pool) => pool.verificationStatus !== VerificationStatus.Verified
+  );
+
   const rankSlices = React.useMemo<RankRangeSlice[]>(() => {
     const colorByKey = new Map(
       RANK_RANGE_BUCKETS.map((bucket) => [bucket.key, bucket.color])
@@ -552,7 +559,7 @@ export default function BeatmapDistributionsCard({
       <SectionHeader icon={ListFilter} title="Distributions" />
 
       {modSegments.length === 0 ? (
-        <EmptyState>No mod data available.</EmptyState>
+        <EmptyState />
       ) : (
         /* Fills the card so a taller neighbour column stretches the section
            rules instead of leaving them hanging mid-card. */
@@ -575,67 +582,57 @@ export default function BeatmapDistributionsCard({
           </div>
 
           <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:divide-x">
-            {/* Each section takes an equal share of the column so the rule
-                between them lands mid-column and neither section's content is
-                stranded above a tall empty region. */}
             <div className="flex flex-col divide-y">
-              <div className="flex-1 px-4 py-4">
-                <div className="flex h-full flex-col justify-center space-y-3">
-                  {/* Wrapped so the label's box hugs the text like the mod
-                      distribution header does; a bare inline Eyebrow inherits
-                      the parent's taller strut and eats into the gap below
-                      it. */}
-                  <div className="flex items-baseline">
-                    <Eyebrow>Grades</Eyebrow>
-                  </div>
-                  {gradeSegments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No grade data recorded for these scores.
-                    </p>
-                  ) : (
-                    <>
-                      <SegmentBar
-                        segments={gradeSegments}
-                        testId="beatmap-grade-distribution-bar"
-                      />
-                      <SegmentLegend
-                        segments={gradeSegments}
-                        ariaLabel="Grade distribution"
-                        /* auto-fit, not a fixed 3, because a fixed track is
-                           ~98px at 1024px and the widest cell needs ~110px,
-                           which split "33.3% · 455" across two lines. */
-                        className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
-                      />
-                    </>
-                  )}
+              <div className="space-y-3 px-4 py-4">
+                {/* Wrapped so the label's box hugs the text like the mod
+                    distribution header does; a bare inline Eyebrow inherits the
+                    parent's taller strut and eats into the gap below it. */}
+                <div className="flex items-baseline">
+                  <Eyebrow>Grades</Eyebrow>
                 </div>
+                {gradeSegments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Not enough data
+                  </p>
+                ) : (
+                  <>
+                    <SegmentBar
+                      segments={gradeSegments}
+                      testId="beatmap-grade-distribution-bar"
+                    />
+                    <SegmentLegend
+                      segments={gradeSegments}
+                      ariaLabel="Grade distribution"
+                      /* auto-fit, not a fixed 3, because a fixed track is ~98px
+                         at 1024px and the widest cell needs ~110px, which split
+                         "33.3% · 455" across two lines. */
+                      className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
+                    />
+                  </>
+                )}
               </div>
 
-              <div className="flex-1 px-4 py-4">
-                <div className="flex h-full flex-col justify-center space-y-3">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <Eyebrow>Freemod picks</Eyebrow>
-                    {freemodPicks.freemodGameCount > 0 ? (
-                      <span className="text-xs text-muted-foreground">
-                        {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {freemodPicks.freemodGameCount === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No freemod games recorded.
-                    </p>
-                  ) : freemodSegments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No verified scores in freemod games yet.
-                    </p>
-                  ) : freemodPicks.freemodScoreCount < 5 ? (
-                    <FreemodPickChips segments={freemodSegments} />
-                  ) : (
-                    <FreemodPickRows segments={freemodSegments} />
-                  )}
+              {/* Takes the column's surplus height so it collects once, below
+                  the content, instead of padding out every section. */}
+              <div className="flex-1 space-y-3 px-4 py-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Eyebrow>Freemod picks</Eyebrow>
+                  {freemodPicks.freemodGameCount > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
+                    </span>
+                  ) : null}
                 </div>
+
+                {freemodSegments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Not enough data
+                  </p>
+                ) : freemodPicks.freemodScoreCount < 5 ? (
+                  <FreemodPickChips segments={freemodSegments} />
+                ) : (
+                  <FreemodPickRows segments={freemodSegments} />
+                )}
               </div>
             </div>
 
@@ -643,18 +640,19 @@ export default function BeatmapDistributionsCard({
               className="flex flex-col border-t px-4 py-4 lg:border-t-0"
               data-testid="beatmap-rank-range"
             >
-              {/* The row ends on one line, so this column stretches to whatever
-                  height the Overview rail sets. Its label and donut center
-                  together rather than the label pinning to the top and leaving
-                  the donut adrift a couple of hundred pixels below it. */}
-              <div className="flex h-full flex-col justify-center space-y-3">
-                <div className="space-y-0.5">
+              <div className="flex flex-col space-y-3">
+                {/* The badge sits under the label rather than beside it: this
+                    panel is 288px at lg, and the pair wraps the label. */}
+                <div className="flex flex-col items-start gap-2">
                   <Eyebrow>Tournament rank ranges</Eyebrow>
+                  {hasUnverifiedPools && rankSlices.length > 0 ? (
+                    <UnverifiedDataBadge />
+                  ) : null}
                 </div>
 
                 {rankSlices.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Never pooled by a tournament.
+                    Not enough data
                   </p>
                 ) : rankSlices.length === 1 ? (
                   /* One bracket is not a distribution — a donut of a single

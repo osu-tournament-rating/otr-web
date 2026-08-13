@@ -1,9 +1,10 @@
+import { SLIDER_MAX, SLIDER_MIN, type NumericScale } from './scale';
+
 export const RANK_RANGE_MIN = 1;
 export const RANK_RANGE_MAX = 1_000_000;
 export const RANK_RANGE_DEFAULT_MAX = 200_000;
-export const RANK_SLIDER_MIN = 0;
-export const RANK_SLIDER_MAX = 100;
-export const RANK_SLIDER_STEP = 0.0001;
+export const RANK_SLIDER_MIN = SLIDER_MIN;
+export const RANK_SLIDER_MAX = SLIDER_MAX;
 
 const rankTiers = [
   { start: 1, end: 1_000, step: 1 },
@@ -72,6 +73,12 @@ export function moveRankBySliderStops(rank: number, offset: number): number {
   return rankSliderValues[clamp(targetIndex, 0, rankSliderValues.length - 1)];
 }
 
+/**
+ * Positions are LOGARITHMIC, not proportional to stop index, so this cannot be
+ * expressed with `tieredScale` — that would move rank 1,000 from 50.0% to 49.0%
+ * of the track and grow the 11k-1M band from 33% to 48%. The drag feel here is
+ * a product constraint; keep this mapping as-is.
+ */
 export function rankToSliderPosition(rank: number): number {
   const normalizedRank = Number.isFinite(rank) ? rank : RANK_RANGE_MIN;
   const value = clamp(normalizedRank, RANK_RANGE_MIN, RANK_RANGE_MAX);
@@ -98,3 +105,12 @@ export function sliderPositionToRank(position: number): number {
 
   return snapRankToSliderStop(rank);
 }
+
+export const tournamentRankScale: NumericScale = {
+  min: RANK_RANGE_MIN,
+  max: RANK_RANGE_MAX,
+  snap: snapRankToSliderStop,
+  toPosition: rankToSliderPosition,
+  fromPosition: sliderPositionToRank,
+  step: moveRankBySliderStops,
+};

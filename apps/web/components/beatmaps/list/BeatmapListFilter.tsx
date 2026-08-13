@@ -9,7 +9,7 @@ import {
   Loader2,
   Rows3,
   Search,
-  SlidersHorizontal,
+  Table2,
   X,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,7 +22,12 @@ import {
 } from 'react';
 import type { z } from 'zod';
 
+import FilterChip from '@/components/filters/FilterChip';
+import FilterPopover, {
+  type FilterField,
+} from '@/components/filters/FilterPopover';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,29 +38,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import type { BeatmapLayout } from '@/components/beatmaps/list/BeatmapListTable';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import type { BeatmapListSort } from '@/lib/orpc/schema/beatmapList';
-import { cn } from '@/lib/utils';
+  BEATMAP_LAYOUTS,
+  isBeatmapLayout,
+  type BeatmapLayout,
+} from '@/components/beatmaps/list/layout';
 import {
   buildBeatmapSearchParams,
   beatmapListNumericKeys as numericKeys,
   type BeatmapListNumericKey as NumericFilterKey,
+  type BeatmapListSortChange,
+  type BeatmapListSortKey,
 } from '@/lib/beatmaps/list-params';
+import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import { tieredScale, type NumericScale } from '@/lib/filters/scale';
+import { formatDuration } from '@/lib/utils/date';
 import type { beatmapListFilterSchema } from '@/lib/validation-schema';
 
 type FilterData = z.infer<typeof beatmapListFilterSchema>;
@@ -65,11 +63,12 @@ interface BeatmapListFilterProps {
   filter: FilterData;
   layout: BeatmapLayout;
   onLayoutChange: (layout: BeatmapLayout) => void;
+  onSortChange: BeatmapListSortChange;
   totalCount: number;
 }
 
 const primarySortOptions: readonly {
-  value: BeatmapListSort;
+  value: BeatmapListSortKey;
   label: string;
 }[] = [
   { value: 'gameCount', label: 'Games' },
@@ -77,7 +76,7 @@ const primarySortOptions: readonly {
 ];
 
 const attributeSortOptions: readonly {
-  value: BeatmapListSort;
+  value: BeatmapListSortKey;
   label: string;
 }[] = [
   { value: 'sr', label: 'SR' },
@@ -85,11 +84,41 @@ const attributeSortOptions: readonly {
   { value: 'cs', label: 'CS' },
   { value: 'ar', label: 'AR' },
   { value: 'length', label: 'Length' },
-] as const;
+];
 
-const rangeDefinitions = [
+/** Keyed by layout so a new entry in `BEATMAP_LAYOUTS` cannot miss a toggle. */
+const layoutOptions: Record<
+  BeatmapLayout,
+  { label: string; icon: typeof LayoutGrid }
+> = {
+  cards: { label: 'Card view', icon: LayoutGrid },
+  compact: { label: 'Compact view', icon: Rows3 },
+  table: { label: 'Table view', icon: Table2 },
+};
+
+interface BeatmapRangeField {
+  id: string;
+  label: string;
+  minKey: NumericFilterKey;
+  maxKey: NumericFilterKey;
+  min: number;
+  max: number;
+  step?: number;
+  scale?: NumericScale;
+  span?: 'half';
+  valueLabel?: string;
+  format?: (value: number) => string;
+}
+
+/**
+ * Bounds and scales are drawn from the real distribution of the 86,435 listed
+ * beatmaps rather than from the column types: p99 length is 399s and p99 games
+ * is 91, so a linear track over the full domain leaves every real value crushed
+ * against the left edge.
+ */
+const rangeFields: readonly BeatmapRangeField[] = [
   {
-    key: 'sr',
+    id: 'sr',
     label: 'SR',
     minKey: 'minSr',
     maxKey: 'maxSr',
@@ -98,7 +127,7 @@ const rangeDefinitions = [
     step: 0.1,
   },
   {
-    key: 'bpm',
+    id: 'bpm',
     label: 'BPM',
     minKey: 'minBpm',
     maxKey: 'maxBpm',
@@ -107,49 +136,97 @@ const rangeDefinitions = [
     step: 1,
   },
   {
-    key: 'length',
-    label: 'Duration (seconds)',
+    id: 'length',
+    label: 'Length (seconds)',
+    valueLabel: 'length',
+    format: formatDuration,
     minKey: 'minLength',
     maxKey: 'maxLength',
     min: 0,
     max: 1800,
-    step: 1,
+    scale: tieredScale({
+      tiers: [
+        { start: 0, end: 300, step: 5 },
+        { start: 300, end: 600, step: 10 },
+        { start: 600, end: 1800, step: 60 },
+      ],
+    }),
   },
   {
-    key: 'games',
+    id: 'games',
     label: 'Games',
     minKey: 'minGameCount',
     maxKey: 'maxGameCount',
     min: 0,
-    max: 10000,
-    step: 1,
+    max: 600,
+    scale: tieredScale({
+      tiers: [
+        { start: 0, end: 50, step: 1 },
+        { start: 50, end: 200, step: 5 },
+        { start: 200, end: 600, step: 25 },
+      ],
+    }),
   },
   {
-    key: 'tournaments',
+    id: 'tournaments',
     label: 'Tournaments',
     minKey: 'minTournamentCount',
     maxKey: 'maxTournamentCount',
     min: 0,
-    max: 1000,
-    step: 1,
+    max: 80,
+    scale: tieredScale({
+      tiers: [
+        { start: 0, end: 30, step: 1 },
+        { start: 30, end: 80, step: 5 },
+      ],
+    }),
   },
-] as const;
+  {
+    id: 'cs',
+    label: 'CS',
+    minKey: 'minCs',
+    maxKey: 'maxCs',
+    min: 0,
+    max: 10,
+    step: 0.1,
+    span: 'half',
+  },
+  {
+    id: 'ar',
+    label: 'AR',
+    minKey: 'minAr',
+    maxKey: 'maxAr',
+    min: 0,
+    max: 10,
+    step: 0.1,
+    span: 'half',
+  },
+  {
+    id: 'od',
+    label: 'OD',
+    minKey: 'minOd',
+    maxKey: 'maxOd',
+    min: 0,
+    max: 10,
+    step: 0.1,
+    span: 'half',
+  },
+  {
+    id: 'hp',
+    label: 'HP',
+    minKey: 'minHp',
+    maxKey: 'maxHp',
+    min: 0,
+    max: 10,
+    step: 0.1,
+    span: 'half',
+  },
+];
 
-const attributeDefinitions = [
-  { key: 'cs', label: 'CS', minKey: 'minCs', maxKey: 'maxCs', max: 10 },
-  { key: 'ar', label: 'AR', minKey: 'minAr', maxKey: 'maxAr', max: 11 },
-  { key: 'od', label: 'OD', minKey: 'minOd', maxKey: 'maxOd', max: 11 },
-  { key: 'hp', label: 'HP', minKey: 'minHp', maxKey: 'maxHp', max: 10 },
-] as const;
-
-function countSheetFilters(filter: FilterData): number {
+function countActiveFilters(filter: FilterData): number {
   return (
     (filter.ruleset === undefined ? 0 : 1) +
-    rangeDefinitions.filter(
-      ({ minKey, maxKey }) =>
-        filter[minKey] !== undefined || filter[maxKey] !== undefined
-    ).length +
-    attributeDefinitions.filter(
+    rangeFields.filter(
       ({ minKey, maxKey }) =>
         filter[minKey] !== undefined || filter[maxKey] !== undefined
     ).length
@@ -160,20 +237,19 @@ export default function BeatmapListFilter({
   filter,
   layout,
   onLayoutChange,
+  onSortChange,
   totalCount,
 }: BeatmapListFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState(filter.q ?? '');
   const [isSearching, setIsSearching] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [draft, setDraft] = useState<FilterData>(filter);
 
+  // The URL is the only filter state, so an external navigation (back button,
+  // a cleared search) resyncs the box.
   useEffect(() => {
     setQuery(filter.q ?? '');
-    setIsSearching(false);
-    if (!isOpen) setDraft(filter);
-  }, [filter, isOpen]);
+  }, [filter.q]);
 
   const navigate = useCallback(
     (next: FilterData) => {
@@ -227,11 +303,72 @@ export default function BeatmapListFilter({
     []
   );
 
-  const clearSheetFilters = () => {
-    const next = { ...draft };
-    delete next.ruleset;
-    for (const key of numericKeys) delete next[key];
-    setDraft(next);
+  const fields = useMemo<FilterField[]>(
+    () => [
+      {
+        kind: 'chip-group',
+        // The desktop chip row is 76px tall at 390px and would push the trigger
+        // down, so the ruleset moves into the popover on phones instead.
+        id: 'ruleset-filters-mobile',
+        label: 'Ruleset',
+        className: 'md:hidden',
+        value: filter.ruleset,
+        onChange: (value) => applyPatch({ ruleset: value }),
+        options: [
+          {
+            key: 'all',
+            label: 'All',
+            icon: (
+              <RulesetIcon
+                ruleset="all"
+                className="size-4 fill-current"
+                aria-hidden="true"
+              />
+            ),
+          },
+          ...rulesets.map((ruleset) => ({
+            key: String(ruleset.value),
+            value: ruleset.value,
+            label: ruleset.label,
+            icon: (
+              <RulesetIcon
+                ruleset={ruleset.value}
+                className="size-4 fill-current"
+                aria-hidden="true"
+              />
+            ),
+          })),
+        ],
+      },
+      ...rangeFields.map(
+        (field): FilterField => ({
+          kind: 'range',
+          id: field.id,
+          label: field.label,
+          span: field.span,
+          min: field.min,
+          max: field.max,
+          step: field.step,
+          scale: field.scale,
+          valueLabel: field.valueLabel,
+          format: field.format,
+          value: { min: filter[field.minKey], max: filter[field.maxKey] },
+          onChange: (next) => {
+            const patch: FilterPatch = {};
+            patch[field.minKey] = next.min;
+            patch[field.maxKey] = next.max;
+            applyPatch(patch);
+          },
+        })
+      ),
+    ],
+    [applyPatch, filter, rulesets]
+  );
+
+  const clearFilters = () => {
+    const patch: FilterPatch = { ruleset: undefined };
+    for (const key of numericKeys) patch[key] = undefined;
+    applyPatch(patch);
   };
 
   const clearAll = () => {
@@ -242,6 +379,8 @@ export default function BeatmapListFilter({
       q: '',
     });
   };
+
+  const activeCount = countActiveFilters(filter);
 
   return (
     <div className="space-y-3">
@@ -274,7 +413,7 @@ export default function BeatmapListFilter({
             <Select
               value={filter.sort}
               onValueChange={(value) =>
-                applyPatch({ sort: value as BeatmapListSort })
+                onSortChange(value as BeatmapListSortKey, filter.descending)
               }
             >
               <SelectTrigger
@@ -299,256 +438,139 @@ export default function BeatmapListFilter({
               </SelectContent>
             </Select>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  data-testid="beatmap-sort-direction"
-                  aria-label={`Sort order is ${filter.descending ? 'descending' : 'ascending'}`}
-                  onClick={() => applyPatch({ descending: !filter.descending })}
-                  className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
-                >
-                  {filter.descending ? <ArrowDown /> : <ArrowUp />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {filter.descending ? 'Descending order' : 'Ascending order'}
-              </TooltipContent>
-            </Tooltip>
+            <SimpleTooltip
+              content={
+                filter.descending ? 'Descending order' : 'Ascending order'
+              }
+            >
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                data-testid="beatmap-sort-direction"
+                aria-label={`Sort order is ${filter.descending ? 'descending' : 'ascending'}`}
+                onClick={() => onSortChange(filter.sort, !filter.descending)}
+                className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
+              >
+                {filter.descending ? <ArrowDown /> : <ArrowUp />}
+              </Button>
+            </SimpleTooltip>
           </div>
 
           <div className="flex gap-2 border-l pl-2 md:pl-4">
-            <Sheet
-              open={isOpen}
-              onOpenChange={(open) => {
-                setIsOpen(open);
-                if (open) setDraft(filter);
-              }}
+            <FilterPopover
+              title="Filter beatmaps"
+              testIdPrefix="beatmap"
+              fields={fields}
+              activeCount={activeCount}
+              onClearAll={clearFilters}
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SheetTrigger asChild>
-                    <Button
-                      data-testid="beatmap-filter-button"
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-label={`Filters${countSheetFilters(filter) > 0 ? `, ${countSheetFilters(filter)} active` : ''}`}
-                      className="relative size-10 bg-background dark:bg-input/50 dark:shadow-none"
-                    >
-                      <Filter aria-hidden="true" />
-                      {countSheetFilters(filter) > 0 && (
-                        <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] leading-none text-primary-foreground shadow-xs">
-                          {countSheetFilters(filter)}
-                        </span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                </TooltipTrigger>
-                <TooltipContent>Filters</TooltipContent>
-              </Tooltip>
-              <SheetContent
-                data-testid="beatmap-filter-popover"
-                className="w-full gap-0 sm:max-w-md"
+              <Button
+                data-testid="beatmap-filter-button"
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={`Filters${activeCount > 0 ? `, ${activeCount} active` : ''}`}
+                className="relative size-10 bg-background dark:bg-input/50 dark:shadow-none"
               >
-                <SheetHeader className="border-b px-5 py-4">
-                  <SheetTitle className="flex items-center gap-2">
-                    <SlidersHorizontal className="size-5 text-primary" />
-                    Filter beatmaps
-                  </SheetTitle>
-                  <SheetDescription className="sr-only">
-                    Set ruleset, beatmap, and tournament usage filters.
-                  </SheetDescription>
-                </SheetHeader>
-
-                <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
-                  <fieldset className="md:hidden">
-                    <legend className="mb-3 text-sm font-medium">
-                      Ruleset
-                    </legend>
-                    <div
-                      data-testid="beatmap-ruleset-filters-mobile"
-                      className="grid grid-cols-2 gap-1.5 min-[400px]:grid-cols-3"
-                    >
-                      <RulesetChip
-                        large
-                        label="All"
-                        value="all"
-                        selected={draft.ruleset === undefined}
-                        onClick={() =>
-                          setDraft((current) => ({
-                            ...current,
-                            ruleset: undefined,
-                          }))
-                        }
-                      />
-                      {rulesets.map((ruleset) => (
-                        <RulesetChip
-                          large
-                          key={ruleset.value}
-                          label={ruleset.label}
-                          value={ruleset.value}
-                          selected={draft.ruleset === ruleset.value}
-                          onClick={() =>
-                            setDraft((current) => ({
-                              ...current,
-                              ruleset: ruleset.value,
-                            }))
-                          }
-                        />
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  <div className="space-y-5">
-                    {rangeDefinitions.map((definition) => (
-                      <RangeInputs
-                        key={definition.key}
-                        label={definition.label}
-                        min={definition.min}
-                        max={definition.max}
-                        step={definition.step}
-                        minValue={draft[definition.minKey]}
-                        maxValue={draft[definition.maxKey]}
-                        onMinChange={(value) =>
-                          setDraft((current) => ({
-                            ...current,
-                            [definition.minKey]: value,
-                          }))
-                        }
-                        onMaxChange={(value) =>
-                          setDraft((current) => ({
-                            ...current,
-                            [definition.maxKey]: value,
-                          }))
-                        }
-                      />
-                    ))}
-                  </div>
-
-                  <fieldset>
-                    <legend className="mb-3 text-sm font-medium">
-                      Map attributes
-                    </legend>
-                    <div className="grid grid-cols-2 gap-4">
-                      {attributeDefinitions.map((definition) => (
-                        <RangeInputs
-                          key={definition.key}
-                          compact
-                          label={definition.label}
-                          min={0}
-                          max={definition.max}
-                          step={0.1}
-                          minValue={draft[definition.minKey]}
-                          maxValue={draft[definition.maxKey]}
-                          onMinChange={(value) =>
-                            setDraft((current) => ({
-                              ...current,
-                              [definition.minKey]: value,
-                            }))
-                          }
-                          onMaxChange={(value) =>
-                            setDraft((current) => ({
-                              ...current,
-                              [definition.maxKey]: value,
-                            }))
-                          }
-                        />
-                      ))}
-                    </div>
-                  </fieldset>
-                </div>
-
-                <SheetFooter className="grid grid-cols-2 border-t p-4">
-                  <Button
-                    data-testid="beatmap-filter-clear"
-                    type="button"
-                    variant="outline"
-                    onClick={clearSheetFilters}
-                  >
-                    <X aria-hidden="true" />
-                    Clear
-                  </Button>
-                  <Button
-                    data-testid="beatmap-filter-apply"
-                    type="button"
-                    onClick={() => {
-                      navigate({ ...draft, q: query, page: undefined });
-                      setIsOpen(false);
-                    }}
-                  >
-                    Done
-                  </Button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  data-testid="beatmap-layout-toggle"
-                  data-layout={layout}
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={
-                    layout === 'cards'
-                      ? 'Switch to compact view'
-                      : 'Switch to card view'
-                  }
-                  aria-pressed={layout === 'compact'}
-                  onClick={() =>
-                    onLayoutChange(layout === 'cards' ? 'compact' : 'cards')
-                  }
-                  className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
-                >
-                  {layout === 'cards' ? (
-                    <LayoutGrid aria-hidden="true" />
-                  ) : (
-                    <Rows3 aria-hidden="true" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {layout === 'cards'
-                  ? 'Switch to compact view'
-                  : 'Switch to card view'}
-              </TooltipContent>
-            </Tooltip>
+                <Filter aria-hidden="true" />
+                {activeCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs leading-none text-primary-foreground shadow-xs">
+                    {activeCount}
+                  </span>
+                )}
+              </Button>
+            </FilterPopover>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-end md:justify-between">
+      <div className="flex items-center justify-end gap-3 md:justify-between">
         <div
           data-testid="beatmap-ruleset-filters-desktop"
           aria-label="Filter by ruleset"
           className="hidden flex-wrap gap-1.5 md:flex"
         >
-          <RulesetChip
+          <FilterChip
             label="All"
-            value="all"
+            icon={
+              <RulesetIcon
+                ruleset="all"
+                className="size-4 fill-current"
+                aria-hidden="true"
+              />
+            }
             selected={filter.ruleset === undefined}
             onClick={() => applyPatch({ ruleset: undefined })}
           />
           {rulesets.map((ruleset) => (
-            <RulesetChip
+            <FilterChip
               key={ruleset.value}
               label={ruleset.label}
-              value={ruleset.value}
+              icon={
+                <RulesetIcon
+                  ruleset={ruleset.value}
+                  className="size-4 fill-current"
+                  aria-hidden="true"
+                />
+              }
               selected={filter.ruleset === ruleset.value}
               onClick={() => applyPatch({ ruleset: ruleset.value })}
             />
           ))}
         </div>
-        <span
-          className="shrink-0 text-xs text-muted-foreground"
-          aria-live="polite"
-        >
-          {totalCount.toLocaleString()} maps
-        </span>
+
+        <div className="flex items-center gap-3">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={layout}
+            // Radix emits '' when the active item is re-clicked; a layout is
+            // always selected, so that deselection is dropped.
+            onValueChange={(value) => {
+              if (isBeatmapLayout(value)) onLayoutChange(value);
+            }}
+            role="radiogroup"
+            aria-label="Beatmap layout"
+            data-testid="beatmap-layout-toggle"
+            data-layout={layout}
+          >
+            {/* No tooltips here: a TooltipTrigger's own `data-state="closed"`
+                replaces the item's `on`/`off`, silently killing every selected
+                style. The aria-labels already name each layout. */}
+            {BEATMAP_LAYOUTS.map((value) => {
+              const { label, icon: Icon } = layoutOptions[value];
+
+              return (
+                <ToggleGroupItem
+                  key={value}
+                  value={value}
+                  aria-label={label}
+                  data-testid={`beatmap-layout-${value}`}
+                  // Radix moves focus on arrow keys but leaves selection to
+                  // Space. These items are radios, where arrows must select, so
+                  // focus selects. Tab lands on the active item, so that is a
+                  // no-op.
+                  onFocus={() => onLayoutChange(value)}
+                  // `accent` is within 0.03 lightness of `input` in both themes,
+                  // so the selected item borrows the ruleset chips' primary tint
+                  // instead. Both states are scoped so neither depends on
+                  // stylesheet order to win.
+                  className="size-10 first:rounded-l-md last:rounded-r-md data-[state=off]:bg-background data-[state=on]:bg-primary/10 data-[state=on]:text-primary dark:data-[state=off]:bg-input/50 dark:data-[state=on]:bg-primary/20"
+                >
+                  <Icon aria-hidden="true" />
+                </ToggleGroupItem>
+              );
+            })}
+          </ToggleGroup>
+
+          <span
+            className="shrink-0 text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            {totalCount.toLocaleString()} maps
+          </span>
+        </div>
       </div>
 
       <ActiveFilterSummary
@@ -564,109 +586,6 @@ export default function BeatmapListFilter({
   );
 }
 
-function RulesetChip({
-  label,
-  value,
-  selected,
-  onClick,
-  large = false,
-}: {
-  label: string;
-  value: Ruleset | 'all';
-  selected: boolean;
-  onClick: () => void;
-  large?: boolean;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={cn(
-        'h-8 flex-none gap-1.5 rounded-full bg-background px-3 dark:bg-input/50 dark:shadow-none',
-        large && 'h-10 w-full gap-2 px-3 text-base has-[>svg]:px-3',
-        selected &&
-          'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary dark:bg-primary/20 dark:hover:bg-primary/25'
-      )}
-    >
-      <RulesetIcon
-        ruleset={value}
-        className={cn('fill-current', large ? 'size-5' : 'size-4')}
-        aria-hidden="true"
-      />
-      {label}
-    </Button>
-  );
-}
-
-function RangeInputs({
-  label,
-  min,
-  max,
-  step,
-  minValue,
-  maxValue,
-  onMinChange,
-  onMaxChange,
-  compact = false,
-}: {
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  minValue?: number;
-  maxValue?: number;
-  onMinChange: (value?: number) => void;
-  onMaxChange: (value?: number) => void;
-  compact?: boolean;
-}) {
-  const parse = (value: string) => {
-    if (!value) return undefined;
-    const number = Number(value);
-    return Number.isFinite(number)
-      ? Math.min(Math.max(number, min), max)
-      : undefined;
-  };
-
-  return (
-    <fieldset className="min-w-0">
-      <legend className={cn('mb-2 text-sm font-medium', compact && 'text-xs')}>
-        {label}
-      </legend>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="min-w-0">
-          <span className="mb-1 block text-xs text-muted-foreground">Min</span>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={minValue ?? ''}
-            placeholder={String(min)}
-            min={min}
-            max={maxValue ?? max}
-            step={step}
-            onChange={(event) => onMinChange(parse(event.target.value))}
-          />
-        </label>
-        <label className="min-w-0">
-          <span className="mb-1 block text-xs text-muted-foreground">Max</span>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={maxValue ?? ''}
-            placeholder={String(max)}
-            min={minValue ?? min}
-            max={max}
-            step={step}
-            onChange={(event) => onMaxChange(parse(event.target.value))}
-          />
-        </label>
-      </div>
-    </fieldset>
-  );
-}
-
 function ActiveFilterSummary({
   filter,
   onRemove,
@@ -676,13 +595,13 @@ function ActiveFilterSummary({
   onRemove: (keys: NumericFilterKey[]) => void;
   onClearAll: () => void;
 }) {
-  const filters = [...rangeDefinitions, ...attributeDefinitions]
+  const filters = rangeFields
     .filter(
       ({ minKey, maxKey }) =>
         filter[minKey] !== undefined || filter[maxKey] !== undefined
     )
-    .map(({ key, label, minKey, maxKey }) => ({
-      key,
+    .map(({ id, label, minKey, maxKey }) => ({
+      key: id,
       label: `${label}: ${filter[minKey] ?? 'Any'} – ${filter[maxKey] ?? 'Any'}`,
       keys: [minKey, maxKey] as NumericFilterKey[],
     }));

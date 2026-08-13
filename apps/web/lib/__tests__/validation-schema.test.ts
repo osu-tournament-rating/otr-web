@@ -39,6 +39,20 @@ describe('beatmapListFilterSchema', () => {
     expect(filter.minGameCount).toBeUndefined();
   });
 
+  test('discards out-of-range AR and OD without dropping sibling filters', () => {
+    // AR/OD cap at 10; an older ?maxAr=11 link must still render the rest.
+    const filter = beatmapListFilterSchema.parse({
+      maxAr: '11',
+      maxOd: '11',
+      minSr: '5',
+    });
+
+    expect(filter.maxAr).toBeUndefined();
+    expect(filter.maxOd).toBeUndefined();
+    expect(filter.minSr).toBe(5);
+    expect(filter.maxCs).toBeUndefined();
+  });
+
   test('discards repeated params that arrive as arrays', () => {
     const filter = beatmapListFilterSchema.parse({
       minSr: ['1', '2'],

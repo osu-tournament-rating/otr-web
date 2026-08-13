@@ -352,13 +352,22 @@ export const getBeatmapStats = publicProcedure
           .select({
             tournamentId: schema.tournaments.id,
             tournamentName: schema.tournaments.name,
-            // Not in the response: firstPlayedAt and tournamentStartTime only
-            // bucket the tournament into a usageOverTime quarter.
+            // Not in the response: firstPlayedAt only buckets the tournament
+            // into a usageOverTime quarter.
             tournamentStartTime: schema.tournaments.startTime,
+            tournamentEndTime: schema.tournaments.endTime,
+            tournamentLobbySize: schema.tournaments.lobbySize,
+            tournamentVerificationStatus: schema.tournaments.verificationStatus,
+            tournamentRejectionReason: schema.tournaments.rejectionReason,
             tournamentRankRangeLowerBound:
               schema.tournaments.rankRangeLowerBound,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
+            // MODE() ignores nulls and games.mods is NOT NULL, so this is null
+            // exactly when the tournament has no verified games on this beatmap.
+            mostCommonMods: sql<
+              number | null
+            >`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
           })
           .from(schema.joinPooledBeatmaps)
           .innerJoin(
@@ -384,12 +393,10 @@ export const getBeatmapStats = publicProcedure
             )
           )
           .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId))
-          .groupBy(
-            schema.tournaments.id,
-            schema.tournaments.name,
-            schema.tournaments.startTime,
-            schema.tournaments.rankRangeLowerBound
-          )
+          // Grouping by the PK alone is enough: Postgres infers the functional
+          // dependency for every other tournaments column. Selecting a column
+          // from another table here would fail at runtime, not at compile time.
+          .groupBy(schema.tournaments.id)
           .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`)),
         context.db
           .select({
@@ -527,6 +534,7 @@ export const getBeatmapStats = publicProcedure
             mods: NORMALIZED_SCORE_MODS_SQL.as('normalized_mods'),
             scoreCount: sql<number>`COUNT(*)`,
             minScore: sql<number>`MIN(${schema.gameScores.score})`,
+            p20Score: sql<number>`PERCENTILE_CONT(0.20) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             p25Score: sql<number>`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             p75Score: sql<number>`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
@@ -742,11 +750,15 @@ export const getBeatmapStats = publicProcedure
               ),
             scoreCount: sql<number>`COUNT(*)`,
             minScore: sql<number>`MIN(${schema.gameScores.score})`,
+            p20Score: sql<number>`PERCENTILE_CONT(0.20) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             p25Score: sql<number>`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             medianScore: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             p75Score: sql<number>`PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${schema.gameScores.score})`,
             maxScore: sql<number>`MAX(${schema.gameScores.score})`,
             minAccuracy: sql<number | null>`MIN(${schema.gameScores.accuracy})`,
+            p20Accuracy: sql<
+              number | null
+            >`PERCENTILE_CONT(0.20) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
             p25Accuracy: sql<
               number | null
             >`PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${schema.gameScores.accuracy}) FILTER (WHERE ${schema.gameScores.accuracy} IS NOT NULL)`,
@@ -942,6 +954,14 @@ export const getBeatmapStats = publicProcedure
           gameCount: Number(row.gameCount),
           scoreCount: scoreCountByTournament.get(row.tournamentId) ?? 0,
           rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+          lobbySize: row.tournamentLobbySize,
+          startTime: row.tournamentStartTime,
+          endTime: row.tournamentEndTime,
+          verificationStatus:
+            row.tournamentVerificationStatus as VerificationStatus,
+          rejectionReason: row.tournamentRejectionReason,
+          mostCommonMods:
+            row.mostCommonMods == null ? null : Number(row.mostCommonMods),
         })
       );
 
@@ -987,6 +1007,7 @@ export const getBeatmapStats = publicProcedure
           mods: Number(row.mods),
           scoreCount: Number(row.scoreCount),
           minScore: Number(row.minScore),
+          p20Score: Math.round(Number(row.p20Score)),
           p25Score: Math.round(Number(row.p25Score)),
           medianScore: Math.round(Number(row.medianScore)),
           p75Score: Math.round(Number(row.p75Score)),
@@ -1066,6 +1087,7 @@ export const getBeatmapStats = publicProcedure
           tier,
           scoreCount,
           minScore: Number(row.minScore),
+          p20Score: Math.round(Number(row.p20Score)),
           p25Score: Math.round(Number(row.p25Score)),
           medianScore: Math.round(Number(row.medianScore)),
           p75Score: Math.round(Number(row.p75Score)),
@@ -1073,6 +1095,7 @@ export const getBeatmapStats = publicProcedure
           // Stored as a 0–1 fraction, passed through unrounded; clamped so a
           // malformed row cannot fail the response schema.
           minAccuracy: toAccuracyFraction(row.minAccuracy),
+          p20Accuracy: toAccuracyFraction(row.p20Accuracy),
           p25Accuracy: toAccuracyFraction(row.p25Accuracy),
           medianAccuracy: toAccuracyFraction(row.medianAccuracy),
           p75Accuracy: toAccuracyFraction(row.p75Accuracy),
@@ -1167,6 +1190,8 @@ export const getBeatmapStats = publicProcedure
           diffName: difficulty.diffName,
           ruleset: difficulty.ruleset as Ruleset,
           sr: difficulty.sr,
+          verifiedTournamentCount: Number(difficulty.verifiedTournamentCount),
+          verifiedGameCount: Number(difficulty.verifiedGameCount),
         })),
         summary,
         usageOverTime,

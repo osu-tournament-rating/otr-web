@@ -12,6 +12,11 @@ import {
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { MatchRow } from './columns';
+import {
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
+import { isDeletedTournamentBeatmap } from '@/lib/beatmaps/presentation';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -394,14 +399,14 @@ export default async function Page({ params, searchParams }: PageProps) {
   const tournamentGames =
     tournament.matches?.flatMap((match) => match.games ?? []) ?? [];
 
-  // Calculate hidden beatmaps count
-  const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {
-    const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
-    const title = beatmap.beatmapset?.title || 'Unknown Title';
-    return artist === 'Unknown Artist' && title === 'Unknown Title';
-  }).length;
+  const hiddenBeatmapsCount = beatmaps.filter(
+    isDeletedTournamentBeatmap
+  ).length;
 
   const visibleBeatmapsCount = beatmaps.length - hiddenBeatmapsCount;
+  const pooledBeatmapsMeta = `${visibleBeatmapsCount} beatmap${
+    visibleBeatmapsCount === 1 ? '' : 's'
+  }${hiddenBeatmapsCount > 0 ? ` · ${hiddenBeatmapsCount} deleted` : ''}`;
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
@@ -458,24 +463,21 @@ export default async function Page({ params, searchParams }: PageProps) {
           data-testid="tab-content-beatmaps"
           className="mt-4"
         >
-          <Card className="p-6 font-sans">
-            <div className="flex items-center gap-2">
-              <Music className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">
-                Pooled Beatmaps
-              </h3>
-              <span className="text-sm text-muted-foreground">
-                ({visibleBeatmapsCount}
-                {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
-              </span>
-            </div>
-            <TournamentBeatmapsAdminView
-              tournamentId={tournament.id}
-              tournamentName={tournament.name}
-              beatmaps={beatmaps}
-              tournamentGames={tournamentGames}
+          <SectionCard>
+            <SectionHeader
+              icon={Music}
+              title="Pooled beatmaps"
+              meta={pooledBeatmapsMeta}
             />
-          </Card>
+            <div className="p-3 sm:p-4">
+              <TournamentBeatmapsAdminView
+                tournamentId={tournament.id}
+                tournamentName={tournament.name}
+                beatmaps={beatmaps}
+                tournamentGames={tournamentGames}
+              />
+            </div>
+          </SectionCard>
         </TabsContent>
 
         <TabsContent

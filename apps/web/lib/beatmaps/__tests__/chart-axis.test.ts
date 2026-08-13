@@ -4,11 +4,13 @@ import {
   formatAccuracyTick,
   formatScoreTick,
   getBoxPlotAxis,
+  getBoxPlotView,
   getNiceAxis,
   getScaleTicks,
   getScatterAxis,
   toAxisPercent,
   toBoxPlotMarks,
+  type BoxPlotQuartiles,
 } from '@/lib/beatmaps/chart-axis';
 
 describe('getNiceAxis', () => {
@@ -48,6 +50,21 @@ describe('getNiceAxis', () => {
     const axis = getNiceAxis(96.2, 100);
 
     expect(axis.max).toBe(100);
+  });
+
+  it('brackets a requested floor it cannot land on', () => {
+    // The box plot axis leans on this: the floor is only ever rounded down, so
+    // truncating at p20 can never cut into a row above its p20.
+    for (const [min, max] of [
+      [398_243, 1_200_000],
+      [389_252, 1_180_400],
+      [951_800, 994_800],
+      [12_001, 12_002],
+      [0.37, 99.63],
+      [1, 3],
+    ] as const) {
+      expect(getNiceAxis(min, max).min).toBeLessThanOrEqual(min);
+    }
   });
 
   it('always brackets the data it was given', () => {
@@ -141,14 +158,28 @@ describe('getScatterAxis', () => {
   });
 });
 
-describe('getBoxPlotAxis', () => {
-  const mania = [
-    // A quit run at 12k next to a mania field that lives above 950k.
-    { min: 12_000, p25: 962_000, median: 978_400, p75: 986_100, max: 994_800 },
-    { min: 903_500, p25: 955_200, median: 971_000, p75: 980_300, max: 989_100 },
-  ];
+const mania: BoxPlotQuartiles[] = [
+  // A quit run at 12k next to a mania field that lives above 950k.
+  {
+    min: 12_000,
+    p20: 958_400,
+    p25: 962_000,
+    median: 978_400,
+    p75: 986_100,
+    max: 994_800,
+  },
+  {
+    min: 903_500,
+    p20: 951_800,
+    p25: 955_200,
+    median: 971_000,
+    p75: 980_300,
+    max: 989_100,
+  },
+];
 
-  it('floors on the lowest p25, not the lowest outlier', () => {
+describe('getBoxPlotAxis', () => {
+  it('floors on the lowest p20, not the lowest outlier', () => {
     const axis = getBoxPlotAxis(mania);
 
     expect(axis.min).toBe(950_000);
@@ -164,8 +195,101 @@ describe('getBoxPlotAxis', () => {
     }
   });
 
+  it("never truncates above any row's twentieth percentile", () => {
+    // The first two rows are the measured mod combinations of /beatmaps/2017881,
+    // the shape that used to draw a chevron on top of its own box.
+    const shapes: BoxPlotQuartiles[][] = [
+      [
+        {
+          min: 64_477,
+          p20: 398_243,
+          p25: 414_854,
+          median: 543_717,
+          p75: 712_905,
+          max: 1_200_000,
+        },
+        {
+          min: 70_124,
+          p20: 389_252,
+          p25: 426_698,
+          median: 578_528,
+          p75: 744_310,
+          max: 1_180_400,
+        },
+      ],
+      mania,
+      [
+        {
+          min: 88.12,
+          p20: 94.4,
+          p25: 95.02,
+          median: 97.31,
+          p75: 98.64,
+          max: 99.91,
+        },
+      ],
+    ];
+
+    for (const groups of shapes) {
+      const axis = getBoxPlotAxis(groups);
+
+      for (const group of groups) {
+        expect(axis.min).toBeLessThanOrEqual(group.p20);
+        expect(axis.min).toBeLessThan(group.median);
+      }
+    }
+  });
+
   it('falls back to zero with nothing to chart', () => {
     expect(getBoxPlotAxis([])).toEqual({ min: 0, max: 0, ticks: [0] });
+  });
+});
+
+describe('getBoxPlotView', () => {
+  const tight: BoxPlotQuartiles[] = [
+    {
+      min: 960_000,
+      p20: 962_000,
+      p25: 963_000,
+      median: 978_400,
+      p75: 986_100,
+      max: 994_800,
+    },
+  ];
+
+  it('offers to expand while a whisker is cut off', () => {
+    expect(getBoxPlotView(mania, formatScoreTick).canExpand).toBe(true);
+  });
+
+  it('keeps offering the control once expanded', () => {
+    // Measured against the truncated axis either way, so the control the
+    // reader just used does not disappear under the cursor.
+    expect(getBoxPlotView(mania, formatScoreTick, 6, true).canExpand).toBe(
+      true
+    );
+  });
+
+  it('reaches every minimum when expanded', () => {
+    const { axis } = getBoxPlotView(mania, formatScoreTick, 6, true);
+
+    expect(axis.min).toBeLessThanOrEqual(Math.min(...mania.map((g) => g.min)));
+    expect(mania.every((g) => !toBoxPlotMarks(g, axis).minClamped)).toBe(true);
+  });
+
+  it('has nothing to expand into when no whisker is cut off', () => {
+    const truncated = getBoxPlotView(tight, formatScoreTick);
+    const expanded = getBoxPlotView(tight, formatScoreTick, 6, true);
+
+    expect(truncated.canExpand).toBe(false);
+    expect(expanded.axis).toEqual(truncated.axis);
+  });
+
+  it('carries the ticks of the axis it settled on', () => {
+    const view = getBoxPlotView(mania, formatScoreTick);
+    const scale = getScaleTicks(view.axis, formatScoreTick);
+
+    expect(view.ticks).toEqual(scale.ticks);
+    expect(view.gridPercents).toEqual(scale.gridPercents);
   });
 });
 
@@ -208,6 +332,7 @@ describe('toBoxPlotMarks', () => {
     const marks = toBoxPlotMarks(
       {
         min: 12_000,
+        p20: 958_400,
         p25: 962_000,
         median: 978_400,
         p75: 986_100,
@@ -218,13 +343,13 @@ describe('toBoxPlotMarks', () => {
 
     expect(marks.minClamped).toBe(true);
     expect(marks.minPercent).toBe(0);
-    expect(marks.maxClamped).toBe(false);
   });
 
   it('leaves a whisker inside the domain unflagged', () => {
     const marks = toBoxPlotMarks(
       {
         min: 960_000,
+        p20: 961_000,
         p25: 962_000,
         median: 978_400,
         p75: 986_100,
@@ -234,7 +359,18 @@ describe('toBoxPlotMarks', () => {
     );
 
     expect(marks.minClamped).toBe(false);
-    expect(marks.maxClamped).toBe(false);
+  });
+
+  it('never reports a cut-off maximum', () => {
+    // The ceiling rounds up past the highest maximum by construction, so there
+    // is no upper counterpart to minClamped to report.
+    for (const groups of [mania, [mania[0]], [mania[1]]]) {
+      const domain = getBoxPlotAxis(groups);
+
+      for (const group of groups) {
+        expect(domain.max).toBeGreaterThanOrEqual(group.max);
+      }
+    }
   });
 });
 

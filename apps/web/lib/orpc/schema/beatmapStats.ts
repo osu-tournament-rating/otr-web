@@ -8,6 +8,7 @@ import {
   CreatedUpdatedOmit,
   RulesetSchema,
   ScoreGradeSchema,
+  VerificationStatusSchema,
 } from './constants';
 import { PlayerCompactSchema } from './playerStats';
 
@@ -16,10 +17,6 @@ export const RankRangeBucketKeySchema = z.enum(RANK_RANGE_BUCKET_KEYS);
 
 /** Rating tier name, keyed by `lib/utils/tierData`. */
 export const TierNameSchema = z.enum(tierNames);
-
-export const BeatmapStatsRequestSchema = z.object({
-  id: z.number().int().positive(),
-});
 
 export const BeatmapTournamentUsageSchema = z.object({
   tournament: z.object({
@@ -30,6 +27,15 @@ export const BeatmapTournamentUsageSchema = z.object({
   /** Verified scores set on this beatmap within the tournament. */
   scoreCount: z.number().int().nonnegative(),
   rankRangeLowerBound: z.number().int().positive(),
+  /** Players per team; renders as `${n}v${n}`. */
+  lobbySize: z.number().int().positive(),
+  startTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  verificationStatus: VerificationStatusSchema,
+  /** `TournamentRejectionReason` bitfield; 0 when the tournament is not rejected. */
+  rejectionReason: z.number().int().nonnegative(),
+  /** Raw mods bitmask of the most common game, null exactly when gameCount is 0. */
+  mostCommonMods: z.number().int().nonnegative().nullable(),
 });
 
 export const BeatmapUsagePointSchema = z.object({
@@ -104,14 +110,20 @@ export const RelatedBeatmapDifficultySchema = z.object({
   diffName: z.string(),
   ruleset: RulesetSchema,
   sr: z.number().nonnegative(),
+  verifiedTournamentCount: z.number().int().nonnegative(),
+  verifiedGameCount: z.number().int().nonnegative(),
 });
 
-/** Five-number summary of verified scores for one normalized mod combination. */
+/**
+ * Five-number summary of verified scores for one normalized mod combination,
+ * plus `p20Score`: the only point the box plots' shared axis may truncate at.
+ */
 export const BeatmapModScoreDistributionSchema = z.object({
   /** Normalized display mods bitmask (NF/SO stripped, NC folded into DT). */
   mods: z.number().int().nonnegative(),
   scoreCount: z.number().int().positive(),
   minScore: z.number().int().nonnegative(),
+  p20Score: z.number().int().nonnegative(),
   p25Score: z.number().int().nonnegative(),
   medianScore: z.number().int().nonnegative(),
   p75Score: z.number().int().nonnegative(),
@@ -193,16 +205,18 @@ export const BeatmapTierScoreSummarySchema = z.object({
   tier: TierNameSchema,
   scoreCount: z.number().int().positive(),
   minScore: z.number().int().nonnegative(),
+  p20Score: z.number().int().nonnegative(),
   p25Score: z.number().int().nonnegative(),
   medianScore: z.number().int().nonnegative(),
   p75Score: z.number().int().nonnegative(),
   maxScore: z.number().int().nonnegative(),
   /**
    * Accuracy quartiles as raw stored fractions (0–1), straight from
-   * `gameScores.accuracy`. All five are null together, when no row in the tier
+   * `gameScores.accuracy`. All six are null together, when no row in the tier
    * has accuracy recorded.
    */
   minAccuracy: z.number().min(0).max(1).nullable(),
+  p20Accuracy: z.number().min(0).max(1).nullable(),
   p25Accuracy: z.number().min(0).max(1).nullable(),
   medianAccuracy: z.number().min(0).max(1).nullable(),
   p75Accuracy: z.number().min(0).max(1).nullable(),
@@ -342,6 +356,7 @@ export const BeatmapStatsResponseSchema = z.object({
   relatedDifficulties: z.array(RelatedBeatmapDifficultySchema),
   summary: BeatmapStatsSummarySchema,
   usageOverTime: z.array(BeatmapUsagePointSchema),
+  /** Every tournament that pooled this beatmap, verified or not, most-played first. */
   tournaments: z.array(BeatmapTournamentUsageSchema),
   modDistribution: z.array(BeatmapModDistributionSchema),
   topPerformers: z.array(BeatmapTopPerformerSchema),
@@ -356,7 +371,6 @@ export const BeatmapStatsResponseSchema = z.object({
   closeness: BeatmapClosenessSummarySchema,
 });
 
-export type BeatmapStatsRequest = z.infer<typeof BeatmapStatsRequestSchema>;
 export type BeatmapTournamentUsage = z.infer<
   typeof BeatmapTournamentUsageSchema
 >;

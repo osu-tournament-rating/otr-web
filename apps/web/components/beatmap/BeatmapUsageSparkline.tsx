@@ -45,7 +45,7 @@ export default function BeatmapUsageSparkline({
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <Eyebrow>Games per quarter</Eyebrow>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {`peak ${formatChartNumber(activity.maxGames)}`}
         </span>
       </div>
@@ -96,7 +96,7 @@ export default function BeatmapUsageSparkline({
           />
         </BarChart>
       </ChartContainer>
-      <div className="mt-1 flex justify-between border-t pt-1 text-[11px] text-muted-foreground">
+      <div className="mt-1 flex justify-between border-t pt-1 text-xs text-muted-foreground">
         <span>
           {activity.firstActive
             ? formatQuarterLong(activity.firstActive.quarter)

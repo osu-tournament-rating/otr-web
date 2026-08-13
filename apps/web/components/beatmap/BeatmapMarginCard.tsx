@@ -10,6 +10,7 @@ import {
   ReferenceLine,
   Scatter,
   ScatterChart,
+  Symbols,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -25,6 +26,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
+import {
+  getClosenessStrip,
+  type ClosenessStrip,
+  type ClosenessStripDot,
+} from '@/lib/beatmaps/closeness-strip';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type { BeatmapClosenessSummary } from '@/lib/orpc/schema/beatmapStats';
@@ -37,6 +43,7 @@ interface BeatmapMarginCardProps {
 }
 
 type ClosenessCohort = NonNullable<BeatmapClosenessSummary['cohort']>;
+type ClosenessRuleset = BeatmapClosenessSummary['games'][number]['ruleset'];
 
 interface QuintileBin {
   label: string;
@@ -45,15 +52,17 @@ interface QuintileBin {
   share: number;
 }
 
-interface ClosenessDot {
-  z: number;
-  y: 0;
-  /** The game's own winning-score gap, straight from its log ratio. */
-  margin: number;
-}
-
 /** Share a map plays at when it matches its cohort exactly. */
 const TYPICAL_SHARE = 20;
+
+/** Vertical room per stacked dot, and the floor a single row still fills. */
+const DOT_PITCH = 12;
+const MIN_STRIP = 36;
+/** Recharts geometry around the plot: 8px top margin + 30px x axis. */
+const STRIP_CHROME = 38;
+
+/** Recharts' own default symbol area, kept for the circles. */
+const DOT_AREA = 64;
 
 const chartConfig: ChartConfig = {
   share: {
@@ -62,13 +71,18 @@ const chartConfig: ChartConfig = {
   },
 };
 
+/** Reads a log ratio back as the winning-score gap it came from. */
+function gapPercent(logRatio: number) {
+  return (1 - Math.exp(-logRatio)) * 100;
+}
+
 /**
- * Reads a standardized value back as the winning-score gap it came from, using
- * the dominant cohort's baseline. Score gaps are what the reader thinks in, and
- * they are 21x wider in osu! than in mania 4K, so the axis cannot speak in z.
+ * Reads a standardized value back as a gap through the dominant cohort's
+ * baseline. Score gaps are what the reader thinks in, and they are 21x wider in
+ * osu! than in mania 4K, so the axis cannot speak in z.
  */
 function marginPercent(z: number, cohort: ClosenessCohort) {
-  return (1 - Math.exp(-(z * cohort.sdLogRatio + cohort.meanLogRatio))) * 100;
+  return gapPercent(z * cohort.sdLogRatio + cohort.meanLogRatio);
 }
 
 /** Two significant figures: `25` in osu!, `0.91` in mania 4K. */
@@ -100,21 +114,23 @@ function gamesLabel(count: number) {
   return `${formatChartNumber(count)} ${count === 1 ? 'game' : 'games'}`;
 }
 
+/** A single (ruleset, team size) cohort: `osu! 3v3`. */
+function cohortName(ruleset: ClosenessRuleset, teamSize: number) {
+  const teams = teamSize >= 5 ? '5v5+' : `${teamSize}v${teamSize}`;
+  return `${RulesetEnumHelper.getMetadata(ruleset).text} ${teams}`;
+}
+
 /**
  * Names the population the baseline was fitted over rather than the cohort the
  * map played. A cell with too few corpus games falls back to its ruleset or to
- * the whole corpus, and the caption would otherwise claim a band nobody
+ * the whole corpus, and the legend would otherwise claim a band nobody
  * measured.
  */
 function cohortLabel(cohort: ClosenessCohort) {
   if (cohort.baselineScope === 'global') return 'tournament';
-
-  const ruleset = RulesetEnumHelper.getMetadata(cohort.ruleset).text;
-  if (cohort.baselineScope === 'ruleset') return ruleset;
-
-  const teams =
-    cohort.teamSize >= 5 ? '5v5+' : `${cohort.teamSize}v${cohort.teamSize}`;
-  return `${ruleset} ${teams}`;
+  if (cohort.baselineScope === 'ruleset')
+    return RulesetEnumHelper.getMetadata(cohort.ruleset).text;
+  return cohortName(cohort.ruleset, cohort.teamSize);
 }
 
 /**
@@ -156,7 +172,6 @@ function ClosenessBars({
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
             tickLine={false}
             axisLine={false}
             // Every other range on phones: five of these labels overlap in
@@ -168,7 +183,6 @@ function ClosenessBars({
             width={40}
             domain={[0, yMax]}
             ticks={yTicks}
-            tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(value: number) => `${value}%`}
@@ -209,87 +223,149 @@ function ClosenessBars({
 }
 
 /**
- * One dot per game against the cohort's middle 80%. The x domain is fitted to
- * whichever of the band and the dots reaches further — a fixed domain in z
- * would collapse the mania band to a sliver, which is the failure this card was
- * rebuilt to fix.
+ * One dot per game against the cohort's middle 80%, plotted in log ratio — the
+ * one scale on which a dot's position and its own tooltip number agree even
+ * when the map's games span several cohorts. `getClosenessStrip` owns the
+ * layout: clamping, stacking and the domain.
  */
 function ClosenessDots({
-  dots,
-  deciles,
-  cohort,
+  strip,
+  bandLabel,
 }: {
-  dots: ClosenessDot[];
-  deciles: number[];
-  cohort: ClosenessCohort;
+  strip: ClosenessStrip;
+  bandLabel: string;
 }) {
-  const values = [deciles[0], deciles[8], ...dots.map((dot) => dot.z)];
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const padding = (max - min) * 0.06 || 0.5;
+  const stripHeight = Math.max(MIN_STRIP, DOT_PITCH * strip.rows);
 
   return (
-    <ChartContainer
-      config={chartConfig}
-      className="aspect-auto h-[220px] w-full"
-    >
-      <ScatterChart margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
-        <XAxis
-          type="number"
-          dataKey="z"
-          domain={[min - padding, max + padding]}
-          ticks={[deciles[0], deciles[4], deciles[8]]}
-          interval="preserveStartEnd"
-          minTickGap={16}
-          tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(value: number) =>
-            formatMargin(marginPercent(value, cohort))
-          }
-        />
-        <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
-        <ReferenceArea
-          x1={deciles[0]}
-          x2={deciles[8]}
-          fill="var(--chart-1)"
-          fillOpacity={0.1}
-        />
-        <ReferenceLine
-          x={deciles[4]}
-          stroke="var(--muted-foreground)"
-          strokeDasharray="4 4"
-        />
-        <ChartTooltip
-          cursor={false}
-          // Scatter always emits an x and a y row; the y one carries nothing
-          // here, and collapsing the payload drops its blank line.
-          payloadUniqBy={() => 'game'}
-          content={
-            <ChartTooltipContent
-              hideIndicator
-              hideLabel
-              formatter={(_value, _name, item) => {
-                const dot = (item as { payload?: ClosenessDot } | undefined)
-                  ?.payload;
-                if (!dot) return null;
-                return (
-                  <span className="font-medium text-foreground">
-                    {formatMargin(dot.margin)} score gap
-                  </span>
-                );
-              }}
-            />
-          }
-        />
-        <Scatter
-          data={dots}
-          fill="var(--chart-1)"
-          fillOpacity={0.85}
-          isAnimationActive={false}
-        />
-      </ScatterChart>
-    </ChartContainer>
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          {/* A 1px full-opacity edge, because the 10% fill alone measures
+              1.14:1 against the card — far under the 3:1 floor. */}
+          <span
+            className="h-2.5 w-4 rounded-[2px] border border-chart-1 bg-chart-1/10"
+            aria-hidden="true"
+          />
+          middle 80% of {bandLabel} games
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className="w-4 border-t border-dashed border-muted-foreground"
+            aria-hidden="true"
+          />
+          typical
+        </span>
+      </div>
+      <ChartContainer
+        config={chartConfig}
+        className="aspect-auto w-full"
+        style={{ height: stripHeight + STRIP_CHROME }}
+      >
+        <ScatterChart margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+          <XAxis
+            type="number"
+            dataKey="plotLr"
+            domain={strip.domain}
+            ticks={[strip.band.lo, strip.band.mid, strip.band.hi]}
+            // Every tick or none: dropping by gap silently unlabelled the
+            // dashed typical line whenever an outlier squeezed the band.
+            interval={0}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(value: number) => formatMargin(gapPercent(value))}
+          />
+          {/* y carries the stacking row, so coincident games stay separately
+              hoverable instead of hiding one another. */}
+          <YAxis
+            type="number"
+            dataKey="row"
+            domain={[-0.5, strip.rows - 0.5]}
+            hide
+          />
+          <ReferenceArea
+            x1={strip.band.lo}
+            x2={strip.band.hi}
+            fill="var(--chart-1)"
+            fillOpacity={0.1}
+            stroke="var(--chart-1)"
+            strokeWidth={1}
+          />
+          <ReferenceLine
+            x={strip.band.mid}
+            stroke="var(--muted-foreground)"
+            strokeDasharray="4 4"
+          />
+          <ChartTooltip
+            cursor={false}
+            // Scatter always emits an x and a y row; the y one carries the
+            // stacking index, and collapsing the payload drops its blank line.
+            payloadUniqBy={() => 'game'}
+            content={
+              <ChartTooltipContent
+                hideIndicator
+                hideLabel
+                formatter={(_value, _name, item) => {
+                  const dot = (
+                    item as { payload?: ClosenessStripDot } | undefined
+                  )?.payload;
+                  if (!dot) return null;
+                  return (
+                    <div className="grid gap-0.5">
+                      <span className="font-medium text-foreground">
+                        {formatMargin(dot.gap)} score gap
+                      </span>
+                      {dot.cohortNote ? (
+                        <span className="text-muted-foreground">
+                          {dot.cohortNote}
+                        </span>
+                      ) : null}
+                      {dot.clamped ? (
+                        <span className="text-muted-foreground">
+                          Beyond the axis
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                }}
+              />
+            }
+          />
+          <Scatter
+            data={strip.dots}
+            fill="var(--chart-1)"
+            fillOpacity={0.85}
+            isAnimationActive={false}
+            // A pinned dot gets a triangle pointing off the edge it sits on,
+            // the same "continues past here" mark the box plots and the score
+            // scatter use.
+            shape={(props) => {
+              const dot = props.payload as ClosenessStripDot | undefined;
+
+              return dot?.clamped ? (
+                <g
+                  transform={`rotate(${dot.clamped === 'low' ? -90 : 90} ${props.cx} ${props.cy})`}
+                >
+                  <Symbols
+                    {...props}
+                    type="triangle"
+                    size={DOT_AREA}
+                    sizeType="area"
+                  />
+                </g>
+              ) : (
+                <Symbols
+                  {...props}
+                  type="circle"
+                  size={DOT_AREA}
+                  sizeType="area"
+                />
+              );
+            }}
+          />
+        </ScatterChart>
+      </ChartContainer>
+    </div>
   );
 }
 
@@ -327,23 +403,27 @@ export default function BeatmapMarginCard({
     });
   }, [bins, cohort, deciles]);
 
-  const dots = React.useMemo<ClosenessDot[]>(
+  const strip = React.useMemo(
     () =>
-      games.map((game) => ({
-        z: game.z,
-        y: 0,
-        margin: (1 - Math.exp(-game.logRatio)) * 100,
-      })),
-    [games]
+      cohort && deciles && quintiles === null
+        ? getClosenessStrip(games, cohort, deciles, cohortName)
+        : null,
+    [cohort, deciles, games, quintiles]
   );
 
   const caption: string[] = [];
-  if (cohort) {
-    if (quintiles === null) {
+  if (strip) {
+    caption.push(
+      "Each dot is one game's winning score gap. Not yet enough games to give this map a percentile."
+    );
+    if (strip.clampedCount > 0) {
+      const clamped = strip.clampedCount;
       caption.push(
-        `Each dot is one game's winning score gap. The band covers the middle 80% of ${cohortLabel(cohort)} games.`
+        `${formatChartNumber(clamped)} ${clamped === 1 ? 'game sits' : 'games sit'} beyond the axis, pinned to its edge.`
       );
-    } else if (percentile != null && closeness.percentileInterval) {
+    }
+  } else if (cohort) {
+    if (percentile != null && closeness.percentileInterval) {
       const [low, high] = closeness.percentileInterval;
       caption.push(
         `Typical score gaps here are larger than on ${Math.round(percentile)}% of comparable ${cohortLabel(cohort)} maps (80% range ${Math.round(low)}–${Math.round(high)}%).`
@@ -354,18 +434,13 @@ export default function BeatmapMarginCard({
       );
     }
   }
-  if (closeness.excludedUnverifiedGameCount > 0) {
-    const excluded = closeness.excludedUnverifiedGameCount;
-    caption.push(
-      `${formatChartNumber(excluded)} unverified ${excluded === 1 ? 'game' : 'games'} excluded.`
-    );
-  }
 
   return (
     <SectionCard data-testid="beatmap-margin" className={cn(className)}>
       <SectionHeader
         icon={Swords}
         title="Game closeness"
+        infoText="A low percentile means the winning and losing scores on this map usually finish closer together than on comparable maps, and a high percentile means they usually finish further apart. Verified team-vs games only."
         meta={
           gameCount === 0
             ? undefined
@@ -375,18 +450,14 @@ export default function BeatmapMarginCard({
         }
       />
       {gameCount === 0 || !cohort || !deciles ? (
-        <EmptyState>
-          {closeness.excludedUnverifiedGameCount > 0
-            ? `No verified team-vs games. ${formatChartNumber(closeness.excludedUnverifiedGameCount)} ${closeness.excludedUnverifiedGameCount === 1 ? 'game is' : 'games are'} unverified or rejected.`
-            : 'No team-vs games recorded for this beatmap.'}
-        </EmptyState>
+        <EmptyState />
       ) : (
         <div className="space-y-3 px-4 py-4">
           {quintiles ? (
             <ClosenessBars bins={quintiles} narrow={narrow} />
-          ) : (
-            <ClosenessDots dots={dots} deciles={deciles} cohort={cohort} />
-          )}
+          ) : strip ? (
+            <ClosenessDots strip={strip} bandLabel={cohortLabel(cohort)} />
+          ) : null}
           <p className="text-xs text-muted-foreground">{caption.join(' ')}</p>
         </div>
       )}

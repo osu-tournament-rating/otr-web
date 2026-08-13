@@ -4,6 +4,7 @@ import type {
   BeatmapTournamentUsage,
   BeatmapUsagePoint,
 } from '@/lib/orpc/schema/beatmapStats';
+import { VerificationStatus } from '@otr/core/osu';
 import {
   formatQuarterLong,
   getMostUsedInPool,
@@ -27,6 +28,12 @@ function pool(
     gameCount: 0,
     scoreCount: 0,
     rankRangeLowerBound: 1,
+    lobbySize: 2,
+    startTime: null,
+    endTime: null,
+    verificationStatus: VerificationStatus.Verified,
+    rejectionReason: 0,
+    mostCommonMods: null,
     ...rest,
   };
 }

@@ -7,6 +7,18 @@ import {
 
 export type BeatmapListFilterData = z.infer<typeof beatmapListFilterSchema>;
 
+/** The sort keys the URL accepts. */
+export type BeatmapListSortKey = BeatmapListFilterData['sort'];
+
+/**
+ * Applied by both the sort select and the table column headers. Neither holds
+ * sort state of its own: both write the URL and read the filter back from it.
+ */
+export type BeatmapListSortChange = (
+  sort: BeatmapListSortKey,
+  descending: boolean
+) => void;
+
 /** Every numeric range key the beatmap list filter serializes to the URL. */
 export const beatmapListNumericKeys = [
   'minSr',

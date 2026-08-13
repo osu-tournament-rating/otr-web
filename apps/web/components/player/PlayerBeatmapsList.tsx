@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Music } from 'lucide-react';
 
+import BeatmapEmptyState from '@/components/beatmaps/BeatmapEmptyState';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PlayerBeatmapCard from './PlayerBeatmapCard';
@@ -38,12 +39,9 @@ export default function PlayerBeatmapsList({
     setErrorMessage(null);
   }, [initialBeatmaps, initialTotal, playerId, ruleset]);
 
-  if (totalCount === 0 && beatmaps.length === 0) {
-    // With SSR + cache resets the list can briefly be empty; only show the empty state
-    // once both the count and current list confirm there is nothing to display.
-    return <NoResultsCard />;
-  }
-
+  // With SSR + cache resets the list can briefly be empty; only show the empty state
+  // once both the count and current list confirm there is nothing to display.
+  const isEmpty = totalCount === 0 && beatmaps.length === 0;
   const remainingCount = Math.max(totalCount - beatmaps.length, 0);
 
   const handleLoadMore = async () => {
@@ -83,10 +81,17 @@ export default function PlayerBeatmapsList({
       <CardHeader>
         <div className="flex flex-row items-center gap-2">
           <Music className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
+          <CardTitle className="text-xl font-bold">Pooled beatmaps</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col space-y-4">
+        {isEmpty && (
+          <BeatmapEmptyState
+            testId="player-beatmaps-empty"
+            title="No pooled beatmaps"
+            body="No beatmaps by this player have been pooled in a tracked tournament."
+          />
+        )}
         {beatmaps.map((beatmap) => (
           <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
         ))}
@@ -108,26 +113,10 @@ export default function PlayerBeatmapsList({
                 Loading…
               </>
             ) : (
-              `Show More (${remainingCount} more)`
+              `Show more (${remainingCount} more)`
             )}
           </Button>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function NoResultsCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Music className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Pooled Beatmaps</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-muted-foreground">No pooled beatmaps found</p>
       </CardContent>
     </Card>
   );

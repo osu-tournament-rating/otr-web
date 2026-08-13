@@ -8,6 +8,7 @@ import {
   BoxPlotTrack,
   EmptyState,
   Eyebrow,
+  FullRangeToggle,
   ScaleAxis,
   SectionCard,
   SectionHeader,
@@ -17,8 +18,7 @@ import TapTooltip from '@/components/tap-tooltip';
 import {
   formatAccuracyTick,
   formatScoreTick,
-  getBoxPlotAxis,
-  getScaleTicks,
+  getBoxPlotView,
   toBoxPlotMarks,
   type BoxPlotQuartiles,
   type NiceAxis,
@@ -96,6 +96,7 @@ function TierTooltipIcon({ tier }: { tier: TierName }) {
 function toScoreQuartiles(summary: BeatmapTierScoreSummary): BoxPlotQuartiles {
   return {
     min: summary.minScore,
+    p20: summary.p20Score,
     p25: summary.p25Score,
     median: summary.medianScore,
     p75: summary.p75Score,
@@ -112,6 +113,8 @@ function TierScoreRow({
   axis: NiceAxis;
   gridPercents: number[];
 }) {
+  const quartiles = toScoreQuartiles(summary);
+
   return (
     <TapTooltip
       triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} score: ${formatChartNumber(summary.scoreCount)} scores`}
@@ -121,7 +124,7 @@ function TierScoreRow({
           label={TIER_DISPLAY_NAME[summary.tier]}
           scoreCount={summary.scoreCount}
           measureLabel="Median score"
-          quartiles={toScoreQuartiles(summary)}
+          quartiles={quartiles}
           color={TIER_CHART_COLOR[summary.tier]}
           format={formatChartNumber}
         />
@@ -132,7 +135,7 @@ function TierScoreRow({
 
         <BoxPlotTrack
           color={TIER_CHART_COLOR[summary.tier]}
-          marks={toBoxPlotMarks(toScoreQuartiles(summary), axis)}
+          marks={toBoxPlotMarks(quartiles, axis)}
           gridPercents={gridPercents}
         />
       </div>
@@ -142,15 +145,22 @@ function TierScoreRow({
 
 /**
  * The accuracy quartiles for one tier as percentages, or null when the tier has
- * no accuracy recorded. The server nulls all five together, but reading them as
+ * no accuracy recorded. The server nulls all six together, but reading them as
  * a set keeps that an assumption the type checker enforces.
  */
 function toAccuracyQuartiles(summary: BeatmapTierScoreSummary) {
-  const { minAccuracy, p25Accuracy, medianAccuracy, p75Accuracy, maxAccuracy } =
-    summary;
+  const {
+    minAccuracy,
+    p20Accuracy,
+    p25Accuracy,
+    medianAccuracy,
+    p75Accuracy,
+    maxAccuracy,
+  } = summary;
 
   if (
     minAccuracy === null ||
+    p20Accuracy === null ||
     p25Accuracy === null ||
     medianAccuracy === null ||
     p75Accuracy === null ||
@@ -161,6 +171,7 @@ function toAccuracyQuartiles(summary: BeatmapTierScoreSummary) {
 
   return {
     min: minAccuracy * 100,
+    p20: p20Accuracy * 100,
     p25: p25Accuracy * 100,
     median: medianAccuracy * 100,
     p75: p75Accuracy * 100,
@@ -232,33 +243,42 @@ export default function BeatmapTierBreakdownCard({
   const isNarrow = useIsNarrowChart();
   const maxTicks = isNarrow ? 4 : 6;
 
-  // Zoomed to the boxes — see getBoxPlotAxis.
-  const scoreAxis = React.useMemo(
-    () => getBoxPlotAxis(tiers.map(toScoreQuartiles), maxTicks),
-    [tiers, maxTicks]
+  const scoreQuartiles = React.useMemo(
+    () => tiers.map(toScoreQuartiles),
+    [tiers]
   );
 
-  const accuracyAxis = React.useMemo(
+  const accuracyQuartiles = React.useMemo(
     () =>
-      getBoxPlotAxis(
-        tiers
-          .map(toAccuracyQuartiles)
-          .filter(
-            (entry): entry is NonNullable<typeof entry> => entry !== null
-          ),
-        maxTicks
-      ),
-    [tiers, maxTicks]
+      tiers
+        .map(toAccuracyQuartiles)
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
+    [tiers]
   );
 
+  // One toggle per axis: the two measures have separate domains and clamp
+  // different rows, so a shared control would sit dead on whichever chart is
+  // already showing its full range. A narrowing viewport can leave one pressed
+  // on a chart that no longer clamps; getBoxPlotView ignores it.
+  const [scoreExpanded, setScoreExpanded] = React.useState(false);
+  const [accuracyExpanded, setAccuracyExpanded] = React.useState(false);
+
+  // Zoomed to the boxes — see getBoxPlotView.
   const score = React.useMemo(
-    () => getScaleTicks(scoreAxis, formatScoreTick),
-    [scoreAxis]
+    () =>
+      getBoxPlotView(scoreQuartiles, formatScoreTick, maxTicks, scoreExpanded),
+    [scoreQuartiles, maxTicks, scoreExpanded]
   );
 
   const accuracy = React.useMemo(
-    () => getScaleTicks(accuracyAxis, formatAccuracyTick),
-    [accuracyAxis]
+    () =>
+      getBoxPlotView(
+        accuracyQuartiles,
+        formatAccuracyTick,
+        maxTicks,
+        accuracyExpanded
+      ),
+    [accuracyQuartiles, maxTicks, accuracyExpanded]
   );
 
   return (
@@ -266,53 +286,62 @@ export default function BeatmapTierBreakdownCard({
       <SectionHeader
         icon={Medal}
         title="Tier breakdown"
+        infoText="Grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
         meta={`${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores rated`}
       />
 
       {tiers.length === 0 ? (
-        <EmptyState>
-          No single tier has enough rated scores to chart yet. Recent scores may
-          not have a pre-match rating.
-        </EmptyState>
+        <EmptyState />
       ) : (
-        <>
-          <div className="xl:grid xl:grid-cols-2 xl:divide-x">
-            <div className="px-4 py-4">
+        <div className="xl:grid xl:grid-cols-2 xl:divide-x">
+          <div className="px-4 py-4">
+            <div className="flex min-h-6 flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <Eyebrow>Score by tier</Eyebrow>
-              <div className="mt-3 space-y-2">
-                {tiers.map((summary) => (
-                  <TierScoreRow
-                    key={summary.tier}
-                    summary={summary}
-                    axis={scoreAxis}
-                    gridPercents={score.gridPercents}
-                  />
-                ))}
-              </div>
-              <ScaleAxis leftSpacerClassName="w-28" ticks={score.ticks} />
+              {score.canExpand ? (
+                <FullRangeToggle
+                  pressed={scoreExpanded}
+                  onPressedChange={setScoreExpanded}
+                  label="Full range: score by tier"
+                />
+              ) : null}
             </div>
-
-            <div className="border-t px-4 py-4 xl:border-t-0">
-              <Eyebrow>Accuracy by tier</Eyebrow>
-              <div className="mt-3 space-y-2">
-                {tiers.map((summary) => (
-                  <TierAccuracyRow
-                    key={summary.tier}
-                    summary={summary}
-                    axis={accuracyAxis}
-                    gridPercents={accuracy.gridPercents}
-                  />
-                ))}
-              </div>
-              <ScaleAxis leftSpacerClassName="w-28" ticks={accuracy.ticks} />
+            <div className="mt-3 space-y-2">
+              {tiers.map((summary) => (
+                <TierScoreRow
+                  key={summary.tier}
+                  summary={summary}
+                  axis={score.axis}
+                  gridPercents={score.gridPercents}
+                />
+              ))}
             </div>
+            <ScaleAxis leftSpacerClassName="w-28" ticks={score.ticks} />
           </div>
 
-          <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">
-            Pre-match rating at time of play · tiers with fewer than 5 scores
-            hidden
-          </p>
-        </>
+          <div className="border-t px-4 py-4 xl:border-t-0">
+            <div className="flex min-h-6 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <Eyebrow>Accuracy by tier</Eyebrow>
+              {accuracy.canExpand ? (
+                <FullRangeToggle
+                  pressed={accuracyExpanded}
+                  onPressedChange={setAccuracyExpanded}
+                  label="Full range: accuracy by tier"
+                />
+              ) : null}
+            </div>
+            <div className="mt-3 space-y-2">
+              {tiers.map((summary) => (
+                <TierAccuracyRow
+                  key={summary.tier}
+                  summary={summary}
+                  axis={accuracy.axis}
+                  gridPercents={accuracy.gridPercents}
+                />
+              ))}
+            </div>
+            <ScaleAxis leftSpacerClassName="w-28" ticks={accuracy.ticks} />
+          </div>
+        </div>
       )}
     </SectionCard>
   );

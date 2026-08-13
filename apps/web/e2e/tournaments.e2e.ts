@@ -201,7 +201,7 @@ test.describe('Tournaments', () => {
         });
         await minimumRank.press('ArrowRight');
 
-        await expect(page.locator('#tournament-min-rank')).toHaveValue(
+        await expect(page.locator('#tournament-rank-min')).toHaveValue(
           String(next)
         );
         await expect
@@ -252,13 +252,14 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
 
       await page.locator('[data-testid="tournament-filters-button"]').click();
-      await page.locator('[data-testid="tournament-status-filter"]').click();
+      await page.locator('[data-testid="tournament-status-trigger"]').click();
       await page
         .getByRole('menuitemcheckbox', { name: 'Verified', exact: true })
         .click();
       await page.waitForURL(/verificationStatus=4/);
-      await page.getByRole('button', { name: 'Done', exact: true }).click();
 
+      // Filters apply as they are set, so the chip is already there with the
+      // popover still open — there is no step left to confirm.
       const activeFilter = page.getByRole('button', {
         name: 'Remove Status: Verified filter',
       });
@@ -278,7 +279,7 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
       await page.locator('[data-testid="tournament-filters-button"]').click();
 
-      const maximumRank = page.locator('#tournament-max-rank');
+      const maximumRank = page.locator('#tournament-rank-max');
       await expect(maximumRank).toHaveValue('200000');
       await maximumRank.fill('250000');
       await maximumRank.blur();
@@ -295,7 +296,7 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
       await page.locator('[data-testid="tournament-filters-button"]').click();
       await page
-        .locator('[data-testid="tournament-rejection-reason-filter"]')
+        .locator('[data-testid="tournament-rejection-reason-trigger"]')
         .click();
 
       await page
@@ -444,9 +445,53 @@ test.describe('Tournaments', () => {
 
       const content = page.locator('[data-testid="tab-content-beatmaps"]');
       await expect(content).toBeVisible({ timeout: 10000 });
-      await expect(content.getByText('Pooled Beatmaps').first()).toBeVisible({
+      await expect(content.getByText('Pooled beatmaps').first()).toBeVisible({
         timeout: 10000,
       });
+    });
+
+    test('a sortable header reorders the pooled beatmaps', async ({ page }) => {
+      await page.goto(
+        `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=beatmaps`
+      );
+      // The rows render on the server, so the sort only answers once the
+      // table has hydrated.
+      await page.waitForLoadState('networkidle');
+
+      const table = page
+        .locator('[data-testid="tab-content-beatmaps"]')
+        .locator('table');
+      await expect(table.locator('tbody tr').first()).toBeVisible({
+        timeout: 15000,
+      });
+
+      const starRatings = () =>
+        table.locator('tbody tr td:nth-child(2)').allInnerTexts();
+      const pool = () =>
+        table.locator('tbody tr td:nth-child(1)').allInnerTexts();
+
+      const before = await pool();
+      const header = table.getByRole('columnheader', { name: /^SR/ });
+      await expect(header).toHaveAttribute('aria-sort', 'none');
+
+      // The pool sorts in place: the rows are already loaded, so this is a
+      // reorder rather than a refetch.
+      await header.getByRole('button').click();
+      await expect(header).toHaveAttribute('aria-sort', 'ascending');
+      expect(await pool()).not.toEqual(before);
+      const ascending = (await starRatings()).map(Number);
+      expect(ascending.length).toBeGreaterThan(1);
+      expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
+
+      await header.getByRole('button').click();
+      await expect(header).toHaveAttribute('aria-sort', 'descending');
+      const descending = (await starRatings()).map(Number);
+      expect(descending).toEqual([...descending].sort((a, b) => b - a));
+
+      // Only one column is sorted at a time.
+      await expect(
+        table.locator('thead th[aria-sort]:not([aria-sort="none"])')
+      ).toHaveCount(1);
     });
 
     test('ratings tab shows player ratings', async ({ page }) => {

@@ -121,7 +121,9 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* items-start: the overview rail is much taller than the distributions
+          card, and stretching left ~230px of void inside it. */}
+      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
         <BeatmapOverviewCard
           beatmap={stats.beatmap}
           usage={stats.usageOverTime}
@@ -147,12 +149,12 @@ export default async function BeatmapPage({ params }: PageProps) {
 
       <BeatmapTierBreakdownCard tierBreakdown={stats.tierBreakdown} />
 
+      <BeatmapScoreScatterCard sample={stats.scoreSample} />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <BeatmapMarginCard closeness={stats.closeness} />
         <BeatmapPerformanceCard performance={stats.performance} />
       </div>
-
-      <BeatmapScoreScatterCard sample={stats.scoreSample} />
 
       <BeatmapLeaderboardCard
         performers={stats.topPerformers}

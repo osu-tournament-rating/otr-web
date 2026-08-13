@@ -94,9 +94,7 @@ export default function AudioPlayerControls() {
                 className="h-11 w-16 shrink-0 rounded-md border sm:h-12 sm:w-20"
               />
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold tracking-wide text-primary uppercase">
-                  Preview
-                </p>
+                <p className="text-xs font-medium text-primary">Preview</p>
                 <p className="truncate text-sm font-semibold">{title}</p>
                 <p
                   className={cn(
@@ -145,7 +143,7 @@ export default function AudioPlayerControls() {
                     'aria-valuetext': `${formatPreviewTime(currentTime)} of ${formatPreviewTime(state.duration)}`,
                   })}
                 />
-                <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span data-testid="audio-transport-current-time">
                     {formatPreviewTime(currentTime)}
                   </span>

@@ -16,7 +16,9 @@ import {
   SectionCard,
   SectionHeader,
   Tile,
+  TileStat,
 } from '@/components/beatmap/BeatmapSection';
+import BeatmapPoolsDialog from '@/components/beatmap/BeatmapPoolsDialog';
 import BeatmapUsageSparkline from '@/components/beatmap/BeatmapUsageSparkline';
 import { Progress } from '@/components/ui/progress';
 import { getBeatmapAttributeRows } from '@/lib/beatmaps/presentation';
@@ -73,14 +75,12 @@ function GroupHeader({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-4 py-2 dark:bg-background/25">
-      <h3 className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-muted-foreground">
+      <h3 className="flex min-w-0 items-center gap-2 text-sm font-medium text-muted-foreground">
         <Icon className="size-3.5 shrink-0" aria-hidden />
         <span className="truncate">{title}</span>
       </h3>
       {meta ? (
-        <span className="shrink-0 text-[11px] text-muted-foreground">
-          {meta}
-        </span>
+        <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
       ) : null}
     </div>
   );
@@ -154,6 +154,16 @@ function ActivityGroup({
     summary.totalTournamentCount
   );
 
+  // One source for both branches below: an e2e spec matches the accessible
+  // name verbatim, and the drill-down must not change the tile at rest.
+  const pooledIn = {
+    icon: WavesLadder,
+    label: 'Pooled in',
+    sublabel: `${formatChartNumber(summary.verifiedTournamentCount)} verified`,
+    value: formatChartNumber(summary.totalTournamentCount),
+  };
+  const pooledInAccessibleValue = `Pooled in ${formatChartNumber(summary.totalTournamentCount)} ${summary.totalTournamentCount === 1 ? 'tournament' : 'tournaments'}, ${formatChartNumber(summary.verifiedTournamentCount)} of them verified`;
+
   return (
     <div data-testid="beatmap-usage-chart" className="border-t">
       <GroupHeader icon={TrendingUp} title="Tournament activity" />
@@ -188,15 +198,23 @@ function ActivityGroup({
           )}
         </Tile>
 
-        <dl className="grid grid-cols-2 gap-2">
-          <ActivityStat
-            testId="beatmap-pool-records"
-            icon={WavesLadder}
-            label="Pooled in"
-            sublabel={`${formatChartNumber(summary.verifiedTournamentCount)} verified`}
-            value={formatChartNumber(summary.totalTournamentCount)}
-            accessibleValue={`Pooled in ${formatChartNumber(summary.totalTournamentCount)} ${summary.totalTournamentCount === 1 ? 'tournament' : 'tournaments'}, ${formatChartNumber(summary.verifiedTournamentCount)} of them verified`}
-          />
+        {/* A <div>, not a <dl>: the "Pooled in" tile is a <button>, which
+            HTML's description-list content model forbids. */}
+        <div className="grid grid-cols-2 gap-2">
+          {pools.length === 0 ? (
+            <ActivityStat
+              testId="beatmap-pool-records"
+              {...pooledIn}
+              accessibleValue={pooledInAccessibleValue}
+            />
+          ) : (
+            <BeatmapPoolsDialog
+              pools={pools}
+              accessibleValue={pooledInAccessibleValue}
+            >
+              <TileStat {...pooledIn} />
+            </BeatmapPoolsDialog>
+          )}
           <ActivityStat
             testId="beatmap-played-tournaments"
             icon={Trophy}
@@ -231,7 +249,7 @@ function ActivityGroup({
             value={formatChartNumber(activity.activeQuarters)}
             accessibleValue={`${formatChartNumber(activity.activeQuarters)} active quarters`}
           />
-        </dl>
+        </div>
       </div>
     </div>
   );
@@ -254,18 +272,7 @@ function ActivityStat({
 }) {
   return (
     <Tile data-testid={testId} aria-label={accessibleValue}>
-      <dt className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" aria-hidden />
-        <span className="truncate">{label}</span>
-      </dt>
-      <dd className="mt-1 text-xl leading-none font-bold">
-        {value}
-        {sublabel ? (
-          <span className="mt-0.5 block text-xs leading-tight font-normal text-muted-foreground">
-            {sublabel}
-          </span>
-        ) : null}
-      </dd>
+      <TileStat icon={Icon} label={label} sublabel={sublabel} value={value} />
     </Tile>
   );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
+import { tieredScale } from '../scale';
 import {
   RANK_RANGE_DEFAULT_MAX,
   RANK_RANGE_MAX,
@@ -8,7 +9,8 @@ import {
   rankToSliderPosition,
   sliderPositionToRank,
   snapRankToSliderStop,
-} from '../tournamentRankSlider';
+  tournamentRankScale,
+} from '../tournament-rank';
 
 describe('tournament rank slider', () => {
   it('keeps the default below the slider ceiling', () => {
@@ -80,5 +82,39 @@ describe('tournament rank slider', () => {
     expect(sliderPositionToRank(RANK_SLIDER_MAX + 1)).toBe(RANK_RANGE_MAX);
     expect(rankToSliderPosition(0)).toBe(0);
     expect(rankToSliderPosition(RANK_RANGE_MAX + 1)).toBe(RANK_SLIDER_MAX);
+  });
+
+  it('exposes the ported functions as a NumericScale', () => {
+    expect(tournamentRankScale.min).toBe(1);
+    expect(tournamentRankScale.max).toBe(RANK_RANGE_MAX);
+    expect(tournamentRankScale.snap(1_050)).toBe(snapRankToSliderStop(1_050));
+    expect(tournamentRankScale.toPosition(1_000)).toBe(
+      rankToSliderPosition(1_000)
+    );
+    expect(tournamentRankScale.fromPosition(50)).toBe(sliderPositionToRank(50));
+    expect(tournamentRankScale.step(1_000, 1)).toBe(
+      moveRankBySliderStops(1_000, 1)
+    );
+  });
+
+  it('stays logarithmic rather than proportional to stop index', () => {
+    // Locks the decision not to rebuild rank on `tieredScale`: the stop-index
+    // mapping moves rank 1,000 off the midpoint and inflates the 11k-1M band.
+    const indexScale = tieredScale({
+      tiers: [
+        { start: 1, end: 1_000, step: 1 },
+        { start: 1_100, end: 5_000, step: 100 },
+        { start: 5_500, end: 10_000, step: 500 },
+        { start: 11_000, end: RANK_RANGE_MAX, step: 1_000 },
+      ],
+    });
+
+    expect(rankToSliderPosition(1_000)).toBe(50);
+    expect(indexScale.toPosition(1_000)).toBeCloseTo(48.995, 3);
+    expect(RANK_SLIDER_MAX - rankToSliderPosition(11_000)).toBeCloseTo(32.6, 1);
+    expect(RANK_SLIDER_MAX - indexScale.toPosition(11_000)).toBeCloseTo(
+      48.5,
+      1
+    );
   });
 });

@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from 'drizzle-orm';
+import { and, asc, eq, ne, sql } from 'drizzle-orm';
 
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import * as schema from '@otr/core/db/schema';
@@ -20,8 +20,20 @@ export async function getRelatedBeatmapDifficulties(
       diffName: schema.beatmaps.diffName,
       ruleset: schema.beatmaps.ruleset,
       sr: schema.beatmaps.sr,
+      verifiedTournamentCount:
+        sql<number>`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`.as(
+          'verified_tournament_count'
+        ),
+      verifiedGameCount:
+        sql<number>`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`.as(
+          'verified_game_count'
+        ),
     })
     .from(schema.beatmaps)
+    .leftJoin(
+      schema.beatmapStats,
+      eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
+    )
     .where(
       and(
         eq(schema.beatmaps.beatmapsetId, beatmapsetId),

@@ -80,13 +80,11 @@ export default function BeatmapPerformanceCard({
       />
 
       {scoreCount === 0 ? (
-        <EmptyState>No verified scores yet.</EmptyState>
+        <EmptyState />
       ) : (
         <div className="flex flex-1 flex-col gap-3 px-4 py-4">
           {missDataScoreCount === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No miss data recorded for these scores.
-            </p>
+            <p className="text-sm text-muted-foreground">Not enough data</p>
           ) : (
             <ChartContainer
               config={missChartConfig}
@@ -104,7 +102,9 @@ export default function BeatmapPerformanceCard({
                   interval={0}
                 />
                 <YAxis
-                  width={32}
+                  // 40 to match the sibling count axes: "1,800" measures 34.4px
+                  // and clips at 32.
+                  width={40}
                   allowDecimals={false}
                   tickLine={false}
                   axisLine={false}

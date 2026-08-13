@@ -1,14 +1,5 @@
 import { z } from 'zod';
-import { Mods } from '@otr/core/osu';
 import { RulesetSchema } from './constants';
-import { TournamentListItemSchema } from './tournament';
-
-export const BeatmapTournamentListItemSchema = TournamentListItemSchema.omit({
-  adminNotes: true,
-}).extend({
-  gamesPlayed: z.number().int().nonnegative().default(0),
-  mostCommonMod: z.number().int().nonnegative().default(Mods.None),
-});
 
 const KeyTypeSchema = z.enum(['otr', 'osu', 'username']).default('otr');
 
@@ -42,8 +33,14 @@ export const PlayerBeatmapStatsSchema = z.object({
   artist: z.string().default(''),
   title: z.string().default(''),
   tournamentCount: z.number().int().nonnegative().default(0),
-  gameCount: z.number().int().nonnegative().default(0),
-  tournaments: z.array(BeatmapTournamentListItemSchema).optional().default([]),
+  gameCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .default(0)
+    .describe(
+      'Games played on this beatmap where the tournament, match and game are all verified.'
+    ),
 });
 
 export type PlayerBeatmapsRequest = z.infer<typeof PlayerBeatmapsRequestSchema>;
@@ -54,7 +51,4 @@ export const PlayerBeatmapsResponseSchema = z.object({
 });
 export type PlayerBeatmapsResponse = z.infer<
   typeof PlayerBeatmapsResponseSchema
->;
-export type BeatmapTournamentListItem = z.infer<
-  typeof BeatmapTournamentListItemSchema
 >;

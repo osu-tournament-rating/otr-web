@@ -94,3 +94,14 @@ export function getBeatmapAttributeRows(
       return [{ ...CS }, { ...AR }, { ...OD }, { ...HP }];
   }
 }
+
+/**
+ * A pooled beatmap whose set was deleted from osu!: the fetch left no metadata
+ * behind. Testing the absent data rather than the 'Unknown Artist'/'Unknown
+ * Title' fallback strings, which a real map is free to be called.
+ */
+export function isDeletedTournamentBeatmap(beatmap: {
+  beatmapset?: { artist?: string; title?: string } | null;
+}): boolean {
+  return !beatmap.beatmapset?.artist && !beatmap.beatmapset?.title;
+}

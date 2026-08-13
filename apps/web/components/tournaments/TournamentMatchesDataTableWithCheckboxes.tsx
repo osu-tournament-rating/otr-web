@@ -1,26 +1,9 @@
 'use client';
 
-import { memo, useCallback } from 'react';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
-  SortingState,
-} from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { MatchRow } from '@/app/tournaments/[id]/columns';
+import type { MatchRow } from '@/app/tournaments/[id]/columns';
+import TournamentDataTableWithCheckboxes from './TournamentDataTableWithCheckboxes';
 
 interface ExtendedMatchRow extends MatchRow {
   isSelected: boolean;
@@ -32,111 +15,21 @@ interface TournamentMatchesDataTableWithCheckboxesProps {
   onSelectMatch: (matchId: number, checked: boolean) => void;
 }
 
-const MatchRowWithCheckbox = memo(
-  ({
-    match,
-    cells,
-    onSelectMatch,
-  }: {
-    match: ExtendedMatchRow;
-    cells: React.ReactNode;
-    onSelectMatch: (matchId: number, checked: boolean) => void;
-  }) => {
-    const handleCheckboxChange = useCallback(
-      (checked: boolean | 'indeterminate') => {
-        onSelectMatch(match.id, checked as boolean);
-      },
-      [match.id, onSelectMatch]
-    );
-
-    return (
-      <TableRow className="border-b border-border/30 transition-colors hover:bg-popover/80">
-        <TableCell className="w-[40px] py-3">
-          <Checkbox
-            checked={match.isSelected}
-            onCheckedChange={handleCheckboxChange}
-            aria-label={`Select ${match.name || 'match'}`}
-          />
-        </TableCell>
-        {cells}
-      </TableRow>
-    );
-  }
-);
-MatchRowWithCheckbox.displayName = 'MatchRowWithCheckbox';
-
+/** Names the match-specific halves of the generic tournament table. */
 export default function TournamentMatchesDataTableWithCheckboxes({
   columns,
   data,
   onSelectMatch,
 }: TournamentMatchesDataTableWithCheckboxesProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
-  });
-
   return (
-    <div className="rounded-lg bg-popover/50">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow
-              key={headerGroup.id}
-              className="border-b border-border/50 hover:bg-transparent"
-            >
-              <TableHead className="w-[40px]" />
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="font-semibold text-foreground"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <MatchRowWithCheckbox
-                key={row.id}
-                match={row.original as ExtendedMatchRow}
-                onSelectMatch={onSelectMatch}
-                cells={row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              />
-            ))
-          ) : (
-            <TableRow className="hover:bg-transparent">
-              <TableCell
-                colSpan={columns.length + 1}
-                className="h-24 text-center text-muted-foreground"
-              >
-                No matches found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <TournamentDataTableWithCheckboxes
+      columns={columns as ColumnDef<ExtendedMatchRow>[]}
+      data={data}
+      getRowId={(match) => match.id}
+      getRowLabel={(match) => match.name || 'match'}
+      isRowSelected={(match) => match.isSelected}
+      onSelectRow={onSelectMatch}
+      emptyMessage="No matches found."
+    />
   );
 }

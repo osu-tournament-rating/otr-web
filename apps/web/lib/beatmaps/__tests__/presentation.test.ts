@@ -5,6 +5,7 @@ import {
   getBeatmapAttributeRows,
   getBeatmapDisplayRuleset,
   getBeatmapRulesetLabel,
+  isDeletedTournamentBeatmap,
   isManiaRuleset,
 } from '../presentation';
 
@@ -125,4 +126,31 @@ describe('beatmap attribute rows', () => {
       });
     }
   );
+});
+
+describe('deleted tournament beatmaps', () => {
+  test('flags a map whose set never came back from osu!', () => {
+    expect(isDeletedTournamentBeatmap({})).toBe(true);
+    expect(isDeletedTournamentBeatmap({ beatmapset: null })).toBe(true);
+    expect(isDeletedTournamentBeatmap({ beatmapset: { artist: '' } })).toBe(
+      true
+    );
+    expect(
+      isDeletedTournamentBeatmap({ beatmapset: { artist: '', title: '' } })
+    ).toBe(true);
+  });
+
+  test('keeps a map that is genuinely titled after the fallback strings', () => {
+    expect(
+      isDeletedTournamentBeatmap({
+        beatmapset: { artist: 'Camellia', title: 'Unknown Title' },
+      })
+    ).toBe(false);
+  });
+
+  test('keeps a map with only one half of its metadata', () => {
+    expect(
+      isDeletedTournamentBeatmap({ beatmapset: { title: 'Blue Zenith' } })
+    ).toBe(false);
+  });
 });

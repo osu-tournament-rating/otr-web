@@ -9,6 +9,7 @@ import {
   BoxPlotTrack,
   EmptyState,
   Eyebrow,
+  FullRangeToggle,
   ScaleAxis,
   SectionCard,
   SectionHeader,
@@ -22,8 +23,7 @@ import {
 } from '@/components/ui/chart';
 import {
   formatScoreTick,
-  getBoxPlotAxis,
-  getScaleTicks,
+  getBoxPlotView,
   toBoxPlotMarks,
   type BoxPlotQuartiles,
   type NiceAxis,
@@ -34,11 +34,7 @@ import type {
   BeatmapScorePercentilePoint,
 } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
-import {
-  CHART_COLORS,
-  formatChartNumber,
-  formatPercentage,
-} from '@/lib/utils/chart';
+import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
 
 interface BeatmapScoreDistributionCardProps {
@@ -61,6 +57,7 @@ function toScoreQuartiles(
 ): BoxPlotQuartiles {
   return {
     min: group.minScore,
+    p20: group.p20Score,
     p25: group.p25Score,
     median: group.medianScore,
     p75: group.p75Score,
@@ -138,7 +135,6 @@ function PercentileCurve({
           tickFormatter={(value: number) => formatScoreTick(value)}
           tickLine={false}
           axisLine={false}
-          stroke={CHART_COLORS.mutedForeground}
           tickCount={isNarrow ? 3 : 5}
         />
         <YAxis
@@ -146,7 +142,6 @@ function PercentileCurve({
           tickFormatter={(value: number) => `${value}%`}
           tickLine={false}
           axisLine={false}
-          stroke={CHART_COLORS.mutedForeground}
           width={40}
         />
         <ChartTooltip
@@ -205,14 +200,19 @@ export default function BeatmapScoreDistributionCard({
   // Six labels smear together on a phone-width track.
   const isNarrow = useIsNarrowChart();
 
-  const axis = React.useMemo(
-    () => getBoxPlotAxis(distribution.map(toScoreQuartiles), isNarrow ? 4 : 6),
-    [distribution, isNarrow]
+  const quartiles = React.useMemo(
+    () => distribution.map(toScoreQuartiles),
+    [distribution]
   );
 
-  const { ticks: axisTicks, gridPercents } = React.useMemo(
-    () => getScaleTicks(axis, formatScoreTick),
-    [axis]
+  // A narrowing viewport can leave this pressed on a chart that no longer
+  // clamps; getBoxPlotView ignores it, so no resize effect is needed.
+  const [expanded, setExpanded] = React.useState(false);
+
+  const view = React.useMemo(
+    () =>
+      getBoxPlotView(quartiles, formatScoreTick, isNarrow ? 4 : 6, expanded),
+    [quartiles, isNarrow, expanded]
   );
 
   return (
@@ -223,6 +223,7 @@ export default function BeatmapScoreDistributionCard({
       <SectionHeader
         icon={ChartCandlestick}
         title="Score distribution"
+        infoText="Mod rows with fewer than 5 scores are hidden. The percentile curve uses every verified score."
         meta={
           hasBoxData
             ? `${formatChartNumber(totalScoreCount)} scores`
@@ -231,15 +232,19 @@ export default function BeatmapScoreDistributionCard({
       />
 
       {!hasData ? (
-        <EmptyState>No verified scores yet.</EmptyState>
+        <EmptyState />
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="flex h-full flex-col px-4 py-4">
-            <div className="flex items-baseline justify-between gap-2">
+            <div className="flex min-h-6 flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <Eyebrow>Mod</Eyebrow>
-              <span className="text-xs text-muted-foreground">
-                fewer than 5 scores hidden
-              </span>
+              {view.canExpand ? (
+                <FullRangeToggle
+                  pressed={expanded}
+                  onPressedChange={setExpanded}
+                  label="Full range: score by mod"
+                />
+              ) : null}
             </div>
             {/* Too few rows to fill the percentile chart's height, so they ride
                 the middle of the panel instead of stranding it below them. */}
@@ -257,24 +262,24 @@ export default function BeatmapScoreDistributionCard({
                     <BoxPlotRow
                       key={group.mods}
                       group={group}
-                      axis={axis}
-                      gridPercents={gridPercents}
+                      axis={view.axis}
+                      gridPercents={view.gridPercents}
                     />
                   ))}
                 </div>
               ) : (
-                <EmptyState>No verified scores yet.</EmptyState>
+                <EmptyState />
               )}
               {hasBoxData ? (
-                <ScaleAxis leftSpacerClassName="w-16" ticks={axisTicks} />
+                <ScaleAxis leftSpacerClassName="w-16" ticks={view.ticks} />
               ) : null}
             </div>
           </div>
 
           <div className="border-t px-4 py-4 xl:border-t-0">
-            {/* Blockified so it sits on the same line box as Mod across the
-                divider, instead of baselining against the inherited strut. */}
-            <div className="flex items-baseline">
+            {/* min-h-6 mirrors the toggle row across the divider, so both
+                panels start their charts on the same line. */}
+            <div className="flex min-h-6 items-center">
               <Eyebrow>Percentiles</Eyebrow>
             </div>
             {hasCurveData ? (
@@ -282,7 +287,7 @@ export default function BeatmapScoreDistributionCard({
                 <PercentileCurve percentiles={percentiles} />
               </div>
             ) : (
-              <EmptyState>No verified scores yet.</EmptyState>
+              <EmptyState />
             )}
           </div>
         </div>

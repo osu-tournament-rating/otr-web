@@ -38,9 +38,6 @@ import { Ruleset } from '@otr/core/osu';
  * pooled. Ruleset 3 (ManiaOther) has no qualifying games, so it has no row.
  */
 
-/** Date the rows below were fitted. */
-export const FIT_DATE = '2026-08-12';
-
 /** Qualifying games behind the fit. */
 export const CORPUS_GAMES = 932137;
 

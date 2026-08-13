@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import type { z } from 'zod';
 
 import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
-import BeatmapListTable, {
+import BeatmapListGrid from '@/components/beatmaps/list/BeatmapListGrid';
+import {
+  isBeatmapLayout,
   type BeatmapLayout,
-} from '@/components/beatmaps/list/BeatmapListTable';
+} from '@/components/beatmaps/list/layout';
+import {
+  buildBeatmapListPath,
+  type BeatmapListSortChange,
+} from '@/lib/beatmaps/list-params';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import { beatmapListFilterSchema } from '@/lib/validation-schema';
 
@@ -27,6 +34,7 @@ export default function BeatmapListContent({
   isFiltered,
   totalCount,
 }: BeatmapListContentProps) {
+  const router = useRouter();
   const [layout, setLayout] = useState<BeatmapLayout>('cards');
 
   useEffect(() => {
@@ -34,7 +42,7 @@ export default function BeatmapListContent({
       const storedLayout = window.localStorage.getItem(
         BEATMAP_LAYOUT_STORAGE_KEY
       );
-      if (storedLayout === 'cards' || storedLayout === 'compact') {
+      if (isBeatmapLayout(storedLayout)) {
         setLayout(storedLayout);
       }
     } catch {
@@ -42,6 +50,7 @@ export default function BeatmapListContent({
     }
   }, []);
 
+  // A device preference, not a shareable filter, so it stays out of the URL.
   const changeLayout = (nextLayout: BeatmapLayout) => {
     setLayout(nextLayout);
     try {
@@ -51,6 +60,17 @@ export default function BeatmapListContent({
     }
   };
 
+  // Shared by the sort select and the table headers so the two cannot diverge.
+  const changeSort = useCallback<BeatmapListSortChange>(
+    (sort, descending) => {
+      router.push(
+        buildBeatmapListPath({ ...filter, sort, descending, page: undefined }),
+        { scroll: false }
+      );
+    },
+    [filter, router]
+  );
+
   return (
     <>
       <div className="border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
@@ -59,13 +79,17 @@ export default function BeatmapListContent({
           totalCount={totalCount}
           layout={layout}
           onLayoutChange={changeLayout}
+          onSortChange={changeSort}
         />
       </div>
 
-      <BeatmapListTable
+      <BeatmapListGrid
         beatmaps={beatmaps}
         isFiltered={isFiltered}
         layout={layout}
+        sort={filter.sort}
+        descending={filter.descending}
+        onSortChange={changeSort}
       />
     </>
   );

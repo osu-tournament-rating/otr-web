@@ -1,6 +1,13 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ChevronLeft,
+  FoldHorizontal,
+  Info,
+  UnfoldHorizontal,
+} from 'lucide-react';
 import type * as React from 'react';
 
+import TapTooltip from '@/components/tap-tooltip';
+import { Toggle } from '@/components/ui/toggle';
 import type {
   BoxPlotMarks,
   BoxPlotQuartiles,
@@ -55,11 +62,20 @@ export function Swatch({ color }: { color: string }) {
 export function SectionHeader({
   icon: Icon,
   title,
+  infoText,
   meta,
   className,
 }: {
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   title: string;
+  /**
+   * Static, per-card explanation of how to read the chart. Never per-beatmap
+   * text — that belongs in meta.
+   *
+   * A string rather than a node: this module is imported by server components,
+   * and a string forbids arbitrary markup drifting into a header.
+   */
+  infoText?: string;
   meta?: React.ReactNode;
   className?: string;
 }) {
@@ -73,6 +89,19 @@ export function SectionHeader({
       <div className="flex min-w-0 items-center gap-2">
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h2 className="truncate font-semibold">{title}</h2>
+        {infoText ? (
+          // TapTooltip, not SimpleTooltip: a bare <svg> trigger is not
+          // focusable and never opens on touch.
+          <TapTooltip
+            side="bottom"
+            align="start"
+            triggerAriaLabel={`About ${title}`}
+            triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+            content={<span className="block max-w-56">{infoText}</span>}
+          >
+            <Info className="size-4" aria-hidden />
+          </TapTooltip>
+        ) : null}
       </div>
       {meta ? (
         <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
@@ -81,7 +110,11 @@ export function SectionHeader({
   );
 }
 
-export function EmptyState({ children }: { children: React.ReactNode }) {
+export function EmptyState({
+  children = 'Not enough data',
+}: {
+  children?: React.ReactNode;
+}) {
   return (
     <p className="px-4 py-10 text-center text-sm text-muted-foreground">
       {children}
@@ -91,10 +124,11 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
 
 /**
  * One box-and-whisker row: whisker from min to max, a filled box over the
- * middle 50%, a median tick, and hollow rings on the extremes. A whisker the
- * axis cuts off ends in a chevron instead of a ring. Pass `marks` as null for a
- * row with no data — the empty track keeps the row's height so the columns
- * either side of it stay aligned.
+ * middle 50%, a median tick, and hollow rings on the extremes. The axis is
+ * anchored on the highest maximum, so only the low end can be cut off; that
+ * whisker ends in a chevron instead of a ring. Pass `marks` as null for a row
+ * with no data — the empty track keeps the row's height so the columns either
+ * side of it stay aligned.
  */
 export function BoxPlotTrack({
   color,
@@ -152,49 +186,32 @@ export function BoxPlotTrack({
             style={{ left: `${marks.medianPercent}%` }}
           />
           {/* Extremes: a hollow ring, or a chevron where the axis cuts off */}
-          <WhiskerCap
-            color={color}
-            percent={marks.minPercent}
-            clamped={marks.minClamped}
-            direction="left"
-          />
-          <WhiskerCap
-            color={color}
-            percent={marks.maxPercent}
-            clamped={marks.maxClamped}
-            direction="right"
-          />
+          {marks.minClamped ? (
+            <ChevronCap color={color} percent={marks.minPercent} />
+          ) : (
+            <RingCap color={color} percent={marks.minPercent} />
+          )}
+          <RingCap color={color} percent={marks.maxPercent} />
         </>
       )}
     </div>
   );
 }
 
-function WhiskerCap({
-  color,
-  percent,
-  clamped,
-  direction,
-}: {
-  color: string;
-  percent: number;
-  clamped: boolean;
-  direction: 'left' | 'right';
-}) {
-  const Chevron = direction === 'left' ? ChevronLeft : ChevronRight;
-
-  return clamped ? (
-    <Chevron
+function ChevronCap({ color, percent }: { color: string; percent: number }) {
+  return (
+    <ChevronLeft
       className="absolute top-1/2 z-10 size-3.5 -translate-y-1/2"
-      style={{
-        color,
-        // Nudged inward so the glyph sits fully on the track rather than
-        // straddling the edge the way a ring does.
-        left: `calc(${percent}% ${direction === 'left' ? '+ 1px' : '- 15px'})`,
-      }}
+      // Nudged inward so the glyph sits fully on the track rather than
+      // straddling the edge the way a ring does.
+      style={{ color, left: `calc(${percent}% + 1px)` }}
       aria-hidden
     />
-  ) : (
+  );
+}
+
+function RingCap({ color, percent }: { color: string; percent: number }) {
+  return (
     <span
       className="absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-transparent"
       style={{ left: `${percent}%`, borderColor: color }}
@@ -323,6 +340,76 @@ export function ScaleAxis({
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * Switches one box plot chart between its truncated default and the full range
+ * of every whisker. Render it only when the truncated axis actually cuts
+ * something off.
+ */
+export function FullRangeToggle({
+  pressed,
+  onPressedChange,
+  label,
+}: {
+  pressed: boolean;
+  onPressedChange: (pressed: boolean) => void;
+  /**
+   * Accessible name. Must contain the visible "Full range" (WCAG 2.5.3), and
+   * disambiguates the two toggles the tier card renders.
+   */
+  label: string;
+}) {
+  return (
+    // h-6 keeps the 24px target of WCAG 2.5.8; the icon swap is the
+    // non-colour pressed cue over Toggle's own data-[state=on] background.
+    <Toggle
+      size="sm"
+      pressed={pressed}
+      onPressedChange={onPressedChange}
+      aria-label={label}
+      className="h-6 shrink-0 cursor-pointer gap-1 px-1.5 text-xs font-medium text-muted-foreground data-[state=on]:text-accent-foreground"
+    >
+      {pressed ? (
+        <FoldHorizontal className="size-3.5" aria-hidden />
+      ) : (
+        <UnfoldHorizontal className="size-3.5" aria-hidden />
+      )}
+      Full range
+    </Toggle>
+  );
+}
+
+/** Icon + label over a large value, the body of every Tournament activity tile. */
+export function TileStat({
+  icon: Icon,
+  label,
+  sublabel,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  label: string;
+  sublabel?: string;
+  value: string;
+}) {
+  // <span> rather than <dt>/<dd>: the "Pooled in" tile is a <button>, and HTML
+  // forbids description-list elements inside one.
+  return (
+    <>
+      <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Icon className="size-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="mt-1 block text-xl leading-none font-bold">
+        {value}
+        {sublabel ? (
+          <span className="mt-0.5 block text-xs leading-tight font-normal text-muted-foreground">
+            {sublabel}
+          </span>
+        ) : null}
+      </span>
+    </>
   );
 }
 
