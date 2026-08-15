@@ -133,11 +133,13 @@ export const listBeatmaps = publicProcedure
         );
       }
 
+      // Deliberately no `hasVerifiedAppearance` filter: this listing shows the
+      // same beatmaps sitewide search does, unverified appearances included.
+      // `NotFound` is the one shared exclusion, applied here and in
+      // `buildBeatmapSearchExpressions` so both paths agree.
       filters.push(
         sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
       );
-
-      filters.push(eq(schema.beatmapStats.hasVerifiedAppearance, true));
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
@@ -160,10 +162,12 @@ export const listBeatmaps = publicProcedure
             return schema.beatmaps.hp;
           case 'length':
             return schema.beatmaps.totalLength;
+          // Coalesced to match the displayed value: the stats join is outer,
+          // so a beatmap with no stats row sorts as 0 rather than as NULL.
           case 'tournamentCount':
-            return schema.beatmapStats.verifiedTournamentCount;
+            return sql`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`;
           case 'gameCount':
-            return schema.beatmapStats.verifiedGameCount;
+            return sql`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`;
           case 'creator':
             return schema.players.username;
           default:
@@ -210,7 +214,7 @@ export const listBeatmaps = publicProcedure
             ),
         })
         .from(schema.beatmaps)
-        .innerJoin(
+        .leftJoin(
           schema.beatmapStats,
           eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
         )
@@ -245,7 +249,7 @@ export const listBeatmaps = publicProcedure
       const countQuery = context.db
         .select({ count: count() })
         .from(schema.beatmaps)
-        .innerJoin(
+        .leftJoin(
           schema.beatmapStats,
           eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
         )

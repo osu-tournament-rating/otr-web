@@ -47,6 +47,8 @@ import {
 } from '@/components/beatmaps/list/layout';
 import {
   buildBeatmapSearchParams,
+  minBeatmapSearchLength,
+  normalizeBeatmapSearchQuery,
   beatmapListNumericKeys as numericKeys,
   type BeatmapListNumericKey as NumericFilterKey,
   type BeatmapListSortKey,
@@ -250,7 +252,15 @@ export default function BeatmapListFilter({
   // The URL is the only filter state, so an external navigation (back button, a
   // landed search) resyncs the box and retires the spinner.
   useEffect(() => {
-    setQuery(filter.q ?? '');
+    // Clearing a search because the term fell below the minimum drops `q` from
+    // the URL while the box legitimately still holds those characters, so the
+    // box only yields when the URL means something else.
+    setQuery((current) =>
+      normalizeBeatmapSearchQuery(current) ===
+      normalizeBeatmapSearchQuery(filter.q)
+        ? current
+        : (filter.q ?? '')
+    );
     setIsSearching(false);
   }, [filter.q]);
 
@@ -300,7 +310,12 @@ export default function BeatmapListFilter({
   const changeQuery = (value: string) => {
     const next = value.trimStart();
     setQuery(next);
-    setIsSearching(next !== (filter.q ?? ''));
+    // A term below the minimum searches for nothing, so the spinner only runs
+    // when the scheduled navigation will actually change the query.
+    setIsSearching(
+      normalizeBeatmapSearchQuery(next) !==
+        normalizeBeatmapSearchQuery(filter.q)
+    );
     schedule({ ...currentFilter, q: next });
   };
 
@@ -309,6 +324,9 @@ export default function BeatmapListFilter({
     event.preventDefault();
     applyPatch({ q: query || undefined }, true);
   };
+
+  const belowMinimumQuery =
+    query.trim().length > 0 && normalizeBeatmapSearchQuery(query) === undefined;
 
   const rulesets = useMemo(
     () =>
@@ -422,6 +440,9 @@ export default function BeatmapListFilter({
             onKeyDown={submitSearch}
             placeholder="Search title, artist, difficulty, mapper, or ID"
             aria-label="Search beatmaps"
+            aria-describedby={
+              belowMinimumQuery ? 'beatmap-search-minimum-hint' : undefined
+            }
             autoComplete="off"
             className="h-10 bg-background pr-3 pl-9 dark:bg-input/50 dark:shadow-none"
           />
@@ -513,6 +534,17 @@ export default function BeatmapListFilter({
           </div>
         </div>
       </div>
+
+      {belowMinimumQuery && (
+        <p
+          id="beatmap-search-minimum-hint"
+          data-testid="beatmap-search-minimum-hint"
+          aria-live="polite"
+          className="text-xs text-muted-foreground"
+        >
+          Keep typing — search starts at {minBeatmapSearchLength} characters.
+        </p>
+      )}
 
       <div className="flex items-center justify-end gap-3 md:justify-between">
         <div

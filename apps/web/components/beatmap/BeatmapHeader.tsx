@@ -318,14 +318,17 @@ function getRulesetGroupLabel(ruleset: Ruleset): string {
  * chips lead somewhere before the reader spends a navigation on them.
  */
 function formatDifficultyUsage({
-  verifiedTournamentCount,
+  pooledTournamentCount,
   verifiedGameCount,
 }: RelatedBeatmapDifficulty): string {
-  if (verifiedGameCount === 0) return 'Not used in a verified tournament';
+  if (pooledTournamentCount === 0 && verifiedGameCount === 0) {
+    return 'Not used in a tournament';
+  }
 
-  const tournaments =
-    verifiedTournamentCount === 1 ? 'tournament' : 'tournaments';
+  // "mappools" counts pools the same way the rank-range donut does; the
+  // tooltip has no room to qualify which pools the counts cover.
+  const mappools = pooledTournamentCount === 1 ? 'mappool' : 'mappools';
   const games = verifiedGameCount === 1 ? 'game' : 'games';
 
-  return `${verifiedTournamentCount} ${tournaments} · ${verifiedGameCount} ${games}`;
+  return `${pooledTournamentCount} ${mappools} · ${verifiedGameCount} ${games}`;
 }

@@ -476,18 +476,19 @@ test.describe('Tournaments', () => {
       await expect(header).toHaveAttribute('aria-sort', 'none');
 
       // The pool sorts in place: the rows are already loaded, so this is a
-      // reorder rather than a refetch.
-      await header.getByRole('button').click();
-      await expect(header).toHaveAttribute('aria-sort', 'ascending');
-      expect(await pool()).not.toEqual(before);
-      const ascending = (await starRatings()).map(Number);
-      expect(ascending.length).toBeGreaterThan(1);
-      expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
-
+      // reorder rather than a refetch. A fresh column starts descending, the
+      // way the shared beatmap table does everywhere else.
       await header.getByRole('button').click();
       await expect(header).toHaveAttribute('aria-sort', 'descending');
+      expect(await pool()).not.toEqual(before);
       const descending = (await starRatings()).map(Number);
+      expect(descending.length).toBeGreaterThan(1);
       expect(descending).toEqual([...descending].sort((a, b) => b - a));
+
+      await header.getByRole('button').click();
+      await expect(header).toHaveAttribute('aria-sort', 'ascending');
+      const ascending = (await starRatings()).map(Number);
+      expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
 
       // Only one column is sorted at a time.
       await expect(

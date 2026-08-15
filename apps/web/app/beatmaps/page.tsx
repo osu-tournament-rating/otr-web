@@ -12,7 +12,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { buildBeatmapListPath } from '@/lib/beatmaps/list-params';
+import {
+  buildBeatmapListPath,
+  normalizeBeatmapSearchQuery,
+} from '@/lib/beatmaps/list-params';
 import { orpc } from '@/lib/orpc/orpc';
 import { beatmapListFilterSchema } from '@/lib/validation-schema';
 
@@ -25,7 +28,7 @@ type FilterData = ReturnType<typeof beatmapListFilterSchema.parse>;
 
 function hasFilters(filter: FilterData): boolean {
   return Boolean(
-    filter.q ||
+    normalizeBeatmapSearchQuery(filter.q) ||
     filter.ruleset !== undefined ||
     Object.entries(filter).some(
       ([key, value]) =>
@@ -41,7 +44,7 @@ export default async function Page(props: {
   const data = await orpc.beatmaps.list({
     page: filter.page ?? 1,
     pageSize: 30,
-    searchQuery: filter.q || undefined,
+    searchQuery: normalizeBeatmapSearchQuery(filter.q),
     ruleset: filter.ruleset,
     minSr: filter.minSr,
     maxSr: filter.maxSr,

@@ -3,7 +3,11 @@ services:
     image: postgres:17
     container_name: otr-db
     restart: unless-stopped
-    shm_size: '256m'
+    # Parallel plans allocate dynamic shared memory segments here, ~8 MB each.
+    # The Playwright suite runs one browser per core against the listing
+    # queries, and 256m ran out mid-run: `could not resize shared memory
+    # segment … No space left on device`, surfacing as a 500 on /beatmaps.
+    shm_size: '1g'
     ports:
       - '5432:5432'
     environment:

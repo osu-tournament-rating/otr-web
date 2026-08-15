@@ -22,6 +22,23 @@ const tsVector = customType<{ data: string }>({
   },
 });
 
+/**
+ * Punctuation-stripped text for `to_tsvector`. The default parser glues
+ * `w/WWW`, `foo.bar` and similar into single `file`/`host` tokens, which the
+ * search layer can never match because it normalizes punctuation out of the
+ * query. Applying the same normalization on both sides keeps them aligned.
+ */
+const searchableText = (column: SQL | unknown): SQL =>
+  sql`regexp_replace(coalesce(${column}, ''), '[^[:alnum:]]+', ' ', 'g')`;
+
+/**
+ * `searchableText` with letter/digit runs split apart in both directions, so
+ * `OWC2024` and `2024OWC` both index as `owc` + `2024`. Carried at a lower
+ * weight than the literal text.
+ */
+const searchableTextSplitDigits = (column: SQL | unknown): SQL =>
+  sql`regexp_replace(regexp_replace(${searchableText(column)}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g'), '([0-9]+)([A-Za-z]+)', '\\1 \\2', 'g')`;
+
 export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
   migrationId: varchar('migration_id', { length: 150 }).primaryKey().notNull(),
   productVersion: varchar('product_version', { length: 32 }).notNull(),
@@ -199,7 +216,7 @@ export const beatmapsets = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', coalesce(${beatmapsets.artist}, '')), 'A') || setweight(to_tsvector('simple', coalesce(${beatmapsets.title}, '')), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmapsets.artist)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmapsets.title)}), 'A')`
       ),
   },
   (table) => [
@@ -576,7 +593,7 @@ export const beatmaps = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', coalesce(${beatmaps.diffName}, '')), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A')`
       ),
   },
   (table) => [
@@ -1000,7 +1017,7 @@ export const matches = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${matches.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${matches.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B')`
+          sql`setweight(to_tsvector('simple', ${searchableText(matches.name)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(matches.name)}), 'B')`
       ),
     startTime: timestamp('start_time', { withTimezone: true, mode: 'string' }),
     endTime: timestamp('end_time', { withTimezone: true, mode: 'string' }),
@@ -1273,7 +1290,7 @@ export const players = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${players.username}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(players.username)}), 'A')`
       ),
     country: varchar({ length: 4 }).default('').notNull(),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),
@@ -1652,7 +1669,20 @@ export const tournaments = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${tournaments.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${tournaments.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B') || setweight(to_tsvector('simple', ${tournaments.abbreviation}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(tournaments.name)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.name)}), 'B') || setweight(to_tsvector('simple', ${searchableText(tournaments.abbreviation)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.abbreviation)}), 'B')`
+      ),
+    /**
+     * The same text as `search_vector`, weighted for match search: a match
+     * reads as "tournament + match name", so the tournament's own words sit
+     * below the match's. Stored rather than computed per row because match
+     * search ranks it against every matching match — 150k rows for a broad
+     * term, all recomputing the same 3k tournaments' vectors.
+     */
+    matchRankVector: tsVector('match_rank_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', ${searchableText(tournaments.name)}), 'B') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.name)}), 'C') || setweight(to_tsvector('simple', ${searchableText(tournaments.abbreviation)}), 'D') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.abbreviation)}), 'D')`
       ),
     forumUrl: varchar('forum_url', { length: 255 }).notNull(),
     rankRangeLowerBound: integer('rank_range_lower_bound').notNull(),

@@ -110,7 +110,8 @@ export const RelatedBeatmapDifficultySchema = z.object({
   diffName: z.string(),
   ruleset: RulesetSchema,
   sr: z.number().nonnegative(),
-  verifiedTournamentCount: z.number().int().nonnegative(),
+  /** Every pool the difficulty appears in, verified or not. */
+  pooledTournamentCount: z.number().int().nonnegative(),
   verifiedGameCount: z.number().int().nonnegative(),
 });
 

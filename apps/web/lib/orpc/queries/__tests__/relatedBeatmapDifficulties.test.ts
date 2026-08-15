@@ -27,8 +27,8 @@ describe('related beatmap difficulty query', () => {
         diffName: 'Normal',
         ruleset: Ruleset.Osu,
         sr: 2.1,
-        // No stats row: the left join coalesces both counts to zero.
-        verifiedTournamentCount: 0,
+        // Never pooled and no stats row: both counts fall to zero.
+        pooledTournamentCount: 0,
         verifiedGameCount: 0,
       },
       {
@@ -36,7 +36,7 @@ describe('related beatmap difficulty query', () => {
         diffName: '[4K] Insane',
         ruleset: Ruleset.Mania4k,
         sr: 5.4,
-        verifiedTournamentCount: 3,
+        pooledTournamentCount: 3,
         verifiedGameCount: 17,
       },
     ];

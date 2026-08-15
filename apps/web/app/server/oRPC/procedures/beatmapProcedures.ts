@@ -1211,7 +1211,7 @@ export const getBeatmapStats = publicProcedure
           diffName: difficulty.diffName,
           ruleset: difficulty.ruleset as Ruleset,
           sr: difficulty.sr,
-          verifiedTournamentCount: Number(difficulty.verifiedTournamentCount),
+          pooledTournamentCount: Number(difficulty.pooledTournamentCount),
           verifiedGameCount: Number(difficulty.verifiedGameCount),
         })),
         summary,

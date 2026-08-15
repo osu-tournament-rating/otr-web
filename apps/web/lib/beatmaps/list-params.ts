@@ -44,6 +44,24 @@ export const beatmapListNumericKeys = [
 export type BeatmapListNumericKey = (typeof beatmapListNumericKeys)[number];
 
 /**
+ * A single character matches too much to be worth a search, so the list waits
+ * for a second one before querying.
+ */
+export const minBeatmapSearchLength = 2;
+
+/**
+ * The search term a filter actually queries with, or `undefined` when it is too
+ * short to search on. Applied wherever `q` leaves the filter — the URL, the
+ * server page — so a hand-typed `?q=a` behaves like no query at all.
+ */
+export function normalizeBeatmapSearchQuery(
+  q: string | undefined
+): string | undefined {
+  const trimmed = q?.trim() ?? '';
+  return trimmed.length >= minBeatmapSearchLength ? trimmed : undefined;
+}
+
+/**
  * The only filter → query-string serialization. Defaults are omitted so URLs
  * stay canonical; both the server page and the client filter bar use this.
  */
@@ -53,7 +71,8 @@ export function buildBeatmapSearchParams(
   const params = new URLSearchParams();
 
   if (filter.page && filter.page > 1) params.set('page', String(filter.page));
-  if (filter.q?.trim()) params.set('q', filter.q.trim());
+  const q = normalizeBeatmapSearchQuery(filter.q);
+  if (q) params.set('q', q);
   if (filter.ruleset !== undefined)
     params.set('ruleset', String(filter.ruleset));
 

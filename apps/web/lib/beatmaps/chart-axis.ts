@@ -78,6 +78,33 @@ function trimFloatDrift(value: number): number {
   return Number(value.toPrecision(12));
 }
 
+/**
+ * Pulls an axis ceiling back down onto the data.
+ *
+ * `getNiceAxis` rounds its ceiling up onto a tick, which can leave most of a
+ * step's worth of empty track past the highest mark. On a domain already zoomed
+ * onto a narrow band that dead space is a visible fraction of the chart, so the
+ * domain ends on `maxValue` instead and keeps only the ticks still inside it:
+ * the labels stay round while the marks use the full width.
+ */
+export function fitAxisMax(axis: NiceAxis, maxValue: number): NiceAxis {
+  if (
+    !Number.isFinite(maxValue) ||
+    maxValue >= axis.max ||
+    maxValue <= axis.min
+  ) {
+    return axis;
+  }
+
+  return {
+    min: axis.min,
+    max: trimFloatDrift(maxValue),
+    // The ceiling overshoots by less than one step, so at most the topmost
+    // tick is dropped and `axis.min` always survives.
+    ticks: axis.ticks.filter((tick) => tick <= maxValue),
+  };
+}
+
 export interface ScatterAxis extends NiceAxis {
   /**
    * Values below this were not plotted where they fall. Always equal to `min`;
@@ -167,8 +194,10 @@ export interface ScaleTick {
 
 /**
  * The labelled ticks under a row chart, plus the interior positions the rows
- * draw gridlines at. Endpoint ticks are left out of the gridlines: they would
- * just trace the edges of the track.
+ * draw gridlines at. Ticks sitting on an edge of the track are left out of the
+ * gridlines: they would just trace its border. A clipped ceiling (see
+ * `fitAxisMax`) leaves its topmost tick short of the right edge, so this goes
+ * by position rather than by index.
  */
 export function getScaleTicks(
   axis: NiceAxis,
@@ -182,7 +211,13 @@ export function getScaleTicks(
 
   return {
     ticks,
-    gridPercents: ticks.slice(1, -1).map((tick) => tick.percent),
+    // A lone tick is the degenerate axis' mid-track marker, not a gridline.
+    gridPercents:
+      ticks.length < 2
+        ? []
+        : ticks
+            .filter((tick) => tick.percent > 0 && tick.percent < 100)
+            .map((tick) => tick.percent),
   };
 }
 
@@ -210,7 +245,8 @@ export interface BoxPlotMarks {
    * The low whisker was cut off by the axis rather than ending where it is
    * drawn. A chart zoomed onto its boxes has to say so; a ring parked on the
    * edge would read as a real extreme. There is no maximum counterpart: the
-   * axis ceiling always rounds up past every row's maximum.
+   * axis ceiling is the highest maximum on the chart, so no row reaches past
+   * it — the top row simply ends on the edge.
    */
   minClamped: boolean;
 }
@@ -239,10 +275,15 @@ export function getBoxPlotAxis(
 ): NiceAxis {
   if (groups.length === 0) return getNiceAxis(0, 0, maxTicks);
 
-  return getNiceAxis(
-    Math.min(...groups.map((group) => (expanded ? group.min : group.p20))),
-    Math.max(...groups.map((group) => group.max)),
-    maxTicks
+  const max = Math.max(...groups.map((group) => group.max));
+
+  return fitAxisMax(
+    getNiceAxis(
+      Math.min(...groups.map((group) => (expanded ? group.min : group.p20))),
+      max,
+      maxTicks
+    ),
+    max
   );
 }
 

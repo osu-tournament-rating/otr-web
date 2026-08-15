@@ -1600,7 +1600,7 @@ test.describe('Beatmap Detail Page', () => {
         const tooltip = page.getByRole('tooltip');
         await expect(tooltip).toContainText(difficultyName);
         await expect(tooltip).toContainText(
-          /Not used in a verified tournament|\d+ tournaments? · \d+ games?/
+          /Not used in a tournament|\d+ mappools? · \d+ games?/
         );
       }
     });

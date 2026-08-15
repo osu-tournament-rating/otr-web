@@ -305,8 +305,6 @@ export function ScaleAxis({
   ticks: ScaleTick[];
   className?: string;
 }) {
-  const lastIndex = ticks.length - 1;
-
   return (
     <div className={cn('mt-1 flex items-start gap-2', className)}>
       <span
@@ -314,7 +312,7 @@ export function ScaleAxis({
         aria-hidden="true"
       />
       <div className="relative h-5 min-w-0 flex-1">
-        {ticks.map((tick, index) => (
+        {ticks.map((tick) => (
           <div key={tick.value}>
             <span
               className="absolute top-0 h-1.5 w-px -translate-x-1/2 bg-border"
@@ -324,13 +322,12 @@ export function ScaleAxis({
             <span
               className={cn(
                 'absolute top-2.5 text-xs whitespace-nowrap text-muted-foreground',
-                lastIndex === 0 && '-translate-x-1/2',
-                lastIndex > 0 && index === 0 && 'translate-x-0',
-                lastIndex > 0 && index === lastIndex && '-translate-x-full',
-                lastIndex > 0 &&
-                  index > 0 &&
-                  index < lastIndex &&
-                  '-translate-x-1/2'
+                // Aligned by position, not by index: an axis clipped to its
+                // data maximum ends on an interior tick, which still wants a
+                // centred label.
+                tick.percent <= 0 && 'translate-x-0',
+                tick.percent >= 100 && '-translate-x-full',
+                tick.percent > 0 && tick.percent < 100 && '-translate-x-1/2'
               )}
               style={{ left: `${tick.percent}%` }}
             >

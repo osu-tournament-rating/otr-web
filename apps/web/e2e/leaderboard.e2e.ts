@@ -365,6 +365,11 @@ test.describe('Leaderboard Page', () => {
       await expect(prevButton).toBeVisible({ timeout: 10000 });
       await prevButton.click();
 
+      // Page 1 drops the parameter entirely, so there is no URL to wait for
+      // other than the one the soft navigation lands on.
+      await page.waitForURL((url) => url.searchParams.get('page') === null, {
+        timeout: 10000,
+      });
       await page.waitForLoadState('networkidle');
       await expect(
         page.locator('[data-testid="leaderboard-table"]')

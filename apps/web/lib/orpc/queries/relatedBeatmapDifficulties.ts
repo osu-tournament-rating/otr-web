@@ -20,10 +20,14 @@ export async function getRelatedBeatmapDifficulties(
       diffName: schema.beatmaps.diffName,
       ruleset: schema.beatmaps.ruleset,
       sr: schema.beatmaps.sr,
-      verifiedTournamentCount:
-        sql<number>`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`.as(
-          'verified_tournament_count'
-        ),
+      // Pool membership, unfiltered by verification, so the tooltip agrees
+      // with the "Pooled in" tile and the rank-range donut on the difficulty's
+      // own page. beatmap_stats only carries the verified subset.
+      pooledTournamentCount: sql<number>`(
+        SELECT COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})::int
+        FROM ${schema.joinPooledBeatmaps}
+        WHERE ${schema.joinPooledBeatmaps.pooledBeatmapsId} = ${schema.beatmaps.id}
+      )`.as('pooled_tournament_count'),
       verifiedGameCount:
         sql<number>`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`.as(
           'verified_game_count'

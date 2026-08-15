@@ -183,7 +183,18 @@ describe('getBoxPlotAxis', () => {
     const axis = getBoxPlotAxis(mania);
 
     expect(axis.min).toBe(950_000);
-    expect(axis.max).toBe(1_000_000);
+    // Ends on the data rather than on the round tick above it.
+    expect(axis.max).toBe(994_800);
+    expect(axis.ticks).toEqual([950_000, 960_000, 970_000, 980_000, 990_000]);
+  });
+
+  it('ends every domain on the highest maximum it charts', () => {
+    for (const expanded of [false, true]) {
+      const axis = getBoxPlotAxis(mania, 6, expanded);
+
+      expect(axis.max).toBe(Math.max(...mania.map((group) => group.max)));
+      expect(axis.ticks.every((tick) => tick <= axis.max)).toBe(true);
+    }
   });
 
   it('keeps every box inside the domain it produces', () => {

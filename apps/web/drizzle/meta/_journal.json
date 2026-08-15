@@ -155,6 +155,20 @@
       "when": 1783864940447,
       "tag": "0021_sturdy_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1786653089938,
+      "tag": "0022_search_vector_punctuation",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1786662976906,
+      "tag": "0023_young_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }
