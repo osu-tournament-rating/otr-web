@@ -10,10 +10,7 @@ export type BeatmapListFilterData = z.infer<typeof beatmapListFilterSchema>;
 /** The sort keys the URL accepts. */
 export type BeatmapListSortKey = BeatmapListFilterData['sort'];
 
-/**
- * Applied by both the sort select and the table column headers. Neither holds
- * sort state of its own: both write the URL and read the filter back from it.
- */
+/** Applied by the sort select and the column headers; both write the URL. */
 export type BeatmapListSortChange = (
   sort: BeatmapListSortKey,
   descending: boolean
@@ -43,17 +40,10 @@ export const beatmapListNumericKeys = [
 
 export type BeatmapListNumericKey = (typeof beatmapListNumericKeys)[number];
 
-/**
- * A single character matches too much to be worth a search, so the list waits
- * for a second one before querying.
- */
+/** A single character matches too much to be worth querying. */
 export const minBeatmapSearchLength = 2;
 
-/**
- * The search term a filter actually queries with, or `undefined` when it is too
- * short to search on. Applied wherever `q` leaves the filter — the URL, the
- * server page — so a hand-typed `?q=a` behaves like no query at all.
- */
+/** The term a filter actually queries with, or `undefined` when it is too short. */
 export function normalizeBeatmapSearchQuery(
   q: string | undefined
 ): string | undefined {
@@ -61,10 +51,7 @@ export function normalizeBeatmapSearchQuery(
   return trimmed.length >= minBeatmapSearchLength ? trimmed : undefined;
 }
 
-/**
- * The only filter → query-string serialization. Defaults are omitted so URLs
- * stay canonical; both the server page and the client filter bar use this.
- */
+/** The only filter → query-string serialization; defaults are omitted. */
 export function buildBeatmapSearchParams(
   filter: BeatmapListFilterData
 ): URLSearchParams {

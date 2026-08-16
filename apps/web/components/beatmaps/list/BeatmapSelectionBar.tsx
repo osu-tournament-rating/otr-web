@@ -4,11 +4,7 @@ import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-/**
- * The floating bar that carries the actions for a table's current selection.
- * It sits over the page rather than above the table so the count and its
- * actions stay reachable however far the table has been scrolled.
- */
+/** Floating bar carrying the actions for a table's current selection. */
 export default function BeatmapSelectionBar({
   count,
   onClear,
@@ -16,13 +12,11 @@ export default function BeatmapSelectionBar({
 }: {
   count: number;
   onClear: () => void;
-  /** The actions themselves, so this component owns no mutation of its own. */
   children: ReactNode;
 }) {
   return (
     <div
-      // Only the bar itself takes pointer events: the strip spans the viewport
-      // and would otherwise swallow clicks on the page beneath it.
+      // Only the bar takes pointer events; the strip spans the viewport.
       className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
       role="region"
       aria-label="Beatmap selection actions"

@@ -106,7 +106,6 @@ for (const entity of ENTITY_CASES) {
         const count = await entries.count();
         expect(count).toBeGreaterThan(0);
 
-        // Each entry should have an action badge
         const badges = page.locator('[data-testid="timeline-action-badge"]');
         const badgeCount = await badges.count();
         expect(badgeCount).toBeGreaterThan(0);
@@ -118,7 +117,6 @@ for (const entity of ENTITY_CASES) {
         const entryList = page.locator('[data-testid="timeline-entry-list"]');
         await expect(entryList).toBeVisible({ timeout: 15000 });
 
-        // Find an entry with a non-disabled trigger (has diffs)
         const entries = page.locator('[data-testid="timeline-entry"]');
         const entryCount = await entries.count();
 
@@ -151,7 +149,6 @@ for (const entity of ENTITY_CASES) {
         const entryList = page.locator('[data-testid="timeline-entry-list"]');
         await expect(entryList).toBeVisible({ timeout: 15000 });
 
-        // Timeline entries have <time> elements for timestamps
         const firstEntry = page
           .locator('[data-testid="timeline-entry"]')
           .first();

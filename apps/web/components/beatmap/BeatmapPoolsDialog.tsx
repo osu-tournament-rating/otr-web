@@ -30,13 +30,6 @@ import { formatUTCDate } from '@/lib/utils/date';
 import { normalizeBeatmapDisplayMods } from '@/lib/utils/mods';
 import { VerificationStatus } from '@otr/core/osu';
 
-/**
- * Mirrors `Tile`'s chrome: the tile it replaces must look untouched at rest,
- * and `Tile` is a `<div>`. Keep in sync with BeatmapSection's `Tile`.
- */
-const TRIGGER_CLASS =
-  'relative cursor-pointer rounded-lg border bg-muted/25 px-3 py-2.5 text-left transition-colors hover:border-ring/40 hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
-
 /** `2021-11-05 – 2021-12-18`, or one bound, or an em dash. */
 function formatDateRange(startTime: string | null, endTime: string | null) {
   const start = startTime ? formatUTCDate(new Date(startTime)) : null;
@@ -61,23 +54,15 @@ function byMostRecent(a: BeatmapTournamentUsage, b: BeatmapTournamentUsage) {
   return a.tournament.name.localeCompare(b.tournament.name);
 }
 
-/**
- * Every tournament that pooled the beatmap, behind the "Pooled in" tile.
- *
- * The rows come from the `pools` the overview card already holds — measured
- * ceiling is 83 on the busiest beatmap. If pool counts ever climb an order of
- * magnitude, that is the reason to split this into its own lazily-fetched
- * procedure rather than shipping it in the page payload.
- */
+/** Every tournament that pooled the beatmap, behind the "Pooled in" tile. */
 export default function BeatmapPoolsDialog({
   pools,
   accessibleValue,
   children,
 }: {
   pools: BeatmapTournamentUsage[];
-  /** Trigger's accessible name; byte-identical to the plain tile it replaces. */
+  /** Trigger's accessible name. */
   accessibleValue: string;
-  /** The tile body, so the trigger reads as the tile it replaces. */
   children: React.ReactNode;
 }) {
   // Sorts a copy: the server's most-played-first order is the public contract.
@@ -92,23 +77,16 @@ export default function BeatmapPoolsDialog({
       <DialogTrigger
         data-testid="beatmap-pool-records"
         aria-label={accessibleValue}
-        className={TRIGGER_CLASS}
+        className="relative cursor-pointer rounded-lg border bg-muted/25 px-3 py-2.5 text-left transition-colors hover:border-ring/40 hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         {children}
-        {/* The section around this tile is frozen, so hover and focus are the
-            only cues a touch user never gets. Absolute placement keeps the
-            resting layout identical; translate-y-px centres the 14px glyph on
-            the 16px label line. */}
         <ChevronRight
           className="absolute top-2.5 right-3 size-3.5 translate-y-px text-muted-foreground"
           aria-hidden
         />
       </DialogTrigger>
 
-      {/* Six columns want room, so the cap grows on wide screens. The `min()`
-          keeps DialogContent's own 1rem gutter: a bare `sm:max-w-3xl` wins the
-          cascade over its `max-w-[calc(100%-2rem)]` base and goes edge-to-edge
-          at exactly 768px. */}
+      {/* `min()` keeps DialogContent's 1rem gutter; a bare `sm:max-w-3xl` wins the cascade */}
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(48rem,calc(100%-2rem))] lg:max-w-[min(64rem,calc(100%-2rem))]">
         <DialogHeader className="gap-1 border-b px-4 py-3 pr-12 text-left">
           <DialogTitle className="text-base">
@@ -119,8 +97,7 @@ export default function BeatmapPoolsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Focusable so the list scrolls by keyboard and Radix has a
-            deterministic first focus target. */}
+        {/* Focusable so the list scrolls by keyboard */}
         <div
           tabIndex={0}
           className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
@@ -132,9 +109,6 @@ export default function BeatmapPoolsDialog({
                   <TableHead className="h-8 pl-4">
                     <Eyebrow>Tournament</Eyebrow>
                   </TableHead>
-                  {/* Every fixed width is the measured content or header,
-                      whichever is wider, plus the cell's own padding — the
-                      slack all goes to the tournament name. */}
                   <TableHead className="h-8 w-48">
                     <Eyebrow>Dates</Eyebrow>
                   </TableHead>
@@ -170,9 +144,6 @@ export default function BeatmapPoolsDialog({
                           href={`/tournaments/${row.tournament.id}`}
                           prefetch={false}
                           title={row.tournament.name}
-                          /* Wraps rather than truncates: the tournament is
-                             what this dialog exists to show, and a third of
-                             the names overflow one line at this width. */
                           className="line-clamp-2 min-w-0 rounded-sm text-sm leading-snug font-medium whitespace-normal hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                         >
                           {row.tournament.name}
@@ -206,8 +177,6 @@ export default function BeatmapPoolsDialog({
             </Table>
           </div>
 
-          {/* Phones get two lines per pool: identity and games on top, the
-              remaining details wrapping underneath. */}
           <ol className="divide-y md:hidden">
             {rows.map((row) => (
               <li key={row.tournament.id} className="px-4 py-2.5">
@@ -250,7 +219,7 @@ export default function BeatmapPoolsDialog({
   );
 }
 
-/** Null mods means the pool was never played, so there is nothing to show. */
+/** Null mods means the pool was never played. */
 function PoolMods({
   mods,
   freemod,
@@ -265,7 +234,6 @@ function PoolMods({
 
   return (
     <ModIconset
-      // Normalised the same way as every other mod surface on this page.
       mods={normalizeBeatmapDisplayMods(mods)}
       freemod={freemod}
       className="flex h-5 shrink-0 items-center"

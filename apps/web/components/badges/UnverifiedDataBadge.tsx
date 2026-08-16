@@ -9,12 +9,7 @@ import { cn } from '@/lib/utils';
 const LABEL = 'Includes unverified';
 const TOOLTIP = 'Includes data that has not been verified';
 
-/**
- * Marks a chart whose data is not filtered to verified entities. Only for
- * charts that stand alone *and* where verified and unverified entries cannot be
- * told apart by looking; anything running through a verified-only query does
- * not need it.
- */
+/** Marks a standalone chart whose data is not filtered to verified entities. */
 export default function UnverifiedDataBadge({
   className,
 }: {
@@ -29,8 +24,6 @@ export default function UnverifiedDataBadge({
       <Badge
         variant="outline"
         className={cn(
-          // `warning` itself is yellow-400: 1.4:1 on this tint over a light
-          // card. Light mode takes the yellow-900 foreground token instead.
           'gap-1 border-current/20 bg-warning/15 text-warning-foreground dark:text-warning',
           className
         )}

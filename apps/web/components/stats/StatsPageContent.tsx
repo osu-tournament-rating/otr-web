@@ -48,7 +48,6 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
 
   return (
     <div className="container mx-auto flex flex-col gap-6 py-6">
-      {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <BarChart3 className="h-8 w-8 text-primary" />
@@ -64,7 +63,6 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
         </p>
       </div>
 
-      {/* Tournament Statistics */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TournamentVerificationChart
           verificationCounts={tournamentStats.countByVerificationStatus}
@@ -77,7 +75,6 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
         />
       </div>
 
-      {/* Rating Distribution */}
       <RatingDistributionTabs
         ratingsByRuleset={ratingStats.ratingsByRuleset}
         userRatings={userRatings}

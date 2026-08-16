@@ -7,17 +7,6 @@ import {
   type ZDecileEdges,
 } from '@/lib/beatmaps/closeness-baselines';
 
-/**
- * Read-time closeness statistics for one beatmap.
- *
- * Every game contributes `logRatio = ln(winning score / losing score)`,
- * standardized against its own cohort baseline so games from different rulesets
- * and team sizes pool onto one scale. Standardizing fixes the total variance of
- * `z` at 1, which is why the between-map variance of `z` is the cohort ICC and
- * the shrinkage constant is `(1 - icc) / icc`. A map spanning several cohorts
- * contributes rows to each and pools through that scale.
- */
-
 /** Games a map needs before the card bins its distribution or states a verdict. */
 export const CLOSENESS_MIN_GAMES = 10;
 
@@ -99,10 +88,7 @@ function findGlobalBaseline(): ClosenessBaseline {
 
 const GLOBAL_BASELINE = findGlobalBaseline();
 
-/**
- * The fitted cohort cell, falling back to the ruleset row and then to the
- * global row. Cells thinner than `MIN_COHORT_GAMES` have no row of their own.
- */
+/** The fitted cohort cell, falling back to the ruleset row and then to the global row. */
 export function lookupBaseline(
   ruleset: Ruleset,
   teamSize: number
@@ -170,12 +156,7 @@ const EMPTY_SUMMARY = {
   baselineZDeciles: null,
 } as const;
 
-/**
- * Pools a map's games into one closeness verdict.
- *
- * `excludedUnverifiedGameCount` is reported back untouched so the card can say
- * why a map has fewer games than its play count suggests.
- */
+/** Pools a map's games into one closeness verdict. */
 export function summarizeCloseness(
   games: readonly ClosenessGame[],
   excludedUnverifiedGameCount: number

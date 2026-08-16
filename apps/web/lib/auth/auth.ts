@@ -23,9 +23,8 @@ import type { User } from 'osu-api-v2-js';
 
 const OSU_PROVIDER_ID = 'osu';
 const OSU_PROFILE_URL = 'https://osu.ppy.sh/api/v2/me';
-// The account create hook runs before defaults are coerced, so values can be
-// undefined where the Drizzle type expects null. We keep this relaxed type here
-// to describe the payload Better Auth actually hands us.
+// The account create hook runs before defaults are coerced, so fields the
+// Drizzle type has as null arrive undefined.
 type AuthAccount = {
   providerId: string | null;
   accountId: string | null;
@@ -76,15 +75,9 @@ const mapPlaymodeToRuleset = (playmode?: string | null) => {
   }
 };
 
-/**
- * Creates an osu! API client authenticated with a user's existing access token.
- *
- * osu-api-v2-js v3 gates every request behind `await this.token_promise`, whose
- * default value (`new Promise((r) => r)`) is never resolved — it is only
- * replaced by `setNewToken()` / `createAsync()`. Constructing the client from a
- * pre-obtained user token bypasses those, so we resolve the promise ourselves;
- * otherwise every request hangs forever.
- */
+// osu-api-v2-js v3 awaits `token_promise` on every request, and only
+// `setNewToken()`/`createAsync()` ever resolve it — construct from a user token
+// and it hangs unless we resolve it ourselves.
 const createUserOsuApiClient = (accessToken: string) => {
   const api = new OsuApi({ access_token: accessToken, token_type: 'Bearer' });
   (api as unknown as { token_promise: Promise<unknown> }).token_promise =
@@ -135,7 +128,6 @@ const ensurePlayer = async ({
     : Ruleset.Osu;
 
   if (profile?.is_bot) {
-    // Skip persisting bot accounts
     return player ?? null;
   }
 
@@ -518,7 +510,7 @@ export const auth = betterAuth({
     modelName: 'auth_account',
     accountLinking: {
       enabled: true,
-      // Allow linking accounts even when osu! doesn't return an email
+      // osu! does not always return an email.
       allowDifferentEmails: true,
     },
   },
@@ -529,11 +521,8 @@ export const auth = betterAuth({
         type: 'number',
         required: true,
         input: true,
-        // The player_id -> players.id foreign key is defined and managed at the
-        // Drizzle/DB schema level. Better Auth's `references` is only consumed by
-        // its own (unused) migration generator, and as of v1.6 it eagerly
-        // resolves the target against Better Auth's model registry — where
-        // `players` is not a model — throwing during get-session. Omit it.
+        // No `references`: Better Auth 1.6 resolves it against its own model
+        // registry, which has no `players`, and throws during get-session.
       },
     },
     deleteUser: {

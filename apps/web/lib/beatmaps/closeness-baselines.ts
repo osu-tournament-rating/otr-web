@@ -1,19 +1,16 @@
 import { Ruleset } from '@otr/core/osu';
 
 /**
- * Fitted cohort baselines for the beatmap game-closeness card.
+ * Fitted cohort baselines for the beatmap game-closeness card. A cohort is
+ * `games.ruleset` x team size (capped at 5); cells under `MIN_COHORT_GAMES`
+ * fall back through `ruleset` to `global`.
  *
- * A cohort is `games.ruleset` x team size, team size capped at 5. Cells with
- * fewer than `MIN_COHORT_GAMES` games do not get a row and fall back through
- * `ruleset` to `global`. `sdLogRatio` is the sample SD.
- * `betweenMapVariance` is a one-way random-effects estimate over the maps with
- * at least two games in the scope: `tau^2 = (MSB - MSW) / n0` with effective
- * group size `n0 = (N - sum(n_i^2) / N) / (groups - 1)`, then
- * `icc = tau^2 / (tau^2 + MSW)` and `shrinkageK = (1 - icc) / icc`.
- * `zDecileEdges` are q10..q90 of `(lr - meanLogRatio) / sdLogRatio` within the
- * scope, linearly interpolated at index `q * (n - 1)`.
- *
- * Refit source rows:
+ * Refit: `betweenMapVariance` is a one-way random-effects estimate over maps
+ * with at least two games in scope — `tau^2 = (MSB - MSW) / n0`,
+ * `n0 = (N - sum(n_i^2) / N) / (groups - 1)`, `icc = tau^2 / (tau^2 + MSW)`,
+ * `shrinkageK = (1 - icc) / icc`. `zDecileEdges` are q10..q90 of
+ * `(lr - meanLogRatio) / sdLogRatio`, interpolated at index `q * (n - 1)`.
+ * Source rows:
  *
  * ```sql
  * SELECT g.beatmap_id,

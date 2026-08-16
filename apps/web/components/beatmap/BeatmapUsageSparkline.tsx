@@ -25,11 +25,7 @@ function countLabel(count: number, noun: string) {
   return `${formatChartNumber(count)} ${noun}${count === 1 ? '' : 's'}`;
 }
 
-/**
- * Verified games per quarter. A chart rather than a strip of divs because the
- * per-quarter counts only exist in the tooltip, and a `title` attribute never
- * fires on touch.
- */
+/** Verified games per quarter. */
 export default function BeatmapUsageSparkline({
   usage,
 }: {
@@ -37,8 +33,7 @@ export default function BeatmapUsageSparkline({
 }) {
   const activity = summarizeActivity(usage);
 
-  // A run of empty quarters is not a chart — pooled-but-never-played maps skip
-  // the sparkline rather than draw a blank frame.
+  // Pooled-but-never-played maps have nothing to draw.
   if (usage.length < 2 || activity.maxGames === 0) return null;
 
   return (
@@ -60,16 +55,12 @@ export default function BeatmapUsageSparkline({
           aria-label="Verified games per quarter"
         >
           <XAxis dataKey="quarter" hide />
-          {/* Pinned to the peak: Recharts' rounded-up default domain would
-              leave the tallest quarter short of the top edge. */}
+          {/* Pinned to the peak; the default domain rounds up past it */}
           <YAxis domain={[0, activity.maxGames]} hide />
           <ChartTooltip
             content={
               <ChartTooltipContent
                 labelFormatter={(label) => formatQuarterLong(String(label))}
-                /* Two populations in one tooltip: bar height is verified
-                   games, pool records count every tournament. Say which is
-                   which rather than letting them read as one series. */
                 formatter={(_value, _name, item) => {
                   const point = (item as { payload?: BeatmapUsagePoint })
                     ?.payload;
@@ -89,8 +80,7 @@ export default function BeatmapUsageSparkline({
             fill="var(--color-gameCount)"
             fillOpacity={0.85}
             radius={[2, 2, 0, 0]}
-            // A single game still reads under a tall peak; an empty quarter
-            // must stay empty, so the floor cannot be a plain number.
+            // A single game must still read; an empty quarter must stay empty.
             minPointSize={(value) => (value ? 2 : 0)}
             isAnimationActive={false}
           />

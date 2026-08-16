@@ -37,10 +37,7 @@ interface BeatmapTierBreakdownCardProps {
   className?: string;
 }
 
-/**
- * Theme-aware tier accents, mirroring the `--text-<tier>` custom properties
- * that back `tierColors[...].textClass`.
- */
+// Mirrors the `--text-<tier>` properties behind `tierColors[...].textClass`.
 const TIER_CHART_COLOR: Record<TierName, string> = {
   Bronze: 'var(--text-bronze)',
   Silver: 'var(--text-silver)',
@@ -53,11 +50,7 @@ const TIER_CHART_COLOR: Record<TierName, string> = {
   'Elite Grandmaster': 'var(--text-elite-grandmaster)',
 };
 
-/**
- * Ladder display names, except that Grandmaster reads "Grandmaster+": the
- * server folds Elite Grandmaster into that bucket, so the row covers everyone
- * at Grandmaster and above.
- */
+// Grandmaster reads "Grandmaster+"; the server folds Elite Grandmaster into it.
 const TIER_DISPLAY_NAME: Record<TierName, string> = {
   ...tierData.reduce(
     (names, entry) => {
@@ -86,7 +79,6 @@ function TierLabel({ tier }: { tier: TierName }) {
   );
 }
 
-/** The ladder icon fronting a tooltip header, sized to sit on a text line. */
 function TierTooltipIcon({ tier }: { tier: TierName }) {
   return (
     <TierIcon tier={tier} subTier={1} tooltip={false} width={14} height={14} />
@@ -143,11 +135,7 @@ function TierScoreRow({
   );
 }
 
-/**
- * The accuracy quartiles for one tier as percentages, or null when the tier has
- * no accuracy recorded. The server nulls all six together, but reading them as
- * a set keeps that an assumption the type checker enforces.
- */
+/** Accuracy quartiles as percentages, or null when the tier has none. */
 function toAccuracyQuartiles(summary: BeatmapTierScoreSummary) {
   const {
     minAccuracy,
@@ -239,7 +227,6 @@ export default function BeatmapTierBreakdownCard({
 }: BeatmapTierBreakdownCardProps) {
   const { tiers, ratedScoreCount, totalScoreCount } = tierBreakdown;
 
-  // Six labels smear together on a phone-width track.
   const isNarrow = useIsNarrowChart();
   const maxTicks = isNarrow ? 4 : 6;
 
@@ -256,14 +243,10 @@ export default function BeatmapTierBreakdownCard({
     [tiers]
   );
 
-  // One toggle per axis: the two measures have separate domains and clamp
-  // different rows, so a shared control would sit dead on whichever chart is
-  // already showing its full range. A narrowing viewport can leave one pressed
-  // on a chart that no longer clamps; getBoxPlotView ignores it.
+  // One toggle per axis: the measures have separate domains and clamp different rows.
   const [scoreExpanded, setScoreExpanded] = React.useState(false);
   const [accuracyExpanded, setAccuracyExpanded] = React.useState(false);
 
-  // Zoomed to the boxes — see getBoxPlotView.
   const score = React.useMemo(
     () =>
       getBoxPlotView(scoreQuartiles, formatScoreTick, maxTicks, scoreExpanded),

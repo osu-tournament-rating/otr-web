@@ -23,17 +23,11 @@ import {
 } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
-/** Basic enum metadata */
 export type EnumMetadata = {
   text: string;
   description: string;
 };
 
-/**
- * A collection of metadata describing each entry in an enumeration
- * @template T Enumeration type
- * @template M Metadata type
- */
 type EnumMetadataCollection<
   T extends number | string,
   M extends EnumMetadata,
@@ -41,40 +35,18 @@ type EnumMetadataCollection<
   [key in T]: M;
 };
 
-/**
- * Interfaces an object that stores enum metadata
- * @template T Enumeration type
- * @template M Metadata type
- */
 interface IEnumHelperBase<T extends number | string, M extends EnumMetadata> {
-  /** Collection of metadata */
   readonly metadata: EnumMetadataCollection<T, M>;
 }
 
-/**
- * Interfaces an object that helps with parsing enums
- * @template T Enumeration type
- * @template M Metadata type
- */
 export interface IEnumHelper<
   T extends number | string,
   M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
-  /**
-   * Gets the metadata describing a given enum value
-   * @param value Enum value
-   * @returns Metadata describing the given enum value
-   */
   getMetadata: (value: T) => M;
 }
 
-/**
- * Creates a default implementation of an {@link IEnumHelper}
- *
- * {@link IEnumHelper.metadata} should always be overwritten
- * @template T Enumeration type
- * @template M Metadata type
- */
+/** Base {@link IEnumHelper}; callers always override `metadata`. */
 const defaultEnumHelper = <
   T extends number | string,
   M extends EnumMetadata = EnumMetadata,
@@ -86,31 +58,16 @@ const defaultEnumHelper = <
   },
 });
 
-/**
- * Interfaces an object that helps with parsing bitwise enums
- * @template T Bitwise enumeration type
- * @template M Metadata type
- */
 export interface IBitwiseEnumHelper<
   T extends number,
   M extends EnumMetadata = EnumMetadata,
 > extends IEnumHelperBase<T, M> {
-  /**
-   * Gets a list of metadata describing each flag in a given bitwise enum value
-   * @param value Bitwise enum value
-   * @returns Metadata describing each flag in the given bitwise enum value
-   */
   getMetadata: (value: T) => M[];
 
-  /**
-   * Gets a list of individual flags in a given bitwise enum value
-   * @param value Bitwise enum value
-   * @returns A list of individual flags in the given bitwise enum value
-   */
   getFlags: (value: T) => T[];
 }
 
-/** Produces an array of individual flags from a bitwise enumeration */
+/** The individual flags set in a bitwise enum value. */
 export function getEnumFlags<T extends object>(
   value: number | undefined,
   enumType: T
@@ -134,13 +91,7 @@ export function getEnumFlags<T extends object>(
   return flags;
 }
 
-/**
- * Creates a default implementation of an {@link IBitwiseEnumHelper}
- *
- * {@link IBitwiseEnumHelper.metadata} should always be overwritten
- * @template T Enumeration type
- * @template M Metadata type
- */
+/** Base {@link IBitwiseEnumHelper}; callers always override `metadata`. */
 const defaultBitwiseEnumHelper = <
   T extends number,
   M extends EnumMetadata = EnumMetadata,

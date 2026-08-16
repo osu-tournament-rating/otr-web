@@ -32,15 +32,13 @@ export default function PlayerBeatmapsList({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Reset to the server response whenever the player/ruleset changes to avoid
-    // mixing cached pages from a different profile view after navigation.
+    // Drop cached pages when the player or ruleset changes
     setBeatmaps(initialBeatmaps);
     setTotalCount(initialTotal);
     setErrorMessage(null);
   }, [initialBeatmaps, initialTotal, playerId, ruleset]);
 
-  // With SSR + cache resets the list can briefly be empty; only show the empty state
-  // once both the count and current list confirm there is nothing to display.
+  // Both conditions: the list is briefly empty across an SSR cache reset
   const isEmpty = totalCount === 0 && beatmaps.length === 0;
   const remainingCount = Math.max(totalCount - beatmaps.length, 0);
 

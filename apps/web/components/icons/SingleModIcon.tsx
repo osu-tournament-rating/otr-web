@@ -17,8 +17,7 @@ export default function SingleModIcon({
   mods &= ~Mods.NoFail;
   const metadata = ModsEnumHelper.getMetadata(mods);
 
-  // Get the mod text - for single mods, just take the first one
-  let modText = 'NM'; // Default to No Mod
+  let modText = 'NM';
   if (metadata.length > 0 && metadata[0]?.text) {
     modText = metadata[0].text;
   } else if (mods === Mods.None) {

@@ -5,12 +5,7 @@ export type ChartDataPoint = {
   timestampValue: number;
 } & PlayerRatingAdjustment;
 
-/**
- * Sorts rating adjustments by timestamp in descending order
- * @param data - The data to sort
- * @param descending - Whether to sort in descending order
- * @returns The sorted data
- */
+/** Sorts rating adjustments by timestamp. */
 export function sortData(
   data: PlayerRatingAdjustment[],
   descending: boolean

@@ -12,19 +12,10 @@ import type {
   BeatmapRankRangeModDistribution,
 } from '@/lib/orpc/schema/beatmapStats';
 
-/**
- * Incidental score-level modifiers stripped by the beatmap mod display rules.
- * Shared between {@link normalizeScoreModsArithmetic} and the SQL mirror in
- * beatmapProcedures so both derive from the same constants.
- */
+/** Incidental score-level modifiers stripped by the beatmap mod display rules. */
 export const STRIPPED_SCORE_MODS_MASK = Mods.NoFail | Mods.SpunOut;
 
-/**
- * Pure-arithmetic mirror of `normalizeBeatmapDisplayMods` (lib/utils/mods):
- * strip NoFail/SpunOut and fold Nightcore into DoubleTime. The SQL constant
- * `NORMALIZED_SCORE_MODS_SQL` in beatmapProcedures implements this exact CASE
- * expression; a parity test asserts both stay in sync.
- */
+/** Arithmetic mirror of normalizeBeatmapDisplayMods and of NORMALIZED_SCORE_MODS_SQL. */
 export function normalizeScoreModsArithmetic(mods: number): number {
   if ((mods & Mods.Nightcore) !== 0) {
     return (
@@ -35,21 +26,11 @@ export function normalizeScoreModsArithmetic(mods: number): number {
   return mods & ~STRIPPED_SCORE_MODS_MASK;
 }
 
-/**
- * The only mods the page's score aggregates chart: NM, HD, HR and DT, plus
- * NoFail (never changes a score, always hidden) and Nightcore (normalizes to
- * DoubleTime). Anything else — EZ, HT, FL, SO, the key mods — is rare enough
- * in pools that its scores add mod rows nobody reads while skewing the
- * pooled quartiles they sit in.
- */
+/** The only mods the page's score aggregates chart; the rest are too rare in pools. */
 export const CHARTED_SCORE_MODS_MASK =
   Mods.NoFail | Mods.Hidden | Mods.HardRock | Mods.DoubleTime | Mods.Nightcore;
 
-/**
- * Whether a raw score bitmask belongs in the charted aggregates. The SQL
- * mirror is `CHARTED_SCORE_MODS_FILTER` in beatmapProcedures; a parity test
- * asserts both keep the same set.
- */
+/** Whether a raw score bitmask belongs in the charted aggregates. */
 export function isChartedScoreMods(mods: number): boolean {
   return (mods & ~CHARTED_SCORE_MODS_MASK) === 0;
 }
@@ -64,13 +45,7 @@ export interface FreemodPickRow {
   scoreCount: number;
 }
 
-/**
- * Collapses per-game score-mod rows into the freemod pick summary. Freemod
- * detection reuses `deriveGameIsFreeMod` so the definition matches the match
- * endpoints (FreeModAllowed flag, or per-score mods varying from the game's).
- * Distribution rows carry raw score bitmasks; the client normalizes them for
- * display.
- */
+/** Collapses per-game score-mod rows into the freemod pick summary; mods stay raw. */
 export function summarizeFreemodPicks(
   rows: FreemodPickRow[]
 ): BeatmapFreemodPickSummary {
@@ -120,12 +95,8 @@ export interface PoolDisplayModsRow extends FreemodPickRow {
 }
 
 /**
- * Resolves the mods each tournament's pool slot displays from the mods players
- * actually used, so freemod lobbies — whose games record no mods of their own —
- * don't report NM. Every game resolves through the shared
- * `deriveGameIsFreeMod`/`resolveGameDisplayMods` pair, then each tournament
- * takes the mode over those resolved values; the first game seen wins a tie.
- * Tournaments with no rows are absent, leaving the caller's fallback in charge.
+ * Modal display mods per tournament pool slot, resolved from the mods players used
+ * so freemod lobbies don't report NM. Tournaments with no rows are absent.
  */
 export function summarizePoolDisplayMods(
   rows: ReadonlyArray<PoolDisplayModsRow>
@@ -194,10 +165,7 @@ export interface RankRangeModRow {
   scoreCount: number;
 }
 
-/**
- * Folds per-(rank range, normalized mods) counts into one distribution per
- * bucket. Rows use the same tie-break as the global mod distribution.
- */
+/** Folds per-(rank range, normalized mods) counts into one distribution per bucket. */
 export function summarizeRankRangeMods(
   rows: ReadonlyArray<RankRangeModRow>
 ): BeatmapRankRangeModDistribution[] {
@@ -241,21 +209,12 @@ export function summarizeRankRangeMods(
   return buckets;
 }
 
-/**
- * Ascending tier boundaries above Bronze: every `tierData` baseRating except
- * Bronze's, so `width_bucket(rating, TIER_RATING_BOUNDARIES)` yields an index
- * into {@link tierNames}. Derived from tierData — never hard-coded.
- */
+/** Ascending tier boundaries above Bronze, indexing into tierNames via width_bucket. */
 export const TIER_RATING_BOUNDARIES: readonly number[] = tierData
   .slice(1)
   .map((tier) => tier.baseRating);
 
-/**
- * Pure-arithmetic mirror of the SQL `width_bucket` expression used by the tier
- * breakdown query. Index 0 (Bronze) covers everything below the first boundary
- * including sub-100 ratings, matching `getTierFromRating`; a parity test
- * asserts both stay in sync.
- */
+/** Arithmetic mirror of the tier breakdown query's width_bucket expression. */
 export function tierNameFromRatingArithmetic(rating: number): TierName {
   let index = 0;
   for (const bound of TIER_RATING_BOUNDARIES) {
@@ -265,19 +224,10 @@ export function tierNameFromRatingArithmetic(rating: number): TierName {
   return tierNames[index];
 }
 
-/**
- * Highest tier index the beatmap tier breakdown reports. Elite Grandmaster is
- * folded into Grandmaster: a single beatmap rarely carries enough scores at the
- * very top of the ladder for its own quartiles to mean anything, so both share
- * one bucket rendered as "Grandmaster+".
- */
+/** Highest tier index the breakdown reports; Elite Grandmaster folds into Grandmaster+. */
 export const TIER_BREAKDOWN_MAX_TIER_INDEX = tierNames.indexOf('Grandmaster');
 
-/**
- * Tier a rating lands in for the breakdown, with the Elite Grandmaster fold
- * applied. Mirrors the clamped `width_bucket` expression in the SQL; a parity
- * test keeps both in sync.
- */
+/** Tier a rating lands in for the breakdown, with the Elite Grandmaster fold applied. */
 export function tierBreakdownTierFromRating(rating: number): TierName {
   let index = 0;
   for (const bound of TIER_RATING_BOUNDARIES) {

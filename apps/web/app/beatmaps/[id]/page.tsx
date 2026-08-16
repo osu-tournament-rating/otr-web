@@ -81,7 +81,7 @@ export default async function BeatmapPage({ params }: PageProps) {
   const hasNoVerifiedData =
     stats.tournaments.length === 0 && totalVerifiedScoreCount === 0;
 
-  // BeatmapHeader and BeatmapOverviewCard are duplicated in both branches — keep their props in sync.
+  // BeatmapHeader and BeatmapOverviewCard render in both branches; keep their props in sync
   if (hasNoVerifiedData) {
     return (
       <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
@@ -121,9 +121,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         relatedDifficulties={stats.relatedDifficulties}
       />
 
-      {/* Both cards stretch to the taller of the two: the distributions card
-          centres its charts in the surplus rather than leaving it as a gap
-          under the row. */}
       <div className="grid gap-4 lg:grid-cols-3">
         <BeatmapOverviewCard
           beatmap={stats.beatmap}

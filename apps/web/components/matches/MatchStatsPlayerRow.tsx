@@ -39,7 +39,7 @@ function TeamBadge({
 function MobileMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="truncate text-[11px] text-muted-foreground">{label}</div>
+      <div className="truncate text-xs text-muted-foreground">{label}</div>
       <div className="mt-0.5 truncate text-sm font-medium">{value}</div>
     </div>
   );
@@ -116,7 +116,7 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
             )}
             <div className="flex items-center gap-1 text-xs">
               <RatingRange player={player} />
-              <TRText className="text-[11px]" />
+              <TRText className="text-xs" />
             </div>
           </div>
         </div>

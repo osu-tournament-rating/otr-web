@@ -145,8 +145,7 @@ export default function TournamentVerificationChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0 font-sans">
-        {/* This chart emphasises its category ticks; `!` is needed because the
-            ChartContainer default has identical specificity. */}
+        {/* `!` beats ChartContainer's equal-specificity tick color */}
         <ChartContainer
           config={chartConfig}
           className="mx-auto max-h-[300px] w-full [&_.recharts-cartesian-axis-tick-value]:fill-foreground!"

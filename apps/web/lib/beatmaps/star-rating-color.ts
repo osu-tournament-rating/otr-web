@@ -57,10 +57,7 @@ function relativeLuminance(color: RgbColor): number {
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 }
 
-/**
- * Returns the osu! difficulty-spectrum color for a star rating.
- * Mirrors osu!'s gray below 0.1, gamma-corrected spectrum, and black at 9+.
- */
+/** osu!'s difficulty spectrum: gray below 0.1, gamma-corrected, black at 9+. */
 export function getStarRatingColor(starRating: number): string {
   const normalizedRating = Number.isNaN(starRating) ? 0 : starRating;
 
@@ -70,18 +67,10 @@ export function getStarRatingColor(starRating: number): string {
   return difficultyColourSpectrum(normalizedRating);
 }
 
-/**
- * Above this rating the spectrum dives toward black, which disappears when
- * the color tints an icon or text directly instead of filling a pill that
- * computes its own contrasting foreground.
- */
+/** Above this the spectrum dives toward black, which disappears as a tint. */
 const ICON_TINT_MAX_RATING = 6.7;
 
-/**
- * Spectrum color for tinting icons/text via `currentColor`. Identical to
- * {@link getStarRatingColor} up to expert-level ratings, then clamps so
- * extreme difficulties stay visible on dark surfaces.
- */
+/** Spectrum color for tinting icons and text, clamped so it stays visible on dark surfaces. */
 export function getStarRatingIconColor(starRating: number): string {
   const normalizedRating = Number.isNaN(starRating) ? 0 : starRating;
 

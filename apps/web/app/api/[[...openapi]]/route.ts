@@ -47,7 +47,6 @@ const normalizeAuthorizationHeader = (
     return { request };
   }
 
-  // Check x-api-key as an alternative to Bearer authorization
   const rawApiKey = request.headers.get('x-api-key');
   const candidate = rawApiKey?.trim();
 

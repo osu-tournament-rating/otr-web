@@ -27,7 +27,7 @@ export default function SimpleTooltip({
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      {/* Defaults match TapTooltip, so the two disclosures sit identically. */}
+      {/* Defaults match TapTooltip */}
       <TooltipContent
         side={side}
         align={align}

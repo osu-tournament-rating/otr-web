@@ -100,22 +100,17 @@ test.describe('Audit Event Feed Page', () => {
       await page.goto(ROUTES.auditLogs);
       await page.waitForLoadState('networkidle');
 
-      // Clear button should not be visible initially
       await expect(
         page.locator('[data-testid="filter-clear"]')
       ).not.toBeVisible();
 
-      // Select an entity type filter
       await page.locator('[data-testid="filter-entity-type"]').click();
       await page.getByRole('option', { name: 'Tournament' }).click();
-      // Close the popover
       await page.keyboard.press('Escape');
 
-      // Clear button should now be visible
       const clearButton = page.locator('[data-testid="filter-clear"]');
       await expect(clearButton).toBeVisible();
 
-      // Click clear and verify it disappears
       await clearButton.click();
       await expect(clearButton).not.toBeVisible();
     });
@@ -153,7 +148,6 @@ test.describe('Audit Event Feed Page', () => {
       const eventList = page.locator('[data-testid="audit-event-list"]');
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
-      // Find an expandable card (one with a chevron indicator)
       const expandableCard = page
         .locator('[data-testid="audit-event-card"]')
         .filter({
@@ -180,7 +174,6 @@ test.describe('Audit Event Feed Page', () => {
       const eventList = page.locator('[data-testid="audit-event-list"]');
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
-      // Find and expand a card that has diffs
       const cards = page.locator('[data-testid="audit-event-card"]');
       const cardCount = await cards.count();
 
@@ -206,7 +199,6 @@ test.describe('Audit Event Feed Page', () => {
             ).toBeVisible();
             break;
           }
-          // Collapse and try next
           await trigger.click();
         }
       }
@@ -221,7 +213,6 @@ test.describe('Audit Event Feed Page', () => {
       const eventList = page.locator('[data-testid="audit-event-list"]');
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
-      // Find an entity link inside the first card description
       const firstCard = page
         .locator('[data-testid="audit-event-card"]')
         .first();
@@ -306,7 +297,6 @@ test.describe('Entity Audit Timeline Page', () => {
       const count = await entries.count();
       expect(count).toBeGreaterThan(0);
 
-      // Each entry should have an action badge
       const badges = page.locator('[data-testid="timeline-action-badge"]');
       const badgeCount = await badges.count();
       expect(badgeCount).toBeGreaterThan(0);
@@ -319,7 +309,6 @@ test.describe('Entity Audit Timeline Page', () => {
       const entryList = page.locator('[data-testid="timeline-entry-list"]');
       await expect(entryList).toBeVisible({ timeout: 15000 });
 
-      // Find an entry with a non-disabled trigger (has diffs)
       const entries = page.locator('[data-testid="timeline-entry"]');
       const entryCount = await entries.count();
 
@@ -353,7 +342,6 @@ test.describe('Entity Audit Timeline Page', () => {
       const entryList = page.locator('[data-testid="timeline-entry-list"]');
       await expect(entryList).toBeVisible({ timeout: 15000 });
 
-      // Timeline entries have <time> elements for timestamps
       const firstEntry = page.locator('[data-testid="timeline-entry"]').first();
       const timestamp = firstEntry.locator('time');
       await expect(timestamp).toBeVisible();

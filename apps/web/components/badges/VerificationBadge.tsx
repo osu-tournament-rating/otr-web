@@ -9,12 +9,12 @@ import {
   TournamentRejectionReason,
 } from '@otr/core/osu';
 import {
-  CheckCircle2, // Verified
-  Square, // PreVerified
-  AlertTriangle, // PreRejected
-  XCircle, // Rejected
-  Clock, // None/Pending
-  UserCheck, // Verifier
+  CheckCircle2,
+  Square,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  UserCheck,
 } from 'lucide-react';
 import React from 'react';
 import SimpleTooltip from '../simple-tooltip';
@@ -82,21 +82,15 @@ type EntityRejectionReason =
 
 interface VerificationBadgeProps {
   verificationStatus: VerificationStatus;
-  /** Include verification status as text instead of a tooltip. Will show tooltip if warnings or rejections are present. */
+  /** Status as text instead of a tooltip; warnings and rejections still get one. */
   displayText?: boolean;
-  /** Size variant of the badge */
   size?: 'small' | 'large';
-  /** Remove background styling (for matches page) */
+  /** Drop the badge background. */
   minimal?: boolean;
-  /** Warning flags for the entity */
   warningFlags?: EntityWarningFlags;
-  /** Rejection reason for the entity */
   rejectionReason?: EntityRejectionReason;
-  /** Entity type for proper enum handling */
   entityType?: ApiItemType;
-  /** Game index for tooltip (when used in games column) */
   gameIndex?: number;
-  /** Username of the verifier (shown in tooltip for Verified/Rejected status) */
   verifierUsername?: string;
 }
 
@@ -297,11 +291,10 @@ export default function VerificationBadge({
     (verificationStatus === VerificationStatus.Verified ||
       verificationStatus === VerificationStatus.Rejected);
 
-  // Show tooltip if there are warnings, rejections, verifier info, or if displayText is false
-  const shouldShowTooltip =
+  const showTooltip =
     !displayText || hasWarnings || hasRejections || hasVerifier;
 
-  if (!shouldShowTooltip) {
+  if (!showTooltip) {
     return badge;
   }
 

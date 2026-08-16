@@ -40,7 +40,6 @@ export const listBeatmaps = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
-      // BeatmapListRequestSchema already bounds and defaults these.
       const { page, pageSize } = input;
       const offset = (page - 1) * pageSize;
 
@@ -89,9 +88,7 @@ export const listBeatmaps = publicProcedure
         input.ruleset === Ruleset.Mania4k ||
         input.ruleset === Ruleset.Mania7k
       ) {
-        // Mirror getBeatmapDisplayRuleset: a beatmap counts as 4K/7K when it
-        // is stored as that ruleset, or is ManiaOther with a "4K"/"7K" word
-        // in the difficulty name (\y is Postgres's word boundary).
+        // Mirrors getBeatmapDisplayRuleset; \y is Postgres's word boundary
         const keyPattern = input.ruleset === Ruleset.Mania4k ? '4k' : '7k';
         filters.push(
           sql`(${schema.beatmaps.ruleset} = ${input.ruleset} OR (${schema.beatmaps.ruleset} = ${Ruleset.ManiaOther} AND ${schema.beatmaps.diffName} ~* ${`\\y${keyPattern}\\y`}))`
@@ -133,10 +130,7 @@ export const listBeatmaps = publicProcedure
         );
       }
 
-      // Deliberately no `hasVerifiedAppearance` filter: this listing shows the
-      // same beatmaps sitewide search does, unverified appearances included.
-      // `NotFound` is the one shared exclusion, applied here and in
-      // `buildBeatmapSearchExpressions` so both paths agree.
+      // NotFound is the one exclusion shared with buildBeatmapSearchExpressions
       filters.push(
         sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
       );
@@ -162,8 +156,7 @@ export const listBeatmaps = publicProcedure
             return schema.beatmaps.hp;
           case 'length':
             return schema.beatmaps.totalLength;
-          // Coalesced to match the displayed value: the stats join is outer,
-          // so a beatmap with no stats row sorts as 0 rather than as NULL.
+          // Outer join, so a missing stats row must sort as 0 rather than NULL
           case 'tournamentCount':
             return sql`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`;
           case 'gameCount':
@@ -244,8 +237,7 @@ export const listBeatmaps = publicProcedure
         .limit(pageSize)
         .offset(offset);
 
-      // No filter references the creator, so the count query skips the
-      // grouped creator subquery and players join the list query needs.
+      // No filter references the creator, so this skips the list query's creator joins
       const countQuery = context.db
         .select({ count: count() })
         .from(schema.beatmaps)

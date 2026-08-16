@@ -87,7 +87,6 @@ const attributeSortOptions: readonly {
   { value: 'length', label: 'Length' },
 ];
 
-/** Keyed by layout so a new entry in `BEATMAP_LAYOUTS` cannot miss a toggle. */
 const layoutOptions: Record<
   BeatmapLayout,
   { label: string; icon: typeof LayoutGrid }
@@ -111,12 +110,7 @@ interface BeatmapRangeField {
   format?: (value: number) => string;
 }
 
-/**
- * Bounds and scales are drawn from the real distribution of the 86,435 listed
- * beatmaps rather than from the column types: p99 length is 399s and p99 games
- * is 91, so a linear track over the full domain leaves every real value crushed
- * against the left edge.
- */
+// Bounds and scales follow the real distribution, not the column types.
 const rangeFields: readonly BeatmapRangeField[] = [
   {
     id: 'sr',
@@ -244,17 +238,12 @@ export default function BeatmapListFilter({
   const pathname = usePathname();
   const [query, setQuery] = useState(filter.q ?? '');
   const [isSearching, setIsSearching] = useState(false);
-  // Edits are held back for a moment, so the controls read from an optimistic
-  // copy until the navigation they scheduled lands.
+  // Optimistic copy the controls read while a navigation is in flight.
   const [pending, setPending] = useState<FilterData | null>(null);
   const currentFilter = pending ?? filter;
 
-  // The URL is the only filter state, so an external navigation (back button, a
-  // landed search) resyncs the box and retires the spinner.
+  // Resync the box from the URL on external navigation.
   useEffect(() => {
-    // Clearing a search because the term fell below the minimum drops `q` from
-    // the URL while the box legitimately still holds those characters, so the
-    // box only yields when the URL means something else.
     setQuery((current) =>
       normalizeBeatmapSearchQuery(current) ===
       normalizeBeatmapSearchQuery(filter.q)
@@ -264,9 +253,7 @@ export default function BeatmapListFilter({
     setIsSearching(false);
   }, [filter.q]);
 
-  // The scheduled navigation arrived; the URL is authoritative again. Keyed on
-  // the serialized filter rather than the prop, which a parent render could
-  // hand back as a fresh object mid-edit.
+  // Serialized, not the prop: a parent render can hand back a fresh object mid-edit.
   const filterKey = useMemo(
     () => buildBeatmapSearchParams({ ...filter, page: undefined }).toString(),
     [filter]
@@ -284,9 +271,7 @@ export default function BeatmapListFilter({
       if (nextPath !== currentPath) {
         router.push(nextPath, { scroll: false });
       } else {
-        // The normalized URL is unchanged (e.g. trailing whitespace in the
-        // query), so no prop change will arrive to clear the spinner or to
-        // retire the optimistic copy.
+        // No prop change will arrive to clear these.
         setIsSearching(false);
         setPending(null);
       }
@@ -305,13 +290,9 @@ export default function BeatmapListFilter({
     [applyNow, currentFilter, query, schedule]
   );
 
-  // Typing only re-arms the countdown: the search box is not a filter box, so
-  // it is never held back for having focus.
   const changeQuery = (value: string) => {
     const next = value.trimStart();
     setQuery(next);
-    // A term below the minimum searches for nothing, so the spinner only runs
-    // when the scheduled navigation will actually change the query.
     setIsSearching(
       normalizeBeatmapSearchQuery(next) !==
         normalizeBeatmapSearchQuery(filter.q)
@@ -343,8 +324,6 @@ export default function BeatmapListFilter({
     () => [
       {
         kind: 'chip-group',
-        // The desktop chip row is 76px tall at 390px and would push the trigger
-        // down, so the ruleset moves into the popover on phones instead.
         id: 'ruleset-filters-mobile',
         label: 'Ruleset',
         className: 'md:hidden',
@@ -457,8 +436,7 @@ export default function BeatmapListFilter({
           >
             <Select
               value={currentFilter.sort}
-              // Sorting is not a filter: it applies at once, carrying any edit
-              // still waiting out its countdown along with it.
+              // Sorting is not a filter; it applies at once.
               onValueChange={(value) =>
                 applyPatch({ sort: value as BeatmapListSortKey }, true)
               }
@@ -587,8 +565,7 @@ export default function BeatmapListFilter({
             type="single"
             variant="outline"
             value={layout}
-            // Radix emits '' when the active item is re-clicked; a layout is
-            // always selected, so that deselection is dropped.
+            // Radix emits '' when the active item is re-clicked.
             onValueChange={(value) => {
               if (isBeatmapLayout(value)) onLayoutChange(value);
             }}
@@ -597,9 +574,7 @@ export default function BeatmapListFilter({
             data-testid="beatmap-layout-toggle"
             data-layout={layout}
           >
-            {/* No tooltips here: a TooltipTrigger's own `data-state="closed"`
-                replaces the item's `on`/`off`, silently killing every selected
-                style. The aria-labels already name each layout. */}
+            {/* No tooltips: a TooltipTrigger's `data-state` replaces the item's `on`/`off` */}
             {BEATMAP_LAYOUTS.map((value) => {
               const { label, icon: Icon } = layoutOptions[value];
 
@@ -609,15 +584,8 @@ export default function BeatmapListFilter({
                   value={value}
                   aria-label={label}
                   data-testid={`beatmap-layout-${value}`}
-                  // Radix moves focus on arrow keys but leaves selection to
-                  // Space. These items are radios, where arrows must select, so
-                  // focus selects. Tab lands on the active item, so that is a
-                  // no-op.
+                  // Radios: arrow-key focus has to select.
                   onFocus={() => onLayoutChange(value)}
-                  // `accent` is within 0.03 lightness of `input` in both themes,
-                  // so the selected item borrows the ruleset chips' primary tint
-                  // instead. Both states are scoped so neither depends on
-                  // stylesheet order to win.
                   className="size-10 first:rounded-l-md last:rounded-r-md data-[state=off]:bg-background data-[state=on]:bg-primary/10 data-[state=on]:text-primary dark:data-[state=off]:bg-input/50 dark:data-[state=on]:bg-primary/20"
                 >
                   <Icon aria-hidden="true" />

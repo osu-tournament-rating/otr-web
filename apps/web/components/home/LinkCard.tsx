@@ -20,13 +20,8 @@ const getIcon = (icon: IconVariant) => {
 };
 
 interface LinkCardProps {
-  /** Card title */
   title: string;
-
-  /** Card description */
   description: string;
-
-  /** Display icon */
   icon: IconVariant;
 }
 

@@ -1,11 +1,6 @@
 import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 
-/**
- * Formats a date into a string as follows: "2023-10-05 14:30:45 UTC"
- * @param date The date to format
- * @returns Formatted UTC date in "YYYY-MM-DD HH:MM:SS UTC" format
- */
-
+/** `2023-10-05 14:30:45 UTC`. */
 export function formatUTCDateFull(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -17,11 +12,7 @@ export function formatUTCDateFull(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
 }
 
-/**
- * Formats a date into a string as follows: "2023-10-05"
- * @param date The date to format
- * @returns Formatted UTC date in "YYYY-MM-DD" format
- */
+/** `2023-10-05`, in UTC. */
 export function formatUTCDate(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -30,11 +21,7 @@ export function formatUTCDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Formats a duration in seconds to a human-readable string
- * @param seconds Duration in seconds
- * @returns Formatted duration string (e.g. "3:45", "1:23:45")
- */
+/** `3:45`, `1:23:45`. */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

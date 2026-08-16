@@ -6,22 +6,13 @@ import { TierName, getTierColor } from '@/lib/utils/tierData';
 import { Card } from '../ui/card';
 
 export interface TierCardProps {
-  /** Desired tier */
   tier: TierName;
-
-  /** Visual text representation of the tier */
   displayName: string;
-
-  /** Tier rating */
   rating: number;
-
-  /** Icon size */
   iconSize: number;
-
   className?: string;
 }
 
-// Individual tier card component
 export default function TierCard({
   tier,
   displayName,
@@ -37,7 +28,6 @@ export default function TierCard({
         className
       )}
     >
-      {/* Enhanced glow effect based on tier color */}
       <div
         className={cn(
           'absolute inset-0 -z-10 rounded-lg bg-gradient-to-br opacity-40 blur-md',
@@ -46,7 +36,6 @@ export default function TierCard({
         )}
       />
 
-      {/* Icon container with enhanced glow */}
       <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
         <div
           className={cn(
@@ -66,7 +55,6 @@ export default function TierCard({
         </span>
       </div>
 
-      {/* Text content */}
       <div className="flex flex-col items-center text-center">
         <span className="text-sm font-semibold">{displayName}</span>
         <span className={cn('text-xs font-semibold', tierColor?.textClass)}>

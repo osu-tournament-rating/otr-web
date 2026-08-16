@@ -18,10 +18,7 @@ interface StarRatingPillProps extends Omit<BeatmapPillVariants, 'tone'> {
   testId?: string;
 }
 
-/**
- * The one saturated element in the beatmap pill family: its fill encodes
- * difficulty on osu!'s spectrum, so the color is the data.
- */
+/** The fill encodes difficulty on osu!'s star-rating spectrum. */
 export default function StarRatingPill({
   starRating,
   size,

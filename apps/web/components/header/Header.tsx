@@ -126,7 +126,6 @@ export default function Header() {
         className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm"
       >
         <div className="flex items-center gap-4">
-          {/* Logo */}
           <Link
             href="/"
             data-testid="header-logo"
@@ -141,7 +140,6 @@ export default function Header() {
             />
           </Link>
 
-          {/* Main nav */}
           <NavigationMenu viewport={false} className="hidden md:flex">
             <NavigationMenuList className="gap-1">
               {navItems.map((item) => (
@@ -168,7 +166,6 @@ export default function Header() {
             </div>
           </ClientOnly>
 
-          {/* Mobile menu */}
           <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
             <MobileNavTrigger isOpen={isMobileNavOpen} />
             <SheetContent
@@ -176,7 +173,7 @@ export default function Header() {
               closeButton={false}
               className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
             >
-              {/* Required for screen reader */}
+              {/* Radix requires a title */}
               <DialogTitle hidden />
               <div className="flex flex-col space-y-6">
                 <nav className="flex flex-col space-y-1">
@@ -208,7 +205,6 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Sign-in banner */}
       <ClientOnly>
         {!currentUser && !isSessionPending && (
           <div className="w-full bg-accent/50 py-1 text-center">
@@ -268,11 +264,9 @@ function SubnavTrigger({
       onPointerDown={
         hasDropdown && !isMobile
           ? (e: React.PointerEvent) => {
-              // Allow touch/stylus events to proceed normally
               if (e.pointerType !== 'mouse') {
                 return;
               }
-              // Only prevent default for mouse events
               e.preventDefault();
             }
           : undefined
@@ -280,7 +274,7 @@ function SubnavTrigger({
     >
       <span className="flex items-center">{children}</span>
       <ChevronDown
-        className="relative top-[1px] size-3 transition duration-300 group-data-[state=open]:rotate-180"
+        className="relative top-px size-3 transition duration-300 group-data-[state=open]:rotate-180"
         aria-hidden="true"
       />
     </NavigationMenuTrigger>
@@ -347,10 +341,9 @@ function NavigationItem({
           </NavLink>
         )}
       </SubnavTrigger>
-      {/* Subnav */}
       {hasDropdown && (
         <NavigationMenuContent>
-          {/* Seamlessly extend the nav border */}
+          {/* Extends the nav border */}
           <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
           {dropdown.map(
             ({ title, href, icon: Icon, roles, requiresSession }) => {

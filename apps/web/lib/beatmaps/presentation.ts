@@ -53,10 +53,7 @@ const OD = {
 } as const;
 const HP = { abbreviation: 'HP', label: 'HP drain', key: 'hp' } as const;
 
-/**
- * Attributes worth showing for a ruleset, in reading order. Attributes that do
- * not apply are muted rather than dropped so the raw value stays visible.
- */
+/** Attributes for a ruleset in reading order; inapplicable ones are muted, not dropped. */
 export function getBeatmapAttributeRows(
   ruleset: Ruleset
 ): BeatmapAttributeRow[] {
@@ -95,11 +92,7 @@ export function getBeatmapAttributeRows(
   }
 }
 
-/**
- * A pooled beatmap whose set was deleted from osu!: the fetch left no metadata
- * behind. Testing the absent data rather than the 'Unknown Artist'/'Unknown
- * Title' fallback strings, which a real map is free to be called.
- */
+/** A pooled beatmap whose set osu! no longer serves, detected by absent metadata. */
 export function isDeletedTournamentBeatmap(beatmap: {
   beatmapset?: { artist?: string; title?: string } | null;
 }): boolean {

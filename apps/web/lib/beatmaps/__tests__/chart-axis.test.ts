@@ -140,9 +140,7 @@ describe('getScatterAxis', () => {
   });
 
   it('zooms past a quit run on a mania field', () => {
-    // The real shape of /beatmaps/2251585: one 287,618 score under 327 that
-    // live between 860k and 999k. Anchoring on the minimum spans 200k..1M and
-    // leaves four fifths of the plot empty.
+    // The real shape of /beatmaps/2251585: one 287,618 score under 327 above 860k.
     const spread = Array.from(
       { length: 327 },
       (_, index) => 860_000 + (index * (998_537 - 860_000)) / 326
@@ -273,8 +271,7 @@ describe('getBoxPlotView', () => {
   });
 
   it('keeps offering the control once expanded', () => {
-    // Measured against the truncated axis either way, so the control the
-    // reader just used does not disappear under the cursor.
+    // Measured against the truncated axis either way.
     expect(getBoxPlotView(mania, formatScoreTick, 6, true).canExpand).toBe(
       true
     );
@@ -320,8 +317,7 @@ describe('getScaleTicks', () => {
       '1M',
     ]);
     expect(ticks.map((tick) => tick.percent)).toEqual([0, 20, 40, 60, 80, 100]);
-    // The endpoints are dropped: a gridline there would trace the edges of the
-    // track the rows are drawn on.
+    // The endpoints are dropped; a gridline there would trace the track's edges.
     expect(gridPercents).toEqual([20, 40, 60, 80]);
   });
 
@@ -373,8 +369,7 @@ describe('toBoxPlotMarks', () => {
   });
 
   it('never reports a cut-off maximum', () => {
-    // The ceiling rounds up past the highest maximum by construction, so there
-    // is no upper counterpart to minClamped to report.
+    // The ceiling rounds up past the highest maximum, so minClamped has no counterpart.
     for (const groups of [mania, [mania[0]], [mania[1]]]) {
       const domain = getBoxPlotAxis(groups);
 

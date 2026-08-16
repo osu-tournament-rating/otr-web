@@ -8,12 +8,7 @@ import {
   normalizeScoreModsArithmetic,
 } from '../beatmapStatsHelpers';
 
-/**
- * Parity between the pure-arithmetic mirror used to build the SQL CASE
- * expression (NORMALIZED_SCORE_MODS_SQL in beatmapProcedures) and the display
- * normalization the client uses (normalizeBeatmapDisplayMods). Both must map
- * every raw score bitmask to the same normalized combination.
- */
+// Parity with NORMALIZED_SCORE_MODS_SQL in beatmapProcedures
 describe('normalizeScoreModsArithmetic', () => {
   const namedCases: Array<[string, number]> = [
     ['NM', Mods.None],
@@ -74,11 +69,7 @@ describe('normalizeScoreModsArithmetic', () => {
   });
 });
 
-/**
- * The charted-mod gate the score distribution, tier breakdown and accuracy
- * charts run behind. Mirrored in SQL as `CHARTED_SCORE_MODS_FILTER`
- * (beatmapProcedures) — both must accept the same set.
- */
+// Parity with CHARTED_SCORE_MODS_FILTER in beatmapProcedures
 describe('isChartedScoreMods', () => {
   const accepted: Array<[string, number]> = [
     ['NM', Mods.None],

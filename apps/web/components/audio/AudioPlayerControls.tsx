@@ -24,19 +24,6 @@ import {
 import { useAudioPlayer, useAudioPlayerTime } from '@/lib/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
 
-/**
- * A filled disc with a ring drawn as a box shadow, rather than the default
- * thumb's one-pixel border. Chrome stair-steps a bordered circle this small
- * once it lands on a fractional offset along the track; a shadow ring keeps a
- * clean edge at every position.
- */
-const THUMB_CLASS =
-  'size-3.5 border-0 bg-primary shadow-[0_0_0_2px_var(--card),0_1px_3px_oklch(0_0_0/0.35)] ring-primary/40 transition-[box-shadow,transform] hover:scale-110 focus-visible:scale-110 dark:shadow-[0_0_0_2px_var(--muted),0_1px_3px_oklch(0_0_0/0.5)]';
-
-/**
- * The default track is `bg-muted`, which is exactly this surface in dark mode
- * and so leaves the unplayed part of a rail invisible.
- */
 const TRACK_CLASS = '[&_[data-slot=slider-track]]:bg-foreground/15';
 
 export default function AudioPlayerControls() {
@@ -82,7 +69,7 @@ export default function AudioPlayerControls() {
 
   return (
     <>
-      {/* In-flow spacer so the fixed transport never covers page content. */}
+      {/* Spacer for the fixed transport */}
       <div
         data-testid="audio-transport-spacer"
         aria-hidden
@@ -94,13 +81,9 @@ export default function AudioPlayerControls() {
         aria-label="Beatmap preview player"
         className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-[1050px] motion-safe:duration-300 motion-safe:ease-out"
       >
-        {/* Same chrome as the beatmap page's section cards, opaque because it
-            floats over whatever is scrolled beneath it. */}
         <div className="relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg dark:bg-muted">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 py-3 pr-11 pl-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,1.4fr)_auto] sm:items-center sm:gap-5 sm:py-3 sm:pr-12">
             <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
-              {/* The artwork carries the play control, matching the cover
-                  affordance on the beatmap listings and page header. */}
               <div className="relative isolate shrink-0">
                 <BeatmapCover
                   beatmapsetOsuId={track.beatmapsetOsuId}
@@ -188,7 +171,6 @@ export default function AudioPlayerControls() {
                 getThumbProps={() => ({
                   'aria-label': 'Preview volume',
                   'aria-valuetext': `${volumePercent} percent`,
-                  className: THUMB_CLASS,
                 })}
               />
             </div>
@@ -220,12 +202,6 @@ export default function AudioPlayerControls() {
   );
 }
 
-/**
- * Elapsed time, the seek rail, and the preview's length on one line. While
- * playback runs the position is sampled per animation frame straight off the
- * element, so the fill advances continuously instead of jumping with each
- * `timeupdate`; a paused or seeking player falls back to the reported time.
- */
 function PreviewTimeline({
   duration,
   isPlaying,
@@ -284,7 +260,6 @@ function PreviewTimeline({
         getThumbProps={() => ({
           'aria-label': 'Preview progress',
           'aria-valuetext': `${formatPreviewTime(position)} of ${formatPreviewTime(duration)}`,
-          className: THUMB_CLASS,
         })}
       />
       <span

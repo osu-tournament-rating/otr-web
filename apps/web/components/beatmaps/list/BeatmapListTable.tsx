@@ -50,21 +50,12 @@ interface BeatmapListTableProps {
   /** A single tournament's pool has nothing to count here. */
   showTournamentCount?: boolean;
   selection?: BeatmapTableSelection;
-  /**
-   * A floor for the table's own width, for callers that render it below `sm`.
-   * The layout is fixed-width, so without one the leading column is squeezed to
-   * nothing rather than the table scrolling inside its container.
-   */
+  /** A width floor for callers that render this fixed layout below `sm`. */
   minWidthClassName?: string;
   className?: string;
 }
 
-/**
- * One class per column, shared by its header and its cells, so a width or a
- * breakpoint can only ever be changed in both at once. Every fixed width is its
- * widest content plus cell padding — measured, because the content box never
- * exceeds 1008px and the beatmap column lives on what the others leave behind.
- */
+// One class per column, shared by its header and its cells.
 const COLUMN = {
   select: 'w-11 pl-4',
   beatmap: 'pl-4',
@@ -204,14 +195,10 @@ export default function BeatmapListTable({
                   </TableCell>
                 ) : null}
 
-                {/* The link is an overlay rather than a wrapper so the cover's
-                    preview button is a sibling of it and not a button nested
-                    inside an anchor. */}
+                {/* Overlay link, so the cover's preview button is a sibling and not nested */}
                 <TableCell
                   className={cn(
                     selection ? 'pl-1' : COLUMN.beatmap,
-                    // The link covers the cover and four lines of text, so only
-                    // the title takes the hover underline.
                     'relative group-hover:[&_[data-testid=beatmap-title]]:underline',
                     beatmap.isDeleted &&
                       '[&_[data-testid=beatmap-title]]:text-muted-foreground [&_[data-testid=beatmap-title]]:line-through'
@@ -260,7 +247,6 @@ export default function BeatmapListTable({
                         className="size-4 fill-current"
                         aria-hidden="true"
                       />
-                      {/* The mode must not be tooltip-only. */}
                       <span className="sr-only">{rulesetLabel}</span>
                     </span>
                   </SimpleTooltip>
@@ -291,8 +277,7 @@ export default function BeatmapListTable({
                 ) : null}
                 <TableCell className={COLUMN.mods}>
                   {isManiaRuleset(ruleset) ? null : (
-                    // Only the dominant group: a second pill costs 72px, and
-                    // the beatmap column is what pays for it.
+                    // Only the dominant group; a second pill costs the beatmap column 72px.
                     <BeatmapTopMods
                       mods={beatmap.topMods.slice(0, 1)}
                       showIcon={false}

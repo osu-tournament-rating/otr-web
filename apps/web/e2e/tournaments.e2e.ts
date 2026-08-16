@@ -259,8 +259,6 @@ test.describe('Tournaments', () => {
         .click();
       await page.waitForURL(/verificationStatus=4/);
 
-      // Filters apply as they are set, so the chip is already there with the
-      // popover still open — there is no step left to confirm.
       const activeFilter = page.getByRole('button', {
         name: 'Remove Status: Verified filter',
       });
@@ -455,8 +453,7 @@ test.describe('Tournaments', () => {
       await page.goto(
         `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=beatmaps`
       );
-      // The rows render on the server, so the sort only answers once the
-      // table has hydrated.
+      // The rows render on the server; the sort only answers once hydrated
       await page.waitForLoadState('networkidle');
 
       const table = page
@@ -477,9 +474,6 @@ test.describe('Tournaments', () => {
       const header = table.getByRole('columnheader', { name: /^SR/ });
       await expect(header).toHaveAttribute('aria-sort', 'none');
 
-      // The pool sorts in place: the rows are already loaded, so this is a
-      // reorder rather than a refetch. A fresh column starts descending, the
-      // way the shared beatmap table does everywhere else.
       await header.getByRole('button').click();
       await expect(header).toHaveAttribute('aria-sort', 'descending');
       expect(await pool()).not.toEqual(before);
@@ -493,7 +487,6 @@ test.describe('Tournaments', () => {
       const ascending = (await starRatings()).map(Number);
       expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
 
-      // Only one column is sorted at a time.
       await expect(
         table.locator('thead th[aria-sort]:not([aria-sort="none"])')
       ).toHaveCount(1);
@@ -529,9 +522,6 @@ test.describe('Tournaments', () => {
 
       const content = page.locator('[data-testid="tab-content-stats"]');
       await expect(content).toBeVisible({ timeout: 15000 });
-      // The stats tab renders the Tournament Statistics summary
-      // (StatCards) plus Top Performers; assert the real statistics
-      // content rather than a chart, which this view does not render.
       await expect(
         content.getByText('Tournament Statistics').first()
       ).toBeVisible({ timeout: 15000 });
@@ -562,9 +552,7 @@ test.describe('Tournaments', () => {
     test('submission is auth-gated for unauthenticated users', async ({
       page,
     }) => {
-      // The submit procedure is a protectedProcedure, so the underlying
-      // POST endpoint must reject an unauthenticated request. Assert the
-      // gate at the API boundary rather than performing a real submission.
+      // Assert the gate at the API boundary rather than submitting for real
       const response = await page.request.post('/api/tournaments:submit', {
         data: {
           name: 'E2E Gate Check',

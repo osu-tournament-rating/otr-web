@@ -76,17 +76,9 @@ export const BeatmapStatsSummarySchema = z.object({
   totalTournamentCount: z.number().int().nonnegative(),
   /** Subset of `totalTournamentCount` whose tournament is verified. */
   verifiedTournamentCount: z.number().int().nonnegative(),
-  /**
-   * Games credited as real-world usage: fully verified games, plus every game
-   * in a tournament that is not verified. Tournaments get rejected for format
-   * reasons while still being genuine play, so the map keeps credit for those.
-   * Never use this as a statistical population.
-   */
+  /** Usage credit, not a statistical population: verified games plus every game in an unverified tournament. */
   totalPlayedGameCount: z.number().int().nonnegative(),
-  /**
-   * Pool records where the beatmap was played at least once. Always <=
-   * `totalTournamentCount`, so the two form a pick rate.
-   */
+  /** Pool records where the beatmap was played at least once; pairs with `totalTournamentCount` as a pick rate. */
   pooledPlayedTournamentCount: z.number().int().nonnegative(),
 });
 
@@ -117,11 +109,7 @@ export const RelatedBeatmapDifficultySchema = z.object({
   verifiedGameCount: z.number().int().nonnegative(),
 });
 
-/**
- * Five-number summary of charted-mod scores for one normalized mod
- * combination, plus `p20Score`: the only point the box plots' shared axis may
- * truncate at.
- */
+/** Five-number summary of charted-mod scores for one normalized mod combination, plus `p20Score`. */
 export const BeatmapModScoreDistributionSchema = z.object({
   /** Normalized display mods bitmask (NF/SO stripped, NC folded into DT). */
   mods: z.number().int().nonnegative(),
@@ -142,10 +130,7 @@ export const BeatmapScorePercentilePointSchema = z.object({
 
 export const BeatmapScoreSamplePointSchema = z.object({
   score: z.number().int().nonnegative(),
-  /**
-   * Pre-match rating (rating_adjustments.rating_before); null is expected and
-   * clusters on recent data.
-   */
+  /** Pre-match rating (rating_adjustments.rating_before); null is expected on recent data. */
   rating: z.number().nullable(),
   /** Raw score mods bitmask (client normalizes for color/label). */
   mods: z.number().int().nonnegative(),
@@ -202,10 +187,7 @@ export const BeatmapRankRangeModDistributionSchema = z.object({
  * at time of play (pre-match rating, `rating_adjustments.rating_before`).
  */
 export const BeatmapTierScoreSummarySchema = z.object({
-  /**
-   * Elite Grandmaster is folded into Grandmaster, so this never reports
-   * `'Elite Grandmaster'`; the merged bucket renders as "Grandmaster+".
-   */
+  /** Elite Grandmaster is folded into Grandmaster and renders as "Grandmaster+". */
   tier: TierNameSchema,
   scoreCount: z.number().int().positive(),
   minScore: z.number().int().nonnegative(),
@@ -214,11 +196,7 @@ export const BeatmapTierScoreSummarySchema = z.object({
   medianScore: z.number().int().nonnegative(),
   p75Score: z.number().int().nonnegative(),
   maxScore: z.number().int().nonnegative(),
-  /**
-   * Accuracy quartiles as raw stored fractions (0–1), straight from
-   * `gameScores.accuracy`. All six are null together, when no row in the tier
-   * has accuracy recorded.
-   */
+  /** Raw stored fractions (0–1) from `gameScores.accuracy`; all six are null together. */
   minAccuracy: z.number().min(0).max(1).nullable(),
   p20Accuracy: z.number().min(0).max(1).nullable(),
   p25Accuracy: z.number().min(0).max(1).nullable(),
@@ -232,23 +210,14 @@ export const BeatmapTierBreakdownSchema = z.object({
   ratedScoreCount: z.number().int().nonnegative(),
   /** All charted-mod scores, for the "X of Y rated" caption. */
   totalScoreCount: z.number().int().nonnegative(),
-  /**
-   * Ascending by tier (Bronze → Grandmaster+); only tiers with at least five
-   * scores.
-   */
+  /** Ascending by tier (Bronze → Grandmaster+); only tiers with at least five scores. */
   tiers: z.array(BeatmapTierScoreSummarySchema),
 });
 
 /**
- * Cohort-standardized closeness of the Team Vs games played on this beatmap.
- *
- * Each qualifying game contributes `logRatio = ln(winning score / losing
- * score)`, standardized against a checked-in baseline for that game's own
- * `(games.ruleset, team size)` cohort. Raw score margins are not comparable
- * across rulesets — the median winning margin is 24.8% in osu! and 1.1% in
- * mania 4K — so the standardized scale is the only one on which a map's games
- * pool into a single figure. Baselines live in `lib/beatmaps/closeness-baselines`
- * with their fit date and refit SQL.
+ * Cohort-standardized closeness of this beatmap's Team Vs games: each game's
+ * `logRatio = ln(winning score / losing score)` standardized against the
+ * `(ruleset, team size)` baseline in `lib/beatmaps/closeness-baselines`.
  */
 export const BeatmapClosenessSummarySchema = z.object({
   gameCount: z
@@ -366,11 +335,7 @@ export const BeatmapStatsResponseSchema = z.object({
   topPerformers: z.array(BeatmapTopPerformerSchema),
   scoreDistribution: z.array(BeatmapModScoreDistributionSchema),
   scorePercentiles: z.array(BeatmapScorePercentilePointSchema),
-  /**
-   * Verified scores behind `scoreDistribution`, `scorePercentiles` and
-   * `tierBreakdown`: NM, HD, HR and DT only (NF ignored, NC folded into DT).
-   * Every other aggregate on this response counts all verified scores.
-   */
+  /** Verified NM/HD/HR/DT scores only; every other aggregate here counts all verified scores. */
   chartedScoreCount: z.number().int().nonnegative(),
   scoreSample: BeatmapScoreSampleSchema,
   performance: BeatmapPerformanceSummarySchema,

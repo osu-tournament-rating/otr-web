@@ -53,7 +53,6 @@ function MultiSelect({
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const commandRef = React.useRef<HTMLDivElement>(null);
 
-  // Filter options based on search
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
     return options.filter((option) =>
@@ -61,12 +60,10 @@ function MultiSelect({
     );
   }, [options, searchValue]);
 
-  // Reset highlighted index when options change
   React.useEffect(() => {
     setHighlightedIndex(-1);
   }, [filteredOptions]);
 
-  // Focus management when popover opens/closes
   React.useEffect(() => {
     if (open) {
       setHighlightedIndex(-1);
@@ -90,7 +87,6 @@ function MultiSelect({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {
-      // When closed, open on Enter, Space, or Arrow keys
       if (
         e.key === 'Enter' ||
         e.key === ' ' ||
@@ -103,7 +99,6 @@ function MultiSelect({
       return;
     }
 
-    // When open, handle navigation
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -147,7 +142,6 @@ function MultiSelect({
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    // Let the search input handle typing, but intercept navigation keys
     switch (e.key) {
       case 'ArrowDown':
       case 'ArrowUp':
@@ -247,7 +241,6 @@ function MultiSelect({
             className="max-h-[200px] overflow-auto"
             role="listbox"
             onWheel={(e) => {
-              // Allow wheel scrolling to work properly
               e.stopPropagation();
             }}
           >

@@ -1,9 +1,4 @@
-/**
- * Sets data to the provided URLSearchParams.
- * If the data type is an Array, each element is appended to the URLSearchParams individually.
- *
- * It is assumed that each type provided can be safely cast to a string.
- */
+/** Writes data onto `URLSearchParams`, appending array elements one by one. */
 export function setFlattenedParams<T>(
   params: URLSearchParams,
   key: string,

@@ -62,9 +62,6 @@ export default function BeatmapHeader({
           className="absolute inset-0 bg-black/60"
         />
 
-        {/* Bottom-right of the artwork, the same place the listings put their
-            cover play control. Positioned over the matte, so the title block
-            below reserves room for it rather than running underneath. */}
         <div className="absolute right-4 bottom-4 z-20 sm:right-6 sm:bottom-6">
           <AudioPreviewButton
             beatmapsetOsuId={beatmap.beatmapset?.osuId}
@@ -158,16 +155,13 @@ function DifficultyNavigator({
       const activeStart =
         scroller.scrollLeft + activeBounds.left - scrollerBounds.left;
 
-      // Assigning rather than nudging also undoes the offset scroll snapping
-      // applies on hydration, which otherwise clips the first group.
       scroller.scrollLeft =
         activeStart + activeBounds.width <= scroller.clientWidth
           ? 0
           : activeStart - (scroller.clientWidth - activeBounds.width) / 2;
     };
 
-    // Chip widths follow their difficulty names, so fallback-font metrics
-    // would centre on the wrong chip.
+    // Wait for real font metrics before centring.
     void document.fonts.ready.then(centerActiveDifficulty);
 
     return () => {
@@ -175,7 +169,6 @@ function DifficultyNavigator({
     };
   }, [currentOsuId, difficulties.length]);
 
-  // A single-difficulty set has nothing to navigate to.
   if (difficulties.length < 2) return null;
 
   const difficultyGroups = Array.from(
@@ -264,7 +257,6 @@ function DifficultyNavigator({
           <span className="min-w-0 truncate font-medium sm:hidden">
             {difficulty.diffName}
           </span>
-          {/* Touch has no hover tooltip, so the rating stays on the chip. */}
           <span className="shrink-0 text-xs text-muted-foreground sm:hidden">
             {formattedRating} SR
           </span>
@@ -277,7 +269,6 @@ function DifficultyNavigator({
     <nav aria-label="Beatmapset difficulties" className="border-t">
       <div
         ref={scrollerRef}
-        // `scroll-pl-4` matches the padding so snapping rests at the start.
         className="flex snap-x scroll-pl-4 gap-2 overflow-x-auto p-4 pt-3"
       >
         {difficultyGroups.map(([ruleset, groupDifficulties], groupIndex) => (
@@ -285,8 +276,7 @@ function DifficultyNavigator({
             {groupIndex > 0 && (
               <Separator
                 orientation="vertical"
-                // Matches the variant Separator ships, otherwise its
-                // `h-full` resolves to 0 inside this self-centred flex row.
+                // Separator's `h-full` resolves to 0 in this self-centred flex row.
                 className="mx-1 self-center data-[orientation=vertical]:h-6"
               />
             )}
@@ -303,20 +293,13 @@ function DifficultyNavigator({
   );
 }
 
-/**
- * "(other)" disambiguates a filter list; as a group header the unkeyed mania
- * bucket reads as plain osu!mania beside any explicit 4K/7K header.
- */
+/** Group headers drop the "(other)" mania qualifier. */
 function getRulesetGroupLabel(ruleset: Ruleset): string {
   return ruleset === Ruleset.ManiaOther
     ? 'osu!mania'
     : RulesetEnumHelper.getMetadata(ruleset).text;
 }
 
-/**
- * Most sibling difficulties have no o!TR data at all, so the strip says which
- * chips lead somewhere before the reader spends a navigation on them.
- */
 function formatDifficultyUsage({
   pooledTournamentCount,
   verifiedGameCount,
@@ -325,8 +308,6 @@ function formatDifficultyUsage({
     return 'Not used in a tournament';
   }
 
-  // "mappools" counts pools the same way the rank-range donut does; the
-  // tooltip has no room to qualify which pools the counts cover.
   const mappools = pooledTournamentCount === 1 ? 'mappool' : 'mappools';
   const games = verifiedGameCount === 1 ? 'game' : 'games';
 

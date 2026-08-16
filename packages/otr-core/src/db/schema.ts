@@ -22,20 +22,11 @@ const tsVector = customType<{ data: string }>({
   },
 });
 
-/**
- * Punctuation-stripped text for `to_tsvector`. The default parser glues
- * `w/WWW`, `foo.bar` and similar into single `file`/`host` tokens, which the
- * search layer can never match because it normalizes punctuation out of the
- * query. Applying the same normalization on both sides keeps them aligned.
- */
+/** Punctuation-stripped text for `to_tsvector`; the query side normalizes the same way. */
 const searchableText = (column: SQL | unknown): SQL =>
   sql`regexp_replace(coalesce(${column}, ''), '[^[:alnum:]]+', ' ', 'g')`;
 
-/**
- * `searchableText` with letter/digit runs split apart in both directions, so
- * `OWC2024` and `2024OWC` both index as `owc` + `2024`. Carried at a lower
- * weight than the literal text.
- */
+/** `searchableText` with letter/digit runs split, so `OWC2024` indexes as `owc` + `2024`. */
 const searchableTextSplitDigits = (column: SQL | unknown): SQL =>
   sql`regexp_replace(regexp_replace(${searchableText(column)}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g'), '([0-9]+)([A-Za-z]+)', '\\1 \\2', 'g')`;
 
@@ -124,20 +115,16 @@ export const apiKeys = pgTable(
     start: text('start'),
     prefix: text('prefix'),
     key: text('key').notNull(),
-    // Legacy owner column. Better Auth's api-key plugin (v1.6+) replaced `userId`
-    // with `referenceId`, so the plugin no longer reads or writes this column.
-    // Kept nullable to preserve historical rows; safe to drop in a follow-up once
-    // the `reference_id` backfill is confirmed in production.
+    // Legacy owner column, unread since Better Auth 1.6 replaced it with
+    // `referenceId`; droppable once the `reference_id` backfill is confirmed in prod.
     userId: text('user_id').references(() => auth_users.id, {
       onDelete: 'cascade',
     }),
-    // Owner of the key (the auth_users id). Replaces `userId` as of better-auth
-    // v1.6 — the plugin reads/writes this field and returns it from verifyApiKey.
+    // Owner of the key, as the Better Auth 1.6 api-key plugin expects it.
     referenceId: text('reference_id')
       .notNull()
       .references(() => auth_users.id, { onDelete: 'cascade' }),
-    // Identifies which api-key plugin configuration a key belongs to. Always
-    // 'default' for this app; required by better-auth v1.6 for hashing/verify.
+    // Always 'default' here; Better Auth 1.6 keys hashing and verification off it.
     configId: text('config_id').default('default').notNull(),
     refillInterval: integer('refill_interval'),
     refillAmount: integer('refill_amount'),
@@ -1671,13 +1658,7 @@ export const tournaments = pgTable(
         (): SQL =>
           sql`setweight(to_tsvector('simple', ${searchableText(tournaments.name)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.name)}), 'B') || setweight(to_tsvector('simple', ${searchableText(tournaments.abbreviation)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.abbreviation)}), 'B')`
       ),
-    /**
-     * The same text as `search_vector`, weighted for match search: a match
-     * reads as "tournament + match name", so the tournament's own words sit
-     * below the match's. Stored rather than computed per row because match
-     * search ranks it against every matching match — 150k rows for a broad
-     * term, all recomputing the same 3k tournaments' vectors.
-     */
+    /** `search_vector`'s text, reweighted below a match's own words for match search. */
     matchRankVector: tsVector('match_rank_vector')
       .notNull()
       .generatedAlwaysAs(

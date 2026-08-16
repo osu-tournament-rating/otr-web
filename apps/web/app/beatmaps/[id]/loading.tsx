@@ -7,9 +7,7 @@ export default function BeatmapDetailLoading() {
       aria-label="Loading beatmap"
       className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0"
     >
-      {/* Mirrors the real page: header, the overview + distributions row, score
-          distribution, tier breakdown, the closeness/misses pair, score
-          scatter, then the leaderboard. */}
+      {/* Mirrors the real page's section order */}
       <Skeleton className="h-[23rem] w-full rounded-xl" />
       <div className="grid gap-4 lg:grid-cols-3">
         <Skeleton className="h-[44rem] w-full rounded-xl" />

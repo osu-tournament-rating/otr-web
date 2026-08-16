@@ -78,7 +78,6 @@ export interface FilterPopoverProps {
   testIdPrefix: string;
   activeCount: number;
   onClearAll: () => void;
-  /** The trigger, kept caller-owned so each page keeps its own affordance. */
   children: ReactNode;
 }
 
@@ -113,8 +112,7 @@ export default function FilterPopover({
         side="bottom"
         sideOffset={8}
         collisionPadding={12}
-        // A field reverting an in-flight edit claims Escape; the popover only
-        // closes once nothing is mid-edit.
+        // A field mid-edit claims Escape; the popover closes only when none does.
         onEscapeKeyDown={(event) => {
           for (const consume of escapeConsumers.current) {
             if (consume()) {
@@ -145,8 +143,7 @@ export default function FilterPopover({
         </div>
 
         <FilterEscapeContext.Provider value={escapeContext}>
-          {/* `data-filter-fields` is FILTER_FIELD_SCOPE_ATTRIBUTE: it tells the
-              deferred apply which inputs are filter boxes to wait on. */}
+          {/* FILTER_FIELD_SCOPE_ATTRIBUTE: marks the boxes the deferred apply waits on */}
           <div
             data-filter-fields=""
             className="grid flex-1 grid-cols-2 gap-x-3 gap-y-4 overflow-y-auto overscroll-contain px-4 py-4"
@@ -239,8 +236,6 @@ function FilterFieldControl({
       );
 
     case 'date-range': {
-      // No caption rows: they cost 40px and the group label plus the native
-      // date placeholder already read clearly.
       return (
         <div className="grid grid-cols-2 gap-2">
           <Input

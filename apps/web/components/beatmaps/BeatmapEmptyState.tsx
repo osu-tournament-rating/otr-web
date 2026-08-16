@@ -1,13 +1,7 @@
 import { SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-/**
- * The "nothing here" block for beatmap *list* surfaces: an icon, a heading, a
- * line of body copy, and an optional recovery action.
- *
- * Distinct from `BeatmapSection`'s `EmptyState`, which is a bare line of text
- * inside a detail card that already has its own header.
- */
+/** The "nothing here" block for beatmap list surfaces. */
 export default function BeatmapEmptyState({
   testId,
   title,

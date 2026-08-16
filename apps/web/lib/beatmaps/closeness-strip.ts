@@ -1,27 +1,15 @@
-/**
- * Layout for the beatmap closeness strip: one dot per game against the middle
- * 80% of the map's dominant cohort.
- *
- * Everything here lives in log-ratio space. A game's `z` is standardized
- * against *its own* cohort, while the axis labels read back through the
- * dominant cohort, so plotting `z` puts a dot somewhere its own tooltip does
- * not describe on any map that spans more than one cohort. Log ratio is the
- * one scale on which position and label are the same number, and the axis
- * stays linear in it either way.
- */
+// Plot in log ratio, never `z`: a game's `z` is standardized against its own
+// cohort while the axis reads back through the dominant one.
 
 import type { BeatmapClosenessSummary } from '@/lib/orpc/schema/beatmapStats';
 
 type ClosenessGame = BeatmapClosenessSummary['games'][number];
 type ClosenessCohort = NonNullable<BeatmapClosenessSummary['cohort']>;
 
-/** Dots closer than this fraction of the domain stack instead of overlapping. Sized for the 308px plot at 390px. */
+/** Dots closer than this fraction of the domain stack instead of overlapping. */
 const STACK_GAP = 0.03;
 
-/**
- * Outliers past this multiple of the band width pin to the edge of the plot,
- * so a long tail cannot squeeze the band below about a third of the domain.
- */
+/** Outliers past this multiple of the band width pin to the edge of the plot. */
 const OUTLIER_CAP = 1;
 
 export interface ClosenessStripDot {
@@ -93,8 +81,7 @@ export function getClosenessStrip(
     }))
     .sort((a, b) => a.plotLr - b.plotLr);
 
-  // Wilkinson dot binning: dots that would overlap climb off the axis instead,
-  // each keeping its own x, so position still equals value inside a stack.
+  // Wilkinson dot binning: overlapping dots climb off the axis, each keeping its own x.
   const stackGap = STACK_GAP * (domain[1] - domain[0]);
   let anchor = -Infinity;
   let row = 0;

@@ -88,9 +88,7 @@ describe('beatmap stats summary contract', () => {
   });
 
   test('separates usage credit from the verified population', () => {
-    // Usage credit is the wider number: it keeps games from tournaments that
-    // were rejected for format reasons. Statistics only ever use the verified
-    // counts, so the wider figure must never be mistaken for a population.
+    // Usage credit keeps games from tournaments rejected for format reasons.
     const summary = BeatmapStatsSummarySchema.parse({
       totalGameCount: 76,
       totalTournamentCount: 9,

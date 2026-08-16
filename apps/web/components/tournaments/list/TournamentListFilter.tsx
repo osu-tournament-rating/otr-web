@@ -106,10 +106,7 @@ const rejectionReasonOptions = Object.entries(
   }));
 
 type FilterFormData = z.infer<typeof tournamentListFilterSchema>;
-/**
- * Filter edits wait out a countdown before they navigate; `immediate` is for the
- * controls that are not filters, or that end the interaction outright.
- */
+/** Filter edits debounce; `immediate` navigates straight away. */
 type ApplyFilterPatch = (
   patch: Partial<FilterFormData>,
   immediate?: boolean
@@ -125,8 +122,6 @@ const fromDateInputValue = (value?: string) =>
 function useSearchInput(initialQuery: string) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
 
-  // The URL is the only filter state, so an external navigation (back button, a
-  // landed search) resyncs the box.
   useEffect(() => {
     setSearchQuery(initialQuery);
   }, [initialQuery]);
@@ -194,8 +189,7 @@ function SortControls({
             <FormLabel className="sr-only">Sort tournaments by</FormLabel>
             <Select
               value={String(field.value)}
-              // Sorting is not a filter: it applies at once, carrying any edit
-              // still waiting out its countdown along with it.
+              // Sorting applies at once, carrying any pending edit with it
               onValueChange={(value) => {
                 const sort = Number(value) as TournamentQuerySortType;
                 field.onChange(sort);
@@ -318,10 +312,7 @@ function RulesetFilter({
   );
 }
 
-/**
- * Descriptors for the shared filter popover. Every field applies immediately by
- * pushing straight through `applyPatch`, so there is no local form state here.
- */
+/** Descriptors for the shared filter popover; every field applies immediately. */
 function buildFilterFields(
   filter: FilterFormData,
   applyPatch: ApplyFilterPatch
@@ -391,7 +382,6 @@ function buildFilterFields(
       max: RANK_RANGE_MAX,
       scale: tournamentRankScale,
       format: (value) => value.toLocaleString(),
-      // Both bounds stay defined so a thumb never pins to the wrong end.
       value: {
         min: filter.minRankRange ?? RANK_RANGE_MIN,
         max: filter.maxRankRange ?? RANK_RANGE_DEFAULT_MAX,
@@ -641,16 +631,13 @@ export default function TournamentListFilter({
         searchQuery,
         ...patch,
       } as FilterFormData;
-      // The form is the optimistic copy: every control shows the edit at once,
-      // even while the navigation it scheduled is still waiting.
+      // The form is the optimistic copy of the scheduled navigation
       form.reset(values);
       (immediate ? applyNow : schedule)(values);
     },
     [applyNow, form, schedule, searchQuery]
   );
 
-  // Typing only re-arms the countdown: the search box is not a filter box, so
-  // it is never held back for having focus.
   const handleSetQuery = useCallback(
     (input: string) => {
       const next = input.trimStart();

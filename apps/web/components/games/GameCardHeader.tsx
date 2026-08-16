@@ -32,18 +32,14 @@ export default function GameCardHeader({ game }: { game: Game }) {
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
-      {/* Beatmap bg */}
       <BeatmapBackground
         beatmapsetId={game.beatmap?.beatmapset?.osuId}
         alt="beatmap cover"
       />
 
-      {/* Enhanced overlay for better text contrast */}
       <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
 
-      {/* Game / beatmap info */}
       <div className="z-3 flex h-full w-full flex-col p-2 text-white">
-        {/* Top row */}
         <div className="flex h-8 w-full items-center justify-between gap-2">
           <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">
             <VerificationBadge
@@ -119,7 +115,6 @@ export default function GameCardHeader({ game }: { game: Game }) {
             <GameAdminView game={game} />
           </div>
         </div>
-        {/* Bottom row */}
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
           <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">

@@ -12,9 +12,8 @@ import { calculateBeatmapListModDistribution } from '@/lib/utils/mods';
 import type { Ruleset } from '@otr/core/osu';
 
 /**
- * The flat shape the beatmap table renders. Both surfaces that use the table
- * adapt into it: the beatmap list, whose counts are global, and a tournament
- * pool, whose counts are scoped to that one tournament.
+ * The flat shape the beatmap table renders: global counts from the beatmap list,
+ * tournament-scoped counts from a pool.
  */
 export interface BeatmapTableRow {
   id: number;
@@ -22,10 +21,7 @@ export interface BeatmapTableRow {
   artist: string;
   title: string;
   diffName: string;
-  /**
-   * A name, never a player object: the row's link covers the whole identity
-   * block, so a mapper link underneath it could not be clicked.
-   */
+  /** A name, never a player object; the row's link covers the whole identity block. */
   creator: string | null;
   beatmapsetOsuId: number | null;
   ruleset: Ruleset;
@@ -74,11 +70,7 @@ interface TournamentBeatmapUsage {
   topMods: BeatmapListTopMod[];
 }
 
-/**
- * How often each pooled beatmap was played, and under which mods, in one pass
- * over the tournament's games. Resolving this per row instead rescans every
- * game once per beatmap, which a 1000-map pool feels.
- */
+/** How often each pooled beatmap was played, and under which mods, in one pass over the games. */
 function buildUsageIndex(
   games: TournamentMatchGame[]
 ): Map<number, TournamentBeatmapUsage> {
@@ -99,8 +91,7 @@ function buildUsageIndex(
   const usage = new Map<number, TournamentBeatmapUsage>();
 
   for (const [osuId, counts] of countsByBeatmap) {
-    // Games stand in for scores: the same aggregation the API runs for the
-    // beatmap list, so both surfaces bucket and rank mods identically.
+    // Games stand in for scores, matching the aggregation the beatmap list API runs.
     const rows = Array.from(counts, ([mods, scoreCount]) => ({
       mods,
       scoreCount,
@@ -144,8 +135,6 @@ export function toTournamentBeatmapTableRows(
       od: beatmap.od,
       hp: beatmap.hp,
       gameCount: played?.gameCount ?? 0,
-      // The pool is one tournament, so this column is hidden there; the field
-      // still carries a truthful value rather than a placeholder.
       tournamentCount: 1,
       topMods: played?.topMods ?? [],
       isDeleted: isDeletedTournamentBeatmap(beatmap),
@@ -169,10 +158,7 @@ const SORT_VALUE: Record<
   creator: (row) => row.creator ?? '',
 };
 
-/**
- * Client-side sorting, for the surfaces that hold the whole set in memory. The
- * beatmap list does not use it: there the server sorts every row, not the page.
- */
+/** Client-side sorting, for the surfaces holding the whole set in memory. */
 export function sortBeatmapTableRows(
   rows: BeatmapTableRow[],
   sort: BeatmapListSortKey,
@@ -180,7 +166,6 @@ export function sortBeatmapTableRows(
 ): BeatmapTableRow[] {
   const valueOf = SORT_VALUE[sort];
 
-  // Sorting is stable, so rows with equal values keep their source order.
   return [...rows].sort((left, right) => {
     const leftValue = valueOf(left);
     const rightValue = valueOf(right);

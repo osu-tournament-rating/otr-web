@@ -16,12 +16,7 @@ export interface BeatmapModDistributionEntry {
 export const BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE = 1;
 export const BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE = 20;
 
-/**
- * Removes score-level modifiers that the beatmap distribution treats as
- * incidental rather than distinct mod combinations. Nightcore folds into
- * DoubleTime: NC is DT with a pitch shift, so "DTNC" is never a real
- * combination of its own.
- */
+/** Strips NF/SO and folds NC into DT, the display form of a mod combination. */
 export function normalizeBeatmapDisplayMods(mods: number): Mods {
   let normalized = mods & ~Mods.NoFail & ~Mods.SpunOut;
 
@@ -89,11 +84,7 @@ export function calculateBeatmapModDistribution(
   });
 }
 
-/**
- * Collapses a score's mods into the broad category used by the beatmap list.
- * This intentionally does not change the exact-combination rules used by the
- * beatmap detail view.
- */
+/** Collapses a score's mods into the broad category used by the beatmap list. */
 export function getBeatmapListModCategory(mods: number): {
   mods: Mods;
   label: string;
@@ -106,16 +97,12 @@ export function getBeatmapListModCategory(mods: number): {
   const hasHardRock = Boolean(normalizedMods & Mods.HardRock);
   const hasFlashlight = Boolean(normalizedMods & Mods.Flashlight);
 
-  // DT is the dominant base mod. DTEZ remains distinct because both alter the
-  // map in opposite directions and are conventionally read as one category.
   if (hasDoubleTime) {
     return hasEasy
       ? { mods: Mods.DoubleTime | Mods.Easy, label: 'DTEZ' }
       : { mods: Mods.DoubleTime, label: 'DT' };
   }
 
-  // HT remains the base for HTHD and the explicitly supported HTHR pairing.
-  // Pairing it with EZ or FL falls outside the list's useful categories.
   if (hasHalfTime) {
     return hasEasy || hasFlashlight
       ? { mods: Mods.None, label: 'Other' }
@@ -150,10 +137,7 @@ export function calculateBeatmapListModDistribution(
 
 export const BEATMAP_MOD_OTHER_LABEL = 'Other';
 
-/**
- * Moves every combination below the display threshold into a single trailing
- * "Other" slice so the chart still accounts for all verified scores.
- */
+/** Moves every combination below the display threshold into a trailing "Other" slice. */
 export function collapseBeatmapModDistribution(
   distribution: BeatmapModDistributionEntry[],
   minimumPercentage = BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE
@@ -193,11 +177,7 @@ export function filterBeatmapModDistribution(
   );
 }
 
-/**
- * Selects the mod groups shown in the beatmap list from an already-ranked
- * distribution. The leading group is always useful context; a secondary group
- * is only prominent enough to show when it accounts for at least 20% of use.
- */
+/** The mod groups shown in the beatmap list: the leading one, plus a runner-up above 20%. */
 export function selectBeatmapListModGroups<T extends { percentage: number }>(
   groups: readonly T[]
 ): T[] {
@@ -214,7 +194,7 @@ export function selectBeatmapListModGroups<T extends { percentage: number }>(
   return [primaryGroup, secondaryGroup];
 }
 
-/** Mod multipliers (ScoreV2, common tournament mods) */
+// ScoreV2 multipliers for the common tournament mods.
 const modMultipliers: Record<number, number> = {
   [Mods.HardRock]: 1.1,
   [Mods.Hidden]: 1.06,
@@ -225,12 +205,7 @@ const modMultipliers: Record<number, number> = {
   [Mods.SpunOut]: 0.9,
 };
 
-/**
- * Calculates a normalized score by applying mod multipliers
- * @param mods Mods applied to the score
- * @param score Raw score to normalize
- * @returns Normalized score after removing mod multiplier effects
- */
+/** Removes the mod multipliers from a raw score. */
 export function normalizedScore(mods: Mods, score: number): number {
   if (score < 0) {
     return 0;
@@ -248,14 +223,8 @@ export function normalizedScore(mods: Mods, score: number): number {
   return Math.round(score / multiplier);
 }
 
-/**
- * Gets the CSS color variable for a given mod combination
- * @param mods Mod combination to get color for
- * @returns CSS color variable string
- */
+/** CSS color variable for a mod combination. */
 export function getModColor(mods: Mods) {
-  // Strip incidental modifiers and fold NC into DT so raw score bitmasks
-  // (e.g. DT|NC) resolve to the same color as their display combination.
   mods = normalizeBeatmapDisplayMods(mods);
 
   switch (mods) {
@@ -321,16 +290,8 @@ export function getModForegroundColor(mods: Mods): string {
 }
 
 /**
- * Resolves which mods to display for a single game.
- *
- * For non-freemod games the game's own mods are authoritative. For freemod
- * games we display what players actually played: if every score shares a single
- * mod combination we show that combination (erring on the side of reality),
- * otherwise we fall back to the "FM" icon to signal that combinations varied.
- *
- * Shared with the game header (GameCardHeader) so the beatmap page resolves the
- * "most common mod" the same way instead of trusting the raw (often NoMod) game
- * mods of freemod lobbies.
+ * The mods to display for a game: its own outside freemod, otherwise the single
+ * combination every score shares, or FM when they vary.
  */
 export function resolveGameDisplayMods(
   game: { isFreeMod: boolean; mods: Mods },
@@ -349,14 +310,10 @@ export function resolveGameDisplayMods(
     return { mods: common as Mods, freemod: false };
   }
 
-  // No scores, or genuinely differing combinations -> keep the "FM" icon.
   return { mods: Mods.None, freemod: true };
 }
 
-/**
- * Whether per-score mods diverge from the game's own mods. Only meaningful when
- * the game records no mods of its own (freemod lobbies where each player picks).
- */
+/** Whether per-score mods diverge from a game that records no mods of its own. */
 function hasModsVaryingFromGame(
   gameMods: number,
   scores: { mods: number }[]
@@ -366,11 +323,7 @@ function hasModsVaryingFromGame(
   return scores.some((s) => (s.mods & mask) !== (gameMods & mask));
 }
 
-/**
- * Derives whether a game is freemod, matching how the match endpoints compute
- * it: either the game carries the freemod-allowed flag, or the per-score mods
- * vary from the game's mods.
- */
+/** Freemod when the game carries the flag, or its scores' mods vary from its own. */
 export function deriveGameIsFreeMod(
   gameMods: number,
   scores: { mods: number }[]

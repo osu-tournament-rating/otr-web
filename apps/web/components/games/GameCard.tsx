@@ -8,13 +8,8 @@ import { Team } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
 
 type ScoreMapItem = {
-  /** Player score */
   score: GameScore;
-
-  /**
-   * If the score "won" it's "matchup"
-   * read: Did it have higher score than the next best on the other team
-   */
+  /** Beat the other team's score in the same slot. */
   won?: boolean;
 };
 
@@ -33,7 +28,6 @@ export default function GameCard({
 }) {
   const scoreMap: ScoreMap = {};
 
-  // Sort by score and group by team
   game.scores
     .sort((a, b) => b.score - a.score)
     .forEach((s) => {
@@ -45,7 +39,6 @@ export default function GameCard({
       scoreMap[teamKey]!.push({ score: s });
     });
 
-  // To determine "winning matchups" we don't want to look at teamless scores
   const teamMaps = Object.values(scoreMap).filter(Boolean) as ScoreMapItem[][];
 
   const nScores = teamMaps.reduce(
@@ -53,8 +46,6 @@ export default function GameCard({
     []
   ).length;
 
-  // Iterate over each "matchup" and compare scores of each team for that slot
-  // Mark the highest score as the winner
   for (let i = 0; i < nScores; i++) {
     const matchups = teamMaps
       .map((map) => map.at(i))
@@ -69,17 +60,14 @@ export default function GameCard({
   let team1: Team | undefined;
   let team2: Team | undefined;
 
-  Object.keys(scoreMap).forEach((teamKeyString) => {
-    const teamEnumValueNumeric = parseInt(teamKeyString, 10);
+  Object.keys(scoreMap).forEach((key) => {
+    const teamValue = parseInt(key, 10);
 
-    if (
-      isNaN(teamEnumValueNumeric) ||
-      Team[teamEnumValueNumeric] === undefined
-    ) {
+    if (isNaN(teamValue) || Team[teamValue] === undefined) {
       return;
     }
 
-    const currentTeam = teamEnumValueNumeric as Team;
+    const currentTeam = teamValue as Team;
 
     if (currentTeam === Team.NoTeam) {
       return;
@@ -117,7 +105,6 @@ export default function GameCard({
       outcomeText = "It's a tie!";
     }
   } else if (team1 && teamScores[team1]) {
-    // Case where there's only one team with scores (e.g. solo match or other team forfeited/didn't score)
     outcomeText = `Team ${TeamEnumHelper.getMetadata(team1).text} wins`;
   }
 
@@ -142,7 +129,6 @@ export default function GameCard({
         </div>
       ) : (
         <div className="flex flex-row flex-wrap gap-1 lg:gap-0">
-          {/* Left column: Red team scores */}
           <div data-team="Red" className="team-container flex flex-col gap-1">
             {redTeamScores.map(({ score }: ScoreMapItem) => (
               <ScoreCard
@@ -153,7 +139,6 @@ export default function GameCard({
               />
             ))}
 
-            {/* No team scores below red team scores */}
             {noTeamScores.length > 0 && (
               <div
                 data-team="NoTeam"
@@ -171,7 +156,6 @@ export default function GameCard({
             )}
           </div>
 
-          {/* Right column: Blue team scores */}
           <div data-team="Blue" className="team-container flex flex-col gap-1">
             {blueTeamScores.map(({ score }: ScoreMapItem) => (
               <ScoreCard
@@ -200,7 +184,7 @@ export default function GameCard({
                         `Team ${TeamEnumHelper.getMetadata(Team.Blue).text}`
                       )
                     ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-900 dark:text-gray-100' // Fallback for other team names if any
+                    : 'text-gray-900 dark:text-gray-100'
                 : 'text-gray-900 dark:text-gray-100'
             }`}
           >

@@ -19,18 +19,11 @@ interface TapTooltipProps {
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   triggerClassName?: string;
-  /**
-   * Concise accessible name for the trigger. Without it the button's name is
-   * every string inside the row, which screen readers then repeat verbatim.
-   */
+  /** Concise accessible name for the trigger. */
   triggerAriaLabel?: string;
 }
 
-/**
- * Hover shows a tooltip; click/tap/Enter pins the same content in a popover.
- * The trigger is a real <button>, so keyboard focus opens the tooltip and
- * touch users get the depth layer hover-only tooltips deny them.
- */
+/** Hover shows a tooltip; click or Enter pins the same content in a popover. */
 export default function TapTooltip({
   content,
   children,
@@ -69,9 +62,7 @@ export default function TapTooltip({
           {content}
         </TooltipContent>
       </Tooltip>
-      {/* Same surface as the tooltip above (accent, no border): the pinned
-          popover has to read as the hover panel held in place, not as a second
-          kind of disclosure. */}
+      {/* Same surface as the tooltip above: accent, no border */}
       <PopoverContent
         side={side}
         align={align}

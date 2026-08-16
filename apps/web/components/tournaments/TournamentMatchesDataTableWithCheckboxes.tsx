@@ -15,7 +15,6 @@ interface TournamentMatchesDataTableWithCheckboxesProps {
   onSelectMatch: (matchId: number, checked: boolean) => void;
 }
 
-/** Names the match-specific halves of the generic tournament table. */
 export default function TournamentMatchesDataTableWithCheckboxes({
   columns,
   data,

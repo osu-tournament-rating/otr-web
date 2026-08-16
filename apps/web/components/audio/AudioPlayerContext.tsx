@@ -46,11 +46,6 @@ interface AudioPlayerContextType {
   togglePlayPause: (source: AudioPreviewSource) => void;
   setVolume: (volume: number) => void;
   seek: (time: number) => void;
-  /**
-   * The live element, for readers that need a position sampled per animation
-   * frame. `timeupdate` only fires a few times a second, which is enough to
-   * label the position but visibly steps a progress bar drawn from it.
-   */
   getAudioElement: () => HTMLAudioElement | null;
 }
 
@@ -75,11 +70,6 @@ export const AudioPlayerContext = createContext<AudioPlayerContextType>({
   getAudioElement: () => null,
 });
 
-/**
- * Playback position lives in its own context because timeupdate fires several
- * times per second; only the transport bar subscribes, so a page full of
- * preview buttons does not re-render for the whole duration of playback.
- */
 export const AudioPlayerTimeContext = createContext(0);
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {

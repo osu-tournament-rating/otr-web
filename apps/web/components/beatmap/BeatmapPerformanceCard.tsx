@@ -102,8 +102,7 @@ export default function BeatmapPerformanceCard({
                   interval={0}
                 />
                 <YAxis
-                  // 40 to match the sibling count axes: "1,800" measures 34.4px
-                  // and clips at 32.
+                  // 40 to match the sibling count axes; "1,800" clips at 32.
                   width={40}
                   allowDecimals={false}
                   tickLine={false}

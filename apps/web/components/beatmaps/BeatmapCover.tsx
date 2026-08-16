@@ -13,17 +13,9 @@ interface BeatmapCoverProps {
   imageClassName?: string;
   sizes: string;
   priority?: boolean;
-  /**
-   * Which osu! derivative to request. Remote covers are `unoptimized`, so
-   * `sizes` produces no srcset and the derivative itself is the size control:
-   * asking for `card` is the only way to keep an 1800px `cover` out of a 40px
-   * thumbnail.
-   */
+  /** Remote covers are `unoptimized`, so the derivative is the only size control. */
   variant?: 'cover' | 'card';
-  /**
-   * osu! ships every derivative at 1x and 2x. A thumbnail small enough for
-   * `card` at 1x takes fewer bytes and still renders sharp.
-   */
+  /** osu! ships every derivative at 1x and 2x. */
   density?: 1 | 2;
 }
 

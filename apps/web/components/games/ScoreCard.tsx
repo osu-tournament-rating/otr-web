@@ -39,7 +39,6 @@ export default function ScoreCard({
   const hasNotes = score.adminNotes && score.adminNotes.length > 0;
   const showAdminControls = isAdmin || hasNotes;
 
-  /** Shared descendant-selector overrides for icon button slots */
   const iconSlotStyles =
     'relative [&_button]:h-6 [&_button]:w-6 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
 
@@ -82,8 +81,6 @@ export default function ScoreCard({
 
   const renderActionIcons = () => (
     <>
-      {/* Keep actions available on touch screens; collapse them until hover or
-          keyboard focus where pointer hover is available. */}
       <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 sm:max-w-0 sm:group-focus-within:max-w-xs sm:group-hover:max-w-xs">
         <div className={iconSlotStyles}>
           <ReportButton
@@ -122,7 +119,6 @@ export default function ScoreCard({
           </>
         )}
       </div>
-      {/* Always-visible: admin notes with content */}
       {hasNotes && (
         <div className={iconSlotStyles}>
           <AdminNoteView
@@ -144,15 +140,11 @@ export default function ScoreCard({
         highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
       )}
     >
-      {/* Background team color overlay */}
-      <div className="absolute z-[2] size-full bg-[var(--team-color)]/10" />
+      <div className="absolute z-2 size-full bg-[var(--team-color)]/10" />
 
-      {/* Team color on the side of the card */}
       <ScoreTeamColorBar />
 
-      {/* XS compact layout */}
       <div className="flex size-full flex-col gap-1 px-2 py-1 sm:hidden">
-        {/* Row 1: Player + Score */}
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex min-w-0 items-center gap-1.5">
             <VerificationBadge
@@ -198,7 +190,6 @@ export default function ScoreCard({
             </span>
           </div>
         </div>
-        {/* Row 2: Compact stats + Action icons */}
         <div className="flex items-center justify-between">
           <span
             className="text-xs text-neutral-500 dark:text-neutral-400"
@@ -213,11 +204,8 @@ export default function ScoreCard({
         </div>
       </div>
 
-      {/* sm+ standard layout (matches original) */}
       <div className="hidden size-full flex-col gap-2 px-2 sm:flex">
-        {/* Top row */}
         <div className="team-flex-row flex flex-1 items-center justify-between">
-          {/* Player */}
           <div className="team-flex-row flex h-full min-w-0 items-center justify-start gap-2">
             <VerificationBadge
               verificationStatus={score.verificationStatus}
@@ -245,7 +233,6 @@ export default function ScoreCard({
               </span>
             </Link>
           </div>
-          {/* Grade / Mods / Score */}
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
             <ModIconset
               className="flex h-full max-w-20 items-center justify-end"
@@ -264,9 +251,7 @@ export default function ScoreCard({
             </span>
           </div>
         </div>
-        {/* Bottom row */}
         <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
-          {/* 300 / 100 / 50 / Miss */}
           <div className="flex items-center justify-start gap-4">
             {hitJudgments.map((item, index) => (
               <div key={index} className="performance-item">
@@ -279,7 +264,6 @@ export default function ScoreCard({
               </div>
             ))}
           </div>
-          {/* Acc / Combo */}
           <div className="team-flex-row flex items-center justify-start gap-4">
             <div className="performance-item">
               <span className="label text-neutral-600 dark:text-neutral-400">

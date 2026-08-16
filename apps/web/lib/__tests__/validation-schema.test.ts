@@ -54,8 +54,7 @@ describe('beatmapListFilterSchema', () => {
   });
 
   test('discards an over-long search term without dropping sibling filters', () => {
-    // The oRPC request schema caps searchQuery at 200 characters; a longer ?q=
-    // must degrade to no query instead of throwing inside the page.
+    // The oRPC request schema caps searchQuery at 200 characters.
     const filter = beatmapListFilterSchema.parse({
       q: 'a'.repeat(201),
       minSr: '5',

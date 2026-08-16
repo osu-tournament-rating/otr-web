@@ -86,7 +86,7 @@ export default function TournamentBeatmapsAdminView({
   const [beatmapIdsToAdd, setBeatmapIdsToAdd] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
 
-  // Matches the beatmap list's default so both tables open the same way.
+  // Matches the beatmap list's default sort
   const [sort, setSort] =
     useState<Parameters<BeatmapListSortChange>[0]>('gameCount');
   const [descending, setDescending] = useState(true);
@@ -108,8 +108,7 @@ export default function TournamentBeatmapsAdminView({
     return sortBeatmapTableRows(shown, sort, descending);
   }, [rows, showDeleted, sort, descending]);
 
-  // Hiding the deleted rows must also drop them from the pending action: an
-  // admin cannot confirm a removal for maps the table is no longer showing.
+  // Hidden rows must drop out of the pending selection
   const selectedRows = useMemo(
     () => visibleRows.filter((row) => selectedBeatmapIds.has(row.id)),
     [visibleRows, selectedBeatmapIds]
@@ -297,8 +296,7 @@ export default function TournamentBeatmapsAdminView({
         onSortChange={changeSort}
         showTournamentCount={false}
         selection={isAdmin && isSelecting ? selection : undefined}
-        // Unlike the beatmap list, the pool has no compact fallback to drop to
-        // on a phone: an admin has to be able to select rows at any width.
+        // No compact fallback: rows stay selectable at any width
         minWidthClassName="min-w-[44rem]"
       />
     );
@@ -354,8 +352,7 @@ export default function TournamentBeatmapsAdminView({
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            {/* Collapsed to its icon until pointed at. The label expands from a
-                zero-width grid track, so the button needs no measured width. */}
+            {/* Label expands from a zero-width grid track */}
             <Button
               data-testid="tournament-beatmaps-add"
               aria-label="Add beatmaps"

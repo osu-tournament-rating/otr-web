@@ -1,10 +1,5 @@
-/**
- * Tournament rank-range buckets, derived from `tournaments.rankRangeLowerBound`.
- *
- * Single source of truth shared by the beatmap stats procedure (server-side
- * aggregation) and the beatmap cards (client-side display). Pure TypeScript —
- * no server-only imports — so both sides can import it directly.
- */
+// Tournament rank-range buckets, shared by the stats procedure and the cards.
+// Keep free of server-only imports.
 
 export const RANK_RANGE_BUCKET_KEYS = [
   'open',
@@ -23,20 +18,12 @@ export interface RankRangeBucketDef {
   minBound: number;
   /** Inclusive upper bound; null = open-ended. */
   maxBound: number | null;
-  /**
-   * Theme token for every rank-range surface (the scatter and its legend).
-   * The buckets are ordinal, so the ramp walks hue and lightness together.
-   */
+  /** Theme token for every rank-range surface. */
   color: string;
-  /**
-   * Symbol and dash carry the bucket redundantly with colour: an ordinal
-   * five-step hue ramp cannot be made CVD-safe, so the two colours that confuse
-   * worst get the two most different silhouettes and dash patterns.
-   */
+  /** Carries the bucket redundantly with colour, which cannot be made CVD-safe. */
   symbol: 'circle' | 'square' | 'triangle' | 'diamond' | 'cross';
   /** SVG stroke-dasharray for this range's trendline at stroke-width 2. */
   dash: string;
-  /** Only the dotted pattern needs round caps to read as dots. */
   dashLinecap: 'butt' | 'round';
 }
 
@@ -94,11 +81,7 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
   },
 ];
 
-/**
- * Bucket a raw `rankRangeLowerBound`. Returns null for non-finite values or
- * anything below 1 — the schema guarantees a positive integer, but malformed
- * data is skipped rather than silently misbucketed.
- */
+/** Buckets a raw `rankRangeLowerBound`; null for non-finite values or anything below 1. */
 export function getRankRangeBucketKey(
   rankRangeLowerBound: number
 ): RankRangeBucketKey | null {
@@ -119,10 +102,7 @@ export interface RankRangeBucketCount {
   count: number;
 }
 
-/**
- * Buckets tournaments by `rankRangeLowerBound` into the fixed brackets.
- * Always returns all five buckets in display order, zero counts included.
- */
+/** Buckets tournaments into all five brackets, in display order, zero counts included. */
 export function bucketRankRanges(
   pools: ReadonlyArray<{ rankRangeLowerBound: number }>
 ): RankRangeBucketCount[] {

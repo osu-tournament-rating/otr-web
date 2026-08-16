@@ -38,7 +38,6 @@ const tierItems: Option<(typeof leaderboardTierFilterValues)[number]>[] = [
   { label: 'Grandmaster', value: 'grandmaster' },
   { label: 'Elite Grandmaster', value: 'eliteGrandmaster' },
 ];
-// Get all countries and create options
 const countries = getAllCountries();
 const countryOptions = Object.entries(countries)
   .map(([code, country]) => ({
@@ -124,7 +123,6 @@ export default function LeaderboardFilter({
       >
         <Form {...form}>
           <form className="items-center space-y-4">
-            {/* Ruleset select */}
             <FormField
               control={form.control}
               name="ruleset"
@@ -176,7 +174,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* osu! rank slider */}
             <FormField
               control={form.control}
               name="minOsuRank"
@@ -188,7 +185,6 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>osu! Global Rank</FormLabel>
                       <Slider
-                        // All exponentially scaling sliders have a range of 0 - 100
                         min={0}
                         max={100}
                         step={1}
@@ -261,7 +257,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Rating slider */}
             <FormField
               control={form.control}
               name="minRating"
@@ -325,7 +320,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Match count slider */}
             <FormField
               control={form.control}
               name="minMatches"
@@ -337,7 +331,6 @@ export default function LeaderboardFilter({
                     <FormItem>
                       <FormLabel>Matches</FormLabel>
                       <Slider
-                        // All exponentially scaling sliders have a range of 0 - 100
                         min={0}
                         max={100}
                         step={1}
@@ -410,7 +403,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Win rate slider */}
             <FormField
               control={form.control}
               name="minWinRate"
@@ -474,7 +466,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Country select */}
             <FormField
               control={form.control}
               name="country"
@@ -495,7 +486,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Tier select */}
             <FormField
               control={form.control}
               name="tiers"
@@ -514,7 +504,6 @@ export default function LeaderboardFilter({
               )}
             />
 
-            {/* Clear filters button */}
             <div className="flex justify-end gap-2">
               <Button
                 data-testid="leaderboard-filter-clear-button"

@@ -19,10 +19,10 @@ import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
 import { RANK_RANGE_DEFAULT_MAX } from '@/lib/filters/tournament-rank';
 
-/** Enum-like object shape (replaces zod v3's removed `EnumLike` type) */
+// Replaces zod v3's removed `EnumLike`.
 type EnumLike = Record<string, string | number>;
 
-/** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
+/** Numeric input assignable to a bitwise enumeration. */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce.number().refine((val) => {
     const validFlags = Object.values(enumType).filter(
@@ -33,13 +33,13 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
     return validFlags.includes(val) || (val & ~allFlags) === 0;
   });
 
-/** Schema that ensures a numeric input is assignable to a given enumeration */
+/** Numeric input assignable to an enumeration. */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce
     .number({ error: 'Required' })
     .refine((val) => Object.values(enumType).includes(val));
 
-/** Schema that will convert string input of 'true' or 'false' to a boolean */
+/** Converts `'true'`/`'false'` to a boolean. */
 const booleanStringSchema = z
   .string()
   .toLowerCase()
@@ -74,7 +74,6 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verified: false,
   sort: TournamentQuerySortType.EndTime,
   descending: true,
-  // Arrays are used for multi-select
   verificationStatus: [],
   lobbySize: [],
   minRankRange: 1,
@@ -207,12 +206,10 @@ export const defaultBeatmapListFilter = {
   descending: true,
 };
 
-// Every field carries .catch so junk or out-of-range URL params degrade to
-// their defaults instead of crashing the page with a ZodError.
+// Every field carries .catch so junk URL params degrade to their defaults.
 export const beatmapListFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional().catch(undefined),
-  // Mirrors BeatmapListRequestSchema.searchQuery's max, so an over-long term
-  // degrades to no query instead of failing oRPC input validation.
+  // Mirrors BeatmapListRequestSchema.searchQuery's max.
   q: z.string().max(200).catch(''),
   ruleset: z.coerce.number().int().min(0).max(5).optional().catch(undefined),
   minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),

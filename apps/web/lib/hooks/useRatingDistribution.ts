@@ -55,7 +55,6 @@ export function useRatingDistribution({ ratings }: UseRatingDistributionProps) {
     const minRating = Math.min(...ratingNumbers);
     const maxRating = Math.max(...ratingNumbers);
 
-    // Create complete rating buckets
     const completeRatings: Record<number, number> = {};
     for (
       let rating =
@@ -67,7 +66,6 @@ export function useRatingDistribution({ ratings }: UseRatingDistributionProps) {
       completeRatings[rating] = ratings[rating.toString()] || 0;
     }
 
-    // Create chart data with tier information
     const chartData: ChartDataType[] = Object.entries(completeRatings).map(
       ([rating, count]) => {
         const ratingNum = parseInt(rating, 10);
@@ -80,7 +78,6 @@ export function useRatingDistribution({ ratings }: UseRatingDistributionProps) {
       }
     );
 
-    // Calculate cumulative percentages
     const totalPlayers = chartData.reduce((sum, item) => sum + item.count, 0);
     let cumulativeCount = 0;
     const completeChartData = chartData.map((data) => {

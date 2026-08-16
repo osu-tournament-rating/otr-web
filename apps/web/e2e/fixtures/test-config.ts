@@ -7,10 +7,7 @@ export const TEST_MATCH_ID = 134010;
 export const TEST_BEATMAP_ID = 3506;
 export const TEST_BEATMAP_OSU_ID = 665721;
 
-/**
- * Entity IDs that have audit-log history in the dev database, used by the
- * audit-timeline specs to assert real diff content renders.
- */
+/** Entity IDs with audit-log history in the dev database. */
 export const TEST_AUDIT_MATCH_ID = 29473;
 export const TEST_AUDIT_GAME_ID = 364304;
 export const TEST_AUDIT_SCORE_ID = 152388;

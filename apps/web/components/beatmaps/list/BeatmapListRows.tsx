@@ -30,10 +30,7 @@ interface BeatmapListRowsProps extends ComponentProps<'div'> {
   beatmaps: BeatmapListItem[];
 }
 
-/**
- * The compact list surface: a full-bleed cover beside a single text block.
- * Also the phone fallback for the table layout, which cannot fit ten columns.
- */
+/** The compact list surface: a full-bleed cover beside a single text block. */
 export default function BeatmapListRows({
   beatmaps,
   className,

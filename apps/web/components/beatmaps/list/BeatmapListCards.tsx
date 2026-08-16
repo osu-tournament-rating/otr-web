@@ -61,7 +61,7 @@ export default function BeatmapListCards({
             key={beatmap.id}
             role="listitem"
             data-testid={`beatmap-list-row-${beatmap.osuId}`}
-            className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card shadow-xs transition-[background-color,border-color,box-shadow] hover:border-primary/35 hover:shadow-sm dark:bg-secondary/35 dark:hover:bg-secondary/60"
+            className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card shadow-xs transition hover:border-primary/35 hover:shadow-sm dark:bg-secondary/35 dark:hover:bg-secondary/60"
           >
             <Link
               href={href}
@@ -107,8 +107,6 @@ export default function BeatmapListCards({
               className="flex min-w-0 flex-1 flex-col p-3.5 sm:p-4"
             >
               <div className="min-w-0">
-                {/* One line per field so every card's text block is the same
-                    height and the footer never shifts. */}
                 <div data-testid="beatmap-heading" className="min-w-0">
                   <h2
                     data-testid="beatmap-title"
@@ -161,9 +159,6 @@ export default function BeatmapListCards({
                 </div>
               </div>
 
-              {/* Two stacked 24px rows on phones, where six items will not fit
-                  side by side; one 24px row from `sm` up, where they will (h-9
-                  minus the 12px of top padding). */}
               <div
                 data-testid="beatmap-data-summary"
                 className="mt-auto flex min-w-0 flex-col gap-1.5 pt-3 text-xs text-muted-foreground sm:h-9 sm:flex-row sm:items-center sm:gap-x-3 sm:text-sm"

@@ -1,14 +1,9 @@
 import type { MessageMetadata } from './values';
 
-/**
- * Default envelope shape combining metadata with message-specific payload.
- */
+/** Metadata plus a message-specific payload. */
 export type MessageEnvelope<TPayload> = MessageMetadata & TPayload;
 
-/**
- * Discriminated payload types for the unified osu! API queue.
- * The `type` field enables routing to the appropriate handler.
- */
+/** Payloads for the unified osu! API queue, routed on `type`. */
 export type FetchBeatmapPayload = {
   type: 'beatmap';
   beatmapId: number;
@@ -26,22 +21,15 @@ export type FetchPlayerPayload = {
   osuPlayerId: number;
 };
 
-/**
- * Union of all osu! API payloads for the unified queue.
- */
 export type OsuApiPayload =
   | FetchBeatmapPayload
   | FetchMatchPayload
   | FetchPlayerPayload;
 
-/**
- * Unified message type for the `data.osu` queue.
- */
+/** Message type for the `data.osu` queue. */
 export type FetchOsuMessage = MessageEnvelope<OsuApiPayload>;
 
-/**
- * Legacy type aliases for backwards compatibility.
- */
+// Legacy aliases.
 export type FetchBeatmapMessage = MessageEnvelope<FetchBeatmapPayload>;
 export type FetchMatchMessage = MessageEnvelope<FetchMatchPayload>;
 export type FetchPlayerMessage = MessageEnvelope<FetchPlayerPayload>;

@@ -58,8 +58,7 @@ export const searchEntities = protectedProcedure
     try {
       const playerVector = schema.players.searchVector;
       const playerSimilarity = similarity(schema.players.username);
-      // The `%>` half nominates candidates from the index; the precision half
-      // drops the ones only the first fuzzy token accounted for.
+      // `%>` nominates candidates from the index; the precision half filters them
       const playerTrigram = sql`(${trigramMatch(schema.players.username)} AND ${buildTrigramPrecision(
         [schema.players.username],
         parsed

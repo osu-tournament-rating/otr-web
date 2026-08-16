@@ -39,7 +39,6 @@ import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
 /** Verified scores surfaced by the beatmap page's score table. */
 const TOP_PERFORMER_LIMIT = 25;
 
-/** Deterministic cap on the score scatter sample. */
 const SCORE_SAMPLE_LIMIT = 1000;
 
 /** Mod groups below this many verified scores are noise for a box plot. */
@@ -50,16 +49,10 @@ const DOUBLE_TIME_SQL = sql.raw(String(Mods.DoubleTime));
 const STRIPPED_MODS_SQL = sql.raw(String(STRIPPED_SCORE_MODS_MASK));
 const CHARTED_MODS_SQL = sql.raw(String(CHARTED_SCORE_MODS_MASK));
 
-/**
- * SQL mirror of `isChartedScoreMods` — keep in sync (see the
- * beatmapModNormalization parity test).
- */
+// SQL mirror of isChartedScoreMods; the beatmapModNormalization test asserts parity
 const CHARTED_SCORE_MODS_FILTER = sql`(${schema.gameScores.mods} & ~${CHARTED_MODS_SQL}) = 0`;
 
-/**
- * SQL mirror of normalizeScoreModsArithmetic / normalizeBeatmapDisplayMods —
- * keep in sync (see the beatmapModNormalization parity test).
- */
+// SQL mirror of normalizeScoreModsArithmetic; the beatmapModNormalization test asserts parity
 const NORMALIZED_SCORE_MODS_SQL = sql<number>`
   CASE
     WHEN (${schema.gameScores.mods} & ${NIGHTCORE_SQL}) <> 0
@@ -67,19 +60,12 @@ const NORMALIZED_SCORE_MODS_SQL = sql<number>`
     ELSE (${schema.gameScores.mods} & ~${STRIPPED_MODS_SQL})
   END`;
 
-/**
- * Ascending tier boundaries as a Postgres array literal, so `width_bucket`
- * returns an index into `tierNames`. Derived from tierData via
- * TIER_RATING_BOUNDARIES; the TS mirror is `tierNameFromRatingArithmetic`.
- */
+// Ascending boundaries, so width_bucket returns an index into tierNames
 const TIER_BOUNDARIES_SQL = sql.raw(
   `ARRAY[${TIER_RATING_BOUNDARIES.join(',')}]::float8[]`
 );
 
-/**
- * Clamps the bucket index so Elite Grandmaster groups with Grandmaster before
- * the percentiles are taken; the TS mirror is `tierBreakdownTierFromRating`.
- */
+// Clamps the bucket index so Elite Grandmaster groups with Grandmaster
 const TIER_BREAKDOWN_MAX_TIER_INDEX_SQL = sql.raw(
   String(TIER_BREAKDOWN_MAX_TIER_INDEX)
 );
@@ -129,9 +115,6 @@ export const getBeatmapStats = publicProcedure
         input.keyType
       );
 
-      // Verified at every level: tournament, match, game (and, where scores
-      // are involved, score). Matches the filter chain used by the original
-      // queries below.
       const fullyVerifiedGame = sql`(${eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)} AND ${eq(schema.matches.verificationStatus, VerificationStatus.Verified)} AND ${eq(schema.games.verificationStatus, VerificationStatus.Verified)})`;
       const verifiedGameFilter = and(
         eq(schema.games.beatmapId, beatmapId),
@@ -142,17 +125,13 @@ export const getBeatmapStats = publicProcedure
         eq(schema.gameScores.verificationStatus, VerificationStatus.Verified)
       );
 
-      // The score-quartile aggregates (score distribution, tier breakdown and
-      // its accuracy rows) chart only the standard mod set; everything else
-      // keeps counting every verified score.
+      // Score-quartile aggregates chart only the standard mod set; everything else counts every verified score
       const chartedScoreFilter = and(
         verifiedScoreFilter,
         CHARTED_SCORE_MODS_FILTER
       );
 
-      // Team Vs games the closeness summary would otherwise have used, held out
-      // only by verification. Counted so the card can say why a map has few
-      // games; never an input to the statistics themselves.
+      // Team Vs games the closeness summary skips, held out only by verification
       const excludedClosenessGames = context.db
         .select({ gameId: schema.games.id })
         .from(schema.gameRosters)
@@ -307,8 +286,7 @@ export const getBeatmapStats = publicProcedure
               )
             )
           ),
-        // Deliberately unfiltered by verification: the question is how often the map was picked at all.
-        // verifiedTournamentCount reports the verified subset separately.
+        // Unfiltered by verification; verifiedTournamentCount reports the verified subset
         context.db
           .select({
             totalTournamentCount: sql<number>`COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})`,
@@ -369,8 +347,7 @@ export const getBeatmapStats = publicProcedure
           .select({
             tournamentId: schema.tournaments.id,
             tournamentName: schema.tournaments.name,
-            // Not in the response: firstPlayedAt only buckets the tournament
-            // into a usageOverTime quarter.
+            // Not in the response; only buckets the tournament into a usageOverTime quarter
             tournamentStartTime: schema.tournaments.startTime,
             tournamentEndTime: schema.tournaments.endTime,
             tournamentLobbySize: schema.tournaments.lobbySize,
@@ -380,8 +357,7 @@ export const getBeatmapStats = publicProcedure
               schema.tournaments.rankRangeLowerBound,
             gameCount: sql<number>`COUNT(DISTINCT ${schema.games.id})`,
             firstPlayedAt: sql<string>`MIN(${schema.games.startTime})`,
-            // MODE() ignores nulls and games.mods is NOT NULL, so this is null
-            // exactly when the tournament has no verified games on this beatmap.
+            // MODE() ignores nulls, so this is null exactly when there are no verified games here
             mostCommonMods: sql<
               number | null
             >`MODE() WITHIN GROUP (ORDER BY ${schema.games.mods})`,
@@ -410,9 +386,7 @@ export const getBeatmapStats = publicProcedure
             )
           )
           .where(eq(schema.joinPooledBeatmaps.pooledBeatmapsId, beatmapId))
-          // Grouping by the PK alone is enough: Postgres infers the functional
-          // dependency for every other tournaments column. Selecting a column
-          // from another table here would fail at runtime, not at compile time.
+          // Postgres infers the functional dependency for the other tournaments columns
           .groupBy(schema.tournaments.id)
           .orderBy(desc(sql`COUNT(DISTINCT ${schema.games.id})`)),
         context.db
@@ -576,9 +550,7 @@ export const getBeatmapStats = publicProcedure
             sql`COUNT(*) >= ${sql.raw(String(SCORE_DISTRIBUTION_MIN_GROUP_SIZE))}`
           )
           .orderBy(desc(sql`COUNT(*)`), asc(sql`normalized_mods`)),
-        // Score CDF: one interpolated quantile per whole percentile, 0..100.
-        // Charted mods only, so the curve and the box rows beside it describe
-        // the same population.
+        // Score CDF: one interpolated quantile per whole percentile, 0..100
         context.db
           .select({
             scores: sql<
@@ -600,8 +572,7 @@ export const getBeatmapStats = publicProcedure
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
           .where(chartedScoreFilter),
-        // Deterministic pseudo-random scatter sample. Ratings are pre-match
-        // (rating_before) only; null when the processor has no adjustment.
+        // Deterministic scatter sample; rating_before is null without a processor adjustment
         context.db
           .select({
             scoreId: schema.gameScores.id,
@@ -735,9 +706,7 @@ export const getBeatmapStats = publicProcedure
             schema.gameScores.mods
           )
           .orderBy(asc(schema.games.id), asc(schema.gameScores.mods)),
-        // Verified scores per (raw rank-range lower bound, normalized mods).
-        // Bucketing stays in TS (summarizeRankRangeMods) so the bracket
-        // definitions live in exactly one place.
+        // Bucketing stays in TS via summarizeRankRangeMods
         context.db
           .select({
             rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
@@ -762,12 +731,8 @@ export const getBeatmapStats = publicProcedure
             schema.tournaments.rankRangeLowerBound,
             sql`normalized_mods`
           ),
-        // Score/accuracy quartiles per rating tier over charted-mod scores,
-        // tiered by the player's
-        // pre-match rating. INNER JOIN on rating_adjustments: unrated scores
-        // are excluded outright rather than falling back to player_ratings.
-        // Elite Grandmaster is clamped into Grandmaster so the merged bucket's
-        // percentiles come from the combined population, not a blend of two.
+        // Quartiles per rating tier; the inner join drops unrated scores rather than
+        // falling back to player_ratings
         context.db
           .select({
             tierIndex:
@@ -819,10 +784,8 @@ export const getBeatmapStats = publicProcedure
           .where(chartedScoreFilter)
           .groupBy(sql`tier_index`)
           .orderBy(asc(sql`tier_index`)),
-        // One row per verified TeamVs game with two equal-sized rosters and a
-        // non-zero losing score — the three conditions that make
-        // ln(winning / losing) defined and comparable. The cohort key reads
-        // games.ruleset, which routinely disagrees with beatmaps.ruleset.
+        // Equal rosters and a non-zero losing score keep ln(winning / losing) defined.
+        // The cohort key reads games.ruleset, which routinely disagrees with beatmaps.ruleset
         context.db
           .select({
             logRatio: sql<number>`LN(MAX(${schema.gameRosters.score})::float8 / MIN(${schema.gameRosters.score}))`,
@@ -885,15 +848,12 @@ export const getBeatmapStats = publicProcedure
         ),
       };
 
-      // Helper to get quarter string from date
       const getQuarterKey = (date: Date): string => {
         const year = date.getFullYear();
         const quarter = Math.ceil((date.getMonth() + 1) / 3);
         return `${year}-Q${quarter}`;
       };
 
-      // Count each tournament in the quarter when the beatmap was first played
-      // (or fall back to tournament start date if never played)
       const poolingByQuarter = new Map<string, Set<number>>();
       for (const t of tournamentRows) {
         const dateToUse = t.firstPlayedAt
@@ -911,7 +871,6 @@ export const getBeatmapStats = publicProcedure
         poolingByQuarter.get(quarterKey)!.add(t.tournamentId);
       }
 
-      // Convert Sets to counts
       const poolingCounts = new Map<string, number>();
       for (const [quarter, tournamentIds] of poolingByQuarter) {
         poolingCounts.set(quarter, tournamentIds.size);
@@ -927,7 +886,6 @@ export const getBeatmapStats = publicProcedure
         ...poolingCounts.keys(),
       ]);
 
-      // Helper to parse quarter string
       const parseQuarter = (q: string): [number, number] => {
         const [year, qNum] = q.split('-Q');
         return [parseInt(year, 10), parseInt(qNum, 10)];
@@ -941,8 +899,7 @@ export const getBeatmapStats = publicProcedure
           sortedQuarters[sortedQuarters.length - 1]
         );
 
-        // Always run the series through the current quarter so idle periods
-        // after the last recorded usage remain visible as empty bars.
+        // Extend through the current quarter so idle periods stay visible as empty bars
         const [currentYear, currentQ] = parseQuarter(getQuarterKey(new Date()));
         const [endYear, endQ] =
           currentYear > lastYear ||
@@ -971,7 +928,6 @@ export const getBeatmapStats = publicProcedure
         avgRows.map((row) => [row.tournamentId, Number(row.scoreCount)])
       );
 
-      // Pool mods come from the mods players actually used
       const poolModsByTournament = summarizePoolDisplayMods(
         freemodPickRows.map((row) => ({
           tournamentId: row.tournamentId,
@@ -1000,9 +956,7 @@ export const getBeatmapStats = publicProcedure
             verificationStatus:
               row.tournamentVerificationStatus as VerificationStatus,
             rejectionReason: row.tournamentRejectionReason,
-            // Falls back to the games' mode only when no verified scores
-            // resolved the pool, so the "null exactly when gameCount is 0"
-            // invariant survives.
+            // Falls back to the games' mode only when no verified score resolved the pool
             mostCommonMods: poolMods
               ? poolMods.mods
               : row.mostCommonMods == null
@@ -1072,20 +1026,16 @@ export const getBeatmapStats = publicProcedure
             }))
           : [];
 
-      // The scatter charts every verified score, so its denominator is the
-      // unfiltered count rather than the charted-mod one.
+      // The scatter charts every verified score, so the denominator is unfiltered
       const scoreSample: BeatmapScoreSample = {
         totalScoreCount: Number(performanceCountRows[0]?.scoreCount ?? 0),
         points: [...scoreSampleRows]
           .sort((left, right) => left.scoreId - right.scoreId)
           .map((row) => ({
             score: row.score,
-            // Pre-match rating only; null is expected on recent data. Never
-            // fall back to the player's current rating here.
+            // Pre-match rating only; null is expected on recent data
             rating: row.rating != null ? Number(row.rating) : null,
             mods: row.mods,
-            // The schema guarantees a positive bound, so the fallback is
-            // unreachable; it only keeps the mapping total.
             rankRange: getRankRangeBucketKey(row.rankRangeLowerBound) ?? 'open',
           })),
       };
@@ -1142,8 +1092,6 @@ export const getBeatmapStats = publicProcedure
           medianScore: Math.round(Number(row.medianScore)),
           p75Score: Math.round(Number(row.p75Score)),
           maxScore: Number(row.maxScore),
-          // Stored as a 0–1 fraction, passed through unrounded; clamped so a
-          // malformed row cannot fail the response schema.
           minAccuracy: toAccuracyFraction(row.minAccuracy),
           p20Accuracy: toAccuracyFraction(row.p20Accuracy),
           p25Accuracy: toAccuracyFraction(row.p25Accuracy),
@@ -1167,8 +1115,7 @@ export const getBeatmapStats = publicProcedure
         })),
         Number(excludedClosenessGameRows[0]?.gameCount ?? 0)
       );
-      // meanZ and shrunkZ stay internal: the interval already carries the
-      // uncertainty and neither reads as anything on its own.
+      // meanZ and shrunkZ stay internal; the interval already carries the uncertainty
       const closeness: BeatmapClosenessSummary = {
         gameCount: closenessSummary.gameCount,
         excludedUnverifiedGameCount:

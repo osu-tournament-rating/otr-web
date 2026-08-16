@@ -20,9 +20,7 @@ export async function getRelatedBeatmapDifficulties(
       diffName: schema.beatmaps.diffName,
       ruleset: schema.beatmaps.ruleset,
       sr: schema.beatmaps.sr,
-      // Pool membership, unfiltered by verification, so the tooltip agrees
-      // with the "Pooled in" tile and the rank-range donut on the difficulty's
-      // own page. beatmap_stats only carries the verified subset.
+      // Unfiltered by verification; beatmap_stats carries only the verified subset.
       pooledTournamentCount: sql<number>`(
         SELECT COUNT(DISTINCT ${schema.joinPooledBeatmaps.tournamentsPooledInId})::int
         FROM ${schema.joinPooledBeatmaps}

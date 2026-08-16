@@ -40,11 +40,10 @@ interface BeatmapScoreScatterCardProps {
 }
 
 interface ScatterPoint {
-  /** The score that was actually set. Everything the reader is told uses this. */
   score: number;
-  /** `score` lifted onto the axis floor, which is what the chart plots. */
+  /** Score lifted onto the axis floor. */
   plotScore: number;
-  /** `score` fell below the axis floor and is drawn pinned to it. */
+  /** Score fell below the axis floor and is drawn pinned to it. */
   clamped: boolean;
   rating: number;
   modLabel: string;
@@ -63,36 +62,20 @@ interface RangeTrend {
   segment: [{ x: number; y: number }, { x: number; y: number }];
 }
 
-/**
- * Minimum scores in one rank range before that range gets a trendline. Two
- * fitted parameters at the conventional ten observations each; on the sampled
- * maps this draws only fits with |t| >= 3.2 and rejects every fit with
- * |t| <= 1.0, including a six-point line that slopes the wrong way.
- */
+// Two fitted parameters at ten observations each.
 const TREND_MIN_POINTS_PER_RANGE = 20;
 
-/**
- * Scatter symbol AREA in px². Sizing goes through an explicit `Symbols` shape
- * because Recharts 3 ignores `ZAxis range` unless the axis also has a
- * `dataKey`, and giving it one would push an extra row into the tooltip. The
- * wide value is Recharts' own default (so wide viewports render unchanged);
- * the narrow one is ~0.68x that diameter so dense samples stay separable on
- * phones.
- */
+// Recharts 3 ignores `ZAxis range` without a `dataKey`, so sizing goes
+// through `Symbols`. Values are symbol areas.
 const DOT_AREA_WIDE = 64;
 const DOT_AREA_NARROW = 30;
-
-/** Symbol area for the legend and tooltip keys, sized to a 10px-tall box. */
 const KEY_SYMBOL_AREA = 28;
 
 const BUCKET_BY_KEY = Object.fromEntries(
   RANK_RANGE_BUCKETS.map((bucket) => [bucket.key, bucket])
 ) as Record<RankRangeBucketKey, RankRangeBucketDef>;
 
-/**
- * Least-squares fit over (x, y) pairs. Returns null when the input cannot
- * support a line (fewer than two points or zero x-variance).
- */
+/** Least-squares fit; null under two points or with zero x-variance. */
 function linearRegression(
   points: Array<{ x: number; y: number }>
 ): { slope: number; intercept: number } | null {
@@ -145,13 +128,6 @@ function TooltipRow({
   );
 }
 
-/**
- * The key for one rank range: its symbol, optionally sitting on its trendline
- * dash pattern. Colour alone cannot separate a five-step ordinal ramp for a
- * colour-blind reader, so symbol and dash carry the range redundantly, and the
- * key has to show the same two marks the plot draws. `Symbols` is Recharts'
- * own glyph, so no geometry is duplicated.
- */
 function RankRangeKey({
   bucket,
   hollow = false,
@@ -159,7 +135,6 @@ function RankRangeKey({
 }: {
   bucket: RankRangeBucketDef;
   hollow?: boolean;
-  /** Only true when this range actually has a fitted line on the chart. */
   withLine?: boolean;
 }) {
   const width = withLine ? 28 : 10;
@@ -306,7 +281,6 @@ export default function BeatmapScoreScatterCard({
   }, [sample.points]);
   const unratedCount = sample.points.length - ratedPoints.length;
 
-  /** One drawable series per populated rank range, in display order. */
   const series = React.useMemo<RangeSeries[]>(() => {
     const grouped = new Map<RankRangeBucketKey, ScatterPoint[]>();
     for (const point of ratedPoints) {
@@ -329,7 +303,6 @@ export default function BeatmapScoreScatterCard({
     [series, hiddenRanges]
   );
 
-  /** Ratings are charted as they fall, rounded outward onto a round step. */
   const ratingDomain = React.useMemo<[number, number] | null>(() => {
     if (ratedPoints.length === 0) return null;
 
@@ -349,7 +322,7 @@ export default function BeatmapScoreScatterCard({
     for (const { bucket, points } of series) {
       if (points.length < TREND_MIN_POINTS_PER_RANGE) continue;
 
-      // Fitted on the scores that were actually set, not on the pinned ones.
+      // Fit the scores that were set, not the pinned ones.
       const fit = linearRegression(
         points.map((point) => ({ x: point.rating, y: point.score }))
       );
@@ -445,9 +418,7 @@ export default function BeatmapScoreScatterCard({
               config={{}}
               className="aspect-auto h-[300px] w-full"
             >
-              {/* No `title`: Recharts renders it as an SVG <title>, which the
-                  browser shows as a native tooltip on hover, covering the
-                  chart's own tooltip. The sr-only paragraph names the chart. */}
+              {/* No `title`: Recharts emits an SVG <title> that hijacks hover */}
               <ScatterChart
                 margin={{ top: 8, right: 12, bottom: 22, left: 0 }}
                 desc={chartDescription}
@@ -520,8 +491,7 @@ export default function BeatmapScoreScatterCard({
                         const isLastRow =
                           index ===
                           (Array.isArray(entries) ? entries.length : 1) - 1;
-                        // The score row reads the raw payload: a pinned point
-                        // is plotted at the floor but never reports it.
+                        // Read the raw payload: a pinned point never reports the floor.
                         const shown = isRating
                           ? Math.round(numeric)
                           : (point?.score ?? numeric);
@@ -560,16 +530,9 @@ export default function BeatmapScoreScatterCard({
                     dataKey="plotScore"
                     fill={bucket.color}
                     fillOpacity={isNarrow ? 0.45 : 0.65}
-                    // Full-opacity outline: the translucent fills alone reach
-                    // 1.35–2.71:1 against the card, and the outline is what
-                    // separates a square silhouette from a circle at this size.
                     stroke={bucket.color}
                     strokeWidth={1}
                     isAnimationActive={false}
-                    // A pinned point is drawn hollow. It sits on the bottom of
-                    // the plot area, so the chevron the box plots use for a
-                    // cut-off whisker would land in the x-axis tick labels;
-                    // hollow among five filled series reads on its own.
                     shape={(props) => (
                       <Symbols
                         {...props}
@@ -596,9 +559,7 @@ export default function BeatmapScoreScatterCard({
                       strokeWidth={2}
                       strokeDasharray={bucket.dash}
                       strokeLinecap={bucket.dashLinecap}
-                      // Clipped to the plot area rather than clamped onto it,
-                      // and drawn above the scatter (600) but below the
-                      // tooltip cursor (1100).
+                      // Above the scatter (600), below the tooltip cursor (1100).
                       ifOverflow="hidden"
                       zIndex={900}
                     />

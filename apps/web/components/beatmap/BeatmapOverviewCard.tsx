@@ -60,10 +60,6 @@ export default function BeatmapOverviewCard({
   );
 }
 
-/**
- * Tinted band that separates the card's two subjects. Lighter than
- * `SectionHeader` on purpose — these sit one level below the card title.
- */
 function GroupHeader({
   icon: Icon,
   title,
@@ -86,11 +82,6 @@ function GroupHeader({
   );
 }
 
-/**
- * Two columns of spec-sheet tiles. Attributes that do not apply to the ruleset
- * are dimmed and drop their gauge, but keep a spacer so the grid rows stay
- * level.
- */
 function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
   const attributes = getBeatmapAttributeRows(beatmap.ruleset);
 
@@ -120,8 +111,6 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
                 </dd>
               </div>
               {row.gauge !== false ? (
-                /* aria-hidden: the sibling `dd` already announces the value,
-                   so a progressbar role would only say it twice. */
                 <Progress
                   aria-hidden
                   value={Math.min(100, (value / ATTRIBUTE_SCALE_MAX) * 100)}
@@ -154,8 +143,7 @@ function ActivityGroup({
     summary.totalTournamentCount
   );
 
-  // One source for both branches below: an e2e spec matches the accessible
-  // name verbatim, and the drill-down must not change the tile at rest.
+  // One source for both branches; an e2e spec matches the accessible name verbatim.
   const pooledIn = {
     icon: WavesLadder,
     label: 'Pooled in',
@@ -198,8 +186,7 @@ function ActivityGroup({
           )}
         </Tile>
 
-        {/* A <div>, not a <dl>: the "Pooled in" tile is a <button>, which
-            HTML's description-list content model forbids. */}
+        {/* A <div>, not a <dl>: the "Pooled in" tile is a <button> */}
         <div className="grid grid-cols-2 gap-2">
           {pools.length === 0 ? (
             <ActivityStat
@@ -219,8 +206,6 @@ function ActivityGroup({
             testId="beatmap-played-tournaments"
             icon={Trophy}
             label="Pick rate"
-            /* Split across value and sublabel — the combined string wraps and
-               unbalances the tile row. */
             value={pickRate === null ? '—' : `${pickRate}%`}
             sublabel={
               pickRate === null

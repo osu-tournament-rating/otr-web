@@ -14,15 +14,12 @@ export default function PlayerRulesetSelector({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Initialize from URL
-  // fallback to defaultRuleset or Osu
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset>(
     Number(
       searchParams.get('ruleset') || defaultRuleset || Ruleset.Osu
     ) as Ruleset
   );
 
-  // Sync state with URL changes (e.g. when navigating from search results)
   useEffect(() => {
     const rulesetFromUrl = Number(
       searchParams.get('ruleset') || defaultRuleset || Ruleset.Osu
@@ -33,11 +30,9 @@ export default function PlayerRulesetSelector({
   const handleRulesetChange = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);
 
-    // Update URL with new ruleset
     const params = new URLSearchParams(searchParams.toString());
     params.set('ruleset', ruleset.toString());
 
-    // Preserve other params like dateMin and dateMax
     router.push(`?${params.toString()}`, { scroll: false });
   };
 

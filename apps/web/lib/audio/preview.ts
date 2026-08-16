@@ -1,10 +1,7 @@
-/**
- * Ceiling applied to the raw HTMLAudioElement gain. osu! previews are mastered
- * hot, so a full-scale slider drowns out the rest of the user's system audio.
- */
+/** Ceiling on the raw element gain; osu! previews are mastered hot. */
 export const MAX_PREVIEW_VOLUME = 0.8;
 
-/** Gain used until the listener picks their own level. Sits mid-slider. */
+/** Gain used until the listener picks their own level. */
 export const DEFAULT_PREVIEW_VOLUME = MAX_PREVIEW_VOLUME / 2;
 
 export interface AudioPreviewTrack {
@@ -31,10 +28,7 @@ export function formatPreviewTime(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-/**
- * Constrains a gain to the supported range, falling back to the default when
- * the value is unusable (a corrupted persisted preference, for example).
- */
+/** Constrains a gain to the supported range, falling back to the default. */
 export function clampPreviewVolume(volume: number): number {
   if (!Number.isFinite(volume)) return DEFAULT_PREVIEW_VOLUME;
 

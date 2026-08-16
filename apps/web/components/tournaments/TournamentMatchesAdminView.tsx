@@ -241,7 +241,6 @@ export default function TournamentMatchesAdminView({
 
   return (
     <div className="space-y-2">
-      {/* Admin action bar */}
       <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
         <div className="flex items-center gap-2">
           <Checkbox
@@ -259,7 +258,6 @@ export default function TournamentMatchesAdminView({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Delete selected button */}
           {selectedMatchIds.size > 0 && (
             <Dialog
               open={isDeleteDialogOpen}
@@ -284,7 +282,6 @@ export default function TournamentMatchesAdminView({
                   </DialogDescription>
                 </DialogHeader>
 
-                {/* Match summary section */}
                 <div className="flex-1 space-y-3 overflow-y-auto py-2">
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <p className="mb-2 text-sm font-medium">
@@ -358,7 +355,6 @@ export default function TournamentMatchesAdminView({
               </DialogContent>
             </Dialog>
           )}
-          {/* Add matches button */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -439,7 +435,6 @@ export default function TournamentMatchesAdminView({
         </div>
       </div>
 
-      {/* Matches table with checkboxes */}
       <div className="relative">
         <TournamentMatchesDataTableWithCheckboxes
           // @ts-expect-error Column def type doesnt work :/

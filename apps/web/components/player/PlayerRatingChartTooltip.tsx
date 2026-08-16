@@ -23,7 +23,6 @@ export default function PlayerRatingChartTooltip({
   const data = payload[0].payload;
   const isRatingTab = activeTab.toLowerCase() === 'rating';
 
-  // Get the appropriate values based on active tab
   const value = isRatingTab
     ? data.ratingAfter.toFixed(0)
     : data.volatilityAfter.toFixed(2);

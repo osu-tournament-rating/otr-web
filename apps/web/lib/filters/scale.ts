@@ -1,11 +1,5 @@
-/**
- * Value <-> track-position mapping for range filters.
- *
- * Radix sliders work in a single numeric space, so every filter drives its
- * track over a fixed 0..100 range at a fine step and converts to domain values
- * through a `NumericScale`. That keeps non-linear filters (tiered rank) and
- * plain ones (SR, BPM) on one slider contract.
- */
+// Radix sliders work in one numeric space, so every filter drives a fixed
+// 0..100 track and converts to domain values through a `NumericScale`.
 
 export const SLIDER_MIN = 0;
 export const SLIDER_MAX = 100;
@@ -27,10 +21,7 @@ export interface NumericScale {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-/**
- * Decimal places carried by `step`, used to undo binary float error after
- * multiplying back up (0.1 * 70 is 7.000000000000001).
- */
+/** Decimal places in `step`, for undoing float error after multiplying back up. */
 function decimalPlaces(step: number): number {
   const [mantissa, exponent] = String(Math.abs(step)).toLowerCase().split('e');
   const dot = mantissa.indexOf('.');
@@ -78,10 +69,8 @@ export function linearScale(options: {
 }
 
 /**
- * A scale whose legal values come from contiguous tiers of differing step
- * sizes. Tiers are expanded once into a sorted stop list; position maps by stop
- * INDEX, so every tier gets track space proportional to how many stops it
- * contributes rather than to its numeric width.
+ * A scale over contiguous tiers of differing step sizes. Position maps by stop
+ * index, so a tier's track space follows its stop count, not its numeric width.
  */
 export function tieredScale(options: {
   tiers: readonly { start: number; end: number; step: number }[];

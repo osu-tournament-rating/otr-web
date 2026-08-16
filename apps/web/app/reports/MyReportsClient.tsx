@@ -145,7 +145,6 @@ export default function MyReportsClient() {
 
     if (!report.hasUnreadUpdate) return;
 
-    // Opening a report acknowledges the admin's update, clearing its indicator.
     setReports((prev) =>
       prev.map((r) =>
         r.id === report.id ? { ...r, hasUnreadUpdate: false } : r

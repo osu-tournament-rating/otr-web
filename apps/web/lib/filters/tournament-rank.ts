@@ -73,12 +73,7 @@ export function moveRankBySliderStops(rank: number, offset: number): number {
   return rankSliderValues[clamp(targetIndex, 0, rankSliderValues.length - 1)];
 }
 
-/**
- * Positions are LOGARITHMIC, not proportional to stop index, so this cannot be
- * expressed with `tieredScale` — that would move rank 1,000 from 50.0% to 49.0%
- * of the track and grow the 11k-1M band from 33% to 48%. The drag feel here is
- * a product constraint; keep this mapping as-is.
- */
+/** Logarithmic, not proportional to stop index, so `tieredScale` cannot express it. */
 export function rankToSliderPosition(rank: number): number {
   const normalizedRank = Number.isFinite(rank) ? rank : RANK_RANGE_MIN;
   const value = clamp(normalizedRank, RANK_RANGE_MIN, RANK_RANGE_MAX);

@@ -151,8 +151,7 @@ export const processOsuTrackPlayerResults = async ({
     }
   }
 
-  // Always update osuTrackLastFetch and status to mark this player as fetched,
-  // even when no updates were persisted
+  // Mark fetched even when nothing was persisted
   await db
     .update(schema.players)
     .set({

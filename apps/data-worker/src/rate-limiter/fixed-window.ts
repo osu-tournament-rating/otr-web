@@ -24,11 +24,7 @@ interface RateLimiterLogger {
   info(message: string, extra?: Record<string, unknown>): void;
 }
 
-/**
- * Fixed-window rate limiter that allows up to N requests within a window.
- * Tasks are queued to preserve ordering and ensure backpressure when the
- * configured budget is exhausted.
- */
+/** Fixed-window rate limiter; queues tasks in order once the budget is spent. */
 export class FixedWindowRateLimiter implements RateLimiter {
   private readonly requests: number;
   private readonly windowMs: number;

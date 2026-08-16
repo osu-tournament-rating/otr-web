@@ -35,29 +35,11 @@ import { getAdminNoteMutations } from './adminNoteMutations';
 import { cn } from '@/lib/utils';
 
 interface AdminNoteViewProps {
-  /**
-   * Admin notes
-   */
   notes: AdminNote[];
-
-  /**
-   * Type of parent entity
-   */
   entity: AdminNoteRouteTarget;
-
-  /**
-   * Id of the parent entity
-   */
   entityId: number;
-
-  /**
-   * Optional display name for the parent entity. Uses entityId if not provided
-   */
+  /** Falls back to entityId when omitted. */
   entityDisplayName?: string;
-
-  /**
-   * Optional flag to force dark mode styles
-   */
   darkMode?: boolean;
 }
 
@@ -153,7 +135,6 @@ export default function AdminNoteView({
           </DialogDescription>
         </DialogHeader>
 
-        {/* New note creation form */}
         {canMutate && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
@@ -174,7 +155,6 @@ export default function AdminNoteView({
                 )}
               />
               <div className="flex justify-between space-x-2">
-                {/* Reset changes */}
                 <Button
                   type="reset"
                   variant={'secondary'}
@@ -186,7 +166,6 @@ export default function AdminNoteView({
                 >
                   Discard
                 </Button>
-                {/* Save changes */}
                 <Button
                   type="submit"
                   size="sm"

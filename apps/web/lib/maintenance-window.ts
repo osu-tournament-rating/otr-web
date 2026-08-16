@@ -3,11 +3,7 @@ import {
   isWithinMaintenanceWindow,
 } from '@otr/core/maintenance';
 
-/**
- * Test-only request header used by the e2e suite to force the maintenance
- * window on or off deterministically, independent of wall-clock time. It is
- * only honored when E2E_TEST_AUTH=true, so it has no effect in production.
- */
+/** Forces the window on or off for the e2e suite; honored only when E2E_TEST_AUTH=true. */
 const E2E_OVERRIDE_HEADER = 'x-e2e-maintenance-window';
 
 type HeadersLike = Pick<Headers, 'get'>;
@@ -26,9 +22,9 @@ export type RatingTimestamps = {
 };
 
 /**
- * Resolves whether the maintenance window is active, after the e2e override
- * header and the `MAINTENANCE_WINDOW_ENABLED` flag. With rating timestamps
- * the window tracks the actual recalculation; otherwise the wall clock.
+ * Whether the maintenance window is active, after the e2e override header and
+ * `MAINTENANCE_WINDOW_ENABLED`. Tracks the recalculation when given rating
+ * timestamps, the wall clock without them.
  */
 export const resolveMaintenanceWindowActive = (
   headers: HeadersLike,

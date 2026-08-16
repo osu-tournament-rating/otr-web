@@ -8,11 +8,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-/** Bitmask of failure reasons shown in the UI (rating-related only) */
 const VISIBLE_FAILURE_MASK =
   FilteringFailReason.MinRating | FilteringFailReason.MaxRating;
 
-/** Masks a failure reason to only include visible (rating-related) flags */
 function maskFailureReason(
   failureReason: number | undefined
 ): FilteringFailReason {
@@ -43,7 +41,7 @@ export default function FailureReasonsBadges({
             <TooltipTrigger asChild>
               <Badge
                 variant="destructive"
-                className="cursor-help px-1.5 py-0.5 text-[10px]"
+                className="cursor-help px-1.5 py-0.5 text-xs"
               >
                 {reason.text}
               </Badge>

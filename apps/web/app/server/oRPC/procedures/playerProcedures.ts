@@ -182,8 +182,7 @@ const findPlayerByKey = async (
   }
 
   if (isStrictNumeric(trimmed)) {
-    // Allow usernames that are entirely numeric (e.g., "846553767646068").
-    // Prefer an exact username match before interpreting the key as an ID.
+    // Some usernames are entirely numeric, so try an exact username match first
     const byExactUsername = await db
       .select()
       .from(schema.players)
@@ -530,8 +529,7 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, playerId),
-          // Filter by the tournament ruleset because mania variants reuse the same
-          // beatmap ruleset (e.g., 4k/7k both map back to Mania = 3).
+          // Mania variants reuse one beatmap ruleset, so filter on the tournament's
           input.ruleset != null
             ? eq(schema.tournaments.ruleset, input.ruleset)
             : undefined
@@ -599,8 +597,7 @@ export const getPlayerBeatmaps = publicProcedure
       .where(
         and(
           eq(schema.joinBeatmapCreators.creatorsId, playerId),
-          // Keep ordering scoped to the tournament ruleset so pagination stays in sync
-          // when a player switches between ruleset tabs.
+          // Scoped to the tournament ruleset so pagination survives a ruleset tab switch
           input.ruleset != null
             ? eq(schema.tournaments.ruleset, input.ruleset)
             : undefined
@@ -656,7 +653,6 @@ export const getPlayerBeatmaps = publicProcedure
 
     const beatmapRowsById = new Map(beatmapRows.map((row) => [row.id, row]));
 
-    // Walking the ordering rows keeps the ranked order and carries their counts.
     const beatmaps = beatmapOrderingRows.flatMap((orderingRow) => {
       const beatmap = beatmapRowsById.get(orderingRow.beatmapId);
 
@@ -922,12 +918,6 @@ export const getPlayerStats = publicProcedure
 
     return PlayerStatsSchema.parse(response);
   });
-
-// Public helper to resolve a fuzzy search key (username, osuId, or internal id)
-// into a canonical playerId to be used with other player endpoints.
-// Note: No public resolver endpoint is exposed. Callers should obtain a
-// canonical playerId via existing discovery flows and pass that id to public
-// endpoints.
 
 const buildFrequencyMap = (
   rows: MatchStatsRow[],

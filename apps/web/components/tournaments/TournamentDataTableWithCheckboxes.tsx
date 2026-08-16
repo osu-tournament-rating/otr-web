@@ -45,11 +45,7 @@ type TournamentDataTableWithCheckboxesProps<TData> = {
   emptyMessage: ReactNode;
 } & SelectionProps<TData>;
 
-/**
- * The sortable tournament table, shared by the matches and beatmaps tabs. Both
- * pass their own TanStack column definitions; everything else — sorting state,
- * the optional selection column, responsive column hiding — is the same.
- */
+/** Sortable table shared by the matches and beatmaps tabs. */
 export default function TournamentDataTableWithCheckboxes<TData>({
   columns,
   data,

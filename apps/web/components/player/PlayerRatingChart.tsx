@@ -88,8 +88,6 @@ const deriveTimeRange = (startDate?: Date, endDate?: Date): TimeRangeOption => {
     }
   }
 
-  // If the end date corresponds to today, re-evaluate presets against today's date
-  // to account for cases where the stored end date might lag behind the current day.
   const todayIso = toDateOnlyIso(new Date());
   if (endDateIso !== todayIso) {
     for (const [range, resolver] of Object.entries(DATE_PRESETS)) {
@@ -214,7 +212,6 @@ export default function PlayerRatingChart({
 
   return (
     <Card data-testid="player-rating-chart" className="p-6 font-sans">
-      {/* One controlled Tabs spans the header (toggle) and the body (panels) */}
       <Tabs
         value={viewMode}
         onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
@@ -227,8 +224,6 @@ export default function PlayerRatingChart({
               <Info className="h-4 w-4 text-muted-foreground" />
             </SimpleTooltip>
 
-            {/* Quiet, always-visible peak chip (issue #722: peak is no longer
-                a big card that reads like the current rating) */}
             {highestRating != null && (
               <>
                 <span className="h-4 w-px bg-border" />
@@ -262,8 +257,6 @@ export default function PlayerRatingChart({
             )}
           </div>
 
-          {/* Header control cluster: Chart/Table, time range, then Options
-              stay on a single row in that order at every width (issue #722) */}
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <TabsList data-testid="rating-chart-toggle" className="font-sans">
               <TabsTrigger value="chart">
@@ -301,8 +294,6 @@ export default function PlayerRatingChart({
           </div>
         </div>
 
-        {/* Rating/Volatility series toggle (demoted from the header) paired
-            with the compact Total Change so the row carries no dead space */}
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <Tabs
             value={activeTab}

@@ -28,13 +28,7 @@ export default function RulesetIcon({
 
   return (
     <Icon
-      className={cn(
-        // Anti-aliasing optimizations for smooth circular rendering
-        'antialiased',
-        // Optimize for smooth scaling
-        '[will-change:transform]',
-        className
-      )}
+      className={cn('antialiased [will-change:transform]', className)}
       {...rest}
     />
   );

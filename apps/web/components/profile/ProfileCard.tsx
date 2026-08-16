@@ -66,8 +66,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const isLoading = Boolean(isSessionPending);
   const { refreshSession } = useContext(SessionContext);
   const userId = session?.dbUser?.id ?? null;
-  // Admins track the pending review queue; everyone else tracks unread updates
-  // to the reports they submitted.
+  // Admins track the review queue; reporters track their own reports
   const [unseenReportCount, setUnseenReportCount] = useState(0);
   const [myUnreadReportCount, setMyUnreadReportCount] = useState(0);
 
@@ -117,7 +116,6 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const reportsHref = isAdmin ? '/admin/reports' : '/reports';
   const reportCountDisplay =
     unseenReportCount > 99 ? '99+' : unseenReportCount.toString();
-  // Admins see a queue count; reporters see a single "you have updates" dot.
   const hasReportNotification = isAdmin
     ? unseenReportCount > 0
     : myUnreadReportCount > 0;

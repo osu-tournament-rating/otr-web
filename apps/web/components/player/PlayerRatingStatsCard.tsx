@@ -30,9 +30,7 @@ export default function PlayerRatingStatsCard({
     <Card className="p-6 font-sans">
       <PlayerCard player={rating.player} ruleset={rating.ruleset} />
       <div className="flex flex-col gap-4">
-        {/* Stats grid: six cards fill exactly two rows at every breakpoint */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {/* Tier Card */}
           <StatCard
             label="Tier"
             value={
@@ -57,7 +55,6 @@ export default function PlayerRatingStatsCard({
             className="col-span-2 md:col-span-3 lg:col-span-2"
           />
 
-          {/* Rating Card */}
           <StatCard
             label="Rating"
             value={
@@ -69,14 +66,12 @@ export default function PlayerRatingStatsCard({
             icon={<BarChart4 className="h-5 w-5 text-primary" />}
           />
 
-          {/* Percentile Card */}
           <StatCard
             label="Percentile"
             value={formatPercentage(rating.percentile)}
             icon={<PercentCircle className="h-5 w-5 text-primary" />}
           />
 
-          {/* Combined rank card: Global and Country grouped side by side */}
           <Card className="col-span-2 flex w-full flex-row items-stretch rounded-lg border-none bg-popover !p-0 md:col-span-3 lg:col-span-2">
             <div
               data-testid="stat-card-global"
@@ -113,14 +108,12 @@ export default function PlayerRatingStatsCard({
             </div>
           </Card>
 
-          {/* Tournaments Card */}
           <StatCard
             label="Tournaments"
             value={rating.tournamentsPlayed || 0}
             icon={<Trophy className="h-5 w-5 text-primary" />}
           />
 
-          {/* Matches Card */}
           <StatCard
             label="Matches"
             value={rating.matchesPlayed || 0}
@@ -128,7 +121,6 @@ export default function PlayerRatingStatsCard({
           />
         </div>
 
-        {/* Tier Progress Card - Only show if there's a next tier */}
         <PlayerTierProgress rating={rating} />
       </div>
     </Card>

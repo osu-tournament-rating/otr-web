@@ -69,8 +69,7 @@ describe('getClosenessStrip', () => {
       expect(-Math.log(1 - dot.gap / 100)).toBeCloseTo(dot.plotLr, 10);
     }
 
-    // The regression itself: the 3v3 game at 0.95 has the higher z but the
-    // smaller gap, so plotting z put it to the right of the 1v1 game at 1.05.
+    // The regression: the 3v3 game at 0.95 has the higher z but the smaller gap.
     const wider = dots[3];
     const narrower = dots[2];
     expect(games[3].z).toBeLessThan(games[2].z);

@@ -40,10 +40,7 @@ import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
 interface BeatmapScoreDistributionCardProps {
   distribution: BeatmapModScoreDistribution[];
   percentiles: BeatmapScorePercentilePoint[];
-  /**
-   * Every verified score on the map, not just the ones that survive the
-   * per-mod-combination clamp the rows below are drawn from.
-   */
+  /** Every verified score on the map, not just the ones the rows are drawn from. */
   totalScoreCount: number;
   className?: string;
 }
@@ -115,7 +112,6 @@ function PercentileCurve({
 }: {
   percentiles: BeatmapScorePercentilePoint[];
 }) {
-  // Five score ticks collide into an unreadable smear on a phone.
   const isNarrow = useIsNarrowChart();
 
   return (
@@ -197,7 +193,6 @@ export default function BeatmapScoreDistributionCard({
   const hasCurveData = percentiles.length > 0;
   const hasData = hasBoxData || hasCurveData;
 
-  // Six labels smear together on a phone-width track.
   const isNarrow = useIsNarrowChart();
 
   const quartiles = React.useMemo(
@@ -205,8 +200,6 @@ export default function BeatmapScoreDistributionCard({
     [distribution]
   );
 
-  // A narrowing viewport can leave this pressed on a chart that no longer
-  // clamps; getBoxPlotView ignores it, so no resize effect is needed.
   const [expanded, setExpanded] = React.useState(false);
 
   const view = React.useMemo(
@@ -246,8 +239,6 @@ export default function BeatmapScoreDistributionCard({
                 />
               ) : null}
             </div>
-            {/* Too few rows to fill the percentile chart's height, so they ride
-                the middle of the panel instead of stranding it below them. */}
             <div className={cn(distribution.length < 3 && 'xl:my-auto')}>
               {hasBoxData ? (
                 <div
@@ -277,8 +268,7 @@ export default function BeatmapScoreDistributionCard({
           </div>
 
           <div className="border-t px-4 py-4 xl:border-t-0">
-            {/* min-h-6 mirrors the toggle row across the divider, so both
-                panels start their charts on the same line. */}
+            {/* min-h-6 mirrors the toggle row across the divider */}
             <div className="flex min-h-6 items-center">
               <Eyebrow>Percentiles</Eyebrow>
             </div>

@@ -29,10 +29,7 @@ export default function TournamentPlayerStatsView({
   return (
     <div className={className}>
       <div className="grid gap-6">
-        {/* Top row - Key highlights */}
         <TournamentTopPerformers playerStats={playerStats} ruleset={ruleset} />
-
-        {/* More can live here */}
       </div>
     </div>
   );

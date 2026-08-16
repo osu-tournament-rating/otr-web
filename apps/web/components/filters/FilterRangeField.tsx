@@ -43,7 +43,7 @@ export interface FilterRangeFieldDescriptor extends FilterFieldBase {
   scale?: NumericScale;
   /** Noun used in the thumb and box accessible names. Defaults to `label`. */
   valueLabel?: string;
-  /** Screen-reader value text only; the boxes always show the plain number. */
+  /** Accessible value text; the boxes show the plain number. */
   format?: (value: number) => string;
   value: FilterRangeValue;
   onChange: (next: FilterRangeValue) => void;
@@ -51,10 +51,7 @@ export interface FilterRangeFieldDescriptor extends FilterFieldBase {
 
 type Bound = 'min' | 'max';
 
-/**
- * A bound being typed or dragged. `text` is what the box shows so intermediate
- * input ("7.", "-") survives, `value` is what the slider tracks.
- */
+/** A bound being typed or dragged: `text` is shown, `value` is tracked. */
 interface DraftBound {
   text: string;
   value?: number;
@@ -69,13 +66,9 @@ function dropBound(draft: Draft, bound: Bound): Draft {
   return next;
 }
 
-/**
- * Returns true when the field consumed Escape by reverting an edit in progress.
- *
- * Radix listens for Escape on `document` in the CAPTURE phase, so a handler on
- * the input can never run first. The popover instead offers each field a chance
- * to claim the key through `onEscapeKeyDown` before it dismisses.
- */
+// Radix listens for Escape on `document` in the capture phase, so the popover
+// offers each field the key before it dismisses.
+/** Returns true when the field consumed Escape by reverting an edit in progress. */
 export type EscapeConsumer = () => boolean;
 
 export const FilterEscapeContext = createContext<{
@@ -116,8 +109,7 @@ export default function FilterRangeField({
     draftRef.current = draft;
   }, [draft]);
 
-  // A drag interrupted by an unmount (the popover closing) would otherwise leave
-  // the apply blocked for good.
+  // An unmount mid-drag would leave the apply blocked.
   useEffect(() => () => setFilterSliderDragging(false), []);
 
   const escape = useContext(FilterEscapeContext);
@@ -212,8 +204,7 @@ export default function FilterRangeField({
     commit(bound, scale.snap(parsed));
   };
 
-  // An absent bound pins its thumb to that end of the track. Out-of-range
-  // values from an old link pin too, but keep their text verbatim.
+  // An absent or out-of-range bound pins its thumb to that end of the track.
   const positions: [number, number] = [
     minValue === undefined ? SLIDER_MIN : scale.toPosition(minValue),
     maxValue === undefined ? SLIDER_MAX : scale.toPosition(maxValue),
@@ -226,8 +217,7 @@ export default function FilterRangeField({
       id: `${idPrefix}-${field.id}-${bound}`,
       'data-bound': bound,
       type: 'text' as const,
-      // `type="number"` loses a 64px box to the spinner and Chrome silently
-      // discards intermediate text.
+      // `type="number"`: Chrome discards intermediate text, and the spinner eats the box.
       inputMode: 'decimal' as const,
       autoComplete: 'off',
       'aria-label': `${isMin ? 'Minimum' : 'Maximum'} ${valueLabel}`,
@@ -275,8 +265,7 @@ export default function FilterRangeField({
         minStepsBetweenThumbs={0}
         value={positions}
         onValueChange={(next) => {
-          // Only a pointer drag reaches here: the thumb's own key handler
-          // preventDefaults, which stops Radix from emitting for the keyboard.
+          // Only pointer drags reach here; the thumb's key handler preventDefaults.
           setFilterSliderDragging(true);
 
           const minDifference = Math.abs(next[0] - positions[0]);

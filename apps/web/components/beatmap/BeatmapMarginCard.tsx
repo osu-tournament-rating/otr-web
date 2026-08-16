@@ -48,20 +48,18 @@ type ClosenessRuleset = BeatmapClosenessSummary['games'][number]['ruleset'];
 interface QuintileBin {
   label: string;
   count: number;
-  /** Percent of the map's games, so the flat profile sits at 20. */
+  /** Percent of the map's games. */
   share: number;
 }
 
 /** Share a map plays at when it matches its cohort exactly. */
 const TYPICAL_SHARE = 20;
 
-/** Vertical room per stacked dot, and the floor a single row still fills. */
 const DOT_PITCH = 12;
 const MIN_STRIP = 36;
-/** Recharts geometry around the plot: 8px top margin + 30px x axis. */
+// Recharts geometry around the plot: 8px top margin + 30px x axis.
 const STRIP_CHROME = 38;
-
-/** Recharts' own default symbol area, kept for the circles. */
+// Recharts' own default symbol area.
 const DOT_AREA = 64;
 
 const chartConfig: ChartConfig = {
@@ -76,16 +74,12 @@ function gapPercent(logRatio: number) {
   return (1 - Math.exp(-logRatio)) * 100;
 }
 
-/**
- * Reads a standardized value back as a gap through the dominant cohort's
- * baseline. Score gaps are what the reader thinks in, and they are 21x wider in
- * osu! than in mania 4K, so the axis cannot speak in z.
- */
+/** Reads a standardized value back as a gap through the cohort's baseline. */
 function marginPercent(z: number, cohort: ClosenessCohort) {
   return gapPercent(z * cohort.sdLogRatio + cohort.meanLogRatio);
 }
 
-/** Two significant figures: `25` in osu!, `0.91` in mania 4K. */
+/** Two significant figures. */
 function formatMarginValue(value: number) {
   const percent = Math.max(0, value);
   return percent.toFixed(percent >= 10 ? 0 : percent >= 1 ? 1 : 2);
@@ -120,12 +114,7 @@ function cohortName(ruleset: ClosenessRuleset, teamSize: number) {
   return `${RulesetEnumHelper.getMetadata(ruleset).text} ${teams}`;
 }
 
-/**
- * Names the population the baseline was fitted over rather than the cohort the
- * map played. A cell with too few corpus games falls back to its ruleset or to
- * the whole corpus, and the legend would otherwise claim a band nobody
- * measured.
- */
+/** Names the population the baseline was fitted over, not the cohort played. */
 function cohortLabel(cohort: ClosenessCohort) {
   if (cohort.baselineScope === 'global') return 'tournament';
   if (cohort.baselineScope === 'ruleset')
@@ -133,16 +122,10 @@ function cohortLabel(cohort: ClosenessCohort) {
   return cohortName(cohort.ruleset, cohort.teamSize);
 }
 
-/** The per-map figures in the caption, lifted out of the muted running text. */
 function Field({ children }: { children: React.ReactNode }) {
   return <strong className="font-semibold text-foreground">{children}</strong>;
 }
 
-/**
- * The map's games against the fifths of its cohort's distribution. A map that
- * plays like its cohort reads as five bars at the typical share; the shape of
- * the departure is the whole message, so the y axis always reaches past it.
- */
 function ClosenessBars({
   bins,
   narrow,
@@ -160,8 +143,6 @@ function ClosenessBars({
 
   return (
     <div className="space-y-1">
-      {/* Legend, not an in-chart label: no band of the plot is guaranteed clear
-          of bars, so a floating label would read against one. */}
       <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
         <span
           className="w-4 border-t border-dashed border-muted-foreground"
@@ -179,9 +160,7 @@ function ClosenessBars({
             dataKey="label"
             tickLine={false}
             axisLine={false}
-            // Every other range on phones: five of these labels overlap in
-            // 286px, and an even alternation reads as deliberate where
-            // Recharts' own gap-based dropping leaves a hole in the middle.
+            // Alternate on phones; five of these labels overlap at 286px.
             interval={narrow ? 1 : 0}
           />
           <YAxis
@@ -227,12 +206,7 @@ function ClosenessBars({
   );
 }
 
-/**
- * One dot per game against the cohort's middle 80%, plotted in log ratio — the
- * one scale on which a dot's position and its own tooltip number agree even
- * when the map's games span several cohorts. `getClosenessStrip` owns the
- * layout: clamping, stacking and the domain.
- */
+/** One dot per game against the cohort's middle 80%, plotted in log ratio. */
 function ClosenessDots({
   strip,
   bandLabel,
@@ -246,10 +220,8 @@ function ClosenessDots({
     <div className="space-y-1">
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          {/* A 1px full-opacity edge, because the 10% fill alone measures
-              1.14:1 against the card — far under the 3:1 floor. */}
           <span
-            className="h-2.5 w-4 rounded-[2px] border border-chart-1 bg-chart-1/10"
+            className="h-2.5 w-4 rounded-xs border border-chart-1 bg-chart-1/10"
             aria-hidden="true"
           />
           middle 80% of {bandLabel} games
@@ -273,15 +245,13 @@ function ClosenessDots({
             dataKey="plotLr"
             domain={strip.domain}
             ticks={[strip.band.lo, strip.band.mid, strip.band.hi]}
-            // Every tick or none: dropping by gap silently unlabelled the
-            // dashed typical line whenever an outlier squeezed the band.
+            // Every tick or none; gap-dropping unlabels the typical line.
             interval={0}
             tickLine={false}
             axisLine={false}
             tickFormatter={(value: number) => formatMargin(gapPercent(value))}
           />
-          {/* y carries the stacking row, so coincident games stay separately
-              hoverable instead of hiding one another. */}
+          {/* y carries the stacking row so coincident games stay hoverable */}
           <YAxis
             type="number"
             dataKey="row"
@@ -303,8 +273,7 @@ function ClosenessDots({
           />
           <ChartTooltip
             cursor={false}
-            // Scatter always emits an x and a y row; the y one carries the
-            // stacking index, and collapsing the payload drops its blank line.
+            // Scatter emits an x and a y row; collapse them into one.
             payloadUniqBy={() => 'game'}
             content={
               <ChartTooltipContent
@@ -341,9 +310,6 @@ function ClosenessDots({
             fill="var(--chart-1)"
             fillOpacity={0.85}
             isAnimationActive={false}
-            // A pinned dot gets a triangle pointing off the edge it sits on,
-            // the same "continues past here" mark the box plots and the score
-            // scatter use.
             shape={(props) => {
               const dot = props.payload as ClosenessStripDot | undefined;
 

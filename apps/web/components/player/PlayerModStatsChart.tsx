@@ -47,43 +47,35 @@ export default function PlayerModStatsChart({
     },
   };
 
-  // Process mod stats data
   const chartData = useMemo(() => {
     if (!modStats || modStats.length === 0) {
       return [];
     }
 
-    // Calculate total games across all mod stats
     const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
     const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
 
-    // Create a map to aggregate scores by mod combination
     const modMap = new Map<string, ChartDataEntry>();
 
-    // Process and normalize scores
     modStats.forEach((stat) => {
-      // Normalize the score using the utility function
       const normalizedAverageScore = normalizedScore(
         stat.mods,
         stat.averageScore
       );
 
       const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      // Join mod texts and remove all "NF" and "SO" occurrences
       let label = metadata
         .map((meta) => meta.text)
         .join('')
         .replace(/NF/g, '')
         .replace(/SO/g, '');
 
-      // If label is empty, it's "No Mod" (NM)
       if (label === '') {
         label = 'NM';
       }
 
       const count = stat.count || 1;
 
-      // If this mod combination already exists in our map, update it
       if (modMap.has(label)) {
         const existing = modMap.get(label)!;
         const totalCount = existing.count + count;
@@ -98,7 +90,6 @@ export default function PlayerModStatsChart({
           fill: getModColor(stat.mods),
         });
       } else {
-        // Add new entry
         modMap.set(label, {
           label,
           averageScore: normalizedAverageScore,
@@ -129,7 +120,6 @@ export default function PlayerModStatsChart({
     );
   }
 
-  // Display a tooltip if the player has played at least MOD_CHART_DISPLAY_THRESHOLD% of all verified games with the Easy mod
   const hasEasyMod =
     modStats.filter((stat) => stat.mods & Mods.Easy).length >=
     modStats.length * MOD_CHART_DISPLAY_THRESHOLD;

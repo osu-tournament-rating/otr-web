@@ -5,8 +5,7 @@ import { AuditEntityType } from '@otr/core/osu';
 
 import { auditFieldConfig } from '../auditFieldConfig';
 
-// Generated columns included: they are derived from audited fields, so an edit
-// to one is already recorded through the column it was computed from.
+// Generated columns are recorded through the fields they derive from.
 const EXCLUDED_AUDIT_FIELDS = new Set([
   'id',
   'updated',

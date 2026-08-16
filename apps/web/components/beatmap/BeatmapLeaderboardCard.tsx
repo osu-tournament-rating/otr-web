@@ -29,16 +29,11 @@ import { formatAccuracy } from '@/lib/utils/format';
 type DisplayRank = {
   /** Rendered numeral, prefixed with `=` when the position is shared. */
   label: string;
-  /** Competition position, so ties share the podium treatment. */
+  /** Competition position; ties share it. */
   position: number;
 };
 
-/**
- * Competition ranks with tie flags: equal scores share the first position of
- * their run, and the next distinct score resumes at its real position
- * (…, 6, =7, =7, =7, 14, …). The server already returns the list in score
- * order, so a linear walk is enough.
- */
+/** Competition ranks with tie flags: …, 6, =7, =7, =7, 14, … */
 function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
   return performers.map((performer, index) => {
     let start = index;
@@ -52,10 +47,6 @@ function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
   });
 }
 
-/**
- * Rank numeral with three steps of emphasis. The numeral and tie prefix carry
- * the ranking on their own, so color is never the only cue.
- */
 function RankBadge({
   rank,
   className,
@@ -109,23 +100,16 @@ export default function BeatmapLeaderboardCard({
         <EmptyState />
       ) : (
         <>
-          {/* Seven columns need a scroll container from sm up; phones get the stacked list below. */}
           <div className="hidden sm:block">
             <Table className="min-w-[39rem] table-fixed">
               <TableHeader>
-                {/* Fixed widths must cover the cell's own padding (p-2, plus
-                    the pl-4/pr-4 on the edge columns) on top of the content, or
-                    the last column's dates clip against the card edge. */}
                 <TableRow className="bg-muted/20">
-                  {/* Wide enough for the `=` a tie prefix adds to the rank. */}
                   <TableHead className="h-8 w-12 pl-4">
                     <Eyebrow>#</Eyebrow>
                   </TableHead>
                   <TableHead className="h-8">
                     <Eyebrow>Player</Eyebrow>
                   </TableHead>
-                  {/* Wide enough for three mod icons in their hover-expanded
-                      state, so fanning them out never overlaps the score. */}
                   <TableHead className="h-8 w-20">
                     <Eyebrow>Mods</Eyebrow>
                   </TableHead>
@@ -245,8 +229,6 @@ export default function BeatmapLeaderboardCard({
             </Table>
           </div>
 
-          {/* Phones get two dense lines per score: identity and score on top,
-              the remaining details in one muted row underneath. */}
           <ol className="divide-y sm:hidden">
             {performers.map((performer, index) => {
               const displayName = (performer.player.username ?? '').trim();

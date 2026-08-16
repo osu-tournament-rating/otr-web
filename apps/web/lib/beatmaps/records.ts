@@ -16,10 +16,7 @@ export interface ActivitySummary {
   maxGames: number;
 }
 
-/**
- * Collapses the quarterly usage series into the span and scale the activity
- * card needs. Quarters with no pool records and no games are gaps, not history.
- */
+/** Collapses the quarterly usage series into the span and scale the activity card needs. */
 export function summarizeActivity(
   points: BeatmapUsagePoint[]
 ): ActivitySummary {
@@ -31,16 +28,12 @@ export function summarizeActivity(
     firstActive: active.at(0) ?? null,
     lastActive: active.at(-1) ?? null,
     activeQuarters: active.length,
-    // The chart only draws game bars, so pool-record counts must not
-    // contribute to the scale.
+    // The chart draws game bars only, so pool records stay out of the scale.
     maxGames: points.reduce((max, point) => Math.max(max, point.gameCount), 0),
   };
 }
 
-/**
- * Share of pool records where the beatmap was actually picked, as a whole
- * percent. Returns null when nothing pooled it, since there is no rate to show.
- */
+/** Share of pool records where the beatmap was picked, as a whole percent; null when unpooled. */
 export function getPoolPickRate(
   playedCount: number,
   pooledCount: number
@@ -54,11 +47,7 @@ export function getPoolPickRate(
   return Math.round(rate);
 }
 
-/**
- * The tournament this beatmap produced the most verified scores in. Score count
- * rather than game count, because a 5v5 lobby yields far more scores per game
- * than a 1v1 one.
- */
+/** The tournament this beatmap produced the most verified scores in. */
 export function getMostUsedInPool(
   pools: BeatmapTournamentUsage[]
 ): BeatmapTournamentUsage | null {

@@ -69,8 +69,7 @@ export const filterRegistrants = protectedProcedure
 
       if (missingOsuIds.length > 0) {
         seededPlayerOsuIds.push(...missingOsuIds);
-        // Seed placeholder player rows so filters can record results even if
-        // the data worker has not ingested these profiles yet.
+        // Placeholder rows, so filters can record results before ingestion
         await context.db
           .insert(schema.players)
           .values(missingOsuIds.map((osuId) => ({ osuId })))
@@ -279,8 +278,7 @@ export const filterRegistrants = protectedProcedure
     const playersFailed = playerResults.length - playersPassed;
 
     const insertedReport = await context.db.transaction(async (tx) => {
-      // Re-assert with the transaction clock so the check matches the
-      // report's `created` timestamp exactly.
+      // Re-asserted on the transaction clock to match the report's `created`
       await assertOutsideMaintenanceWindow(context.headers, tx);
 
       const [report] = await tx

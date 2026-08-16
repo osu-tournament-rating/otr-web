@@ -29,9 +29,6 @@ import {
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
-// --- Actions where inline field labels are suppressed ---
-// Self-describing (verification/rejection) + submission (created) + deletion
-
 const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'verification',
   'rejection',
@@ -40,8 +37,6 @@ const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'submission',
   'deletion',
 ]);
-
-// --- Action display config ---
 
 const ACTION_LABELS: Record<AuditEventAction, string> = {
   verification: 'verified',
@@ -277,7 +272,7 @@ function EventEntityEntries({
   return (
     <div className="border-t border-border bg-muted/20 px-3 py-2">
       <div className="flex flex-col gap-2 pl-9">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-xs font-medium text-muted-foreground">
           {isRepeatedTopEntity
             ? 'Changes in this event'
             : `Affected ${entityPlural}`}
@@ -391,7 +386,6 @@ export default function AuditEventCard({
         )}
       >
         <div className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm">
-          {/* User avatar */}
           {event.actionUser?.osuId ? (
             <OsuAvatar
               osuId={event.actionUser.osuId}
@@ -401,13 +395,12 @@ export default function AuditEventCard({
             />
           ) : (
             <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="text-[11px]">
+              <AvatarFallback className="text-xs">
                 {event.isSystem ? 'S' : '?'}
               </AvatarFallback>
             </Avatar>
           )}
 
-          {/* User name + description */}
           <span data-testid="event-card-description" className="min-w-0 flex-1">
             {event.isSystem ? (
               <span className="mr-1 text-muted-foreground italic">System</span>
@@ -430,7 +423,6 @@ export default function AuditEventCard({
             {buildDescription(event)}
           </span>
 
-          {/* Expand toggle */}
           {hasExpandableContent && (
             <CollapsibleTrigger asChild>
               <button
@@ -448,7 +440,6 @@ export default function AuditEventCard({
             </CollapsibleTrigger>
           )}
 
-          {/* Timestamp */}
           <RelativeTime
             data-testid="event-card-timestamp"
             dateString={event.created}
@@ -456,7 +447,6 @@ export default function AuditEventCard({
           />
         </div>
 
-        {/* Expanded diffs */}
         <CollapsibleContent data-testid="event-card-diff">
           {changes && changeCount > 0 && event.topEntity.entryCount === 1 && (
             <div className="border-t border-border bg-muted/20 px-3 py-2">

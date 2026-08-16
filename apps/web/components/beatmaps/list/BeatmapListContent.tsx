@@ -50,18 +50,17 @@ export default function BeatmapListContent({
     }
   }, []);
 
-  // A device preference, not a shareable filter, so it stays out of the URL.
+  // A device preference, not a shareable filter.
   const changeLayout = (nextLayout: BeatmapLayout) => {
     setLayout(nextLayout);
     try {
       window.localStorage.setItem(BEATMAP_LAYOUT_STORAGE_KEY, nextLayout);
     } catch {
-      // The layout still changes for this session when storage is unavailable.
+      // Storage can be unavailable.
     }
   };
 
-  // The table headers' sort path. The filter bar's own select cannot share it:
-  // that one has to carry any filter edit still waiting out its countdown.
+  // The filter bar's own select cannot share this; it carries pending edits.
   const changeSort = useCallback<BeatmapListSortChange>(
     (sort, descending) => {
       router.push(

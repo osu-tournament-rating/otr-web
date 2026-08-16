@@ -5,16 +5,10 @@ import type { ReactNode } from 'react';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import { cn } from '@/lib/utils';
 
-/**
- * `row` is the compact list row, `table` a table's leading cell. Each picks a
- * cover geometry and density, and whether long text truncates or wraps.
- */
+/** `row` is the compact list row, `table` a table's leading cell. */
 type BeatmapIdentitySize = 'row' | 'table';
 
-/**
- * A bare username with no id (the beatmap list) cannot link anywhere; a player
- * object (tournament pools) can.
- */
+/** A bare username cannot link anywhere; a player object can. */
 type BeatmapCreator = { id: number; username: string } | string | null;
 
 const COVER_DENSITY = {
@@ -54,11 +48,8 @@ const CLIP_CLASS: Record<BeatmapIdentitySize, string> = {
 };
 
 /**
- * Cover art, title, difficulty, artist, and mapper — the block that identifies
- * one beatmap on every surface that lists them.
- *
- * `children` renders inside the cover cell, for the pills and play button the
- * list layouts overlay on their artwork.
+ * Cover art, title, difficulty, artist, and mapper. `children` renders inside
+ * the cover cell, for the pills the list layouts overlay on their artwork.
  */
 export default function BeatmapIdentity({
   osuId,
@@ -80,7 +71,7 @@ export default function BeatmapIdentity({
   title: string;
   diffName: string;
   creator?: BeatmapCreator;
-  /** A player's own mapped beatmaps all share one mapper, so that row is noise. */
+  /** Hides the mapper row on surfaces where every row shares one mapper. */
   showMapper?: boolean;
   size: BeatmapIdentitySize;
   coverSizes: string;
@@ -102,9 +93,7 @@ export default function BeatmapIdentity({
   );
 
   return (
-    // The osu! id is not shown anywhere in the block, so it is exposed as an
-    // attribute rather than dropped: it is what every call site's row link and
-    // row testid are keyed on.
+    // Every call site's row link and row testid key on the osu! id.
     <div
       data-beatmap-osu-id={osuId}
       className={cn(ROOT_CLASS[size], className)}
@@ -113,9 +102,7 @@ export default function BeatmapIdentity({
         <BeatmapCover
           beatmapsetOsuId={beatmapsetOsuId}
           alt={`${artist} - ${title} cover`}
-          // Remote covers are `unoptimized`, so the derivative is the only size
-          // control: `card` is wide at both geometries here, and sharp enough
-          // for the table thumbnail even at 1x.
+          // Remote covers are `unoptimized`, so the derivative is the only size control.
           variant="card"
           density={COVER_DENSITY[size]}
           sizes={coverSizes}

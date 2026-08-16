@@ -257,12 +257,7 @@ async function getDistinctBeatmapPreviewRows(page: Page) {
   };
 }
 
-/**
- * The accuracy column of the tier breakdown, or null when the axis already
- * shows every whisker and the card therefore renders no toggle. The toggle
- * lives in the column header, so its grandparent is the column that holds the
- * rows and the axis it rescales.
- */
+/** The accuracy column of the tier breakdown, or null when it renders no toggle. */
 async function openTierAccuracyChart(page: Page) {
   const card = page.locator('[data-testid="beatmap-tier-breakdown"]');
   await expect(card).toBeVisible({ timeout: 15000 });
@@ -276,18 +271,14 @@ async function openTierAccuracyChart(page: Page) {
   return {
     toggle,
     chevrons: chart.locator('svg.lucide-chevron-left'),
-    // The axis is the column's last child; its tick labels are the only text
-    // in it that is not hidden from the accessibility tree.
+    // Tick labels are the axis's only text left in the accessibility tree
     ticks: chart.locator(
       ':scope > div:last-child span:not([aria-hidden="true"])'
     ),
   };
 }
 
-/**
- * A beatmap whose set has a single difficulty, so the header renders no
- * difficulty navigator at all.
- */
+/** A beatmap whose set has a single difficulty, so no navigator renders. */
 const SINGLE_DIFFICULTY_BEATMAP_OSU_ID = 2624225;
 
 test.describe('Beatmaps Listing Page', () => {
@@ -429,8 +420,6 @@ test.describe('Beatmaps Listing Page', () => {
       expect(artistBox!.y).toBeGreaterThan(difficultyBox!.y);
       expect(Math.abs(mapperBox!.y - artistBox!.y)).toBeLessThanOrEqual(1);
 
-      // Ruleset and star pills anchor to the cover's top corners so they land
-      // in the same spot on every card.
       expect(Math.round(rulesetBox!.x - coverBox!.x)).toBe(8);
       expect(Math.round(rulesetBox!.y - coverBox!.y)).toBe(8);
       expect(
@@ -448,8 +437,6 @@ test.describe('Beatmaps Listing Page', () => {
         )
       ).toHaveCount(0);
 
-      // Every text field is one clamped line, with the full value on hover, so
-      // card height never depends on how long a title or mapper name is.
       const clampedText = await firstRow
         .locator(
           '[data-testid="beatmap-title"], [data-testid="beatmap-difficulty-name"], [data-testid="beatmap-artist-name"], [data-testid="beatmap-mapper-name"]'
@@ -484,7 +471,6 @@ test.describe('Beatmaps Listing Page', () => {
         ).toHaveAttribute('title', /.+/);
       }
 
-      // The point of the fixed layout: identical geometry across all cards.
       const cardGeometry = await page
         .locator('[data-testid^="beatmap-list-row-"]')
         .evaluateAll((cards) =>
@@ -895,8 +881,6 @@ test.describe('Beatmaps Listing Page', () => {
           });
           expect(overflow).toEqual({ document: 0, transport: 0 });
 
-          // A real spacer element reserves the transport's height now, rather
-          // than padding on the body.
           await expect
             .poll(() =>
               page.evaluate(() => {
@@ -1028,8 +1012,6 @@ test.describe('Beatmaps Listing Page', () => {
         page.getByRole('dialog', { name: 'Filter beatmaps' })
       ).toBeVisible({ timeout: 10000 });
 
-      // Filters apply as they are set, so the header offers only "Clear all",
-      // which stays disabled until something is actually filtered.
       const clear = page.locator('[data-testid="beatmap-filter-clear"]');
       await expect(clear).toBeVisible({ timeout: 10000 });
       await expect(clear).toBeDisabled();
@@ -1065,8 +1047,6 @@ test.describe('Beatmaps Listing Page', () => {
         'AR',
         'Length',
       ]);
-      // The divider is decorative: the grouping it draws is already carried by
-      // the option order above, so it is hidden from assistive tech.
       const separator = sortMenu.locator('[data-slot="select-separator"]');
       await expect(separator).toHaveCount(1);
       await expect(separator).toHaveAttribute('aria-hidden', 'true');
@@ -1174,7 +1154,6 @@ test.describe('Beatmaps Listing Page', () => {
       expect(mania7kIconBox!.width).toBe(16);
       expect(Math.abs(mania4kBox!.y - mania7kBox!.y)).toBeLessThanOrEqual(1);
 
-      // The chip navigates on its own: there is no apply step to confirm it.
       await mobileRulesets
         .getByRole('button', { name: 'mania 7K', exact: true })
         .click();
@@ -1261,8 +1240,6 @@ test.describe('Beatmaps Listing Page', () => {
         page.locator('[data-testid^="beatmap-list-row-"]').first()
       ).toBeVisible({ timeout: 10000 });
 
-      // Each layout is selected by its own radio: the group root is a plain
-      // div and swallows a click without changing anything.
       for (const layout of ['cards', 'compact', 'table'] as const) {
         await page.getByTestId(`beatmap-layout-${layout}`).click();
         await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
@@ -1299,8 +1276,6 @@ test.describe('Beatmaps Listing Page', () => {
 
     await expect(list).toHaveAttribute('data-layout', 'cards');
 
-    // Three layouts make this a radio group, not a two-state button: every
-    // option is on screen and exactly one of them is checked.
     const layoutGroup = page.getByTestId('beatmap-layout-toggle');
     const cardsOption = page.getByTestId('beatmap-layout-cards');
     const compactOption = page.getByTestId('beatmap-layout-compact');
@@ -1322,8 +1297,6 @@ test.describe('Beatmaps Listing Page', () => {
     expect(secondCard).not.toBeNull();
     expect(thirdCard).not.toBeNull();
     expect(fourthCard).not.toBeNull();
-    // Two columns on desktop: a third column would leave too little text width
-    // for bpm, duration, games, tournaments, and two mod pills on one row.
     expect(Math.abs(firstCard!.y - secondCard!.y)).toBeLessThanOrEqual(1);
     expect(secondCard!.x).toBeGreaterThan(firstCard!.x);
     expect(thirdCard!.y).toBeGreaterThan(firstCard!.y);
@@ -1331,8 +1304,6 @@ test.describe('Beatmaps Listing Page', () => {
     expect(Math.abs(fourthCard!.y - thirdCard!.y)).toBeLessThanOrEqual(1);
     expect(fourthCard!.x).toBeGreaterThan(thirdCard!.x);
 
-    // On desktop the footer is one 36px row, and nothing in it is clipped —
-    // including the second mod pill, which only some maps have.
     const footers = await page
       .locator('[data-testid="beatmap-data-summary"]')
       .evaluateAll((summaries) =>
@@ -1366,8 +1337,6 @@ test.describe('Beatmaps Listing Page', () => {
       expect(footer.spill).toBeLessThanOrEqual(0);
     }
 
-    // The group is a single tab stop, and once inside it an arrow key moves
-    // the selection rather than only the focus.
     await cardsOption.focus();
     expect(
       await layoutGroup
@@ -1441,8 +1410,6 @@ test.describe('Beatmaps Listing Page', () => {
         )
       );
     });
-    // The rating pill is the one metric sized by its own text, so it is
-    // bounded rather than pinned; the rest are fixed columns.
     expect(metricWidths[0]).toBeGreaterThanOrEqual(64);
     expect(metricWidths[0]).toBeLessThanOrEqual(96);
     expect(metricWidths.slice(1)).toEqual([56, 68, 208]);
@@ -1466,8 +1433,6 @@ test.describe('Beatmaps Listing Page', () => {
       'compact'
     );
 
-    // The third layout persists the same way. Its rows are counted through
-    // `table tbody`: the sub-`sm` compact fallback carries the same test ids.
     await tableOption.click();
     await expect(page.getByTestId('beatmap-list')).toHaveAttribute(
       'data-layout',
@@ -1509,13 +1474,11 @@ test.describe('Beatmaps Listing Page', () => {
     const srHeader = table.getByRole('columnheader', { name: 'SR' });
     await expect(srHeader).toHaveAttribute('aria-sort', 'none');
 
-    // Sorting is server-side, so a header click has to reach the URL.
     await srHeader.getByRole('button').click();
     await page.waitForURL(/sort=sr/, { timeout: 10000 });
     await expect(srHeader).toHaveAttribute('aria-sort', 'descending');
     await expect(sortSelect).toHaveText('SR');
 
-    // A second click on the active column flips the direction.
     await srHeader.getByRole('button').click();
     await page.waitForURL(/descending=false/, { timeout: 10000 });
     await expect(srHeader).toHaveAttribute('aria-sort', 'ascending');
@@ -1523,7 +1486,6 @@ test.describe('Beatmaps Listing Page', () => {
       page.getByTestId('beatmap-sort-direction')
     ).toHaveAccessibleName('Sort order is ascending');
 
-    // And the select drives the headers just as the headers drive the select.
     await sortSelect.click();
     await page.getByRole('option', { name: 'BPM' }).click();
     await page.waitForURL(/sort=bpm/, { timeout: 10000 });
@@ -1532,7 +1494,6 @@ test.describe('Beatmaps Listing Page', () => {
       table.getByRole('columnheader', { name: 'BPM' })
     ).toHaveAttribute('aria-sort', 'ascending');
 
-    // Only one column is ever sorted; the rest say so explicitly.
     await expect(
       table.locator('thead th[aria-sort]:not([aria-sort="none"])')
     ).toHaveCount(1);
@@ -1580,8 +1541,6 @@ test.describe('Beatmap Detail Page', () => {
       if ((await collapsedDifficulty.count()) > 0) {
         await expect(collapsedDifficulty).toHaveAccessibleName(/star rating/);
 
-        // A collapsed chip carries only its rating pill; the current one also
-        // spells out the difficulty name, so it is always the wider of the two.
         const [collapsedBox, activeBox] = await Promise.all([
           collapsedDifficulty.boundingBox(),
           activeDifficulty.boundingBox(),
@@ -1591,8 +1550,6 @@ test.describe('Beatmap Detail Page', () => {
         expect(collapsedBox!.height).toBeGreaterThanOrEqual(40);
         expect(collapsedBox!.width).toBeLessThan(activeBox!.width);
 
-        // The name the chip drops, plus the usage line that says whether the
-        // difficulty leads anywhere, are what the tooltip has to restore.
         const difficultyName = (await collapsedDifficulty.getAttribute(
           'aria-label'
         ))!.split(',')[0];
@@ -1613,8 +1570,6 @@ test.describe('Beatmap Detail Page', () => {
         timeout: 10000,
       });
 
-      // One difficulty is nothing to navigate between, so the strip is absent
-      // rather than rendered with a lone current chip.
       await expect(
         page.locator('nav[aria-label="Beatmapset difficulties"]')
       ).toHaveCount(0);
@@ -1684,8 +1639,6 @@ test.describe('Beatmap Detail Page', () => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
       await page.waitForLoadState('networkidle');
 
-      // The rating is a pill now: the number is the visible label and "SR"
-      // survives only in its accessible name.
       await expect(
         page.getByTestId('beatmap-star-rating')
       ).toHaveAccessibleName(/^\d+\.\d{2} star rating$/, { timeout: 10000 });
@@ -1711,8 +1664,6 @@ test.describe('Beatmap Detail Page', () => {
       ).toBeVisible();
       await expect(card.locator('abbr[title="HP drain"]')).toBeVisible();
 
-      // The banner keeps only the identity row; attributes live beside the
-      // record tables.
       await expect(
         page
           .locator('[data-testid="beatmap-header"]:visible')
@@ -1746,14 +1697,12 @@ test.describe('Beatmap Detail Page', () => {
   }) => {
     await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
     const card = page.locator('[data-testid="beatmap-score-distribution"]');
-    // The card header owns an info button and the chart header a "Full range"
-    // toggle, so a row is named by its score count rather than taken by order.
+    // Card and chart headers own buttons too, so match the row by score count
     const row = card.getByRole('button', { name: /\d+ scores$/ }).first();
     await expect(row).toBeVisible({ timeout: 10000 });
     await row.click();
 
-    // Radix portals the popover out of the card, so the row's own
-    // aria-controls is the only thing that ties the dialog back to it.
+    // Radix portals the popover out of the card; aria-controls is the only link back
     const popoverId = await row.getAttribute('aria-controls');
     expect(popoverId).toBeTruthy();
     const popover = page.locator(`[id="${popoverId}"]`);
@@ -1770,7 +1719,6 @@ test.describe('Beatmap Detail Page', () => {
     await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
 
     const chart = await openTierAccuracyChart(page);
-    // Nothing is cut off at this viewport, so there is no toggle to exercise.
     test.skip(chart === null, 'Accuracy axis clamps no row for this beatmap');
 
     const { toggle, ticks, chevrons } = chart!;
@@ -1781,7 +1729,6 @@ test.describe('Beatmap Detail Page', () => {
 
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    // A wider domain moves the ticks, and every whisker now ends in a ring.
     await expect(ticks.first()).not.toHaveText(truncatedTick);
     await expect(chevrons).toHaveCount(0);
 
@@ -1856,7 +1803,6 @@ test.describe('Beatmap Detail Page', () => {
         name: /Pooled in [\d,]+ tournaments?/,
       });
       await expect(dialog).toBeVisible();
-      // Each row is a way into the tournament, not a dead listing.
       await expect(dialog.getByRole('link').first()).toHaveAttribute(
         'href',
         /^\/tournaments\/\d+$/
@@ -1915,8 +1861,6 @@ test.describe('Beatmap Detail Page', () => {
         .getByText(/^[\d,]+ scores$/)
         .textContent();
 
-      // The leaderboard shows only a top slice, so its meta names both the
-      // slice and the total it was drawn from: "top 25 of 272 scores".
       const leaderboardTotal = await page
         .locator('[data-testid="beatmap-leaderboard"]')
         .getByText(/^(?:top [\d,]+ of )?[\d,]+ scores?$/)
@@ -1955,8 +1899,6 @@ test.describe('Beatmap Detail Page', () => {
         }
       }
 
-      // Sub-1% combinations are collapsed rather than dropped, so the displayed
-      // shares still account for every verified score.
       const summed = parsed.reduce((total, { percentage }) => {
         return total + percentage;
       }, 0);
@@ -1988,13 +1930,11 @@ test.describe('Beatmap Detail Page', () => {
       expect(railBox).not.toBeNull();
       expect(leaderboardBox).not.toBeNull();
 
-      // Rail leads the top row and the chart takes the other two thirds.
       expect(Math.abs(modBox!.y - railBox!.y)).toBeLessThanOrEqual(1);
       expect(modBox!.x).toBeGreaterThan(railBox!.x + railBox!.width);
       expect(modBox!.width).toBeGreaterThan(railBox!.width * 1.8);
       expect(modBox!.width).toBeLessThan(railBox!.width * 2.2);
 
-      // The leaderboard clears both and runs the full content width.
       expect(leaderboardBox!.y).toBeGreaterThanOrEqual(
         modBox!.y + modBox!.height
       );

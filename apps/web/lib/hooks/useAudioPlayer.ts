@@ -50,11 +50,7 @@ export interface PreviewButtonState {
   handleClick: (event: React.MouseEvent) => void;
 }
 
-/**
- * Shared derivation for the preview play buttons: status precedence, the
- * matching accessible label, and a click handler that never lets the event
- * reach the surrounding row link.
- */
+/** Status, label and click handler shared by the preview play buttons. */
 export function usePreviewButtonState(
   track: Partial<AudioPreviewTrack> & { beatmapsetOsuId: number | undefined }
 ): PreviewButtonState {

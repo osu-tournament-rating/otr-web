@@ -13,9 +13,7 @@ import {
   type ProcessTournamentAutomationCheckMessage,
 } from '@otr/core';
 
-/**
- * Public API payload types - omit `type` field since it's added internally.
- */
+// `type` is added by the publisher.
 type FetchBeatmapInput = Omit<FetchBeatmapPayload, 'type'>;
 type FetchMatchInput = Omit<FetchMatchPayload, 'type'>;
 type FetchPlayerInput = Omit<FetchPlayerPayload, 'type'>;

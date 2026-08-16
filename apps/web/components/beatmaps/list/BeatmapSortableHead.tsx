@@ -43,11 +43,9 @@ export default function BeatmapSortableHead({
         size="sm"
         // A fresh column starts descending, matching the request schema default.
         onClick={() => onSortChange(sort, active ? !descending : true)}
-        // Tight chrome: a header must fit a column sized for its numbers.
         className="h-7 gap-1 px-1 has-[>svg]:px-1"
       >
         <Eyebrow className={cn(active && 'text-foreground')}>{label}</Eyebrow>
-        {/* The arrow is the non-colour cue for which column is sorted. */}
         <Icon
           className={cn(
             'size-3',

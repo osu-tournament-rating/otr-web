@@ -49,10 +49,6 @@ export type RankRangeModsByBucket = Map<
   { scoreCount: number; segments: ModSegment[] }
 >;
 
-/**
- * Every mod bar on the page runs through this pipeline so they read as the
- * same visual system.
- */
 function toModSegments(
   distribution: BeatmapFreemodPickSummary['distribution']
 ): ModSegment[] {
@@ -70,10 +66,7 @@ function toModSegments(
   }));
 }
 
-/**
- * Folds the backend's per-bucket mod rows into display segments, keyed by
- * bucket for lookup beside the rank-range pie. Exported for tests.
- */
+/** Display mod segments keyed by rank-range bucket. */
 export function toRankRangeModSegments(
   rankRangeMods: ReadonlyArray<BeatmapRankRangeModDistribution>
 ): RankRangeModsByBucket {
@@ -92,10 +85,7 @@ export function toRankRangeModSegments(
   return byBucket;
 }
 
-/**
- * Silver and normal grades are combined for display: SSH+SS read as SS and
- * SH+S read as S. Ordered best to worst.
- */
+// SSH+SS read as SS, SH+S as S; ordered best to worst.
 const GRADE_GROUPS = [
   {
     label: 'SS',
@@ -150,17 +140,13 @@ interface DisplaySegment {
   fill: string;
 }
 
-/**
- * The one value string every legend, row, and tooltip line prints. Keep the
- * shape (`29.3% · 241`) — the e2e legend assertions parse it.
- */
+// e2e legend assertions parse this shape: `29.3% · 241`
 function formatSegmentValue(
   segment: Pick<DisplaySegment, 'percentageLabel' | 'scoreCount'>
 ): string {
   return `${segment.percentageLabel} · ${formatChartNumber(segment.scoreCount)}`;
 }
 
-/** The shared "single bar with colored sections" mark. */
 function SegmentBar({
   segments,
   testId,
@@ -171,17 +157,14 @@ function SegmentBar({
   className?: string;
 }) {
   return (
-    /* The legend beside every bar carries the same values as text, so the
-       bar itself is presentational only. */
     <div
       data-testid={testId}
-      className={cn('flex h-7 w-full gap-[2px]', className)}
+      className={cn('flex h-7 w-full gap-0.5', className)}
       aria-hidden="true"
     >
       {segments.map((segment) => (
         <div
           key={segment.label}
-          // Flex growth keeps the 2px gaps from pushing the row past 100%.
           className="h-full min-w-[3px] first:rounded-l-md last:rounded-r-md"
           style={{
             flex: `${segment.percentage} 1 0`,
@@ -220,7 +203,6 @@ function SegmentLegend({
   );
 }
 
-/** Freemod picks as a ranking, not a composition: track widths scale to the top pick. */
 function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
   const maxPercentage = Math.max(...segments.map((s) => s.percentage));
 
@@ -256,10 +238,6 @@ function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
   );
 }
 
-/**
- * Below a handful of scores a percentage is noise (1 of 4 is not "25% of the
- * meta"), so the raw counts are shown instead. Every pick still appears.
- */
 function FreemodPickChips({ segments }: { segments: ModSegment[] }) {
   return (
     <ul aria-label="Freemod mod picks" className="flex flex-wrap gap-1.5">
@@ -282,16 +260,8 @@ interface RankRangeSlice {
   fill: string;
 }
 
-/**
- * Long mod tails turn the tooltip into a wall of rows; the remainder collapses
- * into one summed line instead.
- */
 const TOOLTIP_MOD_ROW_CAP = 5;
 
-/**
- * Slices count pools; the mod rows count verified scores. The sub-caption names
- * that second population explicitly so the two are never read as one.
- */
 function RankBucketTooltipBody({
   slice,
   bucketMods,
@@ -301,8 +271,6 @@ function RankBucketTooltipBody({
 }) {
   const shown = bucketMods?.segments.slice(0, TOOLTIP_MOD_ROW_CAP) ?? [];
   const rest = bucketMods?.segments.slice(TOOLTIP_MOD_ROW_CAP) ?? [];
-  // With no mod rows beneath it the rule has nothing to divide, and the panel
-  // would end on a floating line.
   const hasModRows = shown.length > 0;
 
   return (
@@ -349,7 +317,6 @@ function RankBucketTooltipBody({
   );
 }
 
-/** Donut of tournament pools by rank range. Hover only grows the slice — the tooltip is the sole mod-disclosure channel. */
 function RankRangePie({
   slices,
   totalPools,
@@ -436,10 +403,7 @@ function RankRangePie({
           <Label content={renderCenterLabel} />
         </Pie>
         <ChartTooltip
-          /* Parked, not cursor-tracking: a ~200px panel chasing the pointer
-             around a 240px donut covers the center label from every angle. x is
-             the viewBox left edge so the tooltip cannot widen the document at
-             390px. */
+          // Parked, not cursor-tracking: it would cover the center label
           position={{ x: 4, y: 136 }}
           wrapperStyle={{ zIndex: 30 }}
           content={({ active, payload }) => {
@@ -500,8 +464,6 @@ export default function BeatmapDistributionsCard({
     [rankRangeMods]
   );
 
-  /* Pools are the one population on this card that is not filtered to verified
-     entities, and the donut cannot show which slices carry them. */
   const hasUnverifiedPools = pools.some(
     (pool) => pool.verificationStatus !== VerificationStatus.Verified
   );
@@ -522,9 +484,7 @@ export default function BeatmapDistributionsCard({
   return (
     <SectionCard
       data-testid="beatmap-mod-distribution-chart"
-      /* The rank-range tooltip is taller than the space left under the donut on
-         sparse pages, so it has to be allowed past the card edge. Nothing in
-         this card paints to its corners, so dropping the clip is invisible. */
+      // overflow-visible: the rank-range tooltip runs past the card edge
       className={cn('flex flex-col overflow-visible', className)}
     >
       <SectionHeader icon={ListFilter} title="Distributions" />
@@ -532,8 +492,6 @@ export default function BeatmapDistributionsCard({
       {modSegments.length === 0 ? (
         <EmptyState />
       ) : (
-        /* Fills the card so a taller neighbour column stretches the section
-           rules instead of leaving them hanging mid-card. */
         <div className="flex flex-1 flex-col divide-y">
           <div className="space-y-3 px-4 py-4">
             <div className="flex items-baseline justify-between gap-2">
@@ -555,9 +513,6 @@ export default function BeatmapDistributionsCard({
           <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:divide-x">
             <div className="flex flex-col divide-y">
               <div className="space-y-3 px-4 py-4">
-                {/* Wrapped so the label's box hugs the text like the mod
-                    distribution header does; a bare inline Eyebrow inherits the
-                    parent's taller strut and eats into the gap below it. */}
                 <div className="flex items-baseline">
                   <Eyebrow>Grades</Eyebrow>
                 </div>
@@ -574,18 +529,12 @@ export default function BeatmapDistributionsCard({
                     <SegmentLegend
                       segments={gradeSegments}
                       ariaLabel="Grade distribution"
-                      /* auto-fit, not a fixed 3, because a fixed track is ~98px
-                         at 1024px and the widest cell needs ~110px, which split
-                         "33.3% · 455" across two lines. */
                       className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
                     />
                   </>
                 )}
               </div>
 
-              {/* Takes the column's surplus height so it collects once, in this
-                  section, instead of padding out every section. The label stays
-                  pinned; only the content below it rides the surplus. */}
               <div className="flex flex-1 flex-col space-y-3 px-4 py-4">
                 <div className="flex items-baseline justify-between gap-2">
                   <Eyebrow>Freemod picks</Eyebrow>
@@ -596,9 +545,6 @@ export default function BeatmapDistributionsCard({
                   ) : null}
                 </div>
 
-                {/* Centred only when there is a chart to centre: an empty state
-                    stranded mid-section reads as a layout fault, not as
-                    breathing room. */}
                 <div
                   className={cn(
                     'flex flex-1 flex-col',
@@ -623,8 +569,6 @@ export default function BeatmapDistributionsCard({
               data-testid="beatmap-rank-range"
             >
               <div className="flex flex-1 flex-col space-y-3">
-                {/* The badge sits under the label rather than beside it: this
-                    panel is 288px at lg, and the pair wraps the label. */}
                 <div className="flex flex-col items-start gap-2">
                   <Eyebrow>Tournament rank ranges</Eyebrow>
                   {hasUnverifiedPools && rankSlices.length > 0 ? (
@@ -632,9 +576,6 @@ export default function BeatmapDistributionsCard({
                   ) : null}
                 </div>
 
-                {/* The donut and its legend ride the column's surplus height
-                    together, so a taller neighbour column centres them rather
-                    than leaving a void under the legend. */}
                 <div
                   className={cn(
                     'flex flex-1 flex-col space-y-3',
@@ -646,8 +587,6 @@ export default function BeatmapDistributionsCard({
                       Not enough data
                     </p>
                   ) : rankSlices.length === 1 ? (
-                    /* One bracket is not a distribution — a donut of a single
-                       slice would encode nothing the sentence does not. */
                     <Tile
                       data-testid="beatmap-rank-range-summary"
                       className="py-6"
@@ -668,8 +607,6 @@ export default function BeatmapDistributionsCard({
                         totalPools={pools.length}
                         modsByBucket={modsByBucket}
                       />
-                      {/* Sliver brackets are unhittable on the ring, so every
-                          bracket is also inspectable from its legend row. */}
                       <ul
                         aria-label="Tournaments by rank range"
                         className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"

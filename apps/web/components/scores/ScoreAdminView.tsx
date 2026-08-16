@@ -200,7 +200,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
           : 'Saved score updates'
       );
 
-      // Reset forms
       form.reset(values);
       setAdminNote('');
 
@@ -214,7 +213,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
   }
 
   async function handleSubmit(values: z.infer<typeof scoreEditFormSchema>) {
-    // Check if any score-related fields were modified (excluding verification)
     const scoreFields = [
       'score',
       'accuracy',
@@ -657,7 +655,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     Reset
                   </Button>
 
-                  {/* Delete score */}
                   <DeleteButton
                     entityType="score"
                     entityId={score.id}
@@ -665,7 +662,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     onDeleted={() => router.refresh()}
                   />
 
-                  {/* Delete all player scores */}
                   <SimpleTooltip content="Delete All Player Scores">
                     <Button
                       type="button"
@@ -697,7 +693,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Player Scores Confirmation Dialog */}
       <AlertDialog
         open={showDeletePlayerScoresDialog}
         onOpenChange={setShowDeletePlayerScoresDialog}

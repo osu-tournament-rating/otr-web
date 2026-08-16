@@ -36,37 +36,30 @@ export default function PlayerModCountChart({
   modStats,
   className,
 }: PlayerModCountChartProps) {
-  // Process mod stats data
   const processedData = React.useMemo(() => {
     if (!modStats || modStats.length === 0) {
       return [];
     }
 
-    // Calculate total games across all mod stats
     const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
     const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
 
-    // Create a map to aggregate counts by mod combination
     const modMap = new Map<string, ProcessedEntry>();
 
-    // Process mod stats
     modStats.forEach((stat) => {
       const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      // Join mod texts and remove all "NF" and "SO" occurrences
       let label = metadata
         .map((meta) => meta.text)
         .join('')
         .replace(/NF/g, '')
         .replace(/SO/g, '');
 
-      // If label is empty, it's "No Mod" (NM)
       if (label === '') {
         label = 'NM';
       }
 
       const count = stat.count || 1;
 
-      // If this mod combination already exists in our map, update it
       if (modMap.has(label)) {
         const existing = modMap.get(label)!;
         modMap.set(label, {
@@ -74,7 +67,6 @@ export default function PlayerModCountChart({
           count: existing.count + count,
         });
       } else {
-        // Add new entry
         modMap.set(label, {
           label,
           count,
@@ -88,7 +80,6 @@ export default function PlayerModCountChart({
       .sort((a, b) => b.count - a.count);
   }, [modStats]);
 
-  // Calculate total games for percentage display and center label
   const totalGames = React.useMemo(() => {
     return processedData.reduce((sum, entry) => sum + entry.count, 0);
   }, [processedData]);

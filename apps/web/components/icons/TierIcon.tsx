@@ -14,7 +14,6 @@ export const validTiers = [
   'Elite Grandmaster',
 ] as const;
 
-// Create a type from the valid tiers array
 type TierName = (typeof validTiers)[number];
 
 export default function TierIcon({
@@ -23,13 +22,8 @@ export default function TierIcon({
   tooltip,
   ...rest
 }: Omit<React.ComponentProps<typeof Image>, 'src' | 'alt'> & {
-  /** Target tier */
   tier: TierName;
-
-  /** Optional target subtier */
   subTier: number | undefined;
-
-  /** If a tooltip with the tier text should be attached to the icon */
   tooltip?: boolean;
 }) {
   const fileName =
@@ -51,7 +45,6 @@ export default function TierIcon({
 
   const tooltipContent = getTierString(tier, subTier);
 
-  // Here purely for convenience
   if (tier === 'Elite Grandmaster') {
     subTier = undefined;
   }

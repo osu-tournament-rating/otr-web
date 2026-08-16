@@ -8,19 +8,11 @@ import * as schema from '@otr/core/db/schema';
 import { db } from '@/lib/db';
 
 /**
- * Test-only Better Auth plugin that mints a real, signed session for an existing
- * player so the Playwright e2e suite can exercise authenticated and admin-gated
- * flows without going through the osu! OAuth dance.
- *
- * Safety: the plugin is only added to the auth instance when {@link isE2eAuthEnabled}
- * is true, and the endpoint re-checks the flag on every request. The flag must be
- * left unset (or false) in staging/prod configs — Playwright tests the production
- * build (`next start`, NODE_ENV=production), so the gate cannot key off NODE_ENV.
- *
- * Endpoint: `POST /api/auth/e2e/sign-in` with body `{ playerId, admin? }`. The player
- * must exist; if it has no `users`/`auth_users` rows yet (e.g. the local database was
- * restored from a dump that excludes auth tables), they are provisioned on the fly,
- * with `admin: true` granting the `admin` scope the same way a real login would read it.
+ * Test-only plugin: `POST /api/auth/e2e/sign-in` with `{ playerId, admin? }` mints a
+ * signed session for an existing player, provisioning its `users`/`auth_users` rows
+ * if the local database has none. Gated on {@link isE2eAuthEnabled}, which the
+ * endpoint rechecks per request — Playwright runs a production build, so the gate
+ * cannot key off NODE_ENV, and the flag must stay unset in staging and prod.
  */
 export const isE2eAuthEnabled = () => process.env.E2E_TEST_AUTH === 'true';
 

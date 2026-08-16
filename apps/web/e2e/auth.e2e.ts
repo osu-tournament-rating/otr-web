@@ -2,11 +2,7 @@ import { test, expect } from '@playwright/test';
 import { STORAGE_STATE, loginAs } from './fixtures/auth';
 import { ROUTES } from './fixtures/test-config';
 
-/**
- * Smoke coverage for the e2e auth fixtures: proves an admin session and a regular
- * signed-in session resolve to the right privileges, and that authenticated-only
- * surfaces (e.g. global search, gated for signed-out users) work once logged in.
- */
+/** Smoke coverage for the e2e auth fixtures and the surfaces they unlock. */
 test.describe('Auth fixtures', () => {
   test.describe('Admin role', () => {
     test.use({ storageState: STORAGE_STATE.admin });

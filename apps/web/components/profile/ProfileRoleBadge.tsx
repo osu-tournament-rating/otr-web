@@ -20,7 +20,6 @@ export default function ProfileRoleBadge({
   scopes,
   className,
 }: ProfileRoleBadgeProps) {
-  // Memoize role determination to prevent unnecessary recalculations
   const roleBadges = useMemo(() => {
     const badges: RoleBadge[] = [];
 

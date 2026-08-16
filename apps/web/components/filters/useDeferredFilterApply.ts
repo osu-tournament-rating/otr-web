@@ -2,18 +2,10 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-/**
- * How long the last filter edit sits before it navigates. Long enough to tab
- * across the popover's boxes and fill several of them without paying for a
- * round trip per cell.
- */
+/** How long the last filter edit sits before it navigates. */
 export const FILTER_APPLY_DELAY = 600;
 
-/**
- * Marks the popover's field grid. `FilterPopover` sets it; the countdown below
- * reads it to tell a filter box apart from every other input on the page (the
- * search box keeps searching as it is typed).
- */
+/** Marks the popover's field grid, so the countdown can tell a filter box apart. */
 export const FILTER_FIELD_SCOPE_ATTRIBUTE = 'data-filter-fields';
 
 const TEXT_ENTRY_TYPES = new Set([
@@ -29,14 +21,7 @@ const TEXT_ENTRY_TYPES = new Set([
 let sliderDragging = false;
 const dragListeners = new Set<() => void>();
 
-/**
- * Reported by `FilterRangeField` around a pointer drag. A drag emits a value on
- * every pointer move, so an apply landing mid-drag would re-render the track
- * out from under the pointer.
- *
- * Module state rather than context: only one filter surface is ever mounted,
- * and the countdown lives above the popover that owns the slider.
- */
+/** Reported by `FilterRangeField` around a pointer drag. */
 export function setFilterSliderDragging(dragging: boolean) {
   if (sliderDragging === dragging) return;
   sliderDragging = dragging;
@@ -56,13 +41,8 @@ function isEditingFilter() {
 }
 
 /**
- * Debounces filter navigations, and holds them back entirely while a filter box
- * has focus or a slider is mid-drag. The countdown only starts once the user is
- * between controls, so tabbing from box to box collects every edit into one
- * navigation.
- *
- * Callers own their optimistic state: `apply` receives the value to commit, and
- * the UI is expected to already show it.
+ * Debounces filter navigations, holding them while a filter box has focus or a
+ * slider is mid-drag. Callers own their optimistic state.
  */
 export function useDeferredFilterApply<T>(
   apply: (value: T) => void,
@@ -112,9 +92,7 @@ export function useDeferredFilterApply<T>(
   }, []);
 
   useEffect(() => {
-    // Focus leaving a box, or a drag ending, is what re-opens the countdown.
-    // `focusout` alone would start it while focus is still in flight, so
-    // `focusin` re-arms (and re-blocks) once the next control has it.
+    // `focusin` re-arms once the next control has focus; `focusout` alone fires too early.
     document.addEventListener('focusin', arm);
     document.addEventListener('focusout', arm);
     dragListeners.add(arm);

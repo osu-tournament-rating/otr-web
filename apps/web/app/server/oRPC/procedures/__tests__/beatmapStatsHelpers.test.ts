@@ -258,11 +258,7 @@ describe('TIER_RATING_BOUNDARIES', () => {
   });
 });
 
-/**
- * Parity between the width_bucket index arithmetic used by the tier breakdown
- * SQL and the client-side tier resolution, mirroring the mod-normalization
- * parity test.
- */
+// Parity with the tier breakdown query's width_bucket arithmetic
 describe('tierNameFromRatingArithmetic', () => {
   const ratings = [
     0, 99, 100, 399, 400, 699, 700, 999, 1000, 1299, 1300, 1599, 1600, 1899,
@@ -287,10 +283,7 @@ describe('tierNameFromRatingArithmetic', () => {
   });
 });
 
-/**
- * The breakdown folds Elite Grandmaster into Grandmaster; the SQL does the same
- * with LEAST(width_bucket(...), TIER_BREAKDOWN_MAX_TIER_INDEX).
- */
+// Parity with LEAST(width_bucket(...), TIER_BREAKDOWN_MAX_TIER_INDEX) in the SQL
 describe('tierBreakdownTierFromRating', () => {
   test('clamps at Grandmaster', () => {
     expect(TIER_BREAKDOWN_MAX_TIER_INDEX).toBe(tierData.length - 2);

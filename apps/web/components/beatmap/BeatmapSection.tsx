@@ -18,10 +18,7 @@ import { formatChartNumber } from '@/lib/utils/chart';
 
 export type { ScaleTick };
 
-/**
- * Card chrome shared by the beatmap detail page's sections. `as` exists for the
- * page header, which needs the same surface on a `<header>` element.
- */
+/** Card chrome shared by the beatmap detail page's sections. */
 export function SectionCard({
   as: Tag = 'section',
   className,
@@ -52,7 +49,7 @@ export function Tile({ className, ...props }: React.ComponentProps<'div'>) {
 export function Swatch({ color }: { color: string }) {
   return (
     <span
-      className="size-2 shrink-0 rounded-[2px]"
+      className="size-2 shrink-0 rounded-xs"
       style={{ backgroundColor: color }}
       aria-hidden="true"
     />
@@ -68,13 +65,7 @@ export function SectionHeader({
 }: {
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   title: string;
-  /**
-   * Static, per-card explanation of how to read the chart. Never per-beatmap
-   * text — that belongs in meta.
-   *
-   * A string rather than a node: this module is imported by server components,
-   * and a string forbids arbitrary markup drifting into a header.
-   */
+  /** Static, per-card explanation of how to read the chart. */
   infoText?: string;
   meta?: React.ReactNode;
   className?: string;
@@ -90,8 +81,6 @@ export function SectionHeader({
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h2 className="truncate font-semibold">{title}</h2>
         {infoText ? (
-          // TapTooltip, not SimpleTooltip: a bare <svg> trigger is not
-          // focusable and never opens on touch.
           <TapTooltip
             side="bottom"
             align="start"
@@ -122,14 +111,7 @@ export function EmptyState({
   );
 }
 
-/**
- * One box-and-whisker row: whisker from min to max, a filled box over the
- * middle 50%, a median tick, and hollow rings on the extremes. The axis is
- * anchored on the highest maximum, so only the low end can be cut off; that
- * whisker ends in a chevron instead of a ring. Pass `marks` as null for a row
- * with no data — the empty track keeps the row's height so the columns either
- * side of it stay aligned.
- */
+/** One box-and-whisker row; pass null `marks` for an empty track of the same height. */
 export function BoxPlotTrack({
   color,
   marks,
@@ -150,7 +132,7 @@ export function BoxPlotTrack({
       )}
       aria-hidden="true"
     >
-      {/* Axis gridlines, so a box can be read against the ticks below */}
+      {/* Axis gridlines */}
       {gridPercents.map((percent) => (
         <span
           key={percent}
@@ -161,7 +143,7 @@ export function BoxPlotTrack({
 
       {marks === null ? null : (
         <>
-          {/* Whisker: min → max, inset so it stops short of the hollow rings */}
+          {/* Whisker: min → max */}
           <span
             className="absolute top-1/2 h-px -translate-y-1/2 bg-muted-foreground/50"
             style={{
@@ -182,7 +164,7 @@ export function BoxPlotTrack({
           />
           {/* Median tick */}
           <span
-            className="absolute inset-y-0.5 w-[2px] -translate-x-1/2 rounded-full bg-foreground"
+            className="absolute inset-y-0.5 w-0.5 -translate-x-1/2 rounded-full bg-foreground"
             style={{ left: `${marks.medianPercent}%` }}
           />
           {/* Extremes: a hollow ring, or a chevron where the axis cuts off */}
@@ -202,8 +184,6 @@ function ChevronCap({ color, percent }: { color: string; percent: number }) {
   return (
     <ChevronLeft
       className="absolute top-1/2 z-10 size-3.5 -translate-y-1/2"
-      // Nudged inward so the glyph sits fully on the track rather than
-      // straddling the edge the way a ring does.
       style={{ color, left: `calc(${percent}% + 1px)` }}
       aria-hidden
     />
@@ -230,10 +210,7 @@ function RingGlyph({ color }: { color: string }) {
   );
 }
 
-/**
- * The readout behind every box plot row: the same five numbers, formatted for
- * whichever measure the row is drawn from.
- */
+/** The five-number readout behind every box plot row. */
 export function BoxPlotTooltipContent({
   labelIcon,
   label,
@@ -290,12 +267,7 @@ export function BoxPlotTooltipContent({
   );
 }
 
-/**
- * A ticked axis under a row chart. The left spacer matches the label column of
- * the rows above so the ticks land on the same scale the boxes are drawn from.
- * End labels are pulled inward instead of centered so they cannot spill past
- * the card.
- */
+/** A ticked axis under a row chart; the left spacer matches the rows' label column. */
 export function ScaleAxis({
   leftSpacerClassName,
   ticks,
@@ -322,9 +294,7 @@ export function ScaleAxis({
             <span
               className={cn(
                 'absolute top-2.5 text-xs whitespace-nowrap text-muted-foreground',
-                // Aligned by position, not by index: an axis clipped to its
-                // data maximum ends on an interior tick, which still wants a
-                // centred label.
+                // Aligned by position: a clipped axis can end on an interior tick.
                 tick.percent <= 0 && 'translate-x-0',
                 tick.percent >= 100 && '-translate-x-full',
                 tick.percent > 0 && tick.percent < 100 && '-translate-x-1/2'
@@ -340,11 +310,7 @@ export function ScaleAxis({
   );
 }
 
-/**
- * Switches one box plot chart between its truncated default and the full range
- * of every whisker. Render it only when the truncated axis actually cuts
- * something off.
- */
+/** Switches one box plot chart between its truncated default and the full range. */
 export function FullRangeToggle({
   pressed,
   onPressedChange,
@@ -352,15 +318,11 @@ export function FullRangeToggle({
 }: {
   pressed: boolean;
   onPressedChange: (pressed: boolean) => void;
-  /**
-   * Accessible name. Must contain the visible "Full range" (WCAG 2.5.3), and
-   * disambiguates the two toggles the tier card renders.
-   */
+  /** Accessible name; must contain the visible "Full range" (WCAG 2.5.3). */
   label: string;
 }) {
   return (
-    // h-6 keeps the 24px target of WCAG 2.5.8; the icon swap is the
-    // non-colour pressed cue over Toggle's own data-[state=on] background.
+    // h-6 keeps the 24px target (WCAG 2.5.8).
     <Toggle
       size="sm"
       pressed={pressed}
@@ -390,8 +352,7 @@ export function TileStat({
   sublabel?: string;
   value: string;
 }) {
-  // <span> rather than <dt>/<dd>: the "Pooled in" tile is a <button>, and HTML
-  // forbids description-list elements inside one.
+  // <span>, not <dt>/<dd>: the "Pooled in" tile is a <button>.
   return (
     <>
       <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">

@@ -1,10 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-/**
- * Shared geometry for the beatmap pill family (ruleset, star rating). Keeping
- * one source of truth means a pill anchored over cover art and the same pill
- * sitting on a card surface stay identical in height, radius, and icon size.
- */
+/** Shared geometry for the beatmap pill family (ruleset, star rating). */
 export const beatmapPillVariants = cva(
   'gap-1.5 rounded-full border-transparent whitespace-nowrap',
   {

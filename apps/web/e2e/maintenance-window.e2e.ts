@@ -7,23 +7,16 @@ import { RPCLink } from '@orpc/client/fetch';
 import { STORAGE_STATE } from './fixtures/auth';
 
 /**
- * Verifies the daily maintenance window (issue #763) blocks admins from
- * verifying, deleting, or modifying tournament data between 11:45–12:15 UTC.
- *
- * The window's active state is forced per-request via the test-only
- * `x-e2e-maintenance-window` header (honored because `E2E_TEST_AUTH=true`), so
- * the assertions are deterministic regardless of the wall-clock time the suite
- * runs. Non-existent IDs are used throughout: the window guard runs before any
- * entity lookup, so nothing real is ever mutated.
+ * The daily maintenance window blocks admin mutations (issue #763). The window
+ * is forced per-request with the test-only `x-e2e-maintenance-window` header,
+ * and every id is non-existent so nothing real is ever mutated.
  */
 
 type MaintenanceOverride = 'active' | 'inactive';
 
 const MISSING_ID = 999_999_999;
 
-/** A full, valid score-update body so the request fails (if it reaches the
- * handler) at the entity lookup rather than input validation. The
- * verificationStatus of 4 (Verified) makes this an explicit "verify" attempt. */
+/** A valid score-update body, so a request reaching the handler fails at lookup. */
 const SCORE_UPDATE_BODY = {
   id: MISSING_ID,
   score: 0,
@@ -162,9 +155,7 @@ test.describe('Maintenance window', () => {
   test('allows the same admin mutations outside the window', async ({
     baseURL,
   }) => {
-    // With the window inactive the request passes the guard and reaches the
-    // handler, which rejects the non-existent id with NOT_FOUND — proving the
-    // 503 above came from the window guard, not from auth or a missing route.
+    // NOT_FOUND proves the 503 above came from the guard, not auth or routing
     const client = adminClient(baseURL!, 'inactive');
 
     const deleteError = await captureError(

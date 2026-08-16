@@ -4,10 +4,7 @@ import { MAINTENANCE_WINDOW_LABEL } from '@otr/core/maintenance';
 import { readRatingTimestamps, type DbReader } from '@/lib/db/rating-utils';
 import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
-/**
- * Throws a 503 when the maintenance window is active. If a DbReader is passed,
- * the window looks for a rating timestamp that is newer than the window start.
- */
+/** Throws 503 during the maintenance window; a DbReader also checks rating timestamps. */
 export const assertOutsideMaintenanceWindow = async (
   headers: Headers,
   db?: DbReader

@@ -25,10 +25,8 @@ export const highlightMatch = (
     token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   );
 
-  // The query drops punctuation before it is tokenised, so `w/www` arrives as
-  // `w` + `www`. Matching the tokens one at a time leaves the `/` between them
-  // unhighlighted in `w/WWW`; runs of adjacent tokens are matched first, with
-  // whatever separated them, and only then each token on its own.
+  // Tokens arrive punctuation-free, so adjacent runs are matched first, along
+  // with whatever separated them, and only then each token on its own.
   const alternatives: string[] = [];
   for (let length = escapedTokens.length; length > 1; length -= 1) {
     for (let start = 0; start + length <= escapedTokens.length; start += 1) {
@@ -69,7 +67,6 @@ export const highlightMatch = (
       </>
     );
   } catch (error) {
-    // If regex fails, return the original text
     console.error('Error in highlightMatch:', error);
     return text;
   }

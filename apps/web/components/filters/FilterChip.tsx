@@ -9,7 +9,6 @@ export interface FilterChipProps {
   label: string;
   selected: boolean;
   onClick: () => void;
-  /** Sized by the caller so chips can carry differently shaped glyphs. */
   icon?: ReactNode;
   className?: string;
   'data-testid'?: string;

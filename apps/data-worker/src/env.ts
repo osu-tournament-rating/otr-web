@@ -127,7 +127,6 @@ export const dataWorkerEnv = {
   osuApiRateLimit,
   osuTrackRateLimit,
   amqpUrl: requireEnv('RABBITMQ_AMQP_URL'),
-  // Defaults to enabled so existing deployments without the var stay protected.
   maintenanceWindowEnabled: parseBooleanEnvWithDefault(
     'MAINTENANCE_WINDOW_ENABLED',
     true

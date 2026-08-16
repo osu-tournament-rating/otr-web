@@ -104,10 +104,7 @@ export const ReportListResponseSchema = z.object({
   totalCount: z.number().int().nonnegative(),
 });
 
-/**
- * Read-only view of a report for the user who created it. Intentionally omits
- * reporter/resolver identity and exposes whether an admin update is unread.
- */
+/** A reporter's own view: no reporter or resolver identity, plus an unread flag. */
 export const MyReportSchema = reportBaseSchema.extend({
   reason: ReportReasonSchema,
   additionalInformation: z.string().nullable(),

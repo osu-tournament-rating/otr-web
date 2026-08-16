@@ -81,8 +81,6 @@ export default function BeatmapListGrid({
             onSortChange={onSortChange}
             className="hidden sm:block"
           />
-          {/* Ten columns cannot honestly fit a phone, and the compact rows
-              already exist, so the table falls back to them below `sm`. */}
           <BeatmapListRows beatmaps={beatmaps} className="sm:hidden" />
         </div>
       );

@@ -71,7 +71,6 @@ test.describe('Banned Page', () => {
     await expect(heading).toBeVisible({ timeout: 10000 });
     await expect(heading).toHaveText('Account Suspended');
 
-    // With no reason param, the reason section should not render.
     await expect(page.locator('[data-testid="banned-reason"]')).toHaveCount(0);
   });
 

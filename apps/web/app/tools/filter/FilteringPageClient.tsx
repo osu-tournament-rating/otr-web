@@ -8,7 +8,6 @@ import FilteringForm from '@/components/filtering/FilteringForm';
 import { FilteringResult } from '@/lib/orpc/schema/filtering';
 
 type FilteringPageClientProps = {
-  /** True while ratings are recalculating and filtering is blocked. */
   filterBlocked: boolean;
 };
 
@@ -29,7 +28,7 @@ export default function FilteringPageClient({
           criteria.
         </p>
       </div>
-      <Alert className="border-warning/50 bg-warning/10 dark:border-warning/50 dark:bg-warning/10">
+      <Alert className="border-warning/50 bg-warning/10">
         <AlertTriangle className="h-4 w-4 text-warning-foreground dark:text-yellow-400" />
         <AlertTitle className="font-bold text-warning-foreground dark:text-yellow-100">
           Host Compliance
